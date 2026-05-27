@@ -1,0 +1,78 @@
+@font-face {
+  font-family: 'BCC Purno';
+  src: url('/fonts/bcc-purno/BCCPurno.woff2') format('woff2'),
+       url('/fonts/bcc-purno/BCCPurno.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Hind+Siliguri:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f8f7;
+    --bg-tertiary: #f0efe8;
+    --surface: #ffffff;
+    --surface-2: #f0efe8;
+    --border: rgba(0,0,0,0.08);
+    --border-2: rgba(0,0,0,0.15);
+    --text-primary: #1a1a18;
+    --text-secondary: #5a5a56;
+    --text-muted: #9a9a94;
+    --brand: #534AB7;
+    --brand-light: #EEEDFE;
+    --teal: #1D9E75;
+    --teal-light: #E1F5EE;
+    --red: #E24B4A;
+    --red-light: #FCEBEB;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --green: #3B6D11;
+    --green-light: #EAF3DE;
+  }
+
+  [data-theme="dark"] {
+    --bg-primary: #16161a;
+    --bg-secondary: #1e1e24;
+    --bg-tertiary: #242430;
+    --surface: #1e1e24;
+    --surface-2: #2a2a36;
+    --border: rgba(255,255,255,0.08);
+    --border-2: rgba(255,255,255,0.15);
+    --text-primary: #e8e8e2;
+    --text-secondary: #9a9a94;
+    --text-muted: #5a5a56;
+    --brand: #7F77DD;
+    --brand-light: rgba(127,119,221,0.15);
+    --teal: #5DCAA5;
+    --teal-light: rgba(93,202,165,0.15);
+    --red: #F09595;
+    --red-light: rgba(240,149,149,0.15);
+    --amber: #EF9F27;
+    --amber-light: rgba(239,159,39,0.15);
+    --green: #97C459;
+    --green-light: rgba(151,196,89,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', 'Hind Siliguri', sans-serif;
+}
+
+  body {
+    /* font-family: 'Inter', sans-serif; */
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 4px; }
+}
