@@ -2,6 +2,15 @@ import { Routes, Route, Navigate } from "react-router-dom"
 import AppLayout from "@/components/layouts/AppLayout"
 import DashboardPage from "@/pages/dashboard"
 
+// Student pages
+import StudentsPage from "@/pages/students"
+import StudentAdmission from "@/pages/students/admission"
+import StudentAll from "@/pages/students/all"
+import StudentUpdate from "@/pages/students/update"
+import StudentBulkUpdate from "@/pages/students/bulk-update"
+import StudentIdCards from "@/pages/students/id-cards"
+import StudentPromotion from "@/pages/students/promotion"
+
 function Placeholder({ name }: { name: string }) {
   return (
     <div style={{ color: "var(--text-primary)", fontSize: "20px", fontWeight: 500 }}>
@@ -16,7 +25,17 @@ export default function App() {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route element={<AppLayout />}>
         <Route path="/dashboard"      element={<DashboardPage />} />
-        <Route path="/students"       element={<Placeholder name="Students" />} />
+
+        {/* Student routes */}
+        <Route path="/students"             element={<StudentsPage />} />
+        <Route path="/students/admission"   element={<StudentAdmission />} />
+        <Route path="/students/all"         element={<StudentAll />} />
+        <Route path="/students/update"      element={<StudentUpdate />} />
+        <Route path="/students/bulk-update" element={<StudentBulkUpdate />} />
+        <Route path="/students/id-cards"    element={<StudentIdCards />} />
+        <Route path="/students/promotion"   element={<StudentPromotion />} />
+
+        {/* Other pages */}
         <Route path="/teachers"       element={<Placeholder name="Teachers" />} />
         <Route path="/classes"        element={<Placeholder name="Classes" />} />
         <Route path="/hr"             element={<Placeholder name="HR & Staff" />} />
