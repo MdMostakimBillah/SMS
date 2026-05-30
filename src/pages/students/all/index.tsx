@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Icon } from '@iconify/react'
+import { X, User, Edit2, ArrowLeft, Layers, Search, FileSpreadsheet, FileText, Users, Eye, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -139,14 +139,14 @@ export default function AllStudentsPage() {
               <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
                 {statusBadge(viewSt.status)}
                 <button onClick={() => setViewSt(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <Icon icon="lucide:x" width={14} style={{ color:'var(--text-secondary)' }} />
+                  <X size={14} style={{ color:'var(--text-secondary)' }} />
                 </button>
               </div>
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:'16px 18px' }}>
               <div style={{ display:'flex', gap:'14px', marginBottom:'14px' }}>
                 <div style={{ width:'80px', height:'95px', borderRadius:'8px', border:'1px solid var(--border)', overflow:'hidden', background:'var(--bg-secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  {viewSt.photo ? <img src={viewSt.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <Icon icon="lucide:user" width={28} style={{ color:'var(--text-muted)' }} />}
+                  {viewSt.photo ? <img src={viewSt.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={28} style={{ color:'var(--text-muted)' }} />}
                 </div>
                 <div>
                   <h3 style={{ fontSize:'16px', fontWeight:600, color:'var(--text-primary)' }}>{viewSt.nameEn}</h3>
@@ -189,7 +189,7 @@ export default function AllStudentsPage() {
               </button>
               <button onClick={() => { navigate('/students/update', { state:{ studentId: viewSt.id } }); setViewSt(null) }}
                 style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px', background:'var(--amber)', border:'none', color:'#fff', fontSize:'13px', fontWeight:500, cursor:'pointer', fontFamily:'inherit' }}>
-                <Icon icon="lucide:edit-2" width={13} />{isBn?'এডিট':'Edit'}
+                <Edit2 size={13} />{isBn?'এডিট':'Edit'}
               </button>
             </div>
           </div>
@@ -200,7 +200,7 @@ export default function AllStudentsPage() {
       <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
         <button onClick={() => navigate('/students')}
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px', background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px', color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
-          <Icon icon="lucide:arrow-left" width={14} />
+          <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
         <div style={{ flex:1 }}>
@@ -216,11 +216,11 @@ export default function AllStudentsPage() {
         <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
           <button onClick={() => navigate('/students/update')}
             style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px', background:'var(--amber-light)', border:'1px solid var(--amber)', color:'var(--amber)', fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-            <Icon icon="lucide:edit-2" width={14} />{isBn?'আপডেট':'Update'}
+            <Edit2 size={14} />{isBn?'আপডেট':'Update'}
           </button>
           <button onClick={() => navigate('/students/bulk-update')}
             style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-            <Icon icon="lucide:layers" width={14} />{isBn?'বাল্ক আপডেট':'Bulk Update'}
+            <Layers size={14} />{isBn?'বাল্ক আপডেট':'Bulk Update'}
           </button>
         </div>
       </div>
@@ -229,11 +229,11 @@ export default function AllStudentsPage() {
       <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
         <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'2fr 1fr 1fr 1fr 1fr 1fr', gap:'8px' }}>
           <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'7px 10px' }}>
-            <Icon icon="lucide:search" width={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
+            <Search size={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
             <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
               placeholder={isBn?'নাম, আইডি, রোল, মোবাইল...':'Name, ID, roll, mobile...'}
               style={{ flex:1, border:'none', background:'transparent', outline:'none', fontSize:'13px', color:'var(--text-primary)', fontFamily:'inherit' }} />
-            {search && <button onClick={() => setSearch('')} style={{ border:'none', background:'transparent', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}><Icon icon="lucide:x" width={12} /></button>}
+            {search && <button onClick={() => setSearch('')} style={{ border:'none', background:'transparent', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}><X size={12} /></button>}
           </div>
           <select value={fClass} onChange={e => { setFClass(e.target.value); setPage(1) }} style={sel}>
             <option value="">{isBn?'সব শ্রেণি':'All Classes'}</option>
@@ -265,7 +265,7 @@ export default function AllStudentsPage() {
         {hasFilter && (
           <button onClick={clearFilters}
             style={{ display:'flex', alignItems:'center', gap:'5px', padding:'4px 10px', borderRadius:'6px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'11px', cursor:'pointer', fontFamily:'inherit', marginTop:'8px' }}>
-            <Icon icon="lucide:x" width={11} />{isBn?'ফিল্টার সরান':'Clear Filters'}
+            <X size={11} />{isBn?'ফিল্টার সরান':'Clear Filters'}
           </button>
         )}
       </div>
@@ -286,11 +286,11 @@ export default function AllStudentsPage() {
         <div style={{ display:'flex', gap:'6px' }}>
           <button onClick={exportExcel}
             style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-            <Icon icon="lucide:file-spreadsheet" width={13} />Excel
+            <FileSpreadsheet size={13} />Excel
           </button>
           <button onClick={() => setShowPDF(true)}
             style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-            <Icon icon="lucide:file-text" width={13} />PDF {selected.length>0?`(${selected.length})`:`(${filtered.length})`}
+            <FileText size={13} />PDF {selected.length>0?`(${selected.length})`:`(${filtered.length})`}
           </button>
         </div>
       </div>
@@ -301,15 +301,16 @@ export default function AllStudentsPage() {
           <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
             <thead>
               <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
-                <th style={{ padding:'10px 12px', width:'36px' }}>
+                <th style={{ padding:'10px 12px', width:'36px', position:'sticky', left:0, zIndex:4, background:'var(--bg-primary)' }}>
                   <input type="checkbox" checked={allSel} onChange={toggleAll}
                     style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:'var(--brand)' }} />
                 </th>
                 {[
-                  { l:'#', w:'36px' }, { l:isBn?'ছবি':'Photo', w:'44px' },
-                  { l:isBn?'ছাত্র আইডি':'Student ID', w:'140px' },
-                  { l:isBn?'নাম':'Name', w:'160px' },
-                  { l:isBn?'শ্রেণি/রোল':'Class/Roll', w:'90px' },
+                  { l:'#', w:'36px', sticky:true, left:'36px' },
+                  { l:isBn?'ছবি':'Photo', w:'44px', sticky:true, left:'72px' },
+                  { l:isBn?'ছাত্র আইডি':'Student ID', w:'140px', sticky:true, left:'116px' },
+                  { l:isBn?'নাম':'Name', w:'160px', sticky:true, left:'256px' },
+                  { l:isBn?'শ্রেণি/রোল':'Class/Roll', w:'90px', sticky:true, left:'416px' },
                   { l:isBn?'লিঙ্গ':'Gender', w:'65px' },
                   { l:isBn?'রক্ত':'Blood', w:'55px' },
                   { l:isBn?'মোবাইল':'Mobile', w:'108px' },
@@ -318,7 +319,7 @@ export default function AllStudentsPage() {
                   { l:isBn?'অবস্থা':'Status', w:'85px' },
                   { l:isBn?'অ্যাকশন':'Action', w:'70px' },
                 ].map(h => (
-                  <th key={h.l} style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.4px', whiteSpace:'nowrap', minWidth:h.w }}>
+                  <th key={h.l} style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.4px', whiteSpace:'nowrap', minWidth:h.w, ...(h.sticky ? { position:'sticky', left:h.left, zIndex:4, background:'var(--bg-primary)' } : {}) }}>
                     {h.l}
                   </th>
                 ))}
@@ -327,7 +328,7 @@ export default function AllStudentsPage() {
             <tbody>
               {paginated.length === 0
                 ? <tr><td colSpan={13} style={{ padding:'40px', textAlign:'center', color:'var(--text-muted)' }}>
-                    <Icon icon="lucide:users" width={28} style={{ display:'block', margin:'0 auto 8px', opacity:0.3 }} />
+                    <Users size={28} style={{ display:'block', margin:'0 auto 8px', opacity:0.3 }} />
                     {isBn?'কোনো ছাত্র পাওয়া যায়নি':'No students found'}
                   </td></tr>
                 : paginated.map((s, i) => (
@@ -335,24 +336,24 @@ export default function AllStudentsPage() {
                     style={{ borderBottom:'0.5px solid var(--border)', background:selected.includes(s.id)?'rgba(99,102,241,0.04)':'transparent', cursor:'default' }}
                     onMouseEnter={e => { if (!selected.includes(s.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
                     onMouseLeave={e => { if (!selected.includes(s.id)) e.currentTarget.style.background = 'transparent' }}>
-                    <td style={{ padding:'8px 12px' }}>
+                    <td style={{ padding:'8px 12px', position:'sticky', left:0, zIndex:3, background:'var(--bg-primary)' }}>
                       <input type="checkbox" checked={selected.includes(s.id)} onChange={() => toggleOne(s.id)}
                         style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:'var(--brand)' }} />
                     </td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px' }}>{(sp-1)*perPage+i+1}</td>
-                    <td style={{ padding:'7px 8px' }}>
+                    <td style={{ padding:'8px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px', position:'sticky', left:'36px', zIndex:3, background:'var(--bg-primary)' }}>{(sp-1)*perPage+i+1}</td>
+                    <td style={{ padding:'7px 8px', position:'sticky', left:'72px', zIndex:3, background:'var(--bg-primary)' }}>
                       <div style={{ width:'30px', height:'36px', borderRadius:'5px', overflow:'hidden', background:'var(--bg-secondary)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                        {s.photo ? <img src={s.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <Icon icon="lucide:user" width={13} style={{ color:'var(--text-muted)' }} />}
+                        {s.photo ? <img src={s.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={13} style={{ color:'var(--text-muted)' }} />}
                       </div>
                     </td>
-                    <td style={{ padding:'8px 8px' }}>
+                    <td style={{ padding:'8px 8px', position:'sticky', left:'116px', zIndex:3, background:'var(--bg-primary)' }}>
                       <span style={{ fontSize:'10px', fontFamily:'monospace', color:'var(--brand)', background:'var(--brand-light)', padding:'2px 5px', borderRadius:'4px' }}>{s.id}</span>
                     </td>
-                    <td style={{ padding:'8px 8px' }}>
+                    <td style={{ padding:'8px 8px', position:'sticky', left:'256px', zIndex:3, background:'var(--bg-primary)' }}>
                       <div style={{ fontSize:'12px', fontWeight:500, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'155px' }}>{isBn?s.nameBn||s.nameEn:s.nameEn}</div>
                       <div style={{ fontSize:'10px', color:'var(--text-muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{isBn?s.nameEn:s.nameBn}</div>
                     </td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px', whiteSpace:'nowrap' }}>
+                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px', whiteSpace:'nowrap', position:'sticky', left:'416px', zIndex:3, background:'var(--bg-primary)' }}>
                       {isBn?`শ্র ${s.class}`:`Cls ${s.class}`}{s.section?`-${s.section}`:''}{s.roll?` / ${s.roll}`:''}
                     </td>
                     <td style={{ padding:'8px 8px' }}>
@@ -369,11 +370,11 @@ export default function AllStudentsPage() {
                       <div style={{ display:'flex', gap:'3px' }}>
                         <button onClick={() => setViewSt(s)} title="View"
                           style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--brand-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--brand)' }}>
-                          <Icon icon="lucide:eye" width={12} />
+                          <Eye size={12} />
                         </button>
                         <button onClick={() => navigate('/students/update', { state:{ studentId: s.id } })} title="Edit"
                           style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--amber)' }}>
-                          <Icon icon="lucide:edit-2" width={12} />
+                          <Edit2 size={12} />
                         </button>
                       </div>
                     </td>
@@ -388,10 +389,10 @@ export default function AllStudentsPage() {
             {(sp-1)*perPage+1}–{Math.min(sp*perPage,filtered.length)} / {filtered.length}
           </span>
           <div style={{ display:'flex', gap:'3px' }}>
-            {[['lucide:chevrons-left',()=>setPage(1),sp===1],['lucide:chevron-left',()=>setPage(p=>Math.max(1,p-1)),sp===1]].map(([ic,a,d],i)=>(
-              <button key={i} onClick={a as ()=>void} disabled={d as boolean}
-                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:(d as boolean)?'var(--text-muted)':'var(--text-secondary)', cursor:(d as boolean)?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <Icon icon={ic as string} width={12} />
+            {([[<ChevronsLeft size={12} />,()=>setPage(1),sp===1] as [React.ReactNode,()=>void,boolean],[<ChevronLeft size={12} />,()=>setPage(p=>Math.max(1,p-1)),sp===1] as [React.ReactNode,()=>void,boolean]]).map(([ic,a,d],i)=>(
+              <button key={i} onClick={a} disabled={d}
+                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                {ic}
               </button>
             ))}
             {(()=>{
@@ -403,10 +404,10 @@ export default function AllStudentsPage() {
                 </button>
               ))
             })()}
-            {[['lucide:chevron-right',()=>setPage(p=>Math.min(totalPages,p+1)),sp===totalPages],['lucide:chevrons-right',()=>setPage(totalPages),sp===totalPages]].map(([ic,a,d],i)=>(
-              <button key={i} onClick={a as ()=>void} disabled={d as boolean}
-                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:(d as boolean)?'var(--text-muted)':'var(--text-secondary)', cursor:(d as boolean)?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <Icon icon={ic as string} width={12} />
+            {([[<ChevronRight size={12} />,()=>setPage(p=>Math.min(totalPages,p+1)),sp===totalPages] as [React.ReactNode,()=>void,boolean],[<ChevronsRight size={12} />,()=>setPage(totalPages),sp===totalPages] as [React.ReactNode,()=>void,boolean]]).map(([ic,a,d],i)=>(
+              <button key={i} onClick={a} disabled={d}
+                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                {ic}
               </button>
             ))}
           </div>

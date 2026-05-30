@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Icon } from '@iconify/react'
+import { ArrowLeft, ArrowUpCircle, Check, Info, User, Users } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -110,7 +110,7 @@ export default function ClassPromotionPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px', flexWrap: 'wrap' }}>
         <button onClick={() => navigate('/students')}
           style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '13px', color: 'var(--text-secondary)', fontFamily: 'inherit', flexShrink: 0 }}>
-          <Icon icon="lucide:arrow-left" width={14} />
+          <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div style={{ flex: 1 }}>
@@ -123,7 +123,7 @@ export default function ClassPromotionPage() {
         </div>
         <button onClick={promote}
           style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '9px', background: promoted ? 'var(--green)' : 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px rgba(99,102,241,0.3)' }}>
-          <Icon icon={promoted ? 'lucide:check' : 'lucide:arrow-up-circle'} width={14} />
+          {promoted ? <Check size={14} /> : <ArrowUpCircle size={14} />}
           {promoted
             ? (isBn ? `✓ ${promotedCount} জন প্রমোট হয়েছে!` : `✓ ${promotedCount} Promoted!`)
             : (isBn ? `${selected.length} জন প্রমোট করুন` : `Promote ${selected.length}`)}
@@ -190,7 +190,7 @@ export default function ClassPromotionPage() {
           {/* Roll info */}
           <div style={{ background: 'var(--brand-light)', border: '1px solid var(--brand)', borderRadius: '12px', padding: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-              <Icon icon="lucide:info" width={14} style={{ color: 'var(--brand)' }} />
+              <Info size={14} style={{ color: 'var(--brand)' }} />
               <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--brand)' }}>{isBn ? 'রোল নম্বর' : 'Roll Numbers'}</span>
             </div>
             <p style={{ fontSize: '11px', color: 'var(--brand)', lineHeight: 1.5 }}>
@@ -238,7 +238,7 @@ export default function ClassPromotionPage() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr><td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    <Icon icon="lucide:users" width={28} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
+                    <Users size={28} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
                     {isBn ? 'উপরে শ্রেণি নির্বাচন করুন' : 'Select a class above to view students'}
                   </td></tr>
                 ) : filtered.map((s, i) => (
@@ -255,7 +255,7 @@ export default function ClassPromotionPage() {
                       <div style={{ width: '28px', height: '34px', borderRadius: '5px', overflow: 'hidden', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {s.photo
                           ? <img src={s.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          : <Icon icon="lucide:user" width={12} style={{ color: 'var(--text-muted)' }} />}
+                          : <User size={12} style={{ color: 'var(--text-muted)' }} />}
                       </div>
                     </td>
                     <td style={{ padding: '8px 6px' }}>

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Icon } from '@iconify/react'
+import { ArrowLeft, User, UserPlus, X, Search, Eye, Edit2, FileText, Trash2, AlertTriangle, FileSpreadsheet, Users, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -134,22 +134,46 @@ export default function AllTeachersPage() {
   const downloadSinglePDF = useCallback((t: Teacher) => {
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(generateTeacherListPDF([t], {
-      title: t.nameEn,
-      selectedCols: ALL_TEACHER_PDF_COLUMNS.filter(c => !['serial'].includes(c.key)).map(c => c.key),
-      emptyRows: 0, emptyColumns: [], orientation: 'portrait', isBn,
-    }, departments))
+    const photoHtml = t.photo ? `<div style="text-align:center;margin-bottom:10px"><img src="${t.photo}" alt="${t.nameEn}" style="width:100px;height:120px;border-radius:8px;border:2px solid #6366f1;object-fit:cover" /></div>` : ''
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${t.nameEn}</title>
+<style>@page{size:A4 portrait;margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:12px;padding-bottom:7px;border-bottom:2px solid #6366f1;margin-bottom:12px}.logo{width:36px;height:36px;background:#6366f1;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700}.ttl{text-align:center;font-size:14px;font-weight:700;margin:10px 0 4px}.sub{text-align:center;font-size:10px;color:#666;margin-bottom:12px}.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:12px}.info div{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0}.info .lbl{font-size:10px;color:#888;width:100px;flex-shrink:0}.info .val{font-size:11px;font-weight:500;color:#1a1a1a}.ftr{margin-top:14px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
+<div class="hdr"><div class="logo">ET</div><div><div style="font-size:14px;font-weight:700;color:#6366f1">EduTech — Sunrise Academy</div><div style="font-size:9px;color:#888">Employee Profile</div></div></div>
+${photoHtml}
+<div class="ttl">${t.nameEn}</div>
+<div class="sub">${t.nameBn} · ${t.id}</div>
+<div class="info">
+  <div><span class="lbl">${isBn?'পদবি':'Designation'}</span><span class="val">${t.designation || '—'}</span></div>
+  <div><span class="lbl">${isBn?'বিভাগ':'Department'}</span><span class="val">${getDeptName(t.departmentId)}</span></div>
+  <div><span class="lbl">${isBn?'বিষয়':'Subjects'}</span><span class="val">${getSubjectNames(t.subjectIds)}</span></div>
+  <div><span class="lbl">${isBn?'লিঙ্গ':'Gender'}</span><span class="val">${t.gender === 'Male' ? (isBn?'পুরুষ':'Male') : (isBn?'মহিলা':'Female')}</span></div>
+  <div><span class="lbl">${isBn?'মোবাইল':'Phone'}</span><span class="val">${t.phone}</span></div>
+  <div><span class="lbl">Email</span><span class="val">${t.email}</span></div>
+  <div><span class="lbl">${isBn?'ঠিকানা':'Address'}</span><span class="val">${t.address}</span></div>
+  <div><span class="lbl">${isBn?'জন্ম তারিখ':'DOB'}</span><span class="val">${t.dob}</span></div>
+  <div><span class="lbl">${isBn?'রক্তের গ্রুপ':'Blood'}</span><span class="val">${t.bloodGroup}</span></div>
+  <div><span class="lbl">${isBn?'ধর্ম':'Religion'}</span><span class="val">${t.religion}</span></div>
+  <div><span class="lbl">${isBn?'যোগ্যতা':'Qualification'}</span><span class="val">${t.qualification}</span></div>
+  <div><span class="lbl">${isBn?'অভিজ্ঞতা':'Experience'}</span><span class="val">${t.experience}</span></div>
+  <div><span class="lbl">${isBn?'যোগদানের তারিখ':'Joining Date'}</span><span class="val">${t.joiningDate}</span></div>
+  <div><span class="lbl">${isBn?'বেতন':'Salary'}</span><span class="val">৳${t.salary.toLocaleString()}</span></div>
+  <div><span class="lbl">${isBn?'ইন টাইম':'In Time'}</span><span class="val">${t.inTime}</span></div>
+  <div><span class="lbl">${isBn?'আউট টাইম':'Out Time'}</span><span class="val">${t.outTime}</span></div>
+  <div><span class="lbl">${isBn?'জাতীয় পরিচয়':'NID'}</span><span class="val">${t.nid}</span></div>
+  <div><span class="lbl">${isBn?'অবস্থা':'Status'}</span><span class="val"><b style="color:${t.status==='active'?'#10b981':t.status==='inactive'?'#ef4444':'#f59e0b'}">${t.status==='active'?(isBn?'সক্রিয়':'Active'):t.status==='inactive'?(isBn?'নিষ্ক্রিয়':'Inactive'):(isBn?'ছুটিতে':'On Leave')}</b></span></div>
+</div>
+<div style="margin-top:10px;padding-top:8px;border-top:1px solid #e5e7eb">
+  <div style="font-size:11px;font-weight:600;margin-bottom:6px">${isBn?'অভিভাবক তথ্য':'Parent/Guardian Info'}</div>
+  <div class="info">
+    <div><span class="lbl">${isBn?'পিতার নাম':'Father'}</span><span class="val">${t.fatherNameEn}</span></div>
+    <div><span class="lbl">${isBn?'পিতার মোবাইল':'Father Phone'}</span><span class="val">${t.fatherPhone}</span></div>
+    <div><span class="lbl">${isBn?'মাতার নাম':'Mother'}</span><span class="val">${t.motherNameEn}</span></div>
+    <div><span class="lbl">${isBn?'মাতার মোবাইল':'Mother Phone'}</span><span class="val">${t.motherPhone}</span></div>
+  </div>
+</div>
+<div class="ftr"><span>EduTech School Management System</span><div>${isBn?'মুদ্রণ:':'Printed:'} ${new Date().toLocaleDateString()}</div></div></body></html>`)
     win.document.close()
     setTimeout(() => win.print(), 800)
   }, [departments, isBn])
-
-  const ALL_TEACHER_PDF_COLUMNS = useMemo(() => [
-    { key: 'serial' }, { key: 'id' }, { key: 'nameEn' }, { key: 'nameBn' }, { key: 'gender' },
-    { key: 'phone' }, { key: 'email' }, { key: 'department' }, { key: 'designation' },
-    { key: 'dob' }, { key: 'bloodGroup' }, { key: 'religion' }, { key: 'qualification' },
-    { key: 'experience' }, { key: 'joiningDate' }, { key: 'salary' }, { key: 'inTime' },
-    { key: 'outTime' }, { key: 'status' },
-  ], [])
 
   const sel: React.CSSProperties = {
     padding: '7px 9px', borderRadius: '8px', border: '1px solid var(--border)',
@@ -174,14 +198,14 @@ export default function AllTeachersPage() {
               <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
                 {statusBadge(viewT.status)}
                 <button onClick={() => setViewT(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <Icon icon="lucide:x" width={14} style={{ color:'var(--text-secondary)' }} />
+<X size={14} style={{ color:'var(--text-secondary)' }} />
                 </button>
               </div>
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:'16px 18px' }}>
               <div style={{ display:'flex', gap:'14px', marginBottom:'14px' }}>
                 <div style={{ width:'80px', height:'95px', borderRadius:'8px', border:'1px solid var(--border)', overflow:'hidden', background:'var(--bg-secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  {viewT.photo ? <img src={viewT.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <Icon icon="lucide:user" width={28} style={{ color:'var(--text-muted)' }} />}
+                  {viewT.photo ? <img src={viewT.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={28} style={{ color:'var(--text-muted)' }} />}
                 </div>
                 <div>
                   <h3 style={{ fontSize:'16px', fontWeight:600, color:'var(--text-primary)' }}>{viewT.nameEn}</h3>
@@ -235,19 +259,19 @@ export default function AllTeachersPage() {
                 style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
                   background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
                   fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
-                <Icon icon="lucide:file-text" width={13} />PDF
+                <FileText size={13} />PDF
               </button>
               <button onClick={() => { setDelConfirm(viewT.id) }}
                 style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
                   background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
                   fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
-                <Icon icon="lucide:trash-2" width={13} />{isBn?'মুছুন':'Delete'}
+                <Trash2 size={13} />{isBn?'মুছুন':'Delete'}
               </button>
               <button onClick={() => { setEditT(viewT); setViewT(null) }}
                 style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
                   background:'var(--amber)', border:'none', color:'#fff', fontSize:'13px', fontWeight:500,
                   cursor:'pointer', fontFamily:'inherit' }}>
-                <Icon icon="lucide:edit-2" width={13} />{isBn?'এডিট':'Edit'}
+                <Edit2 size={13} />{isBn?'এডিট':'Edit'}
               </button>
               <button onClick={() => setViewT(null)}
                 style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)',
@@ -266,7 +290,7 @@ export default function AllTeachersPage() {
           <div style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'380px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
             <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
               <div style={{ width:'36px', height:'36px', borderRadius:'8px', background:'var(--red-light)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <Icon icon="lucide:alert-triangle" width={18} style={{ color:'var(--red)' }} />
+                <AlertTriangle size={18} style={{ color:'var(--red)' }} />
               </div>
               <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?'মুছে ফেলুন?':'Delete?'}</h3>
             </div>
@@ -294,7 +318,7 @@ export default function AllTeachersPage() {
             <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?'এডিট শিক্ষক':'Edit Teacher'}</h3>
               <button onClick={() => setEditT(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <Icon icon="lucide:x" width={14} style={{ color:'var(--text-secondary)' }} />
+                <X size={14} style={{ color:'var(--text-secondary)' }} />
               </button>
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:'16px 18px' }}>
@@ -312,7 +336,7 @@ export default function AllTeachersPage() {
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
             background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px',
             color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
-          <Icon icon="lucide:arrow-left" width={14} />
+          <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
         <div style={{ flex:1 }}>
@@ -329,7 +353,7 @@ export default function AllTeachersPage() {
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px',
             background:'var(--teal-light)', border:'1px solid var(--teal)', color:'var(--teal)',
             fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-          <Icon icon="lucide:user-plus" width={14} />{isBn?'নতুন যোগ করুন':'Add Teacher'}
+          <UserPlus size={14} />{isBn?'নতুন যোগ করুন':'Add Teacher'}
         </button>
       </div>
 
@@ -337,11 +361,11 @@ export default function AllTeachersPage() {
       <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
         <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr 1fr', gap:'8px' }}>
           <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'7px 10px' }}>
-            <Icon icon="lucide:search" width={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
+            <Search size={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
             <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
               placeholder={isBn?'নাম, আইডি, মোবাইল, পিতা, মাতা...':'Name, ID, phone, father, mother...'}
               style={{ flex:1, border:'none', background:'transparent', outline:'none', fontSize:'13px', color:'var(--text-primary)', fontFamily:'inherit' }} />
-            {search && <button onClick={() => setSearch('')} style={{ border:'none', background:'transparent', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}><Icon icon="lucide:x" width={12} /></button>}
+            {search && <button onClick={() => setSearch('')} style={{ border:'none', background:'transparent', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}><X size={12} /></button>}
           </div>
           <select value={fDept} onChange={e => { setFDept(e.target.value); setPage(1) }} style={sel}>
             <option value="">{isBn?'সব বিভাগ':'All Depts'}</option>
@@ -375,7 +399,7 @@ export default function AllTeachersPage() {
             style={{ display:'flex', alignItems:'center', gap:'5px', padding:'4px 10px', borderRadius:'6px',
               background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
               fontSize:'11px', cursor:'pointer', fontFamily:'inherit', marginTop:'8px' }}>
-            <Icon icon="lucide:x" width={11} />{isBn?'ফিল্টার সরান':'Clear Filters'}
+            <X size={11} />{isBn?'ফিল্টার সরান':'Clear Filters'}
           </button>
         )}
       </div>
@@ -396,11 +420,11 @@ export default function AllTeachersPage() {
         <div style={{ display:'flex', gap:'6px' }}>
           <button onClick={exportExcel}
             style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-            <Icon icon="lucide:file-spreadsheet" width={13} />Excel
+            <FileSpreadsheet size={13} />Excel
           </button>
           <button onClick={() => setShowPDF(true)}
             style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-            <Icon icon="lucide:file-text" width={13} />PDF {selected.length>0?`(${selected.length})`:`(${filtered.length})`}
+            <FileText size={13} />PDF {selected.length>0?`(${selected.length})`:`(${filtered.length})`}
           </button>
         </div>
       </div>
@@ -411,16 +435,17 @@ export default function AllTeachersPage() {
           <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
             <thead>
               <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
-                <th style={{ padding:'10px 12px', width:'36px' }}>
+                <th style={{ padding:'10px 12px', width:'36px', position:'sticky', left:0, zIndex:4, background:'var(--bg-primary)' }}>
                   <input type="checkbox" checked={allSel} onChange={toggleAll}
                     style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:'var(--brand)' }} />
                 </th>
                 {[
-                  { l:'#', w:'36px' }, { l:isBn?'ছবি':'Photo', w:'44px' },
-                  { l:isBn?'আইডি':'ID', w:'130px' },
-                  { l:isBn?'নাম':'Name', w:'160px' },
-                  { l:isBn?'বিভাগ':'Dept', w:'100px' },
-                  { l:isBn?'পদবি':'Designation', w:'120px' },
+                  { l:'#', w:'36px', sticky:true, left:'36px' },
+                  { l:isBn?'ছবি':'Photo', w:'44px', sticky:true, left:'72px' },
+                  { l:isBn?'আইডি':'ID', w:'130px', sticky:true, left:'116px' },
+                  { l:isBn?'নাম':'Name', w:'160px', sticky:true, left:'246px' },
+                  { l:isBn?'বিভাগ':'Dept', w:'100px', sticky:true, left:'406px' },
+                  { l:isBn?'পদবি':'Designation', w:'120px', sticky:true, left:'506px' },
                   { l:isBn?'লিঙ্গ':'Gender', w:'65px' },
                   { l:isBn?'রক্ত':'Blood', w:'55px' },
                   { l:isBn?'মোবাইল':'Phone', w:'108px' },
@@ -431,7 +456,7 @@ export default function AllTeachersPage() {
                 ].map(h => (
                   <th key={h.l} style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600,
                     color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.4px',
-                    whiteSpace:'nowrap', minWidth:h.w }}>
+                    whiteSpace:'nowrap', minWidth:h.w, ...(h.sticky ? { position:'sticky', left:h.left, zIndex:4, background:'var(--bg-primary)' } : {}) }}>
                     {h.l}
                   </th>
                 ))}
@@ -440,7 +465,7 @@ export default function AllTeachersPage() {
             <tbody>
               {paginated.length === 0
                 ? <tr><td colSpan={14} style={{ padding:'40px', textAlign:'center', color:'var(--text-muted)' }}>
-                    <Icon icon="lucide:users" width={28} style={{ display:'block', margin:'0 auto 8px', opacity:0.3 }} />
+                    <Users size={28} style={{ display:'block', margin:'0 auto 8px', opacity:0.3 }} />
                     {isBn?'কোনো শিক্ষক পাওয়া যায়নি':'No teachers found'}
                   </td></tr>
                 : paginated.map((t, i) => (
@@ -448,25 +473,25 @@ export default function AllTeachersPage() {
                     style={{ borderBottom:'0.5px solid var(--border)', background:selected.includes(t.id)?'rgba(99,102,241,0.04)':'transparent', cursor:'default' }}
                     onMouseEnter={e => { if (!selected.includes(t.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
                     onMouseLeave={e => { if (!selected.includes(t.id)) e.currentTarget.style.background = 'transparent' }}>
-                    <td style={{ padding:'8px 12px' }}>
+                    <td style={{ padding:'8px 12px', position:'sticky', left:0, zIndex:3, background:'var(--bg-primary)' }}>
                       <input type="checkbox" checked={selected.includes(t.id)} onChange={() => toggleOne(t.id)}
                         style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:'var(--brand)' }} />
                     </td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px' }}>{(sp-1)*perPage+i+1}</td>
-                    <td style={{ padding:'7px 8px' }}>
+                    <td style={{ padding:'8px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px', position:'sticky', left:'36px', zIndex:3, background:'var(--bg-primary)' }}>{(sp-1)*perPage+i+1}</td>
+                    <td style={{ padding:'7px 8px', position:'sticky', left:'72px', zIndex:3, background:'var(--bg-primary)' }}>
                       <div style={{ width:'30px', height:'36px', borderRadius:'5px', overflow:'hidden', background:'var(--bg-secondary)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                        {t.photo ? <img src={t.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <Icon icon="lucide:user" width={13} style={{ color:'var(--text-muted)' }} />}
+                        {t.photo ? <img src={t.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={13} style={{ color:'var(--text-muted)' }} />}
                       </div>
                     </td>
-                    <td style={{ padding:'8px 8px' }}>
+                    <td style={{ padding:'8px 8px', position:'sticky', left:'116px', zIndex:3, background:'var(--bg-primary)' }}>
                       <span style={{ fontSize:'10px', fontFamily:'monospace', color:'var(--brand)', background:'var(--brand-light)', padding:'2px 5px', borderRadius:'4px' }}>{t.id}</span>
                     </td>
-                    <td style={{ padding:'8px 8px' }}>
+                    <td style={{ padding:'8px 8px', position:'sticky', left:'246px', zIndex:3, background:'var(--bg-primary)' }}>
                       <div style={{ fontSize:'12px', fontWeight:500, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'155px' }}>{isBn?t.nameBn||t.nameEn:t.nameEn}</div>
                       <div style={{ fontSize:'10px', color:'var(--text-muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{isBn?t.nameEn:t.nameBn}</div>
                     </td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px' }}>{getDeptName(t.departmentId)}</td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px' }}>{t.designation || '—'}</td>
+                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px', position:'sticky', left:'406px', zIndex:3, background:'var(--bg-primary)' }}>{getDeptName(t.departmentId)}</td>
+                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px', position:'sticky', left:'506px', zIndex:3, background:'var(--bg-primary)' }}>{t.designation || '—'}</td>
                     <td style={{ padding:'8px 8px' }}>
                       <span style={{ fontSize:'10px', padding:'2px 6px', borderRadius:'5px', background:t.gender==='Female'?'var(--purple-light)':'var(--teal-light)', color:t.gender==='Female'?'var(--purple)':'var(--teal)', fontWeight:500 }}>
                         {t.gender==='Female'?(isBn?'মহিলা':'Female'):(isBn?'পুরুষ':'Male')}
@@ -479,13 +504,13 @@ export default function AllTeachersPage() {
                     <td style={{ padding:'8px 8px' }}>{statusBadge(t.status)}</td>
                     <td style={{ padding:'8px 8px' }}>
                       <div style={{ display:'flex', gap:'3px' }}>
-                        <button onClick={() => setViewT(t)} title="View"
+                        <button onClick={() => navigate(`/teachers/all/${t.id}`)} title="View"
                           style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--brand-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--brand)' }}>
-                          <Icon icon="lucide:eye" width={12} />
+                          <Eye size={12} />
                         </button>
                         <button onClick={() => setEditT(t)} title="Edit"
                           style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--amber)' }}>
-                          <Icon icon="lucide:edit-2" width={12} />
+                          <Edit2 size={12} />
                         </button>
                       </div>
                     </td>
@@ -500,10 +525,10 @@ export default function AllTeachersPage() {
             {(sp-1)*perPage+1}–{Math.min(sp*perPage,filtered.length)} / {filtered.length}
           </span>
           <div style={{ display:'flex', gap:'3px' }}>
-            {[['lucide:chevrons-left',()=>setPage(1),sp===1],['lucide:chevron-left',()=>setPage(p=>Math.max(1,p-1)),sp===1]].map(([ic,a,d],i)=>(
-              <button key={i} onClick={a as ()=>void} disabled={d as boolean}
-                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:(d as boolean)?'var(--text-muted)':'var(--text-secondary)', cursor:(d as boolean)?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <Icon icon={ic as string} width={12} />
+            {([[<ChevronsLeft size={12} />,()=>setPage(1),sp===1] as [React.ReactNode,()=>void,boolean],[<ChevronLeft size={12} />,()=>setPage(p=>Math.max(1,p-1)),sp===1] as [React.ReactNode,()=>void,boolean]]).map(([ic,a,d],i)=>(
+              <button key={i} onClick={a} disabled={d}
+                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                {ic}
               </button>
             ))}
             {(()=>{
@@ -515,10 +540,10 @@ export default function AllTeachersPage() {
                 </button>
               ))
             })()}
-            {[['lucide:chevron-right',()=>setPage(p=>Math.min(totalPages,p+1)),sp===totalPages],['lucide:chevrons-right',()=>setPage(totalPages),sp===totalPages]].map(([ic,a,d],i)=>(
-              <button key={i} onClick={a as ()=>void} disabled={d as boolean}
-                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:(d as boolean)?'var(--text-muted)':'var(--text-secondary)', cursor:(d as boolean)?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <Icon icon={ic as string} width={12} />
+            {([[<ChevronRight size={12} />,()=>setPage(p=>Math.min(totalPages,p+1)),sp===totalPages] as [React.ReactNode,()=>void,boolean],[<ChevronsRight size={12} />,()=>setPage(totalPages),sp===totalPages] as [React.ReactNode,()=>void,boolean]]).map(([ic,a,d],i)=>(
+              <button key={i} onClick={a} disabled={d}
+                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                {ic}
               </button>
             ))}
           </div>
@@ -548,9 +573,18 @@ function EditForm({ teacher, departments, subjects, isBn, onSave, onCancel }: {
   const [status, setStatus] = useState<TeacherStatus>(teacher.status)
   const [inTime, setInTime] = useState(teacher.inTime || '')
   const [outTime, setOutTime] = useState(teacher.outTime || '')
+  const [photo, setPhoto] = useState(teacher.photo || '')
 
   const filteredSubjects = subjects.filter(s => !departmentId || s.departmentId === departmentId)
   const toggleSubject = (id: string) => setSubjectIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onloadend = () => setPhoto(reader.result as string)
+    reader.readAsDataURL(file)
+  }
 
   const input: React.CSSProperties = {
     width: '100%', padding: '8px 10px', borderRadius: '8px',
@@ -561,6 +595,22 @@ function EditForm({ teacher, departments, subjects, isBn, onSave, onCancel }: {
 
   return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px' }}>
+      {/* Photo Section */}
+      <div style={{ gridColumn:'1 / -1', display:'flex', gap:'14px', alignItems:'flex-start', marginBottom:'8px' }}>
+        <div style={{ width:'80px', height:'95px', borderRadius:'8px', border:'1px solid var(--border)', overflow:'hidden', background:'var(--bg-secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+          {photo ? <img src={photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={28} style={{ color:'var(--text-muted)' }} />}
+        </div>
+        <div>
+          <label style={label}>{isBn?'ছবি':'Photo'}</label>
+          <input type="file" accept="image/*" onChange={handlePhotoUpload}
+            style={{ fontSize:'11px', color:'var(--text-secondary)' }} />
+          {photo && (
+            <button onClick={() => setPhoto('')} style={{ marginTop:'4px', padding:'3px 8px', borderRadius:'5px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'10px', cursor:'pointer', fontFamily:'inherit' }}>
+              {isBn?'ছবি সরান':'Remove Photo'}
+            </button>
+          )}
+        </div>
+      </div>
       <div style={{ gridColumn:'1 / -1' }}>
         <label style={label}>{isBn?'নাম (ইংরেজি) *':'Name (English) *'}</label>
         <input value={nameEn} onChange={e => setNameEn(e.target.value)} style={input} />
@@ -648,7 +698,7 @@ function EditForm({ teacher, departments, subjects, isBn, onSave, onCancel }: {
           style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)', border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit' }}>
           {isBn?'বাতিল':'Cancel'}
         </button>
-        <button onClick={() => onSave({ nameEn, nameBn, gender, phone, email, address, departmentId, subjectIds, designation, qualification, experience, salary: Number(salary)||0, status, inTime, outTime })}
+        <button onClick={() => onSave({ nameEn, nameBn, gender, phone, email, address, departmentId, subjectIds, designation, qualification, experience, salary: Number(salary)||0, status, inTime, outTime, photo })}
           style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--brand)', border:'none', color:'#fff', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
           {isBn?'সংরক্ষণ':'Save'}
         </button>

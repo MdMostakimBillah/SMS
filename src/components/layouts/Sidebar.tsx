@@ -1,79 +1,114 @@
 import { NavLink, useLocation } from "react-router-dom"
-import { Icon } from "@iconify/react"
+import {
+  GraduationCap, LayoutDashboard, Users, Building2, Briefcase,
+  CalendarCheck, ClipboardList, BookOpen, FileText, Video,
+  Landmark, Wallet, ShoppingBag, Receipt, Library, Bus,
+  MessageCircle, Megaphone, Bell, Home, User,
+  BarChart2, FileBarChart, Crown, Settings, ChevronsUpDown, type LucideIcon,
+} from "lucide-react"
 import { useAppStore } from "@/store/appStore"
 import { t } from "@/lib/i18n"
 import type { TranslationKey } from "@/lib/i18n"
+
+const iconMap: Record<string, LucideIcon> = {
+  "layout-dashboard": LayoutDashboard,
+  "users": Users,
+  "graduation-cap": GraduationCap,
+  "school": Building2,
+  "briefcase": Briefcase,
+  "calendar-check": CalendarCheck,
+  "clipboard-list": ClipboardList,
+  "book-open": BookOpen,
+  "file-text": FileText,
+  "video": Video,
+  "landmark": Landmark,
+  "wallet": Wallet,
+  "shopping-bag": ShoppingBag,
+  "receipt": Receipt,
+  "library": Library,
+  "bus": Bus,
+  "building-2": Building2,
+  "message-circle": MessageCircle,
+  "megaphone": Megaphone,
+  "bell": Bell,
+  "home": Home,
+  "user": User,
+  "bar-chart-2": BarChart2,
+  "file-bar-chart": FileBarChart,
+  "crown": Crown,
+  "settings": Settings,
+}
 
 const navGroups = [
   {
     key: "grp_main",
     items: [
-      { key: "nav_dashboard", page: "/dashboard", icon: "lucide:layout-dashboard" },
+      { key: "nav_dashboard", page: "/dashboard", icon: "layout-dashboard" },
     ],
   },
   {
     key: "grp_manage",
     items: [
-      { key: "nav_students",  page: "/students",  icon: "lucide:users",            badge: "1248", badgeColor: "blue" },
-      { key: "nav_teachers",  page: "/teachers",  icon: "lucide:graduation-cap" },
-      { key: "nav_classes",   page: "/classes",   icon: "lucide:school" },
-      { key: "nav_hr",        page: "/hr",        icon: "lucide:briefcase" },
+      { key: "nav_students",  page: "/students",  icon: "users",            badge: "1248", badgeColor: "blue" },
+      { key: "nav_teachers",  page: "/teachers",  icon: "graduation-cap" },
+      { key: "nav_classes",   page: "/classes",   icon: "school" },
+      { key: "nav_hr",        page: "/hr",        icon: "briefcase" },
     ],
   },
   {
     key: "grp_academic",
     items: [
-      { key: "nav_attendance",  page: "/attendance",  icon: "lucide:calendar-check",  badge: "3", badgeColor: "red" },
-      { key: "nav_exams",       page: "/exams",       icon: "lucide:clipboard-list" },
-      { key: "nav_syllabus",    page: "/syllabus",    icon: "lucide:book-open" },
-      { key: "nav_assignments", page: "/assignments", icon: "lucide:file-text" },
-      { key: "nav_online",      page: "/online",      icon: "lucide:video" },
+      { key: "nav_attendance",  page: "/attendance",  icon: "calendar-check",  badge: "3", badgeColor: "red" },
+      { key: "nav_exams",       page: "/exams",       icon: "clipboard-list" },
+      { key: "nav_syllabus",    page: "/syllabus",    icon: "book-open" },
+      { key: "nav_assignments", page: "/assignments", icon: "file-text" },
+      { key: "nav_online",      page: "/online",      icon: "video" },
     ],
   },
   {
     key: "grp_finance",
     items: [
-      { key: "nav_finance",  page: "/finance",  icon: "lucide:landmark" },
-      { key: "nav_payroll",  page: "/payroll",  icon: "lucide:wallet" },
-      { key: "nav_store",    page: "/store",    icon: "lucide:shopping-bag" },
-      { key: "nav_expenses", page: "/expenses", icon: "lucide:receipt" },
+      { key: "nav_finance",  page: "/finance",  icon: "landmark" },
+      { key: "nav_payroll",  page: "/payroll",  icon: "wallet" },
+      { key: "nav_store",    page: "/store",    icon: "shopping-bag" },
+      { key: "nav_expenses", page: "/expenses", icon: "receipt" },
     ],
   },
   {
     key: "grp_facility",
     items: [
-      { key: "nav_library",   page: "/library",   icon: "lucide:library" },
-      { key: "nav_transport", page: "/transport", icon: "lucide:bus" },
-      { key: "nav_hostel",    page: "/hostel",    icon: "lucide:building-2" },
+      { key: "nav_library",   page: "/library",   icon: "library" },
+      { key: "nav_transport", page: "/transport", icon: "bus" },
+      { key: "nav_hostel",    page: "/hostel",    icon: "building-2" },
     ],
   },
   {
     key: "grp_comm",
     items: [
-      { key: "nav_messages",      page: "/messages",      icon: "lucide:message-circle", badge: "5", badgeColor: "red" },
-      { key: "nav_notice",        page: "/notice",        icon: "lucide:megaphone" },
-      { key: "nav_notifications", page: "/notifications", icon: "lucide:bell" },
+      { key: "nav_messages",      page: "/messages",      icon: "message-circle", badge: "5", badgeColor: "red" },
+      { key: "nav_notice",        page: "/notice",        icon: "megaphone" },
+      { key: "nav_notifications", page: "/notifications", icon: "bell" },
     ],
   },
   {
     key: "grp_portal",
     items: [
-      { key: "nav_parent",         page: "/parent-portal",  icon: "lucide:home" },
-      { key: "nav_student_portal", page: "/student-portal", icon: "lucide:user" },
+      { key: "nav_parent",         page: "/parent-portal",  icon: "home" },
+      { key: "nav_student_portal", page: "/student-portal", icon: "user" },
     ],
   },
   {
     key: "grp_report",
     items: [
-      { key: "nav_analytics", page: "/analytics", icon: "lucide:bar-chart-2" },
-      { key: "nav_reports",   page: "/reports",   icon: "lucide:file-bar-chart" },
+      { key: "nav_analytics", page: "/analytics", icon: "bar-chart-2" },
+      { key: "nav_reports",   page: "/reports",   icon: "file-bar-chart" },
     ],
   },
   {
     key: "grp_system",
     items: [
-      { key: "nav_superadmin", page: "/super-admin", icon: "lucide:crown" },
-      { key: "nav_settings",   page: "/settings",    icon: "lucide:settings" },
+      { key: "nav_superadmin", page: "/super-admin", icon: "crown" },
+      { key: "nav_settings",   page: "/settings",    icon: "settings" },
     ],
   },
 ]
@@ -113,7 +148,7 @@ export default function Sidebar() {
             flexShrink: 0,
             boxShadow: "0 4px 12px rgba(99,102,241,0.3)",
           }}>
-            <Icon icon="lucide:graduation-cap" width={18} color="#fff" />
+            <GraduationCap size={18} color="#fff" />
           </div>
           <div>
             <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1 }}>
@@ -157,7 +192,7 @@ export default function Sidebar() {
               {t("academic_year", language)}
             </div>
           </div>
-          <Icon icon="lucide:chevrons-up-down" width={12} style={{ color: "var(--text-muted)", marginLeft: "auto", flexShrink: 0 }} />
+          <ChevronsUpDown size={12} style={{ color: "var(--text-muted)", marginLeft: "auto", flexShrink: 0 }} />
         </div>
       </div>
 
@@ -180,6 +215,7 @@ export default function Sidebar() {
             {group.items.map((item) => {
               const isActive = location.pathname === item.page ||
                 location.pathname.startsWith(item.page + "/")
+              const IconComp = iconMap[item.icon] || LayoutDashboard
               return (
                 <NavLink
                   key={item.page}
@@ -216,9 +252,8 @@ export default function Sidebar() {
                     }
                   }}
                 >
-                  <Icon
-                    icon={item.icon}
-                    width={16}
+                  <IconComp
+                    size={16}
                     style={{
                       flexShrink: 0,
                       color: isActive ? "var(--brand)" : "var(--text-muted)",

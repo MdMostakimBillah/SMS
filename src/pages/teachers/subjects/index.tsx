@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Icon } from '@iconify/react'
+import { ArrowLeft, Plus, AlertTriangle, BookOpen, Filter, X, Edit2, Trash2 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { Subject } from '@/pages/teachers/types'
@@ -117,7 +117,7 @@ export default function SubjectsPage() {
           <div style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'380px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
             <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
               <div style={{ width:'36px', height:'36px', borderRadius:'8px', background:'var(--red-light)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <Icon icon="lucide:alert-triangle" width={18} style={{ color:'var(--red)' }} />
+                <AlertTriangle size={18} style={{ color:'var(--red)' }} />
               </div>
               <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?'মুছে ফেলুন?':'Delete?'}</h3>
             </div>
@@ -144,7 +144,7 @@ export default function SubjectsPage() {
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
             background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px',
             color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
-          <Icon icon="lucide:arrow-left" width={14} />
+          <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
         <div style={{ flex:1 }}>
@@ -159,14 +159,14 @@ export default function SubjectsPage() {
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px',
             background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)',
             fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-          <Icon icon="lucide:plus" width={14} />{isBn?'নতুন যোগ করুন':'Add Subject'}
+          <Plus size={14} />{isBn?'নতুন যোগ করুন':'Add Subject'}
         </button>
       </div>
 
       {/* Filter */}
       <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
         <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-          <Icon icon="lucide:filter" width={14} style={{ color:'var(--text-muted)' }} />
+          <Filter size={14} style={{ color:'var(--text-muted)' }} />
           <select value={fDept} onChange={e => setFDept(e.target.value)} style={sel}>
             <option value="">{isBn?'সব বিভাগ':'All Departments'}</option>
             {departments.map(d => <option key={d.id} value={d.id}>{isBn?d.nameBn:d.name}</option>)}
@@ -176,7 +176,7 @@ export default function SubjectsPage() {
               style={{ display:'flex', alignItems:'center', gap:'4px', padding:'4px 10px', borderRadius:'6px',
                 background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
                 fontSize:'11px', cursor:'pointer', fontFamily:'inherit' }}>
-              <Icon icon="lucide:x" width={11} />{isBn?'ফিল্টার সরান':'Clear'}
+              <X size={11} />{isBn?'ফিল্টার সরান':'Clear'}
             </button>
           )}
         </div>
@@ -207,7 +207,7 @@ export default function SubjectsPage() {
             <tbody>
               {filtered.length === 0
                 ? <tr><td colSpan={6} style={{ padding:'40px', textAlign:'center', color:'var(--text-muted)' }}>
-                    <Icon icon="lucide:book-open" width={28} style={{ display:'block', margin:'0 auto 8px', opacity:0.3 }} />
+                    <BookOpen size={28} style={{ display:'block', margin:'0 auto 8px', opacity:0.3 }} />
                     {isBn?'কোনো বিষয় পাওয়া যায়নি':'No subjects found'}
                   </td></tr>
                 : filtered.map((s, i) => (
@@ -219,7 +219,7 @@ export default function SubjectsPage() {
                     <td style={{ padding:'10px 8px' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                         <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:'var(--green-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                          <Icon icon="lucide:book-open" width={16} style={{ color:'var(--green)' }} />
+                          <BookOpen size={16} style={{ color:'var(--green)' }} />
                         </div>
                         <span style={{ fontSize:'13px', fontWeight:500, color:'var(--text-primary)' }}>{s.name}</span>
                       </div>
@@ -239,11 +239,11 @@ export default function SubjectsPage() {
                       <div style={{ display:'flex', gap:'4px' }}>
                         <button onClick={() => startEdit(s)} title={isBn?'এডিট':'Edit'}
                           style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--amber)' }}>
-                          <Icon icon="lucide:edit-2" width={12} />
+                          <Edit2 size={12} />
                         </button>
                         <button onClick={() => setDelConfirm(s.id)} title={isBn?'মুছুন':'Delete'}
                           style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--red-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--red)' }}>
-                          <Icon icon="lucide:trash-2" width={12} />
+                          <Trash2 size={12} />
                         </button>
                       </div>
                     </td>

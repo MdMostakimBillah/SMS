@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Icon } from '@iconify/react'
+import { ArrowLeft, Calendar, Check, CheckCircle, Droplets, Grid3X3, Hash, Image, Info, Save, School, Search, Star, Upload, User, Wand2, X, Zap } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -8,14 +8,14 @@ import { useAdmissionStore } from '@/store/admissionStore'
 
 type Op = 'photo'|'roll'|'class'|'section'|'bloodGroup'|'religion'|'academicYear'
 
-const OPS: { id:Op; icon:string; bn:string; en:string; color:string; bg:string }[] = [
-  { id:'photo',       icon:'lucide:image',     bn:'ছবি আপলোড',    en:'Photo Upload',   color:'var(--brand)',  bg:'var(--brand-light)'  },
-  { id:'roll',        icon:'lucide:hash',       bn:'রোল পরিবর্তন', en:'Roll Number',    color:'var(--teal)',   bg:'var(--teal-light)'   },
-  { id:'class',       icon:'lucide:school',     bn:'শ্রেণি পরিবর্তন',en:'Change Class',  color:'var(--amber)',  bg:'var(--amber-light)'  },
-  { id:'section',     icon:'lucide:grid-3x3',   bn:'সেকশন পরিবর্তন',en:'Change Section', color:'var(--purple)', bg:'var(--purple-light)' },
-  { id:'bloodGroup',  icon:'lucide:droplets',   bn:'রক্তের গ্রুপ',  en:'Blood Group',   color:'var(--red)',    bg:'var(--red-light)'    },
-  { id:'religion',    icon:'lucide:star',       bn:'ধর্ম পরিবর্তন', en:'Change Religion',color:'var(--green)',  bg:'var(--green-light)'  },
-  { id:'academicYear',icon:'lucide:calendar',   bn:'শিক্ষাবর্ষ',   en:'Academic Year',  color:'var(--teal)',   bg:'var(--teal-light)'   },
+const OPS: { id:Op; Icon:React.ComponentType<{size?:number;style?:React.CSSProperties}>; bn:string; en:string; color:string; bg:string }[] = [
+  { id:'photo',       Icon:Image,     bn:'ছবি আপলোড',    en:'Photo Upload',   color:'var(--brand)',  bg:'var(--brand-light)'  },
+  { id:'roll',        Icon:Hash,       bn:'রোল পরিবর্তন', en:'Roll Number',    color:'var(--teal)',   bg:'var(--teal-light)'   },
+  { id:'class',       Icon:School,     bn:'শ্রেণি পরিবর্তন',en:'Change Class',  color:'var(--amber)',  bg:'var(--amber-light)'  },
+  { id:'section',     Icon:Grid3X3,   bn:'সেকশন পরিবর্তন',en:'Change Section', color:'var(--purple)', bg:'var(--purple-light)' },
+  { id:'bloodGroup',  Icon:Droplets,   bn:'রক্তের গ্রুপ',  en:'Blood Group',   color:'var(--red)',    bg:'var(--red-light)'    },
+  { id:'religion',    Icon:Star,       bn:'ধর্ম পরিবর্তন', en:'Change Religion',color:'var(--green)',  bg:'var(--green-light)'  },
+  { id:'academicYear',Icon:Calendar,   bn:'শিক্ষাবর্ষ',   en:'Academic Year',  color:'var(--teal)',   bg:'var(--teal-light)'   },
 ]
 
 const OPTS: Record<string,string[]> = {
@@ -43,7 +43,7 @@ const EditCell = React.memo(function EditCell({ value, onChange, type='text', op
 
 async function compressImage(file: File): Promise<string> {
   return new Promise((resolve,reject) => {
-    const img=new Image(), url=URL.createObjectURL(file)
+    const img=document.createElement('img'), url=URL.createObjectURL(file)
     img.onload=()=>{
       const c=document.createElement('canvas'), max=300, r=Math.min(max/img.width,max/img.height)
       c.width=Math.round(img.width*r); c.height=Math.round(img.height*r)
@@ -156,7 +156,7 @@ const handlePhotoUpload = useCallback(
       <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'18px', flexWrap:'wrap' }}>
         <button onClick={() => navigate('/students')}
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px', background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px', color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
-          <Icon icon="lucide:arrow-left" width={14} />
+          <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
         <div>
@@ -178,7 +178,7 @@ const handlePhotoUpload = useCallback(
           {OPS.map(o => (
             <button key={o.id} onClick={() => { setOp(o.id); setRowEdits({}); setPhotoMap({}); setBatchVal('') }}
               style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'5px', padding:'10px 6px', borderRadius:'10px', border:`2px solid ${op===o.id?o.color:'var(--border)'}`, background:op===o.id?o.bg:'var(--bg-secondary)', cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s' }}>
-              <Icon icon={o.icon} width={18} style={{ color:op===o.id?o.color:'var(--text-muted)' }} />
+              <o.Icon size={18} style={{ color:op===o.id?o.color:'var(--text-muted)' }} />
               <span style={{ fontSize:'10px', fontWeight:op===o.id?600:400, color:op===o.id?o.color:'var(--text-secondary)', textAlign:'center', lineHeight:1.2 }}>
                 {isBn?o.bn:o.en}
               </span>
@@ -197,7 +197,7 @@ const handlePhotoUpload = useCallback(
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
             <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'6px 9px' }}>
-              <Icon icon="lucide:search" width={13} style={{ color:'var(--text-muted)', flexShrink:0 }} />
+              <Search size={13} style={{ color:'var(--text-muted)', flexShrink:0 }} />
               <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={isBn?'নাম বা আইডি...':'Name or ID...'}
                 style={{ flex:1, border:'none', background:'transparent', outline:'none', fontSize:'12px', color:'var(--text-primary)', fontFamily:'inherit' }} />
             </div>
@@ -229,7 +229,7 @@ const handlePhotoUpload = useCallback(
 
           {op === 'photo' ? (
             <div style={{ padding:'10px', background:opInfo.bg, borderRadius:'8px', fontSize:'13px', color:opInfo.color }}>
-              <Icon icon="lucide:info" width={14} style={{ display:'inline', marginRight:'5px', verticalAlign:'middle' }} />
+              <Info size={14} style={{ display:'inline', marginRight:'5px', verticalAlign:'middle' }} />
               {isBn?'নিচের টেবিলে প্রতিটি ছাত্রের পাশের বাটনে ক্লিক করে ছবি আপলোড করুন':'Click the upload button next to each student in the table below'}
             </div>
           ) : op === 'roll' ? (
@@ -241,7 +241,7 @@ const handlePhotoUpload = useCallback(
               </div>
               <button onClick={applyAutoRoll}
                 style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px', background:opInfo.color, border:'none', color:'#fff', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'inherit' }}>
-                <Icon icon="lucide:wand-2" width={13} />
+                <Wand2 size={13} />
                 {isBn?'ক্রমানুসারে রোল দিন':'Auto-assign Sequential Rolls'}
               </button>
               <span style={{ fontSize:'11px', color:'var(--text-muted)' }}>
@@ -263,7 +263,7 @@ const handlePhotoUpload = useCallback(
               )}
               <button onClick={applyBatch} disabled={!batchVal||selected.length===0}
                 style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px', background:(!batchVal||selected.length===0)?'var(--border-2)':opInfo.color, border:'none', color:'#fff', fontSize:'12px', fontWeight:500, cursor:(!batchVal||selected.length===0)?'not-allowed':'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
-                <Icon icon="lucide:zap" width={13} />
+                <Zap size={13} />
                 {isBn?`${selected.length} জনে লাগান`:`Apply to ${selected.length}`}
               </button>
             </div>
@@ -324,12 +324,12 @@ const handlePhotoUpload = useCallback(
                       <div style={{ position:'relative', width:'32px', height:'38px', borderRadius:'6px', overflow:'visible', background:'var(--bg-secondary)', border:`1px solid ${photoMap[s.id]?opInfo.color:'var(--border)'}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
                         {(photoMap[s.id]||s.photo)
                           ? <img src={photoMap[s.id]||s.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:'5px' }} />
-                          : <Icon icon="lucide:user" width={14} style={{ color:'var(--text-muted)' }} />}
+                          : <User size={14} style={{ color:'var(--text-muted)' }} />}
                         {photoMap[s.id] && (
                           <button onClick={()=>setPhotoMap(p=>{const n={...p};delete n[s.id];return n})}
                             title={isBn?'ছবি সরান':'Remove photo'}
                             style={{ position:'absolute', top:'-5px', right:'-5px', width:'18px', height:'18px', borderRadius:'50%', background:'var(--red)', border:'2px solid var(--bg-primary)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1, boxShadow:'0 1px 3px rgba(0,0,0,0.3)' }}>
-                            <Icon icon="lucide:x" width={10} style={{ color:'#fff' }} />
+                            <X size={10} style={{ color:'#fff' }} />
                           </button>
                         )}
                       </div>
@@ -348,7 +348,7 @@ const handlePhotoUpload = useCallback(
                     <td style={{ padding:'6px 8px', background:selected.includes(s.id)?`${opInfo.bg}33`:'transparent' }}>
                       {op==='photo' ? (
                         <label style={{ display:'flex', alignItems:'center', gap:'5px', padding:'6px 10px', borderRadius:'7px', background:photoMap[s.id]?'var(--green-light)':opInfo.bg, border:`1px solid ${photoMap[s.id]?'var(--green)':opInfo.color}`, color:photoMap[s.id]?'var(--green)':opInfo.color, fontSize:'11px', cursor:'pointer', fontWeight:500, width:'fit-content' }}>
-                          <Icon icon={photoMap[s.id]?'lucide:check-circle':'lucide:upload'} width={12} />
+                          {photoMap[s.id] ? <CheckCircle size={12} /> : <Upload size={12} />}
                           {photoMap[s.id]?(isBn?'আপলোড হয়েছে ✓':'Uploaded ✓'):(isBn?'ছবি বেছে নিন':'Choose Photo')}
                           <input ref={el=>{fileRefs.current[s.id]=el}} type="file" accept="image/*"
                             onChange={e=>{const f=e.target.files?.[0];if(f)handlePhotoUpload(s.id,f)}}
@@ -383,7 +383,7 @@ const handlePhotoUpload = useCallback(
           </button>
           <button onClick={applyChanges} disabled={readyCount===0}
             style={{ display:'flex', alignItems:'center', gap:'7px', padding:'10px 22px', borderRadius:'9px', background:readyCount===0?'var(--border-2)':opInfo.color, border:'none', color:'#fff', fontSize:'13px', fontWeight:600, cursor:readyCount===0?'not-allowed':'pointer', fontFamily:'inherit', boxShadow:readyCount>0?`0 4px 14px ${opInfo.color}50`:'none' }}>
-            <Icon icon={applied?'lucide:check':'lucide:save'} width={15} />
+            {applied ? <Check size={15} /> : <Save size={15} />}
             {applied
               ? (isBn?'✓ সফলভাবে আপডেট হয়েছে!':'✓ Updated Successfully!')
               : (isBn?`${readyCount} টি পরিবর্তন সেভ করুন`:`Save ${readyCount} Changes`)}

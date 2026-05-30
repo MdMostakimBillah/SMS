@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Icon } from '@iconify/react'
+import { ArrowLeft, Camera, CheckCircle, GraduationCap, Save, Search, ShieldCheck, User, UserSearch, X } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -100,10 +100,10 @@ export default function UpdateStudentPage() {
     background:'var(--bg-primary)', border:'1px solid var(--border)',
     borderRadius:'14px', padding:isMobile?'14px':'18px', marginBottom:'12px',
   }
-  const secHead = (icon: string, title: string, color='var(--brand)', bg='var(--brand-light)') => (
+  const secHead = (icon: React.ReactNode, title: string, _color='var(--brand)', bg='var(--brand-light)') => (
     <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'12px', paddingBottom:'10px', borderBottom:'1px solid var(--border)' }}>
       <div style={{ width:'28px', height:'28px', borderRadius:'7px', background:bg, display:'flex', alignItems:'center', justifyContent:'center' }}>
-        <Icon icon={icon} width={14} style={{ color }} />
+        {icon}
       </div>
       <span style={{ fontSize:'13px', fontWeight:600, color:'var(--text-primary)' }}>{title}</span>
     </div>
@@ -114,7 +114,7 @@ export default function UpdateStudentPage() {
       <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'18px', flexWrap:'wrap' }}>
         <button onClick={() => window.history.back()}
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px', background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px', color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
-          <Icon icon="lucide:arrow-left" width={14} />
+          <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
         <div>
@@ -137,11 +137,11 @@ export default function UpdateStudentPage() {
             </div>
             <div style={{ position:'relative', marginBottom:'10px' }}>
               <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'9px', padding:'8px 10px' }}>
-                <Icon icon="lucide:search" width={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
+                <Search size={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
                 <input value={search} onChange={e=>setSearch(e.target.value)}
                   placeholder={isBn?'নাম, আইডি, রোল...':'Name, ID, roll...'}
                   style={{ flex:1, border:'none', background:'transparent', outline:'none', fontSize:'13px', color:'var(--text-primary)', fontFamily:'inherit' }} />
-                {search && <button onClick={()=>setSearch('')} style={{ border:'none', background:'transparent', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}><Icon icon="lucide:x" width={12} /></button>}
+                {search && <button onClick={()=>setSearch('')} style={{ border:'none', background:'transparent', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}><X size={12} /></button>}
               </div>
 
               {results.length > 0 && (
@@ -152,7 +152,7 @@ export default function UpdateStudentPage() {
                       onMouseEnter={e=>(e.currentTarget.style.background='var(--bg-secondary)')}
                       onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
                       <div style={{ width:'30px', height:'35px', borderRadius:'5px', overflow:'hidden', background:'var(--bg-secondary)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                        {s.photo ? <img src={s.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <Icon icon="lucide:user" width={13} style={{ color:'var(--text-muted)' }} />}
+                        {s.photo ? <img src={s.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={13} style={{ color:'var(--text-muted)' }} />}
                       </div>
                       <div style={{ flex:1, minWidth:0 }}>
                         <div style={{ fontSize:'13px', fontWeight:500, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.nameEn}</div>
@@ -168,7 +168,7 @@ export default function UpdateStudentPage() {
               <div style={{ padding:'10px', background:'var(--brand-light)', borderRadius:'10px', border:'1px solid var(--brand)' }}>
                 <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
                   <div style={{ width:'36px', height:'44px', borderRadius:'6px', overflow:'hidden', background:'var(--bg-secondary)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    {form.photo ? <img src={form.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <Icon icon="lucide:user" width={16} style={{ color:'var(--text-muted)' }} />}
+                    {form.photo ? <img src={form.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={16} style={{ color:'var(--text-muted)' }} />}
                   </div>
                   <div>
                     <div style={{ fontSize:'12px', fontWeight:600, color:'var(--brand)' }}>{form.nameEn}</div>
@@ -180,14 +180,14 @@ export default function UpdateStudentPage() {
                 </div>
                 {saved && (
                   <div style={{ display:'flex', alignItems:'center', gap:'5px', marginTop:'8px', fontSize:'12px', color:'var(--green)', fontWeight:500 }}>
-                    <Icon icon="lucide:check-circle" width={13} />
+                    <CheckCircle size={13} />
                     {isBn?'সফলভাবে সেভ হয়েছে!':'Saved successfully!'}
                   </div>
                 )}
               </div>
             ) : (
               <div style={{ padding:'20px 12px', background:'var(--bg-secondary)', borderRadius:'10px', textAlign:'center' }}>
-                <Icon icon="lucide:user-search" width={24} style={{ color:'var(--text-muted)', display:'block', margin:'0 auto 6px', opacity:0.4 }} />
+                <UserSearch size={24} style={{ color:'var(--text-muted)', display:'block', margin:'0 auto 6px', opacity:0.4 }} />
                 <p style={{ fontSize:'12px', color:'var(--text-muted)', lineHeight:1.5 }}>
                   {isBn?'নাম বা আইডি লিখে ছাত্র খুঁজুন':'Search by name or ID'}
                 </p>
@@ -210,14 +210,14 @@ export default function UpdateStudentPage() {
                 </button>
                 <button onClick={handleSave}
                   style={{ display:'flex', alignItems:'center', gap:'6px', padding:'8px 18px', borderRadius:'9px', background:'var(--brand)', border:'none', color:'#fff', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'inherit', boxShadow:'0 4px 12px rgba(99,102,241,0.3)' }}>
-                  <Icon icon="lucide:save" width={14} />{isBn?'সেভ করুন':'Save Changes'}
+                  <Save size={14} />{isBn?'সেভ করুন':'Save Changes'}
                 </button>
               </div>
             </div>
 
             {/* Personal */}
             <div style={card}>
-              {secHead('lucide:user', isBn?'ব্যক্তিগত তথ্য':'Personal Information')}
+              {secHead(<User size={14} style={{ color:'var(--brand)' }} />, isBn?'ব্যক্তিগত তথ্য':'Personal Information')}
               <div style={{ display:'flex', gap:'14px', marginBottom:'12px', flexWrap:'wrap' }}>
                 <div>
                   <div style={{ fontSize:'11px', fontWeight:500, color:'var(--text-secondary)', marginBottom:'5px' }}>{isBn?'ছবি (সর্বোচ্চ ২ MB)':'Photo (max 2MB)'}</div>
@@ -226,13 +226,13 @@ export default function UpdateStudentPage() {
                     {form.photo
                       ? <img src={form.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                       : <div style={{ textAlign:'center', color:'var(--text-muted)' }}>
-                          <Icon icon="lucide:camera" width={20} style={{ display:'block', margin:'0 auto 3px' }} />
+                          <Camera size={20} style={{ display:'block', margin:'0 auto 3px' }} />
                           <div style={{ fontSize:'10px' }}>Upload</div>
                         </div>}
                     {form.photo && (
                       <button type="button" onClick={e=>{e.stopPropagation();set('photo','')}}
                         style={{ position:'absolute', top:2, right:2, width:'18px', height:'18px', borderRadius:'50%', background:'var(--red)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff' }}>
-                        <Icon icon="lucide:x" width={10} />
+                        <X size={10} />
                       </button>
                     )}
                   </div>
@@ -269,7 +269,7 @@ export default function UpdateStudentPage() {
 
             {/* Academic */}
             <div style={card}>
-              {secHead('lucide:graduation-cap', isBn?'একাডেমিক তথ্য':'Academic Info', 'var(--teal)', 'var(--teal-light)')}
+              {secHead(<GraduationCap size={14} style={{ color:'var(--teal)' }} />, isBn?'একাডেমিক তথ্য':'Academic Info', 'var(--teal)', 'var(--teal-light)')}
               <div style={{ ...g(3), marginBottom:'10px' }}>
                 <F l={isBn?'শ্রেণি':'Class'} v={form.class} onChange={v=>set('class',v)} opts={['1','2','3','4','5','6','7','8','9','10']} req />
                 <F l={isBn?'সেকশন':'Section'} v={form.section} onChange={v=>set('section',v)} opts={['A','B','C','D','E']} />
@@ -284,7 +284,7 @@ export default function UpdateStudentPage() {
 
             {/* Father */}
             <div style={card}>
-              {secHead('lucide:user', isBn?'পিতার তথ্য':"Father's Info", 'var(--teal)', 'var(--teal-light)')}
+              {secHead(<User size={14} style={{ color:'var(--teal)' }} />, isBn?'পিতার তথ্য':"Father's Info", 'var(--teal)', 'var(--teal-light)')}
               <div style={{ ...g(3), marginBottom:'10px' }}>
                 <F l={isBn?'নাম (ইং)':'Name (EN)'} v={form.fatherNameEn} onChange={v=>set('fatherNameEn',v)} />
                 <F l={isBn?'নাম (বাং)':'Name (BN)'} v={form.fatherNameBn} onChange={v=>set('fatherNameBn',v)} />
@@ -298,7 +298,7 @@ export default function UpdateStudentPage() {
 
             {/* Mother */}
             <div style={card}>
-              {secHead('lucide:user', isBn?'মাতার তথ্য':"Mother's Info", 'var(--purple)', 'var(--purple-light)')}
+              {secHead(<User size={14} style={{ color:'var(--purple)' }} />, isBn?'মাতার তথ্য':"Mother's Info", 'var(--purple)', 'var(--purple-light)')}
               <div style={{ ...g(3), marginBottom:'10px' }}>
                 <F l={isBn?'নাম (ইং)':'Name (EN)'} v={form.motherNameEn} onChange={v=>set('motherNameEn',v)} />
                 <F l={isBn?'নাম (বাং)':'Name (BN)'} v={form.motherNameBn} onChange={v=>set('motherNameBn',v)} />
@@ -312,7 +312,7 @@ export default function UpdateStudentPage() {
 
             {/* Guardian */}
             <div style={card}>
-              {secHead('lucide:shield-check', isBn?'অভিভাবক':'Guardian', 'var(--green)', 'var(--green-light)')}
+              {secHead(<ShieldCheck size={14} style={{ color:'var(--green)' }} />, isBn?'অভিভাবক':'Guardian', 'var(--green)', 'var(--green-light)')}
               <div style={g(3)}>
                 <F l={isBn?'নাম':'Name'} v={form.guardianName} onChange={v=>set('guardianName',v)} />
                 <F l={isBn?'সম্পর্ক':'Relation'} v={form.guardianRelation} onChange={v=>set('guardianRelation',v)} opts={['Uncle / চাচা','Aunt / খালা','Grand Father / দাদা','Grand Mother / দাদি','Other / অন্যান্য']} />
@@ -327,13 +327,13 @@ export default function UpdateStudentPage() {
               </button>
               <button onClick={handleSave}
                 style={{ display:'flex', alignItems:'center', gap:'6px', padding:'10px 22px', borderRadius:'9px', background:'var(--brand)', border:'none', color:'#fff', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'inherit', boxShadow:'0 4px 14px rgba(99,102,241,0.35)' }}>
-                <Icon icon="lucide:save" width={15} />{isBn?'পরিবর্তন সেভ করুন':'Save Changes'}
+                <Save size={15} />{isBn?'পরিবর্তন সেভ করুন':'Save Changes'}
               </button>
             </div>
           </div>
         ) : (
           <div style={{ ...card, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'60px', textAlign:'center' }}>
-            <Icon icon="lucide:user-search" width={48} style={{ color:'var(--text-muted)', opacity:0.3, marginBottom:'14px' }} />
+            <UserSearch size={48} style={{ color:'var(--text-muted)', opacity:0.3, marginBottom:'14px' }} />
             <h3 style={{ fontSize:'16px', fontWeight:500, color:'var(--text-primary)', marginBottom:'6px' }}>
               {isBn?'ছাত্র সিলেক্ট করুন':'Select a Student'}
             </h3>

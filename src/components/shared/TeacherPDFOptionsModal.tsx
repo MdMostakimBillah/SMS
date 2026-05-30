@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import { Icon } from '@iconify/react'
+import { X, File, LayoutTemplate, Plus, Trash2, Download } from 'lucide-react'
 import { ALL_TEACHER_PDF_COLUMNS } from '@/pages/teachers/listPdfTemplate'
 import type { TeacherListPDFOptions } from '@/pages/teachers/listPdfTemplate'
 
@@ -51,7 +51,7 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
             </p>
           </div>
           <button onClick={onClose} style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon icon="lucide:x" width={15} style={{ color: 'var(--text-secondary)' }} />
+            <X size={15} style={{ color: 'var(--text-secondary)' }} />
           </button>
         </div>
 
@@ -82,7 +82,7 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
               {(['portrait', 'landscape'] as const).map(o => (
                 <button key={o} onClick={() => setOrientation(o)}
                   style={{ flex: 1, padding: '10px', borderRadius: '10px', border: `2px solid ${orientation === o ? 'var(--brand)' : 'var(--border)'}`, background: orientation === o ? 'var(--brand-light)' : 'var(--bg-secondary)', color: orientation === o ? 'var(--brand)' : 'var(--text-secondary)', fontSize: '13px', fontWeight: orientation === o ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                  <Icon icon={o === 'portrait' ? 'lucide:file' : 'lucide:layout-template'} width={15} />
+                  {o === 'portrait' ? <File size={15} /> : <LayoutTemplate size={15} />}
                   {isBn ? (o === 'portrait' ? 'উল্লম্ব (Portrait)' : 'আনুভূমিক (Landscape)') : (o === 'portrait' ? 'Portrait' : 'Landscape')}
                 </button>
               ))}
@@ -131,7 +131,7 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
               </div>
               <button onClick={addEmptyCol}
                 style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, whiteSpace: 'nowrap' }}>
-                <Icon icon="lucide:plus" width={12} />
+                <Plus size={12} />
                 {isBn ? 'কলাম যোগ' : 'Add Column'}
               </button>
             </div>
@@ -157,7 +157,7 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
                     />
                     <button onClick={() => removeEmptyCol(i)}
                       style={{ width: '28px', height: '28px', borderRadius: '7px', background: 'var(--red-light)', border: '1px solid var(--red)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)', flexShrink: 0 }}>
-                      <Icon icon="lucide:trash-2" width={13} />
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 ))}
@@ -200,7 +200,7 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
             onClick={() => onDownload({ title, selectedCols: cols, emptyRows, emptyColumns, orientation, isBn })}
             disabled={cols.length === 0}
             style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 20px', borderRadius: '9px', background: cols.length === 0 ? 'var(--border-2)' : 'var(--red)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: cols.length === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
-            <Icon icon="lucide:download" width={14} />
+            <Download size={14} />
             {isBn ? 'PDF ডাউনলোড' : 'Download PDF'}
           </button>
         </div>

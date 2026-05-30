@@ -1,12 +1,12 @@
-import { Icon } from "@iconify/react"
+import { TrendingUp, TrendingDown } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 interface StatCardProps {
   label: string
   value: string
   change?: string
   changeType?: "up" | "down"
-  icon: string
-  iconColor?: string
+  icon: ReactNode
   iconBg?: string
 }
 
@@ -16,7 +16,6 @@ export default function StatCard({
   change,
   changeType = "up",
   icon,
-  iconColor = "var(--brand)",
   iconBg = "var(--brand-light)",
 }: StatCardProps) {
   return (
@@ -43,7 +42,7 @@ export default function StatCard({
           justifyContent: "center",
         }}
       >
-        <Icon icon={icon} width={18} style={{ color: iconColor }} />
+        {icon}
       </div>
 
       {/* Value */}
@@ -81,10 +80,7 @@ export default function StatCard({
             gap: "4px",
           }}
         >
-          <Icon
-            icon={changeType === "up" ? "lucide:trending-up" : "lucide:trending-down"}
-            width={13}
-          />
+          {changeType === "up" ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
           {change}
         </div>
       )}

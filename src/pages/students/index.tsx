@@ -1,12 +1,20 @@
 import { useNavigate } from "react-router-dom"
-import { Icon } from "@iconify/react"
+import { UserPlus, Users, User, UserPen, TableProperties, IdCard, ArrowUpCircle, ArrowRight } from "lucide-react"
 import { useAppStore } from "@/store/appStore"
+import { useWindowSize } from "@/hooks/useWindowSize"
+import type { LucideIcon } from "lucide-react"
 
-const options = [
+const options: {
+  id: string; path: string; icon: LucideIcon;
+  iconColor: string; iconBg: string;
+  titleBn: string; titleEn: string;
+  descBn: string; descEn: string;
+  statBn: string; statEn: string; statColor: string;
+}[] = [
   {
     id: "admission",
     path: "/students/admission",
-    icon: "lucide:user-plus",
+    icon: UserPlus,
     iconColor: "var(--teal)",
     iconBg: "var(--teal-light)",
     titleBn: "নতুন ভর্তি",
@@ -20,7 +28,7 @@ const options = [
   {
     id: "all",
     path: "/students/all",
-    icon: "lucide:users",
+    icon: Users,
     iconColor: "var(--brand)",
     iconBg: "var(--brand-light)",
     titleBn: "সকল ছাত্র",
@@ -34,7 +42,7 @@ const options = [
   {
     id: "update",
     path: "/students/update",
-    icon: "lucide:user-pen",
+    icon: UserPen,
     iconColor: "var(--amber)",
     iconBg: "var(--amber-light)",
     titleBn: "ছাত্র তথ্য আপডেট",
@@ -48,7 +56,7 @@ const options = [
   {
     id: "bulk-update",
     path: "/students/bulk-update",
-    icon: "lucide:table-properties",
+    icon: TableProperties,
     iconColor: "var(--green)",
     iconBg: "var(--green-light)",
     titleBn: "বাল্ক আপডেট",
@@ -62,7 +70,7 @@ const options = [
   {
     id: "id-cards",
     path: "/students/id-cards",
-    icon: "lucide:id-card",
+    icon: IdCard,
     iconColor: "#7C3AED",
     iconBg: "rgba(124,58,237,0.1)",
     titleBn: "ID কার্ড",
@@ -76,7 +84,7 @@ const options = [
   {
     id: "promotion",
     path: "/students/promotion",
-    icon: "lucide:arrow-up-circle",
+    icon: ArrowUpCircle,
     iconColor: "var(--red)",
     iconBg: "var(--red-light)",
     titleBn: "ক্লাস প্রমোশন",
@@ -89,25 +97,33 @@ const options = [
   },
 ]
 
+const stats = [
+  { labelBn: "মোট ছাত্র", labelEn: "Total Students", valueBn: "১,২৪৮", valueEn: "1,248", icon: Users, color: "var(--brand)", bg: "var(--brand-light)" },
+  { labelBn: "ছেলে", labelEn: "Male", valueBn: "৬৮৩", valueEn: "683", icon: User, color: "var(--teal)", bg: "var(--teal-light)" },
+  { labelBn: "মেয়ে", labelEn: "Female", valueBn: "৫৬৫", valueEn: "565", icon: User, color: "#7C3AED", bg: "rgba(124,58,237,0.1)" },
+  { labelBn: "এই মাসে নতুন", labelEn: "New This Month", valueBn: "৪৮", valueEn: "48", icon: UserPlus, color: "var(--green)", bg: "var(--green-light)" },
+]
+
 export default function StudentsPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
+  const { isMobile, isTablet } = useWindowSize()
   const isBn = language === "bn"
 
   return (
     <div>
 
       {/* Page header */}
-      <div style={{ marginBottom: "24px" }}>
+      <div style={{ marginBottom: isMobile ? "16px" : "24px" }}>
         <h1 style={{
-          fontSize: "22px",
+          fontSize: isMobile ? "18px" : "22px",
           fontWeight: 600,
           color: "var(--text-primary)",
           letterSpacing: "-0.3px",
         }}>
           {isBn ? "ছাত্র ব্যবস্থাপনা" : "Student Management"}
         </h1>
-        <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginTop: "4px" }}>
+        <p style={{ fontSize: isMobile ? "12px" : "13px", color: "var(--text-secondary)", marginTop: "4px" }}>
           {isBn
             ? "নিচের অপশনগুলো থেকে কাজ বেছে নিন"
             : "Select an option below to get started"}
@@ -117,52 +133,50 @@ export default function StudentsPage() {
       {/* Quick stats row */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
-        gap: "10px",
-        marginBottom: "24px",
+        gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+        gap: isMobile ? "8px" : "10px",
+        marginBottom: isMobile ? "16px" : "24px",
       }}>
-        {[
-          { labelBn: "মোট ছাত্র", labelEn: "Total Students", valueBn: "১,২৪৮", valueEn: "1,248", icon: "lucide:users", color: "var(--brand)", bg: "var(--brand-light)" },
-          { labelBn: "ছেলে", labelEn: "Male", valueBn: "৬৮৩", valueEn: "683", icon: "lucide:user", color: "var(--teal)", bg: "var(--teal-light)" },
-          { labelBn: "মেয়ে", labelEn: "Female", valueBn: "৫৬৫", valueEn: "565", icon: "lucide:user", color: "#7C3AED", bg: "rgba(124,58,237,0.1)" },
-          { labelBn: "এই মাসে নতুন", labelEn: "New This Month", valueBn: "৪৮", valueEn: "48", icon: "lucide:user-plus", color: "var(--green)", bg: "var(--green-light)" },
-        ].map((s) => (
-          <div key={s.labelEn} style={{
-            background: "var(--bg-primary)",
-            border: "0.5px solid var(--border)",
-            borderRadius: "10px",
-            padding: "12px 14px",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            cursor: "default",
-            transition: "all 0.15s",
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = s.color; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
-          >
-            <div style={{
-              width: "32px", height: "32px",
-              borderRadius: "8px",
-              background: s.bg,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              flexShrink: 0,
-            }}>
-              <Icon icon={s.icon} width={16} style={{ color: s.color }} />
-            </div>
-            <div>
-                <div style={{ fontSize: "18px", fontWeight: 600, color: "var(--text-primary)" }}>
+        {stats.map((s) => {
+          const IconComp = s.icon
+          return (
+            <div key={s.labelEn} style={{
+              background: "var(--bg-primary)",
+              border: "0.5px solid var(--border)",
+              borderRadius: "10px",
+              padding: isMobile ? "10px 12px" : "12px 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: isMobile ? "8px" : "10px",
+              cursor: "default",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = s.color; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
+            >
+              <div style={{
+                width: isMobile ? "28px" : "32px", height: isMobile ? "28px" : "32px",
+                borderRadius: "8px",
+                background: s.bg,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                <IconComp size={isMobile ? 14 : 16} style={{ color: s.color }} />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: isMobile ? "15px" : "18px", fontWeight: 600, color: "var(--text-primary)" }}>
                   {isBn ? s.valueBn : s.valueEn}
                 </div>
                 <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
                   {isBn ? s.valueEn : s.valueBn}
                 </div>
-              <div style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
-                {isBn ? s.labelBn : s.labelEn}
+                <div style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
+                  {isBn ? s.labelBn : s.labelEn}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Section title */}
@@ -180,104 +194,103 @@ export default function StudentsPage() {
       {/* Option cards grid */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
-        gap: "14px",
+        gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
+        gap: isMobile ? "10px" : "14px",
       }}>
-        {options.map((opt) => (
-          <div
-            key={opt.id}
-            onClick={() => navigate(opt.path)}
-            style={{
-              background: "var(--bg-primary)",
-              border: "0.5px solid var(--border)",
-              borderRadius: "14px",
-              padding: "20px",
-              cursor: "pointer",
-              transition: "all 0.15s",
-              position: "relative",
-              overflow: "hidden",
-            }}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget
-              el.style.borderColor = opt.iconColor
-              el.style.transform = "translateY(-2px)"
-              el.style.boxShadow = `0 8px 24px rgba(0,0,0,0.08)`
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget
-              el.style.borderColor = "var(--border)"
-              el.style.transform = "translateY(0)"
-              el.style.boxShadow = "none"
-            }}
-          >
-            {/* Top accent line */}
-            <div style={{
-              position: "absolute",
-              top: 0, left: 0, right: 0,
-              height: "3px",
-              background: opt.iconColor,
-              borderRadius: "14px 14px 0 0",
-            }} />
+        {options.map((opt) => {
+          const IconComp = opt.icon
+          return (
+            <div
+              key={opt.id}
+              onClick={() => navigate(opt.path)}
+              style={{
+                background: "var(--bg-primary)",
+                border: "0.5px solid var(--border)",
+                borderRadius: "14px",
+                padding: isMobile ? "16px" : "20px",
+                cursor: "pointer",
+                transition: "all 0.15s",
+                position: "relative",
+                overflow: "hidden",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget
+                el.style.borderColor = opt.iconColor
+                el.style.transform = "translateY(-2px)"
+                el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)"
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget
+                el.style.borderColor = "var(--border)"
+                el.style.transform = "translateY(0)"
+                el.style.boxShadow = "none"
+              }}
+            >
+              {/* Top accent line */}
+              <div style={{
+                position: "absolute",
+                top: 0, left: 0, right: 0,
+                height: "3px",
+                background: opt.iconColor,
+                borderRadius: "14px 14px 0 0",
+              }} />
 
-            {/* Icon */}
-            <div style={{
-              width: "44px",
-              height: "44px",
-              borderRadius: "12px",
-              background: opt.iconBg,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: "14px",
-            }}>
-              <Icon icon={opt.icon} width={22} style={{ color: opt.iconColor }} />
-            </div>
-
-            {/* Title */}
-            <div style={{
-              fontSize: "15px",
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              marginBottom: "6px",
-            }}>
-              {isBn ? opt.titleBn : opt.titleEn}
-            </div>
-
-            {/* Description */}
-            <div style={{
-              fontSize: "12px",
-              color: "var(--text-secondary)",
-              lineHeight: 1.6,
-              marginBottom: "14px",
-              minHeight: "38px",
-            }}>
-              {isBn ? opt.descBn : opt.descEn}
-            </div>
-
-            {/* Bottom stat */}
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}>
-              <span style={{
-                fontSize: "11px",
-                color: opt.statColor,
-                fontWeight: 500,
+              {/* Icon */}
+              <div style={{
+                width: isMobile ? "38px" : "44px",
+                height: isMobile ? "38px" : "44px",
+                borderRadius: "12px",
                 background: opt.iconBg,
-                padding: "3px 8px",
-                borderRadius: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: isMobile ? "10px" : "14px",
               }}>
-                {isBn ? opt.statBn : opt.statEn}
-              </span>
-              <Icon
-                icon="lucide:arrow-right"
-                width={16}
-                style={{ color: "var(--text-muted)" }}
-              />
+                <IconComp size={isMobile ? 18 : 22} style={{ color: opt.iconColor }} />
+              </div>
+
+              {/* Title */}
+              <div style={{
+                fontSize: isMobile ? "14px" : "15px",
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                marginBottom: "6px",
+              }}>
+                {isBn ? opt.titleBn : opt.titleEn}
+              </div>
+
+              {/* Description */}
+              <div style={{
+                fontSize: "12px",
+                color: "var(--text-secondary)",
+                lineHeight: 1.6,
+                marginBottom: "14px",
+                minHeight: isMobile ? "auto" : "38px",
+              }}>
+                {isBn ? opt.descBn : opt.descEn}
+              </div>
+
+              {/* Bottom stat */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}>
+                <span style={{
+                  fontSize: "11px",
+                  color: opt.statColor,
+                  fontWeight: 500,
+                  background: opt.iconBg,
+                  padding: "3px 8px",
+                  borderRadius: "6px",
+                }}>
+                  {isBn ? opt.statBn : opt.statEn}
+                </span>
+                <ArrowRight size={16} style={{ color: "var(--text-muted)" }} />
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

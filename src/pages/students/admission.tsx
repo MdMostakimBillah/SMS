@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Icon } from '@iconify/react'
+import { ArrowLeft, UserPlus, Users, ListChecks } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import GeneralAdmission from './admission/GeneralAdmission'
@@ -8,9 +8,9 @@ import BulkAdmission from './admission/BulkAdmission'
 import AdmissionManage from './admission/AdmissionManage'
 
 const tabs = [
-  { id: 'general', bn: 'সাধারণ ভর্তি',  en: 'General Admission',  icon: 'lucide:user-plus' },
-  { id: 'bulk',    bn: 'বাল্ক ভর্তি',   en: 'Bulk Admission',     icon: 'lucide:users' },
-  { id: 'manage',  bn: 'ভর্তি ম্যানেজ', en: 'Manage Admissions',  icon: 'lucide:list-checks' },
+  { id: 'general', bn: 'সাধারণ ভর্তি',  en: 'General Admission',  icon: <UserPlus size={15} /> },
+  { id: 'bulk',    bn: 'বাল্ক ভর্তি',   en: 'Bulk Admission',     icon: <Users size={15} /> },
+  { id: 'manage',  bn: 'ভর্তি ম্যানেজ', en: 'Manage Admissions',  icon: <ListChecks size={15} /> },
 ]
 
 export default function StudentAdmission() {
@@ -26,7 +26,7 @@ export default function StudentAdmission() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <button onClick={() => navigate('/students')}
           style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '13px', color: 'var(--text-secondary)', fontFamily: 'inherit' }}>
-          <Icon icon="lucide:arrow-left" width={14} />
+          <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div>
@@ -44,7 +44,7 @@ export default function StudentAdmission() {
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', padding: '9px 14px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: 'inherit', transition: 'all 0.15s', background: activeTab === tab.id ? 'var(--brand)' : 'transparent', color: activeTab === tab.id ? '#fff' : 'var(--text-secondary)', boxShadow: activeTab === tab.id ? '0 4px 12px rgba(99,102,241,0.3)' : 'none' }}>
-            <Icon icon={tab.icon} width={15} />
+            {tab.icon}
             {isBn ? tab.bn : tab.en}
           </button>
         ))}

@@ -1,8 +1,24 @@
-import { Icon } from "@iconify/react"
+import {
+  Users, GraduationCap, Landmark, BarChart2, FileCheck,
+  CreditCard, ClipboardList, UserPlus, FlaskConical, Award,
+  CalendarCheck, Download, Plus, MoreHorizontal, TrendingUp, TrendingDown,
+} from "lucide-react"
 import { useAppStore } from "@/store/appStore"
 import { useWindowSize } from "@/hooks/useWindowSize"
 import CircularChart from "@/components/ui/CircularChart"
 import useReveal from '@/hooks/useReveal'
+
+const iconMap: Record<string, React.ComponentType<{ size?: number; style?: React.CSSProperties }>> = {
+  'users': Users, 'graduation-cap': GraduationCap, 'landmark': Landmark,
+  'bar-chart-2': BarChart2, 'file-check': FileCheck, 'credit-card': CreditCard,
+  'clipboard-list': ClipboardList, 'user-plus': UserPlus, 'flask-conical': FlaskConical,
+  'award': Award, 'calendar-check': CalendarCheck,
+}
+
+const IconByName = ({ name, size, style }: { name: string; size: number; style?: React.CSSProperties }) => {
+  const Comp = iconMap[name.replace('lucide:', '')]
+  return Comp ? <Comp size={size} style={style} /> : null
+}
 
 const stats = [
   { labelBn: "মোট ছাত্র", labelEn: "Total Students", value: "1,248", changeBn: "↑ ১২% গত টার্ম", changeEn: "↑ 12% last term", up: true, icon: "lucide:users", color: "var(--brand)", bg: "var(--brand-light)" },
@@ -93,10 +109,10 @@ export default function DashboardPage() {
         {!isMobile && (
           <div style={{ display: "flex", gap: "8px" }}>
             <button style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "9px", background: "var(--bg-primary)", border: "1px solid var(--border)", fontSize: "13px", color: "var(--text-secondary)", fontFamily: "inherit", cursor: "pointer" }}>
-              <Icon icon="lucide:download" width={14} /> Export
+              <Download size={14} /> Export
             </button>
             <button style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "9px", background: "var(--brand)", border: "none", fontSize: "13px", color: "#fff", fontFamily: "inherit", fontWeight: 500, cursor: "pointer", boxShadow: "0 4px 12px rgba(99,102,241,0.3)" }}>
-              <Icon icon="lucide:plus" width={14} />
+              <Plus size={14} />
               {isBn ? "নতুন" : "Add New"}
             </button>
           </div>
@@ -119,16 +135,16 @@ export default function DashboardPage() {
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: s.color, borderRadius: "14px 14px 0 0" }} />
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
               <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: s.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Icon icon={s.icon} width={17} style={{ color: s.color }} />
+                <IconByName name={s.icon} size={17} style={{ color: s.color }} />
               </div>
-              <Icon icon="lucide:more-horizontal" width={15} style={{ color: "var(--text-muted)" }} />
+              <MoreHorizontal size={15} style={{ color: "var(--text-muted)" }} />
             </div>
             <div>
               <div style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.5px", lineHeight: 1 }}>{s.value}</div>
               <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "3px" }}>{isBn ? s.labelBn : s.labelEn}</div>
             </div>
             <div style={{ fontSize: "11px", color: s.up ? "var(--green)" : "var(--red)", display: "flex", alignItems: "center", gap: "3px", fontWeight: 500 }}>
-              <Icon icon={s.up ? "lucide:trending-up" : "lucide:trending-down"} width={12} />
+              {s.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
               {isBn ? s.changeBn : s.changeEn}
             </div>
           </div>
@@ -151,7 +167,7 @@ export default function DashboardPage() {
           {activities.map((a, i) => (
             <div key={i} style={{ display: "flex", gap: "10px", padding: "9px 0", borderBottom: i < activities.length - 1 ? "1px solid var(--border)" : "none" }}>
               <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: a.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Icon icon={a.icon} width={14} style={{ color: a.color }} />
+                <IconByName name={a.icon} size={14} style={{ color: a.color }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: "12px", color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{isBn ? a.bn : a.en}</div>
@@ -176,7 +192,7 @@ export default function DashboardPage() {
             {events.map((ev, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 10px", background: "var(--bg-secondary)", borderRadius: "10px", border: "1px solid var(--border)", cursor: "pointer" }}>
                 <div style={{ width: "34px", height: "34px", borderRadius: "9px", background: ev.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Icon icon={ev.icon} width={15} style={{ color: ev.color }} />
+                  <IconByName name={ev.icon} size={15} style={{ color: ev.color }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {isBn ? ev.bn : ev.en}
@@ -282,7 +298,7 @@ export default function DashboardPage() {
               <div key={item.en}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <Icon icon={item.icon} width={13} style={{ color: item.color }} />
+                    <IconByName name={item.icon} size={13} style={{ color: item.color }} />
                     <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{isBn ? item.bn : item.en}</span>
                   </div>
                   <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-primary)" }}>{item.val}</span>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import { Icon } from '@iconify/react'
+import { CheckCircle, X, Save, Download, User, Search, FileSpreadsheet, FileText, Users, Eye, Edit2, Check, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -27,7 +27,7 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
       <div style={{ background: 'var(--bg-primary)', borderRadius: '16px', padding: '28px', maxWidth: '420px', width: '100%', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}>
         <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'var(--green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-          <Icon icon="lucide:check-circle" width={26} style={{ color: 'var(--green)' }} />
+          <CheckCircle size={26} style={{ color: 'var(--green)' }} />
         </div>
         <h3 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', marginBottom: '6px' }}>
           {isBn ? 'ভর্তি অনুমোদন করবেন?' : 'Approve Admission?'}
@@ -115,7 +115,7 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
             <p style={{ fontSize: '11px', color: 'var(--brand)', fontFamily: 'monospace', marginTop: '2px' }}>{f.id}</p>
           </div>
           <button onClick={onClose} style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon icon="lucide:x" width={14} style={{ color: 'var(--text-secondary)' }} />
+            <X size={14} style={{ color: 'var(--text-secondary)' }} />
           </button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
@@ -160,7 +160,7 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
           </button>
           <button onClick={() => { onSave(f); onClose() }}
             style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '9px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-            <Icon icon="lucide:save" width={14} /> {isBn ? 'সেভ' : 'Save'}
+            <Save size={14} /> {isBn ? 'সেভ' : 'Save'}
           </button>
         </div>
       </div>
@@ -202,14 +202,14 @@ const ViewModal = React.memo(function ViewModal({ student, isBn, onClose }: { st
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <span style={{ fontSize: '11px', fontWeight: 600, color: sc, background: sb, padding: '3px 10px', borderRadius: '20px', border: `1px solid ${sc}`, textTransform: 'capitalize' }}>{st}</span>
             <button onClick={onClose} style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon icon="lucide:x" width={14} style={{ color: 'var(--text-secondary)' }} />
+<X size={14} style={{ color: 'var(--text-secondary)' }} />
             </button>
           </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
           <div style={{ display: 'flex', gap: '14px', marginBottom: '16px', alignItems: 'flex-start' }}>
             <div style={{ width: '80px', height: '100px', borderRadius: '10px', border: '2px solid var(--border)', overflow: 'hidden', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              {student.photo ? <img src={student.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Icon icon="lucide:user" width={28} style={{ color: 'var(--text-muted)' }} />}
+              {student.photo ? <img src={student.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={28} style={{ color: 'var(--text-muted)' }} />}
             </div>
             <div style={{ flex: 1 }}>
               <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' }}>{student.nameEn}</h3>
@@ -253,7 +253,7 @@ const ViewModal = React.memo(function ViewModal({ student, isBn, onClose }: { st
           </button>
           <button onClick={download}
             style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '9px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-            <Icon icon="lucide:download" width={14} /> {isBn ? 'A4 PDF' : 'Download A4 PDF'}
+            <Download size={14} /> {isBn ? 'A4 PDF' : 'Download A4 PDF'}
           </button>
         </div>
       </div>
@@ -417,7 +417,7 @@ export default function AdmissionManage() {
       <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 14px', marginBottom: '10px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr 1fr 1fr', gap: '8px', marginBottom: fDate === 'custom' ? '8px' : '0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '7px 10px' }}>
-            <Icon icon="lucide:search" width={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+            <Search size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
             <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
               placeholder={isBn ? 'নাম, আইডি, মোবাইল...' : 'Name, ID, mobile...'}
               style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '13px', color: 'var(--text-primary)', fontFamily: 'inherit' }} />
@@ -460,7 +460,7 @@ export default function AdmissionManage() {
         {hasFilter && (
           <button onClick={clearFilters}
             style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '6px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit', marginTop: fDate === 'custom' ? '0' : '6px' }}>
-            <Icon icon="lucide:x" width={11} /> {isBn ? 'ফিল্টার সরান' : 'Clear'}
+            <X size={11} /> {isBn ? 'ফিল্টার সরান' : 'Clear'}
           </button>
         )}
       </div>
@@ -482,12 +482,12 @@ export default function AdmissionManage() {
         <div style={{ display: 'flex', gap: '6px' }}>
           <button onClick={exportExcel}
             style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--green-light)', border: '1px solid var(--green)', color: 'var(--green)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
-            <Icon icon="lucide:file-spreadsheet" width={13} />
+            <FileSpreadsheet size={13} />
             {isBn ? 'Excel' : 'Excel'}
           </button>
           <button onClick={() => setShowPDFModal(true)}
             style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
-            <Icon icon="lucide:file-text" width={13} />
+            <FileText size={13} />
             PDF {selected.length > 0 ? `(${selected.length})` : `(${filtered.length})`}
           </button>
         </div>
@@ -524,7 +524,7 @@ export default function AdmissionManage() {
             <tbody>
               {paginated.length === 0
                 ? <tr><td colSpan={12} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    <Icon icon="lucide:users" width={30} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
+                    <Users size={30} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
                     {isBn ? 'কোনো ছাত্র পাওয়া যায়নি' : 'No students found'}
                   </td></tr>
                 : paginated.map((s, i) => (
@@ -542,7 +542,7 @@ export default function AdmissionManage() {
                     <td style={{ padding: '7px 8px' }}>
                       <div style={{ width: '30px', height: '36px', borderRadius: '5px', overflow: 'hidden', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {s.photo ? <img src={s.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          : <Icon icon="lucide:user" width={13} style={{ color: 'var(--text-muted)' }} />}
+                          : <User size={13} style={{ color: 'var(--text-muted)' }} />}
                       </div>
                     </td>
                     <td style={{ padding: '8px 8px' }}>
@@ -570,16 +570,16 @@ export default function AdmissionManage() {
                       <div style={{ display: 'flex', gap: '3px' }}>
                         <button onClick={() => setViewingStudent(s)} title={isBn ? 'দেখুন' : 'View'}
                           style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--brand-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand)' }}>
-                          <Icon icon="lucide:eye" width={12} />
+                          <Eye size={12} />
                         </button>
                         <button onClick={() => setEditingStudent(s)} title={isBn ? 'এডিট' : 'Edit'}
                           style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--amber-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--amber)' }}>
-                          <Icon icon="lucide:edit-2" width={12} />
+                          <Edit2 size={12} />
                         </button>
                         {s.status === 'pending' && (
                           <button onClick={() => setApprovingStudent(s)} title={isBn ? 'Approve' : 'Approve'}
                             style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--green-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--green)' }}>
-                            <Icon icon="lucide:check" width={12} />
+                            <Check size={12} />
                           </button>
                         )}
                       </div>
@@ -599,12 +599,12 @@ export default function AdmissionManage() {
           </span>
           <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
             {[
-              { icon: 'lucide:chevrons-left', action: () => setPage(1), disabled: sp === 1 },
-              { icon: 'lucide:chevron-left', action: () => setPage(p => Math.max(1, p-1)), disabled: sp === 1 },
+              { icon: <ChevronsLeft size={12} />, action: () => setPage(1), disabled: sp === 1 },
+              { icon: <ChevronLeft size={12} />, action: () => setPage(p => Math.max(1, p-1)), disabled: sp === 1 },
             ].map((b, i) => (
               <button key={i} onClick={b.action} disabled={b.disabled}
                 style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: b.disabled ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: b.disabled ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon icon={b.icon} width={12} />
+                {b.icon}
               </button>
             ))}
             {(() => {
@@ -617,12 +617,12 @@ export default function AdmissionManage() {
               ))
             })()}
             {[
-              { icon: 'lucide:chevron-right', action: () => setPage(p => Math.min(totalPages, p+1)), disabled: sp === totalPages },
-              { icon: 'lucide:chevrons-right', action: () => setPage(totalPages), disabled: sp === totalPages },
+              { icon: <ChevronRight size={12} />, action: () => setPage(p => Math.min(totalPages, p+1)), disabled: sp === totalPages },
+              { icon: <ChevronsRight size={12} />, action: () => setPage(totalPages), disabled: sp === totalPages },
             ].map((b, i) => (
               <button key={i} onClick={b.action} disabled={b.disabled}
                 style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: b.disabled ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: b.disabled ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon icon={b.icon} width={12} />
+                {b.icon}
               </button>
             ))}
           </div>

@@ -11,6 +11,7 @@ import PromotionPage    from '@/pages/students/promotion'
 import TeachersPage     from '@/pages/teachers'
 import AddTeacherPage   from '@/pages/teachers/add'
 import AllTeachersPage  from '@/pages/teachers/all'
+import TeacherDetailPage from '@/pages/teachers/all/[id]'
 import DepartmentsPage  from '@/pages/teachers/departments'
 import SubjectsPage     from '@/pages/teachers/subjects'
 import AttendancePage   from '@/pages/attendance'
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/teachers"              element={<TeachersPage />} />
         <Route path="/teachers/add"          element={<AddTeacherPage />} />
         <Route path="/teachers/all"          element={<AllTeachersPage />} />
+        <Route path="/teachers/all/:id"      element={<TeacherDetailPage />} />
         <Route path="/teachers/departments"  element={<DepartmentsPage />} />
         <Route path="/teachers/subjects"     element={<SubjectsPage />} />
         <Route path="/classes"               element={<P name="Classes" />} />

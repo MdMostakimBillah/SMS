@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Icon } from '@iconify/react'
+import { ArrowLeft, Camera, Clock, Users, Check } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
@@ -126,7 +126,7 @@ export default function AddTeacherPage() {
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
             background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer',
             fontSize:'13px', color:'var(--text-secondary)', fontFamily:'inherit' }}>
-          <Icon icon="lucide:arrow-left" width={14} />
+          <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
         <div>
@@ -151,7 +151,7 @@ export default function AddTeacherPage() {
                 background:'var(--bg-secondary)', cursor:'pointer', display:'flex', flexDirection:'column',
                 alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
               {photo ? <img src={photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                : <><Icon icon="lucide:camera" width={24} style={{ color:'var(--text-muted)' }} />
+                : <><Camera size={24} style={{ color:'var(--text-muted)' }} />
                    <span style={{ fontSize:'10px', color:'var(--text-muted)', marginTop:'4px' }}>{isBn?'ছবি':'Photo'}</span></>}
             </div>
             <button onClick={() => fileRef.current?.click()}
@@ -232,7 +232,7 @@ export default function AddTeacherPage() {
       <div style={section}>
         <div style={sectionTitle}>
           <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-            <Icon icon="lucide:clock" width={18} style={{ color:'var(--teal)' }} />
+            <Clock size={18} style={{ color:'var(--teal)' }} />
             {isBn?'সময়সূচি':'Schedule'}
           </div>
         </div>
@@ -330,7 +330,7 @@ export default function AddTeacherPage() {
       <div style={section}>
         <div style={sectionTitle}>
           <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-            <Icon icon="lucide:users" width={18} style={{ color:'var(--amber)' }} />
+            <Users size={18} style={{ color:'var(--amber)' }} />
             {isBn?'অভিভাবক তথ্য':'Parent / Guardian Information'}
           </div>
         </div>
@@ -425,7 +425,7 @@ export default function AddTeacherPage() {
           style={{ padding:'9px 22px', borderRadius:'9px', background: saving ? 'var(--text-muted)' : 'var(--brand)',
             border:'none', color:'#fff', fontSize:'13px', fontWeight:600, cursor: saving ? 'default' : 'pointer',
             fontFamily:'inherit', display:'flex', alignItems:'center', gap:'6px' }}>
-          <Icon icon="lucide:check" width={14} />
+          <Check size={14} />
           {saving ? (isBn?'সংরক্ষণ হচ্ছে...':'Saving...') : (isBn?'সাবমিট':'Submit')}
         </button>
       </div>

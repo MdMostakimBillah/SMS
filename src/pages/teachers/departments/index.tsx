@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Icon } from '@iconify/react'
+import { ArrowLeft, Plus, AlertTriangle, Building2, Crown, Edit2, Trash2 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { Department } from '@/pages/teachers/types'
@@ -100,7 +100,7 @@ export default function DepartmentsPage() {
           <div style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'380px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
             <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
               <div style={{ width:'36px', height:'36px', borderRadius:'8px', background:'var(--red-light)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <Icon icon="lucide:alert-triangle" width={18} style={{ color:'var(--red)' }} />
+                <AlertTriangle size={18} style={{ color:'var(--red)' }} />
               </div>
               <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?'মুছে ফেলুন?':'Delete?'}</h3>
             </div>
@@ -127,7 +127,7 @@ export default function DepartmentsPage() {
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
             background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px',
             color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
-          <Icon icon="lucide:arrow-left" width={14} />
+          <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
         <div style={{ flex:1 }}>
@@ -142,7 +142,7 @@ export default function DepartmentsPage() {
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px',
             background:'var(--amber-light)', border:'1px solid var(--amber)', color:'var(--amber)',
             fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-          <Icon icon="lucide:plus" width={14} />{isBn?'নতুন যোগ করুন':'Add Department'}
+          <Plus size={14} />{isBn?'নতুন যোগ করুন':'Add Department'}
         </button>
       </div>
 
@@ -172,7 +172,7 @@ export default function DepartmentsPage() {
             <tbody>
               {departments.length === 0
                 ? <tr><td colSpan={7} style={{ padding:'40px', textAlign:'center', color:'var(--text-muted)' }}>
-                    <Icon icon="lucide:building-2" width={28} style={{ display:'block', margin:'0 auto 8px', opacity:0.3 }} />
+                    <Building2 size={28} style={{ display:'block', margin:'0 auto 8px', opacity:0.3 }} />
                     {isBn?'কোনো বিভাগ পাওয়া যায়নি':'No departments found'}
                   </td></tr>
                 : departments.map((d, i) => (
@@ -184,7 +184,7 @@ export default function DepartmentsPage() {
                     <td style={{ padding:'10px 8px' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                         <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:'var(--amber-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                          <Icon icon="lucide:building-2" width={16} style={{ color:'var(--amber)' }} />
+                          <Building2 size={16} style={{ color:'var(--amber)' }} />
                         </div>
                         <span style={{ fontSize:'13px', fontWeight:500, color:'var(--text-primary)' }}>{d.name}</span>
                       </div>
@@ -193,7 +193,7 @@ export default function DepartmentsPage() {
                     <td style={{ padding:'10px 8px', fontSize:'12px', color:'var(--text-secondary)' }}>
                       {d.head ? (
                         <div style={{ display:'flex', alignItems:'center', gap:'5px' }}>
-                          <Icon icon="lucide:crown" width={12} style={{ color:'var(--amber)' }} />
+                          <Crown size={12} style={{ color:'var(--amber)' }} />
                           {d.head}
                         </div>
                       ) : '—'}
@@ -212,11 +212,11 @@ export default function DepartmentsPage() {
                       <div style={{ display:'flex', gap:'4px' }}>
                         <button onClick={() => startEdit(d)} title={isBn?'এডিট':'Edit'}
                           style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--amber)' }}>
-                          <Icon icon="lucide:edit-2" width={12} />
+                          <Edit2 size={12} />
                         </button>
                         <button onClick={() => setDelConfirm(d.id)} title={isBn?'মুছুন':'Delete'}
                           style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--red-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--red)' }}>
-                          <Icon icon="lucide:trash-2" width={12} />
+                          <Trash2 size={12} />
                         </button>
                       </div>
                     </td>

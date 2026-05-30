@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react'
-import { Icon } from '@iconify/react'
+import { CheckCircle, User, GraduationCap, ShieldCheck, IdCard, Camera, X, Download, MessageSquare, Send } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -131,10 +131,10 @@ export default function GeneralAdmission() {
     background: 'var(--bg-primary)', border: '1px solid var(--border)',
     borderRadius: '14px', padding: isMobile ? '14px' : '20px', marginBottom: '14px',
   }
-  const sHead = (icon: string, bn: string, en: string, col = 'var(--brand)', bg = 'var(--brand-light)') => (
+  const sHead = (icon: React.ReactNode, bn: string, en: string, col = 'var(--brand)', bg = 'var(--brand-light)') => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
       <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon icon={icon} width={15} style={{ color: col }} />
+        {React.cloneElement(icon as React.ReactElement<{ size?: number; style?: React.CSSProperties }>, { size: 15, style: { color: col } })}
       </div>
       <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? bn : en}</span>
       <span style={{ fontSize: '10px', color: 'var(--red)', marginLeft: '4px' }}>* {isBn ? 'বাধ্যতামূলক' : 'Required'}</span>
@@ -145,7 +145,7 @@ export default function GeneralAdmission() {
   if (done) return (
     <div style={{ ...card, textAlign: 'center', padding: '40px 20px' }}>
       <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-        <Icon icon="lucide:check-circle" width={30} style={{ color: 'var(--green)' }} />
+        <CheckCircle size={30} style={{ color: 'var(--green)' }} />
       </div>
       <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '10px' }}>
         {isBn ? 'আবেদন জমা হয়েছে!' : 'Application Submitted!'}
@@ -163,7 +163,7 @@ export default function GeneralAdmission() {
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
         <button onClick={downloadPDF}
           style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', borderRadius: '9px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-          <Icon icon="lucide:download" width={14} /> {isBn ? 'আবেদনপত্র PDF' : 'Download Application PDF'}
+          <Download size={14} /> {isBn ? 'আবেদনপত্র PDF' : 'Download Application PDF'}
         </button>
         <button onClick={() => { setDone(false); setForm(initForm()) }}
           style={{ padding: '10px 18px', borderRadius: '9px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -180,7 +180,7 @@ export default function GeneralAdmission() {
       <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon icon="lucide:id-card" width={20} style={{ color: 'var(--brand)' }} />
+            <IdCard size={20} style={{ color: 'var(--brand)' }} />
           </div>
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{isBn ? 'স্বয়ংক্রিয় ছাত্র আইডি' : 'Auto Student ID'}</div>
@@ -194,7 +194,7 @@ export default function GeneralAdmission() {
 
       {/* Personal */}
       <div style={card}>
-        {sHead('lucide:user', 'ব্যক্তিগত তথ্য', 'Personal Information')}
+        {sHead(<User />, 'ব্যক্তিগত তথ্য', 'Personal Information')}
         <div style={{ display: 'flex', gap: '16px', marginBottom: '14px', flexWrap: 'wrap' }}>
           {/* Photo */}
           <div>
@@ -206,13 +206,13 @@ export default function GeneralAdmission() {
               {form.photo
                 ? <img src={form.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : <div style={{ textAlign: 'center', color: 'var(--text-muted)', pointerEvents: 'none' }}>
-                    <Icon icon="lucide:camera" width={22} style={{ display: 'block', margin: '0 auto 4px' }} />
+                    <Camera size={22} style={{ display: 'block', margin: '0 auto 4px' }} />
                     <div style={{ fontSize: '10px' }}>{isBn ? 'ছবি' : 'Photo'}</div>
                   </div>}
               {form.photo && (
                 <button type="button" onClick={e => { e.stopPropagation(); set('photo', '') }}
                   style={{ position: 'absolute', top: 3, right: 3, width: '18px', height: '18px', borderRadius: '50%', background: 'var(--red)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-                  <Icon icon="lucide:x" width={10} />
+                  <X size={10} />
                 </button>
               )}
             </div>
@@ -253,7 +253,7 @@ export default function GeneralAdmission() {
 
       {/* Academic */}
       <div style={card}>
-        {sHead('lucide:graduation-cap', 'একাডেমিক তথ্য', 'Academic Info', 'var(--teal)', 'var(--teal-light)')}
+        {sHead(<GraduationCap />, 'একাডেমিক তথ্য', 'Academic Info', 'var(--teal)', 'var(--teal-light)')}
         <div style={{ ...g(3), marginBottom: '10px' }}>
           <FormField labelEn="Class" labelBn="শ্রেণি" value={form.class} onChange={v => set('class', v)} required isBn={isBn}
             options={['1','2','3','4','5','6','7','8','9','10']} />
@@ -271,7 +271,7 @@ export default function GeneralAdmission() {
 
       {/* Father */}
       <div style={card}>
-        {sHead('lucide:user', 'পিতার তথ্য', "Father's Info", 'var(--teal)', 'var(--teal-light)')}
+        {sHead(<User />, 'পিতার তথ্য', "Father's Info", 'var(--teal)', 'var(--teal-light)')}
         <div style={{ ...g(3), marginBottom: '10px' }}>
           <FormField labelEn="Name (EN)" labelBn="নাম (ইংরেজি)" value={form.fatherNameEn} onChange={v => set('fatherNameEn', v)} required isBn={isBn} />
           <FormField labelEn="Name (BN)" labelBn="নাম (বাংলা)" value={form.fatherNameBn} onChange={v => set('fatherNameBn', v)} required isBn={isBn} />
@@ -285,7 +285,7 @@ export default function GeneralAdmission() {
 
       {/* Mother */}
       <div style={card}>
-        {sHead('lucide:user', 'মাতার তথ্য', "Mother's Info", 'var(--purple)', 'var(--purple-light)')}
+        {sHead(<User />, 'মাতার তথ্য', "Mother's Info", 'var(--purple)', 'var(--purple-light)')}
         <div style={{ ...g(3), marginBottom: '10px' }}>
           <FormField labelEn="Name (EN)" labelBn="নাম (ইংরেজি)" value={form.motherNameEn} onChange={v => set('motherNameEn', v)} required isBn={isBn} />
           <FormField labelEn="Name (BN)" labelBn="নাম (বাংলা)" value={form.motherNameBn} onChange={v => set('motherNameBn', v)} required isBn={isBn} />
@@ -299,7 +299,7 @@ export default function GeneralAdmission() {
 
       {/* Guardian */}
       <div style={card}>
-        {sHead('lucide:shield-check', 'অভিভাবক (ঐচ্ছিক)', 'Guardian (Optional)', 'var(--green)', 'var(--green-light)')}
+        {sHead(<ShieldCheck />, 'অভিভাবক (ঐচ্ছিক)', 'Guardian (Optional)', 'var(--green)', 'var(--green-light)')}
         <div style={g(3)}>
           <FormField labelEn="Name" labelBn="নাম" value={form.guardianName} onChange={v => set('guardianName', v)} isBn={isBn} />
           <FormField labelEn="Relation" labelBn="সম্পর্ক" value={form.guardianRelation} onChange={v => set('guardianRelation', v)} isBn={isBn}
@@ -310,7 +310,7 @@ export default function GeneralAdmission() {
 
       {/* SMS notice */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--teal-light)', border: '1px solid var(--teal)', borderRadius: '10px', padding: '10px 14px', marginBottom: '14px' }}>
-        <Icon icon="lucide:message-square" width={16} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+        <MessageSquare size={16} style={{ color: 'var(--teal)', flexShrink: 0 }} />
         <p style={{ fontSize: '12px', color: 'var(--teal)' }}>
           {isBn
             ? `আবেদন জমা দিলে ${form.phone || '...'} এ SMS যাবে।`
@@ -326,7 +326,7 @@ export default function GeneralAdmission() {
         </button>
         <button type="submit"
           style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 24px', borderRadius: '9px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}>
-          <Icon icon="lucide:send" width={14} />
+          <Send size={14} />
           {isBn ? 'আবেদন জমা দিন' : 'Submit Application'}
         </button>
       </div>

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import { Icon } from '@iconify/react'
+import { CheckCircle, Info, Trash2, Plus, Upload, Check } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import type { StudentAdmission } from './types'
@@ -91,7 +91,7 @@ export default function BulkAdmission() {
   if (done) return (
     <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '14px', padding: '40px', textAlign: 'center' }}>
       <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-        <Icon icon="lucide:check-circle" width={30} style={{ color: 'var(--green)' }} />
+        <CheckCircle size={30} style={{ color: 'var(--green)' }} />
       </div>
       <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
         {isBn ? `${count} জন ছাত্র ভর্তি হয়েছে!` : `${count} Students Submitted!`}
@@ -120,7 +120,7 @@ export default function BulkAdmission() {
     <div>
       {/* Info */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--brand-light)', border: '1px solid var(--brand)', borderRadius: '10px', padding: '10px 14px', marginBottom: '12px' }}>
-        <Icon icon="lucide:info" width={16} style={{ color: 'var(--brand)', flexShrink: 0 }} />
+        <Info size={16} style={{ color: 'var(--brand)', flexShrink: 0 }} />
         <p style={{ fontSize: '13px', color: 'var(--brand)' }}>
           {isBn ? 'প্রয়োজনীয় তথ্য দিন। বিস্তারিত পরে আপডেট করা যাবে।' : 'Enter essential info. Details can be updated later.'}
         </p>
@@ -167,7 +167,7 @@ export default function BulkAdmission() {
                     {rows.length > 1 && (
                       <button onClick={() => removeRow(i)} type="button"
                         style={{ width: '26px', height: '26px', borderRadius: '7px', background: 'var(--red-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)' }}>
-                        <Icon icon="lucide:trash-2" width={12} />
+                        <Trash2 size={12} />
                       </button>
                     )}
                   </td>
@@ -182,18 +182,18 @@ export default function BulkAdmission() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
         <button onClick={addRow} type="button"
           style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px dashed var(--brand)', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
-          <Icon icon="lucide:plus" width={14} />
+          <Plus size={14} />
           {isBn ? 'সারি যোগ করুন' : 'Add Row'}
         </button>
         <div style={{ display: 'flex', gap: '8px' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 14px', borderRadius: '9px', background: 'var(--green-light)', border: '1px solid var(--green)', color: 'var(--green)', fontSize: '13px', cursor: 'pointer', fontWeight: 500 }}>
-            <Icon icon="lucide:upload" width={14} />
+            <Upload size={14} />
             {isBn ? 'CSV আপলোড' : 'CSV Upload'}
             <input type="file" accept=".csv" style={{ display: 'none' }} />
           </label>
           <button onClick={handleSubmit} type="button"
             style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 20px', borderRadius: '9px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}>
-            <Icon icon="lucide:check" width={14} />
+            <Check size={14} />
             {isBn ? `${rows.length} জনকে ভর্তি করুন` : `Admit ${rows.length} Students`}
           </button>
         </div>

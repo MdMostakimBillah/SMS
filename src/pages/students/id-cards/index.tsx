@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Icon } from '@iconify/react'
+import { ArrowLeft, IdCard, Printer, Search, User } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -66,7 +66,7 @@ function IDCard({ student, template, fields, institution, isBn }: {
           <div style={{ width: '65px', height: '80px', borderRadius: '8px', border: `2px solid ${t.primary}`, overflow: 'hidden', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             {student.photo
               ? <img src={student.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <Icon icon="lucide:user" width={24} style={{ color: t.primary, opacity: 0.4 }} />}
+              : <User size={24} style={{ color: t.primary, opacity: 0.4 }} />}
           </div>
         )}
 
@@ -228,7 +228,7 @@ export default function IDCardsPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px', flexWrap: 'wrap' }}>
         <button onClick={() => navigate('/students')}
           style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '13px', color: 'var(--text-secondary)', fontFamily: 'inherit', flexShrink: 0 }}>
-          <Icon icon="lucide:arrow-left" width={14} />
+          <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div style={{ flex: 1 }}>
@@ -241,7 +241,7 @@ export default function IDCardsPage() {
         </div>
         <button onClick={printCards} disabled={displayList.length === 0}
           style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '9px', background: displayList.length === 0 ? 'var(--border-2)' : 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: displayList.length === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit', boxShadow: displayList.length > 0 ? '0 4px 12px rgba(99,102,241,0.3)' : 'none' }}>
-          <Icon icon="lucide:printer" width={14} />
+          <Printer size={14} />
           {isBn ? 'প্রিন্ট করুন' : 'Print'}
         </button>
       </div>
@@ -302,7 +302,7 @@ export default function IDCardsPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '7px', padding: '6px 8px' }}>
-                <Icon icon="lucide:search" width={12} style={{ color: 'var(--text-muted)' }} />
+                <Search size={12} style={{ color: 'var(--text-muted)' }} />
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder={isBn ? 'নাম বা আইডি...' : 'Name or ID...'}
                   style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '11px', color: 'var(--text-primary)', fontFamily: 'inherit' }} />
               </div>
@@ -327,7 +327,7 @@ export default function IDCardsPage() {
           </div>
           {displayList.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-              <Icon icon="lucide:id-card" width={32} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
+              <IdCard size={32} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
               {isBn ? 'কোনো ছাত্র নির্বাচন করুন' : 'Select students to preview'}
             </div>
           ) : (
