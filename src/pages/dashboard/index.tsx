@@ -1,623 +1,302 @@
 import { Icon } from "@iconify/react"
 import { useAppStore } from "@/store/appStore"
-import { t } from "@/lib/i18n"
-import StatCard from "@/components/shared/StatCard"
-import Card from "@/components/ui/Card"
-import Badge from "@/components/ui/Badge"
+import { useWindowSize } from "@/hooks/useWindowSize"
+import CircularChart from "@/components/ui/CircularChart"
+import useReveal from '@/hooks/useReveal'
 
-// Activity feed এর data
+const stats = [
+  { labelBn: "মোট ছাত্র", labelEn: "Total Students", value: "1,248", changeBn: "↑ ১২% গত টার্ম", changeEn: "↑ 12% last term", up: true, icon: "lucide:users", color: "var(--brand)", bg: "var(--brand-light)" },
+  { labelBn: "শিক্ষক ও স্টাফ", labelEn: "Teachers & Staff", value: "96", changeBn: "↑ এই মাসে ৩ জন", changeEn: "↑ 3 new this month", up: true, icon: "lucide:graduation-cap", color: "var(--teal)", bg: "var(--teal-light)" },
+  { labelBn: "ফি সংগ্রহ", labelEn: "Fees Collected", value: "৳82L", changeBn: "↓ ৪% বকেয়া", changeEn: "↓ 4% outstanding", up: false, icon: "lucide:landmark", color: "var(--amber)", bg: "var(--amber-light)" },
+  { labelBn: "গড় উপস্থিতি", labelEn: "Avg Attendance", value: "92.4%", changeBn: "↑ এই সপ্তাহে ভালো", changeEn: "↑ Good this week", up: true, icon: "lucide:bar-chart-2", color: "var(--green)", bg: "var(--green-light)" },
+]
 const activities = [
-  {
-    id: 1,
-    icon: "lucide:file-check",
-    iconBg: "var(--teal-light)",
-    iconColor: "var(--teal)",
-    text: "রাহুল কুমার Physics Chapter 7 অ্যাসাইনমেন্ট জমা দিয়েছে",
-    textEn: "Rahul Kumar submitted Physics Chapter 7 assignment",
-    time: "২ মিনিট আগে",
-    timeEn: "2 mins ago",
-  },
-  {
-    id: 2,
-    icon: "lucide:credit-card",
-    iconBg: "var(--amber-light)",
-    iconColor: "var(--amber)",
-    text: "নিশা দাসের অভিভাবক টার্ম ২ ফি পরিশোধ করেছেন (৳১২,৫০০)",
-    textEn: "Parent of Nisha Das paid Term 2 fees (৳12,500)",
-    time: "১৮ মিনিট আগে",
-    timeEn: "18 mins ago",
-  },
-  {
-    id: 3,
-    icon: "lucide:clipboard-list",
-    iconBg: "var(--brand-light)",
-    iconColor: "var(--brand)",
-    text: "গ্রেড ১০ এর পরীক্ষার সময়সূচি প্রকাশিত হয়েছে",
-    textEn: "Exam schedule for Grade 10 published",
-    time: "১ ঘণ্টা আগে",
-    timeEn: "1 hour ago",
-  },
-  {
-    id: 4,
-    icon: "lucide:building-2",
-    iconBg: "var(--teal-light)",
-    iconColor: "var(--teal)",
-    text: "তারিক ইসলামের হোস্টেল রুম বরাদ্দ নিশ্চিত হয়েছে (Block B-204)",
-    textEn: "Tariq Islam hostel room confirmed (Block B-204)",
-    time: "৩ ঘণ্টা আগে",
-    timeEn: "3 hours ago",
-  },
-  {
-    id: 5,
-    icon: "lucide:user-plus",
-    iconBg: "var(--green-light)",
-    iconColor: "var(--green)",
-    text: "নতুন ভর্তি: আনিকা রায়, গ্রেড ৭ সেকশন C",
-    textEn: "New admission: Anika Roy, Grade 7 Section C",
-    time: "৫ ঘণ্টা আগে",
-    timeEn: "5 hours ago",
-  },
+  { icon: "lucide:file-check", bg: "var(--teal-light)", color: "var(--teal)", bn: "রাহুল কুমার Physics অ্যাসাইনমেন্ট জমা দিয়েছে", en: "Rahul Kumar submitted Physics assignment", tbn: "২ মিনিট আগে", ten: "2 mins ago" },
+  { icon: "lucide:credit-card", bg: "var(--amber-light)", color: "var(--amber)", bn: "নিশা দাসের অভিভাবক টার্ম ২ ফি পরিশোধ করেছেন", en: "Parent of Nisha Das paid Term 2 fees", tbn: "১৮ মিনিট আগে", ten: "18 mins ago" },
+  { icon: "lucide:clipboard-list", bg: "var(--brand-light)", color: "var(--brand)", bn: "গ্রেড ১০ এর পরীক্ষার সময়সূচি প্রকাশিত", en: "Exam schedule for Grade 10 published", tbn: "১ ঘণ্টা আগে", ten: "1 hour ago" },
+  { icon: "lucide:user-plus", bg: "var(--green-light)", color: "var(--green)", bn: "নতুন ভর্তি: আনিকা রায়, গ্রেড ৭ C", en: "New admission: Anika Roy, Grade 7 C", tbn: "৫ ঘণ্টা আগে", ten: "5 hours ago" },
 ]
-
-// Upcoming events এর data
 const events = [
-  {
-    id: 1,
-    title: "বার্ষিক পরীক্ষা শুরু",
-    titleEn: "Annual Exam begins",
-    sub: "গ্রেড ৯ ও ১০",
-    subEn: "Grade 9 & 10",
-    date: "২০ মে",
-    dateEn: "May 20",
-    color: "var(--red)",
-    bg: "var(--red-light)",
-  },
-  {
-    id: 2,
-    title: "অভিভাবক-শিক্ষক সভা",
-    titleEn: "Parent-Teacher Meeting",
-    sub: "সকল সেকশন",
-    subEn: "All sections",
-    date: "২৪ মে",
-    dateEn: "May 24",
-    color: "var(--amber)",
-    bg: "var(--amber-light)",
-  },
-  {
-    id: 3,
-    title: "বিজ্ঞান মেলা ২০২৬",
-    titleEn: "Science Fair 2026",
-    sub: "অডিটোরিয়াম",
-    subEn: "Auditorium",
-    date: "২ জুন",
-    dateEn: "Jun 2",
-    color: "var(--teal)",
-    bg: "var(--teal-light)",
-  },
-  {
-    id: 4,
-    title: "টার্ম ২ ফলাফল প্রকাশ",
-    titleEn: "Term 2 Result Published",
-    sub: "সকল ক্লাস",
-    subEn: "All classes",
-    date: "১৫ জুন",
-    dateEn: "Jun 15",
-    color: "var(--brand)",
-    bg: "var(--brand-light)",
-  },
+  { bn: "বার্ষিক পরীক্ষা শুরু", en: "Annual Exam begins", dbn: "২০ মে", den: "May 20", color: "var(--red)", bg: "var(--red-light)", icon: "lucide:clipboard-list" },
+  { bn: "অভিভাবক-শিক্ষক সভা", en: "Parent-Teacher Meeting", dbn: "২৪ মে", den: "May 24", color: "var(--amber)", bg: "var(--amber-light)", icon: "lucide:users" },
+  { bn: "বিজ্ঞান মেলা ২০২৬", en: "Science Fair 2026", dbn: "২ জুন", den: "Jun 2", color: "var(--teal)", bg: "var(--teal-light)", icon: "lucide:flask-conical" },
+  { bn: "টার্ম ২ ফলাফল", en: "Term 2 Result", dbn: "১৫ জুন", den: "Jun 15", color: "var(--brand)", bg: "var(--brand-light)", icon: "lucide:award" },
+]
+const topStudents = [
+  { name: "Tariq Islam",  cls: "Grade 10 A", score: "97%", av: "TI", color: "#6366f1" },
+  { name: "Priya Sen",    cls: "Grade 10 B", score: "94%", av: "PS", color: "#0ea5e9" },
+  { name: "Rahul Kumar",  cls: "Grade 9 A",  score: "91%", av: "RK", color: "#f59e0b" },
+  { name: "Nisha Das",    cls: "Grade 8 B",  score: "89%", av: "ND", color: "#10b981" },
+]
+const overviews = [
+  { bn: "আজকের উপস্থিতি", en: "Today's Attendance", val: "92%", bar: 92, icon: "lucide:calendar-check", color: "var(--green)" },
+  { bn: "ফি সংগ্রহ", en: "Fee Collection", val: "82%", bar: 82, icon: "lucide:landmark", color: "var(--brand)" },
+  { bn: "অ্যাসাইনমেন্ট জমা", en: "Assignments", val: "89%", bar: 89, icon: "lucide:file-check", color: "var(--teal)" },
+  { bn: "পরীক্ষার প্রস্তুতি", en: "Exam Readiness", val: "74%", bar: 74, icon: "lucide:clipboard-list", color: "var(--amber)" },
+]
+const todaysEmployeesAbsent = [
+  { name: 'Ayesha Rahman', role: 'Registrar' },
+  { name: 'Md. Karim', role: 'Physics Teacher' },
+  { name: 'Sultana Begum', role: 'Librarian' },
+  { name: 'Rafiq Hossain', role: 'Math Teacher' },
+  { name: 'Fatema Begum', role: 'Admin Staff' },
 ]
 
-// Top students data
-const topStudents = [
-  { id: 1, name: "Tariq Islam",  class: "Grade 10 A", score: "97%", avatar: "TI", color: "#534AB7" },
-  { id: 2, name: "Priya Sen",    class: "Grade 10 B", score: "94%", avatar: "PS", color: "#1D9E75" },
-  { id: 3, name: "Rahul Kumar",  class: "Grade 9 A",  score: "91%", avatar: "RK", color: "#BA7517" },
-  { id: 4, name: "Nisha Das",    class: "Grade 8 B",  score: "89%", avatar: "ND", color: "#E24B4A" },
+const todaysStudentsAbsent = [
+  { name: 'Anika Roy', cls: 'Grade 7 C' },
+  { name: 'Tariq Islam', cls: 'Grade 10 A' },
+  { name: 'Rahul Kumar', cls: 'Grade 9 A' },
+  { name: 'Nisha Das', cls: 'Grade 8 B' },
+  { name: 'Sakib Hasan', cls: 'Grade 6 A' },
+  { name: 'Maliha Khan', cls: 'Grade 10 B' },
+  { name: 'Arif Rahman', cls: 'Grade 7 A' },
+  { name: 'Tasnim Ahmed', cls: 'Grade 9 C' },
 ]
+
 
 export default function DashboardPage() {
   const { language } = useAppStore()
+  const { isMobile, isTablet } = useWindowSize()
   const isBn = language === "bn"
 
-  return (
-    <div>
+  useReveal('.reveal', 50)
 
-      {/* Page header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          marginBottom: "20px",
-        }}
-      >
+  const col4 = isMobile ? "1fr 1fr" : isTablet ? "repeat(2,1fr)" : "repeat(4,1fr)"
+  const col2 = isMobile ? "1fr" : "1fr 1fr"
+  const gap = isMobile ? "10px" : "14px"
+
+  const card: React.CSSProperties = {
+    background: "var(--bg-primary)",
+    border: "1px solid var(--border)",
+    borderRadius: "14px",
+    padding: isMobile ? "14px" : "18px",
+    boxShadow: "var(--shadow-sm)",
+  }
+
+  const sectionHead = (color: string) => (
+    <div style={{ width: "4px", height: "16px", background: color, borderRadius: "4px" }} />
+  )
+
+  return (
+    <div className="reveal" style={{ display: "flex", flexDirection: "column", gap: gap }}>
+
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
         <div>
-          <h1
-            style={{
-              fontSize: "22px",
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              letterSpacing: "-0.3px",
-            }}
-          >
+          <h1 style={{ fontSize: isMobile ? "18px" : "22px", fontWeight: 600, color: "var(--text-primary)" }}>
             {isBn ? "সুপ্রভাত, Admin 👋" : "Good morning, Admin 👋"}
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginTop: "3px" }}>
-            {isBn
-              ? "শুক্রবার, ৮ মে ২০২৬ · টার্ম ২, সপ্তাহ ১৪"
-              : "Friday, 8 May 2026 · Term 2, Week 14"}
+          <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginTop: "4px" }}>
+            {isBn ? "শুক্রবার, ৮ মে ২০২৬ · টার্ম ২" : "Friday, 8 May 2026 · Term 2"}
           </p>
         </div>
-
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 14px",
-              borderRadius: "8px",
-              background: "var(--bg-primary)",
-              border: "0.5px solid var(--border)",
-              cursor: "pointer",
-              fontSize: "13px",
-              color: "var(--text-secondary)",
-              fontFamily: "inherit",
-            }}
-          >
-            <Icon icon="lucide:download" width={14} />
-            {isBn ? "Export" : "Export"}
-          </button>
-          <button
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 14px",
-              borderRadius: "8px",
-              background: "var(--brand)",
-              border: "none",
-              cursor: "pointer",
-              fontSize: "13px",
-              color: "#fff",
-              fontFamily: "inherit",
-              fontWeight: 500,
-            }}
-          >
-            <Icon icon="lucide:plus" width={14} />
-            {isBn ? "নতুন যোগ করুন" : "Quick Add"}
-          </button>
-        </div>
+        {!isMobile && (
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "9px", background: "var(--bg-primary)", border: "1px solid var(--border)", fontSize: "13px", color: "var(--text-secondary)", fontFamily: "inherit", cursor: "pointer" }}>
+              <Icon icon="lucide:download" width={14} /> Export
+            </button>
+            <button style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "9px", background: "var(--brand)", border: "none", fontSize: "13px", color: "#fff", fontFamily: "inherit", fontWeight: 500, cursor: "pointer", boxShadow: "0 4px 12px rgba(99,102,241,0.3)" }}>
+              <Icon icon="lucide:plus" width={14} />
+              {isBn ? "নতুন" : "Add New"}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Notification pill */}
-      <div
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          background: "var(--brand-light)",
-          border: "0.5px solid var(--brand)",
-          borderRadius: "20px",
-          padding: "5px 12px",
-          fontSize: "12px",
-          color: "var(--brand)",
-          marginBottom: "20px",
-        }}
-      >
-        <span
-          style={{
-            width: "6px",
-            height: "6px",
-            borderRadius: "50%",
-            background: "var(--brand)",
-            animation: "pulse 2s infinite",
-          }}
-        />
-        {isBn
-          ? "৩টি ফি রিমাইন্ডার পাঠানো হয়েছে · বার্ষিক পরীক্ষা শুরু ২০ মে · নতুন ভর্তি: আনিকা রায়"
-          : "3 fee reminders sent · Annual exams start May 20 · New admission: Anika Roy"}
+      {/* Alert */}
+      <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--brand-light)", border: "1px solid var(--brand)", borderRadius: "30px", padding: "6px 14px", fontSize: "12px", color: "var(--brand)", alignSelf: "flex-start", fontWeight: 500, flexWrap: "wrap" }}>
+        <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--brand)", animation: "pulse 2s infinite", flexShrink: 0 }} />
+        {isBn ? "৩টি ফি রিমাইন্ডার · পরীক্ষা ২০ মে" : "3 fee reminders · Exams May 20"}
       </div>
 
       {/* Stat cards */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "14px",
-          marginBottom: "20px",
-        }}
-      >
-        <StatCard
-          label={isBn ? "মোট ছাত্র" : "Total Students"}
-          value="১,২৪৮"
-          change={isBn ? "গত টার্মের চেয়ে ১২% বেশি" : "12% from last term"}
-          changeType="up"
-          icon="lucide:users"
-          iconColor="var(--brand)"
-          iconBg="var(--brand-light)"
-        />
-        <StatCard
-          label={isBn ? "শিক্ষক ও স্টাফ" : "Teachers & Staff"}
-          value="৯৬"
-          change={isBn ? "এই মাসে ৩ জন নতুন" : "3 new this month"}
-          changeType="up"
-          icon="lucide:graduation-cap"
-          iconColor="var(--teal)"
-          iconBg="var(--teal-light)"
-        />
-        <StatCard
-          label={isBn ? "ফি সংগ্রহ" : "Fees Collected"}
-          value="৳৮২L"
-          change={isBn ? "৪% বকেয়া আছে" : "4% outstanding"}
-          changeType="down"
-          icon="lucide:landmark"
-          iconColor="var(--amber)"
-          iconBg="var(--amber-light)"
-        />
-        <StatCard
-          label={isBn ? "গড় উপস্থিতি" : "Avg Attendance"}
-          value="৯২.৪%"
-          change={isBn ? "এই সপ্তাহে ১.২% বেশি" : "1.2% up this week"}
-          changeType="up"
-          icon="lucide:bar-chart-2"
-          iconColor="var(--green)"
-          iconBg="var(--green-light)"
-        />
+      <div className="card--grid" style={{ display: "grid", gridTemplateColumns: col4, gap }}>
+        {stats.map(s => (
+          <div key={s.labelEn} className="card--premium reveal" style={{ ...card, display: "flex", flexDirection: "column", gap: "10px", position: "relative", overflow: "hidden", cursor: "default", transition: "all 0.15s" }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)' }}
+          >
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: s.color, borderRadius: "14px 14px 0 0" }} />
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+              <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: s.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Icon icon={s.icon} width={17} style={{ color: s.color }} />
+              </div>
+              <Icon icon="lucide:more-horizontal" width={15} style={{ color: "var(--text-muted)" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.5px", lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "3px" }}>{isBn ? s.labelBn : s.labelEn}</div>
+            </div>
+            <div style={{ fontSize: "11px", color: s.up ? "var(--green)" : "var(--red)", display: "flex", alignItems: "center", gap: "3px", fontWeight: 500 }}>
+              <Icon icon={s.up ? "lucide:trending-up" : "lucide:trending-down"} width={12} />
+              {isBn ? s.changeBn : s.changeEn}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Middle row — Activity + Events */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "14px",
-          marginBottom: "14px",
-        }}
-      >
-        {/* Recent Activity */}
-        <Card>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "14px",
-            }}
-          >
-            <span style={{ fontSize: "14px", fontWeight: 500, color: "var(--text-primary)" }}>
-              {isBn ? "সাম্প্রতিক কার্যক্রম" : "Recent Activity"}
-            </span>
-            <span
-              style={{ fontSize: "12px", color: "var(--brand)", cursor: "pointer" }}
-            >
-              {isBn ? "সব দেখুন →" : "View all →"}
-            </span>
+      {/* Activity + Events */}
+      <div style={{ display: "grid", gridTemplateColumns: col2, gap }}>
+        <div className="card--premium reveal" style={{ ...card, transition: "all 0.15s" }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)' }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {sectionHead("var(--brand)")}
+              <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "সাম্প্রতিক কার্যক্রম" : "Recent Activity"}</span>
+            </div>
+            <span style={{ fontSize: "12px", color: "var(--brand)", cursor: "pointer", fontWeight: 500 }}>{isBn ? "সব →" : "All →"}</span>
           </div>
+          {activities.map((a, i) => (
+            <div key={i} style={{ display: "flex", gap: "10px", padding: "9px 0", borderBottom: i < activities.length - 1 ? "1px solid var(--border)" : "none" }}>
+              <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: a.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Icon icon={a.icon} width={14} style={{ color: a.color }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "12px", color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{isBn ? a.bn : a.en}</div>
+                <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>{isBn ? a.tbn : a.ten}</div>
+              </div>
+            </div>
+          ))}
+        </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            {activities.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  padding: "8px 0",
-                  borderBottom: "0.5px solid var(--border)",
-                }}
-              >
-                <div
-                  style={{
-                    width: "30px",
-                    height: "30px",
-                    borderRadius: "50%",
-                    background: item.iconBg,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon icon={item.icon} width={14} style={{ color: item.iconColor }} />
+        <div className="card--premium reveal" style={{ ...card, transition: "all 0.15s" }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)' }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {sectionHead("var(--teal)")}
+              <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "আসন্ন ইভেন্ট" : "Upcoming Events"}</span>
+            </div>
+            <span style={{ fontSize: "12px", color: "var(--brand)", cursor: "pointer", fontWeight: 500 }}>{isBn ? "ক্যালেন্ডার →" : "Calendar →"}</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {events.map((ev, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 10px", background: "var(--bg-secondary)", borderRadius: "10px", border: "1px solid var(--border)", cursor: "pointer" }}>
+                <div style={{ width: "34px", height: "34px", borderRadius: "9px", background: ev.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon icon={ev.icon} width={15} style={{ color: ev.color }} />
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      color: "var(--text-secondary)",
-                      lineHeight: 1.5,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {isBn ? item.text : item.textEn}
-                  </div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
-                    {isBn ? item.time : item.timeEn}
-                  </div>
+                <div style={{ flex: 1, minWidth: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {isBn ? ev.bn : ev.en}
                 </div>
+                <span style={{ fontSize: "11px", fontWeight: 600, color: ev.color, background: ev.bg, padding: "3px 8px", borderRadius: "6px", flexShrink: 0 }}>
+                  {isBn ? ev.dbn : ev.den}
+                </span>
               </div>
             ))}
           </div>
-        </Card>
-
-        {/* Upcoming Events */}
-        <Card>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "14px",
-            }}
-          >
-            <span style={{ fontSize: "14px", fontWeight: 500, color: "var(--text-primary)" }}>
-              {isBn ? "আসন্ন ইভেন্ট" : "Upcoming Events"}
-            </span>
-            <span style={{ fontSize: "12px", color: "var(--brand)", cursor: "pointer" }}>
-              {isBn ? "ক্যালেন্ডার →" : "Calendar →"}
-            </span>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {events.map((event) => (
-              <div
-                key={event.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  padding: "10px",
-                  background: "var(--bg-secondary)",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                }}
-              >
-                {/* Date badge */}
-                <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "8px",
-                    background: event.bg,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    flexDirection: "column",
-                  }}
-                >
-                  <Icon icon="lucide:calendar" width={16} style={{ color: event.color }} />
-                </div>
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: 500,
-                      color: "var(--text-primary)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {isBn ? event.title : event.titleEn}
-                  </div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
-                    {isBn ? event.sub : event.subEn}
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 500,
-                    color: event.color,
-                    background: event.bg,
-                    padding: "3px 8px",
-                    borderRadius: "6px",
-                    flexShrink: 0,
-                  }}
-                >
-                  {isBn ? event.date : event.dateEn}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+        </div>
       </div>
 
-      {/* Bottom row — Top Students + Quick Stats */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "14px",
-        }}
-      >
-        {/* Top Students */}
-        <Card>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "14px",
-            }}
-          >
-            <span style={{ fontSize: "14px", fontWeight: 500, color: "var(--text-primary)" }}>
-              {isBn ? "শীর্ষ ছাত্র" : "Top Students"}
-            </span>
-            <Badge variant="info">{isBn ? "এই টার্ম" : "This Term"}</Badge>
+      {/* Today's Snapshot */}
+      <div className="card--premium reveal" style={card}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {sectionHead('var(--purple)')}
+            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'আজকের সারসংক্ষেপ' : "Today's Snapshot"}</span>
+          </div>
+          <span style={{ fontSize: '12px', color: 'var(--brand)', cursor: 'pointer', fontWeight: 500 }}>{isBn ? 'বিস্তারিত →' : 'Details →'}</span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: col2, gap: '12px' }}>
+          {/* Student Absence */}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: '14px', padding: '16px', border: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+            <div style={{ flexShrink: 0, textAlign: 'center' }}>
+              <CircularChart value={Math.round((todaysStudentsAbsent.length / 1248) * 100)} size={90} stroke={9} color="var(--brand)" />
+              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginTop: '8px' }}>{isBn ? 'ছাত্র অনুপস্থিতি' : 'Students Absent'}</div>
+            </div>
+            <div style={{ flex: 1, minWidth: 0, maxHeight: '160px', overflowY: 'auto' }}>
+              {todaysStudentsAbsent.map(s => (
+                <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                    {s.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{s.cls}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {/* Employee Absence */}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: '14px', padding: '16px', border: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+            <div style={{ flexShrink: 0, textAlign: 'center' }}>
+              <CircularChart value={Math.round((todaysEmployeesAbsent.length / 96) * 100)} size={90} stroke={9} color="var(--teal)" />
+              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginTop: '8px' }}>{isBn ? 'কর্মী অনুপস্থিতি' : 'Employees Absent'}</div>
+            </div>
+            <div style={{ flex: 1, minWidth: 0, maxHeight: '160px', overflowY: 'auto' }}>
+              {todaysEmployeesAbsent.map(e => (
+                <div key={e.name} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                    {e.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{e.role}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Top students + Overview */}
+      <div style={{ display: "grid", gridTemplateColumns: col2, gap }}>
+        <div className="card--premium reveal" style={card}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {sectionHead("var(--amber)")}
+              <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "শীর্ষ ছাত্র" : "Top Students"}</span>
+            </div>
+            <span style={{ fontSize: "11px", fontWeight: 500, color: "var(--amber)", background: "var(--amber-light)", padding: "3px 9px", borderRadius: "6px" }}>
+              {isBn ? "এই টার্ম" : "This Term"}
+            </span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             {topStudents.map((s, i) => (
-              <div
-                key={s.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  padding: "8px",
-                  borderRadius: "8px",
-                  background: "var(--bg-secondary)",
-                }}
-              >
-                {/* Rank */}
-                <div
-                  style={{
-                    width: "20px",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    color: i === 0 ? "var(--amber)" : "var(--text-muted)",
-                    textAlign: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  {i + 1}
-                </div>
-
-                {/* Avatar */}
-                <div
-                  style={{
-                    width: "30px",
-                    height: "30px",
-                    borderRadius: "50%",
-                    background: s.color,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    color: "#fff",
-                    flexShrink: 0,
-                  }}
-                >
-                  {s.avatar}
-                </div>
-
-                {/* Name */}
+              <div key={s.name} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 10px", borderRadius: "10px", background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
+                <span style={{ width: "20px", fontSize: "12px", fontWeight: 700, color: i === 0 ? "var(--amber)" : "var(--text-muted)", textAlign: "center" }}>{i + 1}</span>
+                <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: s.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 700, color: "#fff", flexShrink: 0 }}>{s.av}</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
-                    {s.name}
-                  </div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{s.class}</div>
+                  <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>{s.name}</div>
+                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{s.cls}</div>
                 </div>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", background: "var(--green-light)", padding: "3px 8px", borderRadius: "6px" }}>{s.score}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
-                {/* Score */}
-                <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--green)" }}>
-                  {s.score}
+        <div className="card--premium reveal" style={card}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+            {sectionHead("var(--green)")}
+            <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "দ্রুত পরিসংখ্যান" : "Quick Overview"}</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            {overviews.map(item => (
+              <div key={item.en}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Icon icon={item.icon} width={13} style={{ color: item.color }} />
+                    <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{isBn ? item.bn : item.en}</span>
+                  </div>
+                  <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-primary)" }}>{item.val}</span>
+                </div>
+                <div style={{ height: "5px", background: "var(--bg-secondary)", borderRadius: "5px", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${item.bar}%`, background: item.color, borderRadius: "5px" }} />
                 </div>
               </div>
             ))}
           </div>
-        </Card>
-
-        {/* Quick Overview */}
-        <Card>
-          <div style={{ fontSize: "14px", fontWeight: 500, color: "var(--text-primary)", marginBottom: "14px" }}>
-            {isBn ? "দ্রুত পরিসংখ্যান" : "Quick Overview"}
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {[
-              {
-                label: isBn ? "আজকের উপস্থিতি" : "Today's Attendance",
-                value: "92%",
-                icon: "lucide:calendar-check",
-                color: "var(--green)",
-                bg: "var(--green-light)",
-                bar: 92,
-              },
-              {
-                label: isBn ? "ফি সংগ্রহ" : "Fee Collection",
-                value: "82%",
-                icon: "lucide:landmark",
-                color: "var(--brand)",
-                bg: "var(--brand-light)",
-                bar: 82,
-              },
-              {
-                label: isBn ? "অ্যাসাইনমেন্ট জমা" : "Assignment Submission",
-                value: "89%",
-                icon: "lucide:file-check",
-                color: "var(--teal)",
-                bg: "var(--teal-light)",
-                bar: 89,
-              },
-              {
-                label: isBn ? "পরীক্ষার প্রস্তুতি" : "Exam Readiness",
-                value: "74%",
-                icon: "lucide:clipboard-list",
-                color: "var(--amber)",
-                bg: "var(--amber-light)",
-                bar: 74,
-              },
-            ].map((item) => (
-              <div key={item.label}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: "5px",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-                    <div
-                      style={{
-                        width: "24px",
-                        height: "24px",
-                        borderRadius: "6px",
-                        background: item.bg,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Icon icon={item.icon} width={12} style={{ color: item.color }} />
-                    </div>
-                    <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-                      {item.label}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
-                    {item.value}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    height: "4px",
-                    background: "var(--border-2)",
-                    borderRadius: "2px",
-                  }}
-                >
-                  <div
-                    style={{
-                      height: "100%",
-                      width: `${item.bar}%`,
-                      background: item.color,
-                      borderRadius: "2px",
-                      transition: "width 0.5s ease",
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+        </div>
       </div>
 
-      {/* CSS animation */}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
-      `}</style>
-
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }`}</style>
     </div>
   )
 }

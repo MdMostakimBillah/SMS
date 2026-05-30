@@ -1,0 +1,658 @@
+import { useState, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Icon } from '@iconify/react'
+import * as XLSX from 'xlsx'
+import { useAppStore } from '@/store/appStore'
+import { useTeacherStore } from '@/store/teacherStore'
+import { TeacherPDFOptionsModal } from '@/components/shared/TeacherPDFOptionsModal'
+import { generateTeacherListPDF } from '@/pages/teachers/listPdfTemplate'
+import type { TeacherListPDFOptions } from '@/pages/teachers/listPdfTemplate'
+import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
+
+const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
+const BLOOD_GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-']
+
+export default function AllTeachersPage() {
+  const navigate = useNavigate()
+  const { language } = useAppStore()
+  const { teachers, departments, subjects, deleteTeacher, updateTeacher } = useTeacherStore()
+  const isBn = language === 'bn'
+
+  const [search, setSearch] = useState('')
+  const [fDept, setFDept] = useState('')
+  const [fGender, setFGender] = useState('')
+  const [fStatus, setFStatus] = useState('')
+  const [fBlood, setFBlood] = useState('')
+  const [fReligion, setFReligion] = useState('')
+  const [perPage, setPerPage] = useState(20)
+  const [page, setPage] = useState(1)
+  const [viewT, setViewT] = useState<Teacher | null>(null)
+  const [editT, setEditT] = useState<Teacher | null>(null)
+  const [delConfirm, setDelConfirm] = useState<string | null>(null)
+  const [showPDF, setShowPDF] = useState(false)
+  const [selected, setSelected] = useState<string[]>([])
+
+  const filtered = useMemo(() => teachers.filter(t => {
+    if (search) {
+      const q = search.toLowerCase()
+      if (!t.nameEn.toLowerCase().includes(q) && !t.nameBn.includes(search) &&
+          !t.id.includes(q) && !t.phone.includes(q) &&
+          !t.email.toLowerCase().includes(q) && !t.nid.includes(q) &&
+          !t.fatherNameEn.toLowerCase().includes(q) && !t.motherNameEn.toLowerCase().includes(q) &&
+          !t.fatherPhone.includes(q) && !t.motherPhone.includes(q)) return false
+    }
+    if (fDept && t.departmentId !== fDept) return false
+    if (fGender && t.gender !== fGender) return false
+    if (fStatus && t.status !== fStatus) return false
+    if (fBlood && t.bloodGroup !== fBlood) return false
+    if (fReligion && !t.religion.includes(fReligion)) return false
+    return true
+  }), [teachers, search, fDept, fGender, fStatus, fBlood, fReligion])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
+  const sp = Math.min(page, totalPages)
+  const paginated = useMemo(() => filtered.slice((sp - 1) * perPage, sp * perPage), [filtered, sp, perPage])
+
+  const pageIds = paginated.map(t => t.id)
+  const allSel  = pageIds.length > 0 && pageIds.every(id => selected.includes(id))
+
+  const toggleAll = useCallback(() =>
+    setSelected(p => allSel ? p.filter(id => !pageIds.includes(id)) : [...new Set([...p, ...pageIds])]),
+    [allSel, pageIds])
+  const toggleOne = useCallback((id: string) =>
+    setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]), [])
+
+  const stats = useMemo(() => ({
+    total: filtered.length,
+    active: filtered.filter(t => t.status === 'active').length,
+    inactive: filtered.filter(t => t.status === 'inactive').length,
+    onLeave: filtered.filter(t => t.status === 'on-leave').length,
+  }), [filtered])
+
+  const clearFilters = useCallback(() => {
+    setSearch(''); setFDept(''); setFGender(''); setFStatus(''); setFBlood(''); setFReligion(''); setPage(1)
+  }, [])
+  const hasFilter = search || fDept || fGender || fStatus || fBlood || fReligion
+
+  const getDeptName = (id: string) => {
+    const d = departments.find(x => x.id === id)
+    return d ? (isBn ? d.nameBn : d.name) : '—'
+  }
+  const getSubjectNames = (ids: string[]) => {
+    return ids.map(id => {
+      const s = subjects.find(x => x.id === id)
+      return s ? (isBn ? s.nameBn : s.name) : ''
+    }).filter(Boolean).join(', ') || '—'
+  }
+
+  const handleDelete = (id: string) => {
+    deleteTeacher(id)
+    setDelConfirm(null)
+    setViewT(null)
+  }
+
+  const statusBadge = (st: TeacherStatus) => {
+    const m: Record<TeacherStatus, {b:string;c:string;l:string;lb:string}> = {
+      'active': { b:'var(--green-light)', c:'var(--green)', l:'Active', lb:'সক্রিয়' },
+      'inactive': { b:'var(--red-light)', c:'var(--red)', l:'Inactive', lb:'নিষ্ক্রিয়' },
+      'on-leave': { b:'var(--amber-light)', c:'var(--amber)', l:'On Leave', lb:'ছুটিতে' },
+    }
+    const x = m[st]
+    return <span style={{ fontSize:'10px', fontWeight:600, padding:'2px 7px', borderRadius:'10px', background:x.b, color:x.c, whiteSpace:'nowrap' }}>{isBn?x.lb:x.l}</span>
+  }
+
+  const exportExcel = useCallback(() => {
+    const list = selected.length > 0 ? filtered.filter(t => selected.includes(t.id)) : filtered
+    const data = list.map((t, i) => ({
+      '#': i + 1, 'Teacher ID': t.id,
+      'Name EN': t.nameEn, 'Name BN': t.nameBn,
+      'Gender': t.gender, 'Phone': t.phone, 'Email': t.email,
+      'Department': getDeptName(t.departmentId), 'Designation': t.designation,
+      'Qualification': t.qualification, 'Experience': t.experience,
+      'Blood Group': t.bloodGroup, 'Religion': t.religion,
+      'In Time': t.inTime, 'Out Time': t.outTime,
+      'Salary': t.salary, 'Joining Date': t.joiningDate, 'Status': t.status,
+      'Father': t.fatherNameEn, 'Father Phone': t.fatherPhone,
+      'Mother': t.motherNameEn, 'Mother Phone': t.motherPhone,
+    }))
+    const ws = XLSX.utils.json_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Teachers')
+    XLSX.writeFile(wb, `teachers_${new Date().toISOString().split('T')[0]}.xlsx`)
+  }, [selected, filtered, departments, isBn])
+
+  const handlePDF = useCallback((opts: TeacherListPDFOptions) => {
+    const list = selected.length > 0 ? filtered.filter(t => selected.includes(t.id)) : filtered
+    const win  = window.open('', '_blank')
+    if (!win) return
+    win.document.write(generateTeacherListPDF(list, opts, departments))
+    win.document.close()
+    setTimeout(() => win.print(), 800)
+    setShowPDF(false)
+  }, [selected, filtered, departments])
+
+  const downloadSinglePDF = useCallback((t: Teacher) => {
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(generateTeacherListPDF([t], {
+      title: t.nameEn,
+      selectedCols: ALL_TEACHER_PDF_COLUMNS.filter(c => !['serial'].includes(c.key)).map(c => c.key),
+      emptyRows: 0, emptyColumns: [], orientation: 'portrait', isBn,
+    }, departments))
+    win.document.close()
+    setTimeout(() => win.print(), 800)
+  }, [departments, isBn])
+
+  const ALL_TEACHER_PDF_COLUMNS = useMemo(() => [
+    { key: 'serial' }, { key: 'id' }, { key: 'nameEn' }, { key: 'nameBn' }, { key: 'gender' },
+    { key: 'phone' }, { key: 'email' }, { key: 'department' }, { key: 'designation' },
+    { key: 'dob' }, { key: 'bloodGroup' }, { key: 'religion' }, { key: 'qualification' },
+    { key: 'experience' }, { key: 'joiningDate' }, { key: 'salary' }, { key: 'inTime' },
+    { key: 'outTime' }, { key: 'status' },
+  ], [])
+
+  const sel: React.CSSProperties = {
+    padding: '7px 9px', borderRadius: '8px', border: '1px solid var(--border)',
+    background: 'var(--bg-secondary)', color: 'var(--text-secondary)',
+    fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer', outline: 'none',
+  }
+
+  return (
+    <div>
+      {/* PDF Modal */}
+      {showPDF && <TeacherPDFOptionsModal count={selected.length||filtered.length} isBn={isBn} onClose={() => setShowPDF(false)} onDownload={handlePDF} />}
+
+      {/* View Modal */}
+      {viewT && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}>
+          <div style={{ background:'var(--bg-primary)', borderRadius:'16px', maxWidth:'560px', width:'100%', maxHeight:'90vh', overflow:'hidden', display:'flex', flexDirection:'column', border:'1px solid var(--border)', boxShadow:'var(--shadow-lg)' }}>
+            <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--brand-light)' }}>
+              <div>
+                <div style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?viewT.nameBn||viewT.nameEn:viewT.nameEn}</div>
+                <div style={{ fontSize:'11px', color:'var(--brand)', fontFamily:'monospace' }}>{viewT.id}</div>
+              </div>
+              <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
+                {statusBadge(viewT.status)}
+                <button onClick={() => setViewT(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <Icon icon="lucide:x" width={14} style={{ color:'var(--text-secondary)' }} />
+                </button>
+              </div>
+            </div>
+            <div style={{ flex:1, overflowY:'auto', padding:'16px 18px' }}>
+              <div style={{ display:'flex', gap:'14px', marginBottom:'14px' }}>
+                <div style={{ width:'80px', height:'95px', borderRadius:'8px', border:'1px solid var(--border)', overflow:'hidden', background:'var(--bg-secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  {viewT.photo ? <img src={viewT.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <Icon icon="lucide:user" width={28} style={{ color:'var(--text-muted)' }} />}
+                </div>
+                <div>
+                  <h3 style={{ fontSize:'16px', fontWeight:600, color:'var(--text-primary)' }}>{viewT.nameEn}</h3>
+                  <p style={{ fontSize:'13px', color:'var(--text-secondary)' }}>{viewT.nameBn}</p>
+                  <div style={{ display:'flex', gap:'5px', marginTop:'6px', flexWrap:'wrap' }}>
+                    {[
+                      { t:getDeptName(viewT.departmentId), c:'var(--brand)', b:'var(--brand-light)' },
+                      { t:viewT.designation, c:'var(--teal)', b:'var(--teal-light)' },
+                      { t:viewT.gender==='Male'?(isBn?'পুরুষ':'Male'):(isBn?'মহিলা':'Female'), c:'var(--purple)', b:'var(--purple-light)' },
+                      { t:viewT.bloodGroup, c:'var(--red)', b:'var(--red-light)' },
+                    ].filter(x => x.t).map((x,i) => (
+                      <span key={i} style={{ fontSize:'11px', fontWeight:500, padding:'2px 8px', borderRadius:'5px', color:x.c, background:x.b }}>{x.t}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {[
+                [isBn?'মোবাইল':'Phone', viewT.phone],
+                ['Email', viewT.email],
+                [isBn?'ঠিকানা':'Address', viewT.address],
+                [isBn?'জন্ম তারিখ':'DOB', viewT.dob],
+                [isBn?'রক্তের গ্রুপ':'Blood', viewT.bloodGroup],
+                [isBn?'ধর্ম':'Religion', viewT.religion],
+                [isBn?'বিভাগ':'Department', getDeptName(viewT.departmentId)],
+                [isBn?'বিষয়':'Subjects', getSubjectNames(viewT.subjectIds)],
+                [isBn?'পদবি':'Designation', viewT.designation],
+                [isBn?'যোগ্যতা':'Qualification', viewT.qualification],
+                [isBn?'অভিজ্ঞতা':'Experience', viewT.experience],
+                [isBn?'যোগদানের তারিখ':'Joining Date', viewT.joiningDate],
+                [isBn?'বেতন':'Salary', `৳${viewT.salary.toLocaleString()}`],
+                [isBn?'প্রবেশ সময়':'In Time', viewT.inTime],
+                [isBn?'প্রস্থান সময়':'Out Time', viewT.outTime],
+                [isBn?'জাতীয় পরিচয়':'NID', viewT.nid],
+                [isBn?'জরুরি মোবাইল':'Emergency Phone', viewT.emergencyPhone],
+                [isBn?'পিতার নাম':'Father', viewT.fatherNameEn],
+                [isBn?'পিতার মোবাইল':'Father Phone', viewT.fatherPhone],
+                [isBn?'মাতার নাম':'Mother', viewT.motherNameEn],
+                [isBn?'মাতার মোবাইল':'Mother Phone', viewT.motherPhone],
+                [isBn?'অভিভাবক':'Guardian', viewT.guardianName],
+                [isBn?'অভিভাবক মোবাইল':'Guardian Phone', viewT.guardianPhone],
+                [isBn?'অভিভাবক ঠিকানা':'Parent Address', viewT.parentAddress],
+              ].map(([l,v]) => v ? (
+                <div key={String(l)} style={{ display:'flex', gap:'8px', padding:'5px 0', borderBottom:'0.5px solid var(--border)' }}>
+                  <span style={{ fontSize:'11px', color:'var(--text-muted)', width:'120px', flexShrink:0 }}>{l}</span>
+                  <span style={{ fontSize:'12px', color:'var(--text-primary)', fontWeight:500 }}>{v}</span>
+                </div>
+              ) : null)}
+            </div>
+            <div style={{ padding:'12px 18px', borderTop:'1px solid var(--border)', display:'flex', gap:'8px', justifyContent:'flex-end' }}>
+              <button onClick={() => downloadSinglePDF(viewT)}
+                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
+                  background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
+                  fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
+                <Icon icon="lucide:file-text" width={13} />PDF
+              </button>
+              <button onClick={() => { setDelConfirm(viewT.id) }}
+                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
+                  background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
+                  fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
+                <Icon icon="lucide:trash-2" width={13} />{isBn?'মুছুন':'Delete'}
+              </button>
+              <button onClick={() => { setEditT(viewT); setViewT(null) }}
+                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
+                  background:'var(--amber)', border:'none', color:'#fff', fontSize:'13px', fontWeight:500,
+                  cursor:'pointer', fontFamily:'inherit' }}>
+                <Icon icon="lucide:edit-2" width={13} />{isBn?'এডিট':'Edit'}
+              </button>
+              <button onClick={() => setViewT(null)}
+                style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)',
+                  border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'13px',
+                  cursor:'pointer', fontFamily:'inherit' }}>
+                {isBn?'বন্ধ':'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation */}
+      {delConfirm && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}>
+          <div style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'380px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
+              <div style={{ width:'36px', height:'36px', borderRadius:'8px', background:'var(--red-light)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <Icon icon="lucide:alert-triangle" width={18} style={{ color:'var(--red)' }} />
+              </div>
+              <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?'মুছে ফেলুন?':'Delete?'}</h3>
+            </div>
+            <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginBottom:'16px' }}>
+              {isBn?'এই শিক্ষককে স্থায়ীভাবে মুছে ফেলা হবে।':'This teacher will be permanently deleted.'}
+            </p>
+            <div style={{ display:'flex', gap:'8px', justifyContent:'flex-end' }}>
+              <button onClick={() => setDelConfirm(null)}
+                style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)', border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
+                {isBn?'বাতিল':'Cancel'}
+              </button>
+              <button onClick={() => handleDelete(delConfirm)}
+                style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--red)', border:'none', color:'#fff', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+                {isBn?'মুছে ফেলুন':'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editT && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}>
+          <div style={{ background:'var(--bg-primary)', borderRadius:'16px', maxWidth:'500px', width:'100%', maxHeight:'90vh', overflow:'hidden', display:'flex', flexDirection:'column', border:'1px solid var(--border)' }}>
+            <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?'এডিট শিক্ষক':'Edit Teacher'}</h3>
+              <button onClick={() => setEditT(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <Icon icon="lucide:x" width={14} style={{ color:'var(--text-secondary)' }} />
+              </button>
+            </div>
+            <div style={{ flex:1, overflowY:'auto', padding:'16px 18px' }}>
+              <EditForm teacher={editT} departments={departments} subjects={subjects} isBn={isBn}
+                onSave={(data) => { updateTeacher(editT.id, data); setEditT(null) }}
+                onCancel={() => setEditT(null)} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
+        <button onClick={() => navigate('/teachers')}
+          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
+            background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px',
+            color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
+          <Icon icon="lucide:arrow-left" width={14} />
+          {isBn?'ফিরে যান':'Back'}
+        </button>
+        <div style={{ flex:1 }}>
+          <h1 style={{ fontSize:'22px', fontWeight:600, color:'var(--text-primary)' }}>
+            {isBn?'সকল শিক্ষক':'All Teachers'}
+          </h1>
+          <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginTop:'3px' }}>
+            {isBn
+              ? `মোট ${stats.total} জন · সক্রিয় ${stats.active} · নিষ্ক্রিয় ${stats.inactive} · ছুটিতে ${stats.onLeave}`
+              : `Total ${stats.total} · Active ${stats.active} · Inactive ${stats.inactive} · On Leave ${stats.onLeave}`}
+          </p>
+        </div>
+        <button onClick={() => navigate('/teachers/add')}
+          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px',
+            background:'var(--teal-light)', border:'1px solid var(--teal)', color:'var(--teal)',
+            fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+          <Icon icon="lucide:user-plus" width={14} />{isBn?'নতুন যোগ করুন':'Add Teacher'}
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
+        <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr 1fr', gap:'8px' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'7px 10px' }}>
+            <Icon icon="lucide:search" width={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
+            <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
+              placeholder={isBn?'নাম, আইডি, মোবাইল, পিতা, মাতা...':'Name, ID, phone, father, mother...'}
+              style={{ flex:1, border:'none', background:'transparent', outline:'none', fontSize:'13px', color:'var(--text-primary)', fontFamily:'inherit' }} />
+            {search && <button onClick={() => setSearch('')} style={{ border:'none', background:'transparent', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}><Icon icon="lucide:x" width={12} /></button>}
+          </div>
+          <select value={fDept} onChange={e => { setFDept(e.target.value); setPage(1) }} style={sel}>
+            <option value="">{isBn?'সব বিভাগ':'All Depts'}</option>
+            {departments.map(d => <option key={d.id} value={d.id}>{isBn?d.nameBn:d.name}</option>)}
+          </select>
+          <select value={fGender} onChange={e => { setFGender(e.target.value); setPage(1) }} style={sel}>
+            <option value="">{isBn?'সব লিঙ্গ':'All Genders'}</option>
+            <option value="Male">{isBn?'পুরুষ':'Male'}</option>
+            <option value="Female">{isBn?'মহিলা':'Female'}</option>
+          </select>
+          <select value={fReligion} onChange={e => { setFReligion(e.target.value); setPage(1) }} style={sel}>
+            <option value="">{isBn?'সব ধর্ম':'All Religions'}</option>
+            <option value="Islam">{isBn?'ইসলাম':'Islam'}</option>
+            <option value="Hinduism">{isBn?'হিন্দু':'Hinduism'}</option>
+            <option value="Christianity">{isBn?'খ্রিস্টান':'Christianity'}</option>
+            <option value="Buddhism">{isBn?'বৌদ্ধ':'Buddhism'}</option>
+          </select>
+          <select value={fBlood} onChange={e => { setFBlood(e.target.value); setPage(1) }} style={sel}>
+            <option value="">{isBn?'রক্তের গ্রুপ':'Blood'}</option>
+            {BLOOD_GROUPS.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+          <select value={fStatus} onChange={e => { setFStatus(e.target.value); setPage(1) }} style={sel}>
+            <option value="">{isBn?'সব অবস্থা':'All Status'}</option>
+            <option value="active">{isBn?'সক্রিয়':'Active'}</option>
+            <option value="inactive">{isBn?'নিষ্ক্রিয়':'Inactive'}</option>
+            <option value="on-leave">{isBn?'ছুটিতে':'On Leave'}</option>
+          </select>
+        </div>
+        {hasFilter && (
+          <button onClick={clearFilters}
+            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'4px 10px', borderRadius:'6px',
+              background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
+              fontSize:'11px', cursor:'pointer', fontFamily:'inherit', marginTop:'8px' }}>
+            <Icon icon="lucide:x" width={11} />{isBn?'ফিল্টার সরান':'Clear Filters'}
+          </button>
+        )}
+      </div>
+
+      {/* Toolbar */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px', flexWrap:'wrap', gap:'8px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+          <span style={{ fontSize:'12px', color:'var(--text-secondary)' }}>{isBn?'প্রতি পাতায়:':'Per page:'}</span>
+          <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }} style={{ ...sel, padding:'5px 8px' }}>
+            {PER_PAGE_OPTS.map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+          {selected.length > 0 && (
+            <span style={{ fontSize:'12px', color:'var(--brand)', background:'var(--brand-light)', padding:'3px 10px', borderRadius:'6px', fontWeight:500 }}>
+              {selected.length} {isBn?'নির্বাচিত':'selected'}
+            </span>
+          )}
+        </div>
+        <div style={{ display:'flex', gap:'6px' }}>
+          <button onClick={exportExcel}
+            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+            <Icon icon="lucide:file-spreadsheet" width={13} />Excel
+          </button>
+          <button onClick={() => setShowPDF(true)}
+            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+            <Icon icon="lucide:file-text" width={13} />PDF {selected.length>0?`(${selected.length})`:`(${filtered.length})`}
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
+        <div style={{ overflowX:'auto' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
+            <thead>
+              <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
+                <th style={{ padding:'10px 12px', width:'36px' }}>
+                  <input type="checkbox" checked={allSel} onChange={toggleAll}
+                    style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:'var(--brand)' }} />
+                </th>
+                {[
+                  { l:'#', w:'36px' }, { l:isBn?'ছবি':'Photo', w:'44px' },
+                  { l:isBn?'আইডি':'ID', w:'130px' },
+                  { l:isBn?'নাম':'Name', w:'160px' },
+                  { l:isBn?'বিভাগ':'Dept', w:'100px' },
+                  { l:isBn?'পদবি':'Designation', w:'120px' },
+                  { l:isBn?'লিঙ্গ':'Gender', w:'65px' },
+                  { l:isBn?'রক্ত':'Blood', w:'55px' },
+                  { l:isBn?'মোবাইল':'Phone', w:'108px' },
+                  { l:isBn?'ইন টাইম':'In Time', w:'70px' },
+                  { l:isBn?'আউট টাইম':'Out Time', w:'75px' },
+                  { l:isBn?'অবস্থা':'Status', w:'85px' },
+                  { l:isBn?'অ্যাকশন':'Action', w:'70px' },
+                ].map(h => (
+                  <th key={h.l} style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600,
+                    color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.4px',
+                    whiteSpace:'nowrap', minWidth:h.w }}>
+                    {h.l}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.length === 0
+                ? <tr><td colSpan={14} style={{ padding:'40px', textAlign:'center', color:'var(--text-muted)' }}>
+                    <Icon icon="lucide:users" width={28} style={{ display:'block', margin:'0 auto 8px', opacity:0.3 }} />
+                    {isBn?'কোনো শিক্ষক পাওয়া যায়নি':'No teachers found'}
+                  </td></tr>
+                : paginated.map((t, i) => (
+                  <tr key={t.id}
+                    style={{ borderBottom:'0.5px solid var(--border)', background:selected.includes(t.id)?'rgba(99,102,241,0.04)':'transparent', cursor:'default' }}
+                    onMouseEnter={e => { if (!selected.includes(t.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
+                    onMouseLeave={e => { if (!selected.includes(t.id)) e.currentTarget.style.background = 'transparent' }}>
+                    <td style={{ padding:'8px 12px' }}>
+                      <input type="checkbox" checked={selected.includes(t.id)} onChange={() => toggleOne(t.id)}
+                        style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:'var(--brand)' }} />
+                    </td>
+                    <td style={{ padding:'8px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px' }}>{(sp-1)*perPage+i+1}</td>
+                    <td style={{ padding:'7px 8px' }}>
+                      <div style={{ width:'30px', height:'36px', borderRadius:'5px', overflow:'hidden', background:'var(--bg-secondary)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        {t.photo ? <img src={t.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <Icon icon="lucide:user" width={13} style={{ color:'var(--text-muted)' }} />}
+                      </div>
+                    </td>
+                    <td style={{ padding:'8px 8px' }}>
+                      <span style={{ fontSize:'10px', fontFamily:'monospace', color:'var(--brand)', background:'var(--brand-light)', padding:'2px 5px', borderRadius:'4px' }}>{t.id}</span>
+                    </td>
+                    <td style={{ padding:'8px 8px' }}>
+                      <div style={{ fontSize:'12px', fontWeight:500, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'155px' }}>{isBn?t.nameBn||t.nameEn:t.nameEn}</div>
+                      <div style={{ fontSize:'10px', color:'var(--text-muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{isBn?t.nameEn:t.nameBn}</div>
+                    </td>
+                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px' }}>{getDeptName(t.departmentId)}</td>
+                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px' }}>{t.designation || '—'}</td>
+                    <td style={{ padding:'8px 8px' }}>
+                      <span style={{ fontSize:'10px', padding:'2px 6px', borderRadius:'5px', background:t.gender==='Female'?'var(--purple-light)':'var(--teal-light)', color:t.gender==='Female'?'var(--purple)':'var(--teal)', fontWeight:500 }}>
+                        {t.gender==='Female'?(isBn?'মহিলা':'Female'):(isBn?'পুরুষ':'Male')}
+                      </span>
+                    </td>
+                    <td style={{ padding:'8px 8px', fontSize:'11px', color:'var(--red)', fontWeight:500 }}>{t.bloodGroup||'—'}</td>
+                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontFamily:'monospace', fontSize:'11px' }}>{t.phone}</td>
+                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px' }}>{t.inTime || '—'}</td>
+                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px' }}>{t.outTime || '—'}</td>
+                    <td style={{ padding:'8px 8px' }}>{statusBadge(t.status)}</td>
+                    <td style={{ padding:'8px 8px' }}>
+                      <div style={{ display:'flex', gap:'3px' }}>
+                        <button onClick={() => setViewT(t)} title="View"
+                          style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--brand-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--brand)' }}>
+                          <Icon icon="lucide:eye" width={12} />
+                        </button>
+                        <button onClick={() => setEditT(t)} title="Edit"
+                          style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--amber)' }}>
+                          <Icon icon="lucide:edit-2" width={12} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+        {/* Pagination */}
+        <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center', background:'var(--bg-secondary)', flexWrap:'wrap', gap:'8px' }}>
+          <span style={{ fontSize:'12px', color:'var(--text-muted)' }}>
+            {(sp-1)*perPage+1}–{Math.min(sp*perPage,filtered.length)} / {filtered.length}
+          </span>
+          <div style={{ display:'flex', gap:'3px' }}>
+            {[['lucide:chevrons-left',()=>setPage(1),sp===1],['lucide:chevron-left',()=>setPage(p=>Math.max(1,p-1)),sp===1]].map(([ic,a,d],i)=>(
+              <button key={i} onClick={a as ()=>void} disabled={d as boolean}
+                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:(d as boolean)?'var(--text-muted)':'var(--text-secondary)', cursor:(d as boolean)?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <Icon icon={ic as string} width={12} />
+              </button>
+            ))}
+            {(()=>{
+              const start = Math.max(1, Math.min(sp-2, totalPages-4))
+              return Array.from({ length: Math.min(5, totalPages) }, (_,i) => start+i).map(p => (
+                <button key={p} onClick={()=>setPage(p)}
+                  style={{ width:'28px', height:'28px', borderRadius:'6px', border:`1px solid ${p===sp?'var(--brand)':'var(--border)'}`, background:p===sp?'var(--brand)':'var(--bg-primary)', color:p===sp?'#fff':'var(--text-secondary)', cursor:'pointer', fontSize:'12px', fontWeight:p===sp?600:400 }}>
+                  {p}
+                </button>
+              ))
+            })()}
+            {[['lucide:chevron-right',()=>setPage(p=>Math.min(totalPages,p+1)),sp===totalPages],['lucide:chevrons-right',()=>setPage(totalPages),sp===totalPages]].map(([ic,a,d],i)=>(
+              <button key={i} onClick={a as ()=>void} disabled={d as boolean}
+                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:(d as boolean)?'var(--text-muted)':'var(--text-secondary)', cursor:(d as boolean)?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <Icon icon={ic as string} width={12} />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* Edit Form Component */
+function EditForm({ teacher, departments, subjects, isBn, onSave, onCancel }: {
+  teacher: Teacher; departments: any[]; subjects: any[]; isBn: boolean
+  onSave: (data: Partial<Teacher>) => void; onCancel: () => void
+}) {
+  const [nameEn, setNameEn] = useState(teacher.nameEn)
+  const [nameBn, setNameBn] = useState(teacher.nameBn)
+  const [gender, setGender] = useState(teacher.gender)
+  const [phone, setPhone] = useState(teacher.phone)
+  const [email, setEmail] = useState(teacher.email)
+  const [address, setAddress] = useState(teacher.address)
+  const [departmentId, setDepartmentId] = useState(teacher.departmentId)
+  const [subjectIds, setSubjectIds] = useState<string[]>(teacher.subjectIds)
+  const [designation, setDesignation] = useState(teacher.designation)
+  const [qualification, setQualification] = useState(teacher.qualification)
+  const [experience, setExperience] = useState(teacher.experience)
+  const [salary, setSalary] = useState(String(teacher.salary))
+  const [status, setStatus] = useState<TeacherStatus>(teacher.status)
+  const [inTime, setInTime] = useState(teacher.inTime || '')
+  const [outTime, setOutTime] = useState(teacher.outTime || '')
+
+  const filteredSubjects = subjects.filter(s => !departmentId || s.departmentId === departmentId)
+  const toggleSubject = (id: string) => setSubjectIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
+
+  const input: React.CSSProperties = {
+    width: '100%', padding: '8px 10px', borderRadius: '8px',
+    border: '1px solid var(--border)', background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)', fontSize: '12px', fontFamily: 'inherit', outline: 'none',
+  }
+  const label: React.CSSProperties = { fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }
+
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px' }}>
+      <div style={{ gridColumn:'1 / -1' }}>
+        <label style={label}>{isBn?'নাম (ইংরেজি) *':'Name (English) *'}</label>
+        <input value={nameEn} onChange={e => setNameEn(e.target.value)} style={input} />
+      </div>
+      <div style={{ gridColumn:'1 / -1' }}>
+        <label style={label}>{isBn?'নাম (বাংলা)':'Name (Bangla)'}</label>
+        <input value={nameBn} onChange={e => setNameBn(e.target.value)} style={input} />
+      </div>
+      <div>
+        <label style={label}>{isBn?'লিঙ্গ':'Gender'}</label>
+        <select value={gender} onChange={e => setGender(e.target.value)} style={input}>
+          <option value="Male">{isBn?'পুরুষ':'Male'}</option>
+          <option value="Female">{isBn?'মহিলা':'Female'}</option>
+        </select>
+      </div>
+      <div>
+        <label style={label}>{isBn?'মোবাইল':'Phone'}</label>
+        <input value={phone} onChange={e => setPhone(e.target.value)} style={input} />
+      </div>
+      <div>
+        <label style={label}>Email</label>
+        <input value={email} onChange={e => setEmail(e.target.value)} style={input} />
+      </div>
+      <div>
+        <label style={label}>{isBn?'বিভাগ':'Department'}</label>
+        <select value={departmentId} onChange={e => { setDepartmentId(e.target.value); setSubjectIds([]) }} style={input}>
+          {departments.map((d: any) => <option key={d.id} value={d.id}>{isBn?d.nameBn:d.name}</option>)}
+        </select>
+      </div>
+      <div style={{ gridColumn:'1 / -1' }}>
+        <label style={label}>{isBn?'ঠিকানা':'Address'}</label>
+        <input value={address} onChange={e => setAddress(e.target.value)} style={input} />
+      </div>
+      <div>
+        <label style={label}>{isBn?'পদবি':'Designation'}</label>
+        <input value={designation} onChange={e => setDesignation(e.target.value)} style={input} />
+      </div>
+      <div>
+        <label style={label}>{isBn?'যোগ্যতা':'Qualification'}</label>
+        <input value={qualification} onChange={e => setQualification(e.target.value)} style={input} />
+      </div>
+      <div>
+        <label style={label}>{isBn?'অভিজ্ঞতা':'Experience'}</label>
+        <input value={experience} onChange={e => setExperience(e.target.value)} style={input} />
+      </div>
+      <div>
+        <label style={label}>{isBn?'বেতন':'Salary'}</label>
+        <input type="number" value={salary} onChange={e => setSalary(e.target.value)} style={input} />
+      </div>
+      <div>
+        <label style={label}>{isBn?'ইন টাইম':'In Time'}</label>
+        <input type="time" value={inTime} onChange={e => setInTime(e.target.value)} style={input} />
+      </div>
+      <div>
+        <label style={label}>{isBn?'আউট টাইম':'Out Time'}</label>
+        <input type="time" value={outTime} onChange={e => setOutTime(e.target.value)} style={input} />
+      </div>
+      <div>
+        <label style={label}>{isBn?'অবস্থা':'Status'}</label>
+        <select value={status} onChange={e => setStatus(e.target.value as TeacherStatus)} style={input}>
+          <option value="active">{isBn?'সক্রিয়':'Active'}</option>
+          <option value="inactive">{isBn?'নিষ্ক্রিয়':'Inactive'}</option>
+          <option value="on-leave">{isBn?'ছুটিতে':'On Leave'}</option>
+        </select>
+      </div>
+      {departmentId && (
+        <div style={{ gridColumn:'1 / -1' }}>
+          <label style={label}>{isBn?'বিষয়':'Subjects'}</label>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:'4px', marginTop:'4px' }}>
+            {filteredSubjects.map((s: any) => (
+              <button key={s.id} onClick={() => toggleSubject(s.id)}
+                style={{ padding:'4px 10px', borderRadius:'7px', fontSize:'11px', cursor:'pointer',
+                  fontFamily:'inherit', border:'1px solid',
+                  borderColor: subjectIds.includes(s.id) ? 'var(--brand)' : 'var(--border)',
+                  background: subjectIds.includes(s.id) ? 'var(--brand-light)' : 'var(--bg-secondary)',
+                  color: subjectIds.includes(s.id) ? 'var(--brand)' : 'var(--text-secondary)' }}>
+                {isBn?s.nameBn:s.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div style={{ gridColumn:'1 / -1', display:'flex', gap:'8px', justifyContent:'flex-end', marginTop:'8px' }}>
+        <button onClick={onCancel}
+          style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)', border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit' }}>
+          {isBn?'বাতিল':'Cancel'}
+        </button>
+        <button onClick={() => onSave({ nameEn, nameBn, gender, phone, email, address, departmentId, subjectIds, designation, qualification, experience, salary: Number(salary)||0, status, inTime, outTime })}
+          style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--brand)', border:'none', color:'#fff', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+          {isBn?'সংরক্ষণ':'Save'}
+        </button>
+      </div>
+    </div>
+  )
+}

@@ -122,10 +122,10 @@ export default function StudentsPage() {
         marginBottom: "24px",
       }}>
         {[
-          { labelBn: "মোট ছাত্র", labelEn: "Total Students", value: "১,২৪৮", icon: "lucide:users", color: "var(--brand)", bg: "var(--brand-light)" },
-          { labelBn: "ছেলে", labelEn: "Male", value: "৬৮৩", icon: "lucide:user", color: "var(--teal)", bg: "var(--teal-light)" },
-          { labelBn: "মেয়ে", labelEn: "Female", value: "৫৬৫", icon: "lucide:user", color: "#7C3AED", bg: "rgba(124,58,237,0.1)" },
-          { labelBn: "এই মাসে নতুন", labelEn: "New This Month", value: "৪৮", icon: "lucide:user-plus", color: "var(--green)", bg: "var(--green-light)" },
+          { labelBn: "মোট ছাত্র", labelEn: "Total Students", valueBn: "১,২৪৮", valueEn: "1,248", icon: "lucide:users", color: "var(--brand)", bg: "var(--brand-light)" },
+          { labelBn: "ছেলে", labelEn: "Male", valueBn: "৬৮৩", valueEn: "683", icon: "lucide:user", color: "var(--teal)", bg: "var(--teal-light)" },
+          { labelBn: "মেয়ে", labelEn: "Female", valueBn: "৫৬৫", valueEn: "565", icon: "lucide:user", color: "#7C3AED", bg: "rgba(124,58,237,0.1)" },
+          { labelBn: "এই মাসে নতুন", labelEn: "New This Month", valueBn: "৪৮", valueEn: "48", icon: "lucide:user-plus", color: "var(--green)", bg: "var(--green-light)" },
         ].map((s) => (
           <div key={s.labelEn} style={{
             background: "var(--bg-primary)",
@@ -135,7 +135,12 @@ export default function StudentsPage() {
             display: "flex",
             alignItems: "center",
             gap: "10px",
-          }}>
+            cursor: "default",
+            transition: "all 0.15s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = s.color; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none' }}
+          >
             <div style={{
               width: "32px", height: "32px",
               borderRadius: "8px",
@@ -146,9 +151,12 @@ export default function StudentsPage() {
               <Icon icon={s.icon} width={16} style={{ color: s.color }} />
             </div>
             <div>
-              <div style={{ fontSize: "18px", fontWeight: 600, color: "var(--text-primary)" }}>
-                {s.value}
-              </div>
+                <div style={{ fontSize: "18px", fontWeight: 600, color: "var(--text-primary)" }}>
+                  {isBn ? s.valueBn : s.valueEn}
+                </div>
+                <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                  {isBn ? s.valueEn : s.valueBn}
+                </div>
               <div style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
                 {isBn ? s.labelBn : s.labelEn}
               </div>

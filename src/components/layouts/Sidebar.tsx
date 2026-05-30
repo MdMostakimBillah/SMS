@@ -14,16 +14,16 @@ const navGroups = [
   {
     key: "grp_manage",
     items: [
-      { key: "nav_students", page: "/students", icon: "lucide:users", badge: "1248", badgeColor: "blue" },
-      { key: "nav_teachers", page: "/teachers", icon: "lucide:chalkboard" },
-      { key: "nav_classes",  page: "/classes",  icon: "lucide:school" },
-      { key: "nav_hr",       page: "/hr",       icon: "lucide:badge" },
+      { key: "nav_students",  page: "/students",  icon: "lucide:users",            badge: "1248", badgeColor: "blue" },
+      { key: "nav_teachers",  page: "/teachers",  icon: "lucide:graduation-cap" },
+      { key: "nav_classes",   page: "/classes",   icon: "lucide:school" },
+      { key: "nav_hr",        page: "/hr",        icon: "lucide:briefcase" },
     ],
   },
   {
     key: "grp_academic",
     items: [
-      { key: "nav_attendance",  page: "/attendance",  icon: "lucide:calendar-check", badge: "3", badgeColor: "red" },
+      { key: "nav_attendance",  page: "/attendance",  icon: "lucide:calendar-check",  badge: "3", badgeColor: "red" },
       { key: "nav_exams",       page: "/exams",       icon: "lucide:clipboard-list" },
       { key: "nav_syllabus",    page: "/syllabus",    icon: "lucide:book-open" },
       { key: "nav_assignments", page: "/assignments", icon: "lucide:file-text" },
@@ -35,7 +35,7 @@ const navGroups = [
     items: [
       { key: "nav_finance",  page: "/finance",  icon: "lucide:landmark" },
       { key: "nav_payroll",  page: "/payroll",  icon: "lucide:wallet" },
-      { key: "nav_store",    page: "/store",    icon: "lucide:shopping-cart" },
+      { key: "nav_store",    page: "/store",    icon: "lucide:shopping-bag" },
       { key: "nav_expenses", page: "/expenses", icon: "lucide:receipt" },
     ],
   },
@@ -83,101 +83,103 @@ export default function Sidebar() {
   const location = useLocation()
 
   return (
-    <aside
-      style={{
-        width: "220px",
-        height: "100%",
-        background: "var(--bg-primary)",
-        borderRight: "0.5px solid var(--border)",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}
-    >
+    <aside style={{
+      width: "240px",
+      height: "100%",
+      background: "var(--bg-primary)",
+      borderRight: "1px solid var(--border)",
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+      flexShrink: 0,
+    }}>
+
       {/* Logo */}
-      <div
-        style={{
-          padding: "14px 12px 10px",
-          borderBottom: "0.5px solid var(--border)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-          <div
-            style={{
-              width: "28px",
-              height: "28px",
-              borderRadius: "6px",
-              background: "var(--brand)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              fontSize: "13px",
-              fontWeight: 600,
-              flexShrink: 0,
-            }}
-          >
-            ET
+      <div style={{
+        padding: "20px 16px 16px",
+        borderBottom: "1px solid var(--border)",
+      }}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          marginBottom: "14px",
+        }}>
+          <div style={{
+            width: "34px", height: "34px",
+            borderRadius: "10px",
+            background: "linear-gradient(135deg, var(--brand) 0%, var(--purple) 100%)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+            boxShadow: "0 4px 12px rgba(99,102,241,0.3)",
+          }}>
+            <Icon icon="lucide:graduation-cap" width={18} color="#fff" />
           </div>
-          <span style={{ fontSize: "15px", fontWeight: 500, color: "var(--text-primary)" }}>
-            EduTech
-          </span>
+          <div>
+            <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1 }}>
+              EduTech
+            </div>
+            <div style={{ fontSize: "10px", color: "var(--text-muted)", marginTop: "2px" }}>
+              School Management
+            </div>
+          </div>
         </div>
 
         {/* Tenant */}
-        <div
-          style={{
-            background: "var(--bg-secondary)",
+        <div style={{
+          background: "var(--bg-secondary)",
+          borderRadius: "10px",
+          padding: "8px 10px",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          border: "1px solid var(--border)",
+        }}>
+          <div style={{
+            width: "28px", height: "28px",
             borderRadius: "8px",
-            padding: "7px 9px",
-            display: "flex",
-            alignItems: "center",
-            gap: "7px",
-          }}
-        >
-          <div
-            style={{
-              width: "6px",
-              height: "6px",
-              borderRadius: "50%",
-              background: "var(--teal)",
-              flexShrink: 0,
-            }}
-          />
-          <div>
-            <div style={{ fontSize: "12px", fontWeight: 500, color: "var(--text-primary)" }}>
+            background: "linear-gradient(135deg, var(--teal) 0%, var(--brand) 100%)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "11px", fontWeight: 600, color: "#fff",
+            flexShrink: 0,
+          }}>
+            SA
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{
+              fontSize: "12px", fontWeight: 500,
+              color: "var(--text-primary)",
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>
               Sunrise Academy
             </div>
-            <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+            <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>
               {t("academic_year", language)}
             </div>
           </div>
+          <Icon icon="lucide:chevrons-up-down" width={12} style={{ color: "var(--text-muted)", marginLeft: "auto", flexShrink: 0 }} />
         </div>
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
+      <nav style={{ flex: 1, overflowY: "auto", padding: "10px 10px" }}>
         {navGroups.map((group) => (
-          <div key={group.key} style={{ marginBottom: "14px" }}>
-
-            {/* Group label */}
-            <div
-              style={{
-                fontSize: "10px",
-                fontWeight: 500,
-                color: "var(--text-muted)",
-                textTransform: "uppercase",
-                letterSpacing: "0.7px",
-                padding: "0 6px",
-                marginBottom: "3px",
-              }}
-            >
+          <div key={group.key} style={{ marginBottom: "18px" }}>
+            <div style={{
+              fontSize: "10px",
+              fontWeight: 600,
+              color: "var(--text-muted)",
+              textTransform: "uppercase",
+              letterSpacing: "0.8px",
+              padding: "0 8px",
+              marginBottom: "4px",
+            }}>
               {t(group.key as TranslationKey, language)}
             </div>
 
-            {/* Nav items */}
             {group.items.map((item) => {
-              const isActive = location.pathname === item.page
+              const isActive = location.pathname === item.page ||
+                location.pathname.startsWith(item.page + "/")
               return (
                 <NavLink
                   key={item.page}
@@ -185,62 +187,56 @@ export default function Sidebar() {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "8px",
-                    padding: "7px 8px",
-                    borderRadius: "8px",
-                    marginBottom: "1px",
+                    gap: "9px",
+                    padding: "8px 10px",
+                    borderRadius: "9px",
+                    marginBottom: "2px",
                     fontSize: "13px",
+                    fontWeight: isActive ? 500 : 400,
                     textDecoration: "none",
-                    transition: "all 0.12s",
-                    background: isActive ? "var(--brand-light)" : "transparent",
-                    color: isActive ? "var(--brand)" : "var(--text-secondary)",
-                    border: isActive
-                      ? "0.5px solid var(--brand)"
-                      : "0.5px solid transparent",
+                    transition: "all 0.15s ease",
+                    background: isActive
+                      ? "var(--brand-light)"
+                      : "transparent",
+                    color: isActive
+                      ? "var(--brand)"
+                      : "var(--text-secondary)",
+                    boxShadow: isActive ? "inset 0 0 0 1px var(--brand)" : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = "var(--bg-secondary)"
+                      e.currentTarget.style.color = "var(--text-primary)"
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = "transparent"
+                      e.currentTarget.style.color = "var(--text-secondary)"
+                    }
                   }}
                 >
-                  {/* Icon */}
                   <Icon
                     icon={item.icon}
                     width={16}
-                    height={16}
                     style={{
                       flexShrink: 0,
                       color: isActive ? "var(--brand)" : "var(--text-muted)",
                     }}
                   />
-
-                  {/* Label */}
-                  <span
-                    style={{
-                      flex: 1,
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
+                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {t(item.key as TranslationKey, language)}
                   </span>
-
-                  {/* Badge */}
                   {item.badge && (
-                    <span
-                      style={{
-                        fontSize: "10px",
-                        fontWeight: 500,
-                        padding: "1px 6px",
-                        borderRadius: "10px",
-                        background:
-                          item.badgeColor === "red"
-                            ? "var(--red-light)"
-                            : "var(--brand-light)",
-                        color:
-                          item.badgeColor === "red"
-                            ? "var(--red)"
-                            : "var(--brand)",
-                        flexShrink: 0,
-                      }}
-                    >
+                    <span style={{
+                      fontSize: "10px",
+                      fontWeight: 600,
+                      padding: "1px 6px",
+                      borderRadius: "10px",
+                      background: item.badgeColor === "red" ? "var(--red-light)" : "var(--brand-light)",
+                      color: item.badgeColor === "red" ? "var(--red)" : "var(--brand)",
+                      flexShrink: 0,
+                    }}>
                       {item.badge}
                     </span>
                   )}
@@ -251,42 +247,37 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Bottom — plan info */}
-      <div style={{ padding: "10px 8px", borderTop: "0.5px solid var(--border)" }}>
-        <div
-          style={{
-            background: "var(--bg-secondary)",
-            borderRadius: "10px",
-            padding: "10px",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "12px", fontWeight: 500, color: "var(--text-primary)" }}>
-              {t("enterprise_plan", language)}
+      {/* Bottom */}
+      <div style={{ padding: "10px", borderTop: "1px solid var(--border)" }}>
+        <div style={{
+          background: "linear-gradient(135deg, var(--brand-light) 0%, var(--purple-light) 100%)",
+          borderRadius: "12px",
+          padding: "12px",
+          border: "1px solid var(--border)",
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-primary)" }}>
+              Enterprise Plan
             </span>
-            <span style={{ fontSize: "11px", color: "var(--teal)" }}>
-              {t("plan_active", language)}
+            <span style={{
+              fontSize: "10px", fontWeight: 600,
+              color: "var(--green)",
+              background: "var(--green-light)",
+              padding: "2px 7px",
+              borderRadius: "6px",
+            }}>
+              Active
             </span>
           </div>
-          <div
-            style={{
-              height: "3px",
-              background: "var(--border-2)",
-              borderRadius: "2px",
-              margin: "7px 0 4px",
-            }}
-          >
-            <div
-              style={{
-                height: "100%",
-                width: "67%",
-                background: "var(--brand)",
-                borderRadius: "2px",
-              }}
-            />
+          <div style={{ height: "4px", background: "var(--border)", borderRadius: "4px" }}>
+            <div style={{
+              height: "100%", width: "67%",
+              background: "linear-gradient(90deg, var(--brand), var(--purple))",
+              borderRadius: "4px",
+            }} />
           </div>
-          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-            {t("storage_used", language)}
+          <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "5px" }}>
+            67% storage used
           </div>
         </div>
       </div>
