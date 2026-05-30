@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icon } from '@iconify/react'
 import { useAppStore } from '@/store/appStore'
@@ -173,10 +173,6 @@ export default function IDCardsPage() {
 
   const toggleField = useCallback((key: string) => {
     setFields(p => p.includes(key) ? p.filter(k => k !== key) : [...p, key])
-  }, [])
-
-  const toggleStudent = useCallback((id: string) => {
-    setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
   }, [])
 
   const selectAll = useCallback(() => {

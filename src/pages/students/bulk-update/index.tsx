@@ -4,7 +4,7 @@ import { Icon } from '@iconify/react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
-import type { StudentAdmission } from '@/pages/students/admission/types'
+
 
 type Op = 'photo'|'roll'|'class'|'section'|'bloodGroup'|'religion'|'academicYear'
 

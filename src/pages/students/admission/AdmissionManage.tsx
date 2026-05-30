@@ -267,7 +267,7 @@ const ViewModal = React.memo(function ViewModal({ student, isBn, onClose }: { st
 export default function AdmissionManage() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { students, updateStudent, approveStudent, rejectStudent } = useAdmissionStore()
+  const { students, updateStudent, approveStudent } = useAdmissionStore()
   const isBn = language === 'bn'
 
   const [search, setSearch]     = useState('')

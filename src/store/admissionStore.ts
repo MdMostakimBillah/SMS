@@ -45,7 +45,7 @@ const sampleStudents: StudentAdmission[] = [
     presentAddress: 'Uttara, Dhaka', permanentAddress: 'Sylhet', district: 'Dhaka',
     fatherNameEn: 'Abdul Islam', fatherNameBn: 'আব্দুল ইসলাম', fatherOccupation: 'Engineer',
     fatherPhone: '01733-222222', fatherNid: '3456789012',
-    motherNameEn: 'Fatema Islam', fatherNameBn: 'ফাতেমা ইসলাম', motherNameBn: 'ফাতেমা ইসলাম', motherOccupation: 'Housewife',
+    motherNameEn: 'Fatema Islam', motherNameBn: 'ফাতেমা ইসলাম', motherOccupation: 'Housewife',
     motherPhone: '01733-333333', motherNid: '2109876543',
     guardianName: '', guardianRelation: '', guardianPhone: '',
   },

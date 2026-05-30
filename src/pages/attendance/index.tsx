@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icon } from '@iconify/react'
-import * as XLSX from 'xlsx'
+
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -283,7 +283,7 @@ export default function AttendancePage() {
               { labelBn:'ছুটিতে', labelEn:'Leave', value:stats.onLeave, icon:'lucide:clock', color:'var(--amber)', bg:'var(--amber-light)' },
             ].map(s => (
               <div key={s.labelEn} style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'14px', display:'flex', alignItems:'center', gap:'12px' }}>
-                <div style={{ width:'38px', height:'38px', borderRadius:'10px', background:s.bg, display:'flex', alignItems:'center', justifyContent:'center' }}><Icon icon={s.icon} width={18} style={{ color:s.c }} /></div>
+                <div style={{ width:'38px', height:'38px', borderRadius:'10px', background:s.bg, display:'flex', alignItems:'center', justifyContent:'center' }}><Icon icon={s.icon} width={18} style={{ color:s.color }} /></div>
                 <div><div style={{ fontSize:'20px', fontWeight:700, color:'var(--text-primary)' }}>{toBnNum(s.value)}<span style={{ fontSize:'12px', fontWeight:400, color:'var(--text-muted)', marginLeft:'4px' }}>{s.value}</span></div><div style={{ fontSize:'11px', color:'var(--text-secondary)' }}>{isBn?s.labelBn:s.labelEn}</div></div>
               </div>
             ))}
@@ -364,7 +364,7 @@ export default function AttendancePage() {
                 {activeTeachers.filter(t => {
                   if (statusFilter === 'all') return true
                   return rangeDays.some(ds => getStatus(attendance[ds]?.[t.id]) === statusFilter)
-                }).map((t, i) => (
+                }).map((t) => (
                   <tr key={t.id} style={{ borderBottom:'0.5px solid var(--border)' }}
                     onMouseEnter={e => e.currentTarget.style.background='var(--bg-secondary)'}
                     onMouseLeave={e => e.currentTarget.style.background='transparent'}>
@@ -483,7 +483,7 @@ export default function AttendancePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {approvedStudents.slice(0, 50).map((s, i) => (
+                  {approvedStudents.slice(0, 50).map((s) => (
                     <tr key={s.id} style={{ borderBottom:'0.5px solid var(--border)' }}
                       onMouseEnter={e => e.currentTarget.style.background='var(--bg-secondary)'}
                       onMouseLeave={e => e.currentTarget.style.background='transparent'}>

@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import { Icon } from '@iconify/react'
 import { useAppStore } from '@/store/appStore'
-import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
 import type { StudentAdmission } from './types'
 
@@ -45,7 +44,6 @@ const Cell = React.memo(function Cell({ value, onChange, type = 'text', options,
 
 export default function BulkAdmission() {
   const { language } = useAppStore()
-  const { isMobile } = useWindowSize()
   const { addStudent, students: existing } = useAdmissionStore()
   const isBn = language === 'bn'
 

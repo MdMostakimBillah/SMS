@@ -93,7 +93,7 @@ const options = [
 export default function TeachersPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
-  const { teachers, departments, subjects } = useTeacherStore()
+  const { teachers } = useTeacherStore()
   const isBn = language === "bn"
 
   const activeTeachers = teachers.filter(t => t.status === 'active').length

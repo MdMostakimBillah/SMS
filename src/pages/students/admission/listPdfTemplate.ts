@@ -52,12 +52,12 @@ const statusColor = (st: string) =>
 
 export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptions): string {
   // ✅ Defensive defaults so old calls without emptyColumns don't crash
+  const isBn          = opts.isBn         ?? false
   const title         = opts.title        || (isBn ? 'ছাত্র তালিকা' : 'Student List')
   const selectedCols  = opts.selectedCols  || []
   const emptyRows     = opts.emptyRows     || 0
   const emptyColumns  = opts.emptyColumns  || []
   const orientation   = opts.orientation   || 'landscape'
-  const isBn          = opts.isBn         ?? false
 
   const statusBn: Record<string, string> = {
     pending: 'অপেক্ষমান', approved: 'অনুমোদিত', rejected: 'প্রত্যাখ্যাত',
