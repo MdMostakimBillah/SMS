@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Camera, Clock, Users, Check } from 'lucide-react'
+import { ArrowLeft, Camera, Clock, Users, Check, Briefcase } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -38,9 +38,7 @@ export default function AddTeacherPage() {
   const [experience, setExperience] = useState('')
   const [joiningDate, setJoiningDate] = useState('')
   const [salary, setSalary] = useState('')
-  const [bonus, setBonus] = useState('')
   const [overtime, setOvertime] = useState('')
-  const [festivalBonus, setFestivalBonus] = useState('')
   const [status, setStatus] = useState<TeacherStatus>('active')
   const [inTime, setInTime] = useState('')
   const [outTime, setOutTime] = useState('')
@@ -55,6 +53,7 @@ export default function AddTeacherPage() {
   const [guardianPhone, setGuardianPhone] = useState('')
   const [guardianRelation, setGuardianRelation] = useState('')
   const [parentAddress, setParentAddress] = useState('')
+  const [expertSubjects, setExpertSubjects] = useState('')
   const [saving, setSaving] = useState(false)
 
   const filteredSubjects = subjects.filter(s => !departmentId || s.departmentId === departmentId)
@@ -91,9 +90,7 @@ export default function AddTeacherPage() {
       designation, qualification: qualification.trim(),
       experience: experience.trim(), joiningDate,
       salary: Number(salary) || 0,
-      bonus: Number(bonus) || 0,
       overtime: Number(overtime) || 0,
-      festivalBonus: Number(festivalBonus) || 0,
       inTime, outTime,
       fatherNameEn: fatherNameEn.trim(), fatherNameBn: fatherNameBn.trim(),
       fatherPhone: fatherPhone.trim(), fatherNid: fatherNid.trim(),
@@ -103,6 +100,7 @@ export default function AddTeacherPage() {
       guardianRelation: guardianRelation.trim(),
       parentAddress: parentAddress.trim(),
       signature: '',
+      expertSubjects: expertSubjects.trim(),
     }
     addTeacher(teacher)
     setSaving(false)
@@ -304,19 +302,14 @@ export default function AddTeacherPage() {
               placeholder="৳0" />
           </div>
           <div>
-            <label style={label}>{isBn?'বোনাস (মাসিক)':'Bonus (Monthly)'}</label>
-            <input type="number" value={bonus} onChange={e => setBonus(e.target.value)} style={input}
-              placeholder="৳0" />
-          </div>
-          <div>
-            <label style={label}>{isBn?'ওভারটাইম':'Overtime'}</label>
+            <label style={label}>{isBn?'ওভারটাইম (ঘণ্টার হার)':'Overtime (Hourly)'}</label>
             <input type="number" value={overtime} onChange={e => setOvertime(e.target.value)} style={input}
-              placeholder="৳0" />
+              placeholder="৳0/hrs" />
           </div>
-          <div>
-            <label style={label}>{isBn?'উৎসব বোনাস':'Festival Bonus'}</label>
-            <input type="number" value={festivalBonus} onChange={e => setFestivalBonus(e.target.value)} style={input}
-              placeholder="৳0" />
+          <div style={{ gridColumn: isMobile ? '1' : '1 / -1' }}>
+            <label style={label}>{isBn?'দক্ষ বিষয় (Expert Subjects)':'Expert Subjects'}</label>
+            <input value={expertSubjects} onChange={e => setExpertSubjects(e.target.value)} style={input}
+              placeholder={isBn?'যেমন: পদার্থবিজ্ঞান, গণিত, রসায়ন':'e.g. Physics, Mathematics, Chemistry'} />
           </div>
           <div>
             <label style={label}>{isBn?'অবস্থা':'Status'}</label>

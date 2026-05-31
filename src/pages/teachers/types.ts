@@ -59,4 +59,6 @@ export interface Teacher {
   guardianRelation: string
   parentAddress: string
   signature?: string
+  expertSubjects?: string
+  applySalaryRule?: boolean
 }

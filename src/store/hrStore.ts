@@ -69,6 +69,17 @@ export interface HRRecommendation {
   createdAt: string
 }
 
+export interface MonthlySalaryConfig {
+  id: string
+  month: string // "2026-06"
+  teacherId: string
+  bonus: number
+  festivalBonus: number
+  applyDeductionRule: boolean
+  fundContributionPercent: number
+  createdAt: string
+}
+
 interface HRState {
   increments: IncrementRecord[]
   bonuses: BonusRecord[]
@@ -77,6 +88,7 @@ interface HRState {
   homeworkRecords: HomeworkRecord[]
   dailyReports: DailyReport[]
   recommendations: HRRecommendation[]
+  monthlySalaryConfigs: MonthlySalaryConfig[]
   addIncrement: (record: IncrementRecord) => void
   addBonus: (record: BonusRecord) => void
   addPromotion: (record: PromotionRecord) => void
@@ -86,6 +98,10 @@ interface HRState {
   addDailyReport: (record: DailyReport) => void
   addRecommendation: (rec: HRRecommendation) => void
   updateRecommendation: (id: string, status: 'approved' | 'rejected') => void
+  upsertMonthlySalaryConfig: (config: MonthlySalaryConfig) => void
+  upsertManyMonthlySalaryConfigs: (configs: MonthlySalaryConfig[]) => void
+  deleteMonthlySalaryConfig: (id: string) => void
+  getMonthlySalaryConfigs: (month: string) => MonthlySalaryConfig[]
 }
 
 function generateDemoDailyReports(): DailyReport[] {
@@ -158,6 +174,7 @@ export const useHRStore = create<HRState>()(
       homeworkRecords: [],
       dailyReports: generateDemoDailyReports(),
       recommendations: generateDemoRecommendations(),
+      monthlySalaryConfigs: [],
 
       addIncrement: (record) => set((state) => ({ increments: [...state.increments, record] })),
       addBonus: (record) => set((state) => ({ bonuses: [...state.bonuses, record] })),
@@ -172,6 +189,33 @@ export const useHRStore = create<HRState>()(
       updateRecommendation: (id, status) => set((state) => ({
         recommendations: state.recommendations.map(r => r.id === id ? { ...r, status } : r)
       })),
+      upsertMonthlySalaryConfig: (config) => set((state) => {
+        const existing = state.monthlySalaryConfigs.find(c => c.teacherId === config.teacherId && c.month === config.month)
+        if (existing) {
+          return { monthlySalaryConfigs: state.monthlySalaryConfigs.map(c => c.id === existing.id ? config : c) }
+        }
+        return { monthlySalaryConfigs: [...state.monthlySalaryConfigs, config] }
+      }),
+      upsertManyMonthlySalaryConfigs: (configs) => set((state) => {
+        const newConfigs = [...state.monthlySalaryConfigs]
+        configs.forEach(config => {
+          const existing = newConfigs.find(c => c.teacherId === config.teacherId && c.month === config.month)
+          if (existing) {
+            const idx = newConfigs.indexOf(existing)
+            newConfigs[idx] = config
+          } else {
+            newConfigs.push(config)
+          }
+        })
+        return { monthlySalaryConfigs: newConfigs }
+      }),
+      deleteMonthlySalaryConfig: (id) => set((state) => ({
+        monthlySalaryConfigs: state.monthlySalaryConfigs.filter(c => c.id !== id)
+      })),
+      getMonthlySalaryConfigs: (month) => {
+        const state = (useHRStore as any).getState()
+        return state.monthlySalaryConfigs.filter((c: MonthlySalaryConfig) => c.month === month)
+      },
     }),
     { name: 'edutech-hr' }
   )
