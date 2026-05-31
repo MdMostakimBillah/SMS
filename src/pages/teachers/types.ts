@@ -42,6 +42,9 @@ export interface Teacher {
   experience: string
   joiningDate: string
   salary: number
+  bonus?: number
+  overtime?: number
+  festivalBonus?: number
   inTime: string
   outTime: string
   fatherNameEn: string
@@ -55,4 +58,5 @@ export interface Teacher {
   guardianPhone: string
   guardianRelation: string
   parentAddress: string
+  signature?: string
 }

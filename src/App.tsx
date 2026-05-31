@@ -12,9 +12,14 @@ import TeachersPage     from '@/pages/teachers'
 import AddTeacherPage   from '@/pages/teachers/add'
 import AllTeachersPage  from '@/pages/teachers/all'
 import TeacherDetailPage from '@/pages/teachers/all/[id]'
+import EditTeacherPage  from '@/pages/teachers/edit/[id]'
 import DepartmentsPage  from '@/pages/teachers/departments'
 import SubjectsPage     from '@/pages/teachers/subjects'
-import AttendancePage   from '@/pages/attendance'
+import TeacherBulkUpdatePage from '@/pages/teachers/bulk-update'
+import PayrollPage from '@/pages/payroll'
+import ClassesPage from '@/pages/classes'
+import HRPage from '@/pages/hr'
+import AttendancePage from '@/pages/attendance'
 
 function P({ name }: { name: string }) {
   return <div style={{ color:'var(--text-primary)', fontSize:'20px', fontWeight:500, padding:'20px' }}>{name}</div>
@@ -37,17 +42,19 @@ export default function App() {
         <Route path="/teachers/add"          element={<AddTeacherPage />} />
         <Route path="/teachers/all"          element={<AllTeachersPage />} />
         <Route path="/teachers/all/:id"      element={<TeacherDetailPage />} />
+        <Route path="/teachers/edit/:id"    element={<EditTeacherPage />} />
+        <Route path="/teachers/bulk-update" element={<TeacherBulkUpdatePage />} />
         <Route path="/teachers/departments"  element={<DepartmentsPage />} />
         <Route path="/teachers/subjects"     element={<SubjectsPage />} />
-        <Route path="/classes"               element={<P name="Classes" />} />
-        <Route path="/hr"                    element={<P name="HR & Staff" />} />
+        <Route path="/classes"               element={<ClassesPage />} />
+        <Route path="/hr"                    element={<HRPage />} />
         <Route path="/attendance"            element={<AttendancePage />} />
         <Route path="/exams"                 element={<P name="Exams" />} />
         <Route path="/syllabus"              element={<P name="Syllabus" />} />
         <Route path="/assignments"           element={<P name="Assignments" />} />
         <Route path="/online"                element={<P name="Online Classes" />} />
         <Route path="/finance"               element={<P name="Finance" />} />
-        <Route path="/payroll"               element={<P name="Payroll" />} />
+        <Route path="/payroll"               element={<PayrollPage />} />
         <Route path="/store"                 element={<P name="School Store" />} />
         <Route path="/expenses"              element={<P name="Expenses" />} />
         <Route path="/library"               element={<P name="Library" />} />

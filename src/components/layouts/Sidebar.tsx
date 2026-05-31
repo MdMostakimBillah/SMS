@@ -7,6 +7,8 @@ import {
   BarChart2, FileBarChart, Crown, Settings, ChevronsUpDown, type LucideIcon,
 } from "lucide-react"
 import { useAppStore } from "@/store/appStore"
+import { useAdmissionStore } from "@/store/admissionStore"
+import { useTeacherStore } from "@/store/teacherStore"
 import { t } from "@/lib/i18n"
 import type { TranslationKey } from "@/lib/i18n"
 
@@ -39,90 +41,99 @@ const iconMap: Record<string, LucideIcon> = {
   "settings": Settings,
 }
 
-const navGroups = [
-  {
-    key: "grp_main",
-    items: [
-      { key: "nav_dashboard", page: "/dashboard", icon: "layout-dashboard" },
-    ],
-  },
-  {
-    key: "grp_manage",
-    items: [
-      { key: "nav_students",  page: "/students",  icon: "users",            badge: "1248", badgeColor: "blue" },
-      { key: "nav_teachers",  page: "/teachers",  icon: "graduation-cap" },
-      { key: "nav_classes",   page: "/classes",   icon: "school" },
-      { key: "nav_hr",        page: "/hr",        icon: "briefcase" },
-    ],
-  },
-  {
-    key: "grp_academic",
-    items: [
-      { key: "nav_attendance",  page: "/attendance",  icon: "calendar-check",  badge: "3", badgeColor: "red" },
-      { key: "nav_exams",       page: "/exams",       icon: "clipboard-list" },
-      { key: "nav_syllabus",    page: "/syllabus",    icon: "book-open" },
-      { key: "nav_assignments", page: "/assignments", icon: "file-text" },
-      { key: "nav_online",      page: "/online",      icon: "video" },
-    ],
-  },
-  {
-    key: "grp_finance",
-    items: [
-      { key: "nav_finance",  page: "/finance",  icon: "landmark" },
-      { key: "nav_payroll",  page: "/payroll",  icon: "wallet" },
-      { key: "nav_store",    page: "/store",    icon: "shopping-bag" },
-      { key: "nav_expenses", page: "/expenses", icon: "receipt" },
-    ],
-  },
-  {
-    key: "grp_facility",
-    items: [
-      { key: "nav_library",   page: "/library",   icon: "library" },
-      { key: "nav_transport", page: "/transport", icon: "bus" },
-      { key: "nav_hostel",    page: "/hostel",    icon: "building-2" },
-    ],
-  },
-  {
-    key: "grp_comm",
-    items: [
-      { key: "nav_messages",      page: "/messages",      icon: "message-circle", badge: "5", badgeColor: "red" },
-      { key: "nav_notice",        page: "/notice",        icon: "megaphone" },
-      { key: "nav_notifications", page: "/notifications", icon: "bell" },
-    ],
-  },
-  {
-    key: "grp_portal",
-    items: [
-      { key: "nav_parent",         page: "/parent-portal",  icon: "home" },
-      { key: "nav_student_portal", page: "/student-portal", icon: "user" },
-    ],
-  },
-  {
-    key: "grp_report",
-    items: [
-      { key: "nav_analytics", page: "/analytics", icon: "bar-chart-2" },
-      { key: "nav_reports",   page: "/reports",   icon: "file-bar-chart" },
-    ],
-  },
-  {
-    key: "grp_system",
-    items: [
-      { key: "nav_superadmin", page: "/super-admin", icon: "crown" },
-      { key: "nav_settings",   page: "/settings",    icon: "settings" },
-    ],
-  },
-]
-
 export default function Sidebar() {
   const { language } = useAppStore()
+  const { students } = useAdmissionStore()
+  const { teachers } = useTeacherStore()
   const location = useLocation()
+
+  const studentCount = students.length
+  const pendingCount = students.filter(s => s.status === 'pending').length
+  const teacherCount = teachers.length
+  const activeTeacherCount = teachers.filter(t => t.status === 'active').length
+
+  const navGroups = [
+    {
+      key: "grp_main",
+      items: [
+        { key: "nav_dashboard", page: "/dashboard", icon: "layout-dashboard" },
+      ],
+    },
+    {
+      key: "grp_manage",
+      items: [
+        { key: "nav_students",  page: "/students",  icon: "users",            badge: String(studentCount), badgeColor: "blue" as const },
+        { key: "nav_teachers",  page: "/teachers",  icon: "graduation-cap",   badge: String(teacherCount), badgeColor: "blue" as const },
+        { key: "nav_classes",   page: "/classes",   icon: "school" },
+        { key: "nav_hr",        page: "/hr",        icon: "briefcase",        badge: String(activeTeacherCount), badgeColor: "blue" as const },
+      ],
+    },
+    {
+      key: "grp_academic",
+      items: [
+        { key: "nav_attendance",  page: "/attendance",  icon: "calendar-check" },
+        { key: "nav_exams",       page: "/exams",       icon: "clipboard-list" },
+        { key: "nav_syllabus",    page: "/syllabus",    icon: "book-open" },
+        { key: "nav_assignments", page: "/assignments", icon: "file-text" },
+        { key: "nav_online",      page: "/online",      icon: "video" },
+      ],
+    },
+    {
+      key: "grp_finance",
+      items: [
+        { key: "nav_finance",  page: "/finance",  icon: "landmark" },
+        { key: "nav_payroll",  page: "/payroll",  icon: "wallet" },
+        { key: "nav_store",    page: "/store",    icon: "shopping-bag" },
+        { key: "nav_expenses", page: "/expenses", icon: "receipt" },
+      ],
+    },
+    {
+      key: "grp_facility",
+      items: [
+        { key: "nav_library",   page: "/library",   icon: "library" },
+        { key: "nav_transport", page: "/transport", icon: "bus" },
+        { key: "nav_hostel",    page: "/hostel",    icon: "building-2" },
+      ],
+    },
+    {
+      key: "grp_comm",
+      items: [
+        { key: "nav_messages",      page: "/messages",      icon: "message-circle", badge: String(pendingCount), badgeColor: "red" as const },
+        { key: "nav_notice",        page: "/notice",        icon: "megaphone" },
+        { key: "nav_notifications", page: "/notifications", icon: "bell" },
+      ],
+    },
+    {
+      key: "grp_portal",
+      items: [
+        { key: "nav_parent",         page: "/parent-portal",  icon: "home" },
+        { key: "nav_student_portal", page: "/student-portal", icon: "user" },
+      ],
+    },
+    {
+      key: "grp_report",
+      items: [
+        { key: "nav_analytics", page: "/analytics", icon: "bar-chart-2" },
+        { key: "nav_reports",   page: "/reports",   icon: "file-bar-chart" },
+      ],
+    },
+    {
+      key: "grp_system",
+      items: [
+        { key: "nav_superadmin", page: "/super-admin", icon: "crown" },
+        { key: "nav_settings",   page: "/settings",    icon: "settings" },
+      ],
+    },
+  ]
 
   return (
     <aside style={{
-      width: "240px",
+      width: "220px",
       height: "100%",
-      background: "var(--bg-primary)",
-      borderRight: "1px solid var(--border)",
+      background: "var(--glass)",
+      backdropFilter: "blur(16px) saturate(180%)",
+      WebkitBackdropFilter: "blur(16px) saturate(180%)",
+      borderRight: "1px solid var(--glass-border)",
       display: "flex",
       flexDirection: "column",
       overflow: "hidden",
@@ -131,7 +142,7 @@ export default function Sidebar() {
 
       {/* Logo */}
       <div style={{
-        padding: "20px 16px 16px",
+        padding: "16px 14px 14px",
         borderBottom: "1px solid var(--border)",
       }}>
         <div style={{
@@ -141,20 +152,19 @@ export default function Sidebar() {
           marginBottom: "14px",
         }}>
           <div style={{
-            width: "34px", height: "34px",
-            borderRadius: "10px",
-            background: "linear-gradient(135deg, var(--brand) 0%, var(--purple) 100%)",
+            width: "32px", height: "32px",
+            borderRadius: "8px",
+            background: "var(--brand)",
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,
-            boxShadow: "0 4px 12px rgba(99,102,241,0.3)",
           }}>
-            <GraduationCap size={18} color="#fff" />
+            <GraduationCap size={17} color="#fff" />
           </div>
           <div>
-            <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1 }}>
+            <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1 }}>
               EduTech
             </div>
-            <div style={{ fontSize: "10px", color: "var(--text-muted)", marginTop: "2px" }}>
+            <div style={{ fontSize: "9px", color: "var(--text-muted)", marginTop: "2px" }}>
               School Management
             </div>
           </div>
@@ -163,7 +173,7 @@ export default function Sidebar() {
         {/* Tenant */}
         <div style={{
           background: "var(--bg-secondary)",
-          borderRadius: "10px",
+          borderRadius: "8px",
           padding: "8px 10px",
           display: "flex",
           alignItems: "center",
@@ -171,37 +181,37 @@ export default function Sidebar() {
           border: "1px solid var(--border)",
         }}>
           <div style={{
-            width: "28px", height: "28px",
-            borderRadius: "8px",
-            background: "linear-gradient(135deg, var(--teal) 0%, var(--brand) 100%)",
+            width: "26px", height: "26px",
+            borderRadius: "6px",
+            background: "var(--teal)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "11px", fontWeight: 600, color: "#fff",
+            fontSize: "9px", fontWeight: 600, color: "#fff",
             flexShrink: 0,
           }}>
             SA
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{
-              fontSize: "12px", fontWeight: 500,
+              fontSize: "11px", fontWeight: 500,
               color: "var(--text-primary)",
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}>
               Sunrise Academy
             </div>
-            <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>
+            <div style={{ fontSize: "9px", color: "var(--text-muted)" }}>
               {t("academic_year", language)}
             </div>
           </div>
-          <ChevronsUpDown size={12} style={{ color: "var(--text-muted)", marginLeft: "auto", flexShrink: 0 }} />
+          <ChevronsUpDown size={11} style={{ color: "var(--text-muted)", marginLeft: "auto", flexShrink: 0 }} />
         </div>
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, overflowY: "auto", padding: "10px 10px" }}>
+      <nav style={{ flex: 1, overflowY: "auto", padding: "10px 8px" }}>
         {navGroups.map((group) => (
-          <div key={group.key} style={{ marginBottom: "18px" }}>
+          <div key={group.key} style={{ marginBottom: "16px" }}>
             <div style={{
-              fontSize: "10px",
+              fontSize: "9px",
               fontWeight: 600,
               color: "var(--text-muted)",
               textTransform: "uppercase",
@@ -223,21 +233,16 @@ export default function Sidebar() {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "9px",
+                    gap: "8px",
                     padding: "8px 10px",
-                    borderRadius: "9px",
+                    borderRadius: "8px",
                     marginBottom: "2px",
-                    fontSize: "13px",
+                    fontSize: "12px",
                     fontWeight: isActive ? 500 : 400,
                     textDecoration: "none",
                     transition: "all 0.15s ease",
-                    background: isActive
-                      ? "var(--brand-light)"
-                      : "transparent",
-                    color: isActive
-                      ? "var(--brand)"
-                      : "var(--text-secondary)",
-                    boxShadow: isActive ? "inset 0 0 0 1px var(--brand)" : "none",
+                    background: isActive ? "var(--brand-light)" : "transparent",
+                    color: isActive ? "var(--brand)" : "var(--text-secondary)",
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
@@ -253,7 +258,7 @@ export default function Sidebar() {
                   }}
                 >
                   <IconComp
-                    size={16}
+                    size={15}
                     style={{
                       flexShrink: 0,
                       color: isActive ? "var(--brand)" : "var(--text-muted)",
@@ -264,10 +269,10 @@ export default function Sidebar() {
                   </span>
                   {item.badge && (
                     <span style={{
-                      fontSize: "10px",
+                      fontSize: "9px",
                       fontWeight: 600,
                       padding: "1px 6px",
-                      borderRadius: "10px",
+                      borderRadius: "8px",
                       background: item.badgeColor === "red" ? "var(--red-light)" : "var(--brand-light)",
                       color: item.badgeColor === "red" ? "var(--red)" : "var(--brand)",
                       flexShrink: 0,
@@ -285,33 +290,33 @@ export default function Sidebar() {
       {/* Bottom */}
       <div style={{ padding: "10px", borderTop: "1px solid var(--border)" }}>
         <div style={{
-          background: "linear-gradient(135deg, var(--brand-light) 0%, var(--purple-light) 100%)",
-          borderRadius: "12px",
+          background: "var(--brand-light)",
+          borderRadius: "10px",
           padding: "12px",
           border: "1px solid var(--border)",
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-primary)" }}>
+            <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-primary)" }}>
               Enterprise Plan
             </span>
             <span style={{
-              fontSize: "10px", fontWeight: 600,
+              fontSize: "9px", fontWeight: 600,
               color: "var(--green)",
               background: "var(--green-light)",
-              padding: "2px 7px",
+              padding: "2px 6px",
               borderRadius: "6px",
             }}>
               Active
             </span>
           </div>
-          <div style={{ height: "4px", background: "var(--border)", borderRadius: "4px" }}>
+          <div style={{ height: "3px", background: "var(--border)", borderRadius: "2px" }}>
             <div style={{
               height: "100%", width: "67%",
-              background: "linear-gradient(90deg, var(--brand), var(--purple))",
-              borderRadius: "4px",
+              background: "var(--brand)",
+              borderRadius: "2px",
             }} />
           </div>
-          <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "5px" }}>
+          <div style={{ fontSize: "10px", color: "var(--text-muted)", marginTop: "5px" }}>
             67% storage used
           </div>
         </div>

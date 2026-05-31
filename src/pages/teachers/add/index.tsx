@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera, Clock, Users, Check } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
+import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 
@@ -13,6 +14,7 @@ const RELIGIONS = ['Islam', 'Hinduism', 'Christianity', 'Buddhism']
 export default function AddTeacherPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
+  const { isMobile } = useWindowSize()
   const { departments, subjects, addTeacher, getNextTeacherId } = useTeacherStore()
   const isBn = language === 'bn'
   const fileRef = useRef<HTMLInputElement>(null)
@@ -36,6 +38,9 @@ export default function AddTeacherPage() {
   const [experience, setExperience] = useState('')
   const [joiningDate, setJoiningDate] = useState('')
   const [salary, setSalary] = useState('')
+  const [bonus, setBonus] = useState('')
+  const [overtime, setOvertime] = useState('')
+  const [festivalBonus, setFestivalBonus] = useState('')
   const [status, setStatus] = useState<TeacherStatus>('active')
   const [inTime, setInTime] = useState('')
   const [outTime, setOutTime] = useState('')
@@ -86,6 +91,9 @@ export default function AddTeacherPage() {
       designation, qualification: qualification.trim(),
       experience: experience.trim(), joiningDate,
       salary: Number(salary) || 0,
+      bonus: Number(bonus) || 0,
+      overtime: Number(overtime) || 0,
+      festivalBonus: Number(festivalBonus) || 0,
       inTime, outTime,
       fatherNameEn: fatherNameEn.trim(), fatherNameBn: fatherNameBn.trim(),
       fatherPhone: fatherPhone.trim(), fatherNid: fatherNid.trim(),
@@ -94,6 +102,7 @@ export default function AddTeacherPage() {
       guardianName: guardianName.trim(), guardianPhone: guardianPhone.trim(),
       guardianRelation: guardianRelation.trim(),
       parentAddress: parentAddress.trim(),
+      signature: '',
     }
     addTeacher(teacher)
     setSaving(false)
@@ -119,9 +128,9 @@ export default function AddTeacherPage() {
   }
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: isMobile ? '0 4px' : '0' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <button onClick={() => navigate('/teachers')}
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
             background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer',
@@ -130,7 +139,7 @@ export default function AddTeacherPage() {
           {isBn?'ফিরে যান':'Back'}
         </button>
         <div>
-          <h1 style={{ fontSize:'22px', fontWeight:600, color:'var(--text-primary)' }}>
+          <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: 600, color: 'var(--text-primary)' }}>
             {isBn?'নতুন শিক্ষক যোগ':'Add Teacher'}
           </h1>
           <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginTop:'3px' }}>
@@ -142,18 +151,18 @@ export default function AddTeacherPage() {
       {/* Photo + Basic Info */}
       <div style={section}>
         <div style={sectionTitle}>{isBn?'ব্যক্তিগত তথ্য':'Personal Information'}</div>
-        <div style={{ display:'flex', gap:'16px', alignItems:'flex-start' }}>
-          {/* Photo */}
-          <div style={{ textAlign:'center' }}>
-            <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoUpload} style={{ display:'none' }} />
-            <div onClick={() => fileRef.current?.click()}
-              style={{ width:'100px', height:'120px', borderRadius:'10px', border:'2px dashed var(--border)',
-                background:'var(--bg-secondary)', cursor:'pointer', display:'flex', flexDirection:'column',
-                alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
-              {photo ? <img src={photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                : <><Camera size={24} style={{ color:'var(--text-muted)' }} />
-                   <span style={{ fontSize:'10px', color:'var(--text-muted)', marginTop:'4px' }}>{isBn?'ছবি':'Photo'}</span></>}
-            </div>
+        {/* Photo centered */}
+        <div style={{ textAlign:'center', marginBottom:'16px' }}>
+          <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoUpload} style={{ display:'none' }} />
+          <div onClick={() => fileRef.current?.click()}
+            style={{ width:'100px', height:'120px', borderRadius:'10px', border:'2px dashed var(--border)',
+              background:'var(--bg-secondary)', cursor:'pointer', display:'inline-flex', flexDirection:'column',
+              alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+            {photo ? <img src={photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+              : <><Camera size={24} style={{ color:'var(--text-muted)' }} />
+                 <span style={{ fontSize:'10px', color:'var(--text-muted)', marginTop:'4px' }}>{isBn?'ছবি':'Photo'}</span></>}
+          </div>
+          <div>
             <button onClick={() => fileRef.current?.click()}
               style={{ marginTop:'6px', padding:'4px 10px', borderRadius:'6px', fontSize:'11px', cursor:'pointer',
                 background:'var(--brand-light)', border:'1px solid var(--brand)', color:'var(--brand)',
@@ -161,9 +170,10 @@ export default function AddTeacherPage() {
               {isBn?'ছবি আপলোড':'Upload'}
             </button>
           </div>
+        </div>
 
-          {/* Fields */}
-          <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px' }}>
+        {/* Fields - full width on mobile, 2-col on desktop */}
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:'10px' }}>
             <div>
               <label style={label}>{isBn?'নাম (ইংরেজি) *':'Name (English) *'}</label>
               <input value={nameEn} onChange={e => setNameEn(e.target.value)} style={input}
@@ -225,7 +235,6 @@ export default function AddTeacherPage() {
                 placeholder="01XXX-XXXXXX" />
             </div>
           </div>
-        </div>
       </div>
 
       {/* Schedule Info */}
@@ -236,7 +245,7 @@ export default function AddTeacherPage() {
             {isBn?'সময়সূচি':'Schedule'}
           </div>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px' }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:'10px' }}>
           <div>
             <label style={label}>{isBn?'প্রবেশ সময় (In Time)':'In Time'}</label>
             <input type="time" value={inTime} onChange={e => setInTime(e.target.value)} style={input} />
@@ -257,7 +266,7 @@ export default function AddTeacherPage() {
       {/* Professional Info */}
       <div style={section}>
         <div style={sectionTitle}>{isBn?'পেশাদার তথ্য':'Professional Information'}</div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px' }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:'10px' }}>
           <div>
             <label style={label}>{isBn?'বিভাগ *':'Department *'}</label>
             <select value={departmentId} onChange={e => { setDepartmentId(e.target.value); setSubjectIds([]) }}
@@ -290,8 +299,23 @@ export default function AddTeacherPage() {
             <input type="date" value={joiningDate} onChange={e => setJoiningDate(e.target.value)} style={input} />
           </div>
           <div>
-            <label style={label}>{isBn?'বেতন (মাসিক)':'Salary (Monthly)'}</label>
+            <label style={label}>{isBn?'মূল বেতন (মাসিক)':'Basic Salary (Monthly)'}</label>
             <input type="number" value={salary} onChange={e => setSalary(e.target.value)} style={input}
+              placeholder="৳0" />
+          </div>
+          <div>
+            <label style={label}>{isBn?'বোনাস (মাসিক)':'Bonus (Monthly)'}</label>
+            <input type="number" value={bonus} onChange={e => setBonus(e.target.value)} style={input}
+              placeholder="৳0" />
+          </div>
+          <div>
+            <label style={label}>{isBn?'ওভারটাইম':'Overtime'}</label>
+            <input type="number" value={overtime} onChange={e => setOvertime(e.target.value)} style={input}
+              placeholder="৳0" />
+          </div>
+          <div>
+            <label style={label}>{isBn?'উৎসব বোনাস':'Festival Bonus'}</label>
+            <input type="number" value={festivalBonus} onChange={e => setFestivalBonus(e.target.value)} style={input}
               placeholder="৳0" />
           </div>
           <div>
@@ -334,7 +358,7 @@ export default function AddTeacherPage() {
             {isBn?'অভিভাবক তথ্য':'Parent / Guardian Information'}
           </div>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px' }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:'10px' }}>
           {/* Father */}
           <div style={{ gridColumn:'1 / -1' }}>
             <div style={{ fontSize:'12px', fontWeight:600, color:'var(--text-primary)', marginBottom:'8px' }}>
@@ -414,7 +438,7 @@ export default function AddTeacherPage() {
       </div>
 
       {/* Actions */}
-      <div style={{ display:'flex', gap:'10px', justifyContent:'flex-end', marginTop:'14px' }}>
+      <div style={{ display:'flex', gap:'10px', justifyContent:'flex-end', marginTop:'14px', flexWrap:'wrap' }}>
         <button onClick={() => navigate('/teachers')}
           style={{ padding:'9px 18px', borderRadius:'9px', background:'var(--bg-secondary)',
             border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'13px',

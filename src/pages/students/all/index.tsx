@@ -7,11 +7,13 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
 import { generateListPDF } from '@/pages/students/admission/listPdfTemplate'
+import { generateA4HTML } from '@/pages/students/admission/a4Template'
 import type { ListPDFOptions } from '@/pages/students/admission/listPdfTemplate'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 
 const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
 const CLASSES = ['1','2','3','4','5','6','7','8','9','10']
+const SECTIONS = ['A','B','C','D','E']
 const BLOOD_GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-']
 
 export default function AllStudentsPage() {
@@ -23,8 +25,9 @@ export default function AllStudentsPage() {
 
   const [search,    setSearch]    = useState('')
   const [fClass,    setFClass]    = useState('')
+  const [fSection,  setFSection]  = useState('')
   const [fGender,   setFGender]   = useState('')
-  const [fStatus,   setFStatus]   = useState('')
+  const [fActive,   setFActive]   = useState('')
   const [fReligion, setFReligion] = useState('')
   const [fBlood,    setFBlood]    = useState('')
   const [perPage,   setPerPage]   = useState(20)
@@ -43,12 +46,14 @@ export default function AllStudentsPage() {
           !s.motherPhone.includes(search)) return false
     }
     if (fClass    && s.class !== fClass) return false
+    if (fSection  && s.section !== fSection) return false
     if (fGender   && !s.gender.includes(fGender)) return false
-    if (fStatus   && s.status !== fStatus) return false
+    if (fActive === 'active' && s.status !== 'approved') return false
+    if (fActive === 'inactive' && s.status === 'approved') return false
     if (fReligion && !s.religion.includes(fReligion)) return false
     if (fBlood    && s.bloodGroup !== fBlood) return false
     return true
-  }), [students, search, fClass, fGender, fStatus, fReligion, fBlood])
+  }), [students, search, fClass, fSection, fGender, fActive, fReligion, fBlood])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
   const sp = Math.min(page, totalPages)
@@ -101,10 +106,10 @@ export default function AllStudentsPage() {
   }, [selected, filtered])
 
   const clearFilters = useCallback(() => {
-    setSearch(''); setFClass(''); setFGender(''); setFStatus('');
+    setSearch(''); setFClass(''); setFSection(''); setFGender(''); setFActive('');
     setFReligion(''); setFBlood(''); setPage(1)
   }, [])
-  const hasFilter = search || fClass || fGender || fStatus || fReligion || fBlood
+  const hasFilter = search || fClass || fSection || fGender || fActive || fReligion || fBlood
 
   const sel: React.CSSProperties = {
     padding: '7px 9px', borderRadius: '8px', border: '1px solid var(--border)',
@@ -123,14 +128,14 @@ export default function AllStudentsPage() {
   }
 
   return (
-    <div>
+    <div style={{ display:'flex', flexDirection:'column', height:'calc(100vh - 60px)' }}>
       {/* Modals */}
       {showPDF && <PDFOptionsModal count={selected.length||filtered.length} isBn={isBn} onClose={() => setShowPDF(false)} onDownload={handlePDF} />}
 
       {/* View modal */}
       {viewSt && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}>
-          <div style={{ background:'var(--bg-primary)', borderRadius:'16px', maxWidth:'560px', width:'100%', maxHeight:'90vh', overflow:'hidden', display:'flex', flexDirection:'column', border:'1px solid var(--border)', boxShadow:'var(--shadow-lg)' }}>
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:9999, display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
+          <div style={{ background:'var(--bg-primary)', borderRadius:'16px', maxWidth:'560px', width:'100%', maxHeight:'90vh', overflow:'hidden', display:'flex', flexDirection:'column', border:'1px solid var(--border)', boxShadow:'var(--shadow-lg)', margin:'0 auto' }}>
             <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--brand-light)' }}>
               <div>
                 <div style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn ? viewSt.nameBn||viewSt.nameEn : viewSt.nameEn}</div>
@@ -182,7 +187,17 @@ export default function AllStudentsPage() {
                 </div>
               ) : null)}
             </div>
-            <div style={{ padding:'12px 18px', borderTop:'1px solid var(--border)', display:'flex', gap:'8px', justifyContent:'flex-end' }}>
+            <div style={{ padding:'12px 18px', borderTop:'1px solid var(--border)', display:'flex', gap:'8px', justifyContent:'flex-end', flexWrap:'wrap' }}>
+              <button onClick={() => {
+                const win = window.open('','_blank')
+                if (!win) return
+                win.document.write(generateA4HTML(viewSt, isBn))
+                win.document.close()
+                setTimeout(() => { win.print() }, 600)
+              }}
+                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'13px', fontWeight:500, cursor:'pointer', fontFamily:'inherit' }}>
+                <FileText size={13} />PDF
+              </button>
               <button onClick={() => setViewSt(null)}
                 style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)', border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
                 {isBn?'বন্ধ':'Close'}
@@ -196,22 +211,32 @@ export default function AllStudentsPage() {
         </div>
       )}
 
-      {/* Page header */}
-      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
+      {/* Top Section - fixed, does not scroll */}
+      <div style={{ flexShrink:0 }}>
+        {/* Page header */}
+        <div style={{ display:'flex', alignItems:'flex-start', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
         <button onClick={() => navigate('/students')}
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px', background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px', color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
           <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
-        <div style={{ flex:1 }}>
+        <div style={{ flex:1, minWidth:0 }}>
           <h1 style={{ fontSize:isMobile?'18px':'22px', fontWeight:600, color:'var(--text-primary)' }}>
             {isBn?'সকল ছাত্র':'All Students'}
           </h1>
-          <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginTop:'3px' }}>
-            {isBn
-              ? `মোট ${stats.total} জন · অনুমোদিত ${stats.approved} · অপেক্ষমান ${stats.pending} · ছেলে ${stats.male} · মেয়ে ${stats.female}`
-              : `Total ${stats.total} · Approved ${stats.approved} · Pending ${stats.pending} · Male ${stats.male} · Female ${stats.female}`}
-          </p>
+          <div style={{ display:'flex', flexWrap:'wrap', gap: isMobile ? '4px 10px' : '6px', marginTop:'4px' }}>
+            {[
+              { label: isBn?'মোট':'Total', value: stats.total },
+              { label: isBn?'অনুমোদিত':'Approved', value: stats.approved, color:'var(--green)' },
+              { label: isBn?'অপেক্ষমান':'Pending', value: stats.pending, color:'var(--amber)' },
+              { label: isBn?'ছেলে':'Male', value: stats.male, color:'var(--teal)' },
+              { label: isBn?'মেয়ে':'Female', value: stats.female, color:'var(--purple)' },
+            ].map(s => (
+              <span key={s.label} style={{ fontSize:'12px', color: s.color || 'var(--text-secondary)', fontWeight: s.color ? 600 : 400 }}>
+                {s.label} {s.value}
+              </span>
+            ))}
+          </div>
         </div>
         <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
           <button onClick={() => navigate('/students/update')}
@@ -225,9 +250,11 @@ export default function AllStudentsPage() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
-        <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'2fr 1fr 1fr 1fr 1fr 1fr', gap:'8px' }}>
+      {/* Sticky Filters + Toolbar */}
+      <div style={{ position:'sticky', top:0, zIndex:50, background:'var(--bg-primary)', paddingTop:'2px', paddingBottom:'4px' }}>
+        {/* Filters */}
+        <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(160px, 1fr))', gap:'8px' }}>
           <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'7px 10px' }}>
             <Search size={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
             <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
@@ -238,6 +265,10 @@ export default function AllStudentsPage() {
           <select value={fClass} onChange={e => { setFClass(e.target.value); setPage(1) }} style={sel}>
             <option value="">{isBn?'সব শ্রেণি':'All Classes'}</option>
             {CLASSES.map(c => <option key={c} value={c}>{isBn?`শ্রেণি ${c}`:`Class ${c}`}</option>)}
+          </select>
+          <select value={fSection} onChange={e => { setFSection(e.target.value); setPage(1) }} style={sel}>
+            <option value="">{isBn?'সব সেকশন':'All Sections'}</option>
+            {SECTIONS.map(s => <option key={s} value={s}>{isBn?`সেকশন ${s}`:`Section ${s}`}</option>)}
           </select>
           <select value={fGender} onChange={e => { setFGender(e.target.value); setPage(1) }} style={sel}>
             <option value="">{isBn?'সব লিঙ্গ':'All Genders'}</option>
@@ -255,11 +286,10 @@ export default function AllStudentsPage() {
             <option value="">{isBn?'রক্তের গ্রুপ':'Blood Group'}</option>
             {BLOOD_GROUPS.map(b => <option key={b} value={b}>{b}</option>)}
           </select>
-          <select value={fStatus} onChange={e => { setFStatus(e.target.value); setPage(1) }} style={sel}>
+          <select value={fActive} onChange={e => { setFActive(e.target.value); setPage(1) }} style={sel}>
             <option value="">{isBn?'সব অবস্থা':'All Status'}</option>
-            <option value="approved">{isBn?'অনুমোদিত':'Approved'}</option>
-            <option value="pending">{isBn?'অপেক্ষমান':'Pending'}</option>
-            <option value="rejected">{isBn?'প্রত্যাখ্যাত':'Rejected'}</option>
+            <option value="active">{isBn?'সক্রিয়':'Active'}</option>
+            <option value="inactive">{isBn?'নিষ্ক্রিয়':'Inactive'}</option>
           </select>
         </div>
         {hasFilter && (
@@ -272,7 +302,7 @@ export default function AllStudentsPage() {
 
       {/* Toolbar */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px', flexWrap:'wrap', gap:'8px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
           <span style={{ fontSize:'12px', color:'var(--text-secondary)' }}>{isBn?'প্রতি পাতায়:':'Per page:'}</span>
           <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }} style={{ ...sel, padding:'5px 8px' }}>
             {PER_PAGE_OPTS.map(n => <option key={n} value={n}>{n}</option>)}
@@ -283,7 +313,7 @@ export default function AllStudentsPage() {
             </span>
           )}
         </div>
-        <div style={{ display:'flex', gap:'6px' }}>
+        <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
           <button onClick={exportExcel}
             style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
             <FileSpreadsheet size={13} />Excel
@@ -293,24 +323,26 @@ export default function AllStudentsPage() {
             <FileText size={13} />PDF {selected.length>0?`(${selected.length})`:`(${filtered.length})`}
           </button>
         </div>
+        </div>
+      </div>
       </div>
 
-      {/* Table */}
-      <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-        <div style={{ overflowX:'auto' }}>
+      {/* Table - scrollable */}
+      <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', marginTop:'4px' }}>
+        <div style={{ flex:1, overflowY:'auto' }}>
           <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
             <thead>
               <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
-                <th style={{ padding:'10px 12px', width:'36px', position:'sticky', left:0, zIndex:4, background:'var(--bg-primary)' }}>
+                <th style={{ padding:'10px 12px', width:'36px', ...(isMobile ? {} : { position:'sticky', left:0, zIndex:4, background:'var(--bg-primary)' }) }}>
                   <input type="checkbox" checked={allSel} onChange={toggleAll}
                     style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:'var(--brand)' }} />
                 </th>
                 {[
-                  { l:'#', w:'36px', sticky:true, left:'36px' },
-                  { l:isBn?'ছবি':'Photo', w:'44px', sticky:true, left:'72px' },
-                  { l:isBn?'ছাত্র আইডি':'Student ID', w:'140px', sticky:true, left:'116px' },
-                  { l:isBn?'নাম':'Name', w:'160px', sticky:true, left:'256px' },
-                  { l:isBn?'শ্রেণি/রোল':'Class/Roll', w:'90px', sticky:true, left:'416px' },
+                  { l:'#', w:'36px', sticky:!isMobile, left:'36px' },
+                  { l:isBn?'ছবি':'Photo', w:'44px', sticky:!isMobile, left:'72px' },
+                  { l:isBn?'ছাত্র আইডি':'Student ID', w:'140px', sticky:!isMobile, left:'116px' },
+                  { l:isBn?'নাম':'Name', w:'160px', sticky:!isMobile, left:'256px' },
+                  { l:isBn?'শ্রেণি/রোল':'Class/Roll', w:'90px', sticky:!isMobile, left:'416px' },
                   { l:isBn?'লিঙ্গ':'Gender', w:'65px' },
                   { l:isBn?'রক্ত':'Blood', w:'55px' },
                   { l:isBn?'মোবাইল':'Mobile', w:'108px' },
@@ -336,24 +368,24 @@ export default function AllStudentsPage() {
                     style={{ borderBottom:'0.5px solid var(--border)', background:selected.includes(s.id)?'rgba(99,102,241,0.04)':'transparent', cursor:'default' }}
                     onMouseEnter={e => { if (!selected.includes(s.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
                     onMouseLeave={e => { if (!selected.includes(s.id)) e.currentTarget.style.background = 'transparent' }}>
-                    <td style={{ padding:'8px 12px', position:'sticky', left:0, zIndex:3, background:'var(--bg-primary)' }}>
+                    <td style={{ padding:'8px 12px', ...(isMobile ? {} : { position:'sticky', left:0, zIndex:3, background:'var(--bg-primary)' }) }}>
                       <input type="checkbox" checked={selected.includes(s.id)} onChange={() => toggleOne(s.id)}
                         style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:'var(--brand)' }} />
                     </td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px', position:'sticky', left:'36px', zIndex:3, background:'var(--bg-primary)' }}>{(sp-1)*perPage+i+1}</td>
-                    <td style={{ padding:'7px 8px', position:'sticky', left:'72px', zIndex:3, background:'var(--bg-primary)' }}>
+                    <td style={{ padding:'8px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px', ...(isMobile ? {} : { position:'sticky', left:'36px', zIndex:3, background:'var(--bg-primary)' }) }}>{(sp-1)*perPage+i+1}</td>
+                    <td style={{ padding:'7px 8px', ...(isMobile ? {} : { position:'sticky', left:'72px', zIndex:3, background:'var(--bg-primary)' }) }}>
                       <div style={{ width:'30px', height:'36px', borderRadius:'5px', overflow:'hidden', background:'var(--bg-secondary)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
                         {s.photo ? <img src={s.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={13} style={{ color:'var(--text-muted)' }} />}
                       </div>
                     </td>
-                    <td style={{ padding:'8px 8px', position:'sticky', left:'116px', zIndex:3, background:'var(--bg-primary)' }}>
+                    <td style={{ padding:'8px 8px', ...(isMobile ? {} : { position:'sticky', left:'116px', zIndex:3, background:'var(--bg-primary)' }) }}>
                       <span style={{ fontSize:'10px', fontFamily:'monospace', color:'var(--brand)', background:'var(--brand-light)', padding:'2px 5px', borderRadius:'4px' }}>{s.id}</span>
                     </td>
-                    <td style={{ padding:'8px 8px', position:'sticky', left:'256px', zIndex:3, background:'var(--bg-primary)' }}>
+                    <td style={{ padding:'8px 8px', ...(isMobile ? {} : { position:'sticky', left:'256px', zIndex:3, background:'var(--bg-primary)' }) }}>
                       <div style={{ fontSize:'12px', fontWeight:500, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'155px' }}>{isBn?s.nameBn||s.nameEn:s.nameEn}</div>
                       <div style={{ fontSize:'10px', color:'var(--text-muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{isBn?s.nameEn:s.nameBn}</div>
                     </td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px', whiteSpace:'nowrap', position:'sticky', left:'416px', zIndex:3, background:'var(--bg-primary)' }}>
+                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px', whiteSpace:'nowrap', ...(isMobile ? {} : { position:'sticky', left:'416px', zIndex:3, background:'var(--bg-primary)' }) }}>
                       {isBn?`শ্র ${s.class}`:`Cls ${s.class}`}{s.section?`-${s.section}`:''}{s.roll?` / ${s.roll}`:''}
                     </td>
                     <td style={{ padding:'8px 8px' }}>

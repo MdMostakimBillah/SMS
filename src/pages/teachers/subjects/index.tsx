@@ -185,20 +185,20 @@ export default function SubjectsPage() {
       {/* Table */}
       <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
         <div style={{ overflowX:'auto' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px', tableLayout:'fixed' }}>
             <thead>
               <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
                 {[
-                  { l:'#', w:'40px' },
-                  { l:isBn?'নাম (ইংরেজি)':'Name (EN)', w:'160px' },
-                  { l:isBn?'নাম (বাংলা)':'Name (BN)', w:'160px' },
-                  { l:isBn?'বিভাগ':'Department', w:'140px' },
-                  { l:isBn?'শিক্ষক':'Teachers', w:'80px' },
-                  { l:isBn?'অ্যাকশন':'Action', w:'80px' },
+                  { l:'#', w:'50px', align:'center' as const },
+                  { l:isBn?'নাম (ইংরেজি)':'Name (EN)', align:'left' as const },
+                  { l:isBn?'নাম (বাংলা)':'Name (BN)', align:'left' as const },
+                  { l:isBn?'বিভাগ':'Department', align:'left' as const },
+                  { l:isBn?'শিক্ষক':'Teachers', w:'80px', align:'center' as const },
+                  { l:isBn?'অ্যাকশন':'Action', w:'90px', align:'center' as const },
                 ].map(h => (
-                  <th key={h.l} style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600,
+                  <th key={h.l} style={{ padding:'10px 12px', textAlign:h.align, fontSize:'10px', fontWeight:600,
                     color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.4px',
-                    whiteSpace:'nowrap', minWidth:h.w }}>
+                    whiteSpace:'nowrap' }}>
                     {h.l}
                   </th>
                 ))}
@@ -215,8 +215,8 @@ export default function SubjectsPage() {
                     style={{ borderBottom:'0.5px solid var(--border)' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding:'10px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px' }}>{i+1}</td>
-                    <td style={{ padding:'10px 8px' }}>
+                    <td style={{ padding:'10px 12px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px', textAlign:'center' }}>{i+1}</td>
+                    <td style={{ padding:'10px 12px' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                         <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:'var(--green-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                           <BookOpen size={16} style={{ color:'var(--green)' }} />
@@ -224,19 +224,19 @@ export default function SubjectsPage() {
                         <span style={{ fontSize:'13px', fontWeight:500, color:'var(--text-primary)' }}>{s.name}</span>
                       </div>
                     </td>
-                    <td style={{ padding:'10px 8px', fontSize:'12px', color:'var(--text-secondary)' }}>{s.nameBn || '—'}</td>
-                    <td style={{ padding:'10px 8px' }}>
+                    <td style={{ padding:'10px 12px', fontSize:'12px', color:'var(--text-secondary)' }}>{s.nameBn || '—'}</td>
+                    <td style={{ padding:'10px 12px' }}>
                       <span style={{ fontSize:'11px', fontWeight:500, padding:'3px 8px', borderRadius:'6px', background:'var(--amber-light)', color:'var(--amber)' }}>
                         {getDeptName(s.departmentId)}
                       </span>
                     </td>
-                    <td style={{ padding:'10px 8px' }}>
+                    <td style={{ padding:'10px 12px', textAlign:'center' }}>
                       <span style={{ fontSize:'12px', fontWeight:600, color:'var(--brand)', background:'var(--brand-light)', padding:'3px 8px', borderRadius:'6px' }}>
                         {getSubjectTeacherCount(s.id)}
                       </span>
                     </td>
-                    <td style={{ padding:'10px 8px' }}>
-                      <div style={{ display:'flex', gap:'4px' }}>
+                    <td style={{ padding:'10px 12px', textAlign:'center' }}>
+                      <div style={{ display:'flex', gap:'4px', justifyContent:'center' }}>
                         <button onClick={() => startEdit(s)} title={isBn?'এডিট':'Edit'}
                           style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--amber)' }}>
                           <Edit2 size={12} />

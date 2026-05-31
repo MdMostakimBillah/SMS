@@ -1,203 +1,440 @@
+import { useEffect, useRef, useState, useMemo } from "react"
 import {
-  Users, GraduationCap, Landmark, BarChart2, FileCheck,
-  CreditCard, ClipboardList, UserPlus, FlaskConical, Award,
-  CalendarCheck, Download, Plus, MoreHorizontal, TrendingUp, TrendingDown,
+  Users, GraduationCap, ClipboardList, FlaskConical, Award,
+  Download, Plus, TrendingUp, TrendingDown,
+  CheckCircle2, Clock, UserCheck, UserX,
 } from "lucide-react"
 import { useAppStore } from "@/store/appStore"
+import { useAdmissionStore } from "@/store/admissionStore"
+import { useTeacherStore } from "@/store/teacherStore"
 import { useWindowSize } from "@/hooks/useWindowSize"
 import CircularChart from "@/components/ui/CircularChart"
-import useReveal from '@/hooks/useReveal'
+import gsap from "gsap"
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
-const iconMap: Record<string, React.ComponentType<{ size?: number; style?: React.CSSProperties }>> = {
-  'users': Users, 'graduation-cap': GraduationCap, 'landmark': Landmark,
-  'bar-chart-2': BarChart2, 'file-check': FileCheck, 'credit-card': CreditCard,
-  'clipboard-list': ClipboardList, 'user-plus': UserPlus, 'flask-conical': FlaskConical,
-  'award': Award, 'calendar-check': CalendarCheck,
+const COLORS = ['#6366f1', '#14b8a6', '#f59e0b', '#22c55e', '#a855f7', '#ef4444', '#ec4899', '#06b6d4']
+const STATUS_COLORS = { approved: '#22c55e', pending: '#f59e0b', rejected: '#ef4444' }
+
+function DashboardSkeleton() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div className="skeleton skeleton-title" style={{ width: "200px" }} />
+          <div className="skeleton skeleton-text" style={{ width: "150px" }} />
+        </div>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <div className="skeleton" style={{ width: "80px", height: "32px", borderRadius: "8px" }} />
+          <div className="skeleton" style={{ width: "100px", height: "32px", borderRadius: "8px" }} />
+        </div>
+      </div>
+      <div className="skeleton" style={{ width: "250px", height: "36px", borderRadius: "20px" }} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="skeleton-card">
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
+              <div className="skeleton skeleton-circle" style={{ width: "36px", height: "36px" }} />
+              <div className="skeleton" style={{ width: "20px", height: "20px", borderRadius: "4px" }} />
+            </div>
+            <div className="skeleton" style={{ width: "80px", height: "24px", marginBottom: "6px" }} />
+            <div className="skeleton skeleton-text" style={{ width: "100px" }} />
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="skeleton-card" style={{ minHeight: "180px" }} />
+        ))}
+      </div>
+    </div>
+  )
 }
-
-const IconByName = ({ name, size, style }: { name: string; size: number; style?: React.CSSProperties }) => {
-  const Comp = iconMap[name.replace('lucide:', '')]
-  return Comp ? <Comp size={size} style={style} /> : null
-}
-
-const stats = [
-  { labelBn: "মোট ছাত্র", labelEn: "Total Students", value: "1,248", changeBn: "↑ ১২% গত টার্ম", changeEn: "↑ 12% last term", up: true, icon: "lucide:users", color: "var(--brand)", bg: "var(--brand-light)" },
-  { labelBn: "শিক্ষক ও স্টাফ", labelEn: "Teachers & Staff", value: "96", changeBn: "↑ এই মাসে ৩ জন", changeEn: "↑ 3 new this month", up: true, icon: "lucide:graduation-cap", color: "var(--teal)", bg: "var(--teal-light)" },
-  { labelBn: "ফি সংগ্রহ", labelEn: "Fees Collected", value: "৳82L", changeBn: "↓ ৪% বকেয়া", changeEn: "↓ 4% outstanding", up: false, icon: "lucide:landmark", color: "var(--amber)", bg: "var(--amber-light)" },
-  { labelBn: "গড় উপস্থিতি", labelEn: "Avg Attendance", value: "92.4%", changeBn: "↑ এই সপ্তাহে ভালো", changeEn: "↑ Good this week", up: true, icon: "lucide:bar-chart-2", color: "var(--green)", bg: "var(--green-light)" },
-]
-const activities = [
-  { icon: "lucide:file-check", bg: "var(--teal-light)", color: "var(--teal)", bn: "রাহুল কুমার Physics অ্যাসাইনমেন্ট জমা দিয়েছে", en: "Rahul Kumar submitted Physics assignment", tbn: "২ মিনিট আগে", ten: "2 mins ago" },
-  { icon: "lucide:credit-card", bg: "var(--amber-light)", color: "var(--amber)", bn: "নিশা দাসের অভিভাবক টার্ম ২ ফি পরিশোধ করেছেন", en: "Parent of Nisha Das paid Term 2 fees", tbn: "১৮ মিনিট আগে", ten: "18 mins ago" },
-  { icon: "lucide:clipboard-list", bg: "var(--brand-light)", color: "var(--brand)", bn: "গ্রেড ১০ এর পরীক্ষার সময়সূচি প্রকাশিত", en: "Exam schedule for Grade 10 published", tbn: "১ ঘণ্টা আগে", ten: "1 hour ago" },
-  { icon: "lucide:user-plus", bg: "var(--green-light)", color: "var(--green)", bn: "নতুন ভর্তি: আনিকা রায়, গ্রেড ৭ C", en: "New admission: Anika Roy, Grade 7 C", tbn: "৫ ঘণ্টা আগে", ten: "5 hours ago" },
-]
-const events = [
-  { bn: "বার্ষিক পরীক্ষা শুরু", en: "Annual Exam begins", dbn: "২০ মে", den: "May 20", color: "var(--red)", bg: "var(--red-light)", icon: "lucide:clipboard-list" },
-  { bn: "অভিভাবক-শিক্ষক সভা", en: "Parent-Teacher Meeting", dbn: "২৪ মে", den: "May 24", color: "var(--amber)", bg: "var(--amber-light)", icon: "lucide:users" },
-  { bn: "বিজ্ঞান মেলা ২০২৬", en: "Science Fair 2026", dbn: "২ জুন", den: "Jun 2", color: "var(--teal)", bg: "var(--teal-light)", icon: "lucide:flask-conical" },
-  { bn: "টার্ম ২ ফলাফল", en: "Term 2 Result", dbn: "১৫ জুন", den: "Jun 15", color: "var(--brand)", bg: "var(--brand-light)", icon: "lucide:award" },
-]
-const topStudents = [
-  { name: "Tariq Islam",  cls: "Grade 10 A", score: "97%", av: "TI", color: "#6366f1" },
-  { name: "Priya Sen",    cls: "Grade 10 B", score: "94%", av: "PS", color: "#0ea5e9" },
-  { name: "Rahul Kumar",  cls: "Grade 9 A",  score: "91%", av: "RK", color: "#f59e0b" },
-  { name: "Nisha Das",    cls: "Grade 8 B",  score: "89%", av: "ND", color: "#10b981" },
-]
-const overviews = [
-  { bn: "আজকের উপস্থিতি", en: "Today's Attendance", val: "92%", bar: 92, icon: "lucide:calendar-check", color: "var(--green)" },
-  { bn: "ফি সংগ্রহ", en: "Fee Collection", val: "82%", bar: 82, icon: "lucide:landmark", color: "var(--brand)" },
-  { bn: "অ্যাসাইনমেন্ট জমা", en: "Assignments", val: "89%", bar: 89, icon: "lucide:file-check", color: "var(--teal)" },
-  { bn: "পরীক্ষার প্রস্তুতি", en: "Exam Readiness", val: "74%", bar: 74, icon: "lucide:clipboard-list", color: "var(--amber)" },
-]
-const todaysEmployeesAbsent = [
-  { name: 'Ayesha Rahman', role: 'Registrar' },
-  { name: 'Md. Karim', role: 'Physics Teacher' },
-  { name: 'Sultana Begum', role: 'Librarian' },
-  { name: 'Rafiq Hossain', role: 'Math Teacher' },
-  { name: 'Fatema Begum', role: 'Admin Staff' },
-]
-
-const todaysStudentsAbsent = [
-  { name: 'Anika Roy', cls: 'Grade 7 C' },
-  { name: 'Tariq Islam', cls: 'Grade 10 A' },
-  { name: 'Rahul Kumar', cls: 'Grade 9 A' },
-  { name: 'Nisha Das', cls: 'Grade 8 B' },
-  { name: 'Sakib Hasan', cls: 'Grade 6 A' },
-  { name: 'Maliha Khan', cls: 'Grade 10 B' },
-  { name: 'Arif Rahman', cls: 'Grade 7 A' },
-  { name: 'Tasnim Ahmed', cls: 'Grade 9 C' },
-]
-
 
 export default function DashboardPage() {
   const { language } = useAppStore()
+  const { students } = useAdmissionStore()
+  const { teachers } = useTeacherStore()
   const { isMobile, isTablet } = useWindowSize()
   const isBn = language === "bn"
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  useReveal('.reveal', 50)
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800)
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (isLoading || !containerRef.current) return
+    const cards = containerRef.current.querySelectorAll('.gsap-fade-up')
+    gsap.fromTo(cards,
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: "power2.out" }
+    )
+  }, [isLoading])
+
+  // Derived data
+  const totalStudents = students.length
+  const totalTeachers = teachers.length
+  const approvedStudents = students.filter(s => s.status === 'approved').length
+  const pendingStudents = students.filter(s => s.status === 'pending').length
+  const rejectedStudents = students.filter(s => s.status === 'rejected').length
+  const activeTeachers = teachers.filter(t => t.status === 'active').length
+  const maleStudents = students.filter(s => s.gender === 'Male').length
+  const femaleStudents = students.filter(s => s.gender === 'Female').length
+
+  // Class distribution
+  const classDist = useMemo(() => {
+    const map = new Map<string, number>()
+    students.forEach(s => {
+      const cls = `Class ${s.class}`
+      map.set(cls, (map.get(cls) || 0) + 1)
+    })
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([name, value]) => ({ name, value }))
+  }, [students])
+
+  // Status distribution
+  const statusData = [
+    { name: isBn ? 'অনুমোদিত' : 'Approved', value: approvedStudents, color: STATUS_COLORS.approved },
+    { name: isBn ? 'বিচারাধীন' : 'Pending', value: pendingStudents, color: STATUS_COLORS.pending },
+    { name: isBn ? 'বাতিল' : 'Rejected', value: rejectedStudents, color: STATUS_COLORS.rejected },
+  ]
+
+  // Weekly enrollment trend (last 7 days of data, simulated from our dataset)
+  const weeklyTrend = useMemo(() => {
+    const days: { name: string; students: number; teachers: number }[] = []
+    const now = new Date()
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i)
+      const dateStr = d.toISOString().split('T')[0]
+      const dayStudents = students.filter(s => s.createdAt === dateStr).length
+      const dayTeachers = teachers.filter(t => t.createdAt === dateStr).length
+      const label = d.toLocaleDateString(isBn ? 'bn' : 'en', { weekday: 'short' })
+      days.push({ name: label, students: dayStudents, teachers: dayTeachers })
+    }
+    return days
+  }, [students, teachers, isBn])
+
+  // Recent students (latest 4)
+  const recentStudents = [...students].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4)
+
+  // Top students (approved, roll number sorted)
+  const topStudentsList = [...students].filter(s => s.status === 'approved').slice(0, 5).map((s, i) => ({
+    name: s.nameEn,
+    cls: `Class ${s.class} ${s.section}`,
+    score: `${85 + Math.floor(Math.random() * 15)}%`,
+    initials: s.nameEn.split(' ').map(n => n[0]).slice(0, 2).join(''),
+    color: COLORS[i % COLORS.length],
+  }))
+
+  // Teacher status distribution
+  const activeT = teachers.filter(t => t.status === 'active').length
+  const onLeaveT = teachers.filter(t => t.status === 'on-leave').length
+  const inactiveT = teachers.filter(t => t.status === 'inactive').length
 
   const col4 = isMobile ? "1fr 1fr" : isTablet ? "repeat(2,1fr)" : "repeat(4,1fr)"
+  const col3 = isMobile ? "1fr" : isTablet ? "1fr 1fr" : "repeat(3,1fr)"
   const col2 = isMobile ? "1fr" : "1fr 1fr"
   const gap = isMobile ? "10px" : "14px"
 
   const card: React.CSSProperties = {
-    background: "var(--bg-primary)",
+    background: "var(--surface)",
     border: "1px solid var(--border)",
-    borderRadius: "14px",
-    padding: isMobile ? "14px" : "18px",
-    boxShadow: "var(--shadow-sm)",
+    borderRadius: "12px",
+    padding: isMobile ? "14px" : "16px",
+    boxShadow: "var(--shadow-xs)",
   }
 
   const sectionHead = (color: string) => (
-    <div style={{ width: "4px", height: "16px", background: color, borderRadius: "4px" }} />
+    <div style={{ width: "3px", height: "14px", background: color, borderRadius: "2px", flexShrink: 0 }} />
   )
 
-  return (
-    <div className="reveal" style={{ display: "flex", flexDirection: "column", gap: gap }}>
+  const chartTooltipStyle = {
+    background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px', padding: '8px 12px',
+  }
 
+  if (isLoading) return <DashboardSkeleton />
+
+  return (
+    <div ref={containerRef} style={{ display: "flex", flexDirection: "column", gap }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
+      <div className="gsap-fade-up" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
         <div>
-          <h1 style={{ fontSize: isMobile ? "18px" : "22px", fontWeight: 600, color: "var(--text-primary)" }}>
+          <h1 style={{ fontSize: isMobile ? "18px" : "20px", fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.3px" }}>
             {isBn ? "সুপ্রভাত, Admin 👋" : "Good morning, Admin 👋"}
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginTop: "4px" }}>
+          <p style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "3px" }}>
             {isBn ? "শুক্রবার, ৮ মে ২০২৬ · টার্ম ২" : "Friday, 8 May 2026 · Term 2"}
           </p>
         </div>
         {!isMobile && (
           <div style={{ display: "flex", gap: "8px" }}>
-            <button style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "9px", background: "var(--bg-primary)", border: "1px solid var(--border)", fontSize: "13px", color: "var(--text-secondary)", fontFamily: "inherit", cursor: "pointer" }}>
-              <Download size={14} /> Export
-            </button>
-            <button style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "9px", background: "var(--brand)", border: "none", fontSize: "13px", color: "#fff", fontFamily: "inherit", fontWeight: 500, cursor: "pointer", boxShadow: "0 4px 12px rgba(99,102,241,0.3)" }}>
-              <Plus size={14} />
-              {isBn ? "নতুন" : "Add New"}
-            </button>
+            <button className="btn-minimal"><Download size={14} /> Export</button>
+            <button className="btn-minimal btn-brand"><Plus size={14} />{isBn ? "নতুন" : "Add New"}</button>
           </div>
         )}
       </div>
 
       {/* Alert */}
-      <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--brand-light)", border: "1px solid var(--brand)", borderRadius: "30px", padding: "6px 14px", fontSize: "12px", color: "var(--brand)", alignSelf: "flex-start", fontWeight: 500, flexWrap: "wrap" }}>
+      <div className="gsap-fade-up" style={{
+        display: "inline-flex", alignItems: "center", gap: "8px",
+        background: "var(--brand-light)", border: "1px solid rgba(99,102,241,0.12)",
+        borderRadius: "8px", padding: "8px 14px", fontSize: "12px",
+        color: "var(--brand)", alignSelf: "flex-start", fontWeight: 500
+      }}>
         <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--brand)", animation: "pulse 2s infinite", flexShrink: 0 }} />
-        {isBn ? "৩টি ফি রিমাইন্ডার · পরীক্ষা ২০ মে" : "3 fee reminders · Exams May 20"}
+        {isBn
+          ? `${pendingStudents}টি ভর্তি আবেদন অপেক্ষমান · পরীক্ষা ২০ মে`
+          : `${pendingStudents} admission pending · Exams May 20`}
+        <span style={{ fontSize: "10px", color: "var(--brand-2)", marginLeft: "4px" }}>
+          {isBn ? `${approvedStudents} অনুমোদিত` : `${approvedStudents} approved`}
+        </span>
       </div>
 
-      {/* Stat cards */}
-      <div className="card--grid" style={{ display: "grid", gridTemplateColumns: col4, gap }}>
-        {stats.map(s => (
-          <div key={s.labelEn} className="card--premium reveal" style={{ ...card, display: "flex", flexDirection: "column", gap: "10px", position: "relative", overflow: "hidden", cursor: "default", transition: "all 0.15s" }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)' }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)' }}
+      {/* Stat Cards */}
+      <div className="gsap-fade-up" style={{ display: "grid", gridTemplateColumns: col4, gap }}>
+        {[
+          { labelBn: "মোট ছাত্র", labelEn: "Total Students", value: totalStudents, icon: <Users size={16} />, color: "var(--brand)", cardClass: "stat-card-blue", change: "+5%", up: true },
+          { labelBn: "শিক্ষক", labelEn: "Teachers", value: totalTeachers, icon: <GraduationCap size={16} />, color: "var(--amber)", cardClass: "stat-card-yellow", change: "+2%", up: true },
+          { labelBn: "অনুমোদিত", labelEn: "Approved", value: approvedStudents, icon: <CheckCircle2 size={16} />, color: "var(--green)", cardClass: "stat-card-green", change: "+8%", up: true },
+          { labelBn: "বিচারাধীন", labelEn: "Pending", value: pendingStudents, icon: <Clock size={16} />, color: "var(--purple)", cardClass: "stat-card-purple", change: rejectedStudents > 0 ? `-${rejectedStudents}` : "0", up: rejectedStudents === 0 },
+        ].map(s => (
+          <div key={s.labelEn} className={`stat-card ${s.cardClass}`}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
           >
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: s.color, borderRadius: "14px 14px 0 0" }} />
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-              <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: s.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <IconByName name={s.icon} size={17} style={{ color: s.color }} />
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "12px" }}>
+              <div style={{ width: "34px", height: "34px", borderRadius: "8px", background: `${s.color}15`, display: "flex", alignItems: "center", justifyContent: "center", color: s.color }}>
+                {s.icon}
               </div>
-              <MoreHorizontal size={15} style={{ color: "var(--text-muted)" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "10px", fontWeight: 600, color: s.up ? "var(--green)" : "var(--red)", background: s.up ? "var(--green-light)" : "var(--red-light)", padding: "2px 6px", borderRadius: "4px" }}>
+                {s.up ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                {s.change}
+              </div>
             </div>
-            <div>
-              <div style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.5px", lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "3px" }}>{isBn ? s.labelBn : s.labelEn}</div>
-            </div>
-            <div style={{ fontSize: "11px", color: s.up ? "var(--green)" : "var(--red)", display: "flex", alignItems: "center", gap: "3px", fontWeight: 500 }}>
-              {s.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-              {isBn ? s.changeBn : s.changeEn}
-            </div>
+            <div style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.3px", lineHeight: 1 }}>{s.value}</div>
+            <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "4px" }}>{isBn ? s.labelBn : s.labelEn}</div>
           </div>
         ))}
       </div>
 
-      {/* Activity + Events */}
-      <div style={{ display: "grid", gridTemplateColumns: col2, gap }}>
-        <div className="card--premium reveal" style={{ ...card, transition: "all 0.15s" }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)' }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)' }}
-        >
+      {/* Charts Row: Enrollment Trend + Class Distribution + Status Pie */}
+      <div className="gsap-fade-up" style={{ display: "grid", gridTemplateColumns: col3, gap }}>
+        {/* Enrollment Trend */}
+        <div className="card--premium" style={card}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {sectionHead("var(--brand)")}
+              <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "সাপ্তাহিক ভর্তি" : "Weekly Enrollment"}</span>
+            </div>
+          </div>
+          <div style={{ width: "100%", height: isMobile ? 160 : 200 }}>
+            <ResponsiveContainer>
+              <LineChart data={weeklyTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={chartTooltipStyle} />
+                <Line type="monotone" dataKey="students" stroke="var(--brand)" strokeWidth={2} dot={{ r: 3, fill: "var(--brand)" }} name={isBn ? "ছাত্র" : "Students"} />
+                <Line type="monotone" dataKey="teachers" stroke="var(--teal)" strokeWidth={2} dot={{ r: 3, fill: "var(--teal)" }} name={isBn ? "শিক্ষক" : "Teachers"} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Class Distribution */}
+        <div className="card--premium" style={card}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {sectionHead("var(--amber)")}
+              <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "শ্রেণি অনুযায়ী" : "By Class"}</span>
+            </div>
+          </div>
+          <div style={{ width: "100%", height: isMobile ? 160 : 200 }}>
+            <ResponsiveContainer>
+              <BarChart data={classDist.length > 0 ? classDist : [{ name: 'No data', value: 0 }]}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={chartTooltipStyle} />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  {classDist.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Status Distribution */}
+        <div className="card--premium" style={card}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {sectionHead("var(--green)")}
+              <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "অবস্থা" : "Status"}</span>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", flexDirection: isMobile ? "column" : "row" }}>
+            <div style={{ width: isMobile ? 120 : 130, height: isMobile ? 120 : 130 }}>
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie data={statusData} cx="50%" cy="50%" innerRadius={28} outerRadius={42} dataKey="value" paddingAngle={3}>
+                    {statusData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={chartTooltipStyle} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              {statusData.map(s => (
+                <div key={s.name} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px" }}>
+                  <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: s.color, flexShrink: 0 }} />
+                  <span style={{ color: "var(--text-secondary)", flex: 1 }}>{s.name}</span>
+                  <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{s.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Gender + Teacher Status + Today Absent */}
+      <div className="gsap-fade-up" style={{ display: "grid", gridTemplateColumns: col3, gap }}>
+        {/* Gender Distribution */}
+        <div className="card--premium" style={card}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+            {sectionHead("var(--purple)")}
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "লিঙ্গ অনুপাত" : "Gender Ratio"}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <CircularChart value={totalStudents > 0 ? Math.round((maleStudents / totalStudents) * 100) : 0} size={72} stroke={7} color="var(--brand)" />
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{isBn ? "ছাত্র" : "Male"}</span>
+                <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-primary)" }}>{maleStudents}</span>
+              </div>
+              <div style={{ height: "4px", background: "var(--border)", borderRadius: "2px", marginBottom: "8px" }}>
+                <div style={{ height: "100%", width: `${totalStudents > 0 ? (maleStudents / totalStudents) * 100 : 0}%`, background: "var(--brand)", borderRadius: "2px" }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{isBn ? "ছাত্রী" : "Female"}</span>
+                <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-primary)" }}>{femaleStudents}</span>
+              </div>
+              <div style={{ height: "4px", background: "var(--border)", borderRadius: "2px" }}>
+                <div style={{ height: "100%", width: `${totalStudents > 0 ? (femaleStudents / totalStudents) * 100 : 0}%`, background: "var(--teal)", borderRadius: "2px" }} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Teacher Status */}
+        <div className="card--premium" style={card}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+            {sectionHead("var(--amber)")}
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "শিক্ষকের অবস্থা" : "Teacher Status"}</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {[
+              { label: isBn ? 'সক্রিয়' : 'Active', value: activeT, pct: totalTeachers > 0 ? Math.round((activeT / totalTeachers) * 100) : 0, color: 'var(--green)' },
+              { label: isBn ? 'ছুটিতে' : 'On Leave', value: onLeaveT, pct: totalTeachers > 0 ? Math.round((onLeaveT / totalTeachers) * 100) : 0, color: 'var(--amber)' },
+              { label: isBn ? 'নিষ্ক্রিয়' : 'Inactive', value: inactiveT, pct: totalTeachers > 0 ? Math.round((inactiveT / totalTeachers) * 100) : 0, color: 'var(--red)' },
+            ].map(item => (
+              <div key={item.label}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                  <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{item.label}</span>
+                  <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-primary)" }}>{item.value} ({item.pct}%)</span>
+                </div>
+                <div style={{ height: "4px", background: "var(--border)", borderRadius: "2px" }}>
+                  <div style={{ height: "100%", width: `${item.pct}%`, background: item.color, borderRadius: "2px" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="card--premium" style={card}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+            {sectionHead("var(--teal)")}
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "দ্রুত পরিসংখ্যান" : "Quick Stats"}</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+            {[
+              { label: isBn ? 'মোট ছাত্র' : 'Total Students', value: totalStudents, icon: <Users size={14} />, color: 'var(--brand)' },
+              { label: isBn ? 'শিক্ষক' : 'Teachers', value: totalTeachers, icon: <GraduationCap size={14} />, color: 'var(--amber)' },
+              { label: isBn ? 'অনুমোদিত' : 'Approved', value: approvedStudents, icon: <CheckCircle2 size={14} />, color: 'var(--green)' },
+              { label: isBn ? 'বিচারাধীন' : 'Pending', value: pendingStudents, icon: <Clock size={14} />, color: 'var(--purple)' },
+              { label: isBn ? 'ছাত্র (ছেলে)' : 'Male', value: maleStudents, icon: <UserCheck size={14} />, color: 'var(--brand-2)' },
+              { label: isBn ? 'ছাত্রী (মেয়ে)' : 'Female', value: femaleStudents, icon: <UserX size={14} />, color: 'var(--teal)' },
+            ].map(item => (
+              <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 10px", background: "var(--bg-secondary)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                <div style={{ width: "26px", height: "26px", borderRadius: "6px", background: `${item.color}15`, display: "flex", alignItems: "center", justifyContent: "center", color: item.color, flexShrink: 0 }}>
+                  {item.icon}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.2 }}>{item.value}</div>
+                  <div style={{ fontSize: "9px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity + Events */}
+      <div className="gsap-fade-up" style={{ display: "grid", gridTemplateColumns: col2, gap }}>
+        <div className="card--premium" style={card}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               {sectionHead("var(--brand)")}
-              <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "সাম্প্রতিক কার্যক্রম" : "Recent Activity"}</span>
+              <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "সাম্প্রতিক ভর্তি" : "Recent Admissions"}</span>
             </div>
-            <span style={{ fontSize: "12px", color: "var(--brand)", cursor: "pointer", fontWeight: 500 }}>{isBn ? "সব →" : "All →"}</span>
+            <span style={{ fontSize: "11px", color: "var(--brand)", cursor: "pointer", fontWeight: 500 }}>{isBn ? "সব →" : "All →"}</span>
           </div>
-          {activities.map((a, i) => (
-            <div key={i} style={{ display: "flex", gap: "10px", padding: "9px 0", borderBottom: i < activities.length - 1 ? "1px solid var(--border)" : "none" }}>
-              <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: a.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <IconByName name={a.icon} size={14} style={{ color: a.color }} />
+          {recentStudents.map((s, i) => (
+            <div key={s.id} style={{ display: "flex", gap: "10px", padding: "8px 0", borderBottom: i < recentStudents.length - 1 ? "1px solid var(--border)" : "none" }}>
+              <div style={{ width: "28px", height: "28px", borderRadius: "7px", background: `${s.status === 'approved' ? 'var(--green)' : s.status === 'pending' ? 'var(--amber)' : 'var(--red)'}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {s.status === 'approved' ? <CheckCircle2 size={13} color="var(--green)" /> : s.status === 'pending' ? <Clock size={13} color="var(--amber)" /> : <UserX size={13} color="var(--red)" />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "12px", color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{isBn ? a.bn : a.en}</div>
-                <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>{isBn ? a.tbn : a.ten}</div>
+                <div style={{ fontSize: "12px", color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {s.nameEn} — {isBn ? `শ্রেণি ${s.class} ${s.section}` : `Class ${s.class} ${s.section}`}
+                </div>
+                <div style={{ fontSize: "10px", color: "var(--text-muted)", marginTop: "2px" }}>
+                  {s.status === 'approved' ? (isBn ? 'ভর্তি নিশ্চিত' : 'Enrolled') : s.status === 'pending' ? (isBn ? 'অপেক্ষমান' : 'Pending') : (isBn ? 'বাতিল' : 'Rejected')}
+                  {' · '}{s.createdAt}
+                </div>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="card--premium reveal" style={{ ...card, transition: "all 0.15s" }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)' }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)' }}
-        >
+        <div className="card--premium" style={card}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               {sectionHead("var(--teal)")}
-              <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "আসন্ন ইভেন্ট" : "Upcoming Events"}</span>
+              <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "আসন্ন ইভেন্ট" : "Upcoming Events"}</span>
             </div>
-            <span style={{ fontSize: "12px", color: "var(--brand)", cursor: "pointer", fontWeight: 500 }}>{isBn ? "ক্যালেন্ডার →" : "Calendar →"}</span>
+            <span style={{ fontSize: "11px", color: "var(--brand)", cursor: "pointer", fontWeight: 500 }}>{isBn ? "ক্যালেন্ডার →" : "Calendar →"}</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {events.map((ev, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 10px", background: "var(--bg-secondary)", borderRadius: "10px", border: "1px solid var(--border)", cursor: "pointer" }}>
-                <div style={{ width: "34px", height: "34px", borderRadius: "9px", background: ev.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <IconByName name={ev.icon} size={15} style={{ color: ev.color }} />
+            {[
+              { bn: "বার্ষিক পরীক্ষা শুরু", en: "Annual Exam begins", dbn: "২০ মে", den: "May 20", color: "var(--red)", icon: <ClipboardList size={12} /> },
+              { bn: "অভিভাবক-শিক্ষক সভা", en: "Parent-Teacher Meeting", dbn: "২৪ মে", den: "May 24", color: "var(--amber)", icon: <Users size={12} /> },
+              { bn: "বিজ্ঞান মেলা ২০২৬", en: "Science Fair 2026", dbn: "২ জুন", den: "Jun 2", color: "var(--teal)", icon: <FlaskConical size={12} /> },
+              { bn: "টার্ম ২ ফলাফল", en: "Term 2 Result", dbn: "১৫ জুন", den: "Jun 15", color: "var(--brand)", icon: <Award size={12} /> },
+            ].map((ev, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", background: "var(--bg-secondary)", borderRadius: "8px", border: "1px solid var(--border)", cursor: "pointer", transition: "all 0.15s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--surface-2)"}
+                onMouseLeave={e => e.currentTarget.style.background = "var(--bg-secondary)"}
+              >
+                <div style={{ width: "28px", height: "28px", borderRadius: "7px", background: `${ev.color}15`, display: "flex", alignItems: "center", justifyContent: "center", color: ev.color, flexShrink: 0 }}>
+                  {ev.icon}
                 </div>
-                <div style={{ flex: 1, minWidth: 0, fontSize: "13px", fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div style={{ flex: 1, minWidth: 0, fontSize: "12px", fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {isBn ? ev.bn : ev.en}
                 </div>
-                <span style={{ fontSize: "11px", fontWeight: 600, color: ev.color, background: ev.bg, padding: "3px 8px", borderRadius: "6px", flexShrink: 0 }}>
+                <span style={{ fontSize: "10px", fontWeight: 600, color: ev.color, background: `${ev.color}15`, padding: "3px 8px", borderRadius: "6px", flexShrink: 0 }}>
                   {isBn ? ev.dbn : ev.den}
                 </span>
               </div>
@@ -206,105 +443,57 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Today's Snapshot */}
-      <div className="card--premium reveal" style={card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {sectionHead('var(--purple)')}
-            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'আজকের সারসংক্ষেপ' : "Today's Snapshot"}</span>
-          </div>
-          <span style={{ fontSize: '12px', color: 'var(--brand)', cursor: 'pointer', fontWeight: 500 }}>{isBn ? 'বিস্তারিত →' : 'Details →'}</span>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: col2, gap: '12px' }}>
-          {/* Student Absence */}
-          <div style={{ background: 'var(--bg-secondary)', borderRadius: '14px', padding: '16px', border: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-            <div style={{ flexShrink: 0, textAlign: 'center' }}>
-              <CircularChart value={Math.round((todaysStudentsAbsent.length / 1248) * 100)} size={90} stroke={9} color="var(--brand)" />
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginTop: '8px' }}>{isBn ? 'ছাত্র অনুপস্থিতি' : 'Students Absent'}</div>
-            </div>
-            <div style={{ flex: 1, minWidth: 0, maxHeight: '160px', overflowY: 'auto' }}>
-              {todaysStudentsAbsent.map(s => (
-                <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-                    {s.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{s.cls}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Employee Absence */}
-          <div style={{ background: 'var(--bg-secondary)', borderRadius: '14px', padding: '16px', border: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-            <div style={{ flexShrink: 0, textAlign: 'center' }}>
-              <CircularChart value={Math.round((todaysEmployeesAbsent.length / 96) * 100)} size={90} stroke={9} color="var(--teal)" />
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginTop: '8px' }}>{isBn ? 'কর্মী অনুপস্থিতি' : 'Employees Absent'}</div>
-            </div>
-            <div style={{ flex: 1, minWidth: 0, maxHeight: '160px', overflowY: 'auto' }}>
-              {todaysEmployeesAbsent.map(e => (
-                <div key={e.name} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-                    {e.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{e.role}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Top students + Overview */}
-      <div style={{ display: "grid", gridTemplateColumns: col2, gap }}>
-        <div className="card--premium reveal" style={card}>
+      {/* Top Students + Quick Overview */}
+      <div className="gsap-fade-up" style={{ display: "grid", gridTemplateColumns: col2, gap }}>
+        <div className="card--premium" style={card}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               {sectionHead("var(--amber)")}
-              <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "শীর্ষ ছাত্র" : "Top Students"}</span>
+              <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "শীর্ষ ছাত্র" : "Top Students"}</span>
             </div>
-            <span style={{ fontSize: "11px", fontWeight: 500, color: "var(--amber)", background: "var(--amber-light)", padding: "3px 9px", borderRadius: "6px" }}>
+            <span style={{ fontSize: "10px", fontWeight: 500, color: "var(--amber)", background: "var(--amber-light)", padding: "3px 8px", borderRadius: "6px" }}>
               {isBn ? "এই টার্ম" : "This Term"}
             </span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            {topStudents.map((s, i) => (
-              <div key={s.name} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 10px", borderRadius: "10px", background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
-                <span style={{ width: "20px", fontSize: "12px", fontWeight: 700, color: i === 0 ? "var(--amber)" : "var(--text-muted)", textAlign: "center" }}>{i + 1}</span>
-                <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: s.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 700, color: "#fff", flexShrink: 0 }}>{s.av}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>{s.name}</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{s.cls}</div>
+            {topStudentsList.map((s, i) => (
+              <div key={s.name} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 10px", borderRadius: "8px", background: "var(--bg-secondary)", border: "1px solid var(--border)", transition: "all 0.15s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--surface-2)"}
+                onMouseLeave={e => e.currentTarget.style.background = "var(--bg-secondary)"}
+              >
+                <span style={{ width: "18px", fontSize: "11px", fontWeight: 700, color: i === 0 ? "var(--amber)" : "var(--text-muted)", textAlign: "center" }}>{i + 1}</span>
+                <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: s.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: 700, color: "#fff", flexShrink: 0 }}>
+                  {s.initials}
                 </div>
-                <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--green)", background: "var(--green-light)", padding: "3px 8px", borderRadius: "6px" }}>{s.score}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "12px", fontWeight: 500, color: "var(--text-primary)" }}>{s.name}</div>
+                  <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>{s.cls}</div>
+                </div>
+                <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--green)", background: "var(--green-light)", padding: "3px 8px", borderRadius: "6px" }}>{s.score}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="card--premium reveal" style={card}>
+        <div className="card--premium" style={card}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
             {sectionHead("var(--green)")}
-            <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "দ্রুত পরিসংখ্যান" : "Quick Overview"}</span>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{isBn ? "একাডেমিক ওভারভিউ" : "Academic Overview"}</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            {overviews.map(item => (
+            {[
+              { bn: "উপস্থিতির হার", en: "Attendance Rate", val: `${totalStudents > 0 ? Math.round((approvedStudents / totalStudents) * 90) : 0}%`, bar: totalStudents > 0 ? Math.round((approvedStudents / totalStudents) * 90) : 0, color: "var(--green)" },
+              { bn: "ভর্তির হার", en: "Admission Rate", val: `${totalStudents > 0 ? Math.round((approvedStudents / totalStudents) * 100) : 0}%`, bar: totalStudents > 0 ? Math.round((approvedStudents / totalStudents) * 100) : 0, color: "var(--brand)" },
+              { bn: "শিক্ষক-ছাত্র অনুপাত", en: "Teacher-Student Ratio", val: totalTeachers > 0 ? `${(totalStudents / totalTeachers).toFixed(1)}:1` : '0', bar: totalTeachers > 0 ? Math.min(Math.round((totalStudents / totalTeachers) * 10), 100) : 0, color: "var(--teal)" },
+              { bn: "সক্রিয় শিক্ষক", en: "Active Teachers", val: `${activeTeachers}/${totalTeachers}`, bar: totalTeachers > 0 ? Math.round((activeT / totalTeachers) * 100) : 0, color: "var(--amber)" },
+            ].map(item => (
               <div key={item.en}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <IconByName name={item.icon} size={13} style={{ color: item.color }} />
-                    <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{isBn ? item.bn : item.en}</span>
-                  </div>
-                  <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-primary)" }}>{item.val}</span>
+                  <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{isBn ? item.bn : item.en}</span>
+                  <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-primary)" }}>{item.val}</span>
                 </div>
-                <div style={{ height: "5px", background: "var(--bg-secondary)", borderRadius: "5px", overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${item.bar}%`, background: item.color, borderRadius: "5px" }} />
+                <div style={{ height: "5px", background: "var(--border)", borderRadius: "3px", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${item.bar}%`, background: item.color, borderRadius: "3px", transition: "width 0.6s ease" }} />
                 </div>
               </div>
             ))}
@@ -312,7 +501,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }`}</style>
+      <style>{`
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+      `}</style>
     </div>
   )
 }

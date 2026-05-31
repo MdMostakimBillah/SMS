@@ -64,6 +64,7 @@ export default function BulkUpdatePage() {
   const [op,       setOp]       = useState<Op>('roll')
   const [search,   setSearch]   = useState('')
   const [fClass,   setFClass]   = useState('')
+  const [fSection, setFSection] = useState('')
   const [selected, setSelected] = useState<string[]>([])
   const [batchVal, setBatchVal] = useState('')
   const [rowEdits, setRowEdits] = useState<Record<string,string>>({})
@@ -76,12 +77,13 @@ export default function BulkUpdatePage() {
 
   const filtered = useMemo(() => students.filter(s => {
     if (fClass && s.class !== fClass) return false
+    if (fSection && s.section !== fSection) return false
     if (search) {
       const q = search.toLowerCase()
       return s.nameEn.toLowerCase().includes(q) || s.nameBn.includes(search) || s.id.includes(search) || s.roll.includes(search)
     }
     return true
-  }), [students, search, fClass])
+  }), [students, search, fClass, fSection])
 
   const allSel = filtered.length > 0 && filtered.every(s => selected.includes(s.id))
   const toggleAll = useCallback(() =>
@@ -201,9 +203,13 @@ const handlePhotoUpload = useCallback(
               <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={isBn?'নাম বা আইডি...':'Name or ID...'}
                 style={{ flex:1, border:'none', background:'transparent', outline:'none', fontSize:'12px', color:'var(--text-primary)', fontFamily:'inherit' }} />
             </div>
-            <select value={fClass} onChange={e=>setFClass(e.target.value)} style={inp}>
+            <select value={fClass} onChange={e=>{ setFClass(e.target.value); setFSection('') }} style={inp}>
               <option value="">{isBn?'সব শ্রেণি':'All Classes'}</option>
               {['1','2','3','4','5','6','7','8','9','10'].map(c=><option key={c} value={c}>{isBn?`শ্রেণি ${c}`:`Class ${c}`}</option>)}
+            </select>
+            <select value={fSection} onChange={e=>setFSection(e.target.value)} style={inp}>
+              <option value="">{isBn?'সব সেকশন':'All Sections'}</option>
+              {['A','B','C','D','E'].filter(sec => !fClass || students.some(s => s.class === fClass && s.section === sec)).map(s=><option key={s} value={s}>{isBn?`সেকশন ${s}`:`Section ${s}`}</option>)}
             </select>
             <div style={{ display:'flex', gap:'5px' }}>
               <button onClick={toggleAll}
