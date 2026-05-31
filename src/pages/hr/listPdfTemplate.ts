@@ -57,9 +57,6 @@ const fundTypeLabel = (t: string, isBn: boolean) => {
   return m[t] || t
 }
 
-const fundTypeColor = (t: string) =>
-  t === 'withdrawal' ? '#ef4444' : '#10b981'
-
 function getIncrementCell(row: any, key: string, idx: number, isBn: boolean, getTeacherName: (id: string) => string): string {
   if (key === 'serial') return String(idx + 1)
   if (key === 'teacher') return getTeacherName(row.teacherId)
@@ -83,7 +80,7 @@ function getBonusCell(row: any, key: string, idx: number, isBn: boolean, getTeac
   return String(row[key] || '—')
 }
 
-function getPromotionCell(row: any, key: string, idx: number, isBn: boolean, getTeacherName: (id: string) => string): string {
+function getPromotionCell(row: any, key: string, idx: number, _isBn: boolean, getTeacherName: (id: string) => string): string {
   if (key === 'serial') return String(idx + 1)
   if (key === 'teacher') return getTeacherName(row.teacherId)
   if (key === 'from') return row.fromDesignation

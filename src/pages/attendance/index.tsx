@@ -34,14 +34,6 @@ type StatusFilter = 'all' | 'present' | 'absent' | 'on-leave'
 const CLASSES = ['1','2','3','4','5','6','7','8','9','10']
 const SECTIONS = ['A','B','C','D','E']
 
-const sampleDeviceLogs = [
-  { id: 1, teacherId: 'TCH-2026-001', name: 'Dr. Rafiqul Islam', date: today(), inTime: '07:28', outTime: '14:32', status: 'present' as const, device: 'ZKTeco-U160' },
-  { id: 2, teacherId: 'TCH-2026-002', name: 'Prof. Salma Khatun', date: today(), inTime: '07:55', outTime: '15:05', status: 'present' as const, device: 'ZKTeco-U160' },
-  { id: 3, teacherId: 'TCH-2026-003', name: 'Md. Habibur Rahman', date: today(), inTime: '07:42', outTime: '14:48', status: 'present' as const, device: 'ZKTeco-U160' },
-  { id: 4, teacherId: 'TCH-2026-004', name: 'Farhana Rahman', date: today(), inTime: '08:01', outTime: '—', status: 'present' as const, device: 'ZKTeco-U160' },
-  { id: 5, teacherId: 'TCH-2026-005', name: 'Tanvir Ahmed', date: today(), inTime: '—', outTime: '—', status: 'absent' as const, device: '—' },
-]
-
 function genSinglePDF(name: string, id: string, rows: {date:string;status:string;punches:{time:string;type:string}[]}[], isBn: boolean): string {
   const trs = rows.map((r, i) => {
     const c = r.status === 'present' ? '#10b981' : r.status === 'absent' ? '#ef4444' : '#f59e0b'
@@ -65,7 +57,7 @@ export default function AttendancePage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { teachers, departments, attendance, markAttendance, markAllPresent } = useTeacherStore()
+  const { teachers, departments, attendance, markAllPresent } = useTeacherStore()
   const { students } = useAdmissionStore()
   const isBn = language === 'bn'
   isBnGlobal = isBn
@@ -206,23 +198,6 @@ export default function AttendancePage() {
     XLSX.utils.book_append_sheet(wb, ws, 'Student Attendance')
     XLSX.writeFile(wb, `student_attendance_${new Date().toISOString().split('T')[0]}.xlsx`)
   }, [filteredStudents, getStudentMonthData, isBn])
-
-  const exportEmployeeExcel = useCallback(() => {
-    const data = filteredEmployees.map((t, i) => {
-      const days = getPersonMonthData(t.id)
-      return {
-        '#': i + 1, ID: t.id, Name: isBn ? t.nameBn || t.nameEn : t.nameEn,
-        Department: getDeptName(t.departmentId), Designation: t.designation || '—',
-        Present: days.filter(d => d.status === 'present').length,
-        Absent: days.filter(d => d.status === 'absent').length,
-        Leave: days.filter(d => d.status === 'on-leave').length,
-      }
-    })
-    const ws = XLSX.utils.json_to_sheet(data)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Employee Attendance')
-    XLSX.writeFile(wb, `employee_attendance_${new Date().toISOString().split('T')[0]}.xlsx`)
-  }, [filteredEmployees, getPersonMonthData, getDeptName, isBn])
 
   const exportStudentPDFFromOpts = useCallback((opts: AttendancePDFOptions) => {
     const { title, orientation, isBn: optsIsBn } = opts

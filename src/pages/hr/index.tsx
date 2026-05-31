@@ -4,7 +4,7 @@ import {
   ArrowLeft, Users, TrendingUp, Award, DollarSign, Clock,
   CheckCircle2, XCircle, Plus, Save, X,
   Gift, HandCoins, Medal, Percent,
-  Search, Zap, ThumbsUp, AlertCircle, Briefcase, LayoutGrid,
+  Search, Zap, ThumbsUp, AlertCircle, LayoutGrid,
   List, ChevronRight, FileText, Calendar, Calculator,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
@@ -1111,8 +1111,6 @@ export default function HRPage() {
               <input type="month" value={salarySetupMonth} onChange={e => setSalarySetupMonth(e.target.value)}
                 style={{ ...input, width: 'auto', padding: '6px 10px', fontSize: '12px' }} />
               <button onClick={() => {
-                const now = new Date()
-                const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December']
                 const configs: MonthlySalaryConfig[] = activeTeachers.map(t => {
                   const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth)
                   const local = salaryConfigs[t.id]
