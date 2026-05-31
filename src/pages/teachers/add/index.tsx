@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Camera, Clock, Users, Check, Briefcase } from 'lucide-react'
+import { ArrowLeft, Camera, Clock, Users, Check } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'

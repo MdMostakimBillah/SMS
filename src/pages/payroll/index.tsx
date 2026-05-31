@@ -88,7 +88,7 @@ export default function PayrollPage() {
 
   const getMonthConfigs = useCallback((teacherId: string) => {
     if (!month) return null
-    return monthlySalaryConfigs.find(c => c.teacherId === teacherId && c.month === month) || null
+    return monthlySalaryConfigs.find((c: { teacherId: string; month: string }) => c.teacherId === teacherId && c.month === month) || null
   }, [monthlySalaryConfigs, month])
 
   const handlePrintSelected = useCallback(() => {

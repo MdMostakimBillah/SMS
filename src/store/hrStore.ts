@@ -101,7 +101,6 @@ interface HRState {
   upsertMonthlySalaryConfig: (config: MonthlySalaryConfig) => void
   upsertManyMonthlySalaryConfigs: (configs: MonthlySalaryConfig[]) => void
   deleteMonthlySalaryConfig: (id: string) => void
-  getMonthlySalaryConfigs: (month: string) => MonthlySalaryConfig[]
 }
 
 function generateDemoDailyReports(): DailyReport[] {
@@ -212,10 +211,6 @@ export const useHRStore = create<HRState>()(
       deleteMonthlySalaryConfig: (id) => set((state) => ({
         monthlySalaryConfigs: state.monthlySalaryConfigs.filter(c => c.id !== id)
       })),
-      getMonthlySalaryConfigs: (month) => {
-        const state = (useHRStore as any).getState()
-        return state.monthlySalaryConfigs.filter((c: MonthlySalaryConfig) => c.month === month)
-      },
     }),
     { name: 'edutech-hr' }
   )

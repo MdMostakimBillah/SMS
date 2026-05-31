@@ -218,4 +218,4 @@ export function generateFundPDF(data: any[], opts: HRListPDFOptions): string {
   return buildPDF(opts.title, data, cols, opts, (row, key, i, isBn) => getFundCell(row, key, i, isBn), isBnLabel('টি', opts.isBn))
 }
 
-function isBnLabel(bn: string, en: string): string { return en ? bn : en }
+function isBnLabel(bn: string, isBn: boolean): string { return isBn ? bn : 'records' }
