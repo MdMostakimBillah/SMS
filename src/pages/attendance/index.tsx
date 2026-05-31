@@ -4,6 +4,7 @@ import { ArrowLeft, Briefcase, Calendar, CalendarCheck, CalendarRange, CalendarX
 import * as XLSX from 'xlsx'
 
 import { useAppStore } from '@/store/appStore'
+import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { AttendancePDFOptionsModal } from '@/components/shared/AttendancePDFOptionsModal'
@@ -63,6 +64,7 @@ function genSinglePDF(name: string, id: string, rows: {date:string;status:string
 export default function AttendancePage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
+  const { isMobile } = useWindowSize()
   const { teachers, departments, attendance, markAttendance, markAllPresent } = useTeacherStore()
   const { students } = useAdmissionStore()
   const isBn = language === 'bn'
@@ -596,16 +598,16 @@ export default function AttendancePage() {
       )}
 
       {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
+      <div style={{ display:'flex', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
         <button onClick={() => navigate('/teachers')} style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px', background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px', color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
           <ArrowLeft size={14} />{isBn?'ফিরে যান':'Back'}
         </button>
         <div style={{ flex:1 }}>
-          <h1 style={{ fontSize:'22px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?'উপস্থিতি ব্যবস্থাপনা':'Attendance Management'}</h1>
+          <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?'উপস্থিতি ব্যবস্থাপনা':'Attendance Management'}</h1>
           <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginTop:'3px' }}>{isBn?'শিক্ষক, কর্মচারী এবং ছাত্রদের উপস্থিতি ট্র্যাক করুন':'Track teacher, employee and student attendance'}</p>
         </div>
         {/* Legend Box */}
-        <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'10px', padding:'8px 12px', display:'flex', gap:'10px', flexWrap:'wrap', flexShrink:0 }}>
+        <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'10px', padding:'8px 12px', display:'flex', gap: isMobile ? '6px' : '10px', flexWrap:'wrap', flexShrink:0, ...(isMobile ? { width:'100%' } : {}) }}>
           {legendItems.map(item => (
             <div key={item.l} style={{ display:'flex', alignItems:'center', gap:'4px' }}>
               <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:'18px', height:'18px', borderRadius:'4px', background:item.bg, color:item.color, fontSize:'8px', fontWeight:700 }}>
@@ -721,172 +723,7 @@ export default function AttendancePage() {
           </div>
 
           <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-            <div style={{ overflowX:'auto' }}>
-              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
-                <thead>
-                  <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
-                    {[{l:'#',w:'36px'},{l:isBn?'নাম':'Name',w:'160px'},{l:isBn?'বিভাগ':'Dept',w:'100px'},{l:isBn?'পদবি':'Desig',w:'100px'},{l:isBn?'স্ট্যাটাস':'Status',w:'160px'},{l:'',w:'40px'}].map(h => (
-                      <th key={h.l||'x'} style={{ padding:'8px 8px', textAlign:'left', fontSize:'10px', fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.4px', whiteSpace:'nowrap', minWidth:h.w }}>{h.l}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeTeachers.filter(t => statusFilter === 'all' || getStatus(dayAtt[t.id]) === statusFilter).map((t, i) => (
-                    <tr key={t.id} style={{ borderBottom:'0.5px solid var(--border)' }} onMouseEnter={e => e.currentTarget.style.background='var(--bg-secondary)'} onMouseLeave={e => e.currentTarget.style.background='transparent'}>
-                      <td style={{ padding:'8px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px' }}>{i+1}</td>
-                      <td style={{ padding:'8px 8px' }}>
-                        <div style={{ fontSize:'12px', fontWeight:500, color:'var(--text-primary)' }}>{isBn?t.nameBn||t.nameEn:t.nameEn}</div>
-                        <div style={{ fontSize:'10px', color:'var(--text-muted)' }}>{t.id}</div>
-                      </td>
-                      <td style={{ padding:'8px 8px', fontSize:'11px', color:'var(--text-secondary)' }}>{getDeptName(t.departmentId)}</td>
-                      <td style={{ padding:'8px 8px', fontSize:'11px', color:'var(--text-secondary)' }}>{t.designation || '—'}</td>
-                      <td style={{ padding:'8px 8px' }}>
-                        <div style={{ display:'flex', gap:'3px' }}>
-                          {(['present','absent','on-leave'] as AttendanceStatus[]).map(st => {
-                            const active = getStatus(dayAtt[t.id]) === st
-                            const colors = { present:{activeBg:'var(--green)'}, absent:{activeBg:'var(--red)'}, 'on-leave':{activeBg:'var(--amber)'} }
-                            return <button key={st} onClick={() => markAttendance(date, t.id, st)} style={{ padding:'4px 8px', borderRadius:'6px', fontSize:'9px', fontWeight:500, cursor:'pointer', fontFamily:'inherit', border:'1px solid', borderColor: active ? colors[st].activeBg : 'var(--border)', background: active ? colors[st].activeBg : 'var(--bg-secondary)', color: active ? '#fff' : (st==='present'?'var(--green)':st==='absent'?'var(--red)':'var(--amber)'), transition:'all 0.15s' }}>{st==='present'?(isBn?'P':'P'):st==='absent'?(isBn?'A':'A'):(isBn?'L':'L')}</button>
-                          })}
-                        </div>
-                      </td>
-                      <td style={{ padding:'8px 8px' }}>
-                        <button onClick={() => setViewPerson({id:t.id, name:isBn?t.nameBn||t.nameEn:t.nameEn, type:'teacher'})}
-                          style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--brand-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--brand)' }}>
-                          <FileText size={12} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ==================== TAB: DATE RANGE ==================== */}
-      {activeTab === 'range' && (
-        <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-          <div style={{ overflowX:'auto' }}>
-            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'11px' }}>
-              <thead>
-                <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
-                  <th style={{ padding:'8px 8px', textAlign:'left', fontSize:'10px', fontWeight:600, color:'var(--text-muted)', position:'sticky', left:0, background:'var(--bg-secondary)', zIndex:1, minWidth:'160px' }}>
-                    {isBn?'নাম':'Name'}
-                  </th>
-                  {rangeDays.map(ds => (
-                    <th key={ds} style={{ padding:'6px 4px', textAlign:'center', fontSize:'9px', fontWeight:600, color:'var(--text-muted)', minWidth:'36px' }}>
-                      <div>{shortDate(ds)}</div>
-                      <div style={{ fontSize:'8px', color:'var(--text-muted)', fontWeight:400 }}>{dayName(ds)}</div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {activeTeachers.filter(t => {
-                  if (statusFilter === 'all') return true
-                  return rangeDays.some(ds => getStatus(attendance[ds]?.[t.id]) === statusFilter)
-                }).map((t) => (
-                  <tr key={t.id} style={{ borderBottom:'0.5px solid var(--border)' }}
-                    onMouseEnter={e => e.currentTarget.style.background='var(--bg-secondary)'}
-                    onMouseLeave={e => e.currentTarget.style.background='transparent'}>
-                    <td style={{ padding:'6px 8px', position:'sticky', left:0, background:'var(--bg-primary)', zIndex:1 }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:'6px', cursor:'pointer' }}
-                        onClick={() => setViewPerson({id:t.id, name:isBn?t.nameBn||t.nameEn:t.nameEn, type:'teacher'})}>
-                        <div style={{ fontSize:'11px', fontWeight:500, color:'var(--text-primary)' }}>{isBn?t.nameBn||t.nameEn:t.nameEn}</div>
-                        <ExternalLink size={10} style={{ color:'var(--text-muted)' }} />
-                      </div>
-                      <div style={{ fontSize:'9px', color:'var(--text-muted)' }}>{t.id}</div>
-                    </td>
-                    {rangeDays.map(ds => {
-                      if (isFriday(ds)) {
-                        return <td key={ds} style={{ padding:'4px 2px', textAlign:'center' }}>{weeklyHolidayBadge()}</td>
-                      }
-                      const s = getStatus(attendance[ds]?.[t.id])
-                      return (
-                        <td key={ds} style={{ padding:'4px 2px', textAlign:'center' }}>
-                          {statusBadge(s)}
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', background:'var(--bg-secondary)', display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:'11px', color:'var(--text-muted)' }}>
-            <span>📊 P=Present, A=Absent, L=Late, W=Weekend, E=Early Out · {isBn?'নামে ক্লিক করুন বিস্তারিত দেখতে':'Click name for details'}</span>
-            <span>{rangeDays.length} {isBn?'দিন':'days'} · {activeTeachers.length} {isBn?'শিক্ষক':'teachers'}</span>
-          </div>
-        </div>
-      )}
-
-      {/* ==================== TAB: DEVICE ==================== */}
-      {activeTab === 'device' && (
-        <>
-          <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'10px 14px', marginBottom:'14px', display:'flex', alignItems:'center', gap:'10px' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'6px', padding:'5px 10px', borderRadius:'7px', background:'var(--green-light)', border:'1px solid var(--green)' }}>
-              <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:'var(--green)' }} />
-              <span style={{ fontSize:'11px', fontWeight:500, color:'var(--green)' }}>{isBn?'সংযুক্ত':'Connected'}</span>
-            </div>
-            <span style={{ fontSize:'11px', color:'var(--text-muted)' }}>ZKTeco U160 — Main Gate</span>
-          </div>
-          <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-            <div style={{ overflowX:'auto' }}>
-              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
-                <thead>
-                  <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
-                    {[{l:'#',w:'36px'},{l:isBn?'আইডি':'ID',w:'120px'},{l:isBn?'নাম':'Name',w:'160px'},{l:isBn?'তারিখ':'Date',w:'90px'},{l:isBn?'ইন':'In',w:'70px'},{l:isBn?'আউট':'Out',w:'70px'},{l:isBn?'বার':'Punches',w:'60px'},{l:isBn?'ডিভাইস':'Device',w:'100px'}].map(h => (
-                      <th key={h.l} style={{ padding:'8px 8px', textAlign:'left', fontSize:'10px', fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.4px', whiteSpace:'nowrap', minWidth:h.w }}>{h.l}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {sampleDeviceLogs.map((log, i) => (
-                    <tr key={log.id} style={{ borderBottom:'0.5px solid var(--border)' }} onMouseEnter={e => e.currentTarget.style.background='var(--bg-secondary)'} onMouseLeave={e => e.currentTarget.style.background='transparent'}>
-                      <td style={{ padding:'8px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px' }}>{i+1}</td>
-                      <td style={{ padding:'8px 8px' }}><span style={{ fontSize:'10px', fontFamily:'monospace', color:'var(--brand)', background:'var(--brand-light)', padding:'2px 5px', borderRadius:'4px' }}>{log.teacherId}</span></td>
-                      <td style={{ padding:'8px 8px', fontSize:'12px', fontWeight:500, color:'var(--text-primary)' }}>{log.name}</td>
-                      <td style={{ padding:'8px 8px', fontSize:'11px', color:'var(--text-secondary)' }}>{log.date}</td>
-                      <td style={{ padding:'8px 8px', fontSize:'11px', color:'var(--green)', fontWeight:500 }}>{log.inTime}</td>
-                      <td style={{ padding:'8px 8px', fontSize:'11px', color:'var(--red)', fontWeight:500 }}>{log.outTime}</td>
-                      <td style={{ padding:'8px 8px', fontSize:'11px', fontWeight:600, color:'var(--brand)' }}>{log.inTime !== '—' ? 2 : 0}</td>
-                      <td style={{ padding:'8px 8px', fontSize:'10px', color:'var(--text-muted)' }}>{log.device}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ==================== TAB: EMPLOYEE ==================== */}
-      {activeTab === 'employee' && (
-        <>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px', flexWrap:'wrap', gap:'10px' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-              <span style={{ fontSize:'12px', color:'var(--text-secondary)' }}>{isBn?`মোট ${filteredEmployees.length} জন কর্মচারী`:`${filteredEmployees.length} employees`}</span>
-              {selectedEmployees.length > 0 && (
-                <span style={{ fontSize:'11px', color:'var(--brand)', background:'var(--brand-light)', padding:'3px 10px', borderRadius:'6px', fontWeight:500 }}>
-                  {selectedEmployees.length} {isBn?'নির্বাচিত':'selected'}
-                </span>
-              )}
-            </div>
-            <div style={{ display:'flex', gap:'6px' }}>
-              <button onClick={exportEmployeeExcel}
-                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-                <FileSpreadsheet size={13} />Excel
-              </button>
-              <button onClick={() => setShowEmployeePDF(true)}
-                disabled={selectedEmployees.length === 0}
-                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background: selectedEmployees.length === 0 ? 'var(--border-2)' : 'var(--red-light)', border:`1px solid ${selectedEmployees.length === 0 ? 'var(--border)' : 'var(--red)'}`, color: selectedEmployees.length === 0 ? 'var(--text-muted)' : 'var(--red)', fontSize:'12px', cursor: selectedEmployees.length === 0 ? 'not-allowed' : 'pointer', fontFamily:'inherit', fontWeight:500 }}>
-                <FileText size={13} />PDF {selectedEmployees.length > 0 && `(${selectedEmployees.length})`}
-              </button>
-            </div>
-          </div>
-          <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-            <div style={{ overflowX:'auto' }}>
+            <div style={{ overflowX:'auto', ...(isMobile ? { maxHeight:'60vh', overflowY:'auto' } : {}) }}>
               <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'11px' }}>
                 <thead>
                   <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
@@ -987,7 +824,7 @@ export default function AttendancePage() {
             </div>
           </div>
           <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-            <div style={{ overflowX:'auto' }}>
+            <div style={{ overflowX:'auto', ...(isMobile ? { maxHeight:'60vh', overflowY:'auto' } : {}) }}>
               <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'11px' }}>
                 <thead>
                   <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>

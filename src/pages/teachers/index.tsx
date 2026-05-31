@@ -278,8 +278,8 @@ export default function TeachersPage() {
       {/* Option cards */}
       <div className="gsap-fade-up" style={{
         display: "grid",
-        gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
-        gap: isMobile ? "10px" : "12px",
+        gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : isTablet ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
+        gap: isMobile ? "8px" : "12px",
       }}>
         {options.map((opt) => {
           const IconComp = opt.icon
@@ -291,10 +291,14 @@ export default function TeachersPage() {
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
                 borderRadius: "10px",
-                padding: isMobile ? "14px" : "16px",
+                padding: isMobile ? "12px" : "16px",
                 cursor: "pointer",
                 transition: "all 0.15s ease",
                 boxShadow: "var(--shadow-xs)",
+                display: "flex",
+                flexDirection: isMobile ? "row" : "column",
+                alignItems: isMobile ? "center" : "flex-start",
+                gap: isMobile ? "12px" : "0",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = opt.iconColor
@@ -308,25 +312,28 @@ export default function TeachersPage() {
               }}
             >
               <div style={{
-                width: isMobile ? "36px" : "40px", height: isMobile ? "36px" : "40px", borderRadius: "10px", background: opt.iconBg,
-                display: "flex", alignItems: "center", justifyContent: "center", marginBottom: isMobile ? "10px" : "12px",
+                width: isMobile ? "44px" : "40px", height: isMobile ? "44px" : "40px", borderRadius: isMobile ? "12px" : "10px", background: opt.iconBg,
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                marginBottom: isMobile ? "0" : "10px",
               }}>
-                <IconComp size={isMobile ? 17 : 19} style={{ color: opt.iconColor }} />
+                <IconComp size={isMobile ? 21 : 19} style={{ color: opt.iconColor }} />
               </div>
-              <div style={{ fontSize: isMobile ? "13px" : "14px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "4px" }}>
-                {isBn ? opt.titleBn : opt.titleEn}
-              </div>
-              <div style={{ fontSize: "11px", color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: "10px" }}>
-                {isBn ? opt.descBn : opt.descEn}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{
-                  fontSize: "10px", color: opt.statColor, fontWeight: 500,
-                  background: `${opt.statColor}15`, padding: "3px 8px", borderRadius: "6px",
-                }}>
-                  {isBn ? opt.statBn : opt.statEn}
-                </span>
-                <ArrowRight size={14} style={{ color: "var(--text-muted)" }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: isMobile ? "13px" : "14px", fontWeight: 600, color: "var(--text-primary)", marginBottom: isMobile ? "2px" : "4px" }}>
+                  {isBn ? opt.titleBn : opt.titleEn}
+                </div>
+                <div style={{ fontSize: "11px", color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: isMobile ? "6px" : "8px" }}>
+                  {isBn ? opt.descBn : opt.descEn}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{
+                    fontSize: "10px", color: opt.statColor, fontWeight: 500,
+                    background: `${opt.statColor}15`, padding: "2px 6px", borderRadius: "4px",
+                  }}>
+                    {isBn ? opt.statBn : opt.statEn}
+                  </span>
+                  <ArrowRight size={14} style={{ color: "var(--text-muted)" }} />
+                </div>
               </div>
             </div>
           )

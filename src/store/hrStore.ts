@@ -49,18 +49,87 @@ export interface HomeworkRecord {
   submitted: boolean
 }
 
+export interface DailyReport {
+  id: string
+  teacherId: string
+  date: string
+  submitted: boolean
+  classId: string
+  studentCount: number
+  avgScore: number
+}
+
+export interface HRRecommendation {
+  id: string
+  teacherId: string
+  type: 'promotion' | 'bonus' | 'increment'
+  score: number
+  reason: string
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt: string
+}
+
 interface HRState {
   increments: IncrementRecord[]
   bonuses: BonusRecord[]
   promotions: PromotionRecord[]
   funds: FundRecord[]
   homeworkRecords: HomeworkRecord[]
+  dailyReports: DailyReport[]
+  recommendations: HRRecommendation[]
   addIncrement: (record: IncrementRecord) => void
   addBonus: (record: BonusRecord) => void
   addPromotion: (record: PromotionRecord) => void
   addFund: (record: FundRecord) => void
   addHomeworkRecord: (record: HomeworkRecord) => void
   toggleHomework: (id: string) => void
+  addDailyReport: (record: DailyReport) => void
+  addRecommendation: (rec: HRRecommendation) => void
+  updateRecommendation: (id: string, status: 'approved' | 'rejected') => void
+}
+
+function generateDemoDailyReports(): DailyReport[] {
+  const reports: DailyReport[] = []
+  const teacherIds = [
+    'TCH-2026-001','TCH-2026-002','TCH-2026-003','TCH-2026-004','TCH-2026-005',
+    'TCH-2026-006','TCH-2026-008','TCH-2026-009','TCH-2026-010','TCH-2026-011',
+    'TCH-2026-012','TCH-2026-014','TCH-2026-015','TCH-2026-016','TCH-2026-017',
+    'TCH-2026-018',
+  ]
+  const classIds = ['CLS-001','CLS-002','CLS-003','CLS-004','CLS-005','CLS-006','CLS-007','CLS-008']
+  const now = new Date()
+  for (let i = 1; i <= 28; i++) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    if (d.getDay() === 0) continue
+    const dateStr = d.toISOString().split('T')[0]
+    teacherIds.forEach(tid => {
+      const submitted = Math.random() > 0.18
+      const studentCount = 25 + Math.floor(Math.random() * 20)
+      const avgScore = submitted ? 45 + Math.floor(Math.random() * 35) : 0
+      reports.push({
+        id: `DR-${tid}-${dateStr}`,
+        teacherId: tid,
+        date: dateStr,
+        submitted,
+        classId: classIds[Math.floor(Math.random() * classIds.length)],
+        studentCount,
+        avgScore,
+      })
+    })
+  }
+  return reports
+}
+
+function generateDemoRecommendations(): HRRecommendation[] {
+  const recs: HRRecommendation[] = [
+    { id: 'REC-001', teacherId: 'TCH-2026-001', type: 'promotion', score: 92, reason: 'Consistent top performer, excellent student results', status: 'pending', createdAt: '2026-05-28' },
+    { id: 'REC-002', teacherId: 'TCH-2026-008', type: 'bonus', score: 88, reason: 'Outstanding homework submission rate and attendance', status: 'pending', createdAt: '2026-05-28' },
+    { id: 'REC-003', teacherId: 'TCH-2026-004', type: 'increment', score: 85, reason: 'High student performance scores consistently', status: 'pending', createdAt: '2026-05-27' },
+    { id: 'REC-004', teacherId: 'TCH-2026-014', type: 'bonus', score: 82, reason: 'Perfect daily report submission record', status: 'approved', createdAt: '2026-05-25' },
+    { id: 'REC-005', teacherId: 'TCH-2026-005', type: 'promotion', score: 79, reason: 'Good improvement in last quarter', status: 'pending', createdAt: '2026-05-26' },
+  ]
+  return recs
 }
 
 export const useHRStore = create<HRState>()(
@@ -87,6 +156,8 @@ export const useHRStore = create<HRState>()(
         { id: 'FND-004', type: 'withdrawal', amount: 55000, description: 'April increments paid', date: '2026-04-01' },
       ],
       homeworkRecords: [],
+      dailyReports: generateDemoDailyReports(),
+      recommendations: generateDemoRecommendations(),
 
       addIncrement: (record) => set((state) => ({ increments: [...state.increments, record] })),
       addBonus: (record) => set((state) => ({ bonuses: [...state.bonuses, record] })),
@@ -95,6 +166,11 @@ export const useHRStore = create<HRState>()(
       addHomeworkRecord: (record) => set((state) => ({ homeworkRecords: [...state.homeworkRecords, record] })),
       toggleHomework: (id) => set((state) => ({
         homeworkRecords: state.homeworkRecords.map(r => r.id === id ? { ...r, submitted: !r.submitted } : r)
+      })),
+      addDailyReport: (record) => set((state) => ({ dailyReports: [...state.dailyReports, record] })),
+      addRecommendation: (rec) => set((state) => ({ recommendations: [...state.recommendations, rec] })),
+      updateRecommendation: (id, status) => set((state) => ({
+        recommendations: state.recommendations.map(r => r.id === id ? { ...r, status } : r)
       })),
     }),
     { name: 'edutech-hr' }

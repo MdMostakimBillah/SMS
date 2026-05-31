@@ -149,76 +149,130 @@ export default function PayrollPage() {
     if (!win) return
     win.document.write(`<!DOCTYPE html><html><head><title>Payslip - ${t.id}</title>
 <style>
-  @page{size:A4;margin:0}*{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:12px;background:#fff}
-  .page{width:210mm;min-height:297mm;padding:15mm}
-  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #6366f1}
-  .logo-box{width:45px;height:45px;background:#6366f1;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700}
-  .school h1{font-size:16px;font-weight:700;color:#6366f1}
-  .school p{font-size:10px;color:#666}
-  .title{text-align:center;font-size:13px;font-weight:700;color:#fff;background:#6366f1;padding:7px;margin-bottom:14px;border-radius:6px;letter-spacing:1px}
-  .info-row{display:flex;justify-content:space-between;background:#eef2ff;padding:8px 12px;border-radius:8px;margin-bottom:14px;border:1px solid #c7d2fe}
-  .info-item .label{font-size:9px;color:#666;text-transform:uppercase}
-  .info-item .value{font-size:13px;font-weight:700;color:#6366f1}
-  .section{margin-bottom:12px}
-  .section-title{font-size:11px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e0e7ff;padding-bottom:4px;margin-bottom:8px}
+  @page{size:A4 landscape;margin:8mm}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:11px;background:#fff}
+  .container{display:flex;gap:12mm;height:100%}
+  .slip{flex:1;border:1.5px solid #c7d2fe;border-radius:8px;padding:10mm;position:relative}
+  .slip-label{position:absolute;top:-8px;left:10mm;background:#fff;padding:0 6px;font-size:8px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px}
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #6366f1}
+  .logo-box{width:32px;height:32px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
+  .school h1{font-size:12px;font-weight:700;color:#6366f1}
+  .school p{font-size:8px;color:#666}
+  .title{text-align:center;font-size:10px;font-weight:700;color:#fff;background:#6366f1;padding:5px;margin-bottom:8px;border-radius:4px;letter-spacing:1px}
+  .info-row{display:flex;justify-content:space-between;background:#eef2ff;padding:5px 8px;border-radius:6px;margin-bottom:8px;border:1px solid #c7d2fe}
+  .info-item .label{font-size:7px;color:#666;text-transform:uppercase}
+  .info-item .value{font-size:10px;font-weight:700;color:#6366f1}
+  .section{margin-bottom:6px}
+  .section-title{font-size:8px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e0e7ff;padding-bottom:2px;margin-bottom:4px}
   table{width:100%;border-collapse:collapse}
-  td{padding:5px 10px;border-bottom:0.5px solid #eee;font-size:11px}
+  td{padding:2px 6px;border-bottom:0.5px solid #eee;font-size:9px}
   td:first-child{font-weight:500;color:#555;width:50%}
   td:last-child{text-align:right;font-weight:600}
-  .total td{border-top:2px solid #6366f1;font-weight:700;font-size:12px;color:#1a1a1a}
-  .net td{background:#eef2ff;color:#6366f1;font-size:13px;font-weight:700}
-  .footer{margin-top:20px;padding-top:12px;border-top:1px solid #ddd;display:flex;justify-content:space-between}
+  .total td{border-top:1.5px solid #6366f1;font-weight:700;font-size:10px;color:#1a1a1a}
+  .net td{background:#eef2ff;color:#6366f1;font-size:11px;font-weight:700}
+  .footer{margin-top:8px;padding-top:6px;border-top:1px solid #ddd;display:flex;justify-content:space-between}
   .sign-line{text-align:center}
-  .sign-line .line{width:130px;height:1px;background:#333;margin:20px auto 4px}
-  .sign-label{font-size:10px;color:#555}
+  .sign-line .line{width:80px;height:1px;background:#333;margin:12px auto 3px}
+  .sign-label{font-size:7px;color:#555}
   @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 </style></head><body>
-<div class="page">
-  <div class="header">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div class="logo-box">ET</div>
-      <div class="school"><h1>EduTech School Management</h1><p>Sunrise Academy, Dhaka</p></div>
+<div class="container">
+  <div class="slip">
+    <div class="slip-label">Admin Copy</div>
+    <div class="header">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="logo-box">ET</div>
+        <div class="school"><h1>EduTech School</h1><p>Sunrise Academy</p></div>
+      </div>
+      <div style="text-align:right"><div style="font-size:7px;color:#666">Payslip For</div><div style="font-size:10px;font-weight:700;color:#6366f1">${month}</div></div>
     </div>
-    <div style="text-align:right"><div style="font-size:10px;color:#666">Payslip For</div><div style="font-size:14px;font-weight:700;color:#6366f1">${month}</div></div>
+    <div class="title">SALARY SLIP / বেতন পর্চি</div>
+    <div class="info-row">
+      <div class="info-item"><div class="label">ID</div><div class="value">${t.id}</div></div>
+      <div class="info-item"><div class="label">Name</div><div class="value">${t.nameEn}</div></div>
+      <div class="info-item"><div class="label">Dept</div><div class="value">${getDeptName(t.departmentId)}</div></div>
+      <div class="info-item"><div class="label">Designation</div><div class="value">${t.designation||'—'}</div></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Earnings</div>
+      <table>
+        <tr><td>Basic Salary</td><td>৳${basic.toLocaleString()}</td></tr>
+        <tr><td>House Rent (15%)</td><td>৳${house.toLocaleString()}</td></tr>
+        <tr><td>Medical (10%)</td><td>৳${medical.toLocaleString()}</td></tr>
+        <tr><td>Conveyance (5%)</td><td>৳${conveyance.toLocaleString()}</td></tr>
+        ${bonusVal > 0 ? `<tr><td>Bonus</td><td>৳${bonusVal.toLocaleString()}</td></tr>` : ''}
+        ${overtimeVal > 0 ? `<tr><td>Overtime</td><td>৳${overtimeVal.toLocaleString()}</td></tr>` : ''}
+        ${festivalVal > 0 ? `<tr><td>Festival Bonus</td><td>৳${festivalVal.toLocaleString()}</td></tr>` : ''}
+        <tr class="total"><td>Gross Earnings</td><td>৳${gross.toLocaleString()}</td></tr>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-title">Deductions</div>
+      <table>
+        <tr><td>PF (8%)</td><td>-৳${pf.toLocaleString()}</td></tr>
+        <tr><td>Tax (5%)</td><td>-৳${tax.toLocaleString()}</td></tr>
+        <tr class="total"><td>Total Deductions</td><td>-৳${totalDeduction.toLocaleString()}</td></tr>
+      </table>
+    </div>
+    <div class="section">
+      <table>
+        <tr class="net"><td>NET SALARY</td><td>৳${net.toLocaleString()}</td></tr>
+      </table>
+    </div>
+    <div class="footer">
+      <div class="sign-line"><div class="line"></div><div class="sign-label">Admin Approval</div></div>
+      <div style="text-align:center;font-size:7px;color:#888"><div>Date: ___________</div></div>
+      <div class="sign-line"><div class="line"></div><div class="sign-label">Authorized</div></div>
+    </div>
   </div>
-  <div class="title">SALARY SLIP / বেতন পর্চি</div>
-  <div class="info-row">
-    <div class="info-item"><div class="label">Employee ID</div><div class="value">${t.id}</div></div>
-    <div class="info-item"><div class="label">Name</div><div class="value">${t.nameEn}</div></div>
-    <div class="info-item"><div class="label">Department</div><div class="value">${getDeptName(t.departmentId)}</div></div>
-    <div class="info-item"><div class="label">Designation</div><div class="value">${t.designation||'—'}</div></div>
-  </div>
-  <div class="section">
-    <div class="section-title">Earnings</div>
-    <table>
-      <tr><td>Basic Salary</td><td>৳${basic.toLocaleString()}</td></tr>
-      <tr><td>House Rent (15%)</td><td>৳${house.toLocaleString()}</td></tr>
-      <tr><td>Medical Allowance (10%)</td><td>৳${medical.toLocaleString()}</td></tr>
-      <tr><td>Conveyance (5%)</td><td>৳${conveyance.toLocaleString()}</td></tr>
-      ${bonusVal > 0 ? `<tr><td>Bonus</td><td>৳${bonusVal.toLocaleString()}</td></tr>` : ''}
-      ${overtimeVal > 0 ? `<tr><td>Overtime</td><td>৳${overtimeVal.toLocaleString()}</td></tr>` : ''}
-      ${festivalVal > 0 ? `<tr><td>Festival Bonus</td><td>৳${festivalVal.toLocaleString()}</td></tr>` : ''}
-      <tr class="total"><td>Gross Earnings</td><td>৳${gross.toLocaleString()}</td></tr>
-    </table>
-  </div>
-  <div class="section">
-    <div class="section-title">Deductions</div>
-    <table>
-      <tr><td>Provident Fund (8%)</td><td>-৳${pf.toLocaleString()}</td></tr>
-      <tr><td>Income Tax (5%)</td><td>-৳${tax.toLocaleString()}</td></tr>
-      <tr class="total"><td>Total Deductions</td><td>-৳${totalDeduction.toLocaleString()}</td></tr>
-    </table>
-  </div>
-  <div class="section">
-    <table>
-      <tr class="net"><td>NET SALARY</td><td>৳${net.toLocaleString()}</td></tr>
-    </table>
-  </div>
-  <div class="footer">
-    <div class="sign-line"><div class="line"></div><div class="sign-label">Employee Signature</div></div>
-    <div style="text-align:center;font-size:10px;color:#888"><div>Generated: ${new Date().toLocaleDateString()}</div><div style="font-size:9px;margin-top:2px">EduTech Payroll System</div></div>
-    <div class="sign-line"><div class="line"></div><div class="sign-label">Authorized Signature</div></div>
+  <div class="slip">
+    <div class="slip-label">Employee Copy</div>
+    <div class="header">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="logo-box">ET</div>
+        <div class="school"><h1>EduTech School</h1><p>Sunrise Academy</p></div>
+      </div>
+      <div style="text-align:right"><div style="font-size:7px;color:#666">Payslip For</div><div style="font-size:10px;font-weight:700;color:#6366f1">${month}</div></div>
+    </div>
+    <div class="title">SALARY SLIP / বেতন পর্চি</div>
+    <div class="info-row">
+      <div class="info-item"><div class="label">ID</div><div class="value">${t.id}</div></div>
+      <div class="info-item"><div class="label">Name</div><div class="value">${t.nameEn}</div></div>
+      <div class="info-item"><div class="label">Dept</div><div class="value">${getDeptName(t.departmentId)}</div></div>
+      <div class="info-item"><div class="label">Designation</div><div class="value">${t.designation||'—'}</div></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Earnings</div>
+      <table>
+        <tr><td>Basic Salary</td><td>৳${basic.toLocaleString()}</td></tr>
+        <tr><td>House Rent (15%)</td><td>৳${house.toLocaleString()}</td></tr>
+        <tr><td>Medical (10%)</td><td>৳${medical.toLocaleString()}</td></tr>
+        <tr><td>Conveyance (5%)</td><td>৳${conveyance.toLocaleString()}</td></tr>
+        ${bonusVal > 0 ? `<tr><td>Bonus</td><td>৳${bonusVal.toLocaleString()}</td></tr>` : ''}
+        ${overtimeVal > 0 ? `<tr><td>Overtime</td><td>৳${overtimeVal.toLocaleString()}</td></tr>` : ''}
+        ${festivalVal > 0 ? `<tr><td>Festival Bonus</td><td>৳${festivalVal.toLocaleString()}</td></tr>` : ''}
+        <tr class="total"><td>Gross Earnings</td><td>৳${gross.toLocaleString()}</td></tr>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-title">Deductions</div>
+      <table>
+        <tr><td>PF (8%)</td><td>-৳${pf.toLocaleString()}</td></tr>
+        <tr><td>Tax (5%)</td><td>-৳${tax.toLocaleString()}</td></tr>
+        <tr class="total"><td>Total Deductions</td><td>-৳${totalDeduction.toLocaleString()}</td></tr>
+      </table>
+    </div>
+    <div class="section">
+      <table>
+        <tr class="net"><td>NET SALARY</td><td>৳${net.toLocaleString()}</td></tr>
+      </table>
+    </div>
+    <div class="footer">
+      <div class="sign-line"><div class="line"></div><div class="sign-label">Employee Signature</div></div>
+      <div style="text-align:center;font-size:7px;color:#888"><div>Date: ___________</div></div>
+      <div class="sign-line"><div class="line"></div><div class="sign-label">Received By</div></div>
+    </div>
   </div>
 </div></body></html>`)
     win.document.close()
@@ -428,7 +482,7 @@ export default function PayrollPage() {
       {/* Table */}
       <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
         {selected.length > 0 && (
-          <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--brand-light)' }}>
+          <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--brand-light)', flexWrap:'wrap', gap:'8px' }}>
             <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--brand)' }}>
               {selected.length} {isBn ? 'জন নির্বাচিত' : 'selected'}
             </span>
@@ -438,8 +492,8 @@ export default function PayrollPage() {
             </button>
           </div>
         )}
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', tableLayout: 'fixed' }}>
+        <div style={{ overflowX: 'auto', ...(isMobile ? { maxHeight:'60vh', overflowY:'auto' } : {}) }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: isMobile ? '600px' : undefined }}>
             <thead>
               <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
                 <th style={{ padding: '10px 12px', width: '40px' }}>

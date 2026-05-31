@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, AlertTriangle, BookOpen, Filter, X, Edit2, Trash2 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useWindowSize } from '@/hooks/useWindowSize'
 import type { Subject } from '@/pages/teachers/types'
 
 const sel: React.CSSProperties = {
@@ -15,6 +16,7 @@ export default function SubjectsPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { subjects, departments, teachers, addSubject, updateSubject, deleteSubject } = useTeacherStore()
+  const { isMobile } = useWindowSize()
   const isBn = language === 'bn'
 
   const [fDept, setFDept] = useState('')
@@ -91,7 +93,7 @@ export default function SubjectsPage() {
                 <label style={{ fontSize:'11px', fontWeight:500, color:'var(--text-secondary)', marginBottom:'4px', display:'block' }}>
                   {isBn?'বিভাগ *':'Department *'}
                 </label>
-                <select value={newDeptId} onChange={e => setNewDeptId(e.target.value)} style={sel}>
+                <select value={newDeptId} onChange={e => setNewDeptId(e.target.value)} style={input}>
                   <option value="">{isBn?'নির্বাচন করুন':'Select'}</option>
                   {departments.map(d => <option key={d.id} value={d.id}>{isBn?d.nameBn:d.name}</option>)}
                 </select>
@@ -184,8 +186,8 @@ export default function SubjectsPage() {
 
       {/* Table */}
       <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-        <div style={{ overflowX:'auto' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px', tableLayout:'fixed' }}>
+        <div style={{ overflowX:'auto', ...(isMobile ? { maxHeight:'60vh', overflowY:'auto' } : {}) }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px', minWidth: isMobile ? '500px' : undefined }}>
             <thead>
               <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
                 {[

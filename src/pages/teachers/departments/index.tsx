@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, AlertTriangle, Building2, Crown, Edit2, Trash2 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useWindowSize } from '@/hooks/useWindowSize'
 import type { Department } from '@/pages/teachers/types'
 
 export default function DepartmentsPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { departments, subjects, teachers, addDepartment, updateDepartment, deleteDepartment } = useTeacherStore()
+  const { isMobile } = useWindowSize()
   const isBn = language === 'bn'
 
   const [showAdd, setShowAdd] = useState(false)
@@ -76,8 +78,12 @@ export default function DepartmentsPage() {
                 <label style={{ fontSize:'11px', fontWeight:500, color:'var(--text-secondary)', marginBottom:'4px', display:'block' }}>
                   {isBn?'বিভাগ প্রধান':'Head of Department'}
                 </label>
-                <input value={newHead} onChange={e => setNewHead(e.target.value)} style={input}
-                  placeholder={isBn?'প্রধানের নাম':'Head name'} />
+                <select value={newHead} onChange={e => setNewHead(e.target.value)} style={input}>
+                  <option value="">{isBn?'নির্বাচন করুন':'Select Head'}</option>
+                  {teachers.map(t => (
+                    <option key={t.id} value={t.nameEn}>{t.nameEn} ({t.designation})</option>
+                  ))}
+                </select>
               </div>
             </div>
             <div style={{ display:'flex', gap:'8px', justifyContent:'flex-end', marginTop:'16px' }}>
@@ -148,8 +154,8 @@ export default function DepartmentsPage() {
 
       {/* Table */}
       <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-        <div style={{ overflowX:'auto' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px', tableLayout:'fixed' }}>
+        <div style={{ overflowX:'auto', ...(isMobile ? { maxHeight:'60vh', overflowY:'auto' } : {}) }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px', minWidth: isMobile ? '600px' : undefined }}>
             <thead>
               <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
                 {[

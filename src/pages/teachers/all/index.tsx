@@ -341,7 +341,7 @@ ${photoHtml}
 
       {/* Filters */}
       <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
-        <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr 1fr', gap:'8px' }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr 1fr 1fr', gap:'8px' }}>
           <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'7px 10px' }}>
             <Search size={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
             <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
@@ -413,7 +413,7 @@ ${photoHtml}
 
       {/* Table */}
       <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-        <div style={{ overflowX:'auto' }}>
+        <div style={{ overflowX:'auto', ...(isMobile ? { maxHeight:'60vh', overflowY:'auto' } : {}) }}>
           <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
             <thead>
               <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>

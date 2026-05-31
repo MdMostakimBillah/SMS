@@ -224,7 +224,7 @@ export default function AllStudentsPage() {
           <h1 style={{ fontSize:isMobile?'18px':'22px', fontWeight:600, color:'var(--text-primary)' }}>
             {isBn?'সকল ছাত্র':'All Students'}
           </h1>
-          <div style={{ display:'flex', flexWrap:'wrap', gap: isMobile ? '4px 10px' : '6px', marginTop:'4px' }}>
+          <div style={{ display:'flex', flexWrap:'wrap', gap: isMobile ? '2px 8px' : '6px', marginTop:'4px' }}>
             {[
               { label: isBn?'মোট':'Total', value: stats.total },
               { label: isBn?'অনুমোদিত':'Approved', value: stats.approved, color:'var(--green)' },
@@ -232,7 +232,7 @@ export default function AllStudentsPage() {
               { label: isBn?'ছেলে':'Male', value: stats.male, color:'var(--teal)' },
               { label: isBn?'মেয়ে':'Female', value: stats.female, color:'var(--purple)' },
             ].map(s => (
-              <span key={s.label} style={{ fontSize:'12px', color: s.color || 'var(--text-secondary)', fontWeight: s.color ? 600 : 400 }}>
+              <span key={s.label} style={{ fontSize: isMobile ? '11px' : '12px', color: s.color || 'var(--text-secondary)', fontWeight: s.color ? 600 : 400, whiteSpace:'nowrap' }}>
                 {s.label} {s.value}
               </span>
             ))}
@@ -254,7 +254,7 @@ export default function AllStudentsPage() {
       <div style={{ position:'sticky', top:0, zIndex:50, background:'var(--bg-primary)', paddingTop:'2px', paddingBottom:'4px' }}>
         {/* Filters */}
         <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(160px, 1fr))', gap:'8px' }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(160px, 1fr))', gap:'8px' }}>
           <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'7px 10px' }}>
             <Search size={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
             <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
@@ -329,7 +329,7 @@ export default function AllStudentsPage() {
 
       {/* Table - scrollable */}
       <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', marginTop:'4px' }}>
-        <div style={{ flex:1, overflowY:'auto' }}>
+        <div style={{ flex:1, overflowY:'auto', ...(isMobile ? { maxHeight:'50vh' } : {}) }}>
           <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
             <thead>
               <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
