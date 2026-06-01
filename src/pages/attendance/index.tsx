@@ -371,11 +371,11 @@ export default function AttendancePage() {
       'on-leave':{bg:'var(--amber-light)',c:'var(--amber)',l:'L'}
     }
     const x = m[s]
-    return <span style={{ display:'inline-flex', alignItems:'flex-start', justifyContent:'flex-start', width:'20px', height:'20px', borderRadius:'4px', background:x.bg, color:x.c, fontSize:'9px', fontWeight:700, textAlign:'center' }}>{x.l}</span>
+    return <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:'20px', height:'20px', borderRadius:'4px', background:x.bg, color:x.c, fontSize:'9px', fontWeight:700, textAlign:'center' }}>{x.l}</span>
   }
 
   const weeklyHolidayBadge = () => {
-    return <span style={{ display:'inline-flex', alignItems:'flex-start', justifyContent:'flex-start', width:'20px', height:'20px', borderRadius:'4px', background:'var(--purple-light)', color:'var(--purple)', fontSize:'9px', fontWeight:700, textAlign:'center' }}>W</span>
+    return <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:'20px', height:'20px', borderRadius:'4px', background:'var(--purple-light)', color:'var(--purple)', fontSize:'9px', fontWeight:700, textAlign:'center' }}>W</span>
   }
 
   const legendItems = [
@@ -390,7 +390,7 @@ export default function AttendancePage() {
     <div>
       {/* Mark All Confirm */}
       {showMarkAll && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:700, display:'flex', alignItems:'flex-start', justifyContent:'flex-start', padding:'16px', overflowY:'auto' }}>
+        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
           <div className="modal-content" style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'380px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
             <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)', marginBottom:'12px' }}>{isBn?'সবাইকে উপস্থিত করুন?':'Mark All Present?'}</h3>
             <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginBottom:'16px' }}>{isBn?`${activeTeachers.length} জন শিক্ষককে উপস্থিত হিসেবে চিহ্নিত করা হবে।`:`${activeTeachers.length} teachers will be marked present.`}</p>
@@ -404,14 +404,14 @@ export default function AttendancePage() {
 
       {/* Single Person Detail Modal */}
       {viewPerson && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'flex-start', justifyContent:'flex-start', padding:'16px', overflowY:'auto' }}>
+        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
           <div className="modal-content" style={{ background:'var(--bg-primary)', borderRadius:'16px', maxWidth:'600px', width:'100%', maxHeight:'85vh', overflow:'hidden', display:'flex', flexDirection:'column', border:'1px solid var(--border)' }}>
-            <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'flex-start', justifyContent:'space-between', background:'var(--brand-light)' }}>
+            <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--brand-light)' }}>
               <div>
                 <div style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{viewPerson.name}</div>
                 <div style={{ fontSize:'11px', color:'var(--brand)', fontFamily:'monospace' }}>{viewPerson.id} · {dateFrom} → {dateTo}</div>
               </div>
-              <button onClick={() => setViewPerson(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'flex-start', justifyContent:'flex-start' }}>
+              <button onClick={() => setViewPerson(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
                 <X size={14} style={{ color:'var(--text-secondary)' }} />
               </button>
             </div>
@@ -489,7 +489,7 @@ export default function AttendancePage() {
             </div>
             <div style={{ padding:'12px 18px', borderTop:'1px solid var(--border)', display:'flex', gap:'8px', justifyContent:'flex-end' }}>
               <button onClick={() => setViewPerson(null)} style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)', border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit' }}>{isBn?'বন্ধ':'Close'}</button>
-              <button onClick={() => downloadSinglePDF(viewPerson.id, viewPerson.name)} style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'8px 14px', borderRadius:'8px', background:'var(--red)', border:'none', color:'#fff', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+              <button onClick={() => downloadSinglePDF(viewPerson.id, viewPerson.name)} style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px', background:'var(--red)', border:'none', color:'#fff', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
                 <FileText size={13} />PDF
               </button>
             </div>
@@ -499,14 +499,14 @@ export default function AttendancePage() {
 
       {/* Student Detail Modal */}
       {viewStudent && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'flex-start', justifyContent:'flex-start', padding:'16px', overflowY:'auto' }}>
+        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
           <div className="modal-content" style={{ background:'var(--bg-primary)', borderRadius:'16px', maxWidth:'600px', width:'100%', maxHeight:'85vh', overflow:'hidden', display:'flex', flexDirection:'column', border:'1px solid var(--border)' }}>
-            <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'flex-start', justifyContent:'space-between', background:'var(--brand-light)' }}>
+            <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--brand-light)' }}>
               <div>
                 <div style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{viewStudent.name}</div>
                 <div style={{ fontSize:'11px', color:'var(--brand)', fontFamily:'monospace' }}>{viewStudent.id} · {viewStudent.class} · {isBn?'সেকশন':'Section'}: {viewStudent.section}</div>
               </div>
-              <button onClick={() => setViewStudent(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'flex-start', justifyContent:'flex-start' }}>
+              <button onClick={() => setViewStudent(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
                 <X size={14} style={{ color:'var(--text-secondary)' }} />
               </button>
             </div>
@@ -574,7 +574,7 @@ export default function AttendancePage() {
             </div>
             <div style={{ padding:'12px 18px', borderTop:'1px solid var(--border)', display:'flex', gap:'8px', justifyContent:'flex-end' }}>
               <button onClick={() => setViewStudent(null)} style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)', border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit' }}>{isBn?'বন্ধ':'Close'}</button>
-              <button onClick={() => downloadStudentSinglePDF(viewStudent.id, viewStudent.name, viewStudent.class, viewStudent.section)} style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'8px 14px', borderRadius:'8px', background:'var(--red)', border:'none', color:'#fff', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+              <button onClick={() => downloadStudentSinglePDF(viewStudent.id, viewStudent.name, viewStudent.class, viewStudent.section)} style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px', background:'var(--red)', border:'none', color:'#fff', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
                 <FileText size={13} />PDF
               </button>
             </div>
@@ -584,7 +584,7 @@ export default function AttendancePage() {
 
       {/* Header */}
       <div style={{ display:'flex', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
-        <button onClick={() => navigate('/teachers')} style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'7px 12px', borderRadius:'9px', background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px', color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
+        <button onClick={() => navigate('/teachers')} style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px', background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px', color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
           <ArrowLeft size={14} />{isBn?'ফিরে যান':'Back'}
         </button>
         <div style={{ flex:1 }}>
@@ -594,8 +594,8 @@ export default function AttendancePage() {
         {/* Legend Box */}
         <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'10px', padding:'8px 12px', display:'flex', gap: isMobile ? '6px' : '10px', flexWrap:'wrap', flexShrink:0, ...(isMobile ? { width:'100%' } : {}) }}>
           {legendItems.map(item => (
-            <div key={item.l} style={{ display:'flex', alignItems:'flex-start', gap:'4px' }}>
-              <span style={{ display:'inline-flex', alignItems:'flex-start', justifyContent:'flex-start', width:'18px', height:'18px', borderRadius:'4px', background:item.bg, color:item.color, fontSize:'8px', fontWeight:700 }}>
+            <div key={item.l} style={{ display:'flex', alignItems:'center', gap:'4px' }}>
+              <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:'18px', height:'18px', borderRadius:'4px', background:item.bg, color:item.color, fontSize:'8px', fontWeight:700 }}>
                 <item.Icon size={10} />
               </span>
               <span style={{ fontSize:'10px', color:'var(--text-secondary)', fontWeight:500 }}>{item.l}={item.label}</span>
@@ -608,7 +608,7 @@ export default function AttendancePage() {
       <div style={{ display:'flex', gap:'6px', marginBottom:'14px', flexWrap:'wrap' }}>
         {tabs.map(tab => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-            style={{ display:'flex', alignItems:'flex-start', gap:'6px', padding:'8px 14px', borderRadius:'10px', border:`1.5px solid ${activeTab === tab.key ? tab.color : 'var(--border)'}`, background: activeTab === tab.key ? `${tab.color}15` : 'var(--bg-primary)', color: activeTab === tab.key ? tab.color : 'var(--text-secondary)', fontSize:'12px', fontWeight: activeTab === tab.key ? 600 : 400, cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s' }}>
+            style={{ display:'flex', alignItems:'center', gap:'6px', padding:'8px 14px', borderRadius:'10px', border:`1.5px solid ${activeTab === tab.key ? tab.color : 'var(--border)'}`, background: activeTab === tab.key ? `${tab.color}15` : 'var(--bg-primary)', color: activeTab === tab.key ? tab.color : 'var(--text-secondary)', fontSize:'12px', fontWeight: activeTab === tab.key ? 600 : 400, cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s' }}>
             <tab.Icon size={15} />{isBn ? tab.labelBn : tab.labelEn}
           </button>
         ))}
@@ -616,7 +616,7 @@ export default function AttendancePage() {
 
       {/* Status Filter + Date Range (for teacher tabs) */}
       {(activeTab === 'today' || activeTab === 'range') && (
-        <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'10px 14px', marginBottom:'14px', display:'flex', alignItems:'flex-start', gap:'8px', flexWrap:'wrap' }}>
+        <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'10px 14px', marginBottom:'14px', display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' }}>
           <span style={{ fontSize:'11px', fontWeight:500, color:'var(--text-muted)' }}>{isBn?'অবস্থা:':'Status:'}</span>
           {statusFilters.map(sf => (
             <button key={sf.key} onClick={() => setStatusFilter(sf.key)}
@@ -634,8 +634,8 @@ export default function AttendancePage() {
 
       {/* Filter + Date Range for Student tab */}
       {activeTab === 'student' && (
-        <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'10px 14px', marginBottom:'14px', display:'flex', alignItems:'flex-start', gap:'8px', flexWrap:'wrap' }}>
-          <div style={{ display:'flex', alignItems:'flex-start', gap:'6px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'5px 9px', flex:'1', minWidth:'160px' }}>
+        <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'10px 14px', marginBottom:'14px', display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'6px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'5px 9px', flex:'1', minWidth:'160px' }}>
             <Search size={13} style={{ color:'var(--text-muted)', flexShrink:0 }} />
             <input value={studentSearch} onChange={e => setStudentSearch(e.target.value)}
               placeholder={isBn?'নাম বা আইডি...':'Name or ID...'}
@@ -661,8 +661,8 @@ export default function AttendancePage() {
 
       {/* Filter + Date Range for Employee tab */}
       {activeTab === 'employee' && (
-        <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'10px 14px', marginBottom:'14px', display:'flex', alignItems:'flex-start', gap:'8px', flexWrap:'wrap' }}>
-          <div style={{ display:'flex', alignItems:'flex-start', gap:'6px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'5px 9px', flex:'1', minWidth:'160px' }}>
+        <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'10px 14px', marginBottom:'14px', display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'6px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'5px 9px', flex:'1', minWidth:'160px' }}>
             <Search size={13} style={{ color:'var(--text-muted)', flexShrink:0 }} />
             <input value={employeeSearch} onChange={e => setEmployeeSearch(e.target.value)}
               placeholder={isBn?'নাম বা আইডি...':'Name or ID...'}
@@ -691,18 +691,18 @@ export default function AttendancePage() {
               { labelBn:'অনুপস্থিত', labelEn:'Absent', valueBn: toBnNum(stats.absent), valueEn: String(stats.absent), Icon:XCircle, color:'var(--red)', bg:'var(--red-light)' },
               { labelBn:'ছুটিতে', labelEn:'Leave', valueBn: toBnNum(stats.onLeave), valueEn: String(stats.onLeave), Icon:Clock, color:'var(--amber)', bg:'var(--amber-light)' },
             ].map(s => (
-              <div key={s.labelEn} style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'14px', display:'flex', alignItems:'flex-start', gap:'12px' }}>
-                <div style={{ width:'38px', height:'38px', borderRadius:'10px', background:s.bg, display:'flex', alignItems:'flex-start', justifyContent:'flex-start' }}><s.Icon size={18} style={{ color:s.color }} /></div>
+              <div key={s.labelEn} style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'14px', display:'flex', alignItems:'center', gap:'12px' }}>
+                <div style={{ width:'38px', height:'38px', borderRadius:'10px', background:s.bg, display:'flex', alignItems:'center', justifyContent:'center' }}><s.Icon size={18} style={{ color:s.color }} /></div>
                 <div><div style={{ fontSize:'20px', fontWeight:700, color:'var(--text-primary)' }}>{isBn ? s.valueBn : s.valueEn}</div><div style={{ fontSize:'11px', color:'var(--text-secondary)' }}>{isBn?s.labelBn:s.labelEn}</div></div>
               </div>
             ))}
           </div>
 
-          <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'14px', display:'flex', alignItems:'flex-start', gap:'10px', flexWrap:'wrap' }}>
+          <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'14px', display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap' }}>
             <Calendar size={14} style={{ color:'var(--text-muted)' }} />
             <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ padding:'6px 10px', borderRadius:'8px', border:'1px solid var(--border)', background:'var(--bg-secondary)', color:'var(--text-primary)', fontSize:'12px', fontFamily:'inherit', outline:'none' }} />
             <div style={{ flex:1 }} />
-            <button onClick={() => setShowMarkAll(true)} style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'7px 14px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+            <button onClick={() => setShowMarkAll(true)} style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 14px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
               <CheckCircle size={13} />{isBn?'সবাইকে উপস্থিত করুন':'Mark All Present'}
             </button>
           </div>
@@ -749,7 +749,7 @@ export default function AttendancePage() {
                           style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:'var(--brand)' }} />
                       </td>
                       <td style={{ padding:'6px 8px' }}>
-                        <div style={{ display:'flex', alignItems:'flex-start', gap:'6px', cursor:'pointer' }}
+                        <div style={{ display:'flex', alignItems:'center', gap:'6px', cursor:'pointer' }}
                           onClick={() => setViewPerson({id:t.id, name:isBn?t.nameBn||t.nameEn:t.nameEn, type:'teacher'})}>
                           <div style={{ fontSize:'11px', fontWeight:500, color:'var(--text-primary)' }}>{isBn?t.nameBn||t.nameEn:t.nameEn}</div>
                           <ExternalLink size={10} style={{ color:'var(--text-muted)' }} />
@@ -776,7 +776,7 @@ export default function AttendancePage() {
                 </tbody>
               </table>
             </div>
-            <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', background:'var(--bg-secondary)', display:'flex', justifyContent:'space-between', alignItems:'flex-start', fontSize:'11px', color:'var(--text-muted)' }}>
+            <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', background:'var(--bg-secondary)', display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:'11px', color:'var(--text-muted)' }}>
               <span>📊 P=Present, A=Absent, L=Late, W=Weekend, E=Early Out · {isBn?'নামে ক্লিক করুন বিস্তারিত দেখতে':'Click name for details'}</span>
               <span>{rangeDays.length} {isBn?'দিন':'days'} · {filteredEmployees.length} {isBn?'কর্মচারী':'employees'}</span>
             </div>
@@ -787,8 +787,8 @@ export default function AttendancePage() {
       {/* ==================== TAB: STUDENT ==================== */}
       {activeTab === 'student' && (
         <>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'10px', flexWrap:'wrap', gap:'10px' }}>
-            <div style={{ display:'flex', alignItems:'flex-start', gap:'10px' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px', flexWrap:'wrap', gap:'10px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
               <span style={{ fontSize:'12px', color:'var(--text-secondary)' }}>{isBn?`মোট ${filteredStudents.length} জন শিক্ষার্থী`:`${filteredStudents.length} students`}</span>
               {selectedStudents.length > 0 && (
                 <span style={{ fontSize:'11px', color:'var(--brand)', background:'var(--brand-light)', padding:'3px 10px', borderRadius:'6px', fontWeight:500 }}>
@@ -798,12 +798,12 @@ export default function AttendancePage() {
             </div>
             <div style={{ display:'flex', gap:'6px' }}>
               <button onClick={exportStudentExcel}
-                style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
                 <FileSpreadsheet size={13} />Excel
               </button>
               <button onClick={() => setShowStudentPDF(true)}
                 disabled={selectedStudents.length === 0}
-                style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'7px 12px', borderRadius:'8px', background: selectedStudents.length === 0 ? 'var(--border-2)' : 'var(--red-light)', border:`1px solid ${selectedStudents.length === 0 ? 'var(--border)' : 'var(--red)'}`, color: selectedStudents.length === 0 ? 'var(--text-muted)' : 'var(--red)', fontSize:'12px', cursor: selectedStudents.length === 0 ? 'not-allowed' : 'pointer', fontFamily:'inherit', fontWeight:500 }}>
+                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background: selectedStudents.length === 0 ? 'var(--border-2)' : 'var(--red-light)', border:`1px solid ${selectedStudents.length === 0 ? 'var(--border)' : 'var(--red)'}`, color: selectedStudents.length === 0 ? 'var(--text-muted)' : 'var(--red)', fontSize:'12px', cursor: selectedStudents.length === 0 ? 'not-allowed' : 'pointer', fontFamily:'inherit', fontWeight:500 }}>
                 <FileText size={13} />PDF {selectedStudents.length > 0 && `(${selectedStudents.length})`}
               </button>
             </div>
@@ -866,7 +866,7 @@ export default function AttendancePage() {
                       })}
                       <td style={{ padding:'6px 8px', textAlign:'center' }}>
                         <button onClick={() => setViewStudent({id:s.id, name:isBn?s.nameBn||s.nameEn:s.nameEn, class:s.class, section:s.section||'—'})}
-                          style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--brand-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'flex-start', justifyContent:'flex-start', color:'var(--brand)' }}>
+                          style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--brand-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--brand)' }}>
                           <Eye size={12} />
                         </button>
                       </td>
@@ -881,7 +881,7 @@ export default function AttendancePage() {
                 </tbody>
               </table>
             </div>
-            <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', background:'var(--bg-secondary)', display:'flex', justifyContent:'space-between', alignItems:'flex-start', fontSize:'11px', color:'var(--text-muted)' }}>
+            <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', background:'var(--bg-secondary)', display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:'11px', color:'var(--text-muted)' }}>
               <span>📊 P=Present, A=Absent, L=Late, W=Weekend, E=Early Out · {isBn?'নামে ক্লিক করুন বিস্তারিত দেখতে':'Click name for details'}</span>
               <span>{rangeDays.length} {isBn?'দিন':'days'} · {filteredStudents.length} {isBn?'শিক্ষার্থী':'students'}</span>
             </div>

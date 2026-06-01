@@ -25,9 +25,9 @@ interface ApproveModalProps {
 const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, onApprove }: ApproveModalProps) {
   const [sendSMS, setSendSMS] = useState(true)
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.55)', zIndex: 600, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', padding: '16px', overflowY: 'auto' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.55)', zIndex: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}>
       <div className="modal-content" style={{ background: 'var(--bg-primary)', borderRadius: '16px', padding: '28px', maxWidth: '420px', width: '100%', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}>
-        <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'var(--green-light)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', margin: '0 auto 14px' }}>
+        <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'var(--green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
           <CheckCircle size={26} style={{ color: 'var(--green)' }} />
         </div>
         <h3 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', marginBottom: '6px' }}>
@@ -39,7 +39,7 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
 
         {/* SMS toggle */}
         <div onClick={() => setSendSMS(p => !p)}
-          style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', background: sendSMS ? 'var(--teal-light)' : 'var(--bg-secondary)', border: `1px solid ${sendSMS ? 'var(--teal)' : 'var(--border)'}`, borderRadius: '10px', cursor: 'pointer', marginBottom: '16px', transition: 'all 0.15s' }}>
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: sendSMS ? 'var(--teal-light)' : 'var(--bg-secondary)', border: `1px solid ${sendSMS ? 'var(--teal)' : 'var(--border)'}`, borderRadius: '10px', cursor: 'pointer', marginBottom: '16px', transition: 'all 0.15s' }}>
           <div style={{ width: '36px', height: '20px', borderRadius: '10px', background: sendSMS ? 'var(--teal)' : 'var(--border-2)', position: 'relative', flexShrink: 0, transition: 'background 0.2s' }}>
             <div style={{ position: 'absolute', top: '2px', left: sendSMS ? '18px' : '2px', width: '16px', height: '16px', background: '#fff', borderRadius: '50%', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
           </div>
@@ -112,14 +112,14 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.55)', zIndex: 600, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', padding: '16px', overflowY: 'auto' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.55)', zIndex: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}>
       <div className="modal-content" style={{ background: 'var(--bg-primary)', borderRadius: '16px', width: '100%', maxWidth: '820px', maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', border: '1px solid var(--border)' }}>
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'তথ্য সম্পাদনা' : 'Edit Student'}</h2>
             <p style={{ fontSize: '11px', color: 'var(--brand)', fontFamily: 'monospace', marginTop: '2px' }}>{f.id}</p>
           </div>
-          <button onClick={onClose} style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+          <button onClick={onClose} style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={14} style={{ color: 'var(--text-secondary)' }} />
           </button>
         </div>
@@ -164,7 +164,7 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
             {isBn ? 'বাতিল' : 'Cancel'}
           </button>
           <button onClick={() => { onSave(f); onClose() }}
-            style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '9px 18px', borderRadius: '9px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '9px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             <Save size={14} /> {isBn ? 'সেভ' : 'Save'}
           </button>
         </div>
@@ -197,23 +197,23 @@ const ViewModal = React.memo(function ViewModal({ student, isBn, onClose }: { st
   )
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.55)', zIndex: 600, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', padding: '16px', overflowY: 'auto' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.55)', zIndex: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}>
       <div className="modal-content" style={{ background: 'var(--bg-primary)', borderRadius: '16px', width: '100%', maxWidth: '680px', maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', border: '1px solid var(--border)' }}>
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', background: 'linear-gradient(135deg, var(--brand-light), var(--purple-light))' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'linear-gradient(135deg, var(--brand-light), var(--purple-light))' }}>
           <div>
             <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'ছাত্রের প্রোফাইল' : 'Student Profile'}</h2>
             <p style={{ fontSize: '11px', color: 'var(--brand)', fontFamily: 'monospace', marginTop: '2px' }}>{student.id}</p>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <span style={{ fontSize: '11px', fontWeight: 600, color: sc, background: sb, padding: '3px 10px', borderRadius: '20px', border: `1px solid ${sc}`, textTransform: 'capitalize' }}>{st}</span>
-            <button onClick={onClose} style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+            <button onClick={onClose} style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 <X size={14} style={{ color: 'var(--text-secondary)' }} />
             </button>
           </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
-          <div style={{ display: 'flex', gap: '14px', marginBottom: '16px', alignItems: 'flex-start' }}>
-            <div style={{ width: '80px', height: '100px', borderRadius: '10px', border: '2px solid var(--border)', overflow: 'hidden', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: '14px', marginBottom: '16px', alignItems: 'center' }}>
+            <div style={{ width: '80px', height: '100px', borderRadius: '10px', border: '2px solid var(--border)', overflow: 'hidden', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               {student.photo ? <img src={student.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={28} style={{ color: 'var(--text-muted)' }} />}
             </div>
             <div style={{ flex: 1 }}>
@@ -257,7 +257,7 @@ const ViewModal = React.memo(function ViewModal({ student, isBn, onClose }: { st
             {isBn ? 'বন্ধ' : 'Close'}
           </button>
           <button onClick={download}
-            style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '9px 18px', borderRadius: '9px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '9px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             <Download size={14} /> {isBn ? 'A4 PDF' : 'Download A4 PDF'}
           </button>
         </div>
@@ -433,7 +433,7 @@ export default function AdmissionManage() {
       {/* Filters */}
       <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 14px', marginBottom: '10px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr 1fr 1fr', gap: '8px', marginBottom: fDate === 'custom' ? '8px' : '0' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '7px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '7px 10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '7px 10px' }}>
             <Search size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
             <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
               placeholder={isBn ? 'নাম, আইডি, মোবাইল...' : 'Name, ID, mobile...'}
@@ -471,7 +471,7 @@ export default function AdmissionManage() {
           </select>
         </div>
         {fDate === 'custom' && (
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: '6px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '6px' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{isBn ? 'থেকে:' : 'From:'}</span>
             <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ ...sel, padding: '6px 8px' }} />
             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{isBn ? 'পর্যন্ত:' : 'To:'}</span>
@@ -480,15 +480,15 @@ export default function AdmissionManage() {
         )}
         {hasFilter && (
           <button onClick={clearFilters}
-            style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '4px 10px', borderRadius: '6px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit', marginTop: fDate === 'custom' ? '0' : '6px' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '6px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit', marginTop: fDate === 'custom' ? '0' : '6px' }}>
             <X size={11} /> {isBn ? 'ফিল্টার সরান' : 'Clear'}
           </button>
         )}
       </div>
 
       {/* Toolbar */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{isBn ? 'প্রতি পাতায়:' : 'Per page:'}</span>
           <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
             style={{ ...sel, padding: '5px 8px' }}>
@@ -502,12 +502,12 @@ export default function AdmissionManage() {
         </div>
         <div style={{ display: 'flex', gap: '6px' }}>
           <button onClick={exportExcel}
-            style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--green-light)', border: '1px solid var(--green)', color: 'var(--green)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--green-light)', border: '1px solid var(--green)', color: 'var(--green)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
             <FileSpreadsheet size={13} />
             {isBn ? 'Excel' : 'Excel'}
           </button>
           <button onClick={() => setShowPDFModal(true)}
-            style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
             <FileText size={13} />
             PDF {selected.length > 0 ? `(${selected.length})` : `(${filtered.length})`}
           </button>
@@ -561,7 +561,7 @@ export default function AdmissionManage() {
                       {(sp - 1) * perPage + i + 1}
                     </td>
                     <td style={{ padding: '7px 8px' }}>
-                      <div style={{ width: '30px', height: '36px', borderRadius: '5px', overflow: 'hidden', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+                      <div style={{ width: '30px', height: '36px', borderRadius: '5px', overflow: 'hidden', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {s.photo ? <img src={s.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           : <User size={13} style={{ color: 'var(--text-muted)' }} />}
                       </div>
@@ -590,16 +590,16 @@ export default function AdmissionManage() {
                     <td style={{ padding: '8px 8px' }}>
                       <div style={{ display: 'flex', gap: '3px' }}>
                         <button onClick={() => setViewingStudent(s)} title={isBn ? 'দেখুন' : 'View'}
-                          style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--brand-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', color: 'var(--brand)' }}>
+                          style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--brand-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand)' }}>
                           <Eye size={12} />
                         </button>
                         <button onClick={() => setEditingStudent(s)} title={isBn ? 'এডিট' : 'Edit'}
-                          style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--amber-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', color: 'var(--amber)' }}>
+                          style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--amber-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--amber)' }}>
                           <Edit2 size={12} />
                         </button>
                         {s.status === 'pending' && (
                           <button onClick={() => setApprovingStudent(s)} title={isBn ? 'Approve' : 'Approve'}
-                            style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--green-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', color: 'var(--green)' }}>
+                            style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--green-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--green)' }}>
                             <Check size={12} />
                           </button>
                         )}
@@ -612,7 +612,7 @@ export default function AdmissionManage() {
         </div>
 
         {/* Pagination */}
-        <div style={{ padding: '10px 16px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: 'var(--bg-secondary)', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ padding: '10px 16px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', flexWrap: 'wrap', gap: '8px' }}>
           <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
             {isBn
               ? `${(sp-1)*perPage+1}–${Math.min(sp*perPage,filtered.length)} / মোট ${filtered.length}`
@@ -624,7 +624,7 @@ export default function AdmissionManage() {
               { icon: <ChevronLeft size={12} />, action: () => setPage(p => Math.max(1, p-1)), disabled: sp === 1 },
             ].map((b, i) => (
               <button key={i} onClick={b.action} disabled={b.disabled}
-                style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: b.disabled ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: b.disabled ? 'default' : 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+                style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: b.disabled ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: b.disabled ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {b.icon}
               </button>
             ))}
@@ -642,7 +642,7 @@ export default function AdmissionManage() {
               { icon: <ChevronsRight size={12} />, action: () => setPage(totalPages), disabled: sp === totalPages },
             ].map((b, i) => (
               <button key={i} onClick={b.action} disabled={b.disabled}
-                style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: b.disabled ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: b.disabled ? 'default' : 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+                style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: b.disabled ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: b.disabled ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {b.icon}
               </button>
             ))}

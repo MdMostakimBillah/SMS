@@ -34,11 +34,11 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({
   }
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.55)', zIndex: 700, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', padding: '16px', overflowY: 'auto' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.55)', zIndex: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}>
       <div className="modal-content" style={{ background: 'var(--bg-primary)', borderRadius: '16px', width: '100%', maxWidth: '640px', maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}>
 
         {/* Header */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
               {isBn ? 'PDF বিকল্প' : 'PDF Options'}
@@ -50,7 +50,7 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({
               {' · '}{count} {isBn ? 'জন' : 'students'}
             </p>
           </div>
-          <button onClick={onClose} style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+          <button onClick={onClose} style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={15} style={{ color: 'var(--text-secondary)' }} />
           </button>
         </div>
@@ -81,7 +81,7 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({
             <div style={{ display: 'flex', gap: '8px' }}>
               {(['portrait', 'landscape'] as const).map(o => (
                 <button key={o} onClick={() => setOrientation(o)}
-                  style={{ flex: 1, padding: '10px', borderRadius: '10px', border: `2px solid ${orientation === o ? 'var(--brand)' : 'var(--border)'}`, background: orientation === o ? 'var(--brand-light)' : 'var(--bg-secondary)', color: orientation === o ? 'var(--brand)' : 'var(--text-secondary)', fontSize: '13px', fontWeight: orientation === o ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: '6px' }}>
+                  style={{ flex: 1, padding: '10px', borderRadius: '10px', border: `2px solid ${orientation === o ? 'var(--brand)' : 'var(--border)'}`, background: orientation === o ? 'var(--brand-light)' : 'var(--bg-secondary)', color: orientation === o ? 'var(--brand)' : 'var(--text-secondary)', fontSize: '13px', fontWeight: orientation === o ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   {o === 'portrait' ? <File size={15} /> : <LayoutTemplate size={15} />}
                   {isBn ? (o === 'portrait' ? 'উল্লম্ব (Portrait)' : 'আনুভূমিক (Landscape)') : (o === 'portrait' ? 'Portrait' : 'Landscape')}
                 </button>
@@ -91,7 +91,7 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({
 
           {/* ② Data Columns */}
           <div style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
               <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 ③ {isBn ? 'ডাটা কলাম বেছে নিন' : 'Select Data Columns'} ({cols.length}/{ALL_PDF_COLUMNS.length})
               </div>
@@ -107,7 +107,7 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '5px' }}>
               {ALL_PDF_COLUMNS.map(c => (
                 <label key={c.key}
-                  style={{ display: 'flex', alignItems: 'flex-start', gap: '7px', padding: '6px 9px', borderRadius: '8px', border: `1px solid ${cols.includes(c.key) ? 'var(--brand)' : 'var(--border)'}`, background: cols.includes(c.key) ? 'var(--brand-light)' : 'var(--bg-secondary)', cursor: 'pointer', transition: 'all 0.1s' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '6px 9px', borderRadius: '8px', border: `1px solid ${cols.includes(c.key) ? 'var(--brand)' : 'var(--border)'}`, background: cols.includes(c.key) ? 'var(--brand-light)' : 'var(--bg-secondary)', cursor: 'pointer', transition: 'all 0.1s' }}>
                   <input type="checkbox" checked={cols.includes(c.key)} onChange={() => toggleCol(c.key)}
                     style={{ width: '13px', height: '13px', accentColor: 'var(--brand)', cursor: 'pointer', flexShrink: 0 }} />
                   <span style={{ fontSize: '11px', color: cols.includes(c.key) ? 'var(--brand)' : 'var(--text-secondary)', fontWeight: cols.includes(c.key) ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -120,7 +120,7 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({
 
           {/* ③ Extra Empty Columns */}
           <div style={{ marginBottom: '20px', padding: '14px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
               <div>
                 <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   ④ {isBn ? 'অতিরিক্ত ফাঁকা কলাম' : 'Extra Empty Columns'}
@@ -130,7 +130,7 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({
                 </div>
               </div>
               <button onClick={addEmptyCol}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '6px 12px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, whiteSpace: 'nowrap' }}>
                 <Plus size={12} />
                 {isBn ? 'কলাম যোগ' : 'Add Column'}
               </button>
@@ -143,8 +143,8 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {emptyColumns.map((col, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'var(--brand-light)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexShrink: 0 }}>
+                  <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand)' }}>{i + 1}</span>
                     </div>
                     <input
@@ -156,7 +156,7 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({
                       onBlur={e => (e.target.style.borderColor = 'var(--border)')}
                     />
                     <button onClick={() => removeEmptyCol(i)}
-                      style={{ width: '28px', height: '28px', borderRadius: '7px', background: 'var(--red-light)', border: '1px solid var(--red)', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', color: 'var(--red)', flexShrink: 0 }}>
+                      style={{ width: '28px', height: '28px', borderRadius: '7px', background: 'var(--red-light)', border: '1px solid var(--red)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)', flexShrink: 0 }}>
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -173,14 +173,14 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px' }}>
               {isBn ? 'ডাটার পরে ফাঁকা সারি যোগ হবে' : 'Blank rows added after data'}
             </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
               {[0, 2, 5, 10, 15, 20].map(n => (
                 <button key={n} onClick={() => setEmptyRows(n)}
                   style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${emptyRows === n ? 'var(--teal)' : 'var(--border)'}`, background: emptyRows === n ? 'var(--teal-light)' : 'var(--bg-primary)', color: emptyRows === n ? 'var(--teal)' : 'var(--text-secondary)', fontSize: '12px', fontWeight: emptyRows === n ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {n === 0 ? (isBn ? 'নেই' : 'None') : n}
                 </button>
               ))}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '5px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{isBn ? 'কাস্টম:' : 'Custom:'}</span>
                 <input type="number" min={0} max={500} value={emptyRows}
                   onChange={e => setEmptyRows(Math.max(0, Math.min(500, Number(e.target.value))))}
@@ -199,7 +199,7 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({
           <button
             onClick={() => onDownload({ title, selectedCols: cols, emptyRows, emptyColumns, orientation, isBn })}
             disabled={cols.length === 0}
-            style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '9px 20px', borderRadius: '9px', background: cols.length === 0 ? 'var(--border-2)' : 'var(--red)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: cols.length === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 20px', borderRadius: '9px', background: cols.length === 0 ? 'var(--border-2)' : 'var(--red)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: cols.length === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
             <Download size={14} />
             {isBn ? 'PDF ডাউনলোড' : 'Download PDF'}
           </button>

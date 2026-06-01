@@ -277,7 +277,7 @@ export default function HRPage() {
   const sectionTitle: React.CSSProperties = {
     fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)',
     marginBottom: '14px', paddingBottom: '8px', borderBottom: '1px solid var(--border)',
-    display: 'flex', alignItems: 'flex-start', gap: '8px',
+    display: 'flex', alignItems: 'center', gap: '8px',
   }
 
   const input: React.CSSProperties = {
@@ -294,7 +294,7 @@ export default function HRPage() {
   const modalOverlay: React.CSSProperties = {
     position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', zIndex: 100,
     background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
-    display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', padding: '16px', overflowY: 'auto',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto',
   }
 
   const modalStyle: React.CSSProperties = {
@@ -606,9 +606,9 @@ export default function HRPage() {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <button onClick={() => navigate('/')}
-          style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 12px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '13px', color: 'var(--text-secondary)', fontFamily: 'inherit' }}>
+          style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '13px', color: 'var(--text-secondary)', fontFamily: 'inherit' }}>
           <ArrowLeft size={14} />{isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div>
@@ -626,7 +626,7 @@ export default function HRPage() {
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
             style={{
-              flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: '7px',
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
               padding: '9px 14px', borderRadius: '9px', border: 'none', cursor: 'pointer',
               fontSize: '13px', fontWeight: 500, fontFamily: 'inherit', transition: 'all 0.15s',
               background: activeTab === tab.id ? 'var(--brand)' : 'transparent',
@@ -645,7 +645,7 @@ export default function HRPage() {
         <>
           {/* Date Range Filter */}
           <div style={section}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <Calendar size={14} style={{ color: 'var(--brand)', flexShrink: 0 }} />
               <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary)' }}>{isBn ? 'তারিখ পরিসীমা:' : 'Date Range:'}</span>
               <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
@@ -676,8 +676,8 @@ export default function HRPage() {
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '8px', marginBottom: '14px' }}>
             {quickStats.map(s => (
               <div key={s.labelEn} style={section}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: s.bg, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <s.icon size={15} style={{ color: s.color }} />
                   </div>
                   <div>
@@ -704,9 +704,9 @@ export default function HRPage() {
                 <div key={card.title} style={{ background: 'var(--bg-secondary)', borderRadius: '10px', padding: '12px' }}>
                   <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '10px' }}>{card.title}</div>
                   {card.data.slice(0, 3).map((t, i) => (
-                    <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '5px 0', borderBottom: i < 2 ? '1px solid var(--border)' : 'none' }}>
+                    <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 0', borderBottom: i < 2 ? '1px solid var(--border)' : 'none' }}>
                       <span style={{ fontSize: '11px', fontWeight: 700, color: i === 0 ? 'var(--amber)' : 'var(--text-muted)', width: '18px', textAlign: 'center' }}>#{i + 1}</span>
-                      <div style={{ width: '26px', height: '26px', borderRadius: '7px', background: getAvatarGradient(t.id), display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexShrink: 0, fontSize: '8px', fontWeight: 600, color: '#fff' }}>
+                      <div style={{ width: '26px', height: '26px', borderRadius: '7px', background: getAvatarGradient(t.id), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '8px', fontWeight: 600, color: '#fff' }}>
                         {getInitials(t.nameEn)}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -741,7 +741,7 @@ export default function HRPage() {
               ))}
             </div>
             {salaryDeductions > 0 && (
-              <div style={{ marginTop: '8px', padding: '8px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', fontSize: '11px', color: 'var(--red)', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+              <div style={{ marginTop: '8px', padding: '8px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', fontSize: '11px', color: 'var(--red)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <DollarSign size={13} />
                 {isBn ? `বেতন কাটার নিয়ম প্রযোজ্য: ${activeTeachers.filter(t => t.applySalaryRule).length} জন কর্মচারীর ক্ষেত্রে ১ দিনের বেতন কাটা হয়েছে` : `Salary rule applied: 1 day deducted for ${activeTeachers.filter(t => t.applySalaryRule).length} staff with ≥3 days attendance`}
               </div>
@@ -750,11 +750,11 @@ export default function HRPage() {
 
           {/* Employees */}
           <div style={section}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {isBn ? 'সকল কর্মচারী' : 'All Staff'}
                 <span style={{
-                  display: 'inline-flex', alignItems: 'flex-start', gap: '3px',
+                  display: 'inline-flex', alignItems: 'center', gap: '3px',
                   marginLeft: '4px',
                 }}>
                   {[0, 1, 2].map(i => (
@@ -778,7 +778,7 @@ export default function HRPage() {
                   ))}
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div style={{ position: 'relative' }}>
                   <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input value={employeeSearch} onChange={e => setEmployeeSearch(e.target.value)}
@@ -794,11 +794,11 @@ export default function HRPage() {
                 </select>
                 <div style={{ display: 'flex', borderRadius: '8px', border: '1px solid var(--border)', overflow: 'hidden', flexShrink: 0, height: '34px' }}>
                   <button onClick={() => setEmployeeView('grid')}
-                    style={{ padding: '0 10px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: employeeView === 'grid' ? 'var(--brand-light)' : 'transparent', color: employeeView === 'grid' ? 'var(--brand)' : 'var(--text-muted)', transition: 'all 0.1s', display: 'flex', alignItems: 'flex-start' }}>
+                    style={{ padding: '0 10px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: employeeView === 'grid' ? 'var(--brand-light)' : 'transparent', color: employeeView === 'grid' ? 'var(--brand)' : 'var(--text-muted)', transition: 'all 0.1s', display: 'flex', alignItems: 'center' }}>
                     <LayoutGrid size={14} />
                   </button>
                   <button onClick={() => setEmployeeView('list')}
-                    style={{ padding: '0 10px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: employeeView === 'list' ? 'var(--brand-light)' : 'transparent', color: employeeView === 'list' ? 'var(--brand)' : 'var(--text-muted)', transition: 'all 0.1s', display: 'flex', alignItems: 'flex-start' }}>
+                    style={{ padding: '0 10px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: employeeView === 'list' ? 'var(--brand-light)' : 'transparent', color: employeeView === 'list' ? 'var(--brand)' : 'var(--text-muted)', transition: 'all 0.1s', display: 'flex', alignItems: 'center' }}>
                     <List size={14} />
                   </button>
                 </div>
@@ -810,8 +810,8 @@ export default function HRPage() {
                 {employeeList.map(t => (
                   <div key={t.id} onClick={() => setSelectedEmployee(selectedEmployee === t.id ? null : t.id)}
                     style={{ padding: '12px', borderRadius: '10px', background: selectedEmployee === t.id ? 'var(--brand-light)' : 'var(--bg-secondary)', border: `1px solid ${selectedEmployee === t.id ? 'var(--brand)' : 'var(--border)'}`, cursor: 'pointer', transition: 'all 0.15s' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
-                      <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: getAvatarGradient(t.id), display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', fontSize: '10px', fontWeight: 600, color: '#fff', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: getAvatarGradient(t.id), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, color: '#fff', flexShrink: 0 }}>
                         {getInitials(t.nameEn)}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -867,8 +867,8 @@ export default function HRPage() {
                         onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                         <td style={{ padding: '8px 8px' }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                            <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: getAvatarGradient(t.id), display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', fontSize: '9px', fontWeight: 600, color: '#fff', flexShrink: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: getAvatarGradient(t.id), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 600, color: '#fff', flexShrink: 0 }}>
                               {getInitials(t.nameEn)}
                             </div>
                             <div>
@@ -880,7 +880,7 @@ export default function HRPage() {
                         <td style={{ padding: '8px 8px', fontSize: '11px', color: 'var(--text-secondary)' }}>{getTeacherDept(t.id)}</td>
                         <td style={{ padding: '8px 8px', fontSize: '11px', color: 'var(--text-secondary)' }}>{t.designation}</td>
                         <td style={{ padding: '8px 8px' }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <div style={{ width: '40px', height: '5px', borderRadius: '3px', background: 'var(--border)', overflow: 'hidden' }}>
                               <div style={{ height: '100%', width: `${t.attRate}%`, background: t.attRate >= 80 ? 'var(--green)' : t.attRate >= 60 ? 'var(--amber)' : 'var(--red)', borderRadius: '3px' }} />
                             </div>
@@ -914,9 +914,9 @@ export default function HRPage() {
       {activeTab === 'decisions' && (
         <>
           <div style={section}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between', flexWrap: 'wrap' }}>
               <div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Zap size={16} style={{ color: 'var(--brand)' }} />
                   {isBn ? 'বুদ্ধিমান সুপারিশ' : 'AI Recommendations'}
                 </div>
@@ -925,7 +925,7 @@ export default function HRPage() {
                 </div>
               </div>
               <button onClick={handleGenerateRecommendations}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '8px 16px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Zap size={14} />{isBn ? 'সুপারিশ তৈরি করুন' : 'Generate'}
               </button>
             </div>
@@ -944,9 +944,9 @@ export default function HRPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {teacherCompositeScores.slice(0, 10).map((t, i) => (
                 <div key={t.id} style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--bg-secondary)', transition: 'all 0.15s' }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: i < 3 ? 'var(--amber)' : 'var(--text-muted)', width: '24px' }}>#{i + 1}</span>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: getAvatarGradient(t.id), display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', fontSize: '9px', fontWeight: 600, color: '#fff', flexShrink: 0 }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: getAvatarGradient(t.id), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 600, color: '#fff', flexShrink: 0 }}>
                       {getInitials(t.nameEn)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -992,12 +992,12 @@ export default function HRPage() {
                   const labels: Record<string, string> = { promotion: isBn ? 'পদোন্নতি' : 'Promotion', bonus: isBn ? 'বোনাস' : 'Bonus', increment: isBn ? 'বৃদ্ধি' : 'Increment' }
                   return (
                     <div key={rec.id} style={{ padding: '12px', borderRadius: '10px', background: 'var(--bg-secondary)' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', flexWrap: 'wrap' }}>
-                        <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: bg[rec.type], display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexShrink: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: bg[rec.type], display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <IconComp size={15} style={{ color: colors[rec.type] }} />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{teacher?.nameEn || rec.teacherId}</span>
                             <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', background: bg[rec.type], color: colors[rec.type], fontWeight: 500 }}>{labels[rec.type]}</span>
                             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{isBn ? 'স্কোর' : 'Score'}: <strong style={{ color: 'var(--brand)' }}>{rec.score}</strong></span>
@@ -1006,11 +1006,11 @@ export default function HRPage() {
                         </div>
                         <div style={{ display: 'flex', gap: '6px' }}>
                           <button onClick={() => handleApproveRecommendation(rec)}
-                            style={{ padding: '6px 12px', borderRadius: '8px', background: 'var(--green)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
+                            style={{ padding: '6px 12px', borderRadius: '8px', background: 'var(--green)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <CheckCircle2 size={13} />{isBn ? 'অনুমোদন' : 'Approve'}
                           </button>
                           <button onClick={() => updateRecommendation(rec.id, 'rejected')}
-                            style={{ padding: '6px 12px', borderRadius: '8px', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
+                            style={{ padding: '6px 12px', borderRadius: '8px', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <XCircle size={13} />{isBn ? 'বাতিল' : 'Reject'}
                           </button>
                         </div>
@@ -1034,8 +1034,8 @@ export default function HRPage() {
                   const bg: Record<string, string> = { promotion: 'var(--purple-light)', bonus: 'var(--amber-light)', increment: 'var(--green-light)' }
                   const labels: Record<string, string> = { promotion: isBn ? 'পদোন্নতি' : 'Promotion', bonus: isBn ? 'বোনাস' : 'Bonus', increment: isBn ? 'বৃদ্ধি' : 'Increment' }
                   return (
-                    <div key={rec.id} style={{ padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                      <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: bg[rec.type], display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexShrink: 0 }}>
+                    <div key={rec.id} style={{ padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: bg[rec.type], display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         {rec.type === 'promotion' ? <Award size={13} style={{ color: colors[rec.type] }} /> :
                          rec.type === 'bonus' ? <Gift size={13} style={{ color: colors[rec.type] }} /> :
                          <TrendingUp size={13} style={{ color: colors[rec.type] }} />}
@@ -1059,17 +1059,17 @@ export default function HRPage() {
       {/* ─── INCREMENT ─── */}
       {activeTab === 'increment' && (
         <div style={section}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <div style={sectionTitle}>
               <TrendingUp size={15} style={{ color: 'var(--green)' }} />{isBn ? 'বেতন বৃদ্ধি' : 'Increments'}
             </div>
             <div style={{ display: 'flex', gap: '6px' }}>
               <button onClick={() => setShowPDFModal('increment')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <FileText size={13} />PDF
               </button>
               <button onClick={() => setModalType('increment')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--green)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--green)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Plus size={14} />{isBn ? 'যোগ' : 'Add'}
               </button>
             </div>
@@ -1105,7 +1105,7 @@ export default function HRPage() {
                     <td style={{ padding: '8px 8px', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>৳{inc.amount.toLocaleString()}</td>
                     <td style={{ padding: '8px 8px', fontSize: '11px', color: 'var(--text-secondary)' }}>{inc.reason}</td>
                     <td style={{ padding: '8px 8px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-start' }}>
+                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                         <button onClick={() => { setIncForm({ teacherId: inc.teacherId, type: inc.type, percentage: String(inc.percentage), reason: inc.reason }); setModalType('increment'); }}
                           style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '10px', fontFamily: 'inherit' }}>
                           <Edit2 size={11} />
@@ -1132,17 +1132,17 @@ export default function HRPage() {
       {/* ─── BONUS ─── */}
       {activeTab === 'bonus' && (
         <div style={section}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <div style={sectionTitle}>
               <Gift size={15} style={{ color: 'var(--amber)' }} />{isBn ? 'বোনাস' : 'Bonuses'}
             </div>
             <div style={{ display: 'flex', gap: '6px' }}>
               <button onClick={() => setShowPDFModal('bonus')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <FileText size={13} />PDF
               </button>
               <button onClick={() => setModalType('bonus')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--amber)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--amber)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Plus size={14} />{isBn ? 'যোগ' : 'Add'}
               </button>
             </div>
@@ -1192,17 +1192,17 @@ export default function HRPage() {
       {/* ─── PROMOTION ─── */}
       {activeTab === 'promotion' && (
         <div style={section}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <div style={sectionTitle}>
               <Award size={15} style={{ color: 'var(--purple)' }} />{isBn ? 'পদোন্নতি' : 'Promotions'}
             </div>
             <div style={{ display: 'flex', gap: '6px' }}>
               <button onClick={() => setShowPDFModal('promotion')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <FileText size={13} />PDF
               </button>
               <button onClick={() => setModalType('promotion')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--purple)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--purple)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Plus size={14} />{isBn ? 'যোগ' : 'Add'}
               </button>
             </div>
@@ -1212,7 +1212,7 @@ export default function HRPage() {
           ) : (
             <>
               <div style={{ marginBottom: '8px' }}>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '12px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                   <input type="checkbox" checked={selectedPro.length === promotions.length} onChange={toggleAllPro}
                     style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--brand)' }} />
                   {isBn ? 'সব নির্বাচন করুন' : 'Select all'}
@@ -1220,17 +1220,17 @@ export default function HRPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {promotions.map(p => (
-                  <div key={p.id} style={{ padding: '12px', borderRadius: '10px', background: selectedPro.includes(p.id) ? 'rgba(99,102,241,0.04)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', transition: 'all 0.1s' }}
+                  <div key={p.id} style={{ padding: '12px', borderRadius: '10px', background: selectedPro.includes(p.id) ? 'rgba(99,102,241,0.04)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: 'all 0.1s' }}
                     onClick={() => togglePro(p.id)}>
                     <input type="checkbox" checked={selectedPro.includes(p.id)} onChange={() => togglePro(p.id)}
                       onClick={e => e.stopPropagation()}
                       style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--brand)', flexShrink: 0 }} />
-                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--purple-light)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexShrink: 0 }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--purple-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Award size={16} style={{ color: 'var(--purple)' }} />
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{getTeacherName(p.teacherId)}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '2px' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                         <span>{p.fromDesignation}</span>
                         <ChevronRight size={14} style={{ color: 'var(--green)' }} />
                         <span style={{ color: 'var(--green)', fontWeight: 600 }}>{p.toDesignation}</span>
@@ -1256,22 +1256,22 @@ export default function HRPage() {
       {/* ─── FUND ─── */}
       {activeTab === 'fund' && (
         <div style={section}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <div style={sectionTitle}>
               <HandCoins size={15} style={{ color: 'var(--brand)' }} />{isBn ? 'তহবিল' : 'Fund'}
             </div>
             <div style={{ display: 'flex', gap: '6px' }}>
               <button onClick={() => setShowPDFModal('fund')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <FileText size={13} />PDF
               </button>
               <button onClick={() => setModalType('fund')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Plus size={14} />{isBn ? 'লেনদেন' : 'Transaction'}
               </button>
             </div>
           </div>
-          <div style={{ padding: '14px', borderRadius: '10px', background: fundBalance >= 0 ? 'var(--green-light)' : 'var(--red-light)', marginBottom: '14px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div style={{ padding: '14px', borderRadius: '10px', background: fundBalance >= 0 ? 'var(--green-light)' : 'var(--red-light)', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: fundBalance >= 0 ? 'var(--green)' : 'var(--red)' }}>{isBn ? 'তহবিল ব্যালেন্স' : 'Fund Balance'}</span>
             <span style={{ fontSize: '20px', fontWeight: 700, color: fundBalance >= 0 ? 'var(--green)' : 'var(--red)' }}>৳{fundBalance.toLocaleString()}</span>
           </div>
@@ -1321,11 +1321,11 @@ export default function HRPage() {
       {/* ─── SALARY SETUP ─── */}
       {activeTab === 'salary-setup' && (
         <div style={section}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
             <div style={sectionTitle}>
               <Calculator size={15} style={{ color: 'var(--teal)' }} />{isBn ? 'মাসিক বেতন সেটআপ' : 'Monthly Salary Setup'}
             </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <input type="month" value={salarySetupMonth} onChange={e => setSalarySetupMonth(e.target.value)}
                 style={{ ...input, width: 'auto', padding: '6px 10px', fontSize: '12px' }} />
               <button onClick={() => {
@@ -1347,11 +1347,11 @@ export default function HRPage() {
                 setSalarySaved(true)
                 setTimeout(() => setSalarySaved(false), 2500)
               }}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 16px', borderRadius: '8px', background: 'var(--teal)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 16px', borderRadius: '8px', background: 'var(--teal)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Save size={14} />{isBn ? 'সংরক্ষণ' : 'Save'}
               </button>
               <button onClick={() => setShowPDFModal('salary')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 16px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 16px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Download size={14} />PDF
               </button>
             </div>
@@ -1365,12 +1365,12 @@ export default function HRPage() {
           )}
 
           {/* Bulk Salary Setup Section */}
-          <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px 12px', marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: '4px', whiteSpace: 'nowrap' }}>
+          <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px 12px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
               <Calculator size={11} style={{ color: 'var(--teal)' }} />{isBn ? 'বাল্ক সেটআপ' : 'Bulk Setup'}
             </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', cursor: 'pointer', fontSize: '10px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '10px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                 <input type="checkbox" checked={bulkDeductionEnabled} onChange={e => setBulkDeductionEnabled(e.target.checked)}
                   style={{ width: '11px', height: '11px', cursor: 'pointer', accentColor: 'var(--red)' }} />
                 <TrendingDown size={10} style={{ color: 'var(--red)' }} />
@@ -1391,8 +1391,8 @@ export default function HRPage() {
               </button>
             </div>
             <div style={{ width: '1px', height: '16px', background: 'var(--border)' }} />
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', cursor: 'pointer', fontSize: '10px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '10px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                 <input type="checkbox" checked={bulkFundEnabled} onChange={e => setBulkFundEnabled(e.target.checked)}
                   style={{ width: '11px', height: '11px', cursor: 'pointer', accentColor: 'var(--brand)' }} />
                 <HandCoins size={10} style={{ color: 'var(--brand)' }} />
@@ -1543,12 +1543,12 @@ export default function HRPage() {
         <>
           {/* Facility Definitions */}
           <div style={section}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={sectionTitle}>
                 <Briefcase size={15} style={{ color: 'var(--purple)' }} />{isBn ? 'সুবিধার ধরন' : 'Facility Types'}
               </div>
               <button onClick={() => { setFacForm({ name: '', nameBn: '', defaultAmount: '', type: 'monthly' }); setEditFac(null); setFacModalType('add-facility') }}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--purple-light)', border: '1px solid var(--purple)', color: 'var(--purple)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--purple-light)', border: '1px solid var(--purple)', color: 'var(--purple)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Plus size={14} />{isBn ? 'নতুন সুবিধা' : 'Add Facility'}
               </button>
             </div>
@@ -1582,8 +1582,8 @@ export default function HRPage() {
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                       <td style={{ padding: '10px 8px', color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center' }}>{i + 1}</td>
                       <td style={{ padding: '10px 8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                          <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--purple-light)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--purple-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <Briefcase size={13} style={{ color: 'var(--purple)' }} />
                           </div>
                           <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)' }}>{f.name}</span>
@@ -1602,15 +1602,15 @@ export default function HRPage() {
                         </span>
                       </td>
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-start' }}>
+                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                           <button onClick={() => { setFacForm({ name: f.name, nameBn: f.nameBn, defaultAmount: String(f.defaultAmount), type: f.type }); setEditFac(f); setFacModalType('edit-facility') }}
                             title={isBn ? 'এডিট' : 'Edit'}
-                            style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--amber-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', color: 'var(--amber)' }}>
+                            style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--amber-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--amber)' }}>
                             <Edit2 size={11} />
                           </button>
                           <button onClick={() => setFacDeleteConfirm(f.id)}
                             title={isBn ? 'মুছুন' : 'Delete'}
-                            style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--red-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', color: 'var(--red)' }}>
+                            style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--red-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)' }}>
                             <Trash2 size={11} />
                           </button>
                         </div>
@@ -1624,7 +1624,7 @@ export default function HRPage() {
 
           {/* Staff Facility Panel — select staff and manage all their facilities */}
           <div style={section}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={sectionTitle}>
                 <Users size={15} style={{ color: 'var(--brand)' }} />{isBn ? 'কর্মচারী সুবিধা প্যানেল' : 'Staff Facility Panel'}
               </div>
@@ -1659,7 +1659,7 @@ export default function HRPage() {
             {/* Facility checklist for selected staff */}
             {selectedFacStaff && (
               <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '10px', padding: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                   <div>
                     <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
                       {teachers.find(t => t.id === selectedFacStaff)?.nameEn || ''}
@@ -1669,14 +1669,14 @@ export default function HRPage() {
                     </div>
                   </div>
                   <button onClick={handleSaveStaffFacilities}
-                    style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                     <Save size={13} />{isBn ? 'সংরক্ষণ' : 'Save'}
                   </button>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px' }}>
                   {selectedStaffFacilities.map(sf => (
-                    <div key={sf.facility.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px', borderRadius: '8px', background: 'var(--bg-primary)', border: `1px solid ${sf.assigned ? 'var(--brand)' : 'var(--border)'}`, transition: 'all 0.15s' }}>
+                    <div key={sf.facility.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '8px', background: 'var(--bg-primary)', border: `1px solid ${sf.assigned ? 'var(--brand)' : 'var(--border)'}`, transition: 'all 0.15s' }}>
                       <input type="checkbox" checked={sf.assigned} onChange={() => toggleStaffFacility(sf.facility.id)}
                         style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: 'var(--brand)', flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -1684,7 +1684,7 @@ export default function HRPage() {
                         <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{sf.facility.name}</div>
                       </div>
                       {sf.assigned && (
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '3px', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
                           <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>৳</span>
                           <input type="number" value={sf.amount} onChange={e => updateStaffFacilityAmount(sf.facility.id, Number(e.target.value) || 0)}
                             style={{ ...input, width: '70px', padding: '4px 6px', fontSize: '11px', textAlign: 'right' }}
@@ -1696,7 +1696,7 @@ export default function HRPage() {
                 </div>
 
                 {/* Summary */}
-                <div style={{ marginTop: '12px', padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ marginTop: '12px', padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                     {isBn ? 'মোট সুবিধা' : 'Total Facilities'}: {selectedStaffFacilities.filter(sf => sf.assigned).length} / {facilities.length}
                   </span>
@@ -1717,12 +1717,12 @@ export default function HRPage() {
 
           {/* All Assignments Summary */}
           <div style={section}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={sectionTitle}>
                 <HandCoins size={15} style={{ color: 'var(--teal)' }} />{isBn ? 'সকল বরাদ্দ' : 'All Assignments'}
                 <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', marginLeft: '8px' }}>({filteredAssignments.length})</span>
               </div>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <input type="date" value={assignDateFrom} onChange={e => setAssignDateFrom(e.target.value)}
                   style={{ ...input, width: 'auto', padding: '5px 8px', fontSize: '11px' }} />
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>—</span>
@@ -1730,7 +1730,7 @@ export default function HRPage() {
                   style={{ ...input, width: 'auto', padding: '5px 8px', fontSize: '11px' }} />
                 {selectedAssign.length > 0 && (
                   <button onClick={() => setShowPDFModal('assignment')}
-                    style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '6px 10px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 10px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                     <FileText size={12} />PDF ({selectedAssign.length})
                   </button>
                 )}
@@ -1780,7 +1780,7 @@ export default function HRPage() {
                           <td style={{ padding: '8px', fontSize: '11px', fontWeight: 600, color: 'var(--green)', textAlign: 'right' }}>৳{tf.amount.toLocaleString()}</td>
                           <td style={{ padding: '8px', textAlign: 'center' }}>
                             <button onClick={() => setAssignDeleteConfirm(tf.id)} title={isBn ? 'মুছুন' : 'Delete'}
-                              style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'var(--red-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', color: 'var(--red)' }}>
+                              style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'var(--red-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)' }}>
                               <Trash2 size={10} />
                             </button>
                           </td>
@@ -1807,12 +1807,12 @@ export default function HRPage() {
 
           {/* Bonus Management */}
           <div style={section}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={sectionTitle}>
                 <Gift size={15} style={{ color: 'var(--amber)' }} />{isBn ? 'বোনাস ব্যবস্থাপনা' : 'Bonus Management'}
                 <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', marginLeft: '8px' }}>({filteredBonuses.length})</span>
               </div>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <input type="date" value={bonusDateFrom} onChange={e => setBonusDateFrom(e.target.value)}
                   style={{ ...input, width: 'auto', padding: '5px 8px', fontSize: '11px' }} />
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>—</span>
@@ -1820,12 +1820,12 @@ export default function HRPage() {
                   style={{ ...input, width: 'auto', padding: '5px 8px', fontSize: '11px' }} />
                 {selectedBon.length > 0 && (
                   <button onClick={() => setShowPDFModal('bonus')}
-                    style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '6px 10px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 10px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                     <FileText size={12} />PDF ({selectedBon.length})
                   </button>
                 )}
                 <button onClick={() => setModalType('bonus')}
-                  style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--amber)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--amber)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                   <Plus size={14} />{isBn ? 'বোনাস যোগ' : 'Add Bonus'}
                 </button>
               </div>
@@ -1877,7 +1877,7 @@ export default function HRPage() {
                           <td style={{ padding: '8px', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right' }}>৳{bon.amount.toLocaleString()}</td>
                           <td style={{ padding: '8px', fontSize: '11px', color: 'var(--text-secondary)' }}>{bon.reason}</td>
                           <td style={{ padding: '8px', textAlign: 'center' }}>
-                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-start' }}>
+                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                               <button onClick={() => { setBonForm({ teacherId: bon.teacherId, type: bon.type, amount: String(bon.amount), reason: bon.reason, month: bon.month }); setModalType('bonus'); }}
                                 style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '10px', fontFamily: 'inherit' }}>
                                 <Edit2 size={11} />
@@ -1916,7 +1916,7 @@ export default function HRPage() {
       {modalType && (
         <div style={modalOverlay} onClick={() => setModalType(null)}>
           <div className="modal-content" style={modalStyle} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {modalType === 'increment' && (isBn ? 'বেতন বৃদ্ধি যোগ' : 'Add Increment')}
                 {modalType === 'bonus' && (isBn ? 'বোনাস যোগ' : 'Add Bonus')}
@@ -1951,7 +1951,7 @@ export default function HRPage() {
                   <input value={incForm.reason} onChange={e => setIncForm(p => ({ ...p, reason: e.target.value }))} style={input} />
                 </div>
                 <button onClick={handleAddIncrement}
-                  style={{ padding: '9px', borderRadius: '8px', background: 'var(--green)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: '6px' }}>
+                  style={{ padding: '9px', borderRadius: '8px', background: 'var(--green)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   <Save size={14} />{isBn ? 'সংরক্ষণ' : 'Save'}
                 </button>
               </div>
@@ -1980,7 +1980,7 @@ export default function HRPage() {
                   <input value={bonForm.reason} onChange={e => setBonForm(p => ({ ...p, reason: e.target.value }))} style={input} />
                 </div>
                 <button onClick={handleAddBonus}
-                  style={{ padding: '9px', borderRadius: '8px', background: 'var(--amber)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: '6px' }}>
+                  style={{ padding: '9px', borderRadius: '8px', background: 'var(--amber)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   <Save size={14} />{isBn ? 'সংরক্ষণ' : 'Save'}
                 </button>
               </div>
@@ -2010,7 +2010,7 @@ export default function HRPage() {
                   <input value={proForm.reason} onChange={e => setProForm(p => ({ ...p, reason: e.target.value }))} style={input} />
                 </div>
                 <button onClick={handleAddPromotion}
-                  style={{ padding: '9px', borderRadius: '8px', background: 'var(--purple)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: '6px' }}>
+                  style={{ padding: '9px', borderRadius: '8px', background: 'var(--purple)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   <Save size={14} />{isBn ? 'সংরক্ষণ' : 'Save'}
                 </button>
               </div>
@@ -2033,7 +2033,7 @@ export default function HRPage() {
                   <input value={fundForm.description} onChange={e => setFundForm(p => ({ ...p, description: e.target.value }))} style={input} />
                 </div>
                 <button onClick={handleAddFund}
-                  style={{ padding: '9px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: '6px' }}>
+                  style={{ padding: '9px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   <Save size={14} />{isBn ? 'সংরক্ষণ' : 'Save'}
                 </button>
               </div>
@@ -2064,7 +2064,7 @@ export default function HRPage() {
       {(facModalType === 'add-facility' || facModalType === 'edit-facility') && (
         <div style={modalOverlay} onClick={() => { setFacModalType(null); setEditFac(null) }}>
           <div className="modal-content" style={modalStyle} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {facModalType === 'add-facility' ? (isBn ? 'নতুন সুবিধা যোগ' : 'Add Facility') : (isBn ? 'সুবিধা এডিট করুন' : 'Edit Facility')}
               </h2>
@@ -2090,7 +2090,7 @@ export default function HRPage() {
                 </select>
               </div>
               <button onClick={facModalType === 'add-facility' ? handleAddFacility : handleEditFacility}
-                style={{ padding: '9px', borderRadius: '8px', background: 'var(--purple)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: '6px' }}>
+                style={{ padding: '9px', borderRadius: '8px', background: 'var(--purple)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                 <Save size={14} />{isBn ? 'সংরক্ষণ' : 'Save'}
               </button>
             </div>
@@ -2101,7 +2101,7 @@ export default function HRPage() {
       {(facModalType === 'assign' || facModalType === 'edit-assign') && (
         <div style={modalOverlay} onClick={() => { setFacModalType(null); setEditAssign(null) }}>
           <div className="modal-content" style={modalStyle} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {facModalType === 'assign' ? (isBn ? 'সুবিধা বরাদ্দ করুন' : 'Assign Facility') : (isBn ? 'বরাদ্দ এডিট করুন' : 'Edit Assignment')}
               </h2>
@@ -2132,7 +2132,7 @@ export default function HRPage() {
                 <input type="number" value={assignForm.amount} onChange={e => setAssignForm(p => ({ ...p, amount: e.target.value }))} style={input} placeholder="0" />
               </div>
               <button onClick={facModalType === 'assign' ? handleAssignFacility : handleEditAssign}
-                style={{ padding: '9px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: '6px' }}>
+                style={{ padding: '9px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                 <Save size={14} />{isBn ? 'সংরক্ষণ' : 'Save'}
               </button>
             </div>
@@ -2144,8 +2144,8 @@ export default function HRPage() {
       {facDeleteConfirm && (
         <div style={modalOverlay} onClick={() => setFacDeleteConfirm(null)}>
           <div className="modal-content" style={{ ...modalStyle, maxWidth: '380px' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--red-light)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--red-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <AlertCircle size={18} style={{ color: 'var(--red)' }} />
               </div>
               <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'মুছে ফেলুন?' : 'Delete?'}</h3>
@@ -2171,8 +2171,8 @@ export default function HRPage() {
       {assignDeleteConfirm && (
         <div style={modalOverlay} onClick={() => setAssignDeleteConfirm(null)}>
           <div className="modal-content" style={{ ...modalStyle, maxWidth: '380px' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--red-light)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--red-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <AlertCircle size={18} style={{ color: 'var(--red)' }} />
               </div>
               <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'মুছে ফেলুন?' : 'Delete?'}</h3>
