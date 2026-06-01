@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, User, UserPlus, X, Search, Eye, Edit2, FileText, Trash2, AlertTriangle, FileSpreadsheet, Users, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react'
+import { ArrowLeft, User, UserPlus, X, Search, Eye, Edit2, FileText, AlertTriangle, FileSpreadsheet, Users, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -185,7 +185,7 @@ ${photoHtml}
   }
 
   return (
-    <div>
+    <div style={{ display:'flex', flexDirection:'column', height:'calc(100vh - 60px)' }}>
       {/* PDF Modal */}
       {showPDF && <TeacherPDFOptionsModal count={selected.length||filtered.length} isBn={isBn} onClose={() => setShowPDF(false)} onDownload={handlePDF} />}
 
@@ -201,7 +201,7 @@ ${photoHtml}
               <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
                 {statusBadge(viewT.status)}
                 <button onClick={() => setViewT(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-<X size={14} style={{ color:'var(--text-secondary)' }} />
+                  <X size={14} style={{ color:'var(--text-secondary)' }} />
                 </button>
               </div>
             </div>
@@ -257,30 +257,24 @@ ${photoHtml}
                 </div>
               ) : null)}
             </div>
-            <div style={{ padding:'12px 18px', borderTop:'1px solid var(--border)', display:'flex', gap:'8px', justifyContent:'flex-end' }}>
+            <div style={{ padding:'12px 18px', borderTop:'1px solid var(--border)', display:'flex', gap:'8px', justifyContent:'flex-end', flexWrap:'wrap' }}>
               <button onClick={() => downloadSinglePDF(viewT)}
                 style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
                   background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
-                  fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
+                  fontSize:'13px', fontWeight:500, cursor:'pointer', fontFamily:'inherit' }}>
                 <FileText size={13} />PDF
-              </button>
-              <button onClick={() => { setDelConfirm(viewT.id) }}
-                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
-                  background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
-                  fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
-                <Trash2 size={13} />{isBn?'মুছুন':'Delete'}
-              </button>
-              <button onClick={() => { navigate(`/teachers/edit/${viewT.id}`); setViewT(null) }}
-                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
-                  background:'var(--amber)', border:'none', color:'#fff', fontSize:'13px', fontWeight:500,
-                  cursor:'pointer', fontFamily:'inherit' }}>
-                <Edit2 size={13} />{isBn?'এডিট':'Edit'}
               </button>
               <button onClick={() => setViewT(null)}
                 style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)',
                   border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'13px',
                   cursor:'pointer', fontFamily:'inherit' }}>
                 {isBn?'বন্ধ':'Close'}
+              </button>
+              <button onClick={() => { navigate(`/teachers/edit/${viewT.id}`); setViewT(null) }}
+                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
+                  background:'var(--amber)', border:'none', color:'#fff', fontSize:'13px', fontWeight:500,
+                  cursor:'pointer', fontFamily:'inherit' }}>
+                <Edit2 size={13} />{isBn?'এডিট':'Edit'}
               </button>
             </div>
           </div>
@@ -314,108 +308,121 @@ ${photoHtml}
         </div>
       )}
 
-      {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
-        <button onClick={() => navigate('/teachers')}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
-            background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px',
-            color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
-          <ArrowLeft size={14} />
-          {isBn?'ফিরে যান':'Back'}
-        </button>
-        <div style={{ flex:1 }}>
-          <h1 style={{ fontSize:'22px', fontWeight:600, color:'var(--text-primary)' }}>
-            {isBn?'সকল শিক্ষক':'All Teachers'}
-          </h1>
-          <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginTop:'3px' }}>
-            {isBn
-              ? `মোট ${stats.total} জন · সক্রিয় ${stats.active} · নিষ্ক্রিয় ${stats.inactive} · ছুটিতে ${stats.onLeave}`
-              : `Total ${stats.total} · Active ${stats.active} · Inactive ${stats.inactive} · On Leave ${stats.onLeave}`}
-          </p>
-        </div>
-        <button onClick={() => navigate('/teachers/add')}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px',
-            background:'var(--teal-light)', border:'1px solid var(--teal)', color:'var(--teal)',
-            fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-          <UserPlus size={14} />{isBn?'নতুন যোগ করুন':'Add Teacher'}
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr 1fr 1fr', gap:'8px' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'7px 10px' }}>
-            <Search size={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
-            <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
-              placeholder={isBn?'নাম, আইডি, মোবাইল, পিতা, মাতা...':'Name, ID, phone, father, mother...'}
-              style={{ flex:1, border:'none', background:'transparent', outline:'none', fontSize:'13px', color:'var(--text-primary)', fontFamily:'inherit' }} />
-            {search && <button onClick={() => setSearch('')} style={{ border:'none', background:'transparent', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}><X size={12} /></button>}
+      {/* Top Section - fixed, does not scroll */}
+      <div style={{ flexShrink:0 }}>
+        {/* Page header */}
+        <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
+          <button onClick={() => navigate('/teachers')}
+            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
+              background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px',
+              color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
+            <ArrowLeft size={14} />
+            {isBn?'ফিরে যান':'Back'}
+          </button>
+          <div style={{ flex:1, minWidth:0 }}>
+            <h1 style={{ fontSize:isMobile?'18px':'22px', fontWeight:600, color:'var(--text-primary)' }}>
+              {isBn?'সকল শিক্ষক':'All Teachers'}
+            </h1>
+            <div style={{ display:'flex', flexWrap:'wrap', gap: isMobile ? '2px 8px' : '6px', marginTop:'4px' }}>
+              {[
+                { label: isBn?'মোট':'Total', value: stats.total },
+                { label: isBn?'সক্রিয়':'Active', value: stats.active, color:'var(--green)' },
+                { label: isBn?'নিষ্ক্রিয়':'Inactive', value: stats.inactive, color:'var(--red)' },
+                { label: isBn?'ছুটিতে':'On Leave', value: stats.onLeave, color:'var(--amber)' },
+              ].map(s => (
+                <span key={s.label} style={{ fontSize: isMobile ? '11px' : '12px', color: s.color || 'var(--text-secondary)', fontWeight: s.color ? 600 : 400, whiteSpace:'nowrap' }}>
+                  {s.label} {s.value}
+                </span>
+              ))}
+            </div>
           </div>
-          <select value={fDept} onChange={e => { setFDept(e.target.value); setPage(1) }} style={sel}>
-            <option value="">{isBn?'সব বিভাগ':'All Depts'}</option>
-            {departments.map(d => <option key={d.id} value={d.id}>{isBn?d.nameBn:d.name}</option>)}
-          </select>
-          <select value={fGender} onChange={e => { setFGender(e.target.value); setPage(1) }} style={sel}>
-            <option value="">{isBn?'সব লিঙ্গ':'All Genders'}</option>
-            <option value="Male">{isBn?'পুরুষ':'Male'}</option>
-            <option value="Female">{isBn?'মহিলা':'Female'}</option>
-          </select>
-          <select value={fReligion} onChange={e => { setFReligion(e.target.value); setPage(1) }} style={sel}>
-            <option value="">{isBn?'সব ধর্ম':'All Religions'}</option>
-            <option value="Islam">{isBn?'ইসলাম':'Islam'}</option>
-            <option value="Hinduism">{isBn?'হিন্দু':'Hinduism'}</option>
-            <option value="Christianity">{isBn?'খ্রিস্টান':'Christianity'}</option>
-            <option value="Buddhism">{isBn?'বৌদ্ধ':'Buddhism'}</option>
-          </select>
-          <select value={fBlood} onChange={e => { setFBlood(e.target.value); setPage(1) }} style={sel}>
-            <option value="">{isBn?'রক্তের গ্রুপ':'Blood'}</option>
-            {BLOOD_GROUPS.map(b => <option key={b} value={b}>{b}</option>)}
-          </select>
-          <select value={fStatus} onChange={e => { setFStatus(e.target.value); setPage(1) }} style={sel}>
-            <option value="">{isBn?'সব অবস্থা':'All Status'}</option>
-            <option value="active">{isBn?'সক্রিয়':'Active'}</option>
-            <option value="inactive">{isBn?'নিষ্ক্রিয়':'Inactive'}</option>
-            <option value="on-leave">{isBn?'ছুটিতে':'On Leave'}</option>
-          </select>
-        </div>
-        {hasFilter && (
-          <button onClick={clearFilters}
-            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'4px 10px', borderRadius:'6px',
-              background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
-              fontSize:'11px', cursor:'pointer', fontFamily:'inherit', marginTop:'8px' }}>
-            <X size={11} />{isBn?'ফিল্টার সরান':'Clear Filters'}
+          <button onClick={() => navigate('/teachers/add')}
+            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px',
+              background:'var(--teal-light)', border:'1px solid var(--teal)', color:'var(--teal)',
+              fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+            <UserPlus size={14} />{isBn?'নতুন যোগ করুন':'Add Teacher'}
           </button>
-        )}
+        </div>
+
+        {/* Sticky Filters + Toolbar */}
+        <div style={{ position:'sticky', top:0, zIndex:50, background:'var(--bg-primary)', paddingTop:'2px', paddingBottom:'4px' }}>
+          {/* Filters */}
+          <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
+            <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(160px, 1fr))', gap:'8px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'7px 10px' }}>
+                <Search size={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
+                <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
+                  placeholder={isBn?'নাম, আইডি, মোবাইল, পিতা, মাতা...':'Name, ID, phone, father, mother...'}
+                  style={{ flex:1, border:'none', background:'transparent', outline:'none', fontSize:'13px', color:'var(--text-primary)', fontFamily:'inherit' }} />
+                {search && <button onClick={() => setSearch('')} style={{ border:'none', background:'transparent', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}><X size={12} /></button>}
+              </div>
+              <select value={fDept} onChange={e => { setFDept(e.target.value); setPage(1) }} style={sel}>
+                <option value="">{isBn?'সব বিভাগ':'All Depts'}</option>
+                {departments.map(d => <option key={d.id} value={d.id}>{isBn?d.nameBn:d.name}</option>)}
+              </select>
+              <select value={fGender} onChange={e => { setFGender(e.target.value); setPage(1) }} style={sel}>
+                <option value="">{isBn?'সব লিঙ্গ':'All Genders'}</option>
+                <option value="Male">{isBn?'পুরুষ':'Male'}</option>
+                <option value="Female">{isBn?'মহিলা':'Female'}</option>
+              </select>
+              <select value={fReligion} onChange={e => { setFReligion(e.target.value); setPage(1) }} style={sel}>
+                <option value="">{isBn?'সব ধর্ম':'All Religions'}</option>
+                <option value="Islam">{isBn?'ইসলাম':'Islam'}</option>
+                <option value="Hinduism">{isBn?'হিন্দু':'Hinduism'}</option>
+                <option value="Christianity">{isBn?'খ্রিস্টান':'Christianity'}</option>
+                <option value="Buddhism">{isBn?'বৌদ্ধ':'Buddhism'}</option>
+              </select>
+              <select value={fBlood} onChange={e => { setFBlood(e.target.value); setPage(1) }} style={sel}>
+                <option value="">{isBn?'রক্তের গ্রুপ':'Blood'}</option>
+                {BLOOD_GROUPS.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+              <select value={fStatus} onChange={e => { setFStatus(e.target.value); setPage(1) }} style={sel}>
+                <option value="">{isBn?'সব অবস্থা':'All Status'}</option>
+                <option value="active">{isBn?'সক্রিয়':'Active'}</option>
+                <option value="inactive">{isBn?'নিষ্ক্রিয়':'Inactive'}</option>
+                <option value="on-leave">{isBn?'ছুটিতে':'On Leave'}</option>
+              </select>
+            </div>
+            {hasFilter && (
+              <button onClick={clearFilters}
+                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'4px 10px', borderRadius:'6px',
+                  background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
+                  fontSize:'11px', cursor:'pointer', fontFamily:'inherit', marginTop:'8px' }}>
+                <X size={11} />{isBn?'ফিল্টার সরান':'Clear Filters'}
+              </button>
+            )}
+          </div>
+
+          {/* Toolbar */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px', flexWrap:'wrap', gap:'8px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
+              <span style={{ fontSize:'12px', color:'var(--text-secondary)' }}>{isBn?'প্রতি পাতায়:':'Per page:'}</span>
+              <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }} style={{ ...sel, padding:'5px 8px' }}>
+                {PER_PAGE_OPTS.map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+              {selected.length > 0 && (
+                <span style={{ fontSize:'12px', color:'var(--brand)', background:'var(--brand-light)', padding:'3px 10px', borderRadius:'6px', fontWeight:500 }}>
+                  {selected.length} {isBn?'নির্বাচিত':'selected'}
+                </span>
+              )}
+            </div>
+            <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
+              <button onClick={exportExcel}
+                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+                <FileSpreadsheet size={13} />Excel
+              </button>
+              <button onClick={() => setShowPDF(true)}
+                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+                <FileText size={13} />PDF {selected.length>0?`(${selected.length})`:`(${filtered.length})`}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Toolbar */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px', flexWrap:'wrap', gap:'8px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-          <span style={{ fontSize:'12px', color:'var(--text-secondary)' }}>{isBn?'প্রতি পাতায়:':'Per page:'}</span>
-          <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }} style={{ ...sel, padding:'5px 8px' }}>
-            {PER_PAGE_OPTS.map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
-          {selected.length > 0 && (
-            <span style={{ fontSize:'12px', color:'var(--brand)', background:'var(--brand-light)', padding:'3px 10px', borderRadius:'6px', fontWeight:500 }}>
-              {selected.length} {isBn?'নির্বাচিত':'selected'}
-            </span>
-          )}
-        </div>
-        <div style={{ display:'flex', gap:'6px' }}>
-          <button onClick={exportExcel}
-            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-            <FileSpreadsheet size={13} />Excel
-          </button>
-          <button onClick={() => setShowPDF(true)}
-            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
-            <FileText size={13} />PDF {selected.length>0?`(${selected.length})`:`(${filtered.length})`}
-          </button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-        <div style={{ overflowX:'auto', ...(isMobile ? { maxHeight:'60vh', overflowY:'auto' } : {}) }}>
+      {/* Table - scrollable */}
+      <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', marginTop:'4px' }}>
+        <div style={{ flex:1, overflowY:'auto', ...(isMobile ? { maxHeight:'50vh' } : {}) }}>
           <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
             <thead>
               <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
@@ -423,27 +430,27 @@ ${photoHtml}
                   <input type="checkbox" checked={allSel} onChange={toggleAll}
                     style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:'var(--brand)' }} />
                 </th>
-                  {[
-                    { l:'#', w:'36px', sticky:!isMobile, left:'36px' },
-                    { l:isBn?'ছবি':'Photo', w:'44px', sticky:!isMobile, left:'72px' },
-                    { l:isBn?'আইডি':'ID', w:'130px', sticky:!isMobile, left:'116px' },
-                    { l:isBn?'নাম':'Name', w:'160px', sticky:!isMobile, left:'246px' },
-                    { l:isBn?'বিভাগ':'Dept', w:'100px', sticky:!isMobile, left:'406px' },
-                    { l:isBn?'পদবি':'Designation', w:'120px', sticky:!isMobile, left:'506px' },
-                    { l:isBn?'লিঙ্গ':'Gender', w:'65px' },
-                    { l:isBn?'রক্ত':'Blood', w:'55px' },
-                    { l:isBn?'মোবাইল':'Phone', w:'108px' },
-                    { l:isBn?'ইন টাইম':'In Time', w:'70px' },
-                    { l:isBn?'আউট টাইম':'Out Time', w:'75px' },
-                    { l:isBn?'অবস্থা':'Status', w:'85px' },
-                    { l:isBn?'অ্যাকশন':'Action', w:'70px' },
-                  ].map(h => (
-                    <th key={h.l} style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600,
-                      color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.4px',
-                      whiteSpace:'nowrap', minWidth:h.w, ...(h.sticky ? { position:'sticky', left:h.left, zIndex:4, background:'var(--bg-primary)' } : {}) }}>
-                      {h.l}
-                    </th>
-                  ))}
+                {[
+                  { l:'#', w:'36px', sticky:!isMobile, left:'36px' },
+                  { l:isBn?'ছবি':'Photo', w:'44px', sticky:!isMobile, left:'72px' },
+                  { l:isBn?'আইডি':'ID', w:'130px', sticky:!isMobile, left:'116px' },
+                  { l:isBn?'নাম':'Name', w:'160px', sticky:!isMobile, left:'246px' },
+                  { l:isBn?'বিভাগ':'Dept', w:'100px', sticky:!isMobile, left:'406px' },
+                  { l:isBn?'পদবি':'Designation', w:'120px', sticky:!isMobile, left:'506px' },
+                  { l:isBn?'লিঙ্গ':'Gender', w:'65px' },
+                  { l:isBn?'রক্ত':'Blood', w:'55px' },
+                  { l:isBn?'মোবাইল':'Phone', w:'108px' },
+                  { l:isBn?'ইন টাইম':'In Time', w:'70px' },
+                  { l:isBn?'আউট টাইম':'Out Time', w:'75px' },
+                  { l:isBn?'অবস্থা':'Status', w:'85px' },
+                  { l:isBn?'অ্যাকশন':'Action', w:'70px' },
+                ].map(h => (
+                  <th key={h.l} style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600,
+                    color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.4px',
+                    whiteSpace:'nowrap', minWidth:h.w, ...(h.sticky ? { position:'sticky', left:h.left, zIndex:4, background:'var(--bg-primary)' } : {}) }}>
+                    {h.l}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -488,7 +495,7 @@ ${photoHtml}
                     <td style={{ padding:'8px 8px' }}>{statusBadge(t.status)}</td>
                     <td style={{ padding:'8px 8px' }}>
                       <div style={{ display:'flex', gap:'3px' }}>
-                        <button onClick={() => navigate(`/teachers/all/${t.id}`)} title="View"
+                        <button onClick={() => setViewT(t)} title="View"
                           style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--brand-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--brand)' }}>
                           <Eye size={12} />
                         </button>
@@ -536,5 +543,3 @@ ${photoHtml}
     </div>
   )
 }
-
-
