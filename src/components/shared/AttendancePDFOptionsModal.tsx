@@ -27,7 +27,7 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('landscape')
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.55)', zIndex: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.55)', zIndex: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}>
       <div style={{ background: 'var(--bg-primary)', borderRadius: '16px', width: '100%', maxWidth: '480px', overflow: 'hidden', display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}>
 
         {/* Header */}
