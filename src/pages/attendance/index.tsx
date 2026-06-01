@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Briefcase, Calendar, CalendarCheck, CalendarRange, CalendarX, CheckCircle, Clock, ExternalLink, Eye, FileSpreadsheet, FileText, Fingerprint, GraduationCap, LogOut, Search, Users, X, XCircle } from 'lucide-react'
+import { ArrowLeft, Briefcase, Calendar, CalendarCheck, CalendarRange, CalendarX, CheckCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, ExternalLink, Eye, FileSpreadsheet, FileText, Fingerprint, GraduationCap, LogOut, Search, Users, X, XCircle } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 import { useAppStore } from '@/store/appStore'
@@ -88,7 +88,15 @@ export default function AttendancePage() {
   const [showEmployeePDF, setShowEmployeePDF] = useState(false)
   const [selectedStudents, setSelectedStudents] = useState<string[]>([])
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
+  const [empPage, setEmpPage] = useState(1)
+  const [empPerPage, setEmpPerPage] = useState(20)
+  const [stuPage, setStuPage] = useState(1)
+  const [stuPerPage, setStuPerPage] = useState(20)
   useScrollLock(showMarkAll || viewPerson !== null || viewStudent !== null || showStudentPDF || showEmployeePDF)
+
+  useEffect(() => { setEmpPage(1) }, [employeeSearch, fDeptEmp, empPerPage])
+  useEffect(() => { setStuPage(1) }, [studentSearch, fClass, fSection, stuPerPage])
+  useEffect(() => { setEmpPage(1); setStuPage(1) }, [activeTab])
 
   const dayAtt = attendance[date] || {}
   const activeTeachers = useMemo(() => teachers.filter(t => t.status === 'active'), [teachers])
@@ -113,6 +121,12 @@ export default function AttendancePage() {
     return l
   }, [activeTeachers, fDeptEmp, employeeSearch])
   const rangeDays = useMemo(() => getDaysBetween(dateFrom, dateTo), [dateFrom, dateTo])
+
+  const empTotalPages = Math.max(1, Math.ceil(filteredEmployees.length / empPerPage))
+  const paginatedEmployees = useMemo(() => filteredEmployees.slice((empPage - 1) * empPerPage, empPage * empPerPage), [filteredEmployees, empPage, empPerPage])
+
+  const stuTotalPages = Math.max(1, Math.ceil(filteredStudents.length / stuPerPage))
+  const paginatedStudents = useMemo(() => filteredStudents.slice((stuPage - 1) * stuPerPage, stuPage * stuPerPage), [filteredStudents, stuPage, stuPerPage])
 
   const stats = useMemo(() => {
     let present = 0, absent = 0, onLeave = 0
@@ -735,7 +749,7 @@ export default function AttendancePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredEmployees.map((t) => (
+                  {paginatedEmployees.map((t) => (
                     <tr key={t.id} style={{ borderBottom:'0.5px solid var(--border)', background: selectedEmployees.includes(t.id) ? 'rgba(99,102,241,0.04)' : 'transparent' }}
                       onMouseEnter={e => { if (!selectedEmployees.includes(t.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
                       onMouseLeave={e => { if (!selectedEmployees.includes(t.id)) e.currentTarget.style.background = selectedEmployees.includes(t.id) ? 'rgba(99,102,241,0.04)' : 'transparent' }}>
@@ -779,6 +793,40 @@ export default function AttendancePage() {
             <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', background:'var(--bg-secondary)', display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:'11px', color:'var(--text-muted)' }}>
               <span>📊 P=Present, A=Absent, L=Late, W=Weekend, E=Early Out · {isBn?'নামে ক্লিক করুন বিস্তারিত দেখতে':'Click name for details'}</span>
               <span>{rangeDays.length} {isBn?'দিন':'days'} · {filteredEmployees.length} {isBn?'কর্মচারী':'employees'}</span>
+            </div>
+            <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center', background:'var(--bg-secondary)', flexWrap:'wrap', gap:'8px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                <span style={{ fontSize:'12px', color:'var(--text-muted)' }}>
+                  {(empPage-1)*empPerPage+1}–{Math.min(empPage*empPerPage,filteredEmployees.length)} / {filteredEmployees.length}
+                </span>
+                <select value={empPerPage} onChange={e => { setEmpPerPage(Number(e.target.value)); setEmpPage(1) }}
+                  style={{ padding:'4px 6px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', fontSize:'11px', color:'var(--text-secondary)', fontFamily:'inherit' }}>
+                  {[10,20,50].map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div style={{ display:'flex', gap:'3px' }}>
+                {([[<ChevronsLeft size={12} />,()=>setEmpPage(1),empPage===1] as [React.ReactNode,()=>void,boolean],[<ChevronLeft size={12} />,()=>setEmpPage(p=>Math.max(1,p-1)),empPage===1] as [React.ReactNode,()=>void,boolean]]).map(([ic,a,d],i)=>(
+                  <button key={i} onClick={a} disabled={d}
+                    style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    {ic}
+                  </button>
+                ))}
+                {(()=>{
+                  const start = Math.max(1, Math.min(empPage-2, empTotalPages-4))
+                  return Array.from({ length: Math.min(5, empTotalPages) }, (_,i) => start+i).map(p => (
+                    <button key={p} onClick={()=>setEmpPage(p)}
+                      style={{ width:'28px', height:'28px', borderRadius:'6px', border:`1px solid ${p===empPage?'var(--brand)':'var(--border)'}`, background:p===empPage?'var(--brand)':'var(--bg-primary)', color:p===empPage?'#fff':'var(--text-secondary)', cursor:'pointer', fontSize:'12px', fontWeight:p===empPage?600:400 }}>
+                      {p}
+                    </button>
+                  ))
+                })()}
+                {([[<ChevronRight size={12} />,()=>setEmpPage(p=>Math.min(empTotalPages,p+1)),empPage===empTotalPages] as [React.ReactNode,()=>void,boolean],[<ChevronsRight size={12} />,()=>setEmpPage(empTotalPages),empPage===empTotalPages] as [React.ReactNode,()=>void,boolean]]).map(([ic,a,d],i)=>(
+                  <button key={i} onClick={a} disabled={d}
+                    style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    {ic}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </>
@@ -837,7 +885,7 @@ export default function AttendancePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredStudents.slice(0, 100).map((s) => (
+                  {paginatedStudents.map((s) => (
                     <tr key={s.id} style={{ borderBottom:'0.5px solid var(--border)', background: selectedStudents.includes(s.id) ? 'rgba(99,102,241,0.04)' : 'transparent' }}
                       onMouseEnter={e => { if (!selectedStudents.includes(s.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
                       onMouseLeave={e => { if (!selectedStudents.includes(s.id)) e.currentTarget.style.background = selectedStudents.includes(s.id) ? 'rgba(99,102,241,0.04)' : 'transparent' }}>
@@ -884,6 +932,40 @@ export default function AttendancePage() {
             <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', background:'var(--bg-secondary)', display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:'11px', color:'var(--text-muted)' }}>
               <span>📊 P=Present, A=Absent, L=Late, W=Weekend, E=Early Out · {isBn?'নামে ক্লিক করুন বিস্তারিত দেখতে':'Click name for details'}</span>
               <span>{rangeDays.length} {isBn?'দিন':'days'} · {filteredStudents.length} {isBn?'শিক্ষার্থী':'students'}</span>
+            </div>
+            <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center', background:'var(--bg-secondary)', flexWrap:'wrap', gap:'8px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                <span style={{ fontSize:'12px', color:'var(--text-muted)' }}>
+                  {(stuPage-1)*stuPerPage+1}–{Math.min(stuPage*stuPerPage,filteredStudents.length)} / {filteredStudents.length}
+                </span>
+                <select value={stuPerPage} onChange={e => { setStuPerPage(Number(e.target.value)); setStuPage(1) }}
+                  style={{ padding:'4px 6px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', fontSize:'11px', color:'var(--text-secondary)', fontFamily:'inherit' }}>
+                  {[10,20,50].map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div style={{ display:'flex', gap:'3px' }}>
+                {([[<ChevronsLeft size={12} />,()=>setStuPage(1),stuPage===1] as [React.ReactNode,()=>void,boolean],[<ChevronLeft size={12} />,()=>setStuPage(p=>Math.max(1,p-1)),stuPage===1] as [React.ReactNode,()=>void,boolean]]).map(([ic,a,d],i)=>(
+                  <button key={i} onClick={a} disabled={d}
+                    style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    {ic}
+                  </button>
+                ))}
+                {(()=>{
+                  const start = Math.max(1, Math.min(stuPage-2, stuTotalPages-4))
+                  return Array.from({ length: Math.min(5, stuTotalPages) }, (_,i) => start+i).map(p => (
+                    <button key={p} onClick={()=>setStuPage(p)}
+                      style={{ width:'28px', height:'28px', borderRadius:'6px', border:`1px solid ${p===stuPage?'var(--brand)':'var(--border)'}`, background:p===stuPage?'var(--brand)':'var(--bg-primary)', color:p===stuPage?'#fff':'var(--text-secondary)', cursor:'pointer', fontSize:'12px', fontWeight:p===stuPage?600:400 }}>
+                      {p}
+                    </button>
+                  ))
+                })()}
+                {([[<ChevronRight size={12} />,()=>setStuPage(p=>Math.min(stuTotalPages,p+1)),stuPage===stuTotalPages] as [React.ReactNode,()=>void,boolean],[<ChevronsRight size={12} />,()=>setStuPage(stuTotalPages),stuPage===stuTotalPages] as [React.ReactNode,()=>void,boolean]]).map(([ic,a,d],i)=>(
+                  <button key={i} onClick={a} disabled={d}
+                    style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    {ic}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </>

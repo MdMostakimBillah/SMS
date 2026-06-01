@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, Plus, Save, X,
   Gift, HandCoins, Medal, Percent,
   Search, Zap, ThumbsUp, AlertCircle, LayoutGrid,
-  List, ChevronRight, FileText, Calendar, Calculator, Briefcase, Edit2, Trash2, Download,
+  List, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, FileText, Calendar, Calculator, Briefcase, Edit2, Trash2, Download,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -95,6 +95,9 @@ export default function HRPage() {
   const [bulkDeductionTo, setBulkDeductionTo] = useState(new Date().toISOString().split('T')[0])
   const [bulkFundEnabled, setBulkFundEnabled] = useState(false)
   const [bulkFundPercent, setBulkFundPercent] = useState('')
+
+  const [perPage, setPerPage] = useState(20)
+  const [page, setPage] = useState(1)
 
   const toggleInc = useCallback((id: string) => setSelectedInc(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]), [])
   const toggleAllInc = useCallback(() => setSelectedInc(p => p.length === increments.length ? [] : increments.map(i => i.id)), [increments])
@@ -397,6 +400,28 @@ export default function HRPage() {
     return list
   }, [bonuses, bonusDateFrom, bonusDateTo])
 
+  // Pagination computations
+  const paginatedIncrements = useMemo(() => increments.slice((page - 1) * perPage, page * perPage), [increments, page, perPage])
+  const incrementTotalPages = Math.max(1, Math.ceil(increments.length / perPage))
+
+  const paginatedBonuses = useMemo(() => bonuses.slice((page - 1) * perPage, page * perPage), [bonuses, page, perPage])
+  const bonusTotalPages = Math.max(1, Math.ceil(bonuses.length / perPage))
+
+  const paginatedPromotions = useMemo(() => promotions.slice((page - 1) * perPage, page * perPage), [promotions, page, perPage])
+  const promotionTotalPages = Math.max(1, Math.ceil(promotions.length / perPage))
+
+  const paginatedFunds = useMemo(() => funds.slice((page - 1) * perPage, page * perPage), [funds, page, perPage])
+  const fundTotalPages = Math.max(1, Math.ceil(funds.length / perPage))
+
+  const paginatedActiveTeachers = useMemo(() => activeTeachers.slice((page - 1) * perPage, page * perPage), [activeTeachers, page, perPage])
+  const salaryTotalPages = Math.max(1, Math.ceil(activeTeachers.length / perPage))
+
+  const paginatedAssignments = useMemo(() => filteredAssignments.slice((page - 1) * perPage, page * perPage), [filteredAssignments, page, perPage])
+  const assignmentTotalPages = Math.max(1, Math.ceil(filteredAssignments.length / perPage))
+
+  const paginatedFacBonuses = useMemo(() => filteredBonuses.slice((page - 1) * perPage, page * perPage), [filteredBonuses, page, perPage])
+  const facBonusTotalPages = Math.max(1, Math.ceil(filteredBonuses.length / perPage))
+
   const handleBulkApplyDeduction = () => {
     const configs: MonthlySalaryConfig[] = activeTeachers.map(t => {
       const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth)
@@ -585,6 +610,9 @@ export default function HRPage() {
       compScore: teacherCompositeScores.find(s => s.id === t.id)?.totalScore || 0,
     })), [teachers, employeeSearch, employeeStatusFilter, teacherAttendanceRate, teacherHomeworkRate, teacherReportRate, teacherCompositeScores])
 
+  const paginatedEmployees = useMemo(() => employeeList.slice((page - 1) * perPage, page * perPage), [employeeList, page, perPage])
+  const employeeTotalPages = Math.max(1, Math.ceil(employeeList.length / perPage))
+
   const tabs: { id: Tab; icon: any; label: string; labelBn: string; color: string }[] = [
     { id: 'overview', icon: LayoutGrid, label: 'Overview', labelBn: 'সারসংক্ষেপ', color: 'var(--brand)' },
     { id: 'decisions', icon: Zap, label: 'Decisions', labelBn: 'সিদ্ধান্ত', color: 'var(--teal)' },
@@ -624,7 +652,7 @@ export default function HRPage() {
       {/* Tabs - matching other pages' segmented pill style */}
       <div style={{ display: 'flex', gap: '6px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '5px', marginBottom: '14px', overflowX: 'auto', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
         {tabs.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+          <button key={tab.id} onClick={() => { setActiveTab(tab.id); setPage(1) }}
             style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
               padding: '9px 14px', borderRadius: '9px', border: 'none', cursor: 'pointer',
@@ -781,11 +809,11 @@ export default function HRPage() {
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div style={{ position: 'relative' }}>
                   <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input value={employeeSearch} onChange={e => setEmployeeSearch(e.target.value)}
+                  <input value={employeeSearch} onChange={e => { setEmployeeSearch(e.target.value); setPage(1) }}
                     placeholder={isBn ? 'খুঁজুন...' : 'Search...'}
                     style={{ ...input, paddingLeft: '30px', width: isMobile ? '110px' : '130px', fontSize: '12px', height: '34px' }} />
                 </div>
-                <select value={employeeStatusFilter} onChange={e => setEmployeeStatusFilter(e.target.value)}
+                <select value={employeeStatusFilter} onChange={e => { setEmployeeStatusFilter(e.target.value); setPage(1) }}
                   style={{ ...input, width: '90px', fontSize: '12px', height: '34px' }}>
                   <option value="all">{isBn ? 'সব' : 'All'}</option>
                   <option value="active">{isBn ? 'সক্রিয়' : 'Active'}</option>
@@ -807,7 +835,7 @@ export default function HRPage() {
 
             {employeeView === 'grid' ? (
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: '8px' }}>
-                {employeeList.map(t => (
+                {paginatedEmployees.map(t => (
                   <div key={t.id} onClick={() => setSelectedEmployee(selectedEmployee === t.id ? null : t.id)}
                     style={{ padding: '12px', borderRadius: '10px', background: selectedEmployee === t.id ? 'var(--brand-light)' : 'var(--bg-secondary)', border: `1px solid ${selectedEmployee === t.id ? 'var(--brand)' : 'var(--border)'}`, cursor: 'pointer', transition: 'all 0.15s' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
@@ -862,7 +890,7 @@ export default function HRPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {employeeList.map(t => (
+                {paginatedEmployees.map(t => (
                       <tr key={t.id} style={{ borderBottom: '1px solid var(--border)' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -906,6 +934,40 @@ export default function HRPage() {
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px', textAlign: 'right' }}>
               {isBn ? `মোট ${employeeList.length} জন কর্মচারী` : `${employeeList.length} total`}
             </div>
+            {employeeList.length > perPage && (
+              <div style={{ padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', marginTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  {(page - 1) * perPage + 1}–{Math.min(page * perPage, employeeList.length)} / {employeeList.length}
+                </span>
+                <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                  <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
+                    style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-secondary)', fontSize: '11px', fontFamily: 'inherit', outline: 'none', marginRight: '6px' }}>
+                    <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
+                  </select>
+                  {([[<ChevronsLeft size={12} />, () => setPage(1), page === 1] as [React.ReactNode, () => void, boolean], [<ChevronLeft size={12} />, () => setPage(p => Math.max(1, p - 1)), page === 1] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                    <button key={i} onClick={a} disabled={d}
+                      style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {ic}
+                    </button>
+                  ))}
+                  {(() => {
+                    const start = Math.max(1, Math.min(page - 2, employeeTotalPages - 4))
+                    return Array.from({ length: Math.min(5, employeeTotalPages) }, (_, i) => start + i).map(p => (
+                      <button key={p} onClick={() => setPage(p)}
+                        style={{ width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${p === page ? 'var(--brand)' : 'var(--border)'}`, background: p === page ? 'var(--brand)' : 'var(--bg-primary)', color: p === page ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '12px', fontWeight: p === page ? 600 : 400 }}>
+                        {p}
+                      </button>
+                    ))
+                  })()}
+                  {([[<ChevronRight size={12} />, () => setPage(p => Math.min(employeeTotalPages, p + 1)), page === employeeTotalPages] as [React.ReactNode, () => void, boolean], [<ChevronsRight size={12} />, () => setPage(employeeTotalPages), page === employeeTotalPages] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                    <button key={i} onClick={a} disabled={d}
+                      style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {ic}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1088,7 +1150,7 @@ export default function HRPage() {
                 </tr>
               </thead>
               <tbody>
-                {increments.map(inc => (
+                {paginatedIncrements.map(inc => (
                   <tr key={inc.id} style={{ borderBottom: '1px solid var(--border)', background: selectedInc.includes(inc.id) ? 'rgba(99,102,241,0.04)' : 'transparent' }}
                     onMouseEnter={e => { if (!selectedInc.includes(inc.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
                     onMouseLeave={e => { if (!selectedInc.includes(inc.id)) e.currentTarget.style.background = 'transparent' }}>
@@ -1121,6 +1183,40 @@ export default function HRPage() {
               </tbody>
             </table>
           </div>
+          {increments.length > perPage && (
+            <div style={{ padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', marginTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                {(page - 1) * perPage + 1}–{Math.min(page * perPage, increments.length)} / {increments.length}
+              </span>
+              <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
+                  style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-secondary)', fontSize: '11px', fontFamily: 'inherit', outline: 'none', marginRight: '6px' }}>
+                  <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
+                </select>
+                {([[<ChevronsLeft size={12} />, () => setPage(1), page === 1] as [React.ReactNode, () => void, boolean], [<ChevronLeft size={12} />, () => setPage(p => Math.max(1, p - 1)), page === 1] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                  <button key={i} onClick={a} disabled={d}
+                    style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {ic}
+                  </button>
+                ))}
+                {(() => {
+                  const start = Math.max(1, Math.min(page - 2, incrementTotalPages - 4))
+                  return Array.from({ length: Math.min(5, incrementTotalPages) }, (_, i) => start + i).map(p => (
+                    <button key={p} onClick={() => setPage(p)}
+                      style={{ width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${p === page ? 'var(--brand)' : 'var(--border)'}`, background: p === page ? 'var(--brand)' : 'var(--bg-primary)', color: p === page ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '12px', fontWeight: p === page ? 600 : 400 }}>
+                      {p}
+                    </button>
+                  ))
+                })()}
+                {([[<ChevronRight size={12} />, () => setPage(p => Math.min(incrementTotalPages, p + 1)), page === incrementTotalPages] as [React.ReactNode, () => void, boolean], [<ChevronsRight size={12} />, () => setPage(incrementTotalPages), page === incrementTotalPages] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                  <button key={i} onClick={a} disabled={d}
+                    style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {ic}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {selectedInc.length > 0 && (
             <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--brand)', background: 'var(--brand-light)', padding: '4px 10px', borderRadius: '6px', display: 'inline-block' }}>
               {selectedInc.length} {isBn ? 'নির্বাচিত' : 'selected'}
@@ -1161,7 +1257,7 @@ export default function HRPage() {
                 </tr>
               </thead>
               <tbody>
-                {bonuses.map(bon => (
+                {paginatedBonuses.map(bon => (
                   <tr key={bon.id} style={{ borderBottom: '1px solid var(--border)', background: selectedBon.includes(bon.id) ? 'rgba(99,102,241,0.04)' : 'transparent' }}
                     onMouseEnter={e => { if (!selectedBon.includes(bon.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
                     onMouseLeave={e => { if (!selectedBon.includes(bon.id)) e.currentTarget.style.background = 'transparent' }}>
@@ -1181,6 +1277,40 @@ export default function HRPage() {
               </tbody>
             </table>
           </div>
+          {bonuses.length > perPage && (
+            <div style={{ padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', marginTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                {(page - 1) * perPage + 1}–{Math.min(page * perPage, bonuses.length)} / {bonuses.length}
+              </span>
+              <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
+                  style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-secondary)', fontSize: '11px', fontFamily: 'inherit', outline: 'none', marginRight: '6px' }}>
+                  <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
+                </select>
+                {([[<ChevronsLeft size={12} />, () => setPage(1), page === 1] as [React.ReactNode, () => void, boolean], [<ChevronLeft size={12} />, () => setPage(p => Math.max(1, p - 1)), page === 1] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                  <button key={i} onClick={a} disabled={d}
+                    style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {ic}
+                  </button>
+                ))}
+                {(() => {
+                  const start = Math.max(1, Math.min(page - 2, bonusTotalPages - 4))
+                  return Array.from({ length: Math.min(5, bonusTotalPages) }, (_, i) => start + i).map(p => (
+                    <button key={p} onClick={() => setPage(p)}
+                      style={{ width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${p === page ? 'var(--brand)' : 'var(--border)'}`, background: p === page ? 'var(--brand)' : 'var(--bg-primary)', color: p === page ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '12px', fontWeight: p === page ? 600 : 400 }}>
+                      {p}
+                    </button>
+                  ))
+                })()}
+                {([[<ChevronRight size={12} />, () => setPage(p => Math.min(bonusTotalPages, p + 1)), page === bonusTotalPages] as [React.ReactNode, () => void, boolean], [<ChevronsRight size={12} />, () => setPage(bonusTotalPages), page === bonusTotalPages] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                  <button key={i} onClick={a} disabled={d}
+                    style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {ic}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {selectedBon.length > 0 && (
             <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--brand)', background: 'var(--brand-light)', padding: '4px 10px', borderRadius: '6px', display: 'inline-block' }}>
               {selectedBon.length} {isBn ? 'নির্বাচিত' : 'selected'}
@@ -1219,7 +1349,7 @@ export default function HRPage() {
                 </label>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {promotions.map(p => (
+                {paginatedPromotions.map(p => (
                   <div key={p.id} style={{ padding: '12px', borderRadius: '10px', background: selectedPro.includes(p.id) ? 'rgba(99,102,241,0.04)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: 'all 0.1s' }}
                     onClick={() => togglePro(p.id)}>
                     <input type="checkbox" checked={selectedPro.includes(p.id)} onChange={() => togglePro(p.id)}
@@ -1243,6 +1373,40 @@ export default function HRPage() {
                   </div>
                 ))}
               </div>
+              {promotions.length > perPage && (
+                <div style={{ padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', marginTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    {(page - 1) * perPage + 1}–{Math.min(page * perPage, promotions.length)} / {promotions.length}
+                  </span>
+                  <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                    <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
+                      style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-secondary)', fontSize: '11px', fontFamily: 'inherit', outline: 'none', marginRight: '6px' }}>
+                      <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
+                    </select>
+                    {([[<ChevronsLeft size={12} />, () => setPage(1), page === 1] as [React.ReactNode, () => void, boolean], [<ChevronLeft size={12} />, () => setPage(p => Math.max(1, p - 1)), page === 1] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                      <button key={i} onClick={a} disabled={d}
+                        style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {ic}
+                      </button>
+                    ))}
+                    {(() => {
+                      const start = Math.max(1, Math.min(page - 2, promotionTotalPages - 4))
+                      return Array.from({ length: Math.min(5, promotionTotalPages) }, (_, i) => start + i).map(p => (
+                        <button key={p} onClick={() => setPage(p)}
+                          style={{ width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${p === page ? 'var(--brand)' : 'var(--border)'}`, background: p === page ? 'var(--brand)' : 'var(--bg-primary)', color: p === page ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '12px', fontWeight: p === page ? 600 : 400 }}>
+                          {p}
+                        </button>
+                      ))
+                    })()}
+                    {([[<ChevronRight size={12} />, () => setPage(p => Math.min(promotionTotalPages, p + 1)), page === promotionTotalPages] as [React.ReactNode, () => void, boolean], [<ChevronsRight size={12} />, () => setPage(promotionTotalPages), page === promotionTotalPages] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                      <button key={i} onClick={a} disabled={d}
+                        style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {ic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {selectedPro.length > 0 && (
                 <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--brand)', background: 'var(--brand-light)', padding: '4px 10px', borderRadius: '6px', display: 'inline-block' }}>
                   {selectedPro.length} {isBn ? 'নির্বাচিত' : 'selected'}
@@ -1289,7 +1453,7 @@ export default function HRPage() {
                 </tr>
               </thead>
               <tbody>
-                {funds.map(f => (
+                {paginatedFunds.map(f => (
                   <tr key={f.id} style={{ borderBottom: '1px solid var(--border)', background: selectedFund.includes(f.id) ? 'rgba(99,102,241,0.04)' : 'transparent' }}
                     onMouseEnter={e => { if (!selectedFund.includes(f.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
                     onMouseLeave={e => { if (!selectedFund.includes(f.id)) e.currentTarget.style.background = 'transparent' }}>
@@ -1310,6 +1474,40 @@ export default function HRPage() {
               </tbody>
             </table>
           </div>
+          {funds.length > perPage && (
+            <div style={{ padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', marginTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                {(page - 1) * perPage + 1}–{Math.min(page * perPage, funds.length)} / {funds.length}
+              </span>
+              <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
+                  style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-secondary)', fontSize: '11px', fontFamily: 'inherit', outline: 'none', marginRight: '6px' }}>
+                  <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
+                </select>
+                {([[<ChevronsLeft size={12} />, () => setPage(1), page === 1] as [React.ReactNode, () => void, boolean], [<ChevronLeft size={12} />, () => setPage(p => Math.max(1, p - 1)), page === 1] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                  <button key={i} onClick={a} disabled={d}
+                    style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {ic}
+                  </button>
+                ))}
+                {(() => {
+                  const start = Math.max(1, Math.min(page - 2, fundTotalPages - 4))
+                  return Array.from({ length: Math.min(5, fundTotalPages) }, (_, i) => start + i).map(p => (
+                    <button key={p} onClick={() => setPage(p)}
+                      style={{ width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${p === page ? 'var(--brand)' : 'var(--border)'}`, background: p === page ? 'var(--brand)' : 'var(--bg-primary)', color: p === page ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '12px', fontWeight: p === page ? 600 : 400 }}>
+                      {p}
+                    </button>
+                  ))
+                })()}
+                {([[<ChevronRight size={12} />, () => setPage(p => Math.min(fundTotalPages, p + 1)), page === fundTotalPages] as [React.ReactNode, () => void, boolean], [<ChevronsRight size={12} />, () => setPage(fundTotalPages), page === fundTotalPages] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                  <button key={i} onClick={a} disabled={d}
+                    style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {ic}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {selectedFund.length > 0 && (
             <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--brand)', background: 'var(--brand-light)', padding: '4px 10px', borderRadius: '6px', display: 'inline-block' }}>
               {selectedFund.length} {isBn ? 'নির্বাচিত' : 'selected'}
@@ -1433,7 +1631,7 @@ export default function HRPage() {
                 </tr>
               </thead>
               <tbody>
-                {activeTeachers.map(t => {
+                {paginatedActiveTeachers.map(t => {
                   const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth)
                   const local = salaryConfigs[t.id] || {}
                   const applyDeduction = local.applyDeductionRule ?? existing?.applyDeductionRule ?? false
@@ -1530,6 +1728,40 @@ export default function HRPage() {
               </tfoot>
             </table>
           </div>
+          {activeTeachers.length > perPage && (
+            <div style={{ padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', marginTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                {(page - 1) * perPage + 1}–{Math.min(page * perPage, activeTeachers.length)} / {activeTeachers.length}
+              </span>
+              <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
+                  style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-secondary)', fontSize: '11px', fontFamily: 'inherit', outline: 'none', marginRight: '6px' }}>
+                  <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
+                </select>
+                {([[<ChevronsLeft size={12} />, () => setPage(1), page === 1] as [React.ReactNode, () => void, boolean], [<ChevronLeft size={12} />, () => setPage(p => Math.max(1, p - 1)), page === 1] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                  <button key={i} onClick={a} disabled={d}
+                    style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {ic}
+                  </button>
+                ))}
+                {(() => {
+                  const start = Math.max(1, Math.min(page - 2, salaryTotalPages - 4))
+                  return Array.from({ length: Math.min(5, salaryTotalPages) }, (_, i) => start + i).map(p => (
+                    <button key={p} onClick={() => setPage(p)}
+                      style={{ width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${p === page ? 'var(--brand)' : 'var(--border)'}`, background: p === page ? 'var(--brand)' : 'var(--bg-primary)', color: p === page ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '12px', fontWeight: p === page ? 600 : 400 }}>
+                      {p}
+                    </button>
+                  ))
+                })()}
+                {([[<ChevronRight size={12} />, () => setPage(p => Math.min(salaryTotalPages, p + 1)), page === salaryTotalPages] as [React.ReactNode, () => void, boolean], [<ChevronsRight size={12} />, () => setPage(salaryTotalPages), page === salaryTotalPages] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                  <button key={i} onClick={a} disabled={d}
+                    style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {ic}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {selectedSalary.length > 0 && (
             <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--brand)', background: 'var(--brand-light)', padding: '4px 10px', borderRadius: '6px', display: 'inline-block' }}>
               {selectedSalary.length} {isBn ? 'নির্বাচিত' : 'selected'}
@@ -1723,10 +1955,10 @@ export default function HRPage() {
                 <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', marginLeft: '8px' }}>({filteredAssignments.length})</span>
               </div>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <input type="date" value={assignDateFrom} onChange={e => setAssignDateFrom(e.target.value)}
+                <input type="date" value={assignDateFrom} onChange={e => { setAssignDateFrom(e.target.value); setPage(1) }}
                   style={{ ...input, width: 'auto', padding: '5px 8px', fontSize: '11px' }} />
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>—</span>
-                <input type="date" value={assignDateTo} onChange={e => setAssignDateTo(e.target.value)}
+                <input type="date" value={assignDateTo} onChange={e => { setAssignDateTo(e.target.value); setPage(1) }}
                   style={{ ...input, width: 'auto', padding: '5px 8px', fontSize: '11px' }} />
                 {selectedAssign.length > 0 && (
                   <button onClick={() => setShowPDFModal('assignment')}
@@ -1762,7 +1994,7 @@ export default function HRPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredAssignments.map((tf, i) => {
+                    {paginatedAssignments.map((tf, i) => {
                       const t = teachers.find(tx => tx.id === tf.teacherId)
                       const fac = facilities.find(f => f.id === tf.facilityId)
                       const isSelected = selectedAssign.includes(tf.id)
@@ -1798,6 +2030,40 @@ export default function HRPage() {
                 </table>
               </div>
             )}
+            {filteredAssignments.length > perPage && (
+              <div style={{ padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', marginTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  {(page - 1) * perPage + 1}–{Math.min(page * perPage, filteredAssignments.length)} / {filteredAssignments.length}
+                </span>
+                <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                  <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
+                    style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-secondary)', fontSize: '11px', fontFamily: 'inherit', outline: 'none', marginRight: '6px' }}>
+                    <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
+                  </select>
+                  {([[<ChevronsLeft size={12} />, () => setPage(1), page === 1] as [React.ReactNode, () => void, boolean], [<ChevronLeft size={12} />, () => setPage(p => Math.max(1, p - 1)), page === 1] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                    <button key={i} onClick={a} disabled={d}
+                      style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {ic}
+                    </button>
+                  ))}
+                  {(() => {
+                    const start = Math.max(1, Math.min(page - 2, assignmentTotalPages - 4))
+                    return Array.from({ length: Math.min(5, assignmentTotalPages) }, (_, i) => start + i).map(p => (
+                      <button key={p} onClick={() => setPage(p)}
+                        style={{ width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${p === page ? 'var(--brand)' : 'var(--border)'}`, background: p === page ? 'var(--brand)' : 'var(--bg-primary)', color: p === page ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '12px', fontWeight: p === page ? 600 : 400 }}>
+                        {p}
+                      </button>
+                    ))
+                  })()}
+                  {([[<ChevronRight size={12} />, () => setPage(p => Math.min(assignmentTotalPages, p + 1)), page === assignmentTotalPages] as [React.ReactNode, () => void, boolean], [<ChevronsRight size={12} />, () => setPage(assignmentTotalPages), page === assignmentTotalPages] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                    <button key={i} onClick={a} disabled={d}
+                      style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {ic}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {selectedAssign.length > 0 && (
               <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--brand)', background: 'var(--brand-light)', padding: '4px 10px', borderRadius: '6px', display: 'inline-block' }}>
                 {selectedAssign.length} {isBn ? 'নির্বাচিত' : 'selected'}
@@ -1813,10 +2079,10 @@ export default function HRPage() {
                 <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', marginLeft: '8px' }}>({filteredBonuses.length})</span>
               </div>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <input type="date" value={bonusDateFrom} onChange={e => setBonusDateFrom(e.target.value)}
+                <input type="date" value={bonusDateFrom} onChange={e => { setBonusDateFrom(e.target.value); setPage(1) }}
                   style={{ ...input, width: 'auto', padding: '5px 8px', fontSize: '11px' }} />
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>—</span>
-                <input type="date" value={bonusDateTo} onChange={e => setBonusDateTo(e.target.value)}
+                <input type="date" value={bonusDateTo} onChange={e => { setBonusDateTo(e.target.value); setPage(1) }}
                   style={{ ...input, width: 'auto', padding: '5px 8px', fontSize: '11px' }} />
                 {selectedBon.length > 0 && (
                   <button onClick={() => setShowPDFModal('bonus')}
@@ -1858,7 +2124,7 @@ export default function HRPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredBonuses.map((bon, i) => {
+                    {paginatedFacBonuses.map((bon, i) => {
                       const isSelected = selectedBon.includes(bon.id)
                       return (
                         <tr key={bon.id} style={{ borderBottom: '1px solid var(--border)', background: isSelected ? 'var(--brand-light)' : 'transparent' }}
@@ -1901,6 +2167,40 @@ export default function HRPage() {
                     </tr>
                   </tfoot>
                 </table>
+              </div>
+            )}
+            {filteredBonuses.length > perPage && (
+              <div style={{ padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', marginTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  {(page - 1) * perPage + 1}–{Math.min(page * perPage, filteredBonuses.length)} / {filteredBonuses.length}
+                </span>
+                <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                  <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
+                    style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-secondary)', fontSize: '11px', fontFamily: 'inherit', outline: 'none', marginRight: '6px' }}>
+                    <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
+                  </select>
+                  {([[<ChevronsLeft size={12} />, () => setPage(1), page === 1] as [React.ReactNode, () => void, boolean], [<ChevronLeft size={12} />, () => setPage(p => Math.max(1, p - 1)), page === 1] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                    <button key={i} onClick={a} disabled={d}
+                      style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {ic}
+                    </button>
+                  ))}
+                  {(() => {
+                    const start = Math.max(1, Math.min(page - 2, facBonusTotalPages - 4))
+                    return Array.from({ length: Math.min(5, facBonusTotalPages) }, (_, i) => start + i).map(p => (
+                      <button key={p} onClick={() => setPage(p)}
+                        style={{ width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${p === page ? 'var(--brand)' : 'var(--border)'}`, background: p === page ? 'var(--brand)' : 'var(--bg-primary)', color: p === page ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '12px', fontWeight: p === page ? 600 : 400 }}>
+                        {p}
+                      </button>
+                    ))
+                  })()}
+                  {([[<ChevronRight size={12} />, () => setPage(p => Math.min(facBonusTotalPages, p + 1)), page === facBonusTotalPages] as [React.ReactNode, () => void, boolean], [<ChevronsRight size={12} />, () => setPage(facBonusTotalPages), page === facBonusTotalPages] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                    <button key={i} onClick={a} disabled={d}
+                      style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: d ? 'var(--text-muted)' : 'var(--text-secondary)', cursor: d ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {ic}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             {selectedBon.length > 0 && (
