@@ -566,18 +566,17 @@ export default function ClassesPage() {
 
       {/* Subject Selection Modal */}
       {showSubjectModal && (
-        <div onClick={() => setShowSubjectModal(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', zIndex: 1000, padding: '20px', overflowY: 'auto' }}>
-          <div onClick={e => e.stopPropagation()} className="modal-content" style={{ background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border)', width: '100%', maxWidth: '400px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-lg)' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ position: 'fixed', bottom: '16px', right: '16px', zIndex: 1000, width: '360px', maxHeight: '70vh', background: 'var(--bg-primary)', borderRadius: '14px', border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }} className="modal-content">
+            <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{isBn ? 'বিষয় নির্বাচন করুন' : 'Select Subjects'}</h3>
-                <p style={{ fontSize: '10px', color: 'var(--text-muted)', margin: '4px 0 0' }}>{isBn ? 'শিক্ষক ব্যবস্থাপনা থেকে বিষয় নির্বাচন করুন' : 'Select subjects from Teacher Management'}</p>
+                <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{isBn ? 'বিষয় নির্বাচন করুন' : 'Select Subjects'}</h3>
+                <p style={{ fontSize: '9px', color: 'var(--text-muted)', margin: '2px 0 0' }}>{isBn ? 'শিক্ষক ব্যবস্থাপনা থেকে বিষয় নির্বাচন করুন' : 'Select subjects from Teacher Management'}</p>
               </div>
-              <button onClick={() => setShowSubjectModal(null)} style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                <X size={14} />
+              <button onClick={() => setShowSubjectModal(null)} style={{ width: '26px', height: '26px', borderRadius: '7px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={13} />
               </button>
             </div>
-            <div style={{ padding: '12px 20px', overflowY: 'auto', flex: 1 }}>
+            <div style={{ padding: '10px 16px', overflowY: 'auto', flex: 1 }}>
               {subjects.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '12px' }}>
                   {isBn ? 'কোনো বিষয় পাওয়া যায়নি। প্রথমে শিক্ষক ব্যবস্থাপনায় বিষয় যোগ করুন।' : 'No subjects found. Add subjects in Teacher Management first.'}
@@ -619,7 +618,6 @@ export default function ClassesPage() {
                 {isBn ? 'সেভ করুন' : 'Save'} ({tempSelectedSubjects.length})
               </button>
             </div>
-          </div>
         </div>
       )}
     </div>
