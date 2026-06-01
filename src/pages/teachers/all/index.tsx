@@ -191,23 +191,23 @@ ${photoHtml}
 
       {/* View Modal */}
       {viewT && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
-          <div style={{ background:'var(--bg-primary)', borderRadius:'16px', maxWidth:'560px', width:'100%', maxHeight:'90vh', overflow:'hidden', display:'flex', flexDirection:'column', border:'1px solid var(--border)', boxShadow:'var(--shadow-lg)' }}>
-            <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--brand-light)' }}>
+        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'flex-start', justifyContent:'flex-start', padding:'16px', overflowY:'auto' }}>
+          <div className="modal-content" style={{ background:'var(--bg-primary)', borderRadius:'16px', maxWidth:'560px', width:'100%', maxHeight:'90vh', overflow:'hidden', display:'flex', flexDirection:'column', border:'1px solid var(--border)', boxShadow:'var(--shadow-lg)' }}>
+            <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'flex-start', justifyContent:'space-between', background:'var(--brand-light)' }}>
               <div>
                 <div style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?viewT.nameBn||viewT.nameEn:viewT.nameEn}</div>
                 <div style={{ fontSize:'11px', color:'var(--brand)', fontFamily:'monospace' }}>{viewT.id}</div>
               </div>
-              <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
+              <div style={{ display:'flex', gap:'8px', alignItems:'flex-start' }}>
                 {statusBadge(viewT.status)}
-                <button onClick={() => setViewT(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <button onClick={() => setViewT(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'flex-start', justifyContent:'flex-start' }}>
 <X size={14} style={{ color:'var(--text-secondary)' }} />
                 </button>
               </div>
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:'16px 18px' }}>
               <div style={{ display:'flex', gap:'14px', marginBottom:'14px' }}>
-                <div style={{ width:'80px', height:'95px', borderRadius:'8px', border:'1px solid var(--border)', overflow:'hidden', background:'var(--bg-secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <div style={{ width:'80px', height:'95px', borderRadius:'8px', border:'1px solid var(--border)', overflow:'hidden', background:'var(--bg-secondary)', display:'flex', alignItems:'flex-start', justifyContent:'flex-start', flexShrink:0 }}>
                   {viewT.photo ? <img src={viewT.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={28} style={{ color:'var(--text-muted)' }} />}
                 </div>
                 <div>
@@ -259,19 +259,19 @@ ${photoHtml}
             </div>
             <div style={{ padding:'12px 18px', borderTop:'1px solid var(--border)', display:'flex', gap:'8px', justifyContent:'flex-end' }}>
               <button onClick={() => downloadSinglePDF(viewT)}
-                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
+                style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'8px 14px', borderRadius:'8px',
                   background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
                   fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
                 <FileText size={13} />PDF
               </button>
               <button onClick={() => { setDelConfirm(viewT.id) }}
-                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
+                style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'8px 14px', borderRadius:'8px',
                   background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
                   fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
                 <Trash2 size={13} />{isBn?'মুছুন':'Delete'}
               </button>
               <button onClick={() => { navigate(`/teachers/edit/${viewT.id}`); setViewT(null) }}
-                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px',
+                style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'8px 14px', borderRadius:'8px',
                   background:'var(--amber)', border:'none', color:'#fff', fontSize:'13px', fontWeight:500,
                   cursor:'pointer', fontFamily:'inherit' }}>
                 <Edit2 size={13} />{isBn?'এডিট':'Edit'}
@@ -289,10 +289,10 @@ ${photoHtml}
 
       {/* Delete Confirmation */}
       {delConfirm && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
-          <div style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'380px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
-              <div style={{ width:'36px', height:'36px', borderRadius:'8px', background:'var(--red-light)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:700, display:'flex', alignItems:'flex-start', justifyContent:'flex-start', padding:'16px', overflowY:'auto' }}>
+          <div className="modal-content" style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'380px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
+            <div style={{ display:'flex', alignItems:'flex-start', gap:'10px', marginBottom:'12px' }}>
+              <div style={{ width:'36px', height:'36px', borderRadius:'8px', background:'var(--red-light)', display:'flex', alignItems:'flex-start', justifyContent:'flex-start' }}>
                 <AlertTriangle size={18} style={{ color:'var(--red)' }} />
               </div>
               <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?'মুছে ফেলুন?':'Delete?'}</h3>
@@ -315,9 +315,9 @@ ${photoHtml}
       )}
 
       {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
+      <div style={{ display:'flex', alignItems:'flex-start', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
         <button onClick={() => navigate('/teachers')}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
+          style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'7px 12px', borderRadius:'9px',
             background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px',
             color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
           <ArrowLeft size={14} />
@@ -334,7 +334,7 @@ ${photoHtml}
           </p>
         </div>
         <button onClick={() => navigate('/teachers/add')}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px',
+          style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'8px 14px', borderRadius:'9px',
             background:'var(--teal-light)', border:'1px solid var(--teal)', color:'var(--teal)',
             fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
           <UserPlus size={14} />{isBn?'নতুন যোগ করুন':'Add Teacher'}
@@ -344,7 +344,7 @@ ${photoHtml}
       {/* Filters */}
       <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
         <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr 1fr 1fr', gap:'8px' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'7px 10px' }}>
+          <div style={{ display:'flex', alignItems:'flex-start', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'7px 10px' }}>
             <Search size={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
             <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
               placeholder={isBn?'নাম, আইডি, মোবাইল, পিতা, মাতা...':'Name, ID, phone, father, mother...'}
@@ -380,7 +380,7 @@ ${photoHtml}
         </div>
         {hasFilter && (
           <button onClick={clearFilters}
-            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'4px 10px', borderRadius:'6px',
+            style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'4px 10px', borderRadius:'6px',
               background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
               fontSize:'11px', cursor:'pointer', fontFamily:'inherit', marginTop:'8px' }}>
             <X size={11} />{isBn?'ফিল্টার সরান':'Clear Filters'}
@@ -389,8 +389,8 @@ ${photoHtml}
       </div>
 
       {/* Toolbar */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px', flexWrap:'wrap', gap:'8px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'8px', flexWrap:'wrap', gap:'8px' }}>
+        <div style={{ display:'flex', alignItems:'flex-start', gap:'8px' }}>
           <span style={{ fontSize:'12px', color:'var(--text-secondary)' }}>{isBn?'প্রতি পাতায়:':'Per page:'}</span>
           <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }} style={{ ...sel, padding:'5px 8px' }}>
             {PER_PAGE_OPTS.map(n => <option key={n} value={n}>{n}</option>)}
@@ -403,11 +403,11 @@ ${photoHtml}
         </div>
         <div style={{ display:'flex', gap:'6px' }}>
           <button onClick={exportExcel}
-            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+            style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
             <FileSpreadsheet size={13} />Excel
           </button>
           <button onClick={() => setShowPDF(true)}
-            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+            style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
             <FileText size={13} />PDF {selected.length>0?`(${selected.length})`:`(${filtered.length})`}
           </button>
         </div>
@@ -463,7 +463,7 @@ ${photoHtml}
                     </td>
                     <td style={{ padding:'8px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px', ...(isMobile ? {} : { position:'sticky', left:'36px', zIndex:3, background:'var(--bg-primary)' }) }}>{(sp-1)*perPage+i+1}</td>
                     <td style={{ padding:'7px 8px', ...(isMobile ? {} : { position:'sticky', left:'72px', zIndex:3, background:'var(--bg-primary)' }) }}>
-                      <div style={{ width:'30px', height:'36px', borderRadius:'5px', overflow:'hidden', background:'var(--bg-secondary)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <div style={{ width:'30px', height:'36px', borderRadius:'5px', overflow:'hidden', background:'var(--bg-secondary)', border:'1px solid var(--border)', display:'flex', alignItems:'flex-start', justifyContent:'flex-start' }}>
                         {t.photo ? <img src={t.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={13} style={{ color:'var(--text-muted)' }} />}
                       </div>
                     </td>
@@ -489,11 +489,11 @@ ${photoHtml}
                     <td style={{ padding:'8px 8px' }}>
                       <div style={{ display:'flex', gap:'3px' }}>
                         <button onClick={() => navigate(`/teachers/all/${t.id}`)} title="View"
-                          style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--brand-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--brand)' }}>
+                          style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--brand-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'flex-start', justifyContent:'flex-start', color:'var(--brand)' }}>
                           <Eye size={12} />
                         </button>
                         <button onClick={() => navigate(`/teachers/edit/${t.id}`)} title="Edit"
-                          style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--amber)' }}>
+                          style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'flex-start', justifyContent:'flex-start', color:'var(--amber)' }}>
                           <Edit2 size={12} />
                         </button>
                       </div>
@@ -504,14 +504,14 @@ ${photoHtml}
           </table>
         </div>
         {/* Pagination */}
-        <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center', background:'var(--bg-secondary)', flexWrap:'wrap', gap:'8px' }}>
+        <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'flex-start', background:'var(--bg-secondary)', flexWrap:'wrap', gap:'8px' }}>
           <span style={{ fontSize:'12px', color:'var(--text-muted)' }}>
             {(sp-1)*perPage+1}–{Math.min(sp*perPage,filtered.length)} / {filtered.length}
           </span>
           <div style={{ display:'flex', gap:'3px' }}>
             {([[<ChevronsLeft size={12} />,()=>setPage(1),sp===1] as [React.ReactNode,()=>void,boolean],[<ChevronLeft size={12} />,()=>setPage(p=>Math.max(1,p-1)),sp===1] as [React.ReactNode,()=>void,boolean]]).map(([ic,a,d],i)=>(
               <button key={i} onClick={a} disabled={d}
-                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'flex-start', justifyContent:'flex-start' }}>
                 {ic}
               </button>
             ))}
@@ -526,7 +526,7 @@ ${photoHtml}
             })()}
             {([[<ChevronRight size={12} />,()=>setPage(p=>Math.min(totalPages,p+1)),sp===totalPages] as [React.ReactNode,()=>void,boolean],[<ChevronsRight size={12} />,()=>setPage(totalPages),sp===totalPages] as [React.ReactNode,()=>void,boolean]]).map(([ic,a,d],i)=>(
               <button key={i} onClick={a} disabled={d}
-                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'flex-start', justifyContent:'flex-start' }}>
                 {ic}
               </button>
             ))}

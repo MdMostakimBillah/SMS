@@ -92,9 +92,9 @@ export default function ClassesPage() {
   return (
     <div>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <button onClick={() => navigate('/')}
-          style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '13px', color: 'var(--text-secondary)', fontFamily: 'inherit', flexShrink: 0 }}>
+          style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 12px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '13px', color: 'var(--text-secondary)', fontFamily: 'inherit', flexShrink: 0 }}>
           <ArrowLeft size={14} />{isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div style={{ flex: 1 }}>
@@ -115,7 +115,7 @@ export default function ClassesPage() {
           { id: 'routine' as const, icon: CalendarDays, label: isBn ? 'রুটিন' : 'Routine', color: 'var(--purple)' },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: `1px solid ${activeTab === tab.id ? tab.color : 'var(--border)'}`, background: activeTab === tab.id ? `${tab.color}15` : 'var(--bg-secondary)', color: activeTab === tab.id ? tab.color : 'var(--text-secondary)', fontSize: '13px', fontWeight: activeTab === tab.id ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+            style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: `1px solid ${activeTab === tab.id ? tab.color : 'var(--border)'}`, background: activeTab === tab.id ? `${tab.color}15` : 'var(--bg-secondary)', color: activeTab === tab.id ? tab.color : 'var(--text-secondary)', fontSize: '13px', fontWeight: activeTab === tab.id ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
             <tab.icon size={15} />{tab.label}
           </button>
         ))}
@@ -124,14 +124,14 @@ export default function ClassesPage() {
       {/* Institution Tab */}
       {activeTab === 'institution' && (
         <div style={section}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', paddingBottom: '8px', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '14px', paddingBottom: '8px', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
               <Building2 size={18} style={{ color: 'var(--brand)' }} />
               {isBn ? 'প্রতিষ্ঠানের তথ্য' : 'Institution Information'}
             </div>
             {!editingInst ? (
               <button onClick={() => { setInstForm({ ...institution }); setEditingInst(true) }}
-                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '7px', background: 'var(--brand-light)', border: '1px solid var(--brand)', color: 'var(--brand)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '6px 12px', borderRadius: '7px', background: 'var(--brand-light)', border: '1px solid var(--brand)', color: 'var(--brand)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Edit2 size={13} />{isBn ? 'এডিট' : 'Edit'}
               </button>
             ) : (
@@ -141,7 +141,7 @@ export default function ClassesPage() {
                   {isBn ? 'বাতিল' : 'Cancel'}
                 </button>
                 <button onClick={handleSaveInstitution}
-                  style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '7px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '6px 12px', borderRadius: '7px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {saved ? <Check size={13} /> : <Save size={13} />}{saved ? (isBn ? 'সেভ হয়েছে' : 'Saved') : (isBn ? 'সেভ' : 'Save')}
                 </button>
               </div>
@@ -152,36 +152,36 @@ export default function ClassesPage() {
           {!editingInst && (
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
               <div style={{ padding: '10px', borderRadius: '8px', background: 'var(--bg-secondary)' }}>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}><Building2 size={11} />{isBn ? 'প্রতিষ্ঠানের নাম' : 'Institution Name'}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', alignItems: 'flex-start', gap: '4px' }}><Building2 size={11} />{isBn ? 'প্রতিষ্ঠানের নাম' : 'Institution Name'}</div>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{institution.name}</div>
                 <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{institution.nameBn}</div>
               </div>
               <div style={{ padding: '10px', borderRadius: '8px', background: 'var(--bg-secondary)' }}>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}><Phone size={11} />{isBn ? 'ফোন' : 'Phone'}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', alignItems: 'flex-start', gap: '4px' }}><Phone size={11} />{isBn ? 'ফোন' : 'Phone'}</div>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{institution.phone}</div>
               </div>
               <div style={{ padding: '10px', borderRadius: '8px', background: 'var(--bg-secondary)' }}>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}><Globe size={11} />Email / {isBn?'ওয়েবসাইট':'Website'}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', alignItems: 'flex-start', gap: '4px' }}><Globe size={11} />Email / {isBn?'ওয়েবসাইট':'Website'}</div>
                 <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>{institution.email}</div>
                 <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{institution.website}</div>
               </div>
               <div style={{ padding: '10px', borderRadius: '8px', background: 'var(--bg-secondary)' }}>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={11} />{isBn ? 'ঠিকানা' : 'Address'}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', alignItems: 'flex-start', gap: '4px' }}><MapPin size={11} />{isBn ? 'ঠিকানা' : 'Address'}</div>
                 <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>{institution.address}</div>
               </div>
               <div style={{ padding: '10px', borderRadius: '8px', background: 'var(--bg-secondary)', gridColumn: isMobile ? 'auto' : '1 / -1' }}>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={11} />{isBn ? 'সময়সূচি' : 'Schedule'}</div>
-                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '6px', display: 'flex', alignItems: 'flex-start', gap: '4px' }}><Clock size={11} />{isBn ? 'সময়সূচি' : 'Schedule'}</div>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{isBn ? 'শুরু' : 'Start'}:</span>
                     <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand)', background: 'var(--brand-light)', padding: '3px 8px', borderRadius: '5px' }}>{institution.startTime}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{isBn ? 'শেষ' : 'End'}:</span>
                     <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand)', background: 'var(--brand-light)', padding: '3px 8px', borderRadius: '5px' }}>{institution.endTime}</span>
                   </div>
                   {(institution.breaks || []).map(brk => (
-                    <div key={brk.id} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div key={brk.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{brk.label}:</span>
                       <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--amber)', background: 'var(--amber-light)', padding: '3px 8px', borderRadius: '5px' }}>{brk.start} - {brk.end}</span>
                     </div>
@@ -231,13 +231,13 @@ export default function ClassesPage() {
               </div>
               {/* Dynamic breaks */}
               <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <label style={{ ...label, marginBottom: 0 }}>{isBn ? 'বিরতির সময়' : 'Break Times'}</label>
                   <button type="button" onClick={() => setInstForm(p => ({
                     ...p,
                     breaks: [...p.breaks, { id: `BRK-${Date.now()}`, label: `${isBn ? 'বিরতি' : 'Break'} ${p.breaks.length + 1}`, start: '12:00', end: '12:30' }],
                   }))}
-                    style={{ display: 'flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '5px', background: 'var(--green-light)', border: '1px solid var(--green)', color: 'var(--green)', fontSize: '10px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: '3px', padding: '3px 8px', borderRadius: '5px', background: 'var(--green-light)', border: '1px solid var(--green)', color: 'var(--green)', fontSize: '10px', cursor: 'pointer', fontFamily: 'inherit' }}>
                     <Plus size={10} />{isBn ? 'বিরতি যোগ' : 'Add Break'}
                   </button>
                 </div>
@@ -248,7 +248,7 @@ export default function ClassesPage() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {instForm.breaks.map((brk, i) => (
-                      <div key={brk.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 8px', borderRadius: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+                      <div key={brk.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '6px 8px', borderRadius: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
                         <input value={brk.label} onChange={e => {
                           const breaks = [...instForm.breaks]; breaks[i] = { ...brk, label: e.target.value }; setInstForm(p => ({ ...p, breaks }))
                         }}
@@ -280,12 +280,12 @@ export default function ClassesPage() {
       {/* Classes Tab */}
       {activeTab === 'classes' && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
             <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
               {classes.length} {isBn ? 'টি শ্রেণি' : 'classes'} · {classes.reduce((s, c) => s + c.sections.length, 0)} {isBn ? 'টি সেকশন' : 'sections'}
             </div>
             <button onClick={() => setShowAddClass(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ display: 'flex', alignItems: 'flex-start', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
               <Plus size={14} />{isBn ? 'নতুন শ্রেণি' : 'Add Class'}
             </button>
           </div>
@@ -293,7 +293,7 @@ export default function ClassesPage() {
           {/* Add class form */}
           {showAddClass && (
             <div style={{ ...section, borderColor: 'var(--brand)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand)' }}>{isBn ? 'নতুন শ্রেণি যোগ' : 'Add New Class'}</div>
                 <button onClick={() => setShowAddClass(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={16} /></button>
               </div>
@@ -321,9 +321,9 @@ export default function ClassesPage() {
             return (
               <div key={cls.id} style={{ ...section, marginBottom: '10px' }}>
                 {/* Class header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}
                   onClick={() => setExpandedClass(isExpanded ? null : cls.id)}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--brand-light)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexShrink: 0 }}>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--brand)' }}>{cls.id.replace('CLS-', '')}</span>
                   </div>
                   <div style={{ flex: 1 }}>
@@ -331,7 +331,7 @@ export default function ClassesPage() {
                     <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '2px' }}>
                       <span>{cls.sections.length} {isBn ? 'সেকশন' : 'sections'}</span>
                       <span>{totalSeats} {isBn ? 'আসন' : 'seats'}</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><Clock size={10} />{cls.startTime} - {cls.endTime}</span>
+                      <span style={{ display: 'flex', alignItems: 'flex-start', gap: '3px' }}><Clock size={10} />{cls.startTime} - {cls.endTime}</span>
                     </div>
                   </div>
                   <button onClick={(e) => { e.stopPropagation(); setEditingClassTime(cls.id); setClassTimeForm({ startTime: cls.startTime, endTime: cls.endTime }) }}
@@ -347,7 +347,7 @@ export default function ClassesPage() {
                 {/* Edit class time */}
                 {editingClassTime === cls.id && (
                   <div style={{ marginTop: '10px', padding: '14px', background: 'var(--bg-primary)', border: '1px solid var(--brand)', borderRadius: '10px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand)', marginBottom: '10px', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                       <Clock size={14} />{isBn ? 'ক্লাস সময় পরিবর্তন' : 'Change Class Time'}
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr auto', gap: '10px', alignItems: 'end' }}>
@@ -363,7 +363,7 @@ export default function ClassesPage() {
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <button onClick={() => handleSaveClassTime(cls.id)}
-                          style={{ padding: '8px 16px', borderRadius: '7px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          style={{ padding: '8px 16px', borderRadius: '7px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
                           <Save size={12} />{isBn ? 'সেভ' : 'Save'}
                         </button>
                         <button onClick={() => setEditingClassTime(null)}
@@ -378,12 +378,12 @@ export default function ClassesPage() {
                 {/* Sections */}
                 {isExpanded && (
                   <div style={{ marginTop: '12px', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                       <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         {isBn ? 'সেকশন সমূহ' : 'Sections'}
                       </div>
                       <button onClick={() => handleAddSection(cls.id)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '6px', background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', padding: '5px 10px', borderRadius: '6px', background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' }}>
                         <Plus size={12} />{isBn ? 'সেকশন যোগ' : 'Add Section'}
                       </button>
                     </div>
@@ -400,20 +400,20 @@ export default function ClassesPage() {
                           return (
                             <div key={sec.id} style={{ borderRadius: '10px', border: `1px solid ${isEditing ? 'var(--brand)' : 'var(--border)'}`, background: isEditing ? 'var(--bg-primary)' : 'var(--bg-secondary)', overflow: 'hidden', transition: 'all 0.2s' }}>
                               {/* Compact header — always visible */}
-                              <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+                              <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}
                                 onClick={() => {
                                   if (isEditing) { setEditingSection(null); return }
                                   setEditingSection(sec.id)
                                   setSecForm({ name: sec.name, seatQuantity: sec.seatQuantity, classTeacherId: sec.classTeacherId })
                                 }}>
-                                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: isEditing ? 'var(--brand)' : 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: isEditing ? 'var(--brand)' : 'var(--brand-light)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexShrink: 0, transition: 'all 0.2s' }}>
                                   <span style={{ color: isEditing ? '#fff' : 'var(--brand)', fontSize: '11px', fontWeight: 700 }}>{cls.id.replace('CLS-', '')}{sec.name.charAt(0).toUpperCase()}</span>
                                 </div>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                   <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
                                     {isBn ? 'সেকশন' : 'Section'} {sec.name}
                                   </div>
-                                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                                     {(() => {
                                       const count = getStudentCount(cls.id.replace('CLS-', '').replace(/^0/, ''), sec.name)
                                       const available = sec.seatQuantity - count
@@ -478,21 +478,21 @@ export default function ClassesPage() {
                                     if (!t) return null
                                     return (
                                       <div style={{ marginTop: '8px', padding: '8px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                          <div style={{ width: '28px', height: '28px', borderRadius: '6px', overflow: 'hidden', background: 'var(--bg-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                          <div style={{ width: '28px', height: '28px', borderRadius: '6px', overflow: 'hidden', background: 'var(--bg-primary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexShrink: 0 }}>
                                             {t.photo ? <img src={t.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '8px', color: 'var(--text-muted)' }}>{t.nameEn.split(' ').map(n => n[0]).slice(0, 2).join('')}</span>}
                                           </div>
                                           <div style={{ flex: 1, minWidth: 0 }}>
                                             <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.nameEn}</div>
                                             <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>{t.designation || ''}</div>
                                           </div>
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', flexShrink: 0 }}>
                                             <Phone size={9} style={{ color: 'var(--text-muted)' }} />
                                             <span style={{ fontSize: '9px', color: 'var(--text-secondary)' }}>{institution.phone}</span>
                                           </div>
                                         </div>
                                         {t.signature && (
-                                          <div style={{ marginTop: '6px', padding: '4px 6px', borderRadius: '5px', background: 'var(--bg-primary)', border: '1px dashed var(--border)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                          <div style={{ marginTop: '6px', padding: '4px 6px', borderRadius: '5px', background: 'var(--bg-primary)', border: '1px dashed var(--border)', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
                                             <Signature size={10} style={{ color: 'var(--text-muted)' }} />
                                             <img src={t.signature} alt="Sig" style={{ height: '16px', objectFit: 'contain' }} />
                                           </div>
@@ -510,7 +510,7 @@ export default function ClassesPage() {
                                           const sub = subjects.find(s => s.id === sid)
                                           if (!sub) return null
                                           return (
-                                            <span key={sid} style={{ padding: '3px 8px', borderRadius: '10px', background: 'var(--bg-primary)', border: '1px solid var(--border)', fontSize: '10px', fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <span key={sid} style={{ padding: '3px 8px', borderRadius: '10px', background: 'var(--bg-primary)', border: '1px solid var(--border)', fontSize: '10px', fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
                                               {isBn ? sub.nameBn : sub.name}
                                               <button onClick={() => {
                                                 const updated = sec.subjectIds.filter(s => s !== sid)
@@ -528,7 +528,7 @@ export default function ClassesPage() {
 
                                   <div style={{ marginTop: '8px', display: 'flex', gap: '6px' }}>
                                     <button onClick={() => { setTempSelectedSubjects(sec.subjectIds || []); setShowSubjectModal({ classId: cls.id, sectionId: sec.id }) }}
-                                      style={{ flex: 1, padding: '7px', borderRadius: '7px', background: 'var(--teal)', border: 'none', color: '#fff', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                      style={{ flex: 1, padding: '7px', borderRadius: '7px', background: 'var(--teal)', border: 'none', color: '#fff', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: '4px' }}>
                                       <BookOpen size={11} />{isBn ? 'বিষয় যোগ করুন' : 'Add Subject'}
                                     </button>
                                   </div>
@@ -536,7 +536,7 @@ export default function ClassesPage() {
                                   {/* Save button */}
                                   <div style={{ marginTop: '8px', display: 'flex', gap: '6px' }}>
                                     <button onClick={() => { updateSection(cls.id, sec.id, { name: secForm.name || sec.name, seatQuantity: secForm.seatQuantity, classTeacherId: secForm.classTeacherId }); setEditingSection(null) }}
-                                      style={{ flex: 1, padding: '7px', borderRadius: '7px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                      style={{ flex: 1, padding: '7px', borderRadius: '7px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: '4px' }}>
                                       <Save size={11} />{isBn ? 'সেভ' : 'Save'}
                                     </button>
                                     <button onClick={() => setEditingSection(null)}
@@ -566,14 +566,14 @@ export default function ClassesPage() {
 
       {/* Subject Selection Modal */}
       {showSubjectModal && (
-        <div onClick={() => setShowSubjectModal(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px', overflowY: 'auto' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border)', width: '100%', maxWidth: '400px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-lg)' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div onClick={() => setShowSubjectModal(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', zIndex: 1000, padding: '20px', overflowY: 'auto' }}>
+          <div onClick={e => e.stopPropagation()} className="modal-content" style={{ background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border)', width: '100%', maxWidth: '400px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-lg)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{isBn ? 'বিষয় নির্বাচন করুন' : 'Select Subjects'}</h3>
                 <p style={{ fontSize: '10px', color: 'var(--text-muted)', margin: '4px 0 0' }}>{isBn ? 'শিক্ষক ব্যবস্থাপনা থেকে বিষয় নির্বাচন করুন' : 'Select subjects from Teacher Management'}</p>
               </div>
-              <button onClick={() => setShowSubjectModal(null)} style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)' }}>
+              <button onClick={() => setShowSubjectModal(null)} style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <X size={14} />
               </button>
             </div>
@@ -589,8 +589,8 @@ export default function ClassesPage() {
                     return (
                       <button key={sub.id}
                         onClick={() => setTempSelectedSubjects(prev => isSelected ? prev.filter(s => s !== sub.id) : [...prev, sub.id])}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', border: `1px solid ${isSelected ? 'var(--teal)' : 'var(--border)'}`, background: isSelected ? 'var(--teal-light)' : 'var(--bg-secondary)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', fontFamily: 'inherit' }}>
-                        <div style={{ width: '18px', height: '18px', borderRadius: '5px', border: `2px solid ${isSelected ? 'var(--teal)' : 'var(--border)'}`, background: isSelected ? 'var(--teal)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px 12px', borderRadius: '10px', border: `1px solid ${isSelected ? 'var(--teal)' : 'var(--border)'}`, background: isSelected ? 'var(--teal-light)' : 'var(--bg-secondary)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', fontFamily: 'inherit' }}>
+                        <div style={{ width: '18px', height: '18px', borderRadius: '5px', border: `2px solid ${isSelected ? 'var(--teal)' : 'var(--border)'}`, background: isSelected ? 'var(--teal)' : 'transparent', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', flexShrink: 0, transition: 'all 0.15s' }}>
                           {isSelected && <Check size={11} style={{ color: '#fff' }} />}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -802,7 +802,7 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
             win.document.close()
             setTimeout(() => win.print(), 600)
           }}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px rgba(99,102,241,0.3)' }}>
+            style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px rgba(99,102,241,0.3)' }}>
             <Download size={15} />{isBn ? 'রুটিন ডাউনলোড' : 'Download Routine'}
           </button>
         </div>
@@ -811,9 +811,9 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
       {/* Edit slot modal */}
       {editSlot && (
         <div style={{ background: 'var(--bg-primary)', border: '2px solid var(--purple)', borderRadius: '14px', padding: '16px', marginBottom: '14px', boxShadow: '0 8px 24px rgba(139,92,246,0.15)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: 'var(--purple-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: 'var(--purple-light)', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
                 <Clock size={14} style={{ color: 'var(--purple)' }} />
               </div>
               <div>
@@ -826,14 +826,14 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
               </div>
             </div>
             <button onClick={() => setEditSlot(null)}
-              style={{ width: '28px', height: '28px', borderRadius: '7px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+              style={{ width: '28px', height: '28px', borderRadius: '7px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', color: 'var(--text-muted)' }}>
               <X size={14} />
             </button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
                 <BookOpen size={12} style={{ color: 'var(--purple)' }} />{isBn ? 'বিষয় নির্বাচন' : 'Select Subject'}
               </label>
               <select value={slotForm.subjectId} onChange={e => setSlotForm(p => ({ ...p, subjectId: e.target.value }))}
@@ -843,7 +843,7 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
               </select>
             </div>
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
                 <Users size={12} style={{ color: 'var(--purple)' }} />{isBn ? 'শিক্ষক নির্বাচন' : 'Select Teacher'}
               </label>
               <select value={slotForm.teacherId} onChange={e => setSlotForm(p => ({ ...p, teacherId: e.target.value }))}
@@ -869,7 +869,7 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
 
           {/* Preview */}
           {slotForm.subjectId && slotForm.teacherId && (
-            <div style={{ marginTop: '12px', padding: '10px', borderRadius: '8px', background: 'var(--purple-light)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ marginTop: '12px', padding: '10px', borderRadius: '8px', background: 'var(--purple-light)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
               <Check size={16} style={{ color: 'var(--purple)', flexShrink: 0 }} />
               <div>
                 <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--purple)' }}>{getSubjectName(slotForm.subjectId)}</div>
@@ -884,7 +884,7 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
               {isBn ? 'মুছুন' : 'Clear'}
             </button>
             <button onClick={handleSaveSlot} disabled={!slotForm.subjectId}
-              style={{ padding: '8px 20px', borderRadius: '8px', background: slotForm.subjectId ? 'var(--purple)' : 'var(--border-2)', border: 'none', color: slotForm.subjectId ? '#fff' : 'var(--text-muted)', fontSize: '12px', fontWeight: 600, cursor: slotForm.subjectId ? 'pointer' : 'not-allowed', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              style={{ padding: '8px 20px', borderRadius: '8px', background: slotForm.subjectId ? 'var(--purple)' : 'var(--border-2)', border: 'none', color: slotForm.subjectId ? '#fff' : 'var(--text-muted)', fontSize: '12px', fontWeight: 600, cursor: slotForm.subjectId ? 'pointer' : 'not-allowed', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', gap: '5px' }}>
               <Save size={13} />{isBn ? 'সেভ করুন' : 'Save'}
             </button>
           </div>

@@ -56,8 +56,8 @@ export default function DepartmentsPage() {
     <div>
       {/* Add/Edit Modal */}
       {(showAdd || editD) && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
-          <div style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'400px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
+        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'flex-start', justifyContent:'flex-start', padding:'16px', overflowY:'auto' }}>
+          <div className="modal-content" style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'400px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
             <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)', marginBottom:'14px' }}>
               {editD ? (isBn?'বিভাগ এডিট করুন':'Edit Department') : (isBn?'নতুন বিভাগ':'New Department')}
             </h3>
@@ -104,10 +104,10 @@ export default function DepartmentsPage() {
 
       {/* Delete Confirmation */}
       {delConfirm && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
-          <div style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'380px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
-              <div style={{ width:'36px', height:'36px', borderRadius:'8px', background:'var(--red-light)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:700, display:'flex', alignItems:'flex-start', justifyContent:'flex-start', padding:'16px', overflowY:'auto' }}>
+          <div className="modal-content" style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'380px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
+            <div style={{ display:'flex', alignItems:'flex-start', gap:'10px', marginBottom:'12px' }}>
+              <div style={{ width:'36px', height:'36px', borderRadius:'8px', background:'var(--red-light)', display:'flex', alignItems:'flex-start', justifyContent:'flex-start' }}>
                 <AlertTriangle size={18} style={{ color:'var(--red)' }} />
               </div>
               <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?'মুছে ফেলুন?':'Delete?'}</h3>
@@ -130,9 +130,9 @@ export default function DepartmentsPage() {
       )}
 
       {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
+      <div style={{ display:'flex', alignItems:'flex-start', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
         <button onClick={() => navigate('/teachers')}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
+          style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'7px 12px', borderRadius:'9px',
             background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px',
             color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
           <ArrowLeft size={14} />
@@ -147,7 +147,7 @@ export default function DepartmentsPage() {
           </p>
         </div>
         <button onClick={() => { setShowAdd(true); setNewName(''); setNewNameBn(''); setNewHead('') }}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px',
+          style={{ display:'flex', alignItems:'flex-start', gap:'5px', padding:'8px 14px', borderRadius:'9px',
             background:'var(--amber-light)', border:'1px solid var(--amber)', color:'var(--amber)',
             fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
           <Plus size={14} />{isBn?'নতুন যোগ করুন':'Add Department'}
@@ -190,8 +190,8 @@ export default function DepartmentsPage() {
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <td style={{ padding:'10px 12px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px', textAlign:'center' }}>{i+1}</td>
                     <td style={{ padding:'10px 12px' }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                        <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:'var(--amber-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <div style={{ display:'flex', alignItems:'flex-start', gap:'8px' }}>
+                        <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:'var(--amber-light)', display:'flex', alignItems:'flex-start', justifyContent:'flex-start', flexShrink:0 }}>
                           <Building2 size={16} style={{ color:'var(--amber)' }} />
                         </div>
                         <span style={{ fontSize:'13px', fontWeight:500, color:'var(--text-primary)' }}>{d.name}</span>
@@ -200,7 +200,7 @@ export default function DepartmentsPage() {
                     <td style={{ padding:'10px 12px', fontSize:'12px', color:'var(--text-secondary)' }}>{d.nameBn || '—'}</td>
                     <td style={{ padding:'10px 12px', fontSize:'12px', color:'var(--text-secondary)' }}>
                       {d.head ? (
-                        <div style={{ display:'flex', alignItems:'center', gap:'5px' }}>
+                        <div style={{ display:'flex', alignItems:'flex-start', gap:'5px' }}>
                           <Crown size={12} style={{ color:'var(--amber)' }} />
                           {d.head}
                         </div>
@@ -217,13 +217,13 @@ export default function DepartmentsPage() {
                       </span>
                     </td>
                     <td style={{ padding:'10px 12px', textAlign:'center' }}>
-                      <div style={{ display:'flex', gap:'4px', justifyContent:'center' }}>
+                      <div style={{ display:'flex', gap:'4px', justifyContent:'flex-start' }}>
                         <button onClick={() => startEdit(d)} title={isBn?'এডিট':'Edit'}
-                          style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--amber)' }}>
+                          style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'flex-start', justifyContent:'flex-start', color:'var(--amber)' }}>
                           <Edit2 size={12} />
                         </button>
                         <button onClick={() => setDelConfirm(d.id)} title={isBn?'মুছুন':'Delete'}
-                          style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--red-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--red)' }}>
+                          style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--red-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'flex-start', justifyContent:'flex-start', color:'var(--red)' }}>
                           <Trash2 size={12} />
                         </button>
                       </div>
