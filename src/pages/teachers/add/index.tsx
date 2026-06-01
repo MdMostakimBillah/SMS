@@ -216,7 +216,7 @@ export default function AddTeacherPage() {
   )
 
   return (
-    <form onSubmit={handleSubmit} autoComplete="off" style={{ maxWidth: '800px', margin: '0 auto', padding: isMobile ? '0 4px' : '0' }}>
+    <form onSubmit={handleSubmit} autoComplete="off">
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
