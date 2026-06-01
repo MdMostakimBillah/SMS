@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useHRStore } from '@/store/hrStore'
 
@@ -81,6 +82,10 @@ export default function HRPage() {
   const [assignDateFrom, setAssignDateFrom] = useState('')
   const [assignDateTo, setAssignDateTo] = useState('')
   const [selectedAssign, setSelectedAssign] = useState<string[]>([])
+  useScrollLock(
+    modalType !== null || showPDFModal !== null ||
+    facModalType !== null || facDeleteConfirm !== null || assignDeleteConfirm !== null
+  )
   const [bonusDateFrom, setBonusDateFrom] = useState('')
   const [bonusDateTo, setBonusDateTo] = useState('')
   const [bulkDeductionEnabled, setBulkDeductionEnabled] = useState(false)

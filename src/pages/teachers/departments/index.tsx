@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, AlertTriangle, Building2, Crown, Edit2, Trash2 } from 
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import type { Department } from '@/pages/teachers/types'
 
 export default function DepartmentsPage() {
@@ -19,6 +20,7 @@ export default function DepartmentsPage() {
   const [newName, setNewName] = useState('')
   const [newNameBn, setNewNameBn] = useState('')
   const [newHead, setNewHead] = useState('')
+  useScrollLock(showAdd || editD !== null || delConfirm !== null)
 
   const getDeptTeacherCount = (id: string) => teachers.filter(t => t.departmentId === id).length
   const getDeptSubjectCount = (id: string) => subjects.filter(s => s.departmentId === id).length

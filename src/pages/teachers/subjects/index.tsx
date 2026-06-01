@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, AlertTriangle, BookOpen, Filter, X, Edit2, Trash2 } fr
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import type { Subject } from '@/pages/teachers/types'
 
 const sel: React.CSSProperties = {
@@ -26,6 +27,7 @@ export default function SubjectsPage() {
   const [newName, setNewName] = useState('')
   const [newNameBn, setNewNameBn] = useState('')
   const [newDeptIds, setNewDeptIds] = useState<string[]>([])
+  useScrollLock(showAdd || editS !== null || delConfirm !== null)
 
   const filtered = useMemo(() =>
     fDept ? subjects.filter(s => s.departmentIds?.includes(fDept) || s.departmentId === fDept) : subjects

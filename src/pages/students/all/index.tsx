@@ -4,6 +4,7 @@ import { X, User, Edit2, ArrowLeft, Layers, Search, FileSpreadsheet, FileText, U
 import * as XLSX from 'xlsx'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
@@ -43,6 +44,7 @@ export default function AllStudentsPage() {
   const [selected,  setSelected]  = useState<string[]>([])
   const [showPDF,   setShowPDF]   = useState(false)
   const [viewSt,    setViewSt]    = useState<StudentAdmission | null>(null)
+  useScrollLock(showPDF || viewSt !== null)
 
   const filtered = useMemo(() => students.filter(s => {
     if (s.status !== 'approved') return false

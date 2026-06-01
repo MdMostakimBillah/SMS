@@ -8,6 +8,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import { AttendancePDFOptionsModal } from '@/components/shared/AttendancePDFOptionsModal'
 import type { AttendancePDFOptions } from '@/components/shared/AttendancePDFOptionsModal'
 import type { AttendanceStatus, DayAttendance } from '@/store/teacherStore'
@@ -87,6 +88,7 @@ export default function AttendancePage() {
   const [showEmployeePDF, setShowEmployeePDF] = useState(false)
   const [selectedStudents, setSelectedStudents] = useState<string[]>([])
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
+  useScrollLock(showMarkAll || viewPerson !== null || viewStudent !== null || showStudentPDF || showEmployeePDF)
 
   const dayAtt = attendance[date] || {}
   const activeTeachers = useMemo(() => teachers.filter(t => t.status === 'active'), [teachers])

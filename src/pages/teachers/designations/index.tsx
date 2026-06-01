@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, AlertTriangle, Briefcase, Edit2, Trash2 } from 'lucide
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import type { Designation } from '@/pages/teachers/types'
 
 export default function DesignationsPage() {
@@ -18,6 +19,7 @@ export default function DesignationsPage() {
   const [delConfirm, setDelConfirm] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
   const [newNameBn, setNewNameBn] = useState('')
+  useScrollLock(showAdd || editD !== null || delConfirm !== null)
 
   const getDesignationTeacherCount = (name: string) => teachers.filter(t => t.designation === name).length
 

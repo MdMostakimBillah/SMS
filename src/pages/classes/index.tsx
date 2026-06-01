@@ -5,6 +5,7 @@ import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import { useAdmissionStore } from '@/store/admissionStore'
 
 export default function ClassesPage() {
@@ -33,6 +34,7 @@ export default function ClassesPage() {
   const [secForm, setSecForm] = useState({ name: '', seatQuantity: 40, classTeacherId: '' })
   const [showSubjectModal, setShowSubjectModal] = useState<{ classId: string; sectionId: string } | null>(null)
   const [tempSelectedSubjects, setTempSelectedSubjects] = useState<string[]>([])
+  useScrollLock(showSubjectModal !== null)
 
   const getTeacher = useCallback((id: string) => teachers.find(t => t.id === id), [teachers])
 

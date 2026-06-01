@@ -3,6 +3,7 @@ import { CheckCircle, X, Save, Download, User, Search, FileSpreadsheet, FileText
 import * as XLSX from 'xlsx'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
@@ -300,6 +301,7 @@ export default function AdmissionManage() {
   const [editingStudent, setEditingStudent]         = useState<StudentAdmission | null>(null)
   const [viewingStudent, setViewingStudent]         = useState<StudentAdmission | null>(null)
   const [showPDFModal, setShowPDFModal]             = useState(false)
+  useScrollLock(approvingStudent !== null || editingStudent !== null || viewingStudent !== null || showPDFModal)
 
   const filtered = useMemo(() => students.filter(s => {
     if (search) {

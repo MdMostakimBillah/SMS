@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import { TeacherPDFOptionsModal } from '@/components/shared/TeacherPDFOptionsModal'
 import { generateTeacherListPDF } from '@/pages/teachers/listPdfTemplate'
 import type { TeacherListPDFOptions } from '@/pages/teachers/listPdfTemplate'
@@ -32,6 +33,7 @@ export default function AllTeachersPage() {
   const [delConfirm, setDelConfirm] = useState<string | null>(null)
   const [showPDF, setShowPDF] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
+  useScrollLock(viewT !== null || delConfirm !== null || showPDF)
 
   const filtered = useMemo(() => teachers.filter(t => {
     if (search) {
