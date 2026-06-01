@@ -388,7 +388,7 @@ export default function AttendancePage() {
     <div>
       {/* Mark All Confirm */}
       {showMarkAll && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}>
+        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}>
           <div style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'380px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
             <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)', marginBottom:'12px' }}>{isBn?'সবাইকে উপস্থিত করুন?':'Mark All Present?'}</h3>
             <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginBottom:'16px' }}>{isBn?`${activeTeachers.length} জন শিক্ষককে উপস্থিত হিসেবে চিহ্নিত করা হবে।`:`${activeTeachers.length} teachers will be marked present.`}</p>
@@ -402,7 +402,7 @@ export default function AttendancePage() {
 
       {/* Single Person Detail Modal */}
       {viewPerson && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}>
+        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}>
           <div style={{ background:'var(--bg-primary)', borderRadius:'16px', maxWidth:'600px', width:'100%', maxHeight:'85vh', overflow:'hidden', display:'flex', flexDirection:'column', border:'1px solid var(--border)' }}>
             <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--brand-light)' }}>
               <div>
@@ -497,7 +497,7 @@ export default function AttendancePage() {
 
       {/* Student Detail Modal */}
       {viewStudent && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}>
+        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}>
           <div style={{ background:'var(--bg-primary)', borderRadius:'16px', maxWidth:'600px', width:'100%', maxHeight:'85vh', overflow:'hidden', display:'flex', flexDirection:'column', border:'1px solid var(--border)' }}>
             <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--brand-light)' }}>
               <div>

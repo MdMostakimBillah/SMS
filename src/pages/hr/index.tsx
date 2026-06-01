@@ -287,7 +287,7 @@ export default function HRPage() {
   }
 
   const modalOverlay: React.CSSProperties = {
-    position: 'fixed', inset: 0, zIndex: 100,
+    position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', zIndex: 100,
     background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
     display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
   }
