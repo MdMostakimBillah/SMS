@@ -1,14 +1,47 @@
-import { useState, useRef, useMemo } from 'react'
+import React, { useState, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Camera, Clock, Users, Check } from 'lucide-react'
+import { CheckCircle, Camera, Clock, Users, Send, Briefcase, X, IdCard, MessageSquare } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 
 const BLOOD_GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-']
-const GENDERS = ['Male', 'Female']
-const RELIGIONS = ['Islam', 'Hinduism', 'Christianity', 'Buddhism']
+
+// ─── FormField (outside parent component — fixes input focus loss) ───────────
+interface FieldProps {
+  labelEn: string; labelBn: string; value: string
+  onChange: (v: string) => void; type?: string
+  required?: boolean; options?: string[]; isBn: boolean
+}
+function FormField({ labelEn, labelBn, value, onChange, type = 'text', required = false, options, isBn }: FieldProps) {
+  const base: React.CSSProperties = {
+    width: '100%', padding: '9px 12px', borderRadius: '9px',
+    border: '1px solid var(--border)', background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)', fontSize: '13px', fontFamily: 'inherit', outline: 'none',
+  }
+  return (
+    <div>
+      <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '5px', display: 'block' }}>
+        {isBn ? labelBn : labelEn}
+        {required && <span style={{ color: 'var(--red)', marginLeft: '3px' }}>*</span>}
+      </label>
+      {options ? (
+        <select value={value} onChange={e => onChange(e.target.value)} required={required}
+          style={{ ...base, cursor: 'pointer' }}>
+          <option value="">{isBn ? 'বেছে নিন' : 'Select'}</option>
+          {options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      ) : (
+        <input type={type} value={value} onChange={e => onChange(e.target.value)}
+          required={required} style={base}
+          onFocus={e => (e.target.style.borderColor = 'var(--brand)')}
+          onBlur={e => (e.target.style.borderColor = 'var(--border)')} />
+      )}
+    </div>
+  )
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 export default function AddTeacherPage() {
   const navigate = useNavigate()
@@ -53,6 +86,9 @@ export default function AddTeacherPage() {
   const [guardianRelation, setGuardianRelation] = useState('')
   const [parentAddress, setParentAddress] = useState('')
   const [saving, setSaving] = useState(false)
+  const [done, setDone] = useState(false)
+  const [doneId, setDoneId] = useState('')
+  const [photoErr, setPhotoErr] = useState('')
 
   const { recommendedSubjects, otherSubjects } = useMemo(() => {
     if (!departmentId) return { recommendedSubjects: subjects, otherSubjects: [] }
@@ -66,23 +102,30 @@ export default function AddTeacherPage() {
     setSubjectIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
   }
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    setPhotoErr('')
+    if (file.size > 2 * 1024 * 1024) {
+      setPhotoErr(isBn ? 'ছবির সাইজ সর্বোচ্চ ২ MB' : 'Photo must be under 2MB')
+      return
+    }
     const reader = new FileReader()
     reader.onload = (ev) => setPhoto(ev.target?.result as string)
     reader.readAsDataURL(file)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault()
     if (!nameEn.trim() || !phone.trim() || !departmentId) {
       alert(isBn ? 'অনুগ্রহ করে প্রয়োজনীয় তথ্য পূরণ করুন' : 'Please fill in required fields')
       return
     }
     setSaving(true)
     const now = new Date().toISOString().split('T')[0]
+    const teacherId = getNextTeacherId()
     const teacher: Teacher = {
-      id: getNextTeacherId(),
+      id: teacherId,
       createdAt: now, updatedAt: now,
       status, photo,
       nameEn: nameEn.trim(), nameBn: nameBn.trim(),
@@ -107,37 +150,81 @@ export default function AddTeacherPage() {
     }
     addTeacher(teacher)
     setSaving(false)
-    navigate('/teachers/all')
-  }
+    setDoneId(teacherId)
+    setDone(true)
+  }, [nameEn, phone, getNextTeacherId, addTeacher, isBn])
 
-  const input: React.CSSProperties = {
-    width: '100%', padding: '9px 11px', borderRadius: '8px',
-    border: '1px solid var(--border)', background: 'var(--bg-secondary)',
-    color: 'var(--text-primary)', fontSize: '13px', fontFamily: 'inherit', outline: 'none',
-  }
-  const label: React.CSSProperties = {
-    fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)',
-    marginBottom: '5px', display: 'block',
-  }
-  const section: React.CSSProperties = {
+  const resetForm = useCallback(() => {
+    setPhoto(''); setNameEn(''); setNameBn(''); setGender(''); setDob('')
+    setBloodGroup(''); setReligion(''); setPhone(''); setEmail(''); setAddress('')
+    setNid(''); setEmergencyPhone(''); setDepartmentId(''); setSubjectIds([])
+    setDesignation(''); setQualification(''); setExperience(''); setJoiningDate('')
+    setSalary(''); setOvertime(''); setStatus('active'); setInTime(''); setOutTime('')
+    setFatherNameEn(''); setFatherNameBn(''); setFatherPhone(''); setFatherNid('')
+    setMotherNameEn(''); setMotherNameBn(''); setMotherPhone('')
+    setGuardianName(''); setGuardianPhone(''); setGuardianRelation(''); setParentAddress('')
+  }, [])
+
+  // ── Success screen ──
+  if (done) return (
+    <div style={{ maxWidth: '600px', margin: '0 auto', padding: isMobile ? '0 4px' : '0' }}>
+      <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '14px', padding: isMobile ? '14px' : '20px', marginBottom: '14px', textAlign: 'center', paddingTop: '40px' }}>
+        <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+          <CheckCircle size={30} style={{ color: 'var(--green)' }} />
+        </div>
+        <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '10px' }}>
+          {isBn ? 'শিক্ষক যোগ হয়েছে!' : 'Teacher Added!'}
+        </h2>
+        <div style={{ background: 'var(--brand-light)', border: '1px solid var(--brand)', borderRadius: '10px', padding: '12px 20px', display: 'inline-block', margin: '0 0 12px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>{isBn ? 'শিক্ষক আইডি' : 'Teacher ID'}</div>
+          <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--brand)', letterSpacing: '1px' }}>{doneId}</div>
+        </div>
+        <p style={{ fontSize: '13px', color: 'var(--teal)', margin: '0 0 20px' }}>
+          ✅ {isBn ? `${nameEn} সফলভাবে যোগ করা হয়েছে` : `${nameEn} has been added successfully`}
+        </p>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button onClick={() => { setDone(false); resetForm() }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', borderRadius: '9px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <Send size={14} /> {isBn ? 'নতুন শিক্ষক যোগ করুন' : 'Add Another Teacher'}
+          </button>
+          <button onClick={() => navigate('/teachers/all')}
+            style={{ padding: '10px 18px', borderRadius: '9px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+            {isBn ? 'সকল শিক্ষক' : 'All Teachers'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  const g = (n: number): React.CSSProperties => ({
+    display: 'grid',
+    gridTemplateColumns: isMobile ? '1fr' : `repeat(${n}, 1fr)`,
+    gap: '12px',
+  })
+  const card: React.CSSProperties = {
     background: 'var(--bg-primary)', border: '1px solid var(--border)',
-    borderRadius: '12px', padding: '16px', marginBottom: '14px',
+    borderRadius: '14px', padding: isMobile ? '14px' : '20px', marginBottom: '14px',
   }
-  const sectionTitle: React.CSSProperties = {
-    fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)',
-    marginBottom: '14px', paddingBottom: '8px', borderBottom: '1px solid var(--border)',
-  }
+  const sHead = (icon: React.ReactNode, bn: string, en: string, col = 'var(--brand)', bg = 'var(--brand-light)') => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
+      <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {React.cloneElement(icon as React.ReactElement<{ size?: number; style?: React.CSSProperties }>, { size: 15, style: { color: col } })}
+      </div>
+      <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? bn : en}</span>
+      <span style={{ fontSize: '10px', color: 'var(--red)', marginLeft: '4px' }}>* {isBn ? 'বাধ্যতামূলক' : 'Required'}</span>
+    </div>
+  )
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: isMobile ? '0 4px' : '0' }}>
+    <form onSubmit={handleSubmit} autoComplete="off" style={{ maxWidth: '800px', margin: '0 auto', padding: isMobile ? '0 4px' : '0' }}>
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        <button onClick={() => navigate('/teachers')}
+        <button type="button" onClick={() => navigate('/teachers')}
           style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
             background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer',
             fontSize:'13px', color:'var(--text-secondary)', fontFamily:'inherit' }}>
-          <ArrowLeft size={14} />
-          {isBn?'ফিরে যান':'Back'}
+          ← {isBn?'ফিরে যান':'Back'}
         </button>
         <div>
           <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -149,188 +236,132 @@ export default function AddTeacherPage() {
         </div>
       </div>
 
-      {/* Photo + Basic Info */}
-      <div style={section}>
-        <div style={sectionTitle}>{isBn?'ব্যক্তিগত তথ্য':'Personal Information'}</div>
-        {/* Photo centered */}
-        <div style={{ textAlign:'center', marginBottom:'16px' }}>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoUpload} style={{ display:'none' }} />
-          <div onClick={() => fileRef.current?.click()}
-            style={{ width:'100px', height:'120px', borderRadius:'10px', border:'2px dashed var(--border)',
-              background:'var(--bg-secondary)', cursor:'pointer', display:'inline-flex', flexDirection:'column',
-              alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
-            {photo ? <img src={photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-              : <><Camera size={24} style={{ color:'var(--text-muted)' }} />
-                 <span style={{ fontSize:'10px', color:'var(--text-muted)', marginTop:'4px' }}>{isBn?'ছবি':'Photo'}</span></>}
+      {/* ID bar */}
+      <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IdCard size={20} style={{ color: 'var(--brand)' }} />
           </div>
           <div>
-            <button onClick={() => fileRef.current?.click()}
-              style={{ marginTop:'6px', padding:'4px 10px', borderRadius:'6px', fontSize:'11px', cursor:'pointer',
-                background:'var(--brand-light)', border:'1px solid var(--brand)', color:'var(--brand)',
-                fontFamily:'inherit' }}>
-              {isBn?'ছবি আপলোড':'Upload'}
-            </button>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{isBn ? 'স্বয়ংক্রিয় শিক্ষক আইডি' : 'Auto Teacher ID'}</div>
+            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--brand)', letterSpacing: '2px' }}>{getNextTeacherId()}</div>
           </div>
         </div>
-
-        {/* Fields - full width on mobile, 2-col on desktop */}
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:'10px' }}>
-            <div>
-              <label style={label}>{isBn?'নাম (ইংরেজি) *':'Name (English) *'}</label>
-              <input value={nameEn} onChange={e => setNameEn(e.target.value)} style={input}
-                placeholder={isBn?'ইংরেজিতে নাম':'English name'} />
-            </div>
-            <div>
-              <label style={label}>{isBn?'নাম (বাংলা)':'Name (Bangla)'}</label>
-              <input value={nameBn} onChange={e => setNameBn(e.target.value)} style={input}
-                placeholder={isBn?'বাংলায় নাম':'Bangla name'} />
-            </div>
-            <div>
-              <label style={label}>{isBn?'লিঙ্গ':'Gender'}</label>
-              <select value={gender} onChange={e => setGender(e.target.value)} style={input}>
-                <option value="">{isBn?'নির্বাচন করুন':'Select'}</option>
-                {GENDERS.map(g => <option key={g} value={g}>{isBn?(g==='Male'?'পুরুষ':'মহিলা'):g}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={label}>{isBn?'জন্ম তারিখ':'Date of Birth'}</label>
-              <input type="date" value={dob} onChange={e => setDob(e.target.value)} style={input} />
-            </div>
-            <div>
-              <label style={label}>{isBn?'রক্তের গ্রুপ':'Blood Group'}</label>
-              <select value={bloodGroup} onChange={e => setBloodGroup(e.target.value)} style={input}>
-                <option value="">{isBn?'নির্বাচন করুন':'Select'}</option>
-                {BLOOD_GROUPS.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={label}>{isBn?'ধর্ম':'Religion'}</label>
-              <select value={religion} onChange={e => setReligion(e.target.value)} style={input}>
-                <option value="">{isBn?'নির্বাচন করুন':'Select'}</option>
-                {RELIGIONS.map(r => <option key={r} value={r}>{r}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={label}>{isBn?'মোবাইল *':'Phone *'}</label>
-              <input value={phone} onChange={e => setPhone(e.target.value)} style={input}
-                placeholder="01XXX-XXXXXX" />
-            </div>
-            <div>
-              <label style={label}>Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={input}
-                placeholder="teacher@email.com" />
-            </div>
-            <div style={{ gridColumn:'1 / -1' }}>
-              <label style={label}>{isBn?'ঠিকানা':'Address'}</label>
-              <input value={address} onChange={e => setAddress(e.target.value)} style={input}
-                placeholder={isBn?'সম্পূর্ণ ঠিকানা':'Full address'} />
-            </div>
-            <div>
-              <label style={label}>NID</label>
-              <input value={nid} onChange={e => setNid(e.target.value)} style={input}
-                placeholder={isBn?'জাতীয় পরিচয়পত্র নম্বর':'National ID number'} />
-            </div>
-            <div>
-              <label style={label}>{isBn?'জরুরি মোবাইল':'Emergency Phone'}</label>
-              <input value={emergencyPhone} onChange={e => setEmergencyPhone(e.target.value)} style={input}
-                placeholder="01XXX-XXXXXX" />
-            </div>
-          </div>
       </div>
 
-      {/* Schedule Info */}
-      <div style={section}>
-        <div style={sectionTitle}>
-          <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-            <Clock size={18} style={{ color:'var(--teal)' }} />
-            {isBn?'সময়সূচি':'Schedule'}
+      {/* Personal */}
+      <div style={card}>
+        {sHead(<Users />, 'ব্যক্তিগত তথ্য', 'Personal Information')}
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '14px', flexWrap: 'wrap' }}>
+          {/* Photo */}
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '5px' }}>
+              {isBn ? 'ছবি (সর্বোচ্চ ২ MB)' : 'Photo (max 2MB)'}
+            </div>
+            <div onClick={() => fileRef.current?.click()}
+              style={{ width: '90px', height: '110px', borderRadius: '10px', border: `2px dashed ${photo ? 'var(--brand)' : 'var(--border-2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', background: 'var(--bg-secondary)', position: 'relative' }}>
+              {photo
+                ? <img src={photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <div style={{ textAlign: 'center', color: 'var(--text-muted)', pointerEvents: 'none' }}>
+                    <Camera size={22} style={{ display: 'block', margin: '0 auto 4px' }} />
+                    <div style={{ fontSize: '10px' }}>{isBn ? 'ছবি' : 'Photo'}</div>
+                  </div>}
+              {photo && (
+                <button type="button" onClick={e => { e.stopPropagation(); setPhoto('') }}
+                  style={{ position: 'absolute', top: 3, right: 3, width: '18px', height: '18px', borderRadius: '50%', background: 'var(--red)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                  <X size={10} />
+                </button>
+              )}
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
+            {photoErr && <div style={{ fontSize: '10px', color: 'var(--red)', marginTop: '3px', maxWidth: '90px' }}>{photoErr}</div>}
+          </div>
+          {/* Name + DOB + Gender */}
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <div style={{ ...g(2), marginBottom: '10px' }}>
+              <FormField labelEn="Name (English)" labelBn="নাম (ইংরেজি)" value={nameEn} onChange={setNameEn} required isBn={isBn} />
+              <FormField labelEn="Name (Bangla)" labelBn="নাম (বাংলা)" value={nameBn} onChange={setNameBn} isBn={isBn} />
+            </div>
+            <div style={g(2)}>
+              <FormField labelEn="Date of Birth" labelBn="জন্ম তারিখ" value={dob} onChange={setDob} type="date" isBn={isBn} />
+              <FormField labelEn="Gender" labelBn="লিঙ্গ" value={gender} onChange={setGender} required isBn={isBn}
+                options={['Male', 'Female']} />
+            </div>
           </div>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:'10px' }}>
+        <div style={{ ...g(3), marginBottom: '10px' }}>
+          <FormField labelEn="Blood Group" labelBn="রক্তের গ্রুপ" value={bloodGroup} onChange={setBloodGroup} isBn={isBn}
+            options={BLOOD_GROUPS} />
+          <FormField labelEn="Religion" labelBn="ধর্ম" value={religion} onChange={setReligion} isBn={isBn}
+            options={['Islam', 'Hinduism', 'Christianity', 'Buddhism']} />
+          <FormField labelEn="NID" labelBn="জাতীয় পরিচয়পত্র" value={nid} onChange={setNid} isBn={isBn} />
+        </div>
+        <div style={{ ...g(3), marginBottom: '10px' }}>
+          <FormField labelEn="Mobile" labelBn="মোবাইল" value={phone} onChange={setPhone} type="tel" required isBn={isBn} />
+          <FormField labelEn="Email" labelBn="ইমেইল" value={email} onChange={setEmail} type="email" isBn={isBn} />
+          <FormField labelEn="Emergency Phone" labelBn="জরুরি মোবাইল" value={emergencyPhone} onChange={setEmergencyPhone} type="tel" isBn={isBn} />
+        </div>
+        <div style={g(2)}>
+          <FormField labelEn="Address" labelBn="ঠিকানা" value={address} onChange={setAddress} isBn={isBn} />
+        </div>
+      </div>
+
+      {/* Schedule */}
+      <div style={card}>
+        {sHead(<Clock />, 'সময়সূচি', 'Schedule', 'var(--teal)', 'var(--teal-light)')}
+        <div style={g(2)}>
           <div>
-            <label style={label}>{isBn?'প্রবেশ সময় (In Time)':'In Time'}</label>
-            <input type="time" value={inTime} onChange={e => setInTime(e.target.value)} style={input} />
+            <FormField labelEn="In Time" labelBn="প্রবেশ সময়" value={inTime} onChange={setInTime} type="time" isBn={isBn} />
             <div style={{ fontSize:'10px', color:'var(--text-muted)', marginTop:'3px' }}>
-              {isBn?'বায়োমেট্রিক / ফিঙ্গারপ্রিন্ট মেশিন থেকে পুল করা হবে':'Pulled from biometric / fingerprint machine'}
+              {isBn?'বায়োমেট্রিক থেকে পুল করা হবে':'Pulled from biometric machine'}
             </div>
           </div>
           <div>
-            <label style={label}>{isBn?'প্রস্থান সময় (Out Time)':'Out Time'}</label>
-            <input type="time" value={outTime} onChange={e => setOutTime(e.target.value)} style={input} />
+            <FormField labelEn="Out Time" labelBn="প্রস্থান সময়" value={outTime} onChange={setOutTime} type="time" isBn={isBn} />
             <div style={{ fontSize:'10px', color:'var(--text-muted)', marginTop:'3px' }}>
-              {isBn?'বায়োমেট্রিক / ফিঙ্গারপ্রিন্ট মেশিন থেকে পুল করা হবে':'Pulled from biometric / fingerprint machine'}
+              {isBn?'বায়োমেট্রিক থেকে পুল করা হবে':'Pulled from biometric machine'}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Professional Info */}
-      <div style={section}>
-        <div style={sectionTitle}>{isBn?'পেশাদার তথ্য':'Professional Information'}</div>
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:'10px' }}>
-          <div>
-            <label style={label}>{isBn?'বিভাগ *':'Department *'}</label>
-            <select value={departmentId} onChange={e => { setDepartmentId(e.target.value); setSubjectIds([]) }}
-              style={input}>
-              <option value="">{isBn?'নির্বাচন করুন':'Select'}</option>
-              {departments.map(d => <option key={d.id} value={d.id}>{isBn?d.nameBn:d.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={label}>{isBn?'পদবি':'Designation'}</label>
-            <select value={designation} onChange={e => setDesignation(e.target.value)} style={input}>
-              <option value="">{isBn?'নির্বাচন করুন':'Select'}</option>
-              {designations.map(d => <option key={d.id} value={d.name}>{isBn?d.nameBn:d.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={label}>{isBn?'যোগ্যতা':'Qualification'}</label>
-            <input value={qualification} onChange={e => setQualification(e.target.value)} style={input}
-              placeholder={isBn?'শিক্ষাগত যোগ্যতা':'Educational qualification'} />
-          </div>
-          <div>
-            <label style={label}>{isBn?'অভিজ্ঞতা':'Experience'}</label>
-            <input value={experience} onChange={e => setExperience(e.target.value)} style={input}
-              placeholder={isBn?'৫ বছর':'5 years'} />
-          </div>
-          <div>
-            <label style={label}>{isBn?'যোগদানের তারিখ':'Joining Date'}</label>
-            <input type="date" value={joiningDate} onChange={e => setJoiningDate(e.target.value)} style={input} />
-          </div>
-          <div>
-            <label style={label}>{isBn?'মূল বেতন (মাসিক)':'Basic Salary (Monthly)'}</label>
-            <input type="number" value={salary} onChange={e => setSalary(e.target.value)} style={input}
-              placeholder="৳0" />
-          </div>
-          <div>
-            <label style={label}>{isBn?'ওভারটাইম (ঘণ্টার হার)':'Overtime (Hourly)'}</label>
-            <input type="number" value={overtime} onChange={e => setOvertime(e.target.value)} style={input}
-              placeholder="৳0/hrs" />
-          </div>
-          <div>
-            <label style={label}>{isBn?'অবস্থা':'Status'}</label>
-            <select value={status} onChange={e => setStatus(e.target.value as TeacherStatus)} style={input}>
-              <option value="active">{isBn?'সক্রিয়':'Active'}</option>
-              <option value="inactive">{isBn?'নিষ্ক্রিয়':'Inactive'}</option>
-              <option value="on-leave">{isBn?'ছুটিতে':'On Leave'}</option>
-            </select>
-          </div>
+      {/* Professional */}
+      <div style={card}>
+        {sHead(<Briefcase />, 'পেশাদার তথ্য', 'Professional Information', 'var(--amber)', 'var(--amber-light)')}
+        <div style={{ ...g(3), marginBottom: '10px' }}>
+          <FormField labelEn="Department" labelBn="বিভাগ" value={departmentId} onChange={v => { setDepartmentId(v); setSubjectIds([]) }} required isBn={isBn}
+            options={departments.map(d => d.id)} />
+          <FormField labelEn="Designation" labelBn="পদবি" value={designation} onChange={setDesignation} isBn={isBn}
+            options={designations.map(d => d.name)} />
+          <FormField labelEn="Qualification" labelBn="যোগ্যতা" value={qualification} onChange={setQualification} isBn={isBn} />
+        </div>
+        <div style={{ ...g(3), marginBottom: '10px' }}>
+          <FormField labelEn="Experience" labelBn="অভিজ্ঞতা" value={experience} onChange={setExperience} isBn={isBn} />
+          <FormField labelEn="Joining Date" labelBn="যোগদানের তারিখ" value={joiningDate} onChange={setJoiningDate} type="date" isBn={isBn} />
+          <FormField labelEn="Status" labelBn="অবস্থা" value={status} onChange={v => setStatus(v as TeacherStatus)} isBn={isBn}
+            options={['active', 'inactive', 'on-leave']} />
+        </div>
+        <div style={g(2)}>
+          <FormField labelEn="Basic Salary (Monthly)" labelBn="মূল বেতন (মাসিক)" value={salary} onChange={setSalary} type="number" isBn={isBn} />
+          <FormField labelEn="Overtime (Hourly)" labelBn="ওভারটাইম (ঘণ্টার হার)" value={overtime} onChange={setOvertime} type="number" isBn={isBn} />
         </div>
 
         {/* Subjects */}
         {departmentId && (
-          <div style={{ marginTop:'14px' }}>
-            <label style={label}>{isBn?'বিষয় নির্বাচন করুন':'Select Subjects'}</label>
+          <div style={{ marginTop: '14px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>
+              {isBn ? 'বিষয় নির্বাচন করুন' : 'Select Subjects'}
+            </label>
             {recommendedSubjects.length > 0 && (
-              <div style={{ marginTop:'6px' }}>
-                <div style={{ fontSize:'11px', color:'var(--green)', fontWeight:500, marginBottom:'4px' }}>
+              <div style={{ marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 500, marginBottom: '4px' }}>
                   {isBn ? 'সুপারিশকৃত' : 'Recommended'}
                 </div>
-                <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {recommendedSubjects.map(s => (
-                    <button key={s.id} onClick={() => toggleSubject(s.id)}
-                      style={{ padding:'5px 12px', borderRadius:'8px', fontSize:'12px', cursor:'pointer',
-                        fontFamily:'inherit', border:'1px solid',
+                    <button key={s.id} type="button" onClick={() => toggleSubject(s.id)}
+                      style={{ padding: '5px 12px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer',
+                        fontFamily: 'inherit', border: '1px solid',
                         borderColor: subjectIds.includes(s.id) ? 'var(--brand)' : 'var(--green)',
                         background: subjectIds.includes(s.id) ? 'var(--brand-light)' : 'var(--green-light)',
                         color: subjectIds.includes(s.id) ? 'var(--brand)' : 'var(--green)',
@@ -343,15 +374,15 @@ export default function AddTeacherPage() {
               </div>
             )}
             {otherSubjects.length > 0 && (
-              <div style={{ marginTop:'8px' }}>
-                <div style={{ fontSize:'11px', color:'var(--text-muted)', fontWeight:500, marginBottom:'4px' }}>
+              <div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '4px' }}>
                   {isBn ? 'অন্যান্য বিভাগ' : 'Other Departments'}
                 </div>
-                <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {otherSubjects.map(s => (
-                    <button key={s.id} onClick={() => toggleSubject(s.id)}
-                      style={{ padding:'5px 12px', borderRadius:'8px', fontSize:'12px', cursor:'pointer',
-                        fontFamily:'inherit', border:'1px solid',
+                    <button key={s.id} type="button" onClick={() => toggleSubject(s.id)}
+                      style={{ padding: '5px 12px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer',
+                        fontFamily: 'inherit', border: '1px solid',
                         borderColor: subjectIds.includes(s.id) ? 'var(--brand)' : 'var(--border)',
                         background: subjectIds.includes(s.id) ? 'var(--brand-light)' : 'var(--bg-secondary)',
                         color: subjectIds.includes(s.id) ? 'var(--brand)' : 'var(--text-secondary)',
@@ -367,109 +398,65 @@ export default function AddTeacherPage() {
         )}
       </div>
 
-      {/* Parent / Guardian Info */}
-      <div style={section}>
-        <div style={sectionTitle}>
-          <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-            <Users size={18} style={{ color:'var(--amber)' }} />
-            {isBn?'অভিভাবক তথ্য':'Parent / Guardian Information'}
-          </div>
+      {/* Father */}
+      <div style={card}>
+        {sHead(<Users />, 'পিতার তথ্য', "Father's Info", 'var(--teal)', 'var(--teal-light)')}
+        <div style={{ ...g(3), marginBottom: '10px' }}>
+          <FormField labelEn="Name (EN)" labelBn="নাম (ইংরেজি)" value={fatherNameEn} onChange={setFatherNameEn} required isBn={isBn} />
+          <FormField labelEn="Name (BN)" labelBn="নাম (বাংলা)" value={fatherNameBn} onChange={setFatherNameBn} isBn={isBn} />
+          <FormField labelEn="Phone" labelBn="মোবাইল" value={fatherPhone} onChange={setFatherPhone} type="tel" isBn={isBn} />
         </div>
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:'10px' }}>
-          {/* Father */}
-          <div style={{ gridColumn:'1 / -1' }}>
-            <div style={{ fontSize:'12px', fontWeight:600, color:'var(--text-primary)', marginBottom:'8px' }}>
-              {isBn?'পিতার তথ্য':'Father\'s Information'}
-            </div>
-          </div>
-          <div>
-            <label style={label}>{isBn?'পিতার নাম (ইং)':'Father Name (EN)'}</label>
-            <input value={fatherNameEn} onChange={e => setFatherNameEn(e.target.value)} style={input}
-              placeholder={isBn?'ইংরেজিতে নাম':'English name'} />
-          </div>
-          <div>
-            <label style={label}>{isBn?'পিতার নাম (বা)':'Father Name (BN)'}</label>
-            <input value={fatherNameBn} onChange={e => setFatherNameBn(e.target.value)} style={input}
-              placeholder={isBn?'বাংলায় নাম':'Bangla name'} />
-          </div>
-          <div>
-            <label style={label}>{isBn?'পিতার মোবাইল':'Father Phone'}</label>
-            <input value={fatherPhone} onChange={e => setFatherPhone(e.target.value)} style={input}
-              placeholder="01XXX-XXXXXX" />
-          </div>
-          <div>
-            <label style={label}>{isBn?'পিতার NID':'Father NID'}</label>
-            <input value={fatherNid} onChange={e => setFatherNid(e.target.value)} style={input}
-              placeholder={isBn?'জাতীয় পরিচয়পত্র':'National ID'} />
-          </div>
-
-          {/* Mother */}
-          <div style={{ gridColumn:'1 / -1', marginTop:'8px' }}>
-            <div style={{ fontSize:'12px', fontWeight:600, color:'var(--text-primary)', marginBottom:'8px' }}>
-              {isBn?'মাতার তথ্য':'Mother\'s Information'}
-            </div>
-          </div>
-          <div>
-            <label style={label}>{isBn?'মাতার নাম (ইং)':'Mother Name (EN)'}</label>
-            <input value={motherNameEn} onChange={e => setMotherNameEn(e.target.value)} style={input}
-              placeholder={isBn?'ইংরেজিতে নাম':'English name'} />
-          </div>
-          <div>
-            <label style={label}>{isBn?'মাতার নাম (বা)':'Mother Name (BN)'}</label>
-            <input value={motherNameBn} onChange={e => setMotherNameBn(e.target.value)} style={input}
-              placeholder={isBn?'বাংলায় নাম':'Bangla name'} />
-          </div>
-          <div>
-            <label style={label}>{isBn?'মাতার মোবাইল':'Mother Phone'}</label>
-            <input value={motherPhone} onChange={e => setMotherPhone(e.target.value)} style={input}
-              placeholder="01XXX-XXXXXX" />
-          </div>
-
-          {/* Guardian */}
-          <div style={{ gridColumn:'1 / -1', marginTop:'8px' }}>
-            <div style={{ fontSize:'12px', fontWeight:600, color:'var(--text-primary)', marginBottom:'8px' }}>
-              {isBn?'অভিভাবক তথ্য (ঐচ্ছিক)':'Guardian Information (Optional)'}
-            </div>
-          </div>
-          <div>
-            <label style={label}>{isBn?'অভিভাবকের নাম':'Guardian Name'}</label>
-            <input value={guardianName} onChange={e => setGuardianName(e.target.value)} style={input}
-              placeholder={isBn?'অভিভাবকের নাম':'Guardian name'} />
-          </div>
-          <div>
-            <label style={label}>{isBn?'অভিভাবকের মোবাইল':'Guardian Phone'}</label>
-            <input value={guardianPhone} onChange={e => setGuardianPhone(e.target.value)} style={input}
-              placeholder="01XXX-XXXXXX" />
-          </div>
-          <div>
-            <label style={label}>{isBn?'সম্পর্ক':'Relation'}</label>
-            <input value={guardianRelation} onChange={e => setGuardianRelation(e.target.value)} style={input}
-              placeholder={isBn?'সম্পর্ক (যেমন: চাচা, খালা)':'Relation (e.g. Uncle, Aunt)'} />
-          </div>
-          <div>
-            <label style={label}>{isBn?'অভিভাবকের ঠিকানা':'Parent Address'}</label>
-            <input value={parentAddress} onChange={e => setParentAddress(e.target.value)} style={input}
-              placeholder={isBn?'সম্পূর্ণ ঠিকানা':'Full address'} />
-          </div>
+        <div style={g(2)}>
+          <FormField labelEn="NID" labelBn="NID নম্বর" value={fatherNid} onChange={setFatherNid} isBn={isBn} />
         </div>
       </div>
 
-      {/* Actions */}
-      <div style={{ display:'flex', gap:'10px', justifyContent:'flex-end', marginTop:'14px', flexWrap:'wrap' }}>
-        <button onClick={() => navigate('/teachers')}
-          style={{ padding:'9px 18px', borderRadius:'9px', background:'var(--bg-secondary)',
-            border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'13px',
-            cursor:'pointer', fontFamily:'inherit' }}>
-          {isBn?'বাতিল':'Cancel'}
+      {/* Mother */}
+      <div style={card}>
+        {sHead(<Users />, 'মাতার তথ্য', "Mother's Info", 'var(--purple)', 'var(--purple-light)')}
+        <div style={{ ...g(3), marginBottom: '10px' }}>
+          <FormField labelEn="Name (EN)" labelBn="নাম (ইংরেজি)" value={motherNameEn} onChange={setMotherNameEn} required isBn={isBn} />
+          <FormField labelEn="Name (BN)" labelBn="নাম (বাংলা)" value={motherNameBn} onChange={setMotherNameBn} isBn={isBn} />
+          <FormField labelEn="Phone" labelBn="মোবাইল" value={motherPhone} onChange={setMotherPhone} type="tel" isBn={isBn} />
+        </div>
+      </div>
+
+      {/* Guardian */}
+      <div style={card}>
+        {sHead(<Users />, 'অভিভাবক (ঐচ্ছিক)', 'Guardian (Optional)', 'var(--green)', 'var(--green-light)')}
+        <div style={{ ...g(3), marginBottom: '10px' }}>
+          <FormField labelEn="Name" labelBn="নাম" value={guardianName} onChange={setGuardianName} isBn={isBn} />
+          <FormField labelEn="Relation" labelBn="সম্পর্ক" value={guardianRelation} onChange={setGuardianRelation} isBn={isBn}
+            options={['Uncle', 'Aunt', 'Grand Father', 'Grand Mother', 'Other']} />
+          <FormField labelEn="Phone" labelBn="মোবাইল" value={guardianPhone} onChange={setGuardianPhone} type="tel" isBn={isBn} />
+        </div>
+        <div style={g(2)}>
+          <FormField labelEn="Parent Address" labelBn="অভিভাবকের ঠিকানা" value={parentAddress} onChange={setParentAddress} isBn={isBn} />
+        </div>
+      </div>
+
+      {/* SMS notice */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--teal-light)', border: '1px solid var(--teal)', borderRadius: '10px', padding: '10px 14px', marginBottom: '14px' }}>
+        <MessageSquare size={16} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+        <p style={{ fontSize: '12px', color: 'var(--teal)' }}>
+          {isBn
+            ? `শিক্ষক যোগ করলে ${phone || '...'} এ SMS যাবে।`
+            : `SMS will be sent to ${phone || '...'} after submission.`}
+        </p>
+      </div>
+
+      {/* Submit */}
+      <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+        <button type="button" onClick={() => navigate('/teachers')}
+          style={{ padding: '10px 20px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+          {isBn ? 'বাতিল' : 'Cancel'}
         </button>
-        <button onClick={handleSubmit} disabled={saving}
-          style={{ padding:'9px 22px', borderRadius:'9px', background: saving ? 'var(--text-muted)' : 'var(--brand)',
-            border:'none', color:'#fff', fontSize:'13px', fontWeight:600, cursor: saving ? 'default' : 'pointer',
-            fontFamily:'inherit', display:'flex', alignItems:'center', gap:'6px' }}>
-          <Check size={14} />
+        <button type="submit" disabled={saving}
+          style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 24px', borderRadius: '9px', background: saving ? 'var(--text-muted)' : 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}>
+          <Send size={14} />
           {saving ? (isBn?'সংরক্ষণ হচ্ছে...':'Saving...') : (isBn?'সাবমিট':'Submit')}
         </button>
       </div>
-    </div>
+    </form>
   )
 }
