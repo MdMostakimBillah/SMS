@@ -1,8 +1,9 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useMemo } from 'react'
 import { CheckCircle, User, GraduationCap, ShieldCheck, IdCard, Camera, X, Download, MessageSquare, Send } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useClassStore } from '@/store/classStore'
 import type { StudentAdmission } from './types'
 import { generateA4HTML } from './a4Template'
 
@@ -78,7 +79,17 @@ export default function GeneralAdmission() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const { addStudent, getNextId } = useAdmissionStore()
+  const { classes } = useClassStore()
   const isBn = language === 'bn'
+
+  const classOptions = useMemo(() => classes.map(cls => cls.name), [classes])
+  const sectionsMap = useMemo(() => {
+    const map: Record<string, string[]> = {}
+    classes.forEach(cls => {
+      map[cls.name] = cls.sections.map(s => s.name)
+    })
+    return map
+  }, [classes])
 
   const [form, setForm] = useState<FormData>(initForm)
   const [studentId] = useState(() => getNextId())
@@ -255,10 +266,10 @@ export default function GeneralAdmission() {
       <div style={card}>
         {sHead(<GraduationCap />, 'একাডেমিক তথ্য', 'Academic Info', 'var(--teal)', 'var(--teal-light)')}
         <div style={{ ...g(3), marginBottom: '10px' }}>
-          <FormField labelEn="Class" labelBn="শ্রেণি" value={form.class} onChange={v => set('class', v)} required isBn={isBn}
-            options={['1','2','3','4','5','6','7','8','9','10']} />
+          <FormField labelEn="Class" labelBn="শ্রেণি" value={form.class} onChange={v => { set('class', v); set('section', '') }} required isBn={isBn}
+            options={classOptions} />
           <FormField labelEn="Section" labelBn="সেকশন" value={form.section} onChange={v => set('section', v)} required isBn={isBn}
-            options={['A','B','C','D','E']} />
+            options={form.class ? (sectionsMap[form.class] || []) : []} />
           <FormField labelEn="Roll" labelBn="রোল নম্বর" value={form.roll} onChange={v => set('roll', v)} required isBn={isBn} />
         </div>
         <div style={g(3)}>

@@ -38,6 +38,27 @@ export const HR_FUND_COLUMNS: HRPDFColumn[] = [
   { key: 'desc',      label: 'Description', labelBn: 'বিবরণ',     default: true  },
 ]
 
+export const HR_ASSIGNMENT_COLUMNS: HRPDFColumn[] = [
+  { key: 'serial',    label: '#',           labelBn: 'ক্রম',       default: true  },
+  { key: 'teacher',   label: 'Employee',    labelBn: 'কর্মচারী',   default: true  },
+  { key: 'facility',  label: 'Facility',    labelBn: 'সুবিধা',     default: true  },
+  { key: 'amount',    label: 'Amount',      labelBn: 'পরিমাণ',    default: true  },
+]
+
+export const HR_SALARY_COLUMNS: HRPDFColumn[] = [
+  { key: 'serial',    label: '#',           labelBn: 'ক্রম',       default: true  },
+  { key: 'teacher',   label: 'Employee',    labelBn: 'কর্মচারী',   default: true  },
+  { key: 'basic',     label: 'Basic',       labelBn: 'মূল বেতন',  default: true  },
+  { key: 'perf',      label: 'Perf.',       labelBn: 'কর্মদক্ষতা', default: true  },
+  { key: 'atten',     label: 'Atten.',      labelBn: 'উপস্থিতি',  default: true  },
+  { key: 'special',   label: 'Special',     labelBn: 'বিশেষ',      default: true  },
+  { key: 'festival',  label: 'Festival',    labelBn: 'উৎসব',      default: true  },
+  { key: 'totalBonus',label: 'Total B.',    labelBn: 'মোট বোনাস', default: true  },
+  { key: 'deduction', label: 'Deduction',   labelBn: 'কাটা',      default: true  },
+  { key: 'fund',      label: 'Fund',        labelBn: 'তহবিল',     default: true  },
+  { key: 'net',       label: 'Net Pay',     labelBn: 'নেট বেতন',  default: true  },
+]
+
 export interface HRListPDFOptions {
   title: string
   selectedCols: string[]
@@ -93,6 +114,29 @@ function getFundCell(row: any, key: string, idx: number, isBn: boolean): string 
   if (key === 'type') return fundTypeLabel(row.type, isBn)
   if (key === 'amount') return `${row.type === 'withdrawal' ? '-' : '+'}৳${row.amount.toLocaleString()}`
   if (key === 'desc') return row.description
+  return String(row[key] || '—')
+}
+
+function getAssignmentCell(row: any, key: string, idx: number, _isBn: boolean, getTeacherName: (id: string) => string, getFacilityName: (id: string) => string): string {
+  if (key === 'serial') return String(idx + 1)
+  if (key === 'teacher') return getTeacherName(row.teacherId)
+  if (key === 'facility') return getFacilityName(row.facilityId)
+  if (key === 'amount') return `৳${row.amount.toLocaleString()}`
+  return String(row[key] || '—')
+}
+
+function getSalaryCell(row: any, key: string, idx: number, _isBn: boolean): string {
+  if (key === 'serial') return String(idx + 1)
+  if (key === 'teacher') return row.nameEn
+  if (key === 'basic') return `৳${row.basic.toLocaleString()}`
+  if (key === 'perf') return row.perf > 0 ? `৳${row.perf.toLocaleString()}` : '—'
+  if (key === 'atten') return row.atten > 0 ? `৳${row.atten.toLocaleString()}` : '—'
+  if (key === 'special') return row.special > 0 ? `৳${row.special.toLocaleString()}` : '—'
+  if (key === 'festival') return row.festival > 0 ? `৳${row.festival.toLocaleString()}` : '—'
+  if (key === 'totalBonus') return row.totalBonus > 0 ? `৳${row.totalBonus.toLocaleString()}` : '—'
+  if (key === 'deduction') return row.deduction > 0 ? `৳${row.deduction.toLocaleString()}` : '—'
+  if (key === 'fund') return row.fundPercent > 0 ? `${row.fundPercent}%` : '—'
+  if (key === 'net') return `৳${row.net.toLocaleString()}`
   return String(row[key] || '—')
 }
 
@@ -213,6 +257,16 @@ export function generatePromotionPDF(data: any[], opts: HRListPDFOptions, getTea
 export function generateFundPDF(data: any[], opts: HRListPDFOptions): string {
   const cols = HR_FUND_COLUMNS.filter(c => opts.selectedCols.includes(c.key))
   return buildPDF(opts.title, data, cols, opts, (row, key, i, isBn) => getFundCell(row, key, i, isBn), isBnLabel('টি', opts.isBn))
+}
+
+export function generateAssignmentPDF(data: any[], opts: HRListPDFOptions, getTeacherName: (id: string) => string, getFacilityName: (id: string) => string): string {
+  const cols = HR_ASSIGNMENT_COLUMNS.filter(c => opts.selectedCols.includes(c.key))
+  return buildPDF(opts.title, data, cols, opts, (row, key, i, isBn) => getAssignmentCell(row, key, i, isBn, getTeacherName, getFacilityName), isBnLabel('টি', opts.isBn))
+}
+
+export function generateSalaryPDF(data: any[], opts: HRListPDFOptions): string {
+  const cols = HR_SALARY_COLUMNS.filter(c => opts.selectedCols.includes(c.key))
+  return buildPDF(opts.title, data, cols, opts, (row, key, i, isBn) => getSalaryCell(row, key, i, isBn), isBnLabel('জন', opts.isBn))
 }
 
 function isBnLabel(bn: string, isBn: boolean): string { return isBn ? bn : 'records' }

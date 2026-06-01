@@ -69,6 +69,26 @@ export interface HRRecommendation {
   createdAt: string
 }
 
+export interface Facility {
+  id: string
+  name: string
+  nameBn: string
+  defaultAmount: number
+  type: 'monthly' | 'oneTime'
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TeacherFacility {
+  id: string
+  teacherId: string
+  facilityId: string
+  amount: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface MonthlySalaryConfig {
   id: string
   month: string // "2026-06"
@@ -89,9 +109,14 @@ interface HRState {
   dailyReports: DailyReport[]
   recommendations: HRRecommendation[]
   monthlySalaryConfigs: MonthlySalaryConfig[]
+  facilities: Facility[]
+  teacherFacilities: TeacherFacility[]
   addIncrement: (record: IncrementRecord) => void
+  deleteIncrement: (id: string) => void
   addBonus: (record: BonusRecord) => void
+  deleteBonus: (id: string) => void
   addPromotion: (record: PromotionRecord) => void
+  deletePromotion: (id: string) => void
   addFund: (record: FundRecord) => void
   addHomeworkRecord: (record: HomeworkRecord) => void
   toggleHomework: (id: string) => void
@@ -101,6 +126,15 @@ interface HRState {
   upsertMonthlySalaryConfig: (config: MonthlySalaryConfig) => void
   upsertManyMonthlySalaryConfigs: (configs: MonthlySalaryConfig[]) => void
   deleteMonthlySalaryConfig: (id: string) => void
+  addFacility: (facility: Facility) => void
+  updateFacility: (id: string, data: Partial<Facility>) => void
+  deleteFacility: (id: string) => void
+  assignTeacherFacility: (tf: TeacherFacility) => void
+  assignManyTeacherFacilities: (tfs: TeacherFacility[]) => void
+  updateTeacherFacility: (id: string, data: Partial<TeacherFacility>) => void
+  removeTeacherFacility: (id: string) => void
+  removeTeacherFacilitiesByTeacher: (teacherId: string) => void
+  upsertTeacherFacilities: (tfs: TeacherFacility[]) => void
 }
 
 function generateDemoDailyReports(): DailyReport[] {
@@ -174,10 +208,20 @@ export const useHRStore = create<HRState>()(
       dailyReports: generateDemoDailyReports(),
       recommendations: generateDemoRecommendations(),
       monthlySalaryConfigs: [],
+      facilities: [
+        { id: 'FAC-001', name: 'House Rent', nameBn: 'বাসা ভাড়া', defaultAmount: 0, type: 'monthly', isActive: true, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+        { id: 'FAC-002', name: 'Medicine', nameBn: 'চিকিৎসা', defaultAmount: 0, type: 'monthly', isActive: true, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+        { id: 'FAC-003', name: 'Extra Bonus', nameBn: 'অতিরিক্ত বোনাস', defaultAmount: 0, type: 'oneTime', isActive: true, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+        { id: 'FAC-004', name: 'Conveyance', nameBn: 'যাতায়াত', defaultAmount: 0, type: 'monthly', isActive: true, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+      ],
+      teacherFacilities: [],
 
       addIncrement: (record) => set((state) => ({ increments: [...state.increments, record] })),
+      deleteIncrement: (id) => set((state) => ({ increments: state.increments.filter(i => i.id !== id) })),
       addBonus: (record) => set((state) => ({ bonuses: [...state.bonuses, record] })),
+      deleteBonus: (id) => set((state) => ({ bonuses: state.bonuses.filter(b => b.id !== id) })),
       addPromotion: (record) => set((state) => ({ promotions: [...state.promotions, record] })),
+      deletePromotion: (id) => set((state) => ({ promotions: state.promotions.filter(p => p.id !== id) })),
       addFund: (record) => set((state) => ({ funds: [...state.funds, record] })),
       addHomeworkRecord: (record) => set((state) => ({ homeworkRecords: [...state.homeworkRecords, record] })),
       toggleHomework: (id) => set((state) => ({
@@ -211,6 +255,38 @@ export const useHRStore = create<HRState>()(
       deleteMonthlySalaryConfig: (id) => set((state) => ({
         monthlySalaryConfigs: state.monthlySalaryConfigs.filter(c => c.id !== id)
       })),
+      addFacility: (facility) => set((state) => ({ facilities: [...state.facilities, facility] })),
+      updateFacility: (id, data) => set((state) => ({
+        facilities: state.facilities.map(f => f.id === id ? { ...f, ...data, updatedAt: new Date().toISOString().split('T')[0] } : f)
+      })),
+      deleteFacility: (id) => set((state) => ({
+        facilities: state.facilities.filter(f => f.id !== id),
+        teacherFacilities: state.teacherFacilities.filter(tf => tf.facilityId !== id)
+      })),
+      assignTeacherFacility: (tf) => set((state) => ({ teacherFacilities: [...state.teacherFacilities, tf] })),
+      assignManyTeacherFacilities: (tfs) => set((state) => ({ teacherFacilities: [...state.teacherFacilities, ...tfs] })),
+      updateTeacherFacility: (id, data) => set((state) => ({
+        teacherFacilities: state.teacherFacilities.map(tf => tf.id === id ? { ...tf, ...data, updatedAt: new Date().toISOString().split('T')[0] } : tf)
+      })),
+      removeTeacherFacility: (id) => set((state) => ({
+        teacherFacilities: state.teacherFacilities.filter(tf => tf.id !== id)
+      })),
+      removeTeacherFacilitiesByTeacher: (teacherId) => set((state) => ({
+        teacherFacilities: state.teacherFacilities.filter(tf => tf.teacherId !== teacherId)
+      })),
+      upsertTeacherFacilities: (tfs) => set((state) => {
+        const newTfs = [...state.teacherFacilities]
+        tfs.forEach(tf => {
+          const existing = newTfs.find(e => e.teacherId === tf.teacherId && e.facilityId === tf.facilityId)
+          if (existing) {
+            const idx = newTfs.indexOf(existing)
+            newTfs[idx] = tf
+          } else {
+            newTfs.push(tf)
+          }
+        })
+        return { teacherFacilities: newTfs }
+      }),
     }),
     { name: 'edutech-hr' }
   )

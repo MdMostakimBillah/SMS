@@ -31,6 +31,8 @@ export default function ClassesPage() {
   const [classTimeForm, setClassTimeForm] = useState({ startTime: '', endTime: '' })
   const [editingSection, setEditingSection] = useState<string | null>(null)
   const [secForm, setSecForm] = useState({ name: '', seatQuantity: 40, classTeacherId: '' })
+  const [showSubjectModal, setShowSubjectModal] = useState<{ classId: string; sectionId: string } | null>(null)
+  const [tempSelectedSubjects, setTempSelectedSubjects] = useState<string[]>([])
 
   const getTeacher = useCallback((id: string) => teachers.find(t => t.id === id), [teachers])
 
@@ -63,7 +65,7 @@ export default function ClassesPage() {
     const secLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     const nextLetter = secLetters[cls.sections.length] || 'A'
     const id = `SEC-${classId}-${nextLetter}`
-    addSection(classId, { id, name: nextLetter, seatQuantity: 40, classTeacherId: '' })
+    addSection(classId, { id, name: nextLetter, seatQuantity: 40, classTeacherId: '', subjectIds: [] })
   }
 
   const handleSaveClassTime = (classId: string) => {
@@ -403,7 +405,7 @@ export default function ClassesPage() {
                                   setSecForm({ name: sec.name, seatQuantity: sec.seatQuantity, classTeacherId: sec.classTeacherId })
                                 }}>
                                 <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: isEditing ? 'var(--brand)' : 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
-                                  <span style={{ color: isEditing ? '#fff' : 'var(--brand)', fontSize: '11px', fontWeight: 700 }}>{cls.id.replace('CLS-', '')}{sec.name}</span>
+                                  <span style={{ color: isEditing ? '#fff' : 'var(--brand)', fontSize: '11px', fontWeight: 700 }}>{cls.id.replace('CLS-', '')}{sec.name.charAt(0).toUpperCase()}</span>
                                 </div>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                   <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -424,6 +426,11 @@ export default function ClassesPage() {
                                       )
                                     })()}
                                     {teacher && <span style={{ color: 'var(--brand)' }}>{teacher.nameEn.split(' ')[0]}</span>}
+                                    {sec.subjectIds && sec.subjectIds.length > 0 && (
+                                      <span style={{ color: 'var(--teal)', fontWeight: 500 }}>
+                                        {sec.subjectIds.length} {isBn ? 'বিষয়' : 'subjects'}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
@@ -442,7 +449,7 @@ export default function ClassesPage() {
                                       <label style={{ fontSize: '10px', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>{isBn ? 'সেকশন নাম' : 'Section Name'}</label>
                                       <input value={secForm.name}
                                         onChange={e => setSecForm(p => ({ ...p, name: e.target.value }))}
-                                        style={{ width: '100%', padding: '7px 9px', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '12px', fontFamily: 'inherit', fontWeight: 500 }}
+                                        style={{ width: '100%', padding: '7px 9px', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '12px', fontFamily: 'inherit', fontWeight: 500, textTransform: 'capitalize' }}
                                         placeholder={isBn ? 'যেমন: বিজ্ঞান, মানবিক' : 'e.g. Science, Humanity'} />
                                     </div>
                                     <div>
@@ -492,6 +499,38 @@ export default function ClassesPage() {
                                     )
                                   })()}
 
+                                  {/* Assigned subjects */}
+                                  {sec.subjectIds && sec.subjectIds.length > 0 && (
+                                    <div style={{ marginTop: '8px', padding: '8px', borderRadius: '8px', background: 'var(--teal-light)', border: '1px solid var(--teal-border)' }}>
+                                      <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--teal)', marginBottom: '6px' }}>{isBn ? 'নির্ধারিত বিষয়সমূহ' : 'Assigned Subjects'}</div>
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                        {sec.subjectIds.map(sid => {
+                                          const sub = subjects.find(s => s.id === sid)
+                                          if (!sub) return null
+                                          return (
+                                            <span key={sid} style={{ padding: '3px 8px', borderRadius: '10px', background: 'var(--bg-primary)', border: '1px solid var(--border)', fontSize: '10px', fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                              {isBn ? sub.nameBn : sub.name}
+                                              <button onClick={() => {
+                                                const updated = sec.subjectIds.filter(s => s !== sid)
+                                                updateSection(cls.id, sec.id, { subjectIds: updated })
+                                                setSecForm(p => ({ ...p, subjectIds: updated }))
+                                              }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}>
+                                                <X size={10} />
+                                              </button>
+                                            </span>
+                                          )
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <div style={{ marginTop: '8px', display: 'flex', gap: '6px' }}>
+                                    <button onClick={() => { setTempSelectedSubjects(sec.subjectIds || []); setShowSubjectModal({ classId: cls.id, sectionId: sec.id }) }}
+                                      style={{ flex: 1, padding: '7px', borderRadius: '7px', background: 'var(--teal)', border: 'none', color: '#fff', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                      <BookOpen size={11} />{isBn ? 'বিষয় যোগ করুন' : 'Add Subject'}
+                                    </button>
+                                  </div>
+
                                   {/* Save button */}
                                   <div style={{ marginTop: '8px', display: 'flex', gap: '6px' }}>
                                     <button onClick={() => { updateSection(cls.id, sec.id, { name: secForm.name || sec.name, seatQuantity: secForm.seatQuantity, classTeacherId: secForm.classTeacherId }); setEditingSection(null) }}
@@ -521,6 +560,65 @@ export default function ClassesPage() {
       {/* Routine Tab */}
       {activeTab === 'routine' && (
         <RoutineTab classes={classes} routines={routines} teachers={teachers} subjects={subjects} institution={institution} updateRoutine={updateRoutine} setRoutineSlot={setRoutineSlot} clearRoutineSlot={clearRoutineSlot} isBn={isBn} isMobile={isMobile} />
+      )}
+
+      {/* Subject Selection Modal */}
+      {showSubjectModal && (
+        <div onClick={() => setShowSubjectModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-primary)', borderRadius: '16px', border: '1px solid var(--border)', width: '100%', maxWidth: '400px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-lg)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{isBn ? 'বিষয় নির্বাচন করুন' : 'Select Subjects'}</h3>
+                <p style={{ fontSize: '10px', color: 'var(--text-muted)', margin: '4px 0 0' }}>{isBn ? 'শিক্ষক ব্যবস্থাপনা থেকে বিষয় নির্বাচন করুন' : 'Select subjects from Teacher Management'}</p>
+              </div>
+              <button onClick={() => setShowSubjectModal(null)} style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={14} />
+              </button>
+            </div>
+            <div style={{ padding: '12px 20px', overflowY: 'auto', flex: 1 }}>
+              {subjects.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '12px' }}>
+                  {isBn ? 'কোনো বিষয় পাওয়া যায়নি। প্রথমে শিক্ষক ব্যবস্থাপনায় বিষয় যোগ করুন।' : 'No subjects found. Add subjects in Teacher Management first.'}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {subjects.map(sub => {
+                    const isSelected = tempSelectedSubjects.includes(sub.id)
+                    return (
+                      <button key={sub.id}
+                        onClick={() => setTempSelectedSubjects(prev => isSelected ? prev.filter(s => s !== sub.id) : [...prev, sub.id])}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', border: `1px solid ${isSelected ? 'var(--teal)' : 'var(--border)'}`, background: isSelected ? 'var(--teal-light)' : 'var(--bg-secondary)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', fontFamily: 'inherit' }}>
+                        <div style={{ width: '18px', height: '18px', borderRadius: '5px', border: `2px solid ${isSelected ? 'var(--teal)' : 'var(--border)'}`, background: isSelected ? 'var(--teal)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+                          {isSelected && <Check size={11} style={{ color: '#fff' }} />}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)' }}>
+                            {isBn ? sub.nameBn : sub.name}
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+            <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '8px' }}>
+              <button onClick={() => setShowSubjectModal(null)}
+                style={{ flex: 1, padding: '8px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {isBn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button onClick={() => {
+                if (showSubjectModal) {
+                  updateSection(showSubjectModal.classId, showSubjectModal.sectionId, { subjectIds: tempSelectedSubjects })
+                }
+                setShowSubjectModal(null)
+              }}
+                style={{ flex: 1, padding: '8px', borderRadius: '8px', background: 'var(--teal)', border: 'none', color: '#fff', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {isBn ? 'সেভ করুন' : 'Save'} ({tempSelectedSubjects.length})
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

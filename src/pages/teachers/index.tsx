@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { UserPlus, Users, Building2, BookOpen, ClipboardCheck, Wallet, UserCheck, Banknote, ArrowRight, Layers } from "lucide-react"
+import { UserPlus, Users, Building2, BookOpen, ClipboardCheck, Wallet, UserCheck, Banknote, ArrowRight, Layers, Briefcase } from "lucide-react"
 import { useAppStore } from "@/store/appStore"
 import { useTeacherStore } from "@/store/teacherStore"
 import { useWindowSize } from "@/hooks/useWindowSize"
@@ -69,6 +69,20 @@ const options: {
     statBn: "৮টি বিষয়",
     statEn: "8 subjects",
     statColor: "var(--green)",
+  },
+  {
+    id: "designations",
+    path: "/teachers/designations",
+    icon: Briefcase,
+    iconColor: "var(--purple)",
+    iconBg: "var(--purple-light)",
+    titleBn: "পদবি",
+    titleEn: "Designations",
+    descBn: "পদবি পরিচালনা করুন।",
+    descEn: "Manage designations.",
+    statBn: "৬টি পদবি",
+    statEn: "6 designations",
+    statColor: "var(--purple)",
   },
   {
     id: "bulk-update",

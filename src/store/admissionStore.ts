@@ -1,6 +1,17 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { StudentAdmission } from '@/pages/students/admission/types'
+import { useClassStore } from './classStore'
+
+function normalizeClassName(raw: string, classes: { id: string; name: string }[]): string {
+  if (!raw) return raw
+  if (/^\d+$/.test(raw)) {
+    const num = raw.replace(/^0+/, '')
+    const match = classes.find(cls => cls.name === `Class ${num}`)
+    return match ? match.name : raw
+  }
+  return raw
+}
 
 // Sample data for testing - 50 students
 const sampleStudents: StudentAdmission[] = [
@@ -107,15 +118,20 @@ export const useAdmissionStore = create<AdmissionState>()(
     }),
     {
       name: 'edutech-admissions',
-      version: 1,
+      version: 2,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           const existing = persistedState?.students || []
           if (existing.length < 20) {
-            return { ...persistedState, students: sampleStudents }
+            persistedState = { ...persistedState, students: sampleStudents }
           }
         }
-        return persistedState
+        const classes = useClassStore.getState().classes
+        const students = (persistedState?.students || []).map((s: StudentAdmission) => ({
+          ...s,
+          class: normalizeClassName(s.class, classes),
+        }))
+        return { ...persistedState, students }
       },
     }
   )

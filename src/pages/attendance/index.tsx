@@ -7,6 +7,7 @@ import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { AttendancePDFOptionsModal } from '@/components/shared/AttendancePDFOptionsModal'
 import type { AttendancePDFOptions } from '@/components/shared/AttendancePDFOptionsModal'
 import type { AttendanceStatus, DayAttendance } from '@/store/teacherStore'
@@ -31,8 +32,6 @@ let isBnGlobal = false
 
 type Tab = 'today' | 'range' | 'device' | 'employee' | 'student'
 type StatusFilter = 'all' | 'present' | 'absent' | 'on-leave'
-const CLASSES = ['1','2','3','4','5','6','7','8','9','10']
-const SECTIONS = ['A','B','C','D','E']
 
 function genSinglePDF(name: string, id: string, rows: {date:string;status:string;punches:{time:string;type:string}[]}[], isBn: boolean): string {
   const trs = rows.map((r, i) => {
@@ -59,8 +58,17 @@ export default function AttendancePage() {
   const { isMobile } = useWindowSize()
   const { teachers, departments, attendance, markAllPresent } = useTeacherStore()
   const { students } = useAdmissionStore()
+  const { classes } = useClassStore()
   const isBn = language === 'bn'
   isBnGlobal = isBn
+
+  const classOptions = useMemo(() => getClassOptions(classes), [classes])
+  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
+  const allSections = useMemo(() => {
+    const sectionSet = new Set<string>()
+    classes.forEach(cls => cls.sections.forEach(s => sectionSet.add(s.name)))
+    return Array.from(sectionSet).sort()
+  }, [classes])
 
   const [activeTab, setActiveTab] = useState<Tab>('today')
   const [date, setDate] = useState(today())
@@ -223,7 +231,7 @@ export default function AttendancePage() {
         <td style="padding:4px;font-size:9px">${idx + 1}</td>
         <td style="padding:4px;font-size:8px;font-family:monospace;color:#6366f1">${s.id}</td>
         <td style="padding:4px;font-size:9px;font-weight:500">${optsIsBn ? (s.nameBn || s.nameEn) : s.nameEn}</td>
-        <td style="padding:4px;font-size:8px">${optsIsBn ? `শ্র ${s.class}` : `C${s.class}`}</td>
+        <td style="padding:4px;font-size:8px">${s.class}</td>
         <td style="padding:4px;font-size:8px">${s.section || '—'}</td>
         <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#059669">${p}</td>
         <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#dc2626">${a}</td>
@@ -415,13 +423,13 @@ export default function AttendancePage() {
                   <>
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'8px', marginBottom:'14px' }}>
                       {[
-                        { l: isBn?'মোট':'Total', v: data.length, c:'var(--brand)', bg:'var(--brand-light)' },
-                        { l: isBn?'উপস্থিত':'Present', v: present, c:'var(--green)', bg:'var(--green-light)' },
-                        { l: isBn?'অনুপস্থিত':'Absent', v: absent, c:'var(--red)', bg:'var(--red-light)' },
-                        { l: isBn?'ছুটিতে':'Leave', v: leave, c:'var(--amber)', bg:'var(--amber-light)' },
+                        { l: isBn?'মোট':'Total', vBn: toBnNum(data.length), vEn: String(data.length), c:'var(--brand)', bg:'var(--brand-light)' },
+                        { l: isBn?'উপস্থিত':'Present', vBn: toBnNum(present), vEn: String(present), c:'var(--green)', bg:'var(--green-light)' },
+                        { l: isBn?'অনুপস্থিত':'Absent', vBn: toBnNum(absent), vEn: String(absent), c:'var(--red)', bg:'var(--red-light)' },
+                        { l: isBn?'ছুটিতে':'Leave', vBn: toBnNum(leave), vEn: String(leave), c:'var(--amber)', bg:'var(--amber-light)' },
                       ].map(s => (
                         <div key={s.l} style={{ padding:'10px', borderRadius:'10px', background:s.bg, textAlign:'center' }}>
-                          <div style={{ fontSize:'20px', fontWeight:700, color:s.c }}>{s.v}</div>
+                          <div style={{ fontSize:'20px', fontWeight:700, color:s.c }}>{isBn ? s.vBn : s.vEn}</div>
                           <div style={{ fontSize:'10px', color:s.c }}>{s.l}</div>
                         </div>
                       ))}
@@ -494,7 +502,7 @@ export default function AttendancePage() {
             <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--brand-light)' }}>
               <div>
                 <div style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{viewStudent.name}</div>
-                <div style={{ fontSize:'11px', color:'var(--brand)', fontFamily:'monospace' }}>{viewStudent.id} · {isBn?'শ্রেণি':'Class'}: {viewStudent.class} · {isBn?'সেকশন':'Section'}: {viewStudent.section}</div>
+                <div style={{ fontSize:'11px', color:'var(--brand)', fontFamily:'monospace' }}>{viewStudent.id} · {viewStudent.class} · {isBn?'সেকশন':'Section'}: {viewStudent.section}</div>
               </div>
               <button onClick={() => setViewStudent(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
                 <X size={14} style={{ color:'var(--text-secondary)' }} />
@@ -511,14 +519,14 @@ export default function AttendancePage() {
                   <>
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'8px', marginBottom:'14px' }}>
                       {[
-                        { l: isBn?'মোট':'Total', v: data.length, c:'var(--brand)', bg:'var(--brand-light)' },
-                        { l: isBn?'উপস্থিত':'Present', v: present, c:'var(--green)', bg:'var(--green-light)' },
-                        { l: isBn?'অনুপস্থিত':'Absent', v: absent, c:'var(--red)', bg:'var(--red-light)' },
-                        { l: isBn?'ছুটিতে':'Leave', v: leave, c:'var(--amber)', bg:'var(--amber-light)' },
-                        { l: isBn?'সাপ্তাহিক ছুটি':'W.Holiday', v: weeklyHoliday, c:'var(--purple)', bg:'var(--purple-light)' },
+                        { l: isBn?'মোট':'Total', vBn: toBnNum(data.length), vEn: String(data.length), c:'var(--brand)', bg:'var(--brand-light)' },
+                        { l: isBn?'উপস্থিত':'Present', vBn: toBnNum(present), vEn: String(present), c:'var(--green)', bg:'var(--green-light)' },
+                        { l: isBn?'অনুপস্থিত':'Absent', vBn: toBnNum(absent), vEn: String(absent), c:'var(--red)', bg:'var(--red-light)' },
+                        { l: isBn?'ছুটিতে':'Leave', vBn: toBnNum(leave), vEn: String(leave), c:'var(--amber)', bg:'var(--amber-light)' },
+                        { l: isBn?'সাপ্তাহিক ছুটি':'W.Holiday', vBn: toBnNum(weeklyHoliday), vEn: String(weeklyHoliday), c:'var(--purple)', bg:'var(--purple-light)' },
                       ].map(s => (
                         <div key={s.l} style={{ padding:'10px', borderRadius:'10px', background:s.bg, textAlign:'center' }}>
-                          <div style={{ fontSize:'20px', fontWeight:700, color:s.c }}>{s.v}</div>
+                          <div style={{ fontSize:'20px', fontWeight:700, color:s.c }}>{isBn ? s.vBn : s.vEn}</div>
                           <div style={{ fontSize:'10px', color:s.c }}>{s.l}</div>
                         </div>
                       ))}
@@ -632,13 +640,13 @@ export default function AttendancePage() {
               style={{ flex:1, border:'none', background:'transparent', outline:'none', fontSize:'12px', color:'var(--text-primary)', fontFamily:'inherit' }} />
             {studentSearch && <button onClick={() => setStudentSearch('')} style={{ border:'none', background:'transparent', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}><X size={11} /></button>}
           </div>
-          <select value={fClass} onChange={e => setFClass(e.target.value)} style={sel}>
+          <select value={fClass} onChange={e => { setFClass(e.target.value); setFSection('') }} style={sel}>
             <option value="">{isBn?'সব শ্রেণি':'All Classes'}</option>
-            {CLASSES.map(c => <option key={c} value={c}>{isBn?`শ্রেণি ${c}`:`Class ${c}`}</option>)}
+            {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
           <select value={fSection} onChange={e => setFSection(e.target.value)} style={sel}>
             <option value="">{isBn?'সব সেকশন':'All Sections'}</option>
-            {SECTIONS.map(s => <option key={s} value={s}>{isBn?`সেকশন ${s}`:`Section ${s}`}</option>)}
+            {fClass ? (sectionsMap[fClass] || []).map(s => <option key={s} value={s}>{s}</option>) : allSections.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           {(fClass || fSection || studentSearch) && <button onClick={() => { setFClass(''); setFSection(''); setStudentSearch('') }} style={{ padding:'3px 8px', borderRadius:'6px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'10px', cursor:'pointer', fontFamily:'inherit' }}>✕</button>}
           <div style={{ flex:1 }} />
@@ -677,13 +685,13 @@ export default function AttendancePage() {
         <>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'10px', marginBottom:'14px' }}>
             {[
-              { labelBn:'উপস্থিত', labelEn:'Present', value:stats.present, Icon:CheckCircle, color:'var(--green)', bg:'var(--green-light)' },
-              { labelBn:'অনুপস্থিত', labelEn:'Absent', value:stats.absent, Icon:XCircle, color:'var(--red)', bg:'var(--red-light)' },
-              { labelBn:'ছুটিতে', labelEn:'Leave', value:stats.onLeave, Icon:Clock, color:'var(--amber)', bg:'var(--amber-light)' },
+              { labelBn:'উপস্থিত', labelEn:'Present', valueBn: toBnNum(stats.present), valueEn: String(stats.present), Icon:CheckCircle, color:'var(--green)', bg:'var(--green-light)' },
+              { labelBn:'অনুপস্থিত', labelEn:'Absent', valueBn: toBnNum(stats.absent), valueEn: String(stats.absent), Icon:XCircle, color:'var(--red)', bg:'var(--red-light)' },
+              { labelBn:'ছুটিতে', labelEn:'Leave', valueBn: toBnNum(stats.onLeave), valueEn: String(stats.onLeave), Icon:Clock, color:'var(--amber)', bg:'var(--amber-light)' },
             ].map(s => (
               <div key={s.labelEn} style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'14px', display:'flex', alignItems:'center', gap:'12px' }}>
                 <div style={{ width:'38px', height:'38px', borderRadius:'10px', background:s.bg, display:'flex', alignItems:'center', justifyContent:'center' }}><s.Icon size={18} style={{ color:s.color }} /></div>
-                <div><div style={{ fontSize:'20px', fontWeight:700, color:'var(--text-primary)' }}>{toBnNum(s.value)}<span style={{ fontSize:'12px', fontWeight:400, color:'var(--text-muted)', marginLeft:'4px' }}>{s.value}</span></div><div style={{ fontSize:'11px', color:'var(--text-secondary)' }}>{isBn?s.labelBn:s.labelEn}</div></div>
+                <div><div style={{ fontSize:'20px', fontWeight:700, color:'var(--text-primary)' }}>{isBn ? s.valueBn : s.valueEn}</div><div style={{ fontSize:'11px', color:'var(--text-secondary)' }}>{isBn?s.labelBn:s.labelEn}</div></div>
               </div>
             ))}
           </div>
@@ -844,7 +852,7 @@ export default function AttendancePage() {
                         <div style={{ fontSize:'11px', fontWeight:500, color:'var(--text-primary)' }}>{isBn?s.nameBn||s.nameEn:s.nameEn}</div>
                         <div style={{ fontSize:'9px', color:'var(--text-muted)' }}>{s.id}</div>
                       </td>
-                      <td style={{ padding:'6px 8px', fontSize:'10px', color:'var(--text-secondary)' }}>{isBn?`শ্র ${s.class}`:`C${s.class}`}</td>
+                      <td style={{ padding:'6px 8px', fontSize:'10px', color:'var(--text-secondary)' }}>{s.class}</td>
                       <td style={{ padding:'6px 8px', fontSize:'10px', color:'var(--text-secondary)' }}>{s.section || '—'}</td>
                       {rangeDays.map(ds => {
                         if (isFriday(ds)) {

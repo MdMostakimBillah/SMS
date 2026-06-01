@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
 import { generateListPDF } from '@/pages/students/admission/listPdfTemplate'
 import { generateA4HTML } from '@/pages/students/admission/a4Template'
@@ -12,8 +13,6 @@ import type { ListPDFOptions } from '@/pages/students/admission/listPdfTemplate'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 
 const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
-const CLASSES = ['1','2','3','4','5','6','7','8','9','10']
-const SECTIONS = ['A','B','C','D','E']
 const BLOOD_GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-']
 
 export default function AllStudentsPage() {
@@ -21,7 +20,16 @@ export default function AllStudentsPage() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const { students } = useAdmissionStore()
+  const { classes } = useClassStore()
   const isBn = language === 'bn'
+
+  const classOptions = useMemo(() => getClassOptions(classes), [classes])
+  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
+  const allSections = useMemo(() => {
+    const sectionSet = new Set<string>()
+    classes.forEach(cls => cls.sections.forEach(s => sectionSet.add(s.name)))
+    return Array.from(sectionSet).sort()
+  }, [classes])
 
   const [search,    setSearch]    = useState('')
   const [fClass,    setFClass]    = useState('')
@@ -81,7 +89,7 @@ export default function AllStudentsPage() {
     const data = list.map((s, i) => ({
       '#': i + 1, 'Student ID': s.id,
       'Name EN': s.nameEn, 'Name BN': s.nameBn,
-      'Class': `Class ${s.class}`, 'Section': s.section, 'Roll': s.roll,
+      'Class': s.class, 'Section': s.section, 'Roll': s.roll,
       'Gender': s.gender.split(' / ')[0], 'DOB': s.dob,
       'Blood': s.bloodGroup, 'Religion': s.religion.split(' / ')[0],
       'Mobile': s.phone, 'Email': s.email, 'District': s.district,
@@ -158,7 +166,7 @@ export default function AllStudentsPage() {
                   <p style={{ fontSize:'13px', color:'var(--text-secondary)' }}>{viewSt.nameBn}</p>
                   <div style={{ display:'flex', gap:'5px', marginTop:'6px', flexWrap:'wrap' }}>
                     {[
-                      { t:`${isBn?'শ্রেণি':'Class'} ${viewSt.class}-${viewSt.section}`, c:'var(--brand)', b:'var(--brand-light)' },
+                      { t:`${viewSt.class}-${viewSt.section}`, c:'var(--brand)', b:'var(--brand-light)' },
                       { t:viewSt.gender.split(' / ')[0], c:'var(--teal)', b:'var(--teal-light)' },
                       { t:viewSt.bloodGroup, c:'var(--red)', b:'var(--red-light)' },
                     ].filter(x => x.t).map((x,i) => (
@@ -262,13 +270,13 @@ export default function AllStudentsPage() {
               style={{ flex:1, border:'none', background:'transparent', outline:'none', fontSize:'13px', color:'var(--text-primary)', fontFamily:'inherit' }} />
             {search && <button onClick={() => setSearch('')} style={{ border:'none', background:'transparent', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}><X size={12} /></button>}
           </div>
-          <select value={fClass} onChange={e => { setFClass(e.target.value); setPage(1) }} style={sel}>
+          <select value={fClass} onChange={e => { setFClass(e.target.value); setFSection(''); setPage(1) }} style={sel}>
             <option value="">{isBn?'সব শ্রেণি':'All Classes'}</option>
-            {CLASSES.map(c => <option key={c} value={c}>{isBn?`শ্রেণি ${c}`:`Class ${c}`}</option>)}
+            {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
           <select value={fSection} onChange={e => { setFSection(e.target.value); setPage(1) }} style={sel}>
             <option value="">{isBn?'সব সেকশন':'All Sections'}</option>
-            {SECTIONS.map(s => <option key={s} value={s}>{isBn?`সেকশন ${s}`:`Section ${s}`}</option>)}
+            {fClass ? (sectionsMap[fClass] || []).map(s => <option key={s} value={s}>{s}</option>) : allSections.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <select value={fGender} onChange={e => { setFGender(e.target.value); setPage(1) }} style={sel}>
             <option value="">{isBn?'সব লিঙ্গ':'All Genders'}</option>
@@ -386,7 +394,7 @@ export default function AllStudentsPage() {
                       <div style={{ fontSize:'10px', color:'var(--text-muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{isBn?s.nameEn:s.nameBn}</div>
                     </td>
                     <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px', whiteSpace:'nowrap', ...(isMobile ? {} : { position:'sticky', left:'416px', zIndex:3, background:'var(--bg-primary)' }) }}>
-                      {isBn?`শ্র ${s.class}`:`Cls ${s.class}`}{s.section?`-${s.section}`:''}{s.roll?` / ${s.roll}`:''}
+                      {s.class}{s.section?`-${s.section}`:''}{s.roll?` / ${s.roll}`:''}
                     </td>
                     <td style={{ padding:'8px 8px' }}>
                       <span style={{ fontSize:'10px', padding:'2px 6px', borderRadius:'5px', background:s.gender.includes('Female')?'var(--purple-light)':'var(--teal-light)', color:s.gender.includes('Female')?'var(--purple)':'var(--teal)', fontWeight:500 }}>

@@ -1,23 +1,28 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, Users, TrendingUp, Award, DollarSign, Clock,
+  ArrowLeft, Users, TrendingUp, TrendingDown, Award, DollarSign, Clock,
   CheckCircle2, XCircle, Plus, Save, X,
   Gift, HandCoins, Medal, Percent,
   Search, Zap, ThumbsUp, AlertCircle, LayoutGrid,
-  List, ChevronRight, FileText, Calendar, Calculator,
+  List, ChevronRight, FileText, Calendar, Calculator, Briefcase, Edit2, Trash2, Download,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useHRStore } from '@/store/hrStore'
-import type { MonthlySalaryConfig } from '@/store/hrStore'
+
+function toBnNum(n: number): string {
+  const bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯']
+  return String(n).replace(/\d/g, d => bn[+d])
+}
+import type { MonthlySalaryConfig, Facility } from '@/store/hrStore'
 import CircularChart from '@/components/ui/CircularChart'
 import { HRPDFOptionsModal } from '@/components/shared/HRPDFOptionsModal'
-import { generateIncrementPDF, generateBonusPDF, generatePromotionPDF, generateFundPDF } from '@/pages/hr/listPdfTemplate'
+import { generateIncrementPDF, generateBonusPDF, generatePromotionPDF, generateFundPDF, generateAssignmentPDF, generateSalaryPDF } from '@/pages/hr/listPdfTemplate'
 import type { HRListPDFOptions } from '@/pages/hr/listPdfTemplate'
 
-type Tab = 'overview' | 'decisions' | 'increment' | 'bonus' | 'promotion' | 'fund' | 'salary-setup'
+type Tab = 'overview' | 'decisions' | 'increment' | 'bonus' | 'promotion' | 'fund' | 'salary-setup' | 'facilities'
 
 export default function HRPage() {
   const navigate = useNavigate()
@@ -27,15 +32,19 @@ export default function HRPage() {
   const {
     increments, bonuses, promotions, funds, homeworkRecords,
     dailyReports, recommendations, monthlySalaryConfigs,
-    addIncrement, addBonus, addPromotion, addFund, addRecommendation,
+    facilities, teacherFacilities,
+    addIncrement, deleteIncrement, addBonus, deleteBonus, addPromotion, addFund, addRecommendation,
     updateRecommendation, upsertManyMonthlySalaryConfigs,
+    addFacility, updateFacility, deleteFacility,
+    assignTeacherFacility, updateTeacherFacility, removeTeacherFacility,
+    upsertTeacherFacilities,
   } = useHRStore()
   const isBn = language === 'bn'
 
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [modalType, setModalType] = useState<'increment' | 'bonus' | 'promotion' | 'fund' | null>(null)
-  const [incForm, setIncForm] = useState({ teacherId: '', type: 'annual' as const, percentage: '', reason: '' })
-  const [bonForm, setBonForm] = useState({ teacherId: '', type: 'festival' as const, amount: '', reason: '', month: '' })
+  const [incForm, setIncForm] = useState({ teacherId: '', type: 'annual' as 'annual' | 'performance' | 'special', percentage: '', reason: '' })
+  const [bonForm, setBonForm] = useState({ teacherId: '', type: 'festival' as 'festival' | 'performance' | 'attendance' | 'special', amount: '', reason: '', month: '' })
   const [proForm, setProForm] = useState({ teacherId: '', fromDesignation: '', toDesignation: '', reason: '' })
   const [fundForm, setFundForm] = useState({ type: 'contribution' as const, amount: '', description: '' })
   const [employeeSearch, setEmployeeSearch] = useState('')
@@ -43,7 +52,8 @@ export default function HRPage() {
   const [showGenerateRecs, setShowGenerateRecs] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
   const [employeeView, setEmployeeView] = useState<'grid' | 'list'>('grid')
-  const [showPDFModal, setShowPDFModal] = useState<'increment' | 'bonus' | 'promotion' | 'fund' | null>(null)
+  const [showPDFModal, setShowPDFModal] = useState<'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary' | null>(null)
+  const [selectedSalary, setSelectedSalary] = useState<string[]>([])
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date(); d.setDate(d.getDate() - 28); return d.toISOString().split('T')[0]
   })
@@ -58,6 +68,28 @@ export default function HRPage() {
   })
   const [salaryConfigs, setSalaryConfigs] = useState<Record<string, { bonus: number; festivalBonus: number; applyDeductionRule: boolean; fundContributionPercent: number }>>({})
   const [salarySaved, setSalarySaved] = useState(false)
+  const [facModalType, setFacModalType] = useState<'add-facility' | 'edit-facility' | 'assign' | 'edit-assign' | null>(null)
+  const [facForm, setFacForm] = useState({ name: '', nameBn: '', defaultAmount: '', type: 'monthly' as 'monthly' | 'oneTime' })
+  const [editFac, setEditFac] = useState<Facility | null>(null)
+  const [assignForm, setAssignForm] = useState({ teacherId: '', facilityId: '', amount: '' })
+  const [editAssign, setEditAssign] = useState<{ id: string; teacherId: string; facilityId: string; amount: number } | null>(null)
+  const [facDeleteConfirm, setFacDeleteConfirm] = useState<string | null>(null)
+  const [assignDeleteConfirm, setAssignDeleteConfirm] = useState<string | null>(null)
+  const [selectedFacStaff, setSelectedFacStaff] = useState('')
+  const [facStaffFilter, setFacStaffFilter] = useState('')
+  const [facStaffSearch, setFacStaffSearch] = useState('')
+  const [assignDateFrom, setAssignDateFrom] = useState('')
+  const [assignDateTo, setAssignDateTo] = useState('')
+  const [selectedAssign, setSelectedAssign] = useState<string[]>([])
+  const [bonusDateFrom, setBonusDateFrom] = useState('')
+  const [bonusDateTo, setBonusDateTo] = useState('')
+  const [bulkDeductionEnabled, setBulkDeductionEnabled] = useState(false)
+  const [bulkDeductionFrom, setBulkDeductionFrom] = useState(() => {
+    const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0]
+  })
+  const [bulkDeductionTo, setBulkDeductionTo] = useState(new Date().toISOString().split('T')[0])
+  const [bulkFundEnabled, setBulkFundEnabled] = useState(false)
+  const [bulkFundPercent, setBulkFundPercent] = useState('')
 
   const toggleInc = useCallback((id: string) => setSelectedInc(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]), [])
   const toggleAllInc = useCallback(() => setSelectedInc(p => p.length === increments.length ? [] : increments.map(i => i.id)), [increments])
@@ -67,8 +99,11 @@ export default function HRPage() {
   const toggleAllPro = useCallback(() => setSelectedPro(p => p.length === promotions.length ? [] : promotions.map(p => p.id)), [promotions])
   const toggleFund = useCallback((id: string) => setSelectedFund(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]), [])
   const toggleAllFund = useCallback(() => setSelectedFund(p => p.length === funds.length ? [] : funds.map(f => f.id)), [funds])
+  const toggleAssign = useCallback((id: string) => setSelectedAssign(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]), [])
+  const toggleSalary = useCallback((id: string) => setSelectedSalary(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]), [])
 
   const activeTeachers = useMemo(() => teachers.filter(t => t.status === 'active'), [teachers])
+  const toggleAllSalary = useCallback(() => setSelectedSalary(p => p.length === activeTeachers.length ? [] : activeTeachers.map(t => t.id)), [activeTeachers])
   const totalSalary = useMemo(() => activeTeachers.reduce((s, t) => s + t.salary, 0), [activeTeachers])
 
   const today = new Date().toISOString().split('T')[0]
@@ -295,6 +330,149 @@ export default function HRPage() {
     setModalType(null)
   }
 
+  const handleAddFacility = () => {
+    if (!facForm.name.trim()) return
+    const now = new Date().toISOString().split('T')[0]
+    addFacility({
+      id: `FAC-${Date.now()}`,
+      name: facForm.name.trim(),
+      nameBn: facForm.nameBn.trim(),
+      defaultAmount: Number(facForm.defaultAmount) || 0,
+      type: facForm.type,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+    setFacForm({ name: '', nameBn: '', defaultAmount: '', type: 'monthly' })
+    setFacModalType(null)
+  }
+
+  const handleEditFacility = () => {
+    if (!editFac || !facForm.name.trim()) return
+    updateFacility(editFac.id, { name: facForm.name.trim(), nameBn: facForm.nameBn.trim(), defaultAmount: Number(facForm.defaultAmount) || 0, type: facForm.type })
+    setEditFac(null)
+    setFacForm({ name: '', nameBn: '', defaultAmount: '', type: 'monthly' })
+    setFacModalType(null)
+  }
+
+  const handleAssignFacility = () => {
+    if (!assignForm.teacherId || !assignForm.facilityId) return
+    const now = new Date().toISOString().split('T')[0]
+    assignTeacherFacility({
+      id: `TF-${Date.now()}`,
+      teacherId: assignForm.teacherId,
+      facilityId: assignForm.facilityId,
+      amount: Number(assignForm.amount) || 0,
+      createdAt: now,
+      updatedAt: now,
+    })
+    setAssignForm({ teacherId: '', facilityId: '', amount: '' })
+    setFacModalType(null)
+  }
+
+  const handleEditAssign = () => {
+    if (!editAssign) return
+    updateTeacherFacility(editAssign.id, { amount: Number(assignForm.amount) || 0 })
+    setEditAssign(null)
+    setAssignForm({ teacherId: '', facilityId: '', amount: '' })
+    setFacModalType(null)
+  }
+
+  const filteredAssignments = useMemo(() => {
+    let list = teacherFacilities
+    if (assignDateFrom) list = list.filter(tf => tf.createdAt >= assignDateFrom)
+    if (assignDateTo) list = list.filter(tf => tf.createdAt <= assignDateTo + 'T23:59:59')
+    return list
+  }, [teacherFacilities, assignDateFrom, assignDateTo])
+
+  const filteredBonuses = useMemo(() => {
+    let list = bonuses
+    if (bonusDateFrom) list = list.filter(b => b.date >= bonusDateFrom)
+    if (bonusDateTo) list = list.filter(b => b.date <= bonusDateTo)
+    return list
+  }, [bonuses, bonusDateFrom, bonusDateTo])
+
+  const handleBulkApplyDeduction = () => {
+    const configs: MonthlySalaryConfig[] = activeTeachers.map(t => {
+      const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth)
+      return {
+        id: existing?.id || `MSC-${Date.now()}-${t.id}`,
+        month: salarySetupMonth,
+        teacherId: t.id,
+        bonus: existing?.bonus ?? salaryConfigs[t.id]?.bonus ?? 0,
+        festivalBonus: existing?.festivalBonus ?? salaryConfigs[t.id]?.festivalBonus ?? 0,
+        applyDeductionRule: bulkDeductionEnabled,
+        fundContributionPercent: existing?.fundContributionPercent ?? salaryConfigs[t.id]?.fundContributionPercent ?? 0,
+        createdAt: new Date().toISOString(),
+      }
+    })
+    upsertManyMonthlySalaryConfigs(configs)
+    setSalarySaved(true)
+    setTimeout(() => setSalarySaved(false), 2500)
+  }
+
+  const handleBulkApplyFund = () => {
+    const percent = Number(bulkFundPercent) || 0
+    const configs: MonthlySalaryConfig[] = activeTeachers.map(t => {
+      const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth)
+      return {
+        id: existing?.id || `MSC-${Date.now()}-${t.id}`,
+        month: salarySetupMonth,
+        teacherId: t.id,
+        bonus: existing?.bonus ?? salaryConfigs[t.id]?.bonus ?? 0,
+        festivalBonus: existing?.festivalBonus ?? salaryConfigs[t.id]?.festivalBonus ?? 0,
+        applyDeductionRule: existing?.applyDeductionRule ?? salaryConfigs[t.id]?.applyDeductionRule ?? false,
+        fundContributionPercent: bulkFundEnabled ? percent : 0,
+        createdAt: new Date().toISOString(),
+      }
+    })
+    upsertManyMonthlySalaryConfigs(configs)
+    setSalarySaved(true)
+    setTimeout(() => setSalarySaved(false), 2500)
+  }
+
+  const selectedStaffFacilities = useMemo(() => {
+    if (!selectedFacStaff) return []
+    return facilities.map(fac => {
+      const assigned = teacherFacilities.find(tf => tf.teacherId === selectedFacStaff && tf.facilityId === fac.id)
+      return { facility: fac, assigned: !!assigned, amount: assigned?.amount || fac.defaultAmount }
+    })
+  }, [selectedFacStaff, facilities, teacherFacilities])
+
+  const toggleStaffFacility = useCallback((facilityId: string) => {
+    const existing = teacherFacilities.find(tf => tf.teacherId === selectedFacStaff && tf.facilityId === facilityId)
+    if (existing) {
+      removeTeacherFacility(existing.id)
+    } else {
+      const fac = facilities.find(f => f.id === facilityId)
+      assignTeacherFacility({
+        id: `TF-${Date.now()}-${facilityId}`,
+        teacherId: selectedFacStaff,
+        facilityId,
+        amount: fac?.defaultAmount || 0,
+        createdAt: new Date().toISOString().split('T')[0],
+        updatedAt: new Date().toISOString().split('T')[0],
+      })
+    }
+  }, [selectedFacStaff, teacherFacilities, facilities, assignTeacherFacility, removeTeacherFacility])
+
+  const updateStaffFacilityAmount = useCallback((facilityId: string, amount: number) => {
+    const existing = teacherFacilities.find(tf => tf.teacherId === selectedFacStaff && tf.facilityId === facilityId)
+    if (existing) updateTeacherFacility(existing.id, { amount })
+  }, [selectedFacStaff, teacherFacilities, updateTeacherFacility])
+
+  const handleSaveStaffFacilities = useCallback(() => {
+    const items = selectedStaffFacilities.filter(sf => sf.assigned).map(sf => ({
+      id: teacherFacilities.find(tf => tf.teacherId === selectedFacStaff && tf.facilityId === sf.facility.id)?.id || `TF-${Date.now()}-${sf.facility.id}`,
+      teacherId: selectedFacStaff,
+      facilityId: sf.facility.id,
+      amount: sf.amount,
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0],
+    }))
+    upsertTeacherFacilities(items)
+  }, [selectedStaffFacilities, selectedFacStaff, teacherFacilities, upsertTeacherFacilities])
+
   const handleGenerateRecommendations = () => {
     teacherCompositeScores.slice(0, 5).forEach((t, i) => {
       let type: 'promotion' | 'bonus' | 'increment'
@@ -327,7 +505,7 @@ export default function HRPage() {
     }
   }
 
-  const handlePDFDownload = useCallback((type: 'increment' | 'bonus' | 'promotion' | 'fund', opts: HRListPDFOptions) => {
+  const handlePDFDownload = useCallback((type: 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary', opts: HRListPDFOptions) => {
     const win = window.open('', '_blank')
     if (!win) return
     let html = ''
@@ -343,12 +521,34 @@ export default function HRPage() {
     } else if (type === 'fund') {
       const list = selectedFund.length > 0 ? funds.filter(f => selectedFund.includes(f.id)) : funds
       html = generateFundPDF(list, opts)
+    } else if (type === 'assignment') {
+      const list = selectedAssign.length > 0 ? teacherFacilities.filter(tf => selectedAssign.includes(tf.id)) : filteredAssignments
+      html = generateAssignmentPDF(list, opts, getTeacherName, (id) => facilities.find(f => f.id === id)?.name || id)
+    } else if (type === 'salary') {
+      const teachersToShow = selectedSalary.length > 0 ? activeTeachers.filter(t => selectedSalary.includes(t.id)) : activeTeachers
+      const salaryData = teachersToShow.map(t => {
+        const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth)
+        const local = salaryConfigs[t.id] || {}
+        const applyDeduction = local.applyDeductionRule ?? existing?.applyDeductionRule ?? false
+        const fundPercent = local.fundContributionPercent ?? existing?.fundContributionPercent ?? 0
+        const teacherBonuses = bonuses.filter(b => b.teacherId === t.id && b.month === salarySetupMonth)
+        const perf = teacherBonuses.filter(b => b.type === 'performance').reduce((sum, b) => sum + b.amount, 0)
+        const atten = teacherBonuses.filter(b => b.type === 'attendance').reduce((sum, b) => sum + b.amount, 0)
+        const special = teacherBonuses.filter(b => b.type === 'special').reduce((sum, b) => sum + b.amount, 0)
+        const festival = teacherBonuses.filter(b => b.type === 'festival').reduce((sum, b) => sum + b.amount, 0)
+        const totalBonus = perf + atten + special + festival
+        const deduction = applyDeduction ? Math.round(t.salary / 30) : 0
+        const fund = Math.round(t.salary * fundPercent / 100)
+        const net = t.salary + totalBonus - deduction - fund
+        return { ...t, basic: t.salary, perf, atten, special, festival, totalBonus, deduction, fundPercent, net }
+      })
+      html = generateSalaryPDF(salaryData, opts)
     }
     win.document.write(html)
     win.document.close()
     setTimeout(() => win.print(), 800)
     setShowPDFModal(null)
-  }, [increments, bonuses, promotions, funds, getTeacherName, selectedInc, selectedBon, selectedPro, selectedFund])
+  }, [increments, bonuses, promotions, funds, teacherFacilities, facilities, filteredAssignments, getTeacherName, selectedInc, selectedBon, selectedPro, selectedFund, selectedAssign, selectedSalary, activeTeachers, monthlySalaryConfigs, salaryConfigs, salarySetupMonth, bonuses])
 
   const getStatusBadge = (status: string) => {
     const map: Record<string, { bg: string; color: string; label: string; labelBn: string }> = {
@@ -387,14 +587,15 @@ export default function HRPage() {
     { id: 'bonus', icon: Gift, label: 'Bonus', labelBn: 'বোনাস', color: 'var(--amber)' },
     { id: 'promotion', icon: Award, label: 'Promotion', labelBn: 'পদোন্নতি', color: 'var(--purple)' },
     { id: 'fund', icon: HandCoins, label: 'Fund', labelBn: 'তহবিল', color: 'var(--brand)' },
+    { id: 'facilities', icon: Briefcase, label: 'Facilities', labelBn: 'সুবিধা', color: 'var(--purple)' },
     { id: 'salary-setup', icon: Calculator, label: 'Salary Setup', labelBn: 'বেতন সেটআপ', color: 'var(--teal)' },
   ]
 
   const quickStats = [
-    { labelBn: 'সক্রিয়', labelEn: 'Active', valueBn: `${activeTeachers.length} জন`, valueEn: String(activeTeachers.length), icon: Users, color: 'var(--brand)', bg: 'var(--brand-light)' },
-    { labelBn: 'উপস্থিত', labelEn: 'Present', valueBn: `${attendanceToday.present} জন`, valueEn: String(attendanceToday.present), icon: CheckCircle2, color: 'var(--green)', bg: 'var(--green-light)' },
-    { labelBn: 'অনুপস্থিত', labelEn: 'Absent', valueBn: `${attendanceToday.absent} জন`, valueEn: String(attendanceToday.absent), icon: XCircle, color: 'var(--red)', bg: 'var(--red-light)' },
-    { labelBn: 'ছুটিতে', labelEn: 'On Leave', valueBn: `${attendanceToday.onLeave} জন`, valueEn: String(attendanceToday.onLeave), icon: Clock, color: 'var(--amber)', bg: 'var(--amber-light)' },
+    { labelBn: 'সক্রিয়', labelEn: 'Active', valueBn: `${toBnNum(activeTeachers.length)} জন`, valueEn: String(activeTeachers.length), icon: Users, color: 'var(--brand)', bg: 'var(--brand-light)' },
+    { labelBn: 'উপস্থিত', labelEn: 'Present', valueBn: `${toBnNum(attendanceToday.present)} জন`, valueEn: String(attendanceToday.present), icon: CheckCircle2, color: 'var(--green)', bg: 'var(--green-light)' },
+    { labelBn: 'অনুপস্থিত', labelEn: 'Absent', valueBn: `${toBnNum(attendanceToday.absent)} জন`, valueEn: String(attendanceToday.absent), icon: XCircle, color: 'var(--red)', bg: 'var(--red-light)' },
+    { labelBn: 'ছুটিতে', labelEn: 'On Leave', valueBn: `${toBnNum(attendanceToday.onLeave)} জন`, valueEn: String(attendanceToday.onLeave), icon: Clock, color: 'var(--amber)', bg: 'var(--amber-light)' },
   ]
 
   return (
@@ -869,15 +1070,15 @@ export default function HRPage() {
             </div>
           </div>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '500px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '560px' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
                   <th style={{ padding: '10px 8px', width: '36px' }}>
                     <input type="checkbox" checked={selectedInc.length === increments.length && increments.length > 0} onChange={toggleAllInc}
                       style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--brand)' }} />
                   </th>
-                  {[isBn ? 'তারিখ' : 'Date', isBn ? 'শিক্ষক' : 'Teacher', isBn ? 'ধরন' : 'Type', isBn ? 'শতাংশ' : '%', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'কারণ' : 'Reason'].map(h => (
-                    <th key={h} style={{ padding: '10px 8px', textAlign: 'left', fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap' }}>{h}</th>
+                  {[isBn ? 'তারিখ' : 'Date', isBn ? 'শিক্ষক' : 'Teacher', isBn ? 'ধরন' : 'Type', isBn ? 'শতাংশ' : '%', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'কারণ' : 'Reason', ''].map(h => (
+                    <th key={h || 'action'} style={{ padding: '10px 8px', textAlign: h === '' ? 'center' : 'left', fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap', width: h === '' ? '80px' : undefined }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -898,6 +1099,18 @@ export default function HRPage() {
                     <td style={{ padding: '8px 8px', fontSize: '12px', fontWeight: 600, color: 'var(--green)' }}>{inc.percentage}%</td>
                     <td style={{ padding: '8px 8px', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>৳{inc.amount.toLocaleString()}</td>
                     <td style={{ padding: '8px 8px', fontSize: '11px', color: 'var(--text-secondary)' }}>{inc.reason}</td>
+                    <td style={{ padding: '8px 8px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                        <button onClick={() => { setIncForm({ teacherId: inc.teacherId, type: inc.type, percentage: String(inc.percentage), reason: inc.reason }); setModalType('increment'); }}
+                          style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '10px', fontFamily: 'inherit' }}>
+                          <Edit2 size={11} />
+                        </button>
+                        <button onClick={() => deleteIncrement(inc.id)}
+                          style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--red)', background: 'var(--red-light)', color: 'var(--red)', cursor: 'pointer', fontSize: '10px', fontFamily: 'inherit' }}>
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1132,6 +1345,10 @@ export default function HRPage() {
                 style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 16px', borderRadius: '8px', background: 'var(--teal)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Save size={14} />{isBn ? 'সংরক্ষণ' : 'Save'}
               </button>
+              <button onClick={() => setShowPDFModal('salary')}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 16px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                <Download size={14} />PDF
+              </button>
             </div>
           </div>
 
@@ -1142,69 +1359,129 @@ export default function HRPage() {
             </div>
           )}
 
+          {/* Bulk Salary Setup Section */}
+          <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px 12px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+              <Calculator size={11} style={{ color: 'var(--teal)' }} />{isBn ? 'বাল্ক সেটআপ' : 'Bulk Setup'}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '10px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                <input type="checkbox" checked={bulkDeductionEnabled} onChange={e => setBulkDeductionEnabled(e.target.checked)}
+                  style={{ width: '11px', height: '11px', cursor: 'pointer', accentColor: 'var(--red)' }} />
+                <TrendingDown size={10} style={{ color: 'var(--red)' }} />
+                {isBn ? 'কাটা' : 'Deduction'}
+              </label>
+              {bulkDeductionEnabled && (
+                <>
+                  <input type="date" value={bulkDeductionFrom} onChange={e => setBulkDeductionFrom(e.target.value)}
+                    style={{ padding: '3px 5px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '10px', fontFamily: 'inherit', outline: 'none', width: '110px' }} />
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>-</span>
+                  <input type="date" value={bulkDeductionTo} onChange={e => setBulkDeductionTo(e.target.value)}
+                    style={{ padding: '3px 5px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '10px', fontFamily: 'inherit', outline: 'none', width: '110px' }} />
+                </>
+              )}
+              <button onClick={handleBulkApplyDeduction}
+                style={{ padding: '3px 8px', borderRadius: '4px', background: bulkDeductionEnabled ? 'var(--red)' : 'var(--border)', border: 'none', color: bulkDeductionEnabled ? '#fff' : 'var(--text-muted)', fontSize: '9px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                {isBn ? 'প্রয়োগ' : 'Apply'}
+              </button>
+            </div>
+            <div style={{ width: '1px', height: '16px', background: 'var(--border)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '10px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                <input type="checkbox" checked={bulkFundEnabled} onChange={e => setBulkFundEnabled(e.target.checked)}
+                  style={{ width: '11px', height: '11px', cursor: 'pointer', accentColor: 'var(--brand)' }} />
+                <HandCoins size={10} style={{ color: 'var(--brand)' }} />
+                {isBn ? 'তহবিল' : 'Fund'}
+              </label>
+              {bulkFundEnabled && (
+                <input type="number" value={bulkFundPercent} onChange={e => setBulkFundPercent(e.target.value)}
+                  style={{ padding: '3px 5px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '10px', fontFamily: 'inherit', outline: 'none', width: '45px', textAlign: 'right' }}
+                  placeholder="%" min={0} max={100} />
+              )}
+              {bulkFundEnabled && <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>%</span>}
+              <button onClick={handleBulkApplyFund}
+                style={{ padding: '3px 8px', borderRadius: '4px', background: bulkFundEnabled ? 'var(--brand)' : 'var(--border)', border: 'none', color: bulkFundEnabled ? '#fff' : 'var(--text-muted)', fontSize: '9px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                {isBn ? 'প্রয়োগ' : 'Apply'}
+              </button>
+            </div>
+          </div>
+
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '700px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '900px' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
-                  {[
-                    isBn ? 'কর্মচারী' : 'Employee',
-                    isBn ? 'মূল বেতন' : 'Basic',
-                    isBn ? 'বোনাস' : 'Bonus',
-                    isBn ? 'উৎসব বোনাস' : 'Festival',
-                    isBn ? 'কাটার নিয়ম' : 'Deduction',
-                    isBn ? 'তহবিল %' : 'Fund %',
-                    isBn ? 'নেট বেতন' : 'Net Pay',
-                  ].map(h => (
-                    <th key={h} style={{ padding: '10px 8px', textAlign: 'left', fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
+                  <th style={{ padding: '8px 10px', textAlign: 'center', width: '36px' }}>
+                    <input type="checkbox" checked={selectedSalary.length === activeTeachers.length && activeTeachers.length > 0}
+                      onChange={toggleAllSalary}
+                      style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--brand)' }} />
+                  </th>
+                  <th style={{ padding: '8px 8px', textAlign: 'left', fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{isBn ? 'কর্মচারী' : 'Employee'}</th>
+                  <th style={{ padding: '8px 8px', textAlign: 'right', fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{isBn ? 'মূল বেতন' : 'Basic'}</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'right', fontSize: '9px', fontWeight: 600, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{isBn ? 'কর্মদক্ষতা' : 'Perf.'}</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'right', fontSize: '9px', fontWeight: 600, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{isBn ? 'উপস্থিতি' : 'Atten.'}</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'right', fontSize: '9px', fontWeight: 600, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{isBn ? 'বিশেষ' : 'Special'}</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'right', fontSize: '9px', fontWeight: 600, color: 'var(--amber)', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{isBn ? 'উৎসব' : 'Festival'}</th>
+                  <th style={{ padding: '8px 8px', textAlign: 'right', fontSize: '10px', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{isBn ? 'মোট বোনাস' : 'Total B.'}</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', fontSize: '9px', fontWeight: 600, color: 'var(--red)', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{isBn ? 'কাটা' : 'Ded.'}</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'right', fontSize: '9px', fontWeight: 600, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{isBn ? 'তহবিল' : 'Fund'}</th>
+                  <th style={{ padding: '8px 8px', textAlign: 'right', fontSize: '10px', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{isBn ? 'নেট বেতন' : 'Net Pay'}</th>
                 </tr>
               </thead>
               <tbody>
                 {activeTeachers.map(t => {
                   const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth)
                   const local = salaryConfigs[t.id] || {}
-                  const bonus = local.bonus ?? existing?.bonus ?? 0
-                  const festivalBonus = local.festivalBonus ?? existing?.festivalBonus ?? 0
                   const applyDeduction = local.applyDeductionRule ?? existing?.applyDeductionRule ?? false
                   const fundPercent = local.fundContributionPercent ?? existing?.fundContributionPercent ?? 0
+                  const teacherBonuses = bonuses.filter(b => b.teacherId === t.id && b.month === salarySetupMonth)
+                  const perfBonus = teacherBonuses.filter(b => b.type === 'performance').reduce((sum, b) => sum + b.amount, 0)
+                  const attenBonus = teacherBonuses.filter(b => b.type === 'attendance').reduce((sum, b) => sum + b.amount, 0)
+                  const specialBonus = teacherBonuses.filter(b => b.type === 'special').reduce((sum, b) => sum + b.amount, 0)
+                  const festivalBonus = teacherBonuses.filter(b => b.type === 'festival').reduce((sum, b) => sum + b.amount, 0)
+                  const totalBonus = perfBonus + attenBonus + specialBonus + festivalBonus
                   const daysInMonth = 30
                   const dailySalary = Math.round(t.salary / daysInMonth)
                   const deductionAmount = applyDeduction ? dailySalary : 0
                   const fundAmount = Math.round(t.salary * fundPercent / 100)
-                  const netPay = t.salary + bonus + festivalBonus - deductionAmount - fundAmount
+                  const netPay = t.salary + totalBonus - deductionAmount - fundAmount
 
                   return (
                     <tr key={t.id} style={{ borderBottom: '1px solid var(--border)' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '8px 8px' }}>
-                        <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)' }}>{t.nameEn}</div>
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{t.designation}</div>
+                      <td style={{ padding: '7px 10px', textAlign: 'center' }}>
+                        <input type="checkbox" checked={selectedSalary.includes(t.id)}
+                          onChange={() => toggleSalary(t.id)}
+                          style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--brand)' }} />
                       </td>
-                      <td style={{ padding: '8px 8px', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>৳{t.salary.toLocaleString()}</td>
-                      <td style={{ padding: '8px 8px' }}>
-                        <input type="number" value={bonus} onChange={e => setSalaryConfigs(p => ({ ...p, [t.id]: { ...p[t.id], bonus: Number(e.target.value) || 0, festivalBonus: p[t.id]?.festivalBonus ?? 0, applyDeductionRule: p[t.id]?.applyDeductionRule ?? false, fundContributionPercent: p[t.id]?.fundContributionPercent ?? 0 } }))}
-                          style={{ ...input, width: '80px', padding: '4px 6px', fontSize: '11px', textAlign: 'right' }}
-                          placeholder="0" />
+                      <td style={{ padding: '7px 8px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-primary)' }}>{t.nameEn}</div>
+                        <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>{t.designation}</div>
                       </td>
-                      <td style={{ padding: '8px 8px' }}>
-                        <input type="number" value={festivalBonus} onChange={e => setSalaryConfigs(p => ({ ...p, [t.id]: { ...p[t.id], festivalBonus: Number(e.target.value) || 0, bonus: p[t.id]?.bonus ?? 0, applyDeductionRule: p[t.id]?.applyDeductionRule ?? false, fundContributionPercent: p[t.id]?.fundContributionPercent ?? 0 } }))}
-                          style={{ ...input, width: '80px', padding: '4px 6px', fontSize: '11px', textAlign: 'right' }}
-                          placeholder="0" />
+                      <td style={{ padding: '7px 8px', textAlign: 'right', fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)' }}>৳{t.salary.toLocaleString()}</td>
+                      <td style={{ padding: '7px 6px', textAlign: 'right', fontSize: '10px', fontWeight: 500, color: perfBonus > 0 ? 'var(--green)' : 'var(--text-muted)' }}>
+                        {perfBonus > 0 ? `৳${perfBonus.toLocaleString()}` : '-'}
                       </td>
-                      <td style={{ padding: '8px 8px', textAlign: 'center' }}>
+                      <td style={{ padding: '7px 6px', textAlign: 'right', fontSize: '10px', fontWeight: 500, color: attenBonus > 0 ? 'var(--teal)' : 'var(--text-muted)' }}>
+                        {attenBonus > 0 ? `৳${attenBonus.toLocaleString()}` : '-'}
+                      </td>
+                      <td style={{ padding: '7px 6px', textAlign: 'right', fontSize: '10px', fontWeight: 500, color: specialBonus > 0 ? 'var(--purple)' : 'var(--text-muted)' }}>
+                        {specialBonus > 0 ? `৳${specialBonus.toLocaleString()}` : '-'}
+                      </td>
+                      <td style={{ padding: '7px 6px', textAlign: 'right', fontSize: '10px', fontWeight: 500, color: festivalBonus > 0 ? 'var(--amber)' : 'var(--text-muted)' }}>
+                        {festivalBonus > 0 ? `৳${festivalBonus.toLocaleString()}` : '-'}
+                      </td>
+                      <td style={{ padding: '7px 8px', textAlign: 'right', fontSize: '11px', fontWeight: 700, color: totalBonus > 0 ? 'var(--green)' : 'var(--text-muted)' }}>
+                        {totalBonus > 0 ? `৳${totalBonus.toLocaleString()}` : '-'}
+                      </td>
+                      <td style={{ padding: '7px 6px', textAlign: 'center' }}>
                         <input type="checkbox" checked={applyDeduction} onChange={e => setSalaryConfigs(p => ({ ...p, [t.id]: { ...p[t.id], applyDeductionRule: e.target.checked, bonus: p[t.id]?.bonus ?? 0, festivalBonus: p[t.id]?.festivalBonus ?? 0, fundContributionPercent: p[t.id]?.fundContributionPercent ?? 0 } }))}
-                          style={{ width: '14px', height: '14px', cursor: 'pointer', accentColor: 'var(--brand)' }} />
+                          style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--brand)' }} />
                       </td>
-                      <td style={{ padding: '8px 8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <input type="number" value={fundPercent} onChange={e => setSalaryConfigs(p => ({ ...p, [t.id]: { ...p[t.id], fundContributionPercent: Number(e.target.value) || 0, bonus: p[t.id]?.bonus ?? 0, festivalBonus: p[t.id]?.festivalBonus ?? 0, applyDeductionRule: p[t.id]?.applyDeductionRule ?? false } }))}
-                            style={{ ...input, width: '50px', padding: '4px 6px', fontSize: '11px', textAlign: 'right' }}
-                            placeholder="0" min={0} max={100} />
-                          <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>%</span>
-                        </div>
+                      <td style={{ padding: '7px 6px', textAlign: 'right', fontSize: '10px', fontWeight: 500, color: fundAmount > 0 ? 'var(--brand)' : 'var(--text-muted)' }}>
+                        {fundPercent > 0 ? `${fundPercent}%` : '-'}
                       </td>
-                      <td style={{ padding: '8px 8px', fontSize: '12px', fontWeight: 700, color: 'var(--green)' }}>
+                      <td style={{ padding: '7px 8px', textAlign: 'right', fontSize: '11px', fontWeight: 700, color: 'var(--green)' }}>
                         ৳{netPay.toLocaleString()}
                       </td>
                     </tr>
@@ -1213,28 +1490,421 @@ export default function HRPage() {
               </tbody>
               <tfoot>
                 <tr style={{ background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
-                  <td style={{ padding: '10px 8px', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>{isBn ? 'মোট' : 'Total'}</td>
-                  <td style={{ padding: '10px 8px', fontSize: '12px', fontWeight: 700 }}>৳{activeTeachers.reduce((s, t) => s + t.salary, 0).toLocaleString()}</td>
-                  <td style={{ padding: '10px 8px', fontSize: '12px', fontWeight: 700, color: 'var(--green)' }}>৳{activeTeachers.reduce((s, t) => { const local = salaryConfigs[t.id]; const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth); return s + (local?.bonus ?? existing?.bonus ?? 0) }, 0).toLocaleString()}</td>
-                  <td style={{ padding: '10px 8px', fontSize: '12px', fontWeight: 700, color: 'var(--amber)' }}>৳{activeTeachers.reduce((s, t) => { const local = salaryConfigs[t.id]; const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth); return s + (local?.festivalBonus ?? existing?.festivalBonus ?? 0) }, 0).toLocaleString()}</td>
-                  <td style={{ padding: '10px 8px', fontSize: '12px', fontWeight: 700, color: 'var(--red)' }}></td>
-                  <td style={{ padding: '10px 8px', fontSize: '12px', fontWeight: 700, color: 'var(--brand)' }}></td>
-                  <td style={{ padding: '10px 8px', fontSize: '13px', fontWeight: 700, color: 'var(--green)' }}>
+                  <td style={{ padding: '8px 10px' }}></td>
+                  <td style={{ padding: '8px 8px', fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>{isBn ? 'মোট' : 'Total'}</td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: '11px', fontWeight: 700 }}>৳{activeTeachers.reduce((s, t) => s + t.salary, 0).toLocaleString()}</td>
+                  <td style={{ padding: '8px 6px', textAlign: 'right', fontSize: '10px', fontWeight: 700, color: 'var(--green)' }}>৳{activeTeachers.reduce((s, t) => s + bonuses.filter(b => b.teacherId === t.id && b.month === salarySetupMonth && b.type === 'performance').reduce((sum, b) => sum + b.amount, 0), 0).toLocaleString()}</td>
+                  <td style={{ padding: '8px 6px', textAlign: 'right', fontSize: '10px', fontWeight: 700, color: 'var(--teal)' }}>৳{activeTeachers.reduce((s, t) => s + bonuses.filter(b => b.teacherId === t.id && b.month === salarySetupMonth && b.type === 'attendance').reduce((sum, b) => sum + b.amount, 0), 0).toLocaleString()}</td>
+                  <td style={{ padding: '8px 6px', textAlign: 'right', fontSize: '10px', fontWeight: 700, color: 'var(--purple)' }}>৳{activeTeachers.reduce((s, t) => s + bonuses.filter(b => b.teacherId === t.id && b.month === salarySetupMonth && b.type === 'special').reduce((sum, b) => sum + b.amount, 0), 0).toLocaleString()}</td>
+                  <td style={{ padding: '8px 6px', textAlign: 'right', fontSize: '10px', fontWeight: 700, color: 'var(--amber)' }}>৳{activeTeachers.reduce((s, t) => s + bonuses.filter(b => b.teacherId === t.id && b.month === salarySetupMonth && b.type === 'festival').reduce((sum, b) => sum + b.amount, 0), 0).toLocaleString()}</td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: '11px', fontWeight: 700, color: 'var(--green)' }}>৳{activeTeachers.reduce((s, t) => s + bonuses.filter(b => b.teacherId === t.id && b.month === salarySetupMonth).reduce((sum, b) => sum + b.amount, 0), 0).toLocaleString()}</td>
+                  <td style={{ padding: '8px 6px', textAlign: 'right', fontSize: '10px', fontWeight: 700, color: 'var(--red)' }}>৳{activeTeachers.reduce((s, t) => {
+                    const local = salaryConfigs[t.id]
+                    const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth)
+                    const ded = (local?.applyDeductionRule ?? existing?.applyDeductionRule ?? false) ? Math.round(t.salary / 30) : 0
+                    return s + ded
+                  }, 0).toLocaleString()}</td>
+                  <td style={{ padding: '8px 6px', textAlign: 'right', fontSize: '10px', fontWeight: 700, color: 'var(--brand)' }}>৳{activeTeachers.reduce((s, t) => {
+                    const local = salaryConfigs[t.id]
+                    const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth)
+                    const fund = Math.round(t.salary * (local?.fundContributionPercent ?? existing?.fundContributionPercent ?? 0) / 100)
+                    return s + fund
+                  }, 0).toLocaleString()}</td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: 'var(--green)' }}>
                     ৳{activeTeachers.reduce((s, t) => {
                       const local = salaryConfigs[t.id]
                       const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth)
-                      const bonus = local?.bonus ?? existing?.bonus ?? 0
-                      const fest = local?.festivalBonus ?? existing?.festivalBonus ?? 0
+                      const teacherBonuses = bonuses.filter(b => b.teacherId === t.id && b.month === salarySetupMonth)
+                      const totalBon = teacherBonuses.reduce((sum, b) => sum + b.amount, 0)
                       const ded = (local?.applyDeductionRule ?? existing?.applyDeductionRule ?? false) ? Math.round(t.salary / 30) : 0
                       const fund = Math.round(t.salary * (local?.fundContributionPercent ?? existing?.fundContributionPercent ?? 0) / 100)
-                      return s + t.salary + bonus + fest - ded - fund
+                      return s + t.salary + totalBon - ded - fund
                     }, 0).toLocaleString()}
                   </td>
                 </tr>
               </tfoot>
             </table>
           </div>
+          {selectedSalary.length > 0 && (
+            <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--brand)', background: 'var(--brand-light)', padding: '4px 10px', borderRadius: '6px', display: 'inline-block' }}>
+              {selectedSalary.length} {isBn ? 'নির্বাচিত' : 'selected'}
+            </div>
+          )}
         </div>
+      )}
+
+      {/* ─── FACILITIES ─── */}
+      {activeTab === 'facilities' && (
+        <>
+          {/* Facility Definitions */}
+          <div style={section}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={sectionTitle}>
+                <Briefcase size={15} style={{ color: 'var(--purple)' }} />{isBn ? 'সুবিধার ধরন' : 'Facility Types'}
+              </div>
+              <button onClick={() => { setFacForm({ name: '', nameBn: '', defaultAmount: '', type: 'monthly' }); setEditFac(null); setFacModalType('add-facility') }}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--purple-light)', border: '1px solid var(--purple)', color: 'var(--purple)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                <Plus size={14} />{isBn ? 'নতুন সুবিধা' : 'Add Facility'}
+              </button>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '500px' }}>
+                <thead>
+                  <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+                    {[
+                      { l: '#', w: '50px', align: 'center' as const },
+                      { l: isBn ? 'নাম (ইংরেজি)' : 'Name (EN)', align: 'left' as const },
+                      { l: isBn ? 'নাম (বাংলা)' : 'Name (BN)', align: 'left' as const },
+                      { l: isBn ? 'ধরন' : 'Type', w: '90px', align: 'center' as const },
+                      { l: isBn ? 'ডিফল্ট পরিমাণ' : 'Default Amount', w: '120px', align: 'right' as const },
+                      { l: isBn ? 'অবস্থা' : 'Status', w: '80px', align: 'center' as const },
+                      { l: isBn ? 'অ্যাকশন' : 'Action', w: '90px', align: 'center' as const },
+                    ].map(h => (
+                      <th key={h.l} style={{ padding: '10px 8px', textAlign: h.align, fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap' }}>{h.l}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {facilities.length === 0 ? (
+                    <tr><td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      <Briefcase size={24} style={{ display: 'block', margin: '0 auto 6px', opacity: 0.3 }} />
+                      {isBn ? 'কোনো সুবিধা পাওয়া যায়নি' : 'No facilities found'}
+                    </td></tr>
+                  ) : facilities.map((f, i) => (
+                    <tr key={f.id} style={{ borderBottom: '1px solid var(--border)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <td style={{ padding: '10px 8px', color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center' }}>{i + 1}</td>
+                      <td style={{ padding: '10px 8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--purple-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Briefcase size={13} style={{ color: 'var(--purple)' }} />
+                          </div>
+                          <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)' }}>{f.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '10px 8px', fontSize: '12px', color: 'var(--text-secondary)' }}>{f.nameBn || '—'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '20px', fontWeight: 500, background: f.type === 'monthly' ? 'var(--brand-light)' : 'var(--amber-light)', color: f.type === 'monthly' ? 'var(--brand)' : 'var(--amber)' }}>
+                          {f.type === 'monthly' ? (isBn ? 'মাসিক' : 'Monthly') : (isBn ? 'এককালীন' : 'One-time')}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 8px', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right' }}>৳{f.defaultAmount.toLocaleString()}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                        <span style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '20px', fontWeight: 500, background: f.isActive ? 'var(--green-light)' : 'var(--red-light)', color: f.isActive ? 'var(--green)' : 'var(--red)' }}>
+                          {f.isActive ? (isBn ? 'সক্রিয়' : 'Active') : (isBn ? 'নিষ্ক্রিয়' : 'Inactive')}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                          <button onClick={() => { setFacForm({ name: f.name, nameBn: f.nameBn, defaultAmount: String(f.defaultAmount), type: f.type }); setEditFac(f); setFacModalType('edit-facility') }}
+                            title={isBn ? 'এডিট' : 'Edit'}
+                            style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--amber-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--amber)' }}>
+                            <Edit2 size={11} />
+                          </button>
+                          <button onClick={() => setFacDeleteConfirm(f.id)}
+                            title={isBn ? 'মুছুন' : 'Delete'}
+                            style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--red-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)' }}>
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Staff Facility Panel — select staff and manage all their facilities */}
+          <div style={section}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={sectionTitle}>
+                <Users size={15} style={{ color: 'var(--brand)' }} />{isBn ? 'কর্মচারী সুবিধা প্যানেল' : 'Staff Facility Panel'}
+              </div>
+            </div>
+
+            {/* Staff selector + filters */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '10px', marginBottom: '14px' }}>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '5px', display: 'block' }}>{isBn ? 'কর্মচারী নির্বাচন' : 'Select Staff'}</label>
+                <select value={selectedFacStaff} onChange={e => setSelectedFacStaff(e.target.value)}
+                  style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '12px', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', appearance: 'auto' }}>
+                  <option value="">{isBn ? 'নির্বাচন করুন...' : 'Select staff...'}</option>
+                  {activeTeachers.map(t => <option key={t.id} value={t.id}>{t.nameEn} ({t.designation})</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '5px', display: 'block' }}>{isBn ? 'বিভাগ' : 'Department'}</label>
+                <select value={facStaffFilter} onChange={e => setFacStaffFilter(e.target.value)}
+                  style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '12px', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', appearance: 'auto' }}>
+                  <option value="">{isBn ? 'সব বিভাগ' : 'All Departments'}</option>
+                  {departments.map(d => <option key={d.id} value={d.id}>{isBn ? d.nameBn : d.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '5px', display: 'block' }}>{isBn ? 'অনুসন্ধান' : 'Search'}</label>
+                <input value={facStaffSearch} onChange={e => setFacStaffSearch(e.target.value)}
+                  style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '12px', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                  placeholder={isBn ? 'নাম, আইডি...' : 'Name, ID...'} />
+              </div>
+            </div>
+
+            {/* Facility checklist for selected staff */}
+            {selectedFacStaff && (
+              <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '10px', padding: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {teachers.find(t => t.id === selectedFacStaff)?.nameEn || ''}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      {isBn ? 'সুবিধা চেক করুন এবং পরিমাণ সেট করুন' : 'Check facilities and set amounts'}
+                    </div>
+                  </div>
+                  <button onClick={handleSaveStaffFacilities}
+                    style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <Save size={13} />{isBn ? 'সংরক্ষণ' : 'Save'}
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px' }}>
+                  {selectedStaffFacilities.map(sf => (
+                    <div key={sf.facility.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '8px', background: 'var(--bg-primary)', border: `1px solid ${sf.assigned ? 'var(--brand)' : 'var(--border)'}`, transition: 'all 0.15s' }}>
+                      <input type="checkbox" checked={sf.assigned} onChange={() => toggleStaffFacility(sf.facility.id)}
+                        style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: 'var(--brand)', flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)' }}>{isBn ? sf.facility.nameBn : sf.facility.name}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{sf.facility.name}</div>
+                      </div>
+                      {sf.assigned && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>৳</span>
+                          <input type="number" value={sf.amount} onChange={e => updateStaffFacilityAmount(sf.facility.id, Number(e.target.value) || 0)}
+                            style={{ ...input, width: '70px', padding: '4px 6px', fontSize: '11px', textAlign: 'right' }}
+                            placeholder="0" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Summary */}
+                <div style={{ marginTop: '12px', padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    {isBn ? 'মোট সুবিধা' : 'Total Facilities'}: {selectedStaffFacilities.filter(sf => sf.assigned).length} / {facilities.length}
+                  </span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--green)' }}>
+                    ৳{selectedStaffFacilities.filter(sf => sf.assigned).reduce((s, sf) => s + sf.amount, 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {!selectedFacStaff && (
+              <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+                <Users size={24} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
+                {isBn ? 'একজন কর্মচারী নির্বাচন করুন তার সুবিধা দেখতে' : 'Select a staff member to manage their facilities'}
+              </div>
+            )}
+          </div>
+
+          {/* All Assignments Summary */}
+          <div style={section}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={sectionTitle}>
+                <HandCoins size={15} style={{ color: 'var(--teal)' }} />{isBn ? 'সকল বরাদ্দ' : 'All Assignments'}
+                <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', marginLeft: '8px' }}>({filteredAssignments.length})</span>
+              </div>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <input type="date" value={assignDateFrom} onChange={e => setAssignDateFrom(e.target.value)}
+                  style={{ ...input, width: 'auto', padding: '5px 8px', fontSize: '11px' }} />
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>—</span>
+                <input type="date" value={assignDateTo} onChange={e => setAssignDateTo(e.target.value)}
+                  style={{ ...input, width: 'auto', padding: '5px 8px', fontSize: '11px' }} />
+                {selectedAssign.length > 0 && (
+                  <button onClick={() => setShowPDFModal('assignment')}
+                    style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 10px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <FileText size={12} />PDF ({selectedAssign.length})
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {filteredAssignments.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+                {isBn ? 'কোনো বরাদ্দ নেই' : 'No assignments yet'}
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '550px' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+                      <th style={{ padding: '8px', width: '36px' }}>
+                        <input type="checkbox" checked={selectedAssign.length === filteredAssignments.length && filteredAssignments.length > 0} onChange={() => setSelectedAssign(p => p.length === filteredAssignments.length ? [] : filteredAssignments.map(tf => tf.id))}
+                          style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--brand)' }} />
+                      </th>
+                      {[
+                        { l: '#', w: '40px', align: 'center' as const },
+                        { l: isBn ? 'কর্মচারী' : 'Employee', align: 'left' as const },
+                        { l: isBn ? 'সুবিধা' : 'Facility', align: 'left' as const },
+                        { l: isBn ? 'পরিমাণ' : 'Amount', w: '100px', align: 'right' as const },
+                        { l: '', w: '60px', align: 'center' as const },
+                      ].map(h => (
+                        <th key={h.l} style={{ padding: '8px', textAlign: h.align, fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap' }}>{h.l}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAssignments.map((tf, i) => {
+                      const t = teachers.find(tx => tx.id === tf.teacherId)
+                      const fac = facilities.find(f => f.id === tf.facilityId)
+                      const isSelected = selectedAssign.includes(tf.id)
+                      return (
+                        <tr key={tf.id} style={{ borderBottom: '0.5px solid var(--border)', background: isSelected ? 'var(--brand-light)' : 'transparent' }}
+                          onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-secondary)' }}
+                          onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}>
+                          <td style={{ padding: '8px' }}>
+                            <input type="checkbox" checked={isSelected} onChange={() => toggleAssign(tf.id)}
+                              style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--brand)' }} />
+                          </td>
+                          <td style={{ padding: '8px', color: 'var(--text-muted)', fontSize: '10px', textAlign: 'center' }}>{i + 1}</td>
+                          <td style={{ padding: '8px', fontSize: '11px', fontWeight: 500, color: 'var(--text-primary)' }}>{t?.nameEn || tf.teacherId}</td>
+                          <td style={{ padding: '8px', fontSize: '11px', color: 'var(--text-secondary)' }}>{isBn ? (fac?.nameBn || fac?.name) : fac?.name}</td>
+                          <td style={{ padding: '8px', fontSize: '11px', fontWeight: 600, color: 'var(--green)', textAlign: 'right' }}>৳{tf.amount.toLocaleString()}</td>
+                          <td style={{ padding: '8px', textAlign: 'center' }}>
+                            <button onClick={() => setAssignDeleteConfirm(tf.id)} title={isBn ? 'মুছুন' : 'Delete'}
+                              style={{ width: '22px', height: '22px', borderRadius: '5px', background: 'var(--red-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)' }}>
+                              <Trash2 size={10} />
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
+                      <td colSpan={4} style={{ padding: '8px', fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>{isBn ? 'মোট' : 'Total'}</td>
+                      <td style={{ padding: '8px', fontSize: '12px', fontWeight: 700, color: 'var(--green)', textAlign: 'right' }}>৳{filteredAssignments.reduce((sum, tf) => sum + tf.amount, 0).toLocaleString()}</td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+            {selectedAssign.length > 0 && (
+              <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--brand)', background: 'var(--brand-light)', padding: '4px 10px', borderRadius: '6px', display: 'inline-block' }}>
+                {selectedAssign.length} {isBn ? 'নির্বাচিত' : 'selected'}
+              </div>
+            )}
+          </div>
+
+          {/* Bonus Management */}
+          <div style={section}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={sectionTitle}>
+                <Gift size={15} style={{ color: 'var(--amber)' }} />{isBn ? 'বোনাস ব্যবস্থাপনা' : 'Bonus Management'}
+                <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', marginLeft: '8px' }}>({filteredBonuses.length})</span>
+              </div>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <input type="date" value={bonusDateFrom} onChange={e => setBonusDateFrom(e.target.value)}
+                  style={{ ...input, width: 'auto', padding: '5px 8px', fontSize: '11px' }} />
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>—</span>
+                <input type="date" value={bonusDateTo} onChange={e => setBonusDateTo(e.target.value)}
+                  style={{ ...input, width: 'auto', padding: '5px 8px', fontSize: '11px' }} />
+                {selectedBon.length > 0 && (
+                  <button onClick={() => setShowPDFModal('bonus')}
+                    style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 10px', borderRadius: '8px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <FileText size={12} />PDF ({selectedBon.length})
+                  </button>
+                )}
+                <button onClick={() => setModalType('bonus')}
+                  style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--amber)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  <Plus size={14} />{isBn ? 'বোনাস যোগ' : 'Add Bonus'}
+                </button>
+              </div>
+            </div>
+
+            {filteredBonuses.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+                {isBn ? 'কোনো বোনাস নেই' : 'No bonuses yet'}
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '620px' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+                      <th style={{ padding: '8px', width: '36px' }}>
+                        <input type="checkbox" checked={selectedBon.length === filteredBonuses.length && filteredBonuses.length > 0} onChange={toggleAllBon}
+                          style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--brand)' }} />
+                      </th>
+                      {[
+                        { l: '#', w: '40px', align: 'center' as const },
+                        { l: isBn ? 'মাস' : 'Month', align: 'left' as const },
+                        { l: isBn ? 'কর্মচারী' : 'Employee', align: 'left' as const },
+                        { l: isBn ? 'ধরন' : 'Type', align: 'left' as const },
+                        { l: isBn ? 'পরিমাণ' : 'Amount', w: '100px', align: 'right' as const },
+                        { l: isBn ? 'কারণ' : 'Reason', align: 'left' as const },
+                        { l: '', w: '80px', align: 'center' as const },
+                      ].map(h => (
+                        <th key={h.l || 'action'} style={{ padding: '8px', textAlign: h.align, fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap', width: h.w }}>{h.l}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredBonuses.map((bon, i) => {
+                      const isSelected = selectedBon.includes(bon.id)
+                      return (
+                        <tr key={bon.id} style={{ borderBottom: '1px solid var(--border)', background: isSelected ? 'var(--brand-light)' : 'transparent' }}
+                          onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-secondary)' }}
+                          onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}>
+                          <td style={{ padding: '8px' }}>
+                            <input type="checkbox" checked={isSelected} onChange={() => toggleBon(bon.id)}
+                              style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--brand)' }} />
+                          </td>
+                          <td style={{ padding: '8px', color: 'var(--text-muted)', fontSize: '10px', textAlign: 'center' }}>{i + 1}</td>
+                          <td style={{ padding: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>{bon.month}</td>
+                          <td style={{ padding: '8px', fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)' }}>{getTeacherName(bon.teacherId)}</td>
+                          <td style={{ padding: '8px' }}>
+                            <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '5px', background: bon.type === 'festival' ? 'var(--amber-light)' : bon.type === 'performance' ? 'var(--brand-light)' : bon.type === 'attendance' ? 'var(--green-light)' : 'var(--teal-light)', color: bon.type === 'festival' ? 'var(--amber)' : bon.type === 'performance' ? 'var(--brand)' : bon.type === 'attendance' ? 'var(--green)' : 'var(--teal)', fontWeight: 500 }}>{bon.type}</span>
+                          </td>
+                          <td style={{ padding: '8px', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right' }}>৳{bon.amount.toLocaleString()}</td>
+                          <td style={{ padding: '8px', fontSize: '11px', color: 'var(--text-secondary)' }}>{bon.reason}</td>
+                          <td style={{ padding: '8px', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                              <button onClick={() => { setBonForm({ teacherId: bon.teacherId, type: bon.type, amount: String(bon.amount), reason: bon.reason, month: bon.month }); setModalType('bonus'); }}
+                                style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '10px', fontFamily: 'inherit' }}>
+                                <Edit2 size={11} />
+                              </button>
+                              <button onClick={() => deleteBonus(bon.id)}
+                                style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--red)', background: 'var(--red-light)', color: 'var(--red)', cursor: 'pointer', fontSize: '10px', fontFamily: 'inherit' }}>
+                                <Trash2 size={11} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
+                      <td colSpan={5} style={{ padding: '8px', fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>{isBn ? 'মোট' : 'Total'}</td>
+                      <td style={{ padding: '8px', fontSize: '12px', fontWeight: 700, color: 'var(--amber)', textAlign: 'right' }}>৳{filteredBonuses.reduce((s, b) => s + b.amount, 0).toLocaleString()}</td>
+                      <td></td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+            {selectedBon.length > 0 && (
+              <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--brand)', background: 'var(--brand-light)', padding: '4px 10px', borderRadius: '6px', display: 'inline-block' }}>
+                {selectedBon.length} {isBn ? 'নির্বাচিত' : 'selected'}
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* ─── MODAL ─── */}
@@ -1373,14 +2043,150 @@ export default function HRPage() {
           type={showPDFModal}
           count={
             showPDFModal === 'increment' ? increments.length :
-            showPDFModal === 'bonus' ? bonuses.length :
+            showPDFModal === 'bonus' ? filteredBonuses.length :
             showPDFModal === 'promotion' ? promotions.length :
+            showPDFModal === 'assignment' ? filteredAssignments.length :
+            showPDFModal === 'salary' ? activeTeachers.length :
             funds.length
           }
           isBn={isBn}
           onClose={() => setShowPDFModal(null)}
           onDownload={(opts) => handlePDFDownload(showPDFModal, opts)}
         />
+      )}
+
+      {/* ─── FACILITY MODALS ─── */}
+      {(facModalType === 'add-facility' || facModalType === 'edit-facility') && (
+        <div style={modalOverlay} onClick={() => { setFacModalType(null); setEditFac(null) }}>
+          <div style={modalStyle} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {facModalType === 'add-facility' ? (isBn ? 'নতুন সুবিধা যোগ' : 'Add Facility') : (isBn ? 'সুবিধা এডিট করুন' : 'Edit Facility')}
+              </h2>
+              <button onClick={() => { setFacModalType(null); setEditFac(null) }}
+                style={{ padding: '6px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}>
+                <X size={16} />
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div><label style={label}>{isBn ? 'নাম (ইংরেজি) *' : 'Name (English) *'}</label>
+                <input value={facForm.name} onChange={e => setFacForm(p => ({ ...p, name: e.target.value }))} style={input} placeholder={isBn ? 'সুবিধার নাম' : 'Facility name'} />
+              </div>
+              <div><label style={label}>{isBn ? 'নাম (বাংলা)' : 'Name (Bangla)'}</label>
+                <input value={facForm.nameBn} onChange={e => setFacForm(p => ({ ...p, nameBn: e.target.value }))} style={input} placeholder={isBn ? 'বাংলায় নাম' : 'Bangla name'} />
+              </div>
+              <div><label style={label}>{isBn ? 'ডিফল্ট পরিমাণ (৳)' : 'Default Amount (৳)'}</label>
+                <input type="number" value={facForm.defaultAmount} onChange={e => setFacForm(p => ({ ...p, defaultAmount: e.target.value }))} style={input} placeholder="0" />
+              </div>
+              <div><label style={label}>{isBn ? 'ধরন' : 'Type'}</label>
+                <select value={facForm.type} onChange={e => setFacForm(p => ({ ...p, type: e.target.value as 'monthly' | 'oneTime' }))} style={input}>
+                  <option value="monthly">{isBn ? 'মাসিক' : 'Monthly'}</option>
+                  <option value="oneTime">{isBn ? 'এককালীন' : 'One-time'}</option>
+                </select>
+              </div>
+              <button onClick={facModalType === 'add-facility' ? handleAddFacility : handleEditFacility}
+                style={{ padding: '9px', borderRadius: '8px', background: 'var(--purple)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <Save size={14} />{isBn ? 'সংরক্ষণ' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {(facModalType === 'assign' || facModalType === 'edit-assign') && (
+        <div style={modalOverlay} onClick={() => { setFacModalType(null); setEditAssign(null) }}>
+          <div style={modalStyle} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {facModalType === 'assign' ? (isBn ? 'সুবিধা বরাদ্দ করুন' : 'Assign Facility') : (isBn ? 'বরাদ্দ এডিট করুন' : 'Edit Assignment')}
+              </h2>
+              <button onClick={() => { setFacModalType(null); setEditAssign(null) }}
+                style={{ padding: '6px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}>
+                <X size={16} />
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div><label style={label}>{isBn ? 'কর্মচারী *' : 'Employee *'}</label>
+                <select value={assignForm.teacherId} onChange={e => setAssignForm(p => ({ ...p, teacherId: e.target.value }))} style={input}
+                  disabled={facModalType === 'edit-assign'}>
+                  <option value="">{isBn ? 'নির্বাচন করুন' : 'Select...'}</option>
+                  {activeTeachers.map(t => <option key={t.id} value={t.id}>{t.nameEn} ({t.designation})</option>)}
+                </select>
+              </div>
+              <div><label style={label}>{isBn ? 'সুবিধা *' : 'Facility *'}</label>
+                <select value={assignForm.facilityId} onChange={e => {
+                  const fac = facilities.find(f => f.id === e.target.value)
+                  setAssignForm(p => ({ ...p, facilityId: e.target.value, amount: fac ? String(fac.defaultAmount) : p.amount }))
+                }} style={input}
+                  disabled={facModalType === 'edit-assign'}>
+                  <option value="">{isBn ? 'নির্বাচন করুন' : 'Select...'}</option>
+                  {facilities.filter(f => f.isActive).map(f => <option key={f.id} value={f.id}>{isBn ? f.nameBn : f.name}</option>)}
+                </select>
+              </div>
+              <div><label style={label}>{isBn ? 'পরিমাণ (৳) *' : 'Amount (৳) *'}</label>
+                <input type="number" value={assignForm.amount} onChange={e => setAssignForm(p => ({ ...p, amount: e.target.value }))} style={input} placeholder="0" />
+              </div>
+              <button onClick={facModalType === 'assign' ? handleAssignFacility : handleEditAssign}
+                style={{ padding: '9px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <Save size={14} />{isBn ? 'সংরক্ষণ' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Facility Delete Confirmation */}
+      {facDeleteConfirm && (
+        <div style={modalOverlay} onClick={() => setFacDeleteConfirm(null)}>
+          <div style={{ ...modalStyle, maxWidth: '380px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--red-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertCircle size={18} style={{ color: 'var(--red)' }} />
+              </div>
+              <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'মুছে ফেলুন?' : 'Delete?'}</h3>
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+              {isBn ? 'এই সুবিধাটি স্থায়ীভাবে মুছে ফেলা হবে। সম্পর্কিত সব বরাদ্দও মুছে ফেলা হবে।' : 'This facility will be permanently deleted. All related assignments will also be removed.'}
+            </p>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setFacDeleteConfirm(null)}
+                style={{ padding: '8px 14px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                {isBn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button onClick={() => { deleteFacility(facDeleteConfirm); setFacDeleteConfirm(null) }}
+                style={{ padding: '8px 14px', borderRadius: '8px', background: 'var(--red)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {isBn ? 'মুছে ফেলুন' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assignment Delete Confirmation */}
+      {assignDeleteConfirm && (
+        <div style={modalOverlay} onClick={() => setAssignDeleteConfirm(null)}>
+          <div style={{ ...modalStyle, maxWidth: '380px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--red-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertCircle size={18} style={{ color: 'var(--red)' }} />
+              </div>
+              <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'মুছে ফেলুন?' : 'Delete?'}</h3>
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+              {isBn ? 'এই বরাদ্দটি স্থায়ীভাবে মুছে ফেলা হবে।' : 'This assignment will be permanently deleted.'}
+            </p>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setAssignDeleteConfirm(null)}
+                style={{ padding: '8px 14px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                {isBn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button onClick={() => { removeTeacherFacility(assignDeleteConfirm); setAssignDeleteConfirm(null) }}
+                style={{ padding: '8px 14px', borderRadius: '8px', background: 'var(--red)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {isBn ? 'মুছে ফেলুন' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

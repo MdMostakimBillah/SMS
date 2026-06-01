@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, Check, CheckCircle, Droplets, Grid3X3, Hash, Image
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 
 
 type Op = 'photo'|'roll'|'class'|'section'|'bloodGroup'|'religion'|'academicYear'
@@ -18,9 +19,7 @@ const OPS: { id:Op; Icon:React.ComponentType<{size?:number;style?:React.CSSPrope
   { id:'academicYear',Icon:Calendar,   bn:'শিক্ষাবর্ষ',   en:'Academic Year',  color:'var(--teal)',   bg:'var(--teal-light)'   },
 ]
 
-const OPTS: Record<string,string[]> = {
-  class:       ['1','2','3','4','5','6','7','8','9','10'],
-  section:     ['A','B','C','D','E'],
+const STATIC_OPTS: Record<string,string[]> = {
   bloodGroup:  ['A+','A-','B+','B-','AB+','AB-','O+','O-'],
   religion:    ['Islam / ইসলাম','Hinduism / হিন্দু','Christianity / খ্রিস্টান','Buddhism / বৌদ্ধ','Other / অন্যান্য'],
   academicYear:['2024-25','2025-26','2026-27'],
@@ -59,7 +58,22 @@ export default function BulkUpdatePage() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const { students, updateStudent } = useAdmissionStore()
+  const { classes } = useClassStore()
   const isBn = language === 'bn'
+
+  const classOptions = useMemo(() => getClassOptions(classes), [classes])
+  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
+  const allSections = useMemo(() => {
+    const set = new Set<string>()
+    classes.forEach(cls => cls.sections.forEach(s => set.add(s.name)))
+    return Array.from(set).sort()
+  }, [classes])
+
+  const OPTS: Record<string, string[]> = useMemo(() => ({
+    ...STATIC_OPTS,
+    class: classOptions,
+    section: allSections,
+  }), [classOptions, allSections])
 
   const [op,       setOp]       = useState<Op>('roll')
   const [search,   setSearch]   = useState('')
@@ -205,11 +219,11 @@ const handlePhotoUpload = useCallback(
             </div>
             <select value={fClass} onChange={e=>{ setFClass(e.target.value); setFSection('') }} style={inp}>
               <option value="">{isBn?'সব শ্রেণি':'All Classes'}</option>
-              {['1','2','3','4','5','6','7','8','9','10'].map(c=><option key={c} value={c}>{isBn?`শ্রেণি ${c}`:`Class ${c}`}</option>)}
+              {classOptions.map(c=><option key={c} value={c}>{c}</option>)}
             </select>
             <select value={fSection} onChange={e=>setFSection(e.target.value)} style={inp}>
               <option value="">{isBn?'সব সেকশন':'All Sections'}</option>
-              {['A','B','C','D','E'].filter(sec => !fClass || students.some(s => s.class === fClass && s.section === sec)).map(s=><option key={s} value={s}>{isBn?`সেকশন ${s}`:`Section ${s}`}</option>)}
+              {(fClass ? (sectionsMap[fClass] || []) : allSections).map(s=><option key={s} value={s}>{s}</option>)}
             </select>
             <div style={{ display:'flex', gap:'5px' }}>
               <button onClick={toggleAll}

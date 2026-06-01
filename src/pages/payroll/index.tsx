@@ -13,7 +13,7 @@ export default function PayrollPage() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const { teachers, departments } = useTeacherStore()
-  const { monthlySalaryConfigs } = useHRStore()
+  const { monthlySalaryConfigs, facilities, teacherFacilities } = useHRStore()
   const isBn = language === 'bn'
 
   const [search, setSearch] = useState('')
@@ -43,6 +43,21 @@ export default function PayrollPage() {
   const getDeptName = useCallback((id: string) => {
     return departments.find(d => d.id === id)?.name || id
   }, [departments])
+
+  const getTeacherFacilityAmount = useCallback((teacherId: string) => {
+    return teacherFacilities
+      .filter(tf => tf.teacherId === teacherId)
+      .reduce((sum, tf) => sum + tf.amount, 0)
+  }, [teacherFacilities])
+
+  const getTeacherFacilityDetails = useCallback((teacherId: string) => {
+    return teacherFacilities
+      .filter(tf => tf.teacherId === teacherId)
+      .map(tf => {
+        const fac = facilities.find(f => f.id === tf.facilityId)
+        return { name: fac?.name || 'Unknown', nameBn: fac?.nameBn || 'অজানা', amount: tf.amount }
+      })
+  }, [teacherFacilities, facilities])
 
   const activeTeachers = useMemo(() => teachers.filter(t => t.status === 'active'), [teachers])
 
@@ -99,12 +114,11 @@ export default function PayrollPage() {
       const cfg = getMonthConfigs(t.id)
       const bonusVal = cfg?.bonus || 0
       const festivalVal = cfg?.festivalBonus || 0
+      const facilityTotal = getTeacherFacilityAmount(t.id)
       const deductionAmount = cfg?.applyDeductionRule ? Math.round(basic / 30) : 0
       const fundAmount = Math.round(basic * (cfg?.fundContributionPercent || 0) / 100)
-      const gross = basic + Math.round(basic * 0.15) + Math.round(basic * 0.1) + Math.round(basic * 0.05) + bonusVal + (t.overtime || 0) + festivalVal
-      const pf = Math.round(basic * 0.08)
-      const tax = Math.round(gross * 0.05)
-      const net = gross - pf - tax - deductionAmount - fundAmount
+      const gross = basic + Math.round(basic * 0.15) + Math.round(basic * 0.1) + Math.round(basic * 0.05) + bonusVal + (t.overtime || 0) + festivalVal + facilityTotal
+      const net = gross - deductionAmount - fundAmount
       return `<tr style="border-bottom:1px solid #eee">
         <td style="padding:6px 8px;font-size:11px">${i+1}</td>
         <td style="padding:6px 8px;font-size:11px;font-family:monospace;color:#6366f1">${t.id}</td>
@@ -115,10 +129,11 @@ export default function PayrollPage() {
         <td style="padding:6px 8px;font-size:11px;text-align:right">৳${bonusVal.toLocaleString()}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:right">৳${(t.overtime||0).toLocaleString()}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:right">৳${festivalVal.toLocaleString()}</td>
+        <td style="padding:6px 8px;font-size:11px;text-align:right">৳${facilityTotal.toLocaleString()}</td>
         <td style="padding:6px 8px;font-size:12px;font-weight:700;text-align:right;color:#10b981">৳${net.toLocaleString()}</td>
       </tr>`
     }).join('')
-    const totalNet = list.reduce((s, t) => { const b=t.salary; const cfg=getMonthConfigs(t.id); const bv=cfg?.bonus||0; const fv=cfg?.festivalBonus||0; const da=cfg?.applyDeductionRule?Math.round(b/30):0; const fa=Math.round(b*(cfg?.fundContributionPercent||0)/100); const g=b+Math.round(b*0.15)+Math.round(b*0.1)+Math.round(b*0.05)+bv+(t.overtime||0)+fv; return s+g-Math.round(b*0.08)-Math.round(g*0.05)-da-fa }, 0)
+    const totalNet = list.reduce((s, t) => { const b=t.salary; const cfg=getMonthConfigs(t.id); const bv=cfg?.bonus||0; const fv=cfg?.festivalBonus||0; const ft=getTeacherFacilityAmount(t.id); const da=cfg?.applyDeductionRule?Math.round(b/30):0; const fa=Math.round(b*(cfg?.fundContributionPercent||0)/100); const g=b+Math.round(b*0.15)+Math.round(b*0.1)+Math.round(b*0.05)+bv+(t.overtime||0)+fv+ft; return s+g-Math.round(b*0.08)-Math.round(g*0.05)-da-fa }, 0)
     const win = window.open('', '_blank')
     if (!win) return
     win.document.write(`<!DOCTYPE html><html><head><title>Payroll - ${list.length} employees</title>
@@ -135,9 +150,9 @@ export default function PayrollPage() {
 </style></head><body>
 <h1>EduTech School — Selected Payroll</h1>
 <div class="sub">Month: ${month} | Selected: ${list.length} employees | Generated: ${new Date().toLocaleDateString()}</div>
-<table><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Dept</th><th>Designation</th><th>Basic</th><th>Bonus</th><th>Overtime</th><th>Festival</th><th>Net Pay</th></tr></thead>
+<table><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Dept</th><th>Designation</th><th>Basic</th><th>Bonus</th><th>Overtime</th><th>Festival</th><th>Facilities</th><th>Net Pay</th></tr></thead>
 <tbody>${rows}
-<tr class="total-row"><td colspan="5" style="padding:8px;font-size:12px">TOTAL (${list.length} employees)</td><td colspan="4"></td><td style="padding:8px;text-align:right;font-size:12px;font-weight:700;color:#10b981">৳${totalNet.toLocaleString()}</td></tr>
+<tr class="total-row"><td colspan="5" style="padding:8px;font-size:12px">TOTAL (${list.length} employees)</td><td colspan="5"></td><td style="padding:8px;text-align:right;font-size:12px;font-weight:700;color:#10b981">৳${totalNet.toLocaleString()}</td></tr>
 </tbody></table></body></html>`)
     win.document.close()
     setTimeout(() => win.print(), 600)
@@ -152,24 +167,24 @@ export default function PayrollPage() {
     const bonusVal = cfg?.bonus || 0
     const overtimeVal = t.overtime || 0
     const festivalVal = cfg?.festivalBonus || 0
+    const facilityDetails = getTeacherFacilityDetails(t.id)
+    const facilityTotal = facilityDetails.reduce((s, f) => s + f.amount, 0)
     const deductionAmount = cfg?.applyDeductionRule ? Math.round(basic / 30) : 0
     const fundAmount = Math.round(basic * (cfg?.fundContributionPercent || 0) / 100)
-    const gross = basic + house + medical + conveyance + bonusVal + overtimeVal + festivalVal
-    const pf = Math.round(basic * 0.08)
-    const tax = Math.round(gross * 0.05)
-    const totalDeduction = pf + tax + deductionAmount + fundAmount
+    const gross = basic + house + medical + conveyance + bonusVal + overtimeVal + festivalVal + facilityTotal
+    const totalDeduction = deductionAmount + fundAmount
     const net = gross - totalDeduction
+
+    const facilityRows = facilityDetails.map(f => `<tr><td>${isBn ? f.nameBn : f.name}</td><td style="text-align:right">৳${f.amount.toLocaleString()}</td></tr>`).join('')
 
     const win = window.open('', '_blank')
     if (!win) return
     win.document.write(`<!DOCTYPE html><html><head><title>Payslip - ${t.id}</title>
 <style>
-  @page{size:A4 landscape;margin:8mm}
+  @page{size:A4 portrait;margin:10mm}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:11px;background:#fff}
-  .container{display:flex;gap:12mm;height:100%}
-  .slip{flex:1;border:1.5px solid #c7d2fe;border-radius:8px;padding:10mm;position:relative}
-  .slip-label{position:absolute;top:-8px;left:10mm;background:#fff;padding:0 6px;font-size:8px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:1px}
+  body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:11px;background:#fff;padding:10px}
+  .slip{border:1.5px solid #c7d2fe;border-radius:8px;padding:12px;max-width:190mm;margin:0 auto}
   .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #6366f1}
   .logo-box{width:32px;height:32px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
   .school h1{font-size:12px;font-weight:700;color:#6366f1}
@@ -186,30 +201,29 @@ export default function PayrollPage() {
   td:last-child{text-align:right;font-weight:600}
   .total td{border-top:1.5px solid #6366f1;font-weight:700;font-size:10px;color:#1a1a1a}
   .net td{background:#eef2ff;color:#6366f1;font-size:11px;font-weight:700}
-  .footer{margin-top:8px;padding-top:6px;border-top:1px solid #ddd;display:flex;justify-content:space-between}
+  .footer{margin-top:10px;padding-top:6px;border-top:1px solid #ddd;display:flex;justify-content:space-between}
   .sign-line{text-align:center}
   .sign-line .line{width:80px;height:1px;background:#333;margin:12px auto 3px}
   .sign-label{font-size:7px;color:#555}
   @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 </style></head><body>
-<div class="container">
-  <div class="slip">
-    <div class="slip-label">Admin Copy</div>
-    <div class="header">
-      <div style="display:flex;align-items:center;gap:6px">
-        <div class="logo-box">ET</div>
-        <div class="school"><h1>EduTech School</h1><p>Sunrise Academy</p></div>
-      </div>
-      <div style="text-align:right"><div style="font-size:7px;color:#666">Payslip For</div><div style="font-size:10px;font-weight:700;color:#6366f1">${month}</div></div>
+<div class="slip">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="logo-box">ET</div>
+      <div class="school"><h1>EduTech School</h1><p>Sunrise Academy</p></div>
     </div>
-    <div class="title">SALARY SLIP / বেতন পর্চি</div>
-    <div class="info-row">
-      <div class="info-item"><div class="label">ID</div><div class="value">${t.id}</div></div>
-      <div class="info-item"><div class="label">Name</div><div class="value">${t.nameEn}</div></div>
-      <div class="info-item"><div class="label">Dept</div><div class="value">${getDeptName(t.departmentId)}</div></div>
-      <div class="info-item"><div class="label">Designation</div><div class="value">${t.designation||'—'}</div></div>
-    </div>
-    <div class="section">
+    <div style="text-align:right"><div style="font-size:7px;color:#666">Payslip For</div><div style="font-size:10px;font-weight:700;color:#6366f1">${month}</div></div>
+  </div>
+  <div class="title">SALARY SLIP / বেতন পর্চি</div>
+  <div class="info-row">
+    <div class="info-item"><div class="label">ID</div><div class="value">${t.id}</div></div>
+    <div class="info-item"><div class="label">Name</div><div class="value">${t.nameEn}</div></div>
+    <div class="info-item"><div class="label">Dept</div><div class="value">${getDeptName(t.departmentId)}</div></div>
+    <div class="info-item"><div class="label">Designation</div><div class="value">${t.designation||'—'}</div></div>
+  </div>
+  <div style="display:flex;gap:12px">
+    <div class="section" style="flex:1">
       <div class="section-title">Earnings</div>
       <table>
         <tr><td>Basic Salary</td><td>৳${basic.toLocaleString()}</td></tr>
@@ -219,79 +233,28 @@ export default function PayrollPage() {
         ${bonusVal > 0 ? `<tr><td>Bonus</td><td>৳${bonusVal.toLocaleString()}</td></tr>` : ''}
         ${overtimeVal > 0 ? `<tr><td>Overtime</td><td>৳${overtimeVal.toLocaleString()}</td></tr>` : ''}
         ${festivalVal > 0 ? `<tr><td>Festival Bonus</td><td>৳${festivalVal.toLocaleString()}</td></tr>` : ''}
+        ${facilityRows}
         <tr class="total"><td>Gross Earnings</td><td>৳${gross.toLocaleString()}</td></tr>
       </table>
     </div>
-    <div class="section">
+    <div class="section" style="flex:1">
       <div class="section-title">Deductions</div>
       <table>
-        <tr><td>PF (8%)</td><td>-৳${pf.toLocaleString()}</td></tr>
-        <tr><td>Tax (5%)</td><td>-৳${tax.toLocaleString()}</td></tr>
         ${deductionAmount > 0 ? `<tr><td>Salary Deduction (1 day)</td><td>-৳${deductionAmount.toLocaleString()}</td></tr>` : ''}
         ${fundAmount > 0 ? `<tr><td>Fund Contribution</td><td>-৳${fundAmount.toLocaleString()}</td></tr>` : ''}
         <tr class="total"><td>Total Deductions</td><td>-৳${totalDeduction.toLocaleString()}</td></tr>
       </table>
-    </div>
-    <div class="section">
-      <table>
-        <tr class="net"><td>NET SALARY</td><td>৳${net.toLocaleString()}</td></tr>
-      </table>
-    </div>
-    <div class="footer">
-      <div class="sign-line"><div class="line"></div><div class="sign-label">Admin Approval</div></div>
-      <div style="text-align:center;font-size:7px;color:#888"><div>Date: ___________</div></div>
-      <div class="sign-line"><div class="line"></div><div class="sign-label">Authorized</div></div>
     </div>
   </div>
-  <div class="slip">
-    <div class="slip-label">Employee Copy</div>
-    <div class="header">
-      <div style="display:flex;align-items:center;gap:6px">
-        <div class="logo-box">ET</div>
-        <div class="school"><h1>EduTech School</h1><p>Sunrise Academy</p></div>
-      </div>
-      <div style="text-align:right"><div style="font-size:7px;color:#666">Payslip For</div><div style="font-size:10px;font-weight:700;color:#6366f1">${month}</div></div>
-    </div>
-    <div class="title">SALARY SLIP / বেতন পর্চি</div>
-    <div class="info-row">
-      <div class="info-item"><div class="label">ID</div><div class="value">${t.id}</div></div>
-      <div class="info-item"><div class="label">Name</div><div class="value">${t.nameEn}</div></div>
-      <div class="info-item"><div class="label">Dept</div><div class="value">${getDeptName(t.departmentId)}</div></div>
-      <div class="info-item"><div class="label">Designation</div><div class="value">${t.designation||'—'}</div></div>
-    </div>
-    <div class="section">
-      <div class="section-title">Earnings</div>
-      <table>
-        <tr><td>Basic Salary</td><td>৳${basic.toLocaleString()}</td></tr>
-        <tr><td>House Rent (15%)</td><td>৳${house.toLocaleString()}</td></tr>
-        <tr><td>Medical (10%)</td><td>৳${medical.toLocaleString()}</td></tr>
-        <tr><td>Conveyance (5%)</td><td>৳${conveyance.toLocaleString()}</td></tr>
-        ${bonusVal > 0 ? `<tr><td>Bonus</td><td>৳${bonusVal.toLocaleString()}</td></tr>` : ''}
-        ${overtimeVal > 0 ? `<tr><td>Overtime</td><td>৳${overtimeVal.toLocaleString()}</td></tr>` : ''}
-        ${festivalVal > 0 ? `<tr><td>Festival Bonus</td><td>৳${festivalVal.toLocaleString()}</td></tr>` : ''}
-        <tr class="total"><td>Gross Earnings</td><td>৳${gross.toLocaleString()}</td></tr>
-      </table>
-    </div>
-    <div class="section">
-      <div class="section-title">Deductions</div>
-      <table>
-        <tr><td>PF (8%)</td><td>-৳${pf.toLocaleString()}</td></tr>
-        <tr><td>Tax (5%)</td><td>-৳${tax.toLocaleString()}</td></tr>
-        ${deductionAmount > 0 ? `<tr><td>Salary Deduction (1 day)</td><td>-৳${deductionAmount.toLocaleString()}</td></tr>` : ''}
-        ${fundAmount > 0 ? `<tr><td>Fund Contribution</td><td>-৳${fundAmount.toLocaleString()}</td></tr>` : ''}
-        <tr class="total"><td>Total Deductions</td><td>-৳${totalDeduction.toLocaleString()}</td></tr>
-      </table>
-    </div>
-    <div class="section">
-      <table>
-        <tr class="net"><td>NET SALARY</td><td>৳${net.toLocaleString()}</td></tr>
-      </table>
-    </div>
-    <div class="footer">
-      <div class="sign-line"><div class="line"></div><div class="sign-label">Employee Signature</div></div>
-      <div style="text-align:center;font-size:7px;color:#888"><div>Date: ___________</div></div>
-      <div class="sign-line"><div class="line"></div><div class="sign-label">Received By</div></div>
-    </div>
+  <div class="section">
+    <table>
+      <tr class="net"><td>NET SALARY</td><td>৳${net.toLocaleString()}</td></tr>
+    </table>
+  </div>
+  <div class="footer">
+    <div class="sign-line"><div class="line"></div><div class="sign-label">Admin Approval</div></div>
+    <div style="text-align:center;font-size:7px;color:#888"><div>Date: ___________</div></div>
+    <div class="sign-line"><div class="line"></div><div class="sign-label">Employee Signature</div></div>
   </div>
 </div></body></html>`)
     win.document.close()
@@ -304,12 +267,11 @@ export default function PayrollPage() {
       const cfg = getMonthConfigs(t.id)
       const bonusVal = cfg?.bonus || 0
       const festivalVal = cfg?.festivalBonus || 0
+      const facilityTotal = getTeacherFacilityAmount(t.id)
       const deductionAmount = cfg?.applyDeductionRule ? Math.round(basic / 30) : 0
       const fundAmount = Math.round(basic * (cfg?.fundContributionPercent || 0) / 100)
-      const gross = basic + Math.round(basic * 0.15) + Math.round(basic * 0.1) + Math.round(basic * 0.05) + bonusVal + (t.overtime || 0) + festivalVal
-      const pf = Math.round(basic * 0.08)
-      const tax = Math.round(gross * 0.05)
-      const net = gross - pf - tax - deductionAmount - fundAmount
+      const gross = basic + Math.round(basic * 0.15) + Math.round(basic * 0.1) + Math.round(basic * 0.05) + bonusVal + (t.overtime || 0) + festivalVal + facilityTotal
+      const net = gross - deductionAmount - fundAmount
       return `<tr style="border-bottom:1px solid #eee">
         <td style="padding:6px 8px;font-size:11px">${i+1}</td>
         <td style="padding:6px 8px;font-size:11px;font-family:monospace;color:#6366f1">${t.id}</td>
@@ -320,6 +282,7 @@ export default function PayrollPage() {
         <td style="padding:6px 8px;font-size:11px;text-align:right">৳${bonusVal.toLocaleString()}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:right">৳${(t.overtime||0).toLocaleString()}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:right">৳${festivalVal.toLocaleString()}</td>
+        <td style="padding:6px 8px;font-size:11px;text-align:right">৳${facilityTotal.toLocaleString()}</td>
         <td style="padding:6px 8px;font-size:12px;font-weight:700;text-align:right;color:#10b981">৳${net.toLocaleString()}</td>
       </tr>`
     }).join('')
@@ -343,7 +306,7 @@ export default function PayrollPage() {
 <table>
   <thead><tr>
     <th>#</th><th>ID</th><th>Name</th><th>Dept</th><th>Designation</th>
-    <th>Basic</th><th>Bonus</th><th>Overtime</th><th>Festival</th><th>Net Pay</th>
+    <th>Basic</th><th>Bonus</th><th>Overtime</th><th>Festival</th><th>Facilities</th><th>Net Pay</th>
   </tr></thead>
   <tbody>${rows}
     <tr class="total-row">
@@ -352,7 +315,8 @@ export default function PayrollPage() {
       <td style="padding:8px;text-align:right;font-size:11px">৳${filtered.reduce((s,t)=>{const cfg=getMonthConfigs(t.id);return s+(cfg?.bonus||0)},0).toLocaleString()}</td>
       <td style="padding:8px;text-align:right;font-size:11px">৳${filtered.reduce((s,t)=>s+(t.overtime||0),0).toLocaleString()}</td>
       <td style="padding:8px;text-align:right;font-size:11px">৳${filtered.reduce((s,t)=>{const cfg=getMonthConfigs(t.id);return s+(cfg?.festivalBonus||0)},0).toLocaleString()}</td>
-      <td style="padding:8px;text-align:right;font-size:12px;font-weight:700;color:#10b981">৳${filtered.reduce((s,t)=>{const b=t.salary;const cfg=getMonthConfigs(t.id);const bv=cfg?.bonus||0;const fv=cfg?.festivalBonus||0;const da=cfg?.applyDeductionRule?Math.round(b/30):0;const fa=Math.round(b*(cfg?.fundContributionPercent||0)/100);const g=b+Math.round(b*0.15)+Math.round(b*0.1)+Math.round(b*0.05)+bv+(t.overtime||0)+fv;return s+g-Math.round(b*0.08)-Math.round(g*0.05)-da-fa},0).toLocaleString()}</td>
+      <td style="padding:8px;text-align:right;font-size:11px">৳${filtered.reduce((s,t)=>s+getTeacherFacilityAmount(t.id),0).toLocaleString()}</td>
+      <td style="padding:8px;text-align:right;font-size:12px;font-weight:700;color:#10b981">৳${filtered.reduce((s,t)=>{const b=t.salary;const cfg=getMonthConfigs(t.id);const bv=cfg?.bonus||0;const fv=cfg?.festivalBonus||0;const ft=getTeacherFacilityAmount(t.id);const da=cfg?.applyDeductionRule?Math.round(b/30):0;const fa=Math.round(b*(cfg?.fundContributionPercent||0)/100);const g=b+Math.round(b*0.15)+Math.round(b*0.1)+Math.round(b*0.05)+bv+(t.overtime||0)+fv+ft;return s+g-da-fa},0).toLocaleString()}</td>
     </tr>
   </tbody>
 </table></body></html>`)
@@ -546,12 +510,11 @@ export default function PayrollPage() {
                 const bonusVal = cfg?.bonus || 0
                 const overtimeVal = t.overtime || 0
                 const festivalVal = cfg?.festivalBonus || 0
+                const facilityTotal = getTeacherFacilityAmount(t.id)
                 const deductionAmount = cfg?.applyDeductionRule ? Math.round(basic / 30) : 0
                 const fundAmount = Math.round(basic * (cfg?.fundContributionPercent || 0) / 100)
-                const gross = basic + house + medical + conveyance + bonusVal + overtimeVal + festivalVal
-                const pf = Math.round(basic * 0.08)
-                const tax = Math.round(gross * 0.05)
-                const net = gross - pf - tax - deductionAmount - fundAmount
+                const gross = basic + house + medical + conveyance + bonusVal + overtimeVal + festivalVal + facilityTotal
+                const net = gross - deductionAmount - fundAmount
                 const isExpanded = expandedId === t.id
 
                 return (
@@ -588,54 +551,52 @@ export default function PayrollPage() {
                     {isExpanded && (
                       <tr>
                         <td colSpan={7} style={{ padding: '0 16px 12px' }}>
-                          <div style={{ background: 'var(--bg-secondary)', borderRadius: '8px', padding: '12px', display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '10px' }}>
-                            <div>
+                          <div style={{ background: 'var(--bg-secondary)', borderRadius: '8px', padding: '14px 20px', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '16px 32px' }}>
+                            <div style={{ textAlign: 'center', minWidth: '120px' }}>
                               <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>{isBn ? 'মূল বেতন' : 'Basic Salary'}</div>
-                              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>৳{basic.toLocaleString()}</div>
+                              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>৳{basic.toLocaleString()}</div>
                             </div>
-                            <div>
+                            <div style={{ textAlign: 'center', minWidth: '120px' }}>
                               <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>{isBn ? 'বাসা ভাড়া (১৫%)' : 'House Rent (15%)'}</div>
-                              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>৳{house.toLocaleString()}</div>
+                              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>৳{house.toLocaleString()}</div>
                             </div>
-                            <div>
+                            <div style={{ textAlign: 'center', minWidth: '120px' }}>
                               <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>{isBn ? 'চিকিৎসা (১০%)' : 'Medical (10%)'}</div>
-                              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>৳{medical.toLocaleString()}</div>
+                              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>৳{medical.toLocaleString()}</div>
                             </div>
-                            <div>
+                            <div style={{ textAlign: 'center', minWidth: '120px' }}>
                               <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>{isBn ? 'যাতায়াত (৫%)' : 'Conveyance (5%)'}</div>
-                              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>৳{conveyance.toLocaleString()}</div>
+                              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>৳{conveyance.toLocaleString()}</div>
                             </div>
-                            {bonusVal > 0 && <div>
+                            {bonusVal > 0 && <div style={{ textAlign: 'center', minWidth: '120px' }}>
                               <div style={{ fontSize: '10px', color: 'var(--green)', marginBottom: '4px' }}>{isBn ? 'বোনাস' : 'Bonus'}</div>
-                              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--green)' }}>+৳{bonusVal.toLocaleString()}</div>
+                              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--green)' }}>+৳{bonusVal.toLocaleString()}</div>
                             </div>}
-                            {overtimeVal > 0 && <div>
+                            {overtimeVal > 0 && <div style={{ textAlign: 'center', minWidth: '120px' }}>
                               <div style={{ fontSize: '10px', color: 'var(--green)', marginBottom: '4px' }}>{isBn ? 'ওভারটাইম' : 'Overtime'}</div>
-                              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--green)' }}>+৳{overtimeVal.toLocaleString()}</div>
+                              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--green)' }}>+৳{overtimeVal.toLocaleString()}</div>
                             </div>}
-                            {festivalVal > 0 && <div>
+                            {festivalVal > 0 && <div style={{ textAlign: 'center', minWidth: '120px' }}>
                               <div style={{ fontSize: '10px', color: 'var(--green)', marginBottom: '4px' }}>{isBn ? 'উৎসব বোনাস' : 'Festival Bonus'}</div>
-                              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--green)' }}>+৳{festivalVal.toLocaleString()}</div>
+                              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--green)' }}>+৳{festivalVal.toLocaleString()}</div>
                             </div>}
-                            {deductionAmount > 0 && <div>
+                            {getTeacherFacilityDetails(t.id).map((fac, fi) => (
+                              <div key={fi} style={{ textAlign: 'center', minWidth: '120px' }}>
+                                <div style={{ fontSize: '10px', color: 'var(--green)', marginBottom: '4px' }}>{isBn ? fac.nameBn : fac.name}</div>
+                                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--green)' }}>+৳{fac.amount.toLocaleString()}</div>
+                              </div>
+                            ))}
+                            {deductionAmount > 0 && <div style={{ textAlign: 'center', minWidth: '120px' }}>
                               <div style={{ fontSize: '10px', color: 'var(--red)', marginBottom: '4px' }}>{isBn ? 'বেতন কাটা (১ দিন)' : 'Deduction (1 day)'}</div>
-                              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--red)' }}>-৳{deductionAmount.toLocaleString()}</div>
+                              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--red)' }}>-৳{deductionAmount.toLocaleString()}</div>
                             </div>}
-                            {fundAmount > 0 && <div>
+                            {fundAmount > 0 && <div style={{ textAlign: 'center', minWidth: '120px' }}>
                               <div style={{ fontSize: '10px', color: 'var(--red)', marginBottom: '4px' }}>{isBn ? 'তহবিল অংশদান' : 'Fund Contribution'}</div>
-                              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--red)' }}>-৳{fundAmount.toLocaleString()}</div>
+                              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--red)' }}>-৳{fundAmount.toLocaleString()}</div>
                             </div>}
-                            <div>
-                              <div style={{ fontSize: '10px', color: 'var(--red)', marginBottom: '4px' }}>{isBn ? 'পিএফ (৮%)' : 'PF (8%)'}</div>
-                              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--red)' }}>-৳{pf.toLocaleString()}</div>
-                            </div>
-                            <div>
-                              <div style={{ fontSize: '10px', color: 'var(--red)', marginBottom: '4px' }}>{isBn ? 'ট্যাক্স (৫%)' : 'Tax (5%)'}</div>
-                              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--red)' }}>-৳{tax.toLocaleString()}</div>
-                            </div>
-                            <div style={{ gridColumn: isMobile ? '1 / -1' : 'auto' }}>
+                            <div style={{ textAlign: 'center', minWidth: '120px' }}>
                               <div style={{ fontSize: '10px', color: 'var(--green)', marginBottom: '4px' }}>{isBn ? 'নেট বেতন' : 'Net Salary'}</div>
-                              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--green)' }}>৳{net.toLocaleString()}</div>
+                              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--green)' }}>৳{net.toLocaleString()}</div>
                             </div>
                           </div>
                         </td>

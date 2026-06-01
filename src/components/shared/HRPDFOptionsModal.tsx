@@ -1,15 +1,17 @@
 import React, { useState, useCallback } from 'react'
 import { X, File, LayoutTemplate, Plus, Trash2, Download } from 'lucide-react'
-import { HR_INCREMENT_COLUMNS, HR_BONUS_COLUMNS, HR_PROMOTION_COLUMNS, HR_FUND_COLUMNS } from '@/pages/hr/listPdfTemplate'
+import { HR_INCREMENT_COLUMNS, HR_BONUS_COLUMNS, HR_PROMOTION_COLUMNS, HR_FUND_COLUMNS, HR_ASSIGNMENT_COLUMNS, HR_SALARY_COLUMNS } from '@/pages/hr/listPdfTemplate'
 import type { HRPDFColumn, HRListPDFOptions } from '@/pages/hr/listPdfTemplate'
 
-type HRType = 'increment' | 'bonus' | 'promotion' | 'fund'
+type HRType = 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary'
 
 const COLUMN_MAP: Record<HRType, HRPDFColumn[]> = {
   increment: HR_INCREMENT_COLUMNS,
   bonus: HR_BONUS_COLUMNS,
   promotion: HR_PROMOTION_COLUMNS,
   fund: HR_FUND_COLUMNS,
+  assignment: HR_ASSIGNMENT_COLUMNS,
+  salary: HR_SALARY_COLUMNS,
 }
 
 const TITLE_MAP: Record<HRType, { en: string; bn: string }> = {
@@ -17,6 +19,8 @@ const TITLE_MAP: Record<HRType, { en: string; bn: string }> = {
   bonus: { en: 'Bonus List', bn: 'বোনাস তালিকা' },
   promotion: { en: 'Promotion List', bn: 'পদোন্নতি তালিকা' },
   fund: { en: 'Fund Transactions', bn: 'তহবিল লেনদেন' },
+  assignment: { en: 'Facility Assignments', bn: 'সুবিধা বরাদ্দ' },
+  salary: { en: 'Salary Statement', bn: 'বেতন স্টেটমেন্ট' },
 }
 
 interface Props {

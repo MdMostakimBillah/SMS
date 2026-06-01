@@ -4,10 +4,9 @@ import { ArrowLeft, ArrowUpCircle, Check, Info, User, Users } from 'lucide-react
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 
-const CLASSES = ['1','2','3','4','5','6','7','8','9','10']
-const SECTIONS = ['A','B','C','D','E']
 const SESSIONS = ['2024-25','2025-26','2026-27','2027-28']
 
 // OUTSIDE — prevents input focus loss on re-render
@@ -38,7 +37,11 @@ export default function ClassPromotionPage() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const { students, updateStudent } = useAdmissionStore()
+  const { classes } = useClassStore()
   const isBn = language === 'bn'
+
+  const classOptions = useMemo(() => getClassOptions(classes), [classes])
+  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
   const approved = useMemo(() => students.filter(s => s.status === 'approved'), [students])
 
@@ -145,14 +148,14 @@ export default function ClassPromotionPage() {
                 <label style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>{isBn ? 'শ্রেণি' : 'Class'}</label>
                 <select value={fromClass} onChange={e => { setFromClass(e.target.value); setSelected([]); setRollMap({}) }} style={inp}>
                   <option value="">{isBn ? 'সব শ্রেণি' : 'All Classes'}</option>
-                  {CLASSES.map(c => <option key={c} value={c}>{isBn ? `শ্রেণি ${c}` : `Class ${c}`}</option>)}
+                  {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
                 <label style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>{isBn ? 'সেকশন' : 'Section'}</label>
                 <select value={fromSection} onChange={e => { setFromSection(e.target.value); setSelected([]); setRollMap({}) }} style={inp}>
                   <option value="">{isBn ? 'সব সেকশন' : 'All Sections'}</option>
-                  {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                  {(sectionsMap[fromClass] || classOptions.flatMap(c => sectionsMap[c] || [])).filter((s, i, a) => a.indexOf(s) === i).map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             </div>
@@ -168,14 +171,14 @@ export default function ClassPromotionPage() {
                 <label style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>{isBn ? 'শ্রেণি' : 'Class'} <span style={{ color: 'var(--red)' }}>*</span></label>
                 <select value={toClass} onChange={e => setToClass(e.target.value)} style={{ ...inp, borderColor: toClass ? 'var(--brand)' : 'var(--border)' }}>
                   <option value="">{isBn ? 'বেছে নিন' : 'Select'}</option>
-                  {CLASSES.map(c => <option key={c} value={c}>{isBn ? `শ্রেণি ${c}` : `Class ${c}`}</option>)}
+                  {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
                 <label style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>{isBn ? 'সেকশন' : 'Section'}</label>
                 <select value={toSection} onChange={e => setToSection(e.target.value)} style={inp}>
                   <option value="">{isBn ? 'একই সেকশন' : 'Same Section'}</option>
-                  {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                  {(sectionsMap[toClass] || classOptions.flatMap(c => sectionsMap[c] || [])).filter((s, i, a) => a.indexOf(s) === i).map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
@@ -265,7 +268,7 @@ export default function ClassPromotionPage() {
                     <td style={{ padding: '8px 6px' }}>
                       <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 6px', borderRadius: '5px', background: 'var(--brand-light)', color: 'var(--brand)' }}>
-                          {isBn ? `শ্র ${s.class}` : `Cls ${s.class}`}
+                          {s.class}
                         </span>
                         <span style={{ fontSize: '10px', padding: '2px 5px', borderRadius: '5px', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
                           {s.section}
@@ -277,7 +280,7 @@ export default function ClassPromotionPage() {
                       {toClass ? (
                         <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 6px', borderRadius: '5px', background: 'var(--green-light)', color: 'var(--green)' }}>
-                            {isBn ? `শ্র ${toClass}` : `Cls ${toClass}`}
+                            {toClass}
                           </span>
                           <span style={{ fontSize: '10px', padding: '2px 5px', borderRadius: '5px', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
                             {toSection || s.section}

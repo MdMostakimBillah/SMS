@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera, Clock, Users, Check } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
@@ -8,14 +8,13 @@ import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 
 const BLOOD_GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-']
 const GENDERS = ['Male', 'Female']
-const DESIGNATIONS = ['Professor', 'Associate Professor', 'Assistant Professor', 'Lecturer', 'Head of Department', 'Lab Assistant']
 const RELIGIONS = ['Islam', 'Hinduism', 'Christianity', 'Buddhism']
 
 export default function AddTeacherPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { departments, subjects, addTeacher, getNextTeacherId } = useTeacherStore()
+  const { departments, subjects, designations, addTeacher, getNextTeacherId } = useTeacherStore()
   const isBn = language === 'bn'
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -53,10 +52,15 @@ export default function AddTeacherPage() {
   const [guardianPhone, setGuardianPhone] = useState('')
   const [guardianRelation, setGuardianRelation] = useState('')
   const [parentAddress, setParentAddress] = useState('')
-  const [expertSubjects, setExpertSubjects] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const filteredSubjects = subjects.filter(s => !departmentId || s.departmentId === departmentId)
+  const { recommendedSubjects, otherSubjects } = useMemo(() => {
+    if (!departmentId) return { recommendedSubjects: subjects, otherSubjects: [] }
+    return {
+      recommendedSubjects: subjects.filter(s => s.departmentId === departmentId || s.departmentIds?.includes(departmentId)),
+      otherSubjects: subjects.filter(s => s.departmentId !== departmentId && !s.departmentIds?.includes(departmentId)),
+    }
+  }, [subjects, departmentId])
 
   const toggleSubject = (id: string) => {
     setSubjectIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
@@ -100,7 +104,6 @@ export default function AddTeacherPage() {
       guardianRelation: guardianRelation.trim(),
       parentAddress: parentAddress.trim(),
       signature: '',
-      expertSubjects: expertSubjects.trim(),
     }
     addTeacher(teacher)
     setSaving(false)
@@ -277,9 +280,7 @@ export default function AddTeacherPage() {
             <label style={label}>{isBn?'পদবি':'Designation'}</label>
             <select value={designation} onChange={e => setDesignation(e.target.value)} style={input}>
               <option value="">{isBn?'নির্বাচন করুন':'Select'}</option>
-              {DESIGNATIONS.map(d => <option key={d} value={d}>{isBn?
-                d==='Professor'?'অধ্যাপক':d==='Associate Professor'?'সহযোগী অধ্যাপক':d==='Assistant Professor'?'সহকারী অধ্যাপক':
-                d==='Lecturer'?'প্রভাষক':d==='Head of Department'?'বিভাগ প্রধান':'ল্যাব সহকারী':d}</option>)}
+              {designations.map(d => <option key={d.id} value={d.name}>{isBn?d.nameBn:d.name}</option>)}
             </select>
           </div>
           <div>
@@ -306,11 +307,6 @@ export default function AddTeacherPage() {
             <input type="number" value={overtime} onChange={e => setOvertime(e.target.value)} style={input}
               placeholder="৳0/hrs" />
           </div>
-          <div style={{ gridColumn: isMobile ? '1' : '1 / -1' }}>
-            <label style={label}>{isBn?'দক্ষ বিষয় (Expert Subjects)':'Expert Subjects'}</label>
-            <input value={expertSubjects} onChange={e => setExpertSubjects(e.target.value)} style={input}
-              placeholder={isBn?'যেমন: পদার্থবিজ্ঞান, গণিত, রসায়ন':'e.g. Physics, Mathematics, Chemistry'} />
-          </div>
           <div>
             <label style={label}>{isBn?'অবস্থা':'Status'}</label>
             <select value={status} onChange={e => setStatus(e.target.value as TeacherStatus)} style={input}>
@@ -325,20 +321,48 @@ export default function AddTeacherPage() {
         {departmentId && (
           <div style={{ marginTop:'14px' }}>
             <label style={label}>{isBn?'বিষয় নির্বাচন করুন':'Select Subjects'}</label>
-            <div style={{ display:'flex', flexWrap:'wrap', gap:'6px', marginTop:'4px' }}>
-              {filteredSubjects.map(s => (
-                <button key={s.id} onClick={() => toggleSubject(s.id)}
-                  style={{ padding:'5px 12px', borderRadius:'8px', fontSize:'12px', cursor:'pointer',
-                    fontFamily:'inherit', border:'1px solid',
-                    borderColor: subjectIds.includes(s.id) ? 'var(--brand)' : 'var(--border)',
-                    background: subjectIds.includes(s.id) ? 'var(--brand-light)' : 'var(--bg-secondary)',
-                    color: subjectIds.includes(s.id) ? 'var(--brand)' : 'var(--text-secondary)',
-                    fontWeight: subjectIds.includes(s.id) ? 600 : 400,
-                  }}>
-                  {isBn?s.nameBn:s.name}
-                </button>
-              ))}
-            </div>
+            {recommendedSubjects.length > 0 && (
+              <div style={{ marginTop:'6px' }}>
+                <div style={{ fontSize:'11px', color:'var(--green)', fontWeight:500, marginBottom:'4px' }}>
+                  {isBn ? 'সুপারিশকৃত' : 'Recommended'}
+                </div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                  {recommendedSubjects.map(s => (
+                    <button key={s.id} onClick={() => toggleSubject(s.id)}
+                      style={{ padding:'5px 12px', borderRadius:'8px', fontSize:'12px', cursor:'pointer',
+                        fontFamily:'inherit', border:'1px solid',
+                        borderColor: subjectIds.includes(s.id) ? 'var(--brand)' : 'var(--green)',
+                        background: subjectIds.includes(s.id) ? 'var(--brand-light)' : 'var(--green-light)',
+                        color: subjectIds.includes(s.id) ? 'var(--brand)' : 'var(--green)',
+                        fontWeight: subjectIds.includes(s.id) ? 600 : 400,
+                      }}>
+                      {isBn?s.nameBn:s.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {otherSubjects.length > 0 && (
+              <div style={{ marginTop:'8px' }}>
+                <div style={{ fontSize:'11px', color:'var(--text-muted)', fontWeight:500, marginBottom:'4px' }}>
+                  {isBn ? 'অন্যান্য বিভাগ' : 'Other Departments'}
+                </div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                  {otherSubjects.map(s => (
+                    <button key={s.id} onClick={() => toggleSubject(s.id)}
+                      style={{ padding:'5px 12px', borderRadius:'8px', fontSize:'12px', cursor:'pointer',
+                        fontFamily:'inherit', border:'1px solid',
+                        borderColor: subjectIds.includes(s.id) ? 'var(--brand)' : 'var(--border)',
+                        background: subjectIds.includes(s.id) ? 'var(--brand-light)' : 'var(--bg-secondary)',
+                        color: subjectIds.includes(s.id) ? 'var(--brand)' : 'var(--text-secondary)',
+                        fontWeight: subjectIds.includes(s.id) ? 600 : 400,
+                      }}>
+                      {isBn?s.nameBn:s.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

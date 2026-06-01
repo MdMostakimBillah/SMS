@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { UserPlus, Users, User, UserPen, TableProperties, IdCard, ArrowUpCircle, ArrowRight } from "lucide-react"
 import { useAppStore } from "@/store/appStore"
 import { useWindowSize } from "@/hooks/useWindowSize"
+import { useAdmissionStore } from "@/store/admissionStore"
 import type { LucideIcon } from "lucide-react"
 import gsap from "gsap"
 
@@ -99,12 +100,10 @@ const options: {
   },
 ]
 
-const stats = [
-  { labelBn: "মোট", labelEn: "Total", valueBn: "১,২৪৮", valueEn: "1,248", icon: Users, color: "var(--brand)", bg: "var(--brand-light)" },
-  { labelBn: "ছেলে", labelEn: "Male", valueBn: "৬৮৩", valueEn: "683", icon: User, color: "var(--teal)", bg: "var(--teal-light)" },
-  { labelBn: "মেয়ে", labelEn: "Female", valueBn: "৫৬৫", valueEn: "565", icon: User, color: "var(--purple)", bg: "var(--purple-light)" },
-  { labelBn: "নতুন", labelEn: "New", valueBn: "৪৮", valueEn: "48", icon: UserPlus, color: "var(--green)", bg: "var(--green-light)" },
-]
+function toBnNum(n: number): string {
+  const bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯']
+  return String(n).replace(/\d/g, d => bn[+d])
+}
 
 // Skeleton Loading
 function StudentsSkeleton() {
@@ -147,9 +146,24 @@ export default function StudentsPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { isMobile, isTablet } = useWindowSize()
+  const { students } = useAdmissionStore()
   const isBn = language === "bn"
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  const approvedStudents = students.filter(s => s.status === 'approved')
+  const totalStudents = approvedStudents.length
+  const maleStudents = approvedStudents.filter(s => s.gender === 'Male').length
+  const femaleStudents = approvedStudents.filter(s => s.gender === 'Female').length
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  const newStudents = approvedStudents.filter(s => s.admissionDate?.startsWith(currentMonth)).length
+
+  const statsData = [
+    { labelBn: "মোট", labelEn: "Total", valueBn: toBnNum(totalStudents), valueEn: String(totalStudents), icon: Users, color: "var(--brand)", bg: "var(--brand-light)" },
+    { labelBn: "ছেলে", labelEn: "Male", valueBn: toBnNum(maleStudents), valueEn: String(maleStudents), icon: User, color: "var(--teal)", bg: "var(--teal-light)" },
+    { labelBn: "মেয়ে", labelEn: "Female", valueBn: toBnNum(femaleStudents), valueEn: String(femaleStudents), icon: User, color: "var(--purple)", bg: "var(--purple-light)" },
+    { labelBn: "নতুন", labelEn: "New", valueBn: toBnNum(newStudents), valueEn: String(newStudents), icon: UserPlus, color: "var(--green)", bg: "var(--green-light)" },
+  ]
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 600)
@@ -200,7 +214,7 @@ export default function StudentsPage() {
         gap: isMobile ? "8px" : "10px",
         marginBottom: isMobile ? "16px" : "20px",
       }}>
-        {stats.map((s) => {
+        {statsData.map((s) => {
           const IconComp = s.icon
           return (
             <div key={s.labelEn} style={{

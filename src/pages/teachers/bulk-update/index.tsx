@@ -7,8 +7,6 @@ import { useTeacherStore } from '@/store/teacherStore'
 
 type Op = 'salary'|'phone'|'photo'|'department'|'designation'|'inTime'|'outTime'
 
-const DESIGNATIONS = ['Professor', 'Associate Professor', 'Assistant Professor', 'Lecturer', 'Head of Department', 'Lab Assistant']
-
 const OPS: { id:Op; Icon:React.ComponentType<{size?:number;style?:React.CSSProperties}>; bn:string; en:string; color:string; bg:string }[] = [
   { id:'photo',       Icon:Image,       bn:'ছবি পরিবর্তন',    en:'Photo',       color:'var(--brand)',  bg:'var(--brand-light)'  },
   { id:'salary',      Icon:DollarSign,   bn:'বেতন পরিবর্তন',  en:'Salary',      color:'var(--green)',  bg:'var(--green-light)'  },
@@ -44,7 +42,7 @@ export default function TeacherBulkUpdatePage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { teachers, updateTeacher, departments } = useTeacherStore()
+  const { teachers, updateTeacher, departments, designations } = useTeacherStore()
   const isBn = language === 'bn'
 
   const [op,       setOp]       = useState<Op>('salary')
@@ -226,7 +224,7 @@ export default function TeacherBulkUpdatePage() {
               <select value={batchVal} onChange={e => setBatchVal(e.target.value)}
                 style={{ ...inp, flex: 1, color: batchVal ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                 <option value="">{isBn ? 'নতুন পদবি বেছে নিন' : 'Select new designation'}</option>
-                {DESIGNATIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                {designations.map(d => <option key={d.id} value={d.name}>{isBn?d.nameBn:d.name}</option>)}
               </select>
               <button onClick={applyBatch} disabled={!batchVal || selected.length === 0}
                 style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 14px', borderRadius: '8px', background: (!batchVal || selected.length === 0) ? 'var(--border-2)' : opInfo.color, border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: (!batchVal || selected.length === 0) ? 'not-allowed' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>

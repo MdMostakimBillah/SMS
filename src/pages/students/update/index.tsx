@@ -1,9 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react'
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { ArrowLeft, Camera, CheckCircle, GraduationCap, Save, Search, ShieldCheck, User, UserSearch, X } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 
 // ✅ OUTSIDE — prevents input focus loss
@@ -45,7 +46,11 @@ export default function UpdateStudentPage() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const { students, updateStudent } = useAdmissionStore()
+  const { classes } = useClassStore()
   const isBn = language === 'bn'
+
+  const classOptions = useMemo(() => getClassOptions(classes), [classes])
+  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
   const [search,  setSearch]  = useState('')
   const [chosen,  setChosen]  = useState<StudentAdmission|null>(null)
@@ -156,7 +161,7 @@ export default function UpdateStudentPage() {
                       </div>
                       <div style={{ flex:1, minWidth:0 }}>
                         <div style={{ fontSize:'13px', fontWeight:500, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.nameEn}</div>
-                        <div style={{ fontSize:'10px', color:'var(--text-muted)' }}>{s.id} · {isBn?`শ্রেণি ${s.class}`:`Class ${s.class}`}{s.section?`-${s.section}`:''}</div>
+                        <div style={{ fontSize:'10px', color:'var(--text-muted)' }}>{s.id} · {s.class}{s.section?`-${s.section}`:''}</div>
                       </div>
                     </div>
                   ))}
@@ -174,7 +179,7 @@ export default function UpdateStudentPage() {
                     <div style={{ fontSize:'12px', fontWeight:600, color:'var(--brand)' }}>{form.nameEn}</div>
                     <div style={{ fontSize:'10px', color:'var(--brand)', fontFamily:'monospace', opacity:0.8 }}>{form.id}</div>
                     <div style={{ fontSize:'10px', color:'var(--brand)', opacity:0.7 }}>
-                      {isBn?`শ্রেণি ${form.class}`:`Class ${form.class}`}{form.section?`-${form.section}`:''} · {form.phone}
+                      {form.class}{form.section?`-${form.section}`:''} · {form.phone}
                     </div>
                   </div>
                 </div>
@@ -271,8 +276,8 @@ export default function UpdateStudentPage() {
             <div style={card}>
               {secHead(<GraduationCap size={14} style={{ color:'var(--teal)' }} />, isBn?'একাডেমিক তথ্য':'Academic Info', 'var(--teal)', 'var(--teal-light)')}
               <div style={{ ...g(3), marginBottom:'10px' }}>
-                <F l={isBn?'শ্রেণি':'Class'} v={form.class} onChange={v=>set('class',v)} opts={['1','2','3','4','5','6','7','8','9','10']} req />
-                <F l={isBn?'সেকশন':'Section'} v={form.section} onChange={v=>set('section',v)} opts={['A','B','C','D','E']} />
+                <F l={isBn?'শ্রেণি':'Class'} v={form.class} onChange={v=>set('class',v)} opts={classOptions} req />
+                <F l={isBn?'সেকশন':'Section'} v={form.section} onChange={v=>set('section',v)} opts={sectionsMap[form.class] || []} />
                 <F l={isBn?'রোল':'Roll'} v={form.roll} onChange={v=>set('roll',v)} />
               </div>
               <div style={g(3)}>

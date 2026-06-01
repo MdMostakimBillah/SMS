@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
 import type { StudentAdmission } from './types'
 import { generateA4HTML } from './a4Template'
@@ -11,7 +12,6 @@ import { generateListPDF } from './listPdfTemplate'
 import type { ListPDFOptions } from './listPdfTemplate'
 
 const PER_PAGE = [10, 20, 30, 50, 100, 200, 500, 1000]
-const CLASSES = ['1','2','3','4','5','6','7','8','9','10']
 const RELIGIONS = ['Islam','Hinduism','Christianity','Buddhism']
 
 // ═══════════════════════════════════════════════
@@ -104,7 +104,11 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
   const [f, setF] = useState({ ...student })
   const s = useCallback((k: keyof StudentAdmission, v: string) => setF(p => ({ ...p, [k]: v })), [])
   const { isMobile } = useWindowSize()
+  const { classes } = useClassStore()
   const g = (n: number): React.CSSProperties => ({ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : `repeat(${n},1fr)`, gap: '10px' })
+
+  const classOptions = useMemo(() => getClassOptions(classes), [classes])
+  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
@@ -137,8 +141,8 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
           </div>
           <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>{isBn ? '• একাডেমিক' : '• Academic'}</div>
           <div style={{ ...g(3), marginBottom: '14px' }}>
-            <EField label={isBn ? 'শ্রেণি' : 'Class'} value={f.class} onChange={v => s('class', v)} opts={['1','2','3','4','5','6','7','8','9','10']} />
-            <EField label={isBn ? 'সেকশন' : 'Section'} value={f.section} onChange={v => s('section', v)} opts={['A','B','C','D','E']} />
+            <EField label={isBn ? 'শ্রেণি' : 'Class'} value={f.class} onChange={v => { s('class', v); s('section', '') }} opts={classOptions} />
+            <EField label={isBn ? 'সেকশন' : 'Section'} value={f.section} onChange={v => s('section', v)} opts={f.class ? (sectionsMap[f.class] || []) : []} />
             <EField label={isBn ? 'রোল' : 'Roll'} value={f.roll} onChange={v => s('roll', v)} />
           </div>
           <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--amber)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>{isBn ? '• পিতামাতা' : '• Parents'}</div>
@@ -216,7 +220,7 @@ const ViewModal = React.memo(function ViewModal({ student, isBn, onClose }: { st
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>{student.nameBn}</p>
               <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '11px', background: 'var(--brand-light)', color: 'var(--brand)', padding: '2px 8px', borderRadius: '5px', fontWeight: 500 }}>
-                  {isBn ? `শ্রেণি ${student.class}` : `Class ${student.class}`} - {student.section}
+                  {student.class} - {student.section}
                 </span>
                 <span style={{ fontSize: '11px', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '5px', border: '1px solid var(--border)' }}>{student.gender.split(' / ')[0]}</span>
                 {student.bloodGroup && <span style={{ fontSize: '11px', background: 'var(--red-light)', color: 'var(--red)', padding: '2px 8px', borderRadius: '5px' }}>{student.bloodGroup}</span>}
@@ -268,10 +272,20 @@ export default function AdmissionManage() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const { students, updateStudent, approveStudent } = useAdmissionStore()
+  const { classes } = useClassStore()
   const isBn = language === 'bn'
+
+  const classOptions = useMemo(() => getClassOptions(classes), [classes])
+  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
+  const allSections = useMemo(() => {
+    const set = new Set<string>()
+    classes.forEach(cls => cls.sections.forEach(s => set.add(s.name)))
+    return Array.from(set).sort()
+  }, [classes])
 
   const [search, setSearch]     = useState('')
   const [fClass, setFClass]     = useState('')
+  const [fSection, setFSection] = useState('')
   const [fGender, setFGender]   = useState('')
   const [fReligion, setFReligion] = useState('')
   const [fStatus, setFStatus]   = useState('')
@@ -294,6 +308,7 @@ export default function AdmissionManage() {
           !s.id.includes(search) && !s.phone.includes(search)) return false
     }
     if (fClass && s.class !== fClass) return false
+    if (fSection && s.section !== fSection) return false
     if (fGender && !s.gender.includes(fGender)) return false
     if (fReligion && !s.religion.includes(fReligion)) return false
     if (fStatus && s.status !== fStatus) return false
@@ -305,7 +320,7 @@ export default function AdmissionManage() {
       if (fDate === 'custom' && dateFrom && dateTo && (d < new Date(dateFrom) || d > new Date(dateTo))) return false
     }
     return true
-  }), [students, search, fClass, fGender, fReligion, fStatus, fDate, dateFrom, dateTo])
+  }), [students, search, fClass, fSection, fGender, fReligion, fStatus, fDate, dateFrom, dateTo])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
   const sp = Math.min(page, totalPages)
@@ -339,7 +354,7 @@ export default function AdmissionManage() {
       .map((s, i) => ({
         '#': i + 1, 'Student ID': s.id,
         'Name EN': s.nameEn, 'Name BN': s.nameBn,
-        'Class': `Class ${s.class}`, 'Section': s.section, 'Roll': s.roll,
+        'Class': s.class, 'Section': s.section, 'Roll': s.roll,
         'Gender': s.gender.split(' / ')[0], 'DOB': s.dob,
         'Blood Group': s.bloodGroup, 'Religion': s.religion.split(' / ')[0],
         'Mobile': s.phone, 'Email': s.email, 'District': s.district,
@@ -365,9 +380,9 @@ export default function AdmissionManage() {
   }, [selected, filtered])
 
   const clearFilters = useCallback(() => {
-    setSearch(''); setFClass(''); setFGender(''); setFReligion(''); setFStatus(''); setFDate(''); setDateFrom(''); setDateTo(''); setPage(1)
+    setSearch(''); setFClass(''); setFSection(''); setFGender(''); setFReligion(''); setFStatus(''); setFDate(''); setDateFrom(''); setDateTo(''); setPage(1)
   }, [])
-  const hasFilter = search || fClass || fGender || fReligion || fStatus || fDate
+  const hasFilter = search || fClass || fSection || fGender || fReligion || fStatus || fDate
 
   const sel: React.CSSProperties = { padding: '7px 9px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer', outline: 'none' }
 
@@ -422,9 +437,13 @@ export default function AdmissionManage() {
               placeholder={isBn ? 'নাম, আইডি, মোবাইল...' : 'Name, ID, mobile...'}
               style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '13px', color: 'var(--text-primary)', fontFamily: 'inherit' }} />
           </div>
-          <select value={fClass} onChange={e => { setFClass(e.target.value); setPage(1) }} style={sel}>
+          <select value={fClass} onChange={e => { setFClass(e.target.value); setFSection(''); setPage(1) }} style={sel}>
             <option value="">{isBn ? 'সব শ্রেণি' : 'All Classes'}</option>
-            {CLASSES.map(c => <option key={c} value={c}>{isBn ? `শ্রেণি ${c}` : `Class ${c}`}</option>)}
+            {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={fSection} onChange={e => { setFSection(e.target.value); setPage(1) }} style={sel}>
+            <option value="">{isBn ? 'সব সেকশন' : 'All Sections'}</option>
+            {(fClass ? (sectionsMap[fClass] || []) : allSections).map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <select value={fGender} onChange={e => { setFGender(e.target.value); setPage(1) }} style={sel}>
             <option value="">{isBn ? 'সব লিঙ্গ' : 'All Genders'}</option>
@@ -553,7 +572,7 @@ export default function AdmissionManage() {
                       <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '150px' }}>{isBn ? s.nameEn : s.nameBn}</div>
                     </td>
                     <td style={{ padding: '8px 8px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', fontSize: '12px' }}>
-                      {isBn ? `শ্রেণি ${s.class}` : `Cls ${s.class}`} {s.section}
+                      {s.class} {s.section}
                     </td>
                     <td style={{ padding: '8px 8px' }}>
                       <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '5px', background: s.gender.includes('Female') ? 'var(--purple-light)' : 'var(--teal-light)', color: s.gender.includes('Female') ? 'var(--purple)' : 'var(--teal)', fontWeight: 500, whiteSpace: 'nowrap' }}>

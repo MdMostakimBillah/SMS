@@ -1,7 +1,8 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { CheckCircle, Info, Trash2, Plus, Upload, Check } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from './types'
 
 interface Row {
@@ -45,7 +46,11 @@ const Cell = React.memo(function Cell({ value, onChange, type = 'text', options,
 export default function BulkAdmission() {
   const { language } = useAppStore()
   const { addStudent, students: existing } = useAdmissionStore()
+  const { classes } = useClassStore()
   const isBn = language === 'bn'
+
+  const classOptions = useMemo(() => getClassOptions(classes), [classes])
+  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
   const [rows, setRows] = useState<Row[]>(() => {
     const base = existing.length
@@ -111,8 +116,8 @@ export default function BulkAdmission() {
     { key: 'nameBn',  bn: 'নাম (BN)',     en: 'Name (BN)',  w: '130px' },
     { key: 'dob',     bn: 'জন্ম তারিখ',  en: 'DOB',        w: '120px', type: 'date' },
     { key: 'gender',  bn: 'লিঙ্গ',        en: 'Gender',     w: '100px', opts: ['Male / পুরুষ', 'Female / মহিলা'] },
-    { key: 'class',   bn: 'শ্রেণি',       en: 'Class',      w: '90px',  opts: ['1','2','3','4','5','6','7','8','9','10'] },
-    { key: 'section', bn: 'সেকশন',        en: 'Section',    w: '80px',  opts: ['A','B','C','D','E'] },
+    { key: 'class',   bn: 'শ্রেণি',       en: 'Class',      w: '90px',  opts: classOptions },
+    { key: 'section', bn: 'সেকশন',        en: 'Section',    w: '80px',  opts: [] },
     { key: 'phone',   bn: 'মোবাইল',       en: 'Mobile',     w: '120px', type: 'tel' },
   ]
 
@@ -159,7 +164,7 @@ export default function BulkAdmission() {
                         value={(row as any)[c.key]}
                         onChange={v => update(i, c.key as keyof Row, v)}
                         type={c.type}
-                        options={c.opts}
+                        options={c.key === 'section' ? (sectionsMap[row.class] || []) : c.opts}
                       />
                     </td>
                   ))}

@@ -9,11 +9,20 @@ export interface Department {
   updatedAt: string
 }
 
+export interface Designation {
+  id: string
+  name: string
+  nameBn: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Subject {
   id: string
   name: string
   nameBn: string
   departmentId: string
+  departmentIds: string[]
   createdAt: string
   updatedAt: string
 }

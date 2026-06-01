@@ -16,6 +16,7 @@ import EditTeacherPage  from '@/pages/teachers/edit/[id]'
 import DepartmentsPage  from '@/pages/teachers/departments'
 import SubjectsPage     from '@/pages/teachers/subjects'
 import TeacherBulkUpdatePage from '@/pages/teachers/bulk-update'
+import DesignationsPage    from '@/pages/teachers/designations'
 import PayrollPage from '@/pages/payroll'
 import ClassesPage from '@/pages/classes'
 import HRPage from '@/pages/hr'
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/teachers/bulk-update" element={<TeacherBulkUpdatePage />} />
         <Route path="/teachers/departments"  element={<DepartmentsPage />} />
         <Route path="/teachers/subjects"     element={<SubjectsPage />} />
+        <Route path="/teachers/designations" element={<DesignationsPage />} />
         <Route path="/classes"               element={<ClassesPage />} />
         <Route path="/hr"                    element={<HRPage />} />
         <Route path="/attendance"            element={<AttendancePage />} />

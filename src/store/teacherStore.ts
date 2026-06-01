@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Teacher, Department, Subject } from '@/pages/teachers/types'
+import type { Teacher, Department, Subject, Designation } from '@/pages/teachers/types'
 
 const sampleDepartments: Department[] = [
   { id: 'DEPT-001', name: 'Science', nameBn: 'বিজ্ঞান', head: 'Dr. Rafiqul Islam', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
@@ -9,15 +9,24 @@ const sampleDepartments: Department[] = [
   { id: 'DEPT-004', name: 'Languages', nameBn: 'ভাষা', head: 'Farhana Rahman', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
 ]
 
+const sampleDesignations: Designation[] = [
+  { id: 'DES-001', name: 'Professor', nameBn: 'অধ্যাপক', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'DES-002', name: 'Associate Professor', nameBn: 'সহযোগী অধ্যাপক', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'DES-003', name: 'Assistant Professor', nameBn: 'সহকারী অধ্যাপক', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'DES-004', name: 'Lecturer', nameBn: 'প্রভাষক', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'DES-005', name: 'Head of Department', nameBn: 'বিভাগ প্রধান', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'DES-006', name: 'Lab Assistant', nameBn: 'ল্যাব সহকারী', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+]
+
 const sampleSubjects: Subject[] = [
-  { id: 'SUB-001', name: 'Physics', nameBn: 'পদার্থবিজ্ঞান', departmentId: 'DEPT-001', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
-  { id: 'SUB-002', name: 'Chemistry', nameBn: 'রসায়ন', departmentId: 'DEPT-001', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
-  { id: 'SUB-003', name: 'Mathematics', nameBn: 'গণিত', departmentId: 'DEPT-001', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
-  { id: 'SUB-004', name: 'Bangla', nameBn: 'বাংলা', departmentId: 'DEPT-004', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
-  { id: 'SUB-005', name: 'English', nameBn: 'ইংরেজি', departmentId: 'DEPT-004', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
-  { id: 'SUB-006', name: 'History', nameBn: 'ইতিহাস', departmentId: 'DEPT-002', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
-  { id: 'SUB-007', name: 'Accounting', nameBn: 'হিসাববিজ্ঞান', departmentId: 'DEPT-003', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
-  { id: 'SUB-008', name: 'ICT', nameBn: 'তথ্য ও যোগাযোগ প্রযুক্তি', departmentId: 'DEPT-001', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'SUB-001', name: 'Physics', nameBn: 'পদার্থবিজ্ঞান', departmentId: 'DEPT-001', departmentIds: ['DEPT-001'], createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'SUB-002', name: 'Chemistry', nameBn: 'রসায়ন', departmentId: 'DEPT-001', departmentIds: ['DEPT-001'], createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'SUB-003', name: 'Mathematics', nameBn: 'গণিত', departmentId: 'DEPT-001', departmentIds: ['DEPT-001', 'DEPT-002'], createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'SUB-004', name: 'Bangla', nameBn: 'বাংলা', departmentId: 'DEPT-004', departmentIds: ['DEPT-004', 'DEPT-002'], createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'SUB-005', name: 'English', nameBn: 'ইংরেজি', departmentId: 'DEPT-004', departmentIds: ['DEPT-004', 'DEPT-001'], createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'SUB-006', name: 'History', nameBn: 'ইতিহাস', departmentId: 'DEPT-002', departmentIds: ['DEPT-002'], createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'SUB-007', name: 'Accounting', nameBn: 'হিসাববিজ্ঞান', departmentId: 'DEPT-003', departmentIds: ['DEPT-003'], createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+  { id: 'SUB-008', name: 'ICT', nameBn: 'তথ্য ও যোগাযোগ প্রযুক্তি', departmentId: 'DEPT-001', departmentIds: ['DEPT-001', 'DEPT-002'], createdAt: '2026-01-01', updatedAt: '2026-01-01' },
 ]
 
 const sampleTeachers: Teacher[] = [
@@ -348,6 +357,7 @@ interface TeacherState {
   teachers: Teacher[]
   departments: Department[]
   subjects: Subject[]
+  designations: Designation[]
   attendance: Record<string, Record<string, DayAttendance>>
   addTeacher: (teacher: Teacher) => void
   updateTeacher: (id: string, data: Partial<Teacher>) => void
@@ -359,6 +369,9 @@ interface TeacherState {
   addSubject: (sub: Subject) => void
   updateSubject: (id: string, data: Partial<Subject>) => void
   deleteSubject: (id: string) => void
+  addDesignation: (des: Designation) => void
+  updateDesignation: (id: string, data: Partial<Designation>) => void
+  deleteDesignation: (id: string) => void
   markAttendance: (date: string, teacherId: string, status: AttendanceStatus) => void
   markAllPresent: (date: string) => void
   getAttendanceStats: (date: string) => { present: number; absent: number; onLeave: number }
@@ -370,6 +383,7 @@ export const useTeacherStore = create<TeacherState>()(
       teachers: sampleTeachers,
       departments: sampleDepartments,
       subjects: sampleSubjects,
+      designations: sampleDesignations,
       attendance: generateDemoAttendance(),
 
       addTeacher: (teacher) =>
@@ -418,6 +432,19 @@ export const useTeacherStore = create<TeacherState>()(
       deleteSubject: (id) =>
         set(state => ({ subjects: state.subjects.filter(s => s.id !== id) })),
 
+      addDesignation: (des) =>
+        set(state => ({ designations: [...state.designations, des] })),
+
+      updateDesignation: (id, data) =>
+        set(state => ({
+          designations: state.designations.map(d =>
+            d.id === id ? { ...d, ...data, updatedAt: new Date().toISOString().split('T')[0] } : d
+          ),
+        })),
+
+      deleteDesignation: (id) =>
+        set(state => ({ designations: state.designations.filter(d => d.id !== id) })),
+
       markAttendance: (date, teacherId, status) =>
         set(state => ({
           attendance: {
@@ -457,13 +484,16 @@ export const useTeacherStore = create<TeacherState>()(
     }),
     {
       name: 'edutech-teachers',
-      version: 1,
+      version: 2,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           const existing = persistedState?.teachers || []
           if (existing.length < 7) {
-            return { ...persistedState, teachers: sampleTeachers, departments: sampleDepartments, subjects: sampleSubjects }
+            return { ...persistedState, teachers: sampleTeachers, departments: sampleDepartments, subjects: sampleSubjects, designations: sampleDesignations }
           }
+        }
+        if (version === 1) {
+          return { ...persistedState, designations: persistedState?.designations || sampleDesignations }
         }
         return persistedState
       },

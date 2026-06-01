@@ -4,6 +4,7 @@ import { ArrowLeft, IdCard, Printer, Search, User } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 
 const TEMPLATES = [
@@ -31,8 +32,6 @@ const FIELDS = [
   { key: 'religion',       label: 'Religion',        labelBn: 'ধর্ম',              default: false },
   { key: 'address',        label: 'Address',         labelBn: 'ঠিকানা',            default: false },
 ]
-
-const CLASSES = ['1','2','3','4','5','6','7','8','9','10']
 
 function IDCard({ student, template, fields, institution, isBn }: {
   student: StudentAdmission; template: typeof TEMPLATES[0]; fields: string[]; institution: string; isBn: boolean
@@ -149,25 +148,35 @@ export default function IDCardsPage() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const { students } = useAdmissionStore()
+  const { classes } = useClassStore()
   const isBn = language === 'bn'
 
   const approved = useMemo(() => students.filter(s => s.status === 'approved'), [students])
+  const classOptions = useMemo(() => getClassOptions(classes), [classes])
+  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
+  const allSections = useMemo(() => {
+    const set = new Set<string>()
+    classes.forEach(cls => cls.sections.forEach(s => set.add(s.name)))
+    return Array.from(set).sort()
+  }, [classes])
 
   const [template, setTemplate] = useState(TEMPLATES[0])
   const [fields, setFields] = useState<string[]>(FIELDS.filter(f => f.default).map(f => f.key))
   const [institution, setInstitution] = useState('EduTech — Sunrise Academy')
   const [fClass, setFClass] = useState('')
+  const [fSection, setFSection] = useState('')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<string[]>([])
 
   const filtered = useMemo(() => approved.filter(s => {
     if (fClass && s.class !== fClass) return false
+    if (fSection && s.section !== fSection) return false
     if (search) {
       const q = search.toLowerCase()
       if (!s.nameEn.toLowerCase().includes(q) && !s.nameBn.includes(search) && !s.id.includes(search)) return false
     }
     return true
-  }), [approved, fClass, search])
+  }), [approved, fClass, fSection, search])
 
   const displayList = selected.length > 0 ? approved.filter(s => selected.includes(s.id)) : filtered
 
@@ -306,9 +315,13 @@ export default function IDCardsPage() {
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder={isBn ? 'নাম বা আইডি...' : 'Name or ID...'}
                   style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '11px', color: 'var(--text-primary)', fontFamily: 'inherit' }} />
               </div>
-              <select value={fClass} onChange={e => setFClass(e.target.value)} style={inp}>
+              <select value={fClass} onChange={e => { setFClass(e.target.value); setFSection('') }} style={inp}>
                 <option value="">{isBn ? 'সব শ্রেণি' : 'All Classes'}</option>
-                {CLASSES.map(c => <option key={c} value={c}>{isBn ? `শ্রেণি ${c}` : `Class ${c}`}</option>)}
+                {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select value={fSection} onChange={e => setFSection(e.target.value)} style={inp}>
+                <option value="">{isBn ? 'সব সেকশন' : 'All Sections'}</option>
+                {(fClass ? (sectionsMap[fClass] || []) : allSections).map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               <button onClick={selectAll}
                 style={{ padding: '6px', borderRadius: '7px', border: `1px solid ${selected.length > 0 ? 'var(--brand)' : 'var(--border)'}`, background: selected.length > 0 ? 'var(--brand-light)' : 'var(--bg-secondary)', color: selected.length > 0 ? 'var(--brand)' : 'var(--text-secondary)', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
