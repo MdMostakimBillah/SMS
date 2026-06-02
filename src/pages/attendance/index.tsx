@@ -245,6 +245,9 @@ export default function AttendancePage() {
   const [kioskPending, setKioskPending] = useState(false)
   const [kioskMsg, setKioskMsg] = useState<{type:'success'|'error';text:string}|null>(null)
   const [kioskIdentified, setKioskIdentified] = useState<{staffId:string;staffName:string;punchType:'in'|'out';time:string}|null>(null)
+  const [kioskRegMode, setKioskRegMode] = useState(false)
+  const [kioskRegStaff, setKioskRegStaff] = useState('')
+  const [kioskRegCount, setKioskRegCount] = useState(0)
   // WiFi verification state
   const [institutionWifi, setInstitutionWifi] = useState(() => localStorage.getItem('institutionWifi') || '')
   const [institutionGateway, setInstitutionGateway] = useState(() => localStorage.getItem('institutionGateway') || '')
@@ -494,6 +497,65 @@ export default function AttendancePage() {
       }
     } catch (err: any) {
       setKioskMsg({ type: 'error', text: err.name === 'NotAllowedError' ? (isBn ? 'বাতিল করা হয়েছে। আবার চেষ্টা করুন।' : 'Cancelled. Try again.') : (isBn ? 'স্ক্যান ব্যর্থ' : 'Scan failed') })
+    }
+    setKioskPending(false)
+  }
+
+  const handleKioskRegister = async () => {
+    if (!kioskRegStaff) return
+    const teacher = activeTeachers.find(t => t.id === kioskRegStaff)
+    if (!teacher) return
+    setKioskPending(true)
+    setKioskMsg(null)
+    try {
+      const challenge = generateChallenge()
+      const credential = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: 'EduTech Attendance', id: window.location.hostname },
+          user: {
+            id: new TextEncoder().encode(teacher.id),
+            name: teacher.id,
+            displayName: isBn ? (teacher.nameBn || teacher.nameEn) : teacher.nameEn,
+          },
+          pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
+          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+          timeout: 60000,
+        }
+      }) as PublicKeyCredential | null
+      if (credential) {
+        const rawId = bufferToBase64(credential.rawId)
+        const newCount = kioskRegCount + 1
+        setKioskRegCount(newCount)
+        if (newCount >= 3) {
+          const newDevice = {
+            id: `MOB-${Date.now()}`,
+            staffId: teacher.id,
+            staffName: isBn ? (teacher.nameBn || teacher.nameEn) : teacher.nameEn,
+            deviceName: navigator.userAgent.includes('iPhone') ? 'iPhone' : navigator.userAgent.includes('Android') ? 'Android' : 'Browser',
+            credentialId: rawId,
+            registeredAt: new Date().toISOString(),
+            lastAuth: '',
+          }
+          const updated = [...mobileDevices, newDevice]
+          setMobileDevices(updated)
+          localStorage.setItem('mobileAuthDevices', JSON.stringify(updated))
+          setKioskMsg({ type: 'success', text: isBn ? `${newDevice.staffName} নিবন্ধন সম্পন্ন!` : `${newDevice.staffName} registered!` })
+          setKioskRegMode(false)
+          setKioskRegStaff('')
+          setKioskRegCount(0)
+          setTimeout(() => setKioskMsg(null), 3000)
+        }
+      }
+    } catch (err: any) {
+      const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost'
+      if (!isSecure) {
+        setKioskMsg({ type: 'error', text: isBn ? '🔒 HTTPS প্রয়োজন!' : '🔒 HTTPS required!' })
+      } else if (err.name === 'NotAllowedError') {
+        setKioskMsg({ type: 'error', text: isBn ? 'বাতিল করা হয়েছে। আবার চেষ্টা করুন।' : 'Cancelled. Try again.' })
+      } else {
+        setKioskMsg({ type: 'error', text: `${isBn ? 'স্ক্যান ব্যর্থ' : 'Scan failed'}: ${err.message || err.name}` })
+      }
     }
     setKioskPending(false)
   }
@@ -2651,12 +2713,65 @@ export default function AttendancePage() {
                   )}
                 </button>
 
-                {/* Registration link */}
-                <div className="mt-4 text-center">
-                  <button onClick={() => { setKioskMode(false); navigate('/attendance?tab=device') }}
-                    className="text-[12px] text-[var(--teal)] hover:underline cursor-pointer bg-transparent border-none">
-                    {isBn ? 'নতুন স্টাফ নিবন্ধন করুন →' : 'Register new staff →'}
-                  </button>
+                {/* Registration section */}
+                <div className="mt-4">
+                  {!kioskRegMode ? (
+                    <button onClick={() => { setKioskRegMode(true); setKioskRegCount(0); setKioskRegStaff(''); setKioskMsg(null) }}
+                      className="w-full py-3 rounded-xl text-[13px] font-semibold cursor-pointer border-2 border-dashed border-[var(--teal)] bg-transparent text-[var(--teal)] hover:bg-[var(--teal-light)] transition-all flex items-center justify-center gap-2">
+                      <Plus size={16} />
+                      {isBn ? 'নতুন স্টাফ নিবন্ধন করুন' : 'Register New Staff'}
+                    </button>
+                  ) : (
+                    <div className="p-4 rounded-xl border-2 border-[var(--teal)] bg-[var(--teal-light)]">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[13px] font-bold text-[var(--teal)]">{isBn ? 'নিবন্ধন' : 'Registration'}</span>
+                        <button onClick={() => { setKioskRegMode(false); setKioskRegStaff(''); setKioskRegCount(0) }}
+                          className="text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none underline">
+                          {isBn ? 'বাতিল' : 'Cancel'}
+                        </button>
+                      </div>
+                      <select value={kioskRegStaff} onChange={e => { setKioskRegStaff(e.target.value); setKioskRegCount(0); setKioskMsg(null) }}
+                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[13px] text-[var(--text-primary)] outline-none mb-3">
+                        <option value="">{isBn ? 'স্টাফ নির্বাচন করুন...' : 'Select staff...'}</option>
+                        {activeTeachers.map(t => {
+                          const registered = mobileDevices.find(d => d.staffId === t.id)
+                          return (
+                            <option key={t.id} value={t.id}>
+                              {isBn ? (t.nameBn || t.nameEn) : t.nameEn} ({t.id}){registered ? ' ✓' : ''}
+                            </option>
+                          )
+                        })}
+                      </select>
+                      {kioskRegStaff && (
+                        <>
+                          <div className="flex items-center justify-center gap-2 mb-3">
+                            {[1,2,3].map(n => (
+                              <div key={n} className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${
+                                n <= kioskRegCount
+                                  ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]'
+                                  : n === kioskRegCount + 1
+                                    ? 'border-[var(--teal)] bg-[var(--teal)] text-white animate-pulse'
+                                    : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'
+                              }`}>
+                                {n <= kioskRegCount ? <CheckCircle size={16} /> : <span className="text-[12px] font-bold">{n}</span>}
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-[11px] text-center text-[var(--text-muted)] mb-3">
+                            {isBn ? `${kioskRegCount}/৩ সম্পন্ন — আঙুল রাখুন` : `${kioskRegCount}/3 done — Place finger`}
+                          </p>
+                          <button onClick={handleKioskRegister} disabled={kioskPending}
+                            className={`w-full py-3 rounded-xl text-[13px] font-bold cursor-pointer border-none transition-all ${kioskPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : 'bg-[var(--teal)] text-white hover:shadow-lg'}`}>
+                            {kioskPending ? (
+                              <span className="flex items-center justify-center gap-2"><Loader size={16} className="animate-spin" />{isBn ? 'যাচাই হচ্ছে...' : 'Verifying...'}</span>
+                            ) : (
+                              <span className="flex items-center justify-center gap-2"><Fingerprint size={16} />{isBn ? `স্ক্যান #${kioskRegCount + 1}` : `Scan #${kioskRegCount + 1}`}</span>
+                            )}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* WiFi check */}
