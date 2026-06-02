@@ -12,7 +12,7 @@ export default function ClassesPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { institution, classes, routines, updateInstitution, addClass, updateClass, deleteClass, addSection, updateSection, deleteSection, updateRoutine, setRoutineSlot, clearRoutineSlot, switchSession, addSession, removeSession } = useClassStore()
+  const { institution, classes, routines, updateInstitution, addClass, updateClass, deleteClass, addSection, updateSection, deleteSection, updateRoutine, setRoutineSlot, clearRoutineSlot, switchSession } = useClassStore()
   const { teachers, subjects } = useTeacherStore()
   const { students } = useAdmissionStore()
   const isBn = language === 'bn'

@@ -163,7 +163,7 @@ const defaultRoutines: ClassRoutine[] = [
 
 export const useClassStore = create<ClassState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       institution: defaultInstitution,
       classes: defaultClasses,
       routines: defaultRoutines,

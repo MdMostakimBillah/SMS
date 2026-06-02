@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Briefcase, Camera, Calendar, CalendarCheck, CalendarRange, CalendarX, CheckCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, CreditCard, ExternalLink, Eye, FileSpreadsheet, FileText, Fingerprint, GraduationCap, Layers, Loader, LogOut, Plus, RefreshCw, ScanFace, Search, Settings, Smartphone, Tag, User, Users, Wifi, WifiOff, X, XCircle } from 'lucide-react'
 import * as XLSX from 'xlsx'
@@ -14,7 +14,6 @@ import type { AttendancePDFOptions } from '@/components/shared/AttendancePDFOpti
 import type { AttendanceStatus, DayAttendance } from '@/store/teacherStore'
 
 function today() { return new Date().toISOString().split('T')[0] }
-function firstOfMonth() { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0] }
 function twentyDaysAgo() { const d = new Date(); d.setDate(d.getDate() - 20); return d.toISOString().split('T')[0] }
 function toBnNum(n: number): string { const bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯']; return String(n).replace(/\d/g, d => bn[+d]) }
 function getDaysBetween(from: string, to: string): string[] {
@@ -256,7 +255,7 @@ export default function AttendancePage() {
   const faceCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const faceVideoRef = useRef<HTMLVideoElement | null>(null)
   const faceIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const faceStateRef = useRef({ step: 'position' as 'position'|'blink'|'movement'|'done', frameCount: 0, movements: [] as boolean[], prevFrame: null as ImageData | null })
+  const faceStateRef = useRef({ step: 'position' as 'position'|'blink'|'movement'|'done', frameCount: 0, movements: [] as boolean[], blinkDetected: false, prevFrame: null as ImageData | null })
   // WiFi verification state
   const [institutionWifi, setInstitutionWifi] = useState(() => localStorage.getItem('institutionWifi') || '')
   const [institutionGateway, setInstitutionGateway] = useState(() => localStorage.getItem('institutionGateway') || '')
@@ -292,13 +291,13 @@ export default function AttendancePage() {
   }
 
   // WiFi/Network verification - checks if device is on institution network
-  const checkInstitutionNetwork = async (): Promise<{ onNetwork: boolean; method: string; info: string }> => {
+  const checkInstitutionNetwork = async (): Promise<{ onNetwork: boolean | null; method: string; info: string }> => {
     // Method 1: Check if gateway IP is reachable (most reliable for same network)
     if (institutionGateway) {
       try {
         const controller = new AbortController()
         const timeout = setTimeout(() => controller.abort(), 3000)
-        const resp = await fetch(`http://${institutionGateway}/ping`, { method: 'HEAD', mode: 'no-cors', signal: controller.signal })
+        await fetch(`http://${institutionGateway}/ping`, { method: 'HEAD', mode: 'no-cors', signal: controller.signal })
         clearTimeout(timeout)
         // If we get here (even with opaque response), the gateway is reachable
         return { onNetwork: true, method: 'gateway', info: `Gateway ${institutionGateway} reachable` }
@@ -312,7 +311,7 @@ export default function AttendancePage() {
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 2000)
       // Try to reach the app's own origin (if hosted on institution network)
-      const resp = await fetch(window.location.origin, { method: 'HEAD', mode: 'no-cors', signal: controller.signal })
+      await fetch(window.location.origin, { method: 'HEAD', mode: 'no-cors', signal: controller.signal })
       clearTimeout(timeout)
       // If reachable, we're likely on the same network
       return { onNetwork: true, method: 'origin', info: 'Connected to institution network' }
@@ -512,7 +511,7 @@ export default function AttendancePage() {
     setFaceLivenessStep('position')
     setFaceBlinkDetected(false)
     setFaceMoveCount(0)
-    faceStateRef.current = { step: 'position', frameCount: 0, movements: [], prevFrame: null }
+      faceStateRef.current = { step: 'position', frameCount: 0, movements: [], blinkDetected: false, prevFrame: null }
     if (faceIntervalRef.current) { clearInterval(faceIntervalRef.current); faceIntervalRef.current = null }
     if (faceStream) { faceStream.getTracks().forEach(t => t.stop()); setFaceStream(null) }
   }
@@ -608,7 +607,7 @@ export default function AttendancePage() {
       setFaceLivenessStep('position')
       setFaceBlinkDetected(false)
       setFaceMoveCount(0)
-      faceStateRef.current = { step: 'position', frameCount: 0, movements: [], prevFrame: null }
+    faceStateRef.current = { step: 'position', frameCount: 0, movements: [], blinkDetected: false, prevFrame: null }
 
       if (faceVideoRef.current) faceVideoRef.current.srcObject = stream
 
@@ -1573,8 +1572,11 @@ export default function AttendancePage() {
                 </select>
               </div>
               <div className="flex gap-[3px]">
-                {([[<ChevronsLeft size={12} />,()=>setEmpPage(1),empPage===1],[<ChevronLeft size={12} />,()=>setEmpPage(p=>Math.max(1,p-1)),empPage===1]]).map(([ic,a,d],i)=>(
-                  <button key={i} onClick={a} disabled={d as boolean}
+                {([
+                  [<ChevronsLeft size={12} />,()=>setEmpPage(1),empPage===1] as const,
+                  [<ChevronLeft size={12} />,()=>setEmpPage(p=>Math.max(1,p-1)),empPage===1] as const
+                ] as [React.ReactNode, () => void, boolean][]).map(([ic,a,d],i)=>(
+                  <button key={i} onClick={a} disabled={d}
                     className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer disabled:cursor-default disabled:text-[var(--text-muted)]">
                     {ic}
                   </button>
@@ -1588,8 +1590,11 @@ export default function AttendancePage() {
                     </button>
                   ))
                 })()}
-                {([[<ChevronRight size={12} />,()=>setEmpPage(p=>Math.min(todayTotalPages,p+1)),empPage===todayTotalPages],[<ChevronsRight size={12} />,()=>setEmpPage(todayTotalPages),empPage===todayTotalPages]]).map(([ic,a,d],i)=>(
-                  <button key={i} onClick={a} disabled={d as boolean}
+                {([
+                  [<ChevronRight size={12} />,()=>setEmpPage(p=>Math.min(todayTotalPages,p+1)),empPage===todayTotalPages] as const,
+                  [<ChevronsRight size={12} />,()=>setEmpPage(todayTotalPages),empPage===todayTotalPages] as const
+                ] as [React.ReactNode, () => void, boolean][]).map(([ic,a,d],i)=>(
+                  <button key={i} onClick={a} disabled={d}
                     className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer disabled:cursor-default disabled:text-[var(--text-muted)]">
                     {ic}
                   </button>
@@ -1732,8 +1737,11 @@ export default function AttendancePage() {
                 </select>
               </div>
               <div className="flex gap-[3px]">
-                {([[<ChevronsLeft size={12} />,()=>setEmpPage(1),empPage===1],[<ChevronLeft size={12} />,()=>setEmpPage(p=>Math.max(1,p-1)),empPage===1]]).map(([ic,a,d],i)=>(
-                  <button key={i} onClick={a} disabled={d as boolean}
+                {([
+                  [<ChevronsLeft size={12} />,()=>setEmpPage(1),empPage===1] as const,
+                  [<ChevronLeft size={12} />,()=>setEmpPage(p=>Math.max(1,p-1)),empPage===1] as const
+                ] as [React.ReactNode, () => void, boolean][]).map(([ic,a,d],i)=>(
+                  <button key={i} onClick={a} disabled={d}
                     className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer disabled:cursor-default disabled:text-[var(--text-muted)]">
                     {ic}
                   </button>
@@ -1747,8 +1755,11 @@ export default function AttendancePage() {
                     </button>
                   ))
                 })()}
-                {([[<ChevronRight size={12} />,()=>setEmpPage(p=>Math.min(empTotalPages,p+1)),empPage===empTotalPages],[<ChevronsRight size={12} />,()=>setEmpPage(empTotalPages),empPage===empTotalPages]]).map(([ic,a,d],i)=>(
-                  <button key={i} onClick={a} disabled={d as boolean}
+                {([
+                  [<ChevronRight size={12} />,()=>setEmpPage(p=>Math.min(empTotalPages,p+1)),empPage===empTotalPages] as const,
+                  [<ChevronsRight size={12} />,()=>setEmpPage(empTotalPages),empPage===empTotalPages] as const
+                ] as [React.ReactNode, () => void, boolean][]).map(([ic,a,d],i)=>(
+                  <button key={i} onClick={a} disabled={d}
                     className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer disabled:cursor-default disabled:text-[var(--text-muted)]">
                     {ic}
                   </button>
@@ -2945,8 +2956,11 @@ export default function AttendancePage() {
                 </select>
               </div>
               <div className="flex gap-[3px]">
-                {([[<ChevronsLeft size={12} />,()=>setStuPage(1),stuPage===1],[<ChevronLeft size={12} />,()=>setStuPage(p=>Math.max(1,p-1)),stuPage===1]]).map(([ic,a,d],i)=>(
-                  <button key={i} onClick={a} disabled={d as boolean}
+                {([
+                  [<ChevronsLeft size={12} />,()=>setStuPage(1),stuPage===1] as const,
+                  [<ChevronLeft size={12} />,()=>setStuPage(p=>Math.max(1,p-1)),stuPage===1] as const
+                ] as [React.ReactNode, () => void, boolean][]).map(([ic,a,d],i)=>(
+                  <button key={i} onClick={a} disabled={d}
                     className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer disabled:cursor-default disabled:text-[var(--text-muted)]">
                     {ic}
                   </button>
@@ -2960,8 +2974,11 @@ export default function AttendancePage() {
                     </button>
                   ))
                 })()}
-                {([[<ChevronRight size={12} />,()=>setStuPage(p=>Math.min(stuTotalPages,p+1)),stuPage===stuTotalPages],[<ChevronsRight size={12} />,()=>setStuPage(stuTotalPages),stuPage===stuTotalPages]]).map(([ic,a,d],i)=>(
-                  <button key={i} onClick={a} disabled={d as boolean}
+                {([
+                  [<ChevronRight size={12} />,()=>setStuPage(p=>Math.min(stuTotalPages,p+1)),stuPage===stuTotalPages] as const,
+                  [<ChevronsRight size={12} />,()=>setStuPage(stuTotalPages),stuPage===stuTotalPages] as const
+                ] as [React.ReactNode, () => void, boolean][]).map(([ic,a,d],i)=>(
+                  <button key={i} onClick={a} disabled={d}
                     className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer disabled:cursor-default disabled:text-[var(--text-muted)]">
                     {ic}
                   </button>

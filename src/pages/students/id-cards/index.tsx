@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, IdCard, Printer, Search, User } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'

@@ -152,7 +152,7 @@ export default function TeacherBulkUpdatePage() {
             <button key={o.id} onClick={() => { setOp(o.id); setRowEdits({}); setPhotoMap({}); setBatchVal('') }}
               className={`flex flex-col items-center gap-[5px] py-[10px] px-[6px] rounded-[10px] border-2 ${op === o.id ? 'border-[color:var(--o-color)]' : 'border-[var(--border)]'} ${op === o.id ? 'bg-[color:var(--o-bg)]' : 'bg-[var(--bg-secondary)]'} cursor-pointer font-[inherit] transition-all duration-150`}
               style={{ '--o-color': o.color, '--o-bg': o.bg } as React.CSSProperties}>
-              <o.Icon size={18} className={op === o.id ? 'text-[color:var(--o-color)]' : 'text-[var(--text-muted)]'} />
+              <o.Icon size={18} style={{color: op === o.id ? o.color : undefined}} />
               <span className={`text-[10px] ${op === o.id ? 'font-semibold' : 'font-normal'} ${op === o.id ? 'text-[color:var(--o-color)]' : 'text-[var(--text-secondary)]'} text-center leading-[1.2]`}>
                 {isBn ? o.bn : o.en}
               </span>

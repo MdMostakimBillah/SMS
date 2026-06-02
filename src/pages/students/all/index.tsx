@@ -359,7 +359,7 @@ export default function AllStudentsPage() {
                   { l:isBn?'অ্যাকশন':'Action', w:'70px', sticky:false },
                 ].map(h => (
                   <th key={h.l} className="py-2.5 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap"
-                    style={{ minWidth:h.w, ...(h.sticky ? sc(h.left) : {}) }}>
+                    style={{ minWidth:h.w, ...(h.sticky ? sc(h.left || '0') : {}) }}>
                     {h.l}
                   </th>
                 ))}
@@ -429,8 +429,11 @@ export default function AllStudentsPage() {
             {(sp-1)*perPage+1}–{Math.min(sp*perPage,filtered.length)} / {filtered.length}
           </span>
           <div className="flex gap-[3px]">
-            {([[<ChevronsLeft size={12} />,()=>setPage(1),sp===1],[<ChevronLeft size={12} />,()=>setPage(p=>Math.max(1,p-1)),sp===1]]).map(([ic,a,d],i)=>(
-              <button key={i} onClick={a} disabled={d as boolean}
+            {([
+              [<ChevronsLeft size={12} />,()=>setPage(1),sp===1] as const,
+              [<ChevronLeft size={12} />,()=>setPage(p=>Math.max(1,p-1)),sp===1] as const
+            ] as [React.ReactNode, () => void, boolean][]).map(([ic,a,d],i)=>(
+              <button key={i} onClick={a} disabled={d}
                 className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer disabled:cursor-default disabled:text-[var(--text-muted)]">
                 {ic}
               </button>
@@ -444,8 +447,11 @@ export default function AllStudentsPage() {
                 </button>
               ))
             })()}
-            {([[<ChevronRight size={12} />,()=>setPage(p=>Math.min(totalPages,p+1)),sp===totalPages],[<ChevronsRight size={12} />,()=>setPage(totalPages),sp===totalPages]]).map(([ic,a,d],i)=>(
-              <button key={i} onClick={a} disabled={d as boolean}
+            {([
+              [<ChevronRight size={12} />,()=>setPage(p=>Math.min(totalPages,p+1)),sp===totalPages] as const,
+              [<ChevronsRight size={12} />,()=>setPage(totalPages),sp===totalPages] as const
+            ] as [React.ReactNode, () => void, boolean][]).map(([ic,a,d],i)=>(
+              <button key={i} onClick={a} disabled={d}
                 className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer disabled:cursor-default disabled:text-[var(--text-muted)]">
                 {ic}
               </button>

@@ -192,7 +192,7 @@ const handlePhotoUpload = useCallback(
           {OPS.map(o => (
             <button key={o.id} onClick={() => { setOp(o.id); setRowEdits({}); setPhotoMap({}); setBatchVal('') }}
               className={`flex flex-col items-center gap-[5px] py-[10px] px-[6px] rounded-[10px] border-2 font-[inherit] transition-all ${op===o.id ? `border-[${o.color}] bg-[${o.bg}]` : 'border-[var(--border)] bg-[var(--bg-secondary)]'}`}>
-              <o.Icon size={18} className={op===o.id ? `text-[${o.color}]` : 'text-[var(--text-muted)]'} />
+              <o.Icon size={18} style={{color: op===o.id ? o.color : undefined}} />
               <span className={`text-[10px] text-center leading-[1.2] ${op===o.id ? `font-semibold text-[${o.color}]` : 'font-normal text-[var(--text-secondary)]'}`}>
                 {isBn?o.bn:o.en}
               </span>
