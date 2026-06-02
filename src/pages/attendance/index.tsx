@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Briefcase, Calendar, CalendarCheck, CalendarRange, CalendarX, CheckCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, CreditCard, ExternalLink, Eye, FileSpreadsheet, FileText, Fingerprint, GraduationCap, Layers, Loader, LogOut, Plus, RefreshCw, ScanFace, Search, Settings, Smartphone, Tag, User, Users, Wifi, WifiOff, X, XCircle } from 'lucide-react'
+import { ArrowLeft, Briefcase, Camera, Calendar, CalendarCheck, CalendarRange, CalendarX, CheckCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, CreditCard, ExternalLink, Eye, FileSpreadsheet, FileText, Fingerprint, GraduationCap, Layers, Loader, LogOut, Plus, RefreshCw, ScanFace, Search, Settings, Smartphone, Tag, User, Users, Wifi, WifiOff, X, XCircle } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 import { useAppStore } from '@/store/appStore'
@@ -246,6 +246,17 @@ export default function AttendancePage() {
   const [kioskStaff, setKioskStaff] = useState('')
   const [kioskPending, setKioskPending] = useState(false)
   const [kioskMsg, setKioskMsg] = useState<{type:'success'|'error';text:string}|null>(null)
+  // Kiosk registration state
+  const [kioskRegStep, setKioskRegStep] = useState<'method'|'fingerprint'|'face'|'done'>('method')
+  const [kioskRegCount, setKioskRegCount] = useState(0)
+  const [faceStream, setFaceStream] = useState<MediaStream | null>(null)
+  const [faceLivenessStep, setFaceLivenessStep] = useState<'position'|'blink'|'movement'|'done'>('position')
+  const [faceBlinkDetected, setFaceBlinkDetected] = useState(false)
+  const [faceMoveCount, setFaceMoveCount] = useState(0)
+  const faceCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const faceVideoRef = useRef<HTMLVideoElement | null>(null)
+  const faceIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const faceStateRef = useRef({ step: 'position' as 'position'|'blink'|'movement'|'done', frameCount: 0, movements: [] as boolean[], prevFrame: null as ImageData | null })
   // WiFi verification state
   const [institutionWifi, setInstitutionWifi] = useState(() => localStorage.getItem('institutionWifi') || '')
   const [institutionGateway, setInstitutionGateway] = useState(() => localStorage.getItem('institutionGateway') || '')
@@ -370,7 +381,15 @@ export default function AttendancePage() {
         setMobileAuthMsg({ type: 'success', text: isBn ? `${newDevice.staffName} সফলভাবে নিবন্ধিত হয়েছে!` : `${newDevice.staffName} registered successfully!` })
       }
     } catch (err: any) {
-      setMobileAuthMsg({ type: 'error', text: err.name === 'NotAllowedError' ? (isBn ? 'ব্যবহারকারী বাতিল করেছেন' : 'User cancelled') : (isBn ? 'নিবন্ধন ব্যর্থ হয়েছে' : 'Registration failed') })
+      console.error('Device registration error:', err)
+      const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost'
+      if (!isSecure) {
+        setMobileAuthMsg({ type: 'error', text: isBn ? '🔒 HTTPS প্রয়োজন! https:// দিয়ে খুলুন।' : '🔒 HTTPS required! Open with https://' })
+      } else if (err.name === 'NotAllowedError') {
+        setMobileAuthMsg({ type: 'error', text: isBn ? 'ব্যবহারকারী বাতিল করেছেন' : 'User cancelled' })
+      } else {
+        setMobileAuthMsg({ type: 'error', text: `${isBn ? 'নিবন্ধন ব্যর্থ' : 'Registration failed'}: ${err.message || err.name}` })
+      }
     }
     setMobileRegPending(false)
   }
@@ -428,7 +447,15 @@ export default function AttendancePage() {
         setMobileAuthMsg({ type: 'success', text: isBn ? `${device.staffName} ${punchType === 'in' ? 'চেক-ইন' : 'চেক-আউট'} সফল হয়েছে! (${timeStr})${wifiInfo}` : `${device.staffName} ${punchType === 'in' ? 'checked in' : 'checked out'} at ${timeStr}${wifiInfo}` })
       }
     } catch (err: any) {
-      setMobileAuthMsg({ type: 'error', text: err.name === 'NotAllowedError' ? (isBn ? 'ব্যবহারকারী বাতিল করেছেন' : 'User cancelled') : (isBn ? 'প্রমাণীকরণ ব্যর্থ হয়েছে' : 'Authentication failed') })
+      console.error('Mobile auth error:', err)
+      const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost'
+      if (!isSecure) {
+        setMobileAuthMsg({ type: 'error', text: isBn ? '🔒 HTTPS প্রয়োজন! https:// দিয়ে খুলুন।' : '🔒 HTTPS required! Open with https://' })
+      } else if (err.name === 'NotAllowedError') {
+        setMobileAuthMsg({ type: 'error', text: isBn ? 'ব্যবহারকারী বাতিল করেছেন' : 'User cancelled' })
+      } else {
+        setMobileAuthMsg({ type: 'error', text: `${isBn ? 'প্রমাণীকরণ ব্যর্থ' : 'Authentication failed'}: ${err.message || err.name}` })
+      }
     }
     setMobileAuthPending(false)
   }
@@ -476,6 +503,221 @@ export default function AttendancePage() {
       setKioskMsg({ type: 'error', text: err.name === 'NotAllowedError' ? (isBn ? 'বাতিল করা হয়েছে' : 'Cancelled') : (isBn ? 'ব্যর্থ' : 'Failed') })
     }
     setKioskPending(false)
+  }
+
+  // ===== Kiosk Registration: Fingerprint 3x verify =====
+  const resetKioskReg = () => {
+    setKioskRegStep('method')
+    setKioskRegCount(0)
+    setFaceLivenessStep('position')
+    setFaceBlinkDetected(false)
+    setFaceMoveCount(0)
+    faceStateRef.current = { step: 'position', frameCount: 0, movements: [], prevFrame: null }
+    if (faceIntervalRef.current) { clearInterval(faceIntervalRef.current); faceIntervalRef.current = null }
+    if (faceStream) { faceStream.getTracks().forEach(t => t.stop()); setFaceStream(null) }
+  }
+
+  const handleKioskFingerprintScan = async () => {
+    const teacher = activeTeachers.find(t => t.id === kioskStaff)
+    if (!teacher) return
+    setKioskPending(true)
+    setKioskMsg(null)
+    try {
+      const challenge = generateChallenge()
+      const credential = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: 'EduTech Attendance', id: window.location.hostname },
+          user: {
+            id: new TextEncoder().encode(teacher.id),
+            name: teacher.id,
+            displayName: isBn ? (teacher.nameBn || teacher.nameEn) : teacher.nameEn,
+          },
+          pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
+          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+          timeout: 60000,
+        }
+      }) as PublicKeyCredential | null
+      if (credential) {
+        const rawId = bufferToBase64(credential.rawId)
+        const newCount = kioskRegCount + 1
+        setKioskRegCount(newCount)
+        if (newCount >= 3) {
+          const newDevice = {
+            id: `MOB-${Date.now()}`,
+            staffId: teacher.id,
+            staffName: isBn ? (teacher.nameBn || teacher.nameEn) : teacher.nameEn,
+            deviceName: navigator.userAgent.includes('iPhone') ? 'iPhone' : navigator.userAgent.includes('Android') ? 'Android' : 'Browser',
+            credentialId: rawId,
+            registeredAt: new Date().toISOString(),
+            lastAuth: '',
+          }
+          const updated = [...mobileDevices, newDevice]
+          setMobileDevices(updated)
+          localStorage.setItem('mobileAuthDevices', JSON.stringify(updated))
+          setKioskRegStep('done')
+          setKioskMsg({ type: 'success', text: isBn ? `${newDevice.staffName} ৩ বার যাচাই সফল! নিবন্ধন সম্পন্ন।` : `${newDevice.staffName} verified 3 times! Registration complete.` })
+          setTimeout(() => { resetKioskReg(); setKioskStaff(''); setKioskMsg(null) }, 3000)
+        }
+      }
+    } catch (err: any) {
+      console.error('Fingerprint scan error:', err)
+      const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost'
+      if (!isSecure) {
+        setKioskMsg({ type: 'error', text: isBn ? '🔒 HTTPS প্রয়োজন! দয়া করে https:// দিয়ে খুলুন।' : '🔒 HTTPS required! Open with https:// on your phone.' })
+      } else if (err.name === 'NotAllowedError') {
+        setKioskMsg({ type: 'error', text: isBn ? 'ব্যবহারকারী বাতিল করেছেন। আবার চেষ্টা করুন।' : 'Cancelled by user. Tap to try again.' })
+      } else {
+        setKioskMsg({ type: 'error', text: `${isBn ? 'স্ক্যান ব্যর্থ' : 'Scan failed'}: ${err.message || err.name}` })
+      }
+    }
+    setKioskPending(false)
+  }
+
+  // ===== Kiosk Registration: Face liveness =====
+  const captureFaceFrame = (): ImageData | null => {
+    if (!faceVideoRef.current || !faceCanvasRef.current) return null
+    const canvas = faceCanvasRef.current
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    canvas.width = 320
+    canvas.height = 240
+    ctx.drawImage(faceVideoRef.current, 0, 0, 320, 240)
+    return ctx.getImageData(0, 0, 320, 240)
+  }
+
+  const compareFrames = (a: ImageData, b: ImageData): { movement: number; blinkScore: number } => {
+    const da = a.data, db = b.data
+    let totalDiff = 0, topDiff = 0, topCount = 0
+    const w = a.width, h = a.height
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4
+        const diff = Math.abs(da[i] - db[i]) + Math.abs(da[i+1] - db[i+1]) + Math.abs(da[i+2] - db[i+2])
+        totalDiff += diff
+        if (y < h * 0.4) { topDiff += diff; topCount++ }
+      }
+    }
+    return { movement: totalDiff / (w * h * 3), blinkScore: topCount > 0 ? topDiff / (topCount * 3) : 0 }
+  }
+
+  const startFaceCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 320, height: 240 } })
+      setFaceStream(stream)
+      setFaceLivenessStep('position')
+      setFaceBlinkDetected(false)
+      setFaceMoveCount(0)
+      faceStateRef.current = { step: 'position', frameCount: 0, movements: [], prevFrame: null }
+
+      if (faceVideoRef.current) faceVideoRef.current.srcObject = stream
+
+      if (faceIntervalRef.current) clearInterval(faceIntervalRef.current)
+      faceIntervalRef.current = setInterval(() => {
+        const fs = faceStateRef.current
+        if (fs.step === 'done') return
+        const frame = captureFaceFrame()
+        if (!frame) return
+        fs.frameCount++
+
+        if (fs.prevFrame) {
+          const { movement, blinkScore } = compareFrames(fs.prevFrame, frame)
+
+          if (fs.step === 'blink' && blinkScore > 15) {
+            fs.blinkDetected = true
+            fs.step = 'movement'
+            fs.movements = []
+            fs.frameCount = 0
+            setFaceLivenessStep('movement')
+            setFaceBlinkDetected(true)
+            setFaceMoveCount(0)
+          } else if (fs.step === 'movement') {
+            fs.movements.push(movement > 3)
+            setFaceMoveCount(fs.movements.filter(Boolean).length)
+            if (fs.movements.filter(Boolean).length >= 3) {
+              fs.step = 'done'
+              setFaceLivenessStep('done')
+              if (faceIntervalRef.current) { clearInterval(faceIntervalRef.current); faceIntervalRef.current = null }
+              completeFaceRegistration()
+              return
+            }
+            if (fs.movements.length >= 20) {
+              fs.step = 'position'
+              fs.frameCount = 0
+              fs.movements = []
+              setFaceLivenessStep('position')
+              setFaceMoveCount(0)
+            }
+          }
+
+          if (fs.step === 'position' && fs.frameCount > 15) {
+            fs.step = 'blink'
+            fs.frameCount = 0
+            setFaceLivenessStep('blink')
+          }
+        }
+        fs.prevFrame = frame
+      }, 500)
+    } catch (err: any) {
+      console.error('Camera access error:', err)
+      const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost'
+      if (!isSecure) {
+        setKioskMsg({ type: 'error', text: isBn ? '🔒 HTTPS প্রয়োজন! দয়া করে https:// দিয়ে খুলুন।' : '🔒 HTTPS required! Open with https:// on your phone.' })
+      } else if (err.name === 'NotAllowedError' || err.name === 'NotFoundError') {
+        setKioskMsg({ type: 'error', text: isBn ? 'ক্যামেরা অনুমতি প্রয়োজন। ব্রাউজারে অনুমতি দিন।' : 'Camera permission denied. Allow camera access in browser.' })
+      } else {
+        setKioskMsg({ type: 'error', text: isBn ? `ক্যামেরা ত্রুটি: ${err.message}` : `Camera error: ${err.message}` })
+      }
+    }
+  }
+
+  const stopFaceCamera = () => {
+    if (faceIntervalRef.current) { clearInterval(faceIntervalRef.current); faceIntervalRef.current = null }
+    if (faceStream) { faceStream.getTracks().forEach(t => t.stop()); setFaceStream(null) }
+  }
+
+  const completeFaceRegistration = async () => {
+    const teacher = activeTeachers.find(t => t.id === kioskStaff)
+    if (!teacher) return
+    try {
+      const challenge = generateChallenge()
+      const credential = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: 'EduTech Attendance', id: window.location.hostname },
+          user: {
+            id: new TextEncoder().encode(teacher.id),
+            name: teacher.id,
+            displayName: isBn ? (teacher.nameBn || teacher.nameEn) : teacher.nameEn,
+          },
+          pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
+          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+          timeout: 60000,
+        }
+      }) as PublicKeyCredential | null
+      if (credential) {
+        const rawId = bufferToBase64(credential.rawId)
+        const newDevice = {
+          id: `MOB-${Date.now()}`,
+          staffId: teacher.id,
+          staffName: isBn ? (teacher.nameBn || teacher.nameEn) : teacher.nameEn,
+          deviceName: navigator.userAgent.includes('iPhone') ? 'iPhone' : navigator.userAgent.includes('Android') ? 'Android' : 'Face-Webcam',
+          credentialId: rawId,
+          registeredAt: new Date().toISOString(),
+          lastAuth: '',
+        }
+        const updated = [...mobileDevices, newDevice]
+        setMobileDevices(updated)
+        localStorage.setItem('mobileAuthDevices', JSON.stringify(updated))
+        stopFaceCamera()
+        setKioskRegStep('done')
+        setKioskMsg({ type: 'success', text: isBn ? `${newDevice.staffName} মুখ যাচাই সফল! নিবন্ধন সম্পন্ন।` : `${newDevice.staffName} face verified! Registration complete.` })
+        setTimeout(() => { resetKioskReg(); setKioskStaff(''); setKioskMsg(null) }, 3000)
+      }
+    } catch (err: any) {
+      setKioskMsg({ type: 'error', text: isBn ? 'নিবন্ধন ব্যর্থ' : 'Registration failed' })
+      stopFaceCamera()
+    }
   }
 
   const filteredStudents = useMemo(() => {
@@ -2375,8 +2617,8 @@ export default function AttendancePage() {
           {/* Kiosk Mode Modal */}
           {kioskMode && (
             <div className="fixed inset-0 flex items-center justify-center p-4 z-[800] bg-black/80">
-              <div className="bg-[var(--bg-primary)] rounded-2xl max-w-[420px] w-full p-6 border border-[var(--border)] shadow-2xl">
-                <div className="flex items-center justify-between mb-6">
+              <div className="bg-[var(--bg-primary)] rounded-2xl max-w-[440px] w-full p-6 border border-[var(--border)] shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[var(--teal-light)] flex items-center justify-center">
                       <Wifi size={20} className="text-[var(--teal)]" />
@@ -2386,11 +2628,22 @@ export default function AttendancePage() {
                       <p className="text-[11px] text-[var(--text-muted)]">{isBn ? 'শেয়ার্ড ডিভাইস হিসেবে ব্যবহার করুন' : 'Use as shared device'}</p>
                     </div>
                   </div>
-                  <button onClick={() => { setKioskMode(false); setKioskStaff(''); setKioskMsg(null) }}
+                  <button onClick={() => { setKioskMode(false); setKioskStaff(''); setKioskMsg(null); resetKioskReg() }}
                     className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                     <X size={16} />
                   </button>
                 </div>
+
+                {/* HTTPS warning */}
+                {window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && (
+                  <div className="mb-4 py-3 px-4 rounded-xl bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[12px] font-medium text-center">
+                    <span className="font-bold">🔒 {isBn ? 'HTTPS প্রয়োজন!' : 'HTTPS Required!'}</span>
+                    <br />
+                    {isBn
+                      ? 'বায়োমেট্রিক কাজ করতে https:// দিয়ে খুলুন। যেমন: https://192.168.0.188:5173'
+                      : 'Open with https:// for biometric to work. E.g.: https://192.168.0.188:5173'}
+                  </div>
+                )}
 
                 {kioskMsg && (
                   <div className={`mb-4 py-3 px-4 rounded-xl text-center text-[14px] font-bold ${kioskMsg.type === 'success' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
@@ -2398,28 +2651,185 @@ export default function AttendancePage() {
                   </div>
                 )}
 
-                <div className="mb-4">
-                  <label className="text-[12px] font-medium text-[var(--text-secondary)] mb-2 block">{isBn ? 'স্টাফ নির্বাচন করুন' : 'Select Staff'}</label>
-                  <select value={kioskStaff} onChange={e => { setKioskStaff(e.target.value); setKioskMsg(null) }}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-[var(--border)] bg-[var(--bg-secondary)] text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--teal)]">
-                    <option value="">{isBn ? 'নাম নির্বাচন করুন...' : 'Choose name...'}</option>
-                    {mobileDevices.map(d => (
-                      <option key={d.staffId} value={d.staffId}>{d.staffName} ({d.staffId})</option>
-                    ))}
-                  </select>
-                </div>
+                {/* Staff selector - always shown */}
+                {kioskRegStep !== 'done' && (
+                  <div className="mb-4">
+                    <label className="text-[12px] font-medium text-[var(--text-secondary)] mb-2 block">{isBn ? 'স্টাফ নির্বাচন করুন' : 'Select Staff'}</label>
+                    <select value={kioskStaff} onChange={e => { setKioskStaff(e.target.value); setKioskMsg(null); resetKioskReg() }}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-[var(--border)] bg-[var(--bg-secondary)] text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--teal)]">
+                      <option value="">{isBn ? 'নাম নির্বাচন করুন...' : 'Choose name...'}</option>
+                      {activeTeachers.map(t => {
+                        const registered = mobileDevices.find(d => d.staffId === t.id)
+                        return (
+                          <option key={t.id} value={t.id}>
+                            {isBn ? (t.nameBn || t.nameEn) : t.nameEn} ({t.id}){registered ? ' ✓' : ''}
+                          </option>
+                        )
+                      })}
+                    </select>
+                  </div>
+                )}
 
-                <button onClick={handleKioskAuth} disabled={!kioskStaff || kioskPending}
-                  className={`w-full py-4 rounded-xl text-[15px] font-bold cursor-pointer border-none transition-all ${kioskPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : kioskStaff ? 'bg-[var(--teal)] text-white hover:shadow-lg hover:scale-[1.02]' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}>
-                  {kioskPending ? (
-                    <span className="flex items-center justify-center gap-2"><Loader size={18} className="animate-spin" />{isBn ? 'অপেক্ষা করুন...' : 'Authenticating...'}</span>
-                  ) : (
-                    <span className="flex items-center justify-center gap-2"><Fingerprint size={18} />{isBn ? 'বায়োমেট্রিক চেক করুন' : 'Tap for Biometric'}</span>
-                  )}
-                </button>
+                {/* ===== REGISTERED STAFF: Simple auth button ===== */}
+                {kioskStaff && mobileDevices.find(d => d.staffId === kioskStaff) && kioskRegStep === 'method' && (
+                  <button onClick={handleKioskAuth} disabled={kioskPending}
+                    className={`w-full py-4 rounded-xl text-[15px] font-bold cursor-pointer border-none transition-all ${kioskPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : 'bg-[var(--teal)] text-white hover:shadow-lg hover:scale-[1.02]'}`}>
+                    {kioskPending ? (
+                      <span className="flex items-center justify-center gap-2"><Loader size={18} className="animate-spin" />{isBn ? 'অপেক্ষা করুন...' : 'Authenticating...'}</span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2"><Fingerprint size={18} />{isBn ? 'বায়োমেট্রিক চেক করুন' : 'Tap for Biometric'}</span>
+                    )}
+                  </button>
+                )}
 
+                {/* ===== UNREGISTERED: Choose method ===== */}
+                {kioskStaff && !mobileDevices.find(d => d.staffId === kioskStaff) && kioskRegStep === 'method' && (
+                  <div className="space-y-3">
+                    <div className="bg-[var(--amber-light)] rounded-xl py-2.5 px-4 text-center">
+                      <p className="text-[13px] font-medium text-[var(--amber)]">
+                        {isBn ? '⚠️ এই স্টাফ এখনো নিবন্ধিত হয়নি। নিবন্ধন করুন:' : '⚠️ Not registered yet. Choose registration method:'}
+                      </p>
+                    </div>
+                    <button onClick={() => { setKioskRegStep('fingerprint'); setKioskRegCount(0) }}
+                      className="w-full py-4 rounded-xl text-[15px] font-bold cursor-pointer border-2 border-[var(--teal)] bg-[var(--teal-light)] text-[var(--teal)] hover:shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[var(--teal)] flex items-center justify-center">
+                        <Fingerprint size={22} className="text-white" />
+                      </div>
+                      <div className="text-left">
+                        <div>{isBn ? 'আঙুল দিয়ে নিবন্ধন' : 'Register with Fingerprint'}</div>
+                        <div className="text-[10px] font-normal opacity-70">{isBn ? '৩ বার যাচাই করুন' : 'Verify 3 times'}</div>
+                      </div>
+                    </button>
+                    <button onClick={() => { setKioskRegStep('face'); startFaceCamera() }}
+                      className="w-full py-4 rounded-xl text-[15px] font-bold cursor-pointer border-2 border-[var(--green)] bg-[var(--green-light)] text-[var(--green)] hover:shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[var(--green)] flex items-center justify-center">
+                        <Camera size={22} className="text-white" />
+                      </div>
+                      <div className="text-left">
+                        <div>{isBn ? 'মুখ দিয়ে নিবন্ধন' : 'Register with Face Scan'}</div>
+                        <div className="text-[10px] font-normal opacity-70">{isBn ? 'বিঁক ও মুখ সরান' : 'Blink & move head'}</div>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
+                {/* ===== FINGERPRINT 3x VERIFICATION ===== */}
+                {kioskRegStep === 'fingerprint' && (
+                  <div className="text-center space-y-4">
+                    <div className="text-[13px] font-medium text-[var(--text-secondary)]">
+                      {isBn ? 'আঙুল রেখে রাখুন' : 'Place your finger on sensor'}
+                    </div>
+
+                    {/* 3 step indicators */}
+                    <div className="flex items-center justify-center gap-3">
+                      {[1,2,3].map(n => (
+                        <div key={n} className={`w-14 h-14 rounded-full border-2 flex items-center justify-center transition-all ${
+                          n < kioskRegCount + 1
+                            ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]'
+                            : n === kioskRegCount + 1
+                              ? 'border-[var(--teal)] bg-[var(--teal-light)] text-[var(--teal)] animate-pulse'
+                              : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'
+                        }`}>
+                          {n < kioskRegCount + 1 ? <CheckCircle size={24} /> : <span className="text-[18px] font-bold">{n}</span>}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="text-[12px] text-[var(--text-muted)]">
+                      {isBn
+                        ? `${kioskRegCount}/৩ সম্পন্ন`
+                        : `${kioskRegCount}/3 completed`}
+                    </div>
+
+                    <button onClick={handleKioskFingerprintScan} disabled={kioskPending}
+                      className={`w-full py-4 rounded-xl text-[15px] font-bold cursor-pointer border-none transition-all ${kioskPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : 'bg-[var(--teal)] text-white hover:shadow-lg hover:scale-[1.02]'}`}>
+                      {kioskPending ? (
+                        <span className="flex items-center justify-center gap-2"><Loader size={18} className="animate-spin" />{isBn ? 'যাচাই হচ্ছে...' : 'Verifying...'}</span>
+                      ) : (
+                        <span className="flex items-center justify-center gap-2"><Fingerprint size={18} />{isBn ? `স্ক্যান #${kioskRegCount + 1}` : `Scan #${kioskRegCount + 1}`}</span>
+                      )}
+                    </button>
+
+                    <button onClick={() => { resetKioskReg(); setKioskStaff('') }}
+                      className="text-[12px] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer underline">
+                      {isBn ? 'বাতিল করুন' : 'Cancel'}
+                    </button>
+                  </div>
+                )}
+
+                {/* ===== FACE SCAN WITH LIVENESS ===== */}
+                {kioskRegStep === 'face' && (
+                  <div className="text-center space-y-4">
+                    {/* Camera preview */}
+                    <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] max-w-[320px] mx-auto">
+                      <video ref={faceVideoRef}
+                        autoPlay playsInline muted className="w-full h-full object-cover" />
+                      <canvas ref={faceCanvasRef} className="hidden" />
+
+                      {/* Overlay guides */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        {faceLivenessStep === 'position' && (
+                          <div className="w-36 h-44 rounded-[50%] border-2 border-dashed border-white/60 animate-pulse" />
+                        )}
+                        {faceLivenessStep === 'blink' && (
+                          <div className="bg-black/50 rounded-xl px-4 py-2 text-white text-[13px] font-bold">
+                            {isBn ? '👁️ চোখ বন্ধ করুন ও খুলুন' : '👁️ Blink your eyes'}
+                          </div>
+                        )}
+                        {faceLivenessStep === 'movement' && (
+                          <div className="bg-black/50 rounded-xl px-4 py-2 text-white text-[13px] font-bold">
+                            {isBn ? '↔️ মাথা ডানে-বামে সরান' : '↔️ Move head left-right'}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Status badge */}
+                      <div className="absolute top-3 left-3 bg-black/60 rounded-lg px-2.5 py-1 text-white text-[10px] font-medium flex items-center gap-1.5">
+                        <div className={`w-2 h-2 rounded-full ${faceStream ? 'bg-[var(--green)] animate-pulse' : 'bg-red-500'}`} />
+                        {faceStream ? (isBn ? 'লাইভ' : 'LIVE') : (isBn ? 'বন্ধ' : 'OFF')}
+                      </div>
+
+                      {faceLivenessStep === 'done' && (
+                        <div className="absolute inset-0 bg-[var(--green)]/20 flex items-center justify-center">
+                          <div className="bg-[var(--green)] rounded-full p-4">
+                            <CheckCircle size={40} className="text-white" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Progress steps */}
+                    <div className="flex items-center justify-center gap-2 text-[11px]">
+                      <span className={`px-3 py-1.5 rounded-full font-medium ${faceLivenessStep === 'position' ? 'bg-[var(--teal)] text-white' : 'bg-[var(--green-light)] text-[var(--green)]'}`}>
+                        {isBn ? '১. মুখ' : '1. Position'}
+                      </span>
+                      <span className={`px-3 py-1.5 rounded-full font-medium ${faceLivenessStep === 'blink' ? 'bg-[var(--teal)] text-white' : faceBlinkDetected ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
+                        {isBn ? '২. বিঁক' : '2. Blink'}
+                      </span>
+                      <span className={`px-3 py-1.5 rounded-full font-medium ${faceLivenessStep === 'movement' ? 'bg-[var(--teal)] text-white' : faceLivenessStep === 'done' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
+                        {isBn ? '৩. সরান' : '3. Move'}
+                      </span>
+                    </div>
+
+                    {/* Auto-check running */}
+                    {faceStream && faceLivenessStep !== 'done' && (
+                      <div className="text-[11px] text-[var(--text-muted)]">
+                        {faceLivenessStep === 'position' && (isBn ? 'মুখ ক্যামেরার সামনে রাখুন...' : 'Hold face in front of camera...')}
+                        {faceLivenessStep === 'blink' && (isBn ? 'চোখ বন্ধ করুন ও খুলুন...' : 'Blink your eyes...')}
+                        {faceLivenessStep === 'movement' && `${isBn ? 'মাথা সরাচ্ছেন' : 'Moving head...'} ${faceMoveCount}/3`}
+                      </div>
+                    )}
+
+                    <button onClick={() => { resetKioskReg(); setKioskStaff('') }}
+                      className="text-[12px] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer underline">
+                      {isBn ? 'বাতিল করুন' : 'Cancel'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Stats footer */}
                 <div className="mt-4 text-center text-[10px] text-[var(--text-muted)]">
-                  {isBn ? `নিবন্ধিত স্টাফ: ${mobileDevices.length}` : `Registered staff: ${mobileDevices.length}`}
+                  {isBn ? `মোট স্টাফ: ${activeTeachers.length} · নিবন্ধিত: ${mobileDevices.length}` : `Total staff: ${activeTeachers.length} · Registered: ${mobileDevices.length}`}
                 </div>
               </div>
             </div>
