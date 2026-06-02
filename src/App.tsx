@@ -21,6 +21,7 @@ import PayrollPage from '@/pages/payroll'
 import ClassesPage from '@/pages/classes'
 import HRPage from '@/pages/hr'
 import AttendancePage from '@/pages/attendance'
+import ExamsPage from '@/pages/exams'
 
 function P({ name }: { name: string }) {
   return <div style={{ color:'var(--text-primary)', fontSize:'20px', fontWeight:500, padding:'20px' }}>{name}</div>
@@ -51,7 +52,7 @@ export default function App() {
         <Route path="/classes"               element={<ClassesPage />} />
         <Route path="/hr"                    element={<HRPage />} />
         <Route path="/attendance"            element={<AttendancePage />} />
-        <Route path="/exams"                 element={<P name="Exams" />} />
+        <Route path="/exams"                 element={<ExamsPage />} />
         <Route path="/syllabus"              element={<P name="Syllabus" />} />
         <Route path="/assignments"           element={<P name="Assignments" />} />
         <Route path="/online"                element={<P name="Online Classes" />} />

@@ -99,6 +99,8 @@ export default function HRPage() {
   const [bulkDeductionTo, setBulkDeductionTo] = useState(new Date().toISOString().split('T')[0])
   const [bulkFundEnabled, setBulkFundEnabled] = useState(false)
   const [bulkFundPercent, setBulkFundPercent] = useState('')
+  const [fundDateFrom, setFundDateFrom] = useState('')
+  const [fundDateTo, setFundDateTo] = useState('')
 
   const [perPage, setPerPage] = useState(20)
   const [page, setPage] = useState(1)
@@ -123,6 +125,13 @@ export default function HRPage() {
     if (proDateTo) list = list.filter(p => p.date <= proDateTo)
     return list
   }, [promotions, proDateFrom, proDateTo])
+
+  const filteredFunds = useMemo(() => {
+    let list = funds
+    if (fundDateFrom) list = list.filter(f => f.date >= fundDateFrom)
+    if (fundDateTo) list = list.filter(f => f.date <= fundDateTo)
+    return list
+  }, [funds, fundDateFrom, fundDateTo])
 
   const toggleInc = useCallback((id: string) => setSelectedInc(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]), [])
   const toggleAllInc = useCallback(() => setSelectedInc(p => p.length === filteredIncrements.length ? [] : filteredIncrements.map(i => i.id)), [filteredIncrements])
@@ -395,6 +404,16 @@ export default function HRPage() {
     return list
   }, [teacherFacilities, assignDateFrom, assignDateTo])
 
+  const filteredFacStaff = useMemo(() => {
+    let list = activeTeachers
+    if (facStaffFilter) list = list.filter(t => t.departmentId === facStaffFilter)
+    if (facStaffSearch) {
+      const q = facStaffSearch.toLowerCase()
+      list = list.filter(t => t.nameEn.toLowerCase().includes(q) || t.id.toLowerCase().includes(q) || (t.nameBn && t.nameBn.includes(facStaffSearch)))
+    }
+    return list
+  }, [activeTeachers, facStaffFilter, facStaffSearch])
+
   // Pagination computations
   const paginatedIncrements = useMemo(() => filteredIncrements.slice((page - 1) * perPage, page * perPage), [filteredIncrements, page, perPage])
   const incrementTotalPages = Math.max(1, Math.ceil(filteredIncrements.length / perPage))
@@ -405,8 +424,8 @@ export default function HRPage() {
   const paginatedPromotions = useMemo(() => filteredPromotions.slice((page - 1) * perPage, page * perPage), [filteredPromotions, page, perPage])
   const promotionTotalPages = Math.max(1, Math.ceil(filteredPromotions.length / perPage))
 
-  const paginatedFunds = useMemo(() => funds.slice((page - 1) * perPage, page * perPage), [funds, page, perPage])
-  const fundTotalPages = Math.max(1, Math.ceil(funds.length / perPage))
+  const paginatedFunds = useMemo(() => filteredFunds.slice((page - 1) * perPage, page * perPage), [filteredFunds, page, perPage])
+  const fundTotalPages = Math.max(1, Math.ceil(filteredFunds.length / perPage))
 
   const paginatedActiveTeachers = useMemo(() => activeTeachers.slice((page - 1) * perPage, page * perPage), [activeTeachers, page, perPage])
   const salaryTotalPages = Math.max(1, Math.ceil(activeTeachers.length / perPage))
@@ -1536,6 +1555,29 @@ export default function HRPage() {
               </div>
             </div>
 
+            {/* Date filter */}
+            <div className="flex items-center gap-2 mb-[14px] flex-wrap">
+              <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
+                <Calendar size={13} />
+                <span className="text-[11px] font-medium">{isBn ? 'তারিখ' : 'Date'}:</span>
+              </div>
+              <input type="date" value={fundDateFrom} onChange={e => { setFundDateFrom(e.target.value); setPage(1) }}
+                className="h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none" />
+              <span className="text-[var(--text-muted)] text-[11px]">–</span>
+              <input type="date" value={fundDateTo} onChange={e => { setFundDateTo(e.target.value); setPage(1) }}
+                className="h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none" />
+              <div className="flex">
+                <button onClick={() => { const d = new Date(); d.setMonth(d.getMonth() - 6); setFundDateFrom(d.toISOString().split('T')[0]); setFundDateTo(new Date().toISOString().split('T')[0]); setPage(1) }}
+                  className="h-8 px-3 rounded-l-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[11px] text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--bg-primary)]">6M</button>
+                <button onClick={() => { const d = new Date(); d.setFullYear(d.getFullYear() - 1); setFundDateFrom(d.toISOString().split('T')[0]); setFundDateTo(new Date().toISOString().split('T')[0]); setPage(1) }}
+                  className={`h-8 px-3 border border-[var(--border)] bg-[var(--bg-secondary)] text-[11px] text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--bg-primary)] ${(fundDateFrom || fundDateTo) ? 'border-r-0' : 'rounded-r-lg'}`}>1Y</button>
+                {(fundDateFrom || fundDateTo) && (
+                  <button onClick={() => { setFundDateFrom(''); setFundDateTo(''); setPage(1) }}
+                    className="h-8 px-3 rounded-r-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[11px] text-[var(--red)] cursor-pointer hover:bg-[var(--bg-primary)]">✕</button>
+                )}
+              </div>
+            </div>
+
             {/* Fund Balance Summary */}
             <div className={`p-[14px] rounded-[10px] mb-[14px] ${fundBalance >= 0 ? 'bg-[var(--green-light)]' : 'bg-[var(--red-light)]'}`}>
               <div className="flex items-center justify-between mb-2">
@@ -1559,7 +1601,7 @@ export default function HRPage() {
                 <thead>
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                     <th className="py-[10px] px-2 w-9">
-                      <input type="checkbox" checked={selectedFund.length === funds.length && funds.length > 0} onChange={toggleAllFund}
+                      <input type="checkbox" checked={selectedFund.length === filteredFunds.length && filteredFunds.length > 0} onChange={toggleAllFund}
                         className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
                     </th>
                     {[isBn ? 'তারিখ' : 'Date', isBn ? 'ধরন' : 'Type', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'বিবরণ' : 'Description'].map(h => (
@@ -1589,10 +1631,10 @@ export default function HRPage() {
                 </tbody>
               </table>
             </div>
-            {funds.length > perPage && (
+            {filteredFunds.length > perPage && (
               <div className="py-[10px] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
                 <span className="text-xs text-[var(--text-muted)]">
-                  {(page - 1) * perPage + 1}–{Math.min(page * perPage, funds.length)} / {funds.length}
+                  {(page - 1) * perPage + 1}–{Math.min(page * perPage, filteredFunds.length)} / {filteredFunds.length}
                 </span>
                 <div className="flex gap-[3px] items-center">
                   <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
@@ -2033,7 +2075,7 @@ export default function HRPage() {
                 <select value={selectedFacStaff} onChange={e => setSelectedFacStaff(e.target.value)}
                   className="w-full h-9 py-0 px-[10px] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border appearance-auto">
                   <option value="">{isBn ? 'নির্বাচন করুন...' : 'Select staff...'}</option>
-                  {activeTeachers.map(t => <option key={t.id} value={t.id}>{t.nameEn} ({t.designation})</option>)}
+                  {filteredFacStaff.map(t => <option key={t.id} value={t.id}>{t.nameEn} ({t.designation})</option>)}
                 </select>
               </div>
               <div>
