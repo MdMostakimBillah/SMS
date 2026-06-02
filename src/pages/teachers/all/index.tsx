@@ -330,11 +330,11 @@ ${photoHtml}
         <div className="sticky top-0 z-50 bg-[var(--bg-primary)] pt-0.5 pb-1">
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[14px] mb-2.5">
             <div className="grid gap-2" style={{ gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(160px, 1fr))' }}>
-              <div className="flex items-center gap-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-[10px] py-[7px]">
+              <div className="flex items-center gap-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-[10px] py-[7px] min-w-0">
                 <Search size={14} className="text-[var(--text-muted)] shrink-0" />
                 <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
                   placeholder={isBn?'নাম, আইডি, মোবাইল, পিতা, মাতা...':'Name, ID, phone, father, mother...'}
-                  className="flex-1 border-none bg-transparent outline-none text-[13px] text-[var(--text-primary)]" />
+                  className="flex-1 min-w-0 border-none bg-transparent outline-none text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] placeholder:text-[12px] truncate" />
                 {search && <button onClick={() => setSearch('')} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)] flex"><X size={12} /></button>}
               </div>
               <select value={fDept} onChange={e => { setFDept(e.target.value); setPage(1) }} className={sel}>
