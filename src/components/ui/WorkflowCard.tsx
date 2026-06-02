@@ -28,8 +28,8 @@ const badgeStyles: Record<string, CSSProperties> = {
 
 const WorkflowCard = memo(function WorkflowCard({
   icon: Icon, iconColor, iconBg,
-  title, titleBn, description, descriptionBn,
-  stat, statBn, statColor, onClick, badge, badgeVariant = 'info',
+  title, titleBn: _titleBn, description, descriptionBn: _descriptionBn,
+  stat, statBn: _statBn, statColor, onClick, badge, badgeVariant = 'info',
 }: WorkflowCardProps) {
   const { isMobile } = useWindowSize()
 

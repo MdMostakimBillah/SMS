@@ -32,7 +32,6 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {steps.map((step, i) => {
-          const Icon = step.icon
           const colors = statusColors[step.status]
           return (
             <div

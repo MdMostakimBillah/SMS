@@ -15,6 +15,8 @@ const sectionTitleCls = 'flex items-center gap-2 text-[13px] font-semibold text-
 const inputCls = 'h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border'
 const btnPrimary = 'flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
 
+type SubTab = 'exams' | 'subjects' | 'grade-scale' | 'omr'
+
 const EXAM_TYPE_LABELS: Record<ExamType, { en: string; bn: string }> = {
   'semester-1': { en: '1st Semester', bn: '১ম সেমিস্টার' },
   'semester-2': { en: '2nd Semester', bn: '২য় সেমিস্টার' },
@@ -46,6 +48,7 @@ export default function Step1Planning() {
   const removeSubExam = useExamStore(s => s.removeSubExam)
   const upsertOMRConfig = useExamStore(s => s.upsertOMRConfig)
   const deleteOMRConfig = useExamStore(s => s.deleteOMRConfig)
+  const addGradeScale = useExamStore(s => s.addGradeScale)
   const deleteGradeScale = useExamStore(s => s.deleteGradeScale)
 
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('exams')
@@ -70,6 +73,9 @@ export default function Step1Planning() {
   const [showOMRForm, setShowOMRForm] = useState(false)
   const [editOMR, setEditOMR] = useState<OMRConfig | null>(null)
   const [omrForm, setOMRForm] = useState({ examId: '', subjectId: '', totalQuestions: '50', correctMark: '2', negativeMark: '0.5', optionCount: '4', sheetFormat: 'A' as 'A' | 'B' | 'C' | 'D' })
+
+  // Grade Scale Form
+  const [showGradeForm, setShowGradeForm] = useState(false)
 
   // Checklist
   const checklist = [
@@ -653,6 +659,39 @@ export default function Step1Planning() {
             <div className="flex gap-2 justify-end mt-4">
               <button onClick={() => { setShowOMRForm(false); setEditOMR(null) }} className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer">{isBn ? 'বাতিল' : 'Cancel'}</button>
               <button onClick={handleSaveOMR} className={`${btnPrimary} text-[12px]`}>{isBn ? 'সংরক্ষণ' : 'Save'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Grade Scale Form Modal ═══ */}
+      {showGradeForm && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
+          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[400px] w-full p-5 border border-[var(--border)]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">{isBn ? 'গ্রেড স্কেল যোগ' : 'Add Grade Scale'}</h3>
+              <button onClick={() => setShowGradeForm(false)} className="w-7 h-7 rounded-md flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={16} /></button>
+            </div>
+            <p className="text-[12px] text-[var(--text-muted)] mb-3">
+              {isBn ? 'ডিফল্ট গ্রেড স্কেল (A+ থেকে F) যোগ করা হবে।' : 'Default grade scale (A+ to F) will be added.'}
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setShowGradeForm(false)} className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer">{isBn ? 'বাতিল' : 'Cancel'}</button>
+              <button onClick={() => {
+                addGradeScale({
+                  name: 'Default Scale', nameBn: 'ডিফল্ট স্কেল',
+                  grades: [
+                    { grade: 'A+', minPct: 80, gpa: 5.0, color: '#10b981' },
+                    { grade: 'A', minPct: 70, gpa: 4.0, color: '#34d399' },
+                    { grade: 'A-', minPct: 60, gpa: 3.5, color: '#6ee7b7' },
+                    { grade: 'B', minPct: 50, gpa: 3.0, color: '#60a5fa' },
+                    { grade: 'C', minPct: 40, gpa: 2.0, color: '#fbbf24' },
+                    { grade: 'D', minPct: 33, gpa: 1.0, color: '#f97316' },
+                    { grade: 'F', minPct: 0, gpa: 0.0, color: '#ef4444' },
+                  ],
+                })
+                setShowGradeForm(false)
+              }} className={`${btnPrimary} text-[12px]`}>{isBn ? 'যোগ করুন' : 'Add Scale'}</button>
             </div>
           </div>
         </div>

@@ -28,6 +28,7 @@ const statusStyles: Record<string, { bg: string; color: string; label: string; l
 export default function Step2Schedule() {
   const navigate = useNavigate()
   const { language } = useAppStore()
+  const teachers = useTeacherStore(s => s.teachers)
   const subjects = useTeacherStore(s => s.subjects)
   const { classes } = useClassStore()
   const students = useSessionStudents()
@@ -422,7 +423,7 @@ export default function Step2Schedule() {
                         <UserCheck size={14} className="text-[var(--brand)]" />
                       </div>
                       <div>
-                        <div className="text-[13px] font-semibold text-[var(--text-primary)]">{teacher?.name || inv.teacherId}</div>
+                        <div className="text-[13px] font-semibold text-[var(--text-primary)]">{teacher?.nameEn || inv.teacherId}</div>
                         <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
                           <span className="flex items-center gap-1"><MapPin size={10} />{room?.roomNo || inv.roomId}</span>
                           <span className="flex items-center gap-1"><Calendar size={10} />{inv.date}</span>
@@ -578,7 +579,7 @@ export default function Step2Schedule() {
                 <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শিক্ষক' : 'Teacher'}</label>
                 <select value={invigForm.teacherId} onChange={e => setInvigForm(p => ({ ...p, teacherId: e.target.value }))} className={`${inputCls} w-full`}>
                   <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                  {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  {teachers.map(t => <option key={t.id} value={t.id}>{t.nameEn}</option>)}
                 </select>
               </div>
               <div>
