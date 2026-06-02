@@ -2889,6 +2889,7 @@ export default function AttendancePage() {
                         }}
                         className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
                     </th>
+                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[36px]"></th>
                     <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[140px]">{isBn?'নাম':'Name'}</th>
                     <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[60px]">{isBn?'শ্রেণি':'Class'}</th>
                     <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[50px]">{isBn?'সেকশন':'Section'}</th>
@@ -2898,7 +2899,6 @@ export default function AttendancePage() {
                         <div className="text-[8px] font-normal">{dayName(ds)}</div>
                       </th>
                     ))}
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[50px]">{isBn?'অ্যাকশন':'Action'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2912,28 +2912,29 @@ export default function AttendancePage() {
                           onChange={() => setSelectedStudents(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
                           className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
                       </td>
+                      <td className="p-[6px] text-center">
+                        <div className="w-[30px] h-[36px] rounded-[5px] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
+                          {s.photo ? <img src={s.photo} alt="" className="w-full h-full object-cover" /> : <User size={13} className="text-[var(--text-muted)]" />}
+                        </div>
+                      </td>
                       <td className="p-[6px]">
-                        <div className="text-[11px] font-medium text-[var(--text-primary)]">{isBn?s.nameBn||s.nameEn:s.nameEn}</div>
-                        <div className="text-[9px] text-[var(--text-muted)]">{s.id}</div>
+                        <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setViewStudent({id:s.id, name:isBn?s.nameBn||s.nameEn:s.nameEn, class:s.class, section:s.section||'—'})}>
+                          <div className="text-[11px] font-medium text-[var(--text-primary)]">{isBn?s.nameBn||s.nameEn:s.nameEn}</div>
+                          <ExternalLink size={10} className="text-[var(--text-muted)]" />
+                        </div>
+                        <div className="text-[9px] text-[var(--text-muted)] font-mono">{s.id}</div>
                       </td>
                       <td className="p-[6px] text-[10px] text-[var(--text-secondary)]">{s.class}</td>
                       <td className="p-[6px] text-[10px] text-[var(--text-secondary)]">{s.section || '—'}</td>
                       {rangeDays.map(ds => {
                         if (isFriday(ds)) return <td key={ds} className="p-[4px] text-center">{weeklyHolidayBadge()}</td>
-                        const rand = Math.random()
-                        const st: AttendanceStatus = rand < 0.85 ? 'present' : rand < 0.95 ? 'absent' : 'on-leave'
+                        const st = getStatus(attendance[ds]?.[s.id])
                         return <td key={ds} className="p-[4px] text-center">{statusBadge(st)}</td>
                       })}
-                      <td className="p-[6px] text-center">
-                        <button onClick={() => setViewStudent({id:s.id, name:isBn?s.nameBn||s.nameEn:s.nameEn, class:s.class, section:s.section||'—'})}
-                          className="w-[26px] h-[26px] rounded-[6px] bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]">
-                          <Eye size={12} />
-                        </button>
-                      </td>
                     </tr>
                   ))}
                   {filteredStudents.length === 0 && (
-                    <tr><td colSpan={4 + rangeDays.length} className="p-10 text-center text-[var(--text-muted)]">
+                    <tr><td colSpan={5 + rangeDays.length} className="p-10 text-center text-[var(--text-muted)]">
                       <Users size={28} className="block mx-auto mb-2 opacity-30" />
                       {isBn?'কোনো শিক্ষার্থী পাওয়া যায়নি':'No students found'}
                     </td></tr>
