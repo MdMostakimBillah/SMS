@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
-import { useAdmissionStore } from '@/store/admissionStore'
+import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
 import type { StudentAdmission } from './types'
@@ -272,7 +272,8 @@ const ViewModal = React.memo(function ViewModal({ student, isBn, onClose }: { st
 export default function AdmissionManage() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { students, updateStudent, approveStudent } = useAdmissionStore()
+  const { updateStudent, approveStudent } = useAdmissionStore()
+  const students = useSessionStudents()
   const { classes } = useClassStore()
   const isBn = language === 'bn'
 

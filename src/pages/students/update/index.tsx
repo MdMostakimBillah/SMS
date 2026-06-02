@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { ArrowLeft, Camera, CheckCircle, GraduationCap, Save, Search, ShieldCheck, User, UserSearch, X } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useAdmissionStore } from '@/store/admissionStore'
+import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 
@@ -44,7 +44,8 @@ export default function UpdateStudentPage() {
   const location = useLocation()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { students, updateStudent } = useAdmissionStore()
+  const { updateStudent } = useAdmissionStore()
+  const students = useSessionStudents()
   const { classes } = useClassStore()
   const isBn = language === 'bn'
 

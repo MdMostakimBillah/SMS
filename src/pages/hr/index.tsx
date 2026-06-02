@@ -34,7 +34,7 @@ export default function HRPage() {
     increments, bonuses, promotions, funds, homeworkRecords,
     dailyReports, recommendations, monthlySalaryConfigs,
     facilities, teacherFacilities,
-    addIncrement, deleteIncrement, addBonus, deleteBonus, addPromotion, addFund, addRecommendation,
+    addIncrement, deleteIncrement, addBonus, deleteBonus, addPromotion, deletePromotion, addFund, addRecommendation,
     updateRecommendation, upsertManyMonthlySalaryConfigs,
     addFacility, updateFacility, deleteFacility,
     assignTeacherFacility, updateTeacherFacility, removeTeacherFacility,
@@ -62,6 +62,8 @@ export default function HRPage() {
   const [selectedInc, setSelectedInc] = useState<string[]>([])
   const [selectedBon, setSelectedBon] = useState<string[]>([])
   const [selectedPro, setSelectedPro] = useState<string[]>([])
+  const [proDateFrom, setProDateFrom] = useState('')
+  const [proDateTo, setProDateTo] = useState('')
   const [selectedFund, setSelectedFund] = useState<string[]>([])
   const [salarySetupMonth, setSalarySetupMonth] = useState(() => {
     const now = new Date()
@@ -88,6 +90,8 @@ export default function HRPage() {
   )
   const [bonusDateFrom, setBonusDateFrom] = useState('')
   const [bonusDateTo, setBonusDateTo] = useState('')
+  const [incDateFrom, setIncDateFrom] = useState('')
+  const [incDateTo, setIncDateTo] = useState('')
   const [bulkDeductionEnabled, setBulkDeductionEnabled] = useState(false)
   const [bulkDeductionFrom, setBulkDeductionFrom] = useState(() => {
     const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0]
@@ -99,12 +103,33 @@ export default function HRPage() {
   const [perPage, setPerPage] = useState(20)
   const [page, setPage] = useState(1)
 
+  const filteredIncrements = useMemo(() => {
+    let list = increments
+    if (incDateFrom) list = list.filter(i => i.date >= incDateFrom)
+    if (incDateTo) list = list.filter(i => i.date <= incDateTo)
+    return list
+  }, [increments, incDateFrom, incDateTo])
+
+  const filteredBonuses = useMemo(() => {
+    let list = bonuses
+    if (bonusDateFrom) list = list.filter(b => b.date >= bonusDateFrom)
+    if (bonusDateTo) list = list.filter(b => b.date <= bonusDateTo)
+    return list
+  }, [bonuses, bonusDateFrom, bonusDateTo])
+
+  const filteredPromotions = useMemo(() => {
+    let list = promotions
+    if (proDateFrom) list = list.filter(p => p.date >= proDateFrom)
+    if (proDateTo) list = list.filter(p => p.date <= proDateTo)
+    return list
+  }, [promotions, proDateFrom, proDateTo])
+
   const toggleInc = useCallback((id: string) => setSelectedInc(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]), [])
-  const toggleAllInc = useCallback(() => setSelectedInc(p => p.length === increments.length ? [] : increments.map(i => i.id)), [increments])
+  const toggleAllInc = useCallback(() => setSelectedInc(p => p.length === filteredIncrements.length ? [] : filteredIncrements.map(i => i.id)), [filteredIncrements])
   const toggleBon = useCallback((id: string) => setSelectedBon(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]), [])
-  const toggleAllBon = useCallback(() => setSelectedBon(p => p.length === bonuses.length ? [] : bonuses.map(b => b.id)), [bonuses])
+  const toggleAllBon = useCallback(() => setSelectedBon(p => p.length === filteredBonuses.length ? [] : filteredBonuses.map(b => b.id)), [filteredBonuses])
   const togglePro = useCallback((id: string) => setSelectedPro(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]), [])
-  const toggleAllPro = useCallback(() => setSelectedPro(p => p.length === promotions.length ? [] : promotions.map(p => p.id)), [promotions])
+  const toggleAllPro = useCallback(() => setSelectedPro(p => p.length === filteredPromotions.length ? [] : filteredPromotions.map(p => p.id)), [filteredPromotions])
   const toggleFund = useCallback((id: string) => setSelectedFund(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]), [])
   const toggleAllFund = useCallback(() => setSelectedFund(p => p.length === funds.length ? [] : funds.map(f => f.id)), [funds])
   const toggleAssign = useCallback((id: string) => setSelectedAssign(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]), [])
@@ -370,22 +395,15 @@ export default function HRPage() {
     return list
   }, [teacherFacilities, assignDateFrom, assignDateTo])
 
-  const filteredBonuses = useMemo(() => {
-    let list = bonuses
-    if (bonusDateFrom) list = list.filter(b => b.date >= bonusDateFrom)
-    if (bonusDateTo) list = list.filter(b => b.date <= bonusDateTo)
-    return list
-  }, [bonuses, bonusDateFrom, bonusDateTo])
-
   // Pagination computations
-  const paginatedIncrements = useMemo(() => increments.slice((page - 1) * perPage, page * perPage), [increments, page, perPage])
-  const incrementTotalPages = Math.max(1, Math.ceil(increments.length / perPage))
+  const paginatedIncrements = useMemo(() => filteredIncrements.slice((page - 1) * perPage, page * perPage), [filteredIncrements, page, perPage])
+  const incrementTotalPages = Math.max(1, Math.ceil(filteredIncrements.length / perPage))
 
-  const paginatedBonuses = useMemo(() => bonuses.slice((page - 1) * perPage, page * perPage), [bonuses, page, perPage])
-  const bonusTotalPages = Math.max(1, Math.ceil(bonuses.length / perPage))
+  const paginatedBonuses = useMemo(() => filteredBonuses.slice((page - 1) * perPage, page * perPage), [filteredBonuses, page, perPage])
+  const bonusTotalPages = Math.max(1, Math.ceil(filteredBonuses.length / perPage))
 
-  const paginatedPromotions = useMemo(() => promotions.slice((page - 1) * perPage, page * perPage), [promotions, page, perPage])
-  const promotionTotalPages = Math.max(1, Math.ceil(promotions.length / perPage))
+  const paginatedPromotions = useMemo(() => filteredPromotions.slice((page - 1) * perPage, page * perPage), [filteredPromotions, page, perPage])
+  const promotionTotalPages = Math.max(1, Math.ceil(filteredPromotions.length / perPage))
 
   const paginatedFunds = useMemo(() => funds.slice((page - 1) * perPage, page * perPage), [funds, page, perPage])
   const fundTotalPages = Math.max(1, Math.ceil(funds.length / perPage))
@@ -395,9 +413,6 @@ export default function HRPage() {
 
   const paginatedAssignments = useMemo(() => filteredAssignments.slice((page - 1) * perPage, page * perPage), [filteredAssignments, page, perPage])
   const assignmentTotalPages = Math.max(1, Math.ceil(filteredAssignments.length / perPage))
-
-  const paginatedFacBonuses = useMemo(() => filteredBonuses.slice((page - 1) * perPage, page * perPage), [filteredBonuses, page, perPage])
-  const facBonusTotalPages = Math.max(1, Math.ceil(filteredBonuses.length / perPage))
 
   const handleBulkApplyDeduction = () => {
     const configs: MonthlySalaryConfig[] = activeTeachers.map(t => {
@@ -523,7 +538,7 @@ export default function HRPage() {
       const list = selectedBon.length > 0 ? bonuses.filter(b => selectedBon.includes(b.id)) : bonuses
       html = generateBonusPDF(list, opts, getTeacherName)
     } else if (type === 'promotion') {
-      const list = selectedPro.length > 0 ? promotions.filter(p => selectedPro.includes(p.id)) : promotions
+      const list = selectedPro.length > 0 ? filteredPromotions.filter(p => selectedPro.includes(p.id)) : filteredPromotions
       html = generatePromotionPDF(list, opts, getTeacherName)
     } else if (type === 'fund') {
       const list = selectedFund.length > 0 ? funds.filter(f => selectedFund.includes(f.id)) : funds
@@ -667,9 +682,9 @@ export default function HRPage() {
           </div>
 
           {/* Quick Stats */}
-          <div className={`grid gap-2 mb-[14px] ${isMobile ? 'grid-cols-[repeat(2, 1fr)]' : 'grid-cols-[repeat(4, 1fr)]'}`}>
+          <div className={`grid gap-2 mb-[14px] ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
             {quickStats.map(s => (
-              <div key={s.labelEn} className={sectionCls}>
+              <div key={s.labelEn} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3">
                 <div className="flex items-center gap-[10px]">
                   <div className={`w-8 h-8 rounded-lg ${s.bgCls} flex items-center justify-center shrink-0`}>
                     <s.icon size={15} className={s.colorCls} />
@@ -688,7 +703,7 @@ export default function HRPage() {
             <div className={sectionTitleCls}>
               <Medal size={15} className="text-[var(--amber)]" />{isBn ? 'শীর্ষ কর্মী' : 'Top Performers'}
             </div>
-            <div className={`grid gap-[10px] ${isMobile ? 'grid-cols-[1fr]' : isTablet ? 'grid-cols-[1fr_1fr]' : 'grid-cols-[repeat(4,1fr)]'}`}>
+            <div className={`grid gap-[10px] ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-4'}`}>
               {[
                 { title: isBn ? 'শিক্ষার্থী ফলাফল' : 'Student Performance', data: studentPerformanceRank, color: 'var(--brand)', key: 'avgScore' as const, suffix: '' },
                 { title: isBn ? 'দৈনিক রিপোর্ট' : 'Reports', data: reportRank, color: 'var(--teal)', key: 'rate' as const, suffix: '%' },
@@ -698,7 +713,7 @@ export default function HRPage() {
                 <div key={card.title} className="bg-[var(--bg-secondary)] rounded-[10px] p-3">
                   <div className="text-[11px] font-semibold text-[var(--text-muted)] mb-[10px]">{card.title}</div>
                   {card.data.slice(0, 3).map((t, i) => (
-                    <div key={t.id} className={`flex items-center gap-2 py-[5px] px-0 ${i < 2 ? 'border-b border-[var(--border)]' : 'border-b'}`}>
+                    <div key={t.id} className="flex items-center gap-2 py-[5px] px-0 border-b border-[var(--border)]">
                       <span className={`text-[11px] font-bold w-[18px] text-center ${i === 0 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}>#{i + 1}</span>
                       <div className="w-[26px] h-[26px] rounded-[7px] flex items-center justify-center shrink-0 text-[8px] font-semibold text-white" style={{ background: getAvatarGradient(t.id) }}>
                         {getInitials(t.nameEn)}
@@ -707,7 +722,7 @@ export default function HRPage() {
                         <div className="text-xs font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">{t.nameEn}</div>
                         <div className="text-[10px] text-[var(--text-muted)]">{getTeacherDept(t.id)}</div>
                       </div>
-                      <div className="text-[13px] font-bold text-[card.color]">{(t as any)[card.key]}{card.suffix}</div>
+                      <div className="text-[13px] font-bold" style={{ color: card.color }}>{(t as any)[card.key]}{card.suffix}</div>
                     </div>
                   ))}
                 </div>
@@ -720,7 +735,7 @@ export default function HRPage() {
             <div className={sectionTitleCls}>
               <DollarSign size={15} className="text-[var(--green)]" />{isBn ? 'আর্থিক সারসংক্ষেপ' : 'Financial Summary'}
             </div>
-            <div className={`grid gap-2 ${isMobile ? 'grid-cols-[repeat(2, 1fr)]' : 'grid-cols-[repeat(5, 1fr)]'}`}>
+            <div className={`grid gap-2 ${isMobile ? 'grid-cols-2' : 'grid-cols-5'}`}>
               {[
                 { label: isBn ? 'মোট বেতন' : 'Total Salary', val: `৳${adjustedTotalSalary.toLocaleString()}`, color: 'var(--text-primary)' },
                 { label: isBn ? 'বেতন কাটা' : 'Deductions', val: salaryDeductions > 0 ? `-৳${salaryDeductions.toLocaleString()}` : '৳0', color: salaryDeductions > 0 ? 'var(--red)' : 'var(--text-muted)' },
@@ -730,7 +745,7 @@ export default function HRPage() {
               ].map(item => (
                 <div key={item.label} className="p-3 rounded-lg bg-[var(--bg-secondary)]">
                   <div className="text-[11px] text-[var(--text-muted)] mb-1">{item.label}</div>
-                  <div className="text-lg font-bold text-[item.color]">{item.val}</div>
+                  <div className="text-lg font-bold" style={{ color: item.color }}>{item.val}</div>
                 </div>
               ))}
             </div>
@@ -764,12 +779,12 @@ export default function HRPage() {
                   ))}
                 </span>
               </div>
-              <div className="flex gap-1.5 items-center flex-wrap">
+              <div className="flex gap-1.5 items-center">
                 <div className="relative">
-                  <Search size={13} className="absolute left-[10px] top-[50%] text-[var(--text-muted)]" />
+                  <Search size={13} className="absolute left-[10px] top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                   <input value={employeeSearch} onChange={e => { setEmployeeSearch(e.target.value); setPage(1) }}
                     placeholder={isBn ? 'খুঁজুন...' : 'Search...'}
-                    className={`${inputCls} pl-[30px] text-xs h-[34px] ${isMobile ? 'w-[110px]' : 'w-[130px]'}`} />
+                    className={`${inputCls} pl-[30px] text-xs h-[34px] w-[130px]`} />
                 </div>
                 <select value={employeeStatusFilter} onChange={e => { setEmployeeStatusFilter(e.target.value); setPage(1) }}
                   className={`${inputCls} w-[90px] text-xs h-[34px]`}>
@@ -792,12 +807,12 @@ export default function HRPage() {
             </div>
 
             {employeeView === 'grid' ? (
-              <div className={`grid gap-2 ${isMobile ? 'grid-cols-[1fr]' : isTablet ? 'grid-cols-[repeat(2,1fr)]' : 'grid-cols-[repeat(3,1fr)]'}`}>
+              <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-3'}`}>
                 {paginatedEmployees.map(t => (
                   <div key={t.id} onClick={() => setSelectedEmployee(selectedEmployee === t.id ? null : t.id)}
                     className={`p-3 rounded-[10px] cursor-pointer transition-all ${selectedEmployee === t.id ? 'bg-[var(--brand-light)]' : 'bg-[var(--bg-secondary)]'}`}>
                     <div className="flex items-center gap-[10px] mb-[10px]">
-                      <div className="w-[34px] h-[34px] rounded-lg bg-[getAvatarGradient(t.id)] flex items-center justify-center text-[10px] font-semibold text-white shrink-0">
+                      <div className="w-[34px] h-[34px] rounded-lg flex items-center justify-center text-[10px] font-semibold text-white shrink-0" style={{ background: getAvatarGradient(t.id) }}>
                         {getInitials(t.nameEn)}
                       </div>
                       <div className="flex-1 min-w-[0]">
@@ -806,7 +821,7 @@ export default function HRPage() {
                       </div>
                       {getStatusBadge(t.status)}
                     </div>
-                    <div className="grid grid-cols-[repeat(3, 1fr)] gap-1">
+                    <div className="grid grid-cols-3 gap-1">
                       <div className="text-center py-[5px] px-[2px] rounded-md bg-[var(--bg-primary)]">
                         <div className="text-[9px] text-[var(--text-muted)]">{isBn ? 'উপস্থিতি' : 'Att.'}</div>
                         <div className={`text-xs font-semibold ${t.attRate >= 80 ? 'text-[var(--green)]' : 'text-[var(--amber)]'}`}>{t.attRate}%</div>
@@ -854,7 +869,7 @@ export default function HRPage() {
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                         <td className="py-2 px-2">
                           <div className="flex items-center gap-[10px]">
-                            <div className="w-[30px] h-[30px] rounded-[7px] bg-[getAvatarGradient(t.id)] flex items-center justify-center text-[9px] font-semibold text-white shrink-0">
+                            <div className="w-[30px] h-[30px] rounded-[7px] flex items-center justify-center text-[9px] font-semibold text-white shrink-0" style={{ background: getAvatarGradient(t.id) }}>
                               {getInitials(t.nameEn)}
                             </div>
                             <div>
@@ -966,7 +981,7 @@ export default function HRPage() {
                 <div key={t.id} className="py-[10px] px-3 rounded-lg bg-[var(--bg-secondary)] transition-all">
                   <div className="flex items-center gap-[10px]">
                     <span className={`text-[13px] font-bold w-[24px] ${i < 3 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}>#{i + 1}</span>
-                    <div className="w-8 h-8 rounded-lg bg-[getAvatarGradient(t.id)] flex items-center justify-center text-[9px] font-semibold text-white shrink-0">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-semibold text-white shrink-0" style={{ background: getAvatarGradient(t.id) }}>
                       {getInitials(t.nameEn)}
                     </div>
                     <div className="flex-1 min-w-[0]">
@@ -975,7 +990,7 @@ export default function HRPage() {
                     </div>
                     <CircularChart value={t.totalScore} size={42} stroke={5} color={t.totalScore >= 80 ? 'var(--green)' : t.totalScore >= 60 ? 'var(--amber)' : 'var(--red)'} />
                   </div>
-                  <div className="grid grid-cols-[repeat(4, 1fr)] gap-1.5 mt-2">
+                  <div className="grid grid-cols-4 gap-1.5 mt-2">
                     {[
                       { label: isBn ? 'উপস্থিতি' : 'Att', val: `${t.attRate}%`, color: 'var(--purple)' },
                       { label: isBn ? 'হোমওয়ার্ক' : 'HW', val: `${t.hwRate}%`, color: 'var(--green)' },
@@ -984,7 +999,7 @@ export default function HRPage() {
                     ].map(d => (
                       <div key={d.label} className="text-center p-1 rounded-md bg-[var(--bg-primary)]">
                         <div className="text-[10px] text-[var(--text-muted)]">{d.label}</div>
-                        <div className="text-[13px] font-semibold text-[d.color]">{d.val}</div>
+                        <div className="text-[13px] font-semibold" style={{ color: d.color }}>{d.val}</div>
                       </div>
                     ))}
                   </div>
@@ -1013,13 +1028,13 @@ export default function HRPage() {
                   return (
                     <div key={rec.id} className="p-3 rounded-[10px] bg-[var(--bg-secondary)]">
                       <div className="flex items-center gap-[10px] flex-wrap">
-                        <div className="w-[34px] h-[34px] rounded-lg bg-[bg[rec.type]] flex items-center justify-center shrink-0">
-                          <IconComp size={15} className="text-[colors[rec.type]]" />
+                        <div className="w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0" style={{ background: bg[rec.type] }}>
+                          <IconComp size={15} style={{ color: colors[rec.type] }} />
                         </div>
                         <div className="flex-1 min-w-[0]">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[13px] font-semibold text-[var(--text-primary)]">{teacher?.nameEn || rec.teacherId}</span>
-                            <span className="text-[11px] py-[2px] px-2 rounded-full bg-[bg[rec.type]] text-[colors[rec.type]] font-medium">{labels[rec.type]}</span>
+                            <span className="text-[11px] py-[2px] px-2 rounded-full font-medium" style={{ background: bg[rec.type], color: colors[rec.type] }}>{labels[rec.type]}</span>
                             <span className="text-[11px] text-[var(--text-muted)]">{isBn ? 'স্কোর' : 'Score'}: <strong className="text-[var(--brand)]">{rec.score}</strong></span>
                           </div>
                           <div className="text-xs text-[var(--text-secondary)] mt-[2px]">{rec.reason}</div>
@@ -1055,14 +1070,14 @@ export default function HRPage() {
                   const labels: Record<string, string> = { promotion: isBn ? 'পদোন্নতি' : 'Promotion', bonus: isBn ? 'বোনাস' : 'Bonus', increment: isBn ? 'বৃদ্ধি' : 'Increment' }
                   return (
                     <div key={rec.id} className="py-2 px-3 rounded-lg bg-[var(--bg-secondary)] flex items-center gap-[10px]">
-                      <div className="w-7 h-7 rounded-[7px] bg-[bg[rec.type]] flex items-center justify-center shrink-0">
-                        {rec.type === 'promotion' ? <Award size={13} className="text-[colors[rec.type]]" /> :
-                         rec.type === 'bonus' ? <Gift size={13} className="text-[colors[rec.type]]" /> :
-                         <TrendingUp size={13} className="text-[colors[rec.type]]" />}
+                      <div className="w-7 h-7 rounded-[7px] flex items-center justify-center shrink-0" style={{ background: bg[rec.type] }}>
+                        {rec.type === 'promotion' ? <Award size={13} style={{ color: colors[rec.type] }} /> :
+                         rec.type === 'bonus' ? <Gift size={13} style={{ color: colors[rec.type] }} /> :
+                         <TrendingUp size={13} style={{ color: colors[rec.type] }} />}
                       </div>
                       <div className="flex-1">
                         <span className="text-[13px] font-medium text-[var(--text-primary)]">{teacher?.nameEn || rec.teacherId}</span>
-                        <span className="text-[11px] py-px px-2 rounded-xl bg-[bg[rec.type]] text-[colors[rec.type]] font-medium ml-2">{labels[rec.type]}</span>
+                        <span className="text-[11px] py-px px-2 rounded-xl font-medium ml-2" style={{ background: bg[rec.type], color: colors[rec.type] }}>{labels[rec.type]}</span>
                       </div>
                       <span className={`text-[11px] py-[3px] px-2 rounded-full font-medium ${rec.status === 'approved' ? 'bg-[var(--green-light)]' : 'bg-[var(--red-light)]'} ${rec.status === 'approved' ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
                         {rec.status === 'approved' ? (isBn ? 'অনুমোদিত' : 'Approved') : (isBn ? 'বাতিল' : 'Rejected')}
@@ -1094,57 +1109,100 @@ export default function HRPage() {
               </button>
             </div>
           </div>
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <Calendar size={13} className="text-[var(--text-muted)]" />
+            <input type="date" value={incDateFrom} onChange={e => { setIncDateFrom(e.target.value); setPage(1) }}
+              className={`${inputCls} w-auto h-[32px] py-0 px-2 text-[11px]`} />
+            <span className="text-[11px] text-[var(--text-muted)]">—</span>
+            <input type="date" value={incDateTo} onChange={e => { setIncDateTo(e.target.value); setPage(1) }}
+              className={`${inputCls} w-auto h-[32px] py-0 px-2 text-[11px]`} />
+            <div className="flex h-[32px] shrink-0">
+              <button onClick={() => { const d = new Date(); d.setMonth(d.getMonth() - 6); setIncDateFrom(d.toISOString().split('T')[0]); setIncDateTo(new Date().toISOString().split('T')[0]) }}
+                className="px-[10px] border border-[var(--border)] border-r-0 cursor-pointer font-[inherit] text-[11px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--brand-light)] hover:text-[var(--brand)] transition-all rounded-l-lg">
+                6{isBn ? 'মাস' : 'M'}
+              </button>
+              <button onClick={() => { const d = new Date(); d.setFullYear(d.getFullYear() - 1); setIncDateFrom(d.toISOString().split('T')[0]); setIncDateTo(new Date().toISOString().split('T')[0]) }}
+                className={`px-[10px] border border-[var(--border)] cursor-pointer font-[inherit] text-[11px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--brand-light)] hover:text-[var(--brand)] transition-all ${incDateFrom || incDateTo ? 'border-r-0' : 'rounded-r-lg'}`}>
+                1{isBn ? 'বছর' : 'Y'}
+              </button>
+              {(incDateFrom || incDateTo) && (
+                <button onClick={() => { setIncDateFrom(''); setIncDateTo(''); setPage(1) }}
+                  className="px-[10px] border border-[var(--border)] cursor-pointer font-[inherit] text-[11px] bg-[var(--red-light)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white transition-all rounded-r-lg">
+                  {isBn ? 'মুছুন' : 'Clear'}
+                </button>
+              )}
+            </div>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-xs min-w-[560px]">
+            <table className="w-full text-xs min-w-[640px]">
               <thead>
                 <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                   <th className="py-[10px] px-2 w-9">
-                    <input type="checkbox" checked={selectedInc.length === increments.length && increments.length > 0} onChange={toggleAllInc}
+                    <input type="checkbox" checked={selectedInc.length === filteredIncrements.length && filteredIncrements.length > 0} onChange={toggleAllInc}
                       className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
                   </th>
-                  {[isBn ? 'তারিখ' : 'Date', isBn ? 'শিক্ষক' : 'Teacher', isBn ? 'ধরন' : 'Type', isBn ? 'শতাংশ' : '%', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'কারণ' : 'Reason', ''].map(h => (
-                    <th key={h || 'action'} className={`py-[10px] px-2 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap ${h === '' ? 'text-center' : 'text-left'} ${h === '' ? 'w-[80px]' : 'w-[undefined]'}`}>{h}</th>
+                  {[isBn ? 'তারিখ' : 'Date', isBn ? 'শিক্ষক' : 'Teacher', isBn ? 'ধরন' : 'Type', isBn ? 'শতাংশ' : '%', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'মোট' : 'Total', isBn ? 'কারণ' : 'Reason', ''].map(h => (
+                    <th key={h || 'action'} className={`py-[10px] px-2 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap ${h === '' ? 'text-center w-[80px]' : (h === (isBn ? 'পরিমাণ' : 'Amount') || h === (isBn ? 'মোট' : 'Total')) ? 'text-right' : 'text-left'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {paginatedIncrements.map(inc => (
-                  <tr key={inc.id} className={`border-b border-[var(--border)] ${selectedInc.includes(inc.id) ? 'bg-[rgba(99,102,241,0.04)]' : 'bg-transparent'}`}
-                    onMouseEnter={e => { if (!selectedInc.includes(inc.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
-                    onMouseLeave={e => { if (!selectedInc.includes(inc.id)) e.currentTarget.style.background = 'transparent' }}>
-                    <td className="py-2 px-2">
-                      <input type="checkbox" checked={selectedInc.includes(inc.id)} onChange={() => toggleInc(inc.id)}
-                        className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
-                    </td>
-                    <td className="py-2 px-2 text-[11px] text-[var(--text-muted)]">{inc.date}</td>
-                    <td className="py-2 px-2 text-xs font-medium text-[var(--text-primary)]">{getTeacherName(inc.teacherId)}</td>
-                    <td className="py-2 px-2">
-                      <span className={`text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium ${inc.type === 'annual' ? 'bg-[var(--green-light)]' : inc.type === 'performance' ? 'bg-[var(--brand-light)]' : 'bg-[var(--amber-light)]'} ${inc.type === 'annual' ? 'text-[var(--green)]' : inc.type === 'performance' ? 'text-[var(--brand)]' : 'text-[var(--amber)]'}`}>{inc.type}</span>
-                    </td>
-                    <td className="py-2 px-2 text-xs font-semibold text-[var(--green)]">{inc.percentage}%</td>
-                    <td className="py-2 px-2 text-xs font-semibold text-[var(--text-primary)]">৳{inc.amount.toLocaleString()}</td>
-                    <td className="py-2 px-2 text-[11px] text-[var(--text-secondary)]">{inc.reason}</td>
-                    <td className="py-2 px-2 text-center">
-                      <div className="flex gap-1 justify-center">
-                        <button onClick={() => { setIncForm({ teacherId: inc.teacherId, type: inc.type, percentage: String(inc.percentage), reason: inc.reason }); setModalType('increment'); }}
-                          className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[10px] font-[inherit]">
-                          <Edit2 size={11} />
-                        </button>
-                        <button onClick={() => deleteIncrement(inc.id)}
-                          className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[10px] font-[inherit]">
-                          <Trash2 size={11} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {paginatedIncrements.map(inc => {
+                  const t = teachers.find(tx => tx.id === inc.teacherId)
+                  const baseSalary = t?.salary || 0
+                  const totalWithInc = baseSalary + inc.amount
+                  return (
+                    <tr key={inc.id} className={`border-b border-[var(--border)] ${selectedInc.includes(inc.id) ? 'bg-[rgba(99,102,241,0.04)]' : 'bg-transparent'}`}
+                      onMouseEnter={e => { if (!selectedInc.includes(inc.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
+                      onMouseLeave={e => { if (!selectedInc.includes(inc.id)) e.currentTarget.style.background = 'transparent' }}>
+                      <td className="py-2 px-2">
+                        <input type="checkbox" checked={selectedInc.includes(inc.id)} onChange={() => toggleInc(inc.id)}
+                          className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
+                      </td>
+                      <td className="py-2 px-2 text-[11px] text-[var(--text-muted)]">{inc.date}</td>
+                      <td className="py-2 px-2 text-xs font-medium text-[var(--text-primary)]">{getTeacherName(inc.teacherId)}</td>
+                      <td className="py-2 px-2">
+                        <span className={`text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium ${inc.type === 'annual' ? 'bg-[var(--green-light)]' : inc.type === 'performance' ? 'bg-[var(--brand-light)]' : 'bg-[var(--amber-light)]'} ${inc.type === 'annual' ? 'text-[var(--green)]' : inc.type === 'performance' ? 'text-[var(--brand)]' : 'text-[var(--amber)]'}`}>{inc.type}</span>
+                      </td>
+                      <td className="py-2 px-2 text-xs font-semibold text-[var(--green)]">{inc.percentage}%</td>
+                      <td className="py-2 px-2 text-xs font-semibold text-[var(--text-primary)] text-right">৳{inc.amount.toLocaleString()}</td>
+                      <td className="py-2 px-2 text-xs font-bold text-[var(--green)] text-right">৳{totalWithInc.toLocaleString()}</td>
+                      <td className="py-2 px-2 text-[11px] text-[var(--text-secondary)]">{inc.reason}</td>
+                      <td className="py-2 px-2 text-center">
+                        <div className="flex gap-1 justify-center">
+                          <button onClick={() => { setIncForm({ teacherId: inc.teacherId, type: inc.type, percentage: String(inc.percentage), reason: inc.reason }); setModalType('increment'); }}
+                            className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[10px] font-[inherit]">
+                            <Edit2 size={11} />
+                          </button>
+                          <button onClick={() => deleteIncrement(inc.id)}
+                            className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[10px] font-[inherit]">
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
+              <tfoot>
+                <tr className="bg-[var(--bg-secondary)] border-t border-t-2 border-[var(--border)]">
+                  <td className="py-2 px-2"></td>
+                  <td colSpan={3} className="py-2 px-2 text-[11px] font-bold text-[var(--text-primary)]">{isBn ? 'মোট' : 'Total'}</td>
+                  <td className="py-2 px-2 text-xs font-bold text-[var(--green)] text-right">৳{filteredIncrements.reduce((s, i) => s + i.amount, 0).toLocaleString()}</td>
+                  <td className="py-2 px-2 text-xs font-bold text-[var(--green)] text-right">৳{filteredIncrements.reduce((s, i) => {
+                    const t = teachers.find(tx => tx.id === i.teacherId)
+                    return s + (t?.salary || 0) + i.amount
+                  }, 0).toLocaleString()}</td>
+                  <td className="py-2 px-2"></td>
+                  <td className="py-2 px-2"></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
-          {increments.length > perPage && (
+          {filteredIncrements.length > perPage && (
             <div className="py-[10px] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
               <span className="text-xs text-[var(--text-muted)]">
-                {(page - 1) * perPage + 1}–{Math.min(page * perPage, increments.length)} / {increments.length}
+                {(page - 1) * perPage + 1}–{Math.min(page * perPage, filteredIncrements.length)} / {filteredIncrements.length}
               </span>
               <div className="flex gap-[3px] items-center">
                 <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
@@ -1201,16 +1259,40 @@ export default function HRPage() {
               </button>
             </div>
           </div>
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <Calendar size={13} className="text-[var(--text-muted)]" />
+            <input type="date" value={bonusDateFrom} onChange={e => { setBonusDateFrom(e.target.value); setPage(1) }}
+              className={`${inputCls} w-auto h-[32px] py-0 px-2 text-[11px]`} />
+            <span className="text-[11px] text-[var(--text-muted)]">—</span>
+            <input type="date" value={bonusDateTo} onChange={e => { setBonusDateTo(e.target.value); setPage(1) }}
+              className={`${inputCls} w-auto h-[32px] py-0 px-2 text-[11px]`} />
+            <div className="flex h-[32px] shrink-0">
+              <button onClick={() => { const d = new Date(); d.setMonth(d.getMonth() - 6); setBonusDateFrom(d.toISOString().split('T')[0]); setBonusDateTo(new Date().toISOString().split('T')[0]) }}
+                className="px-[10px] border border-[var(--border)] border-r-0 cursor-pointer font-[inherit] text-[11px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--brand-light)] hover:text-[var(--brand)] transition-all rounded-l-lg">
+                6{isBn ? 'মাস' : 'M'}
+              </button>
+              <button onClick={() => { const d = new Date(); d.setFullYear(d.getFullYear() - 1); setBonusDateFrom(d.toISOString().split('T')[0]); setBonusDateTo(new Date().toISOString().split('T')[0]) }}
+                className={`px-[10px] border border-[var(--border)] cursor-pointer font-[inherit] text-[11px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--brand-light)] hover:text-[var(--brand)] transition-all ${bonusDateFrom || bonusDateTo ? 'border-r-0' : 'rounded-r-lg'}`}>
+                1{isBn ? 'বছর' : 'Y'}
+              </button>
+              {(bonusDateFrom || bonusDateTo) && (
+                <button onClick={() => { setBonusDateFrom(''); setBonusDateTo(''); setPage(1) }}
+                  className="px-[10px] border border-[var(--border)] cursor-pointer font-[inherit] text-[11px] bg-[var(--red-light)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white transition-all rounded-r-lg">
+                  {isBn ? 'মুছুন' : 'Clear'}
+                </button>
+              )}
+            </div>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-xs min-w-[500px]">
+            <table className="w-full text-xs min-w-[640px]">
               <thead>
                 <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                   <th className="py-[10px] px-2 w-9">
-                    <input type="checkbox" checked={selectedBon.length === bonuses.length && bonuses.length > 0} onChange={toggleAllBon}
+                    <input type="checkbox" checked={selectedBon.length === filteredBonuses.length && filteredBonuses.length > 0} onChange={toggleAllBon}
                       className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
                   </th>
-                  {[isBn ? 'মাস' : 'Month', isBn ? 'শিক্ষক' : 'Teacher', isBn ? 'ধরন' : 'Type', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'কারণ' : 'Reason'].map(h => (
-                    <th key={h} className="py-[10px] px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap">{h}</th>
+                  {[isBn ? 'মাস' : 'Month', isBn ? 'শিক্ষক' : 'Teacher', isBn ? 'ধরন' : 'Type', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'মোট' : 'Total', isBn ? 'কারণ' : 'Reason', ''].map(h => (
+                    <th key={h || 'action'} className={`py-[10px] px-2 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap ${h === '' ? 'text-center w-[80px]' : (h === (isBn ? 'পরিমাণ' : 'Amount') || h === (isBn ? 'মোট' : 'Total')) ? 'text-right' : 'text-left'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1228,17 +1310,39 @@ export default function HRPage() {
                     <td className="py-2 px-2">
                       <span className={`text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium ${bon.type === 'festival' ? 'bg-[var(--amber-light)]' : bon.type === 'performance' ? 'bg-[var(--brand-light)]' : bon.type === 'attendance' ? 'bg-[var(--green-light)]' : 'bg-[var(--teal-light)]'} ${bon.type === 'festival' ? 'text-[var(--amber)]' : bon.type === 'performance' ? 'text-[var(--brand)]' : bon.type === 'attendance' ? 'text-[var(--green)]' : 'text-[var(--teal)]'}`}>{bon.type}</span>
                     </td>
-                    <td className="py-2 px-2 text-xs font-semibold text-[var(--text-primary)]">৳{bon.amount.toLocaleString()}</td>
+                    <td className="py-2 px-2 text-xs font-semibold text-[var(--text-primary)] text-right">৳{bon.amount.toLocaleString()}</td>
+                    <td className="py-2 px-2 text-xs font-bold text-[var(--amber)] text-right">৳{bon.amount.toLocaleString()}</td>
                     <td className="py-2 px-2 text-[11px] text-[var(--text-secondary)]">{bon.reason}</td>
+                    <td className="py-2 px-2 text-center">
+                      <div className="flex gap-1 justify-center">
+                        <button onClick={() => { setBonForm({ teacherId: bon.teacherId, type: bon.type, amount: String(bon.amount), reason: bon.reason, month: bon.month }); setModalType('bonus'); }}
+                          className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[10px] font-[inherit]">
+                          <Edit2 size={11} />
+                        </button>
+                        <button onClick={() => deleteBonus(bon.id)}
+                          className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[10px] font-[inherit]">
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr className="bg-[var(--bg-secondary)] border-t border-t-2 border-[var(--border)]">
+                  <td colSpan={4} className="py-2 px-2 text-[11px] font-bold text-[var(--text-primary)]">{isBn ? 'মোট' : 'Total'}</td>
+                  <td className="py-2 px-2 text-xs font-bold text-[var(--amber)] text-right">৳{filteredBonuses.reduce((s, b) => s + b.amount, 0).toLocaleString()}</td>
+                  <td className="py-2 px-2 text-xs font-bold text-[var(--amber)] text-right">৳{filteredBonuses.reduce((s, b) => s + b.amount, 0).toLocaleString()}</td>
+                  <td className="py-2 px-2"></td>
+                  <td className="py-2 px-2"></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
-          {bonuses.length > perPage && (
+          {filteredBonuses.length > perPage && (
             <div className="py-[10px] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
               <span className="text-xs text-[var(--text-muted)]">
-                {(page - 1) * perPage + 1}–{Math.min(page * perPage, bonuses.length)} / {bonuses.length}
+                {(page - 1) * perPage + 1}–{Math.min(page * perPage, filteredBonuses.length)} / {filteredBonuses.length}
               </span>
               <div className="flex gap-[3px] items-center">
                 <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
@@ -1295,46 +1399,82 @@ export default function HRPage() {
               </button>
             </div>
           </div>
-          {promotions.length === 0 ? (
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <Calendar size={13} className="text-[var(--text-muted)]" />
+            <input type="date" value={proDateFrom} onChange={e => { setProDateFrom(e.target.value); setPage(1) }}
+              className={`${inputCls} w-auto h-[32px] py-0 px-2 text-[11px]`} />
+            <span className="text-[11px] text-[var(--text-muted)]">—</span>
+            <input type="date" value={proDateTo} onChange={e => { setProDateTo(e.target.value); setPage(1) }}
+              className={`${inputCls} w-auto h-[32px] py-0 px-2 text-[11px]`} />
+            <div className="flex h-[32px] shrink-0">
+              <button onClick={() => { const d = new Date(); d.setMonth(d.getMonth() - 6); setProDateFrom(d.toISOString().split('T')[0]); setProDateTo(new Date().toISOString().split('T')[0]) }}
+                className="px-[10px] border border-[var(--border)] border-r-0 cursor-pointer font-[inherit] text-[11px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--brand-light)] hover:text-[var(--brand)] transition-all rounded-l-lg">
+                6{isBn ? 'মাস' : 'M'}
+              </button>
+              <button onClick={() => { const d = new Date(); d.setFullYear(d.getFullYear() - 1); setProDateFrom(d.toISOString().split('T')[0]); setProDateTo(new Date().toISOString().split('T')[0]) }}
+                className={`px-[10px] border border-[var(--border)] cursor-pointer font-[inherit] text-[11px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--brand-light)] hover:text-[var(--brand)] transition-all ${proDateFrom || proDateTo ? 'border-r-0' : 'rounded-r-lg'}`}>
+                1{isBn ? 'বছর' : 'Y'}
+              </button>
+              {(proDateFrom || proDateTo) && (
+                <button onClick={() => { setProDateFrom(''); setProDateTo(''); setPage(1) }}
+                  className="px-[10px] border border-[var(--border)] cursor-pointer font-[inherit] text-[11px] bg-[var(--red-light)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white transition-all rounded-r-lg">
+                  {isBn ? 'মুছুন' : 'Clear'}
+                </button>
+              )}
+            </div>
+          </div>
+          {filteredPromotions.length === 0 ? (
             <div className="p-[30px] text-center text-[var(--text-muted)] text-[13px]">{isBn ? 'কোনো পদোন্নতি নেই' : 'No promotions yet'}</div>
           ) : (
             <>
-              <div className="mb-2">
-                <label className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] cursor-pointer">
-                  <input type="checkbox" checked={selectedPro.length === promotions.length} onChange={toggleAllPro}
-                    className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
-                  {isBn ? 'সব নির্বাচন করুন' : 'Select all'}
-                </label>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs min-w-[600px]">
+                  <thead>
+                    <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                      <th className="py-[10px] px-2 w-9">
+                        <input type="checkbox" checked={selectedPro.length === filteredPromotions.length && filteredPromotions.length > 0} onChange={toggleAllPro}
+                          className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
+                      </th>
+                      {[isBn ? 'তারিখ' : 'Date', isBn ? 'শিক্ষক' : 'Teacher', isBn ? 'পূর্ববর্তী' : 'From', isBn ? 'নতুন' : 'To', isBn ? 'কারণ' : 'Reason', ''].map(h => (
+                        <th key={h || 'action'} className={`py-[10px] px-2 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap ${h === '' ? 'text-center w-[80px]' : 'text-left'}`}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedPromotions.map(p => (
+                      <tr key={p.id} className={`border-b border-[var(--border)] ${selectedPro.includes(p.id) ? 'bg-[rgba(99,102,241,0.04)]' : 'bg-transparent'}`}
+                        onMouseEnter={e => { if (!selectedPro.includes(p.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
+                        onMouseLeave={e => { if (!selectedPro.includes(p.id)) e.currentTarget.style.background = 'transparent' }}>
+                        <td className="py-2 px-2">
+                          <input type="checkbox" checked={selectedPro.includes(p.id)} onChange={() => togglePro(p.id)}
+                            className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
+                        </td>
+                        <td className="py-2 px-2 text-[11px] text-[var(--text-muted)]">{p.date}</td>
+                        <td className="py-2 px-2 text-xs font-medium text-[var(--text-primary)]">{getTeacherName(p.teacherId)}</td>
+                        <td className="py-2 px-2 text-[11px] text-[var(--text-secondary)]">{p.fromDesignation}</td>
+                        <td className="py-2 px-2 text-xs font-semibold text-[var(--green)]">{p.toDesignation}</td>
+                        <td className="py-2 px-2 text-[11px] text-[var(--text-secondary)]">{p.reason}</td>
+                        <td className="py-2 px-2 text-center">
+                          <div className="flex gap-1 justify-center">
+                            <button onClick={() => { setProForm({ teacherId: p.teacherId, fromDesignation: p.fromDesignation, toDesignation: p.toDesignation, reason: p.reason }); setModalType('promotion'); }}
+                              className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[10px] font-[inherit]">
+                              <Edit2 size={11} />
+                            </button>
+                            <button onClick={() => deletePromotion(p.id)}
+                              className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[10px] font-[inherit]">
+                              <Trash2 size={11} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div className="flex flex-col gap-1.5">
-                {paginatedPromotions.map(p => (
-                  <div key={p.id} className={`p-3 rounded-[10px] flex items-center gap-3 cursor-pointer transition-all ${selectedPro.includes(p.id) ? 'bg-[rgba(99,102,241,0.04)]' : 'bg-[var(--bg-secondary)]'}`}
-                    onClick={() => togglePro(p.id)}>
-                    <input type="checkbox" checked={selectedPro.includes(p.id)} onChange={() => togglePro(p.id)}
-                      onClick={e => e.stopPropagation()}
-                      className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)] shrink-0" />
-                    <div className="w-9 h-9 rounded-lg bg-[var(--purple-light)] flex items-center justify-center shrink-0">
-                      <Award size={16} className="text-[var(--purple)]" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-[13px] font-semibold text-[var(--text-primary)]">{getTeacherName(p.teacherId)}</div>
-                      <div className="text-xs text-[var(--text-muted)] flex items-center gap-1.5 mt-[2px]">
-                        <span>{p.fromDesignation}</span>
-                        <ChevronRight size={14} className="text-[var(--green)]" />
-                        <span className="text-[var(--green)] font-semibold">{p.toDesignation}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs text-[var(--text-muted)]">{p.date}</div>
-                      <div className="text-[11px] text-[var(--text-secondary)] mt-px">{p.reason}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {promotions.length > perPage && (
+              {filteredPromotions.length > perPage && (
                 <div className="py-[10px] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
                   <span className="text-xs text-[var(--text-muted)]">
-                    {(page - 1) * perPage + 1}–{Math.min(page * perPage, promotions.length)} / {promotions.length}
+                    {(page - 1) * perPage + 1}–{Math.min(page * perPage, filteredPromotions.length)} / {filteredPromotions.length}
                   </span>
                   <div className="flex gap-[3px] items-center">
                     <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
@@ -1377,101 +1517,167 @@ export default function HRPage() {
 
       {/* ─── FUND ─── */}
       {activeTab === 'fund' && (
-        <div className={sectionCls}>
-          <div className="flex justify-between items-center mb-[14px]">
-            <div className={sectionTitleCls}>
-              <HandCoins size={15} className="text-[var(--brand)]" />{isBn ? 'তহবিল' : 'Fund'}
-            </div>
-            <div className="flex gap-1.5">
-              <button onClick={() => setShowPDFModal('fund')}
-                className="flex items-center gap-[5px] py-[7px] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]">
-                <FileText size={13} />PDF
-              </button>
-              <button onClick={() => setModalType('fund')}
-                className="flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]">
-                <Plus size={14} />{isBn ? 'লেনদেন' : 'Transaction'}
-              </button>
-            </div>
-          </div>
-          <div className={`p-[14px] rounded-[10px] mb-[14px] flex items-center justify-between ${fundBalance >= 0 ? 'bg-[var(--green-light)]' : 'bg-[var(--red-light)]'}`}>
-            <span className={`text-[13px] font-semibold ${fundBalance >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>{isBn ? 'তহবিল ব্যালেন্স' : 'Fund Balance'}</span>
-            <span className={`text-xl font-bold ${fundBalance >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>৳{fundBalance.toLocaleString()}</span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs min-w-[500px]">
-              <thead>
-                <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                  <th className="py-[10px] px-2 w-9">
-                    <input type="checkbox" checked={selectedFund.length === funds.length && funds.length > 0} onChange={toggleAllFund}
-                      className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
-                  </th>
-                  {[isBn ? 'তারিখ' : 'Date', isBn ? 'ধরন' : 'Type', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'বিবরণ' : 'Description'].map(h => (
-                    <th key={h} className="py-[10px] px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedFunds.map(f => (
-                  <tr key={f.id} className={`border-b border-[var(--border)] ${selectedFund.includes(f.id) ? 'bg-[rgba(99,102,241,0.04)]' : 'bg-transparent'}`}
-                    onMouseEnter={e => { if (!selectedFund.includes(f.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
-                    onMouseLeave={e => { if (!selectedFund.includes(f.id)) e.currentTarget.style.background = 'transparent' }}>
-                    <td className="py-2 px-2">
-                      <input type="checkbox" checked={selectedFund.includes(f.id)} onChange={() => toggleFund(f.id)}
-                        className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
-                    </td>
-                    <td className="py-2 px-2 text-[11px] text-[var(--text-muted)]">{f.date}</td>
-                    <td className="py-2 px-2">
-                      <span className={`text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium ${f.type === 'withdrawal' ? 'bg-[var(--red-light)]' : 'bg-[var(--green-light)]'} ${f.type === 'withdrawal' ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>{f.type.replace('_', ' ')}</span>
-                    </td>
-                    <td className={`py-2 px-2 text-xs font-semibold ${f.type === 'withdrawal' ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
-                      {f.type === 'withdrawal' ? '-' : '+'}৳{f.amount.toLocaleString()}
-                    </td>
-                    <td className="py-2 px-2 text-[11px] text-[var(--text-secondary)]">{f.description}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {funds.length > perPage && (
-            <div className="py-[10px] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
-              <span className="text-xs text-[var(--text-muted)]">
-                {(page - 1) * perPage + 1}–{Math.min(page * perPage, funds.length)} / {funds.length}
-              </span>
-              <div className="flex gap-[3px] items-center">
-                <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
-                  className="py-1 px-[6px] rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-[11px] font-[inherit] outline-none mr-[6px]">
-                  <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
-                </select>
-                {([[<ChevronsLeft size={12} />, () => setPage(1), page === 1] as [React.ReactNode, () => void, boolean], [<ChevronLeft size={12} />, () => setPage(p => Math.max(1, p - 1)), page === 1] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
-                  <button key={i} onClick={a} disabled={d}
-                    className={`w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center ${d ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'} ${d ? 'cursor-default' : 'cursor-pointer'}`}>
-                    {ic}
-                  </button>
-                ))}
-                {(() => {
-                  const start = Math.max(1, Math.min(page - 2, fundTotalPages - 4))
-                  return Array.from({ length: Math.min(5, fundTotalPages) }, (_, i) => start + i).map(p => (
-                    <button key={p} onClick={() => setPage(p)}
-                      className={`w-7 h-7 rounded-md cursor-pointer text-xs ${p === page ? 'bg-[var(--brand)]' : 'bg-[var(--bg-primary)]'} ${p === page ? 'text-white' : 'text-[var(--text-secondary)]'} ${p === page ? 'font-semibold' : 'font-normal'}`}>
-                      {p}
-                    </button>
-                  ))
-                })()}
-                {([[<ChevronRight size={12} />, () => setPage(p => Math.min(fundTotalPages, p + 1)), page === fundTotalPages] as [React.ReactNode, () => void, boolean], [<ChevronsRight size={12} />, () => setPage(fundTotalPages), page === fundTotalPages] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
-                  <button key={i} onClick={a} disabled={d}
-                    className={`w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center ${d ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'} ${d ? 'cursor-default' : 'cursor-pointer'}`}>
-                    {ic}
-                  </button>
-                ))}
+        <>
+          {/* Institution Fund */}
+          <div className={sectionCls}>
+            <div className="flex justify-between items-center mb-[14px]">
+              <div className={sectionTitleCls}>
+                <HandCoins size={15} className="text-[var(--brand)]" />{isBn ? 'প্রতিষ্ঠান তহবিল' : 'Institution Fund'}
+              </div>
+              <div className="flex gap-1.5">
+                <button onClick={() => setShowPDFModal('fund')}
+                  className="flex items-center gap-[5px] py-[7px] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]">
+                  <FileText size={13} />PDF
+                </button>
+                <button onClick={() => setModalType('fund')}
+                  className="flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]">
+                  <Plus size={14} />{isBn ? 'লেনদেন' : 'Transaction'}
+                </button>
               </div>
             </div>
-          )}
-          {selectedFund.length > 0 && (
-            <div className="mt-2 text-[11px] text-[var(--brand)] bg-[var(--brand-light)] py-1 px-[10px] rounded-md inline-block">
-              {selectedFund.length} {isBn ? 'নির্বাচিত' : 'selected'}
+
+            {/* Fund Balance Summary */}
+            <div className={`p-[14px] rounded-[10px] mb-[14px] ${fundBalance >= 0 ? 'bg-[var(--green-light)]' : 'bg-[var(--red-light)]'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-[13px] font-semibold ${fundBalance >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>{isBn ? 'মোট ব্যালেন্স' : 'Total Balance'}</span>
+                <span className={`text-xl font-bold ${fundBalance >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>৳{fundBalance.toLocaleString()}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-[var(--bg-primary)] rounded-lg p-2">
+                  <div className="text-[10px] text-[var(--green)] font-medium">{isBn ? 'আয়' : 'Income'}</div>
+                  <div className="text-sm font-bold text-[var(--green)]">৳{funds.filter(f => f.type !== 'withdrawal').reduce((s, f) => s + f.amount, 0).toLocaleString()}</div>
+                </div>
+                <div className="bg-[var(--bg-primary)] rounded-lg p-2">
+                  <div className="text-[10px] text-[var(--red)] font-medium">{isBn ? 'খরচ' : 'Expense'}</div>
+                  <div className="text-sm font-bold text-[var(--red)]">৳{funds.filter(f => f.type === 'withdrawal').reduce((s, f) => s + f.amount, 0).toLocaleString()}</div>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs min-w-[500px]">
+                <thead>
+                  <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                    <th className="py-[10px] px-2 w-9">
+                      <input type="checkbox" checked={selectedFund.length === funds.length && funds.length > 0} onChange={toggleAllFund}
+                        className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
+                    </th>
+                    {[isBn ? 'তারিখ' : 'Date', isBn ? 'ধরন' : 'Type', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'বিবরণ' : 'Description'].map(h => (
+                      <th key={h} className="py-[10px] px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedFunds.map(f => (
+                    <tr key={f.id} className={`border-b border-[var(--border)] ${selectedFund.includes(f.id) ? 'bg-[rgba(99,102,241,0.04)]' : 'bg-transparent'}`}
+                      onMouseEnter={e => { if (!selectedFund.includes(f.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
+                      onMouseLeave={e => { if (!selectedFund.includes(f.id)) e.currentTarget.style.background = 'transparent' }}>
+                      <td className="py-2 px-2">
+                        <input type="checkbox" checked={selectedFund.includes(f.id)} onChange={() => toggleFund(f.id)}
+                          className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
+                      </td>
+                      <td className="py-2 px-2 text-[11px] text-[var(--text-muted)]">{f.date}</td>
+                      <td className="py-2 px-2">
+                        <span className={`text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium ${f.type === 'withdrawal' ? 'bg-[var(--red-light)]' : 'bg-[var(--green-light)]'} ${f.type === 'withdrawal' ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>{f.type.replace('_', ' ')}</span>
+                      </td>
+                      <td className={`py-2 px-2 text-xs font-semibold ${f.type === 'withdrawal' ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
+                        {f.type === 'withdrawal' ? '-' : '+'}৳{f.amount.toLocaleString()}
+                      </td>
+                      <td className="py-2 px-2 text-[11px] text-[var(--text-secondary)]">{f.description}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {funds.length > perPage && (
+              <div className="py-[10px] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
+                <span className="text-xs text-[var(--text-muted)]">
+                  {(page - 1) * perPage + 1}–{Math.min(page * perPage, funds.length)} / {funds.length}
+                </span>
+                <div className="flex gap-[3px] items-center">
+                  <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
+                    className="py-1 px-[6px] rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-[11px] font-[inherit] outline-none mr-[6px]">
+                    <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
+                  </select>
+                  {([[<ChevronsLeft size={12} />, () => setPage(1), page === 1] as [React.ReactNode, () => void, boolean], [<ChevronLeft size={12} />, () => setPage(p => Math.max(1, p - 1)), page === 1] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                    <button key={i} onClick={a} disabled={d}
+                      className={`w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center ${d ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'} ${d ? 'cursor-default' : 'cursor-pointer'}`}>
+                      {ic}
+                    </button>
+                  ))}
+                  {(() => {
+                    const start = Math.max(1, Math.min(page - 2, fundTotalPages - 4))
+                    return Array.from({ length: Math.min(5, fundTotalPages) }, (_, i) => start + i).map(p => (
+                      <button key={p} onClick={() => setPage(p)}
+                        className={`w-7 h-7 rounded-md cursor-pointer text-xs ${p === page ? 'bg-[var(--brand)]' : 'bg-[var(--bg-primary)]'} ${p === page ? 'text-white' : 'text-[var(--text-secondary)]'} ${p === page ? 'font-semibold' : 'font-normal'}`}>
+                        {p}
+                      </button>
+                    ))
+                  })()}
+                  {([[<ChevronRight size={12} />, () => setPage(p => Math.min(fundTotalPages, p + 1)), page === fundTotalPages] as [React.ReactNode, () => void, boolean], [<ChevronsRight size={12} />, () => setPage(fundTotalPages), page === fundTotalPages] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
+                    <button key={i} onClick={a} disabled={d}
+                      className={`w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center ${d ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'} ${d ? 'cursor-default' : 'cursor-pointer'}`}>
+                      {ic}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {selectedFund.length > 0 && (
+              <div className="mt-2 text-[11px] text-[var(--brand)] bg-[var(--brand-light)] py-1 px-[10px] rounded-md inline-block">
+                {selectedFund.length} {isBn ? 'নির্বাচিত' : 'selected'}
+              </div>
+            )}
+          </div>
+
+          {/* Employee Fund */}
+          <div className={sectionCls}>
+            <div className={sectionTitleCls}>
+              <Users size={15} className="text-[var(--teal)]" />{isBn ? 'কর্মচারী তহবিল' : 'Employee Fund'}
+            </div>
+            <div className="text-[12px] text-[var(--text-secondary)] mb-3 leading-relaxed">
+              {isBn
+                ? 'প্রতিটি কর্মচারীর বেতন থেকে মাসিক তহবিল কাটা হয়। চাকরি ছাড়লে তাদের তহবিল + নাফা ফেরত দেওয়া হয়।'
+                : 'A monthly fund is deducted from each employee\'s salary. When an employee resigns, their fund + profit is returned.'}
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs min-w-[500px]">
+                <thead>
+                  <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                    {[isBn ? 'কর্মচারী' : 'Employee', isBn ? 'বেতন' : 'Salary', isBn ? 'তহবিল %' : 'Fund %', isBn ? 'মাসিক কাটা' : 'Monthly Deduction', isBn ? 'মোট জমা' : 'Total Deposited'].map(h => (
+                      <th key={h} className="py-[10px] px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeTeachers.map(t => {
+                    const fundPercents = monthlySalaryConfigs
+                      .filter(c => c.teacherId === t.id && c.fundContributionPercent > 0)
+                      .map(c => c.fundContributionPercent)
+                    const avgPercent = fundPercents.length > 0 ? Math.round(fundPercents.reduce((a, b) => a + b, 0) / fundPercents.length) : 0
+                    const monthlyDeduction = Math.round(t.salary * avgPercent / 100)
+                    const monthsWithFund = fundPercents.length
+                    const totalDeposited = monthlyDeduction * monthsWithFund
+                    return (
+                      <tr key={t.id} className="border-b border-[var(--border)]"
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <td className="py-2 px-2">
+                          <div className="text-xs font-medium text-[var(--text-primary)]">{t.nameEn}</div>
+                          <div className="text-[10px] text-[var(--text-muted)]">{t.designation}</div>
+                        </td>
+                        <td className="py-2 px-2 text-xs text-[var(--text-secondary)]">৳{t.salary.toLocaleString()}</td>
+                        <td className="py-2 px-2 text-xs font-medium text-[var(--brand)]">{avgPercent > 0 ? `${avgPercent}%` : '—'}</td>
+                        <td className="py-2 px-2 text-xs font-semibold text-[var(--red)]">{monthlyDeduction > 0 ? `৳${monthlyDeduction.toLocaleString()}` : '—'}</td>
+                        <td className="py-2 px-2 text-xs font-bold text-[var(--green)]">{totalDeposited > 0 ? `৳${totalDeposited.toLocaleString()}` : '—'}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {/* ─── SALARY SETUP ─── */}
@@ -1821,7 +2027,7 @@ export default function HRPage() {
             </div>
 
             {/* Staff selector + filters */}
-            <div className={`grid gap-[10px] mb-[14px] ${isMobile ? 'grid-cols-[1fr]' : 'grid-cols-[repeat(3, 1fr)]'}`}>
+            <div className={`grid gap-[10px] mb-[14px] ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
               <div>
                 <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-[5px] block">{isBn ? 'কর্মচারী নির্বাচন' : 'Select Staff'}</label>
                 <select value={selectedFacStaff} onChange={e => setSelectedFacStaff(e.target.value)}
@@ -1864,7 +2070,7 @@ export default function HRPage() {
                   </button>
                 </div>
 
-                <div className={`grid gap-2 ${isMobile ? 'grid-cols-[1fr]' : 'grid-cols-[repeat(auto-fill, minmax(280px, 1fr))]'}`}>
+                <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
                   {selectedStaffFacilities.map(sf => (
                     <div key={sf.facility.id} className="flex items-center gap-[10px] p-[10px] rounded-lg bg-[var(--bg-primary)] transition-all">
                       <input type="checkbox" checked={sf.assigned} onChange={() => toggleStaffFacility(sf.facility.id)}
@@ -2028,152 +2234,13 @@ export default function HRPage() {
               </div>
             )}
           </div>
-
-          {/* Bonus Management */}
-          <div className={sectionCls}>
-            <div className="flex justify-between items-center mb-[14px] flex-wrap gap-2">
-              <div className={sectionTitleCls}>
-                <Gift size={15} className="text-[var(--amber)]" />{isBn ? 'বোনাস ব্যবস্থাপনা' : 'Bonus Management'}
-                <span className="text-[11px] font-medium text-[var(--text-muted)] ml-2">({filteredBonuses.length})</span>
-              </div>
-              <div className="flex gap-1.5 items-center flex-wrap">
-                <input type="date" value={bonusDateFrom} onChange={e => { setBonusDateFrom(e.target.value); setPage(1) }}
-                  className={`${inputCls} w-auto py-[5px] px-2 text-[11px]`} />
-                <span className="text-[11px] text-[var(--text-muted)]">—</span>
-                <input type="date" value={bonusDateTo} onChange={e => { setBonusDateTo(e.target.value); setPage(1) }}
-                  className={`${inputCls} w-auto py-[5px] px-2 text-[11px]`} />
-                {selectedBon.length > 0 && (
-                  <button onClick={() => setShowPDFModal('bonus')}
-                    className="flex items-center gap-[5px] py-[6px] px-[10px] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[11px] font-medium cursor-pointer font-[inherit]">
-                    <FileText size={12} />PDF ({selectedBon.length})
-                  </button>
-                )}
-                <button onClick={() => setModalType('bonus')}
-                  className="flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--amber)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]">
-                  <Plus size={14} />{isBn ? 'বোনাস যোগ' : 'Add Bonus'}
-                </button>
-              </div>
-            </div>
-
-            {filteredBonuses.length === 0 ? (
-              <div className="p-5 text-center text-[var(--text-muted)] text-xs">
-                {isBn ? 'কোনো বোনাস নেই' : 'No bonuses yet'}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs min-w-[620px]">
-                  <thead>
-                    <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                      <th className="p-2 w-9">
-                        <input type="checkbox" checked={selectedBon.length === filteredBonuses.length && filteredBonuses.length > 0} onChange={toggleAllBon}
-                          className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
-                      </th>
-                      {[
-                        { l: '#', w: '40px', align: 'center' as const },
-                        { l: isBn ? 'মাস' : 'Month', align: 'left' as const },
-                        { l: isBn ? 'কর্মচারী' : 'Employee', align: 'left' as const },
-                        { l: isBn ? 'ধরন' : 'Type', align: 'left' as const },
-                        { l: isBn ? 'পরিমাণ' : 'Amount', w: '100px', align: 'right' as const },
-                        { l: isBn ? 'কারণ' : 'Reason', align: 'left' as const },
-                        { l: '', w: '80px', align: 'center' as const },
-                      ].map(h => (
-                        <th key={h.l || 'action'} className="p-2 h.align text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap w-[h.w]">{h.l}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedFacBonuses.map((bon, i) => {
-                      const isSelected = selectedBon.includes(bon.id)
-                      return (
-                        <tr key={bon.id} className={`border-b border-[var(--border)] ${isSelected ? 'bg-[var(--brand-light)]' : 'bg-transparent'}`}
-                          onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-secondary)' }}
-                          onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}>
-                          <td className="p-2">
-                            <input type="checkbox" checked={isSelected} onChange={() => toggleBon(bon.id)}
-                              className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
-                          </td>
-                          <td className="p-2 text-[var(--text-muted)] text-[10px] text-center">{i + 1}</td>
-                          <td className="p-2 text-[11px] text-[var(--text-muted)]">{bon.month}</td>
-                          <td className="p-2 text-xs font-medium text-[var(--text-primary)]">{getTeacherName(bon.teacherId)}</td>
-                          <td className="p-2">
-                      <span className={`text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium ${bon.type === 'festival' ? 'bg-[var(--amber-light)]' : bon.type === 'performance' ? 'bg-[var(--brand-light)]' : bon.type === 'attendance' ? 'bg-[var(--green-light)]' : 'bg-[var(--teal-light)]'} ${bon.type === 'festival' ? 'text-[var(--amber)]' : bon.type === 'performance' ? 'text-[var(--brand)]' : bon.type === 'attendance' ? 'text-[var(--green)]' : 'text-[var(--teal)]'}`}>{bon.type}</span>
-                          </td>
-                          <td className="p-2 text-xs font-semibold text-[var(--text-primary)] text-right">৳{bon.amount.toLocaleString()}</td>
-                          <td className="p-2 text-[11px] text-[var(--text-secondary)]">{bon.reason}</td>
-                          <td className="p-2 text-center">
-                            <div className="flex gap-1 justify-center">
-                              <button onClick={() => { setBonForm({ teacherId: bon.teacherId, type: bon.type, amount: String(bon.amount), reason: bon.reason, month: bon.month }); setModalType('bonus'); }}
-                                className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[10px] font-[inherit]">
-                                <Edit2 size={11} />
-                              </button>
-                              <button onClick={() => deleteBonus(bon.id)}
-                                className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[10px] font-[inherit]">
-                                <Trash2 size={11} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                  <tfoot>
-                    <tr className="bg-[var(--bg-secondary)] border-t border-t-2 border-[var(--border)]">
-                      <td colSpan={5} className="p-2 text-[11px] font-bold text-[var(--text-primary)]">{isBn ? 'মোট' : 'Total'}</td>
-                      <td className="p-2 text-xs font-bold text-[var(--amber)] text-right">৳{filteredBonuses.reduce((s, b) => s + b.amount, 0).toLocaleString()}</td>
-                      <td></td>
-                      <td></td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            )}
-            {filteredBonuses.length > perPage && (
-              <div className="py-[10px] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
-                <span className="text-xs text-[var(--text-muted)]">
-                  {(page - 1) * perPage + 1}–{Math.min(page * perPage, filteredBonuses.length)} / {filteredBonuses.length}
-                </span>
-                <div className="flex gap-[3px] items-center">
-                  <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }}
-                    className="py-1 px-[6px] rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-[11px] font-[inherit] outline-none mr-[6px]">
-                    <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
-                  </select>
-                  {([[<ChevronsLeft size={12} />, () => setPage(1), page === 1] as [React.ReactNode, () => void, boolean], [<ChevronLeft size={12} />, () => setPage(p => Math.max(1, p - 1)), page === 1] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
-                    <button key={i} onClick={a} disabled={d}
-                      className={`w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center ${d ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'} ${d ? 'cursor-default' : 'cursor-pointer'}`}>
-                      {ic}
-                    </button>
-                  ))}
-                  {(() => {
-                    const start = Math.max(1, Math.min(page - 2, facBonusTotalPages - 4))
-                    return Array.from({ length: Math.min(5, facBonusTotalPages) }, (_, i) => start + i).map(p => (
-                      <button key={p} onClick={() => setPage(p)}
-                        className={`w-7 h-7 rounded-md cursor-pointer text-xs ${p === page ? 'bg-[var(--brand)]' : 'bg-[var(--bg-primary)]'} ${p === page ? 'text-white' : 'text-[var(--text-secondary)]'} ${p === page ? 'font-semibold' : 'font-normal'}`}>
-                        {p}
-                      </button>
-                    ))
-                  })()}
-                  {([[<ChevronRight size={12} />, () => setPage(p => Math.min(facBonusTotalPages, p + 1)), page === facBonusTotalPages] as [React.ReactNode, () => void, boolean], [<ChevronsRight size={12} />, () => setPage(facBonusTotalPages), page === facBonusTotalPages] as [React.ReactNode, () => void, boolean]]).map(([ic, a, d], i) => (
-                    <button key={i} onClick={a} disabled={d}
-                      className={`w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center ${d ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'} ${d ? 'cursor-default' : 'cursor-pointer'}`}>
-                      {ic}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {selectedBon.length > 0 && (
-              <div className="mt-2 text-[11px] text-[var(--brand)] bg-[var(--brand-light)] py-1 px-[10px] rounded-md inline-block">
-                {selectedBon.length} {isBn ? 'নির্বাচিত' : 'selected'}
-              </div>
-            )}
-          </div>
         </>
       )}
 
       {/* ─── MODAL ─── */}
       {modalType && (
         <div className={modalOverlayCls} onClick={() => setModalType(null)}>
-          <div className="modal-content" className={modalStyleCls} onClick={e => e.stopPropagation()}>
+          <div className={`modal-content ${modalStyleCls}`} onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-base font-semibold text-[var(--text-primary)]">
                 {modalType === 'increment' && (isBn ? 'বেতন বৃদ্ধি যোগ' : 'Add Increment')}
@@ -2307,7 +2374,7 @@ export default function HRPage() {
           count={
             showPDFModal === 'increment' ? increments.length :
             showPDFModal === 'bonus' ? filteredBonuses.length :
-            showPDFModal === 'promotion' ? promotions.length :
+            showPDFModal === 'promotion' ? filteredPromotions.length :
             showPDFModal === 'assignment' ? filteredAssignments.length :
             showPDFModal === 'salary' ? activeTeachers.length :
             funds.length
@@ -2321,7 +2388,7 @@ export default function HRPage() {
       {/* ─── FACILITY MODALS ─── */}
       {(facModalType === 'add-facility' || facModalType === 'edit-facility') && (
         <div className={modalOverlayCls} onClick={() => { setFacModalType(null); setEditFac(null) }}>
-          <div className="modal-content" className={modalStyleCls} onClick={e => e.stopPropagation()}>
+          <div className={`modal-content ${modalStyleCls}`} onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-base font-semibold text-[var(--text-primary)]">
                 {facModalType === 'add-facility' ? (isBn ? 'নতুন সুবিধা যোগ' : 'Add Facility') : (isBn ? 'সুবিধা এডিট করুন' : 'Edit Facility')}
@@ -2358,7 +2425,7 @@ export default function HRPage() {
 
       {(facModalType === 'assign' || facModalType === 'edit-assign') && (
         <div className={modalOverlayCls} onClick={() => { setFacModalType(null); setEditAssign(null) }}>
-          <div className="modal-content" className={modalStyleCls} onClick={e => e.stopPropagation()}>
+          <div className={`modal-content ${modalStyleCls}`} onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-base font-semibold text-[var(--text-primary)]">
                 {facModalType === 'assign' ? (isBn ? 'সুবিধা বরাদ্দ করুন' : 'Assign Facility') : (isBn ? 'বরাদ্দ এডিট করুন' : 'Edit Assignment')}
@@ -2401,7 +2468,7 @@ export default function HRPage() {
       {/* Facility Delete Confirmation */}
       {facDeleteConfirm && (
         <div className={modalOverlayCls} onClick={() => setFacDeleteConfirm(null)}>
-          <div className="modal-content" className={`${modalStyleCls} max-w-[380px]`} onClick={e => e.stopPropagation()}>
+          <div className={`modal-content ${modalStyleCls} max-w-[380px]`} onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-[10px] mb-3">
               <div className="w-9 h-9 rounded-lg bg-[var(--red-light)] flex items-center justify-center">
                 <AlertCircle size={18} className="text-[var(--red)]" />
@@ -2428,7 +2495,7 @@ export default function HRPage() {
       {/* Assignment Delete Confirmation */}
       {assignDeleteConfirm && (
         <div className={modalOverlayCls} onClick={() => setAssignDeleteConfirm(null)}>
-          <div className="modal-content" className={`${modalStyleCls} max-w-[380px]`} onClick={e => e.stopPropagation()}>
+          <div className={`modal-content ${modalStyleCls} max-w-[380px]`} onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-[10px] mb-3">
               <div className="w-9 h-9 rounded-lg bg-[var(--red-light)] flex items-center justify-center">
                 <AlertCircle size={18} className="text-[var(--red)]" />

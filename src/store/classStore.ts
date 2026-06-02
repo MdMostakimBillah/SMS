@@ -18,6 +18,8 @@ export interface InstitutionSettings {
   startTime: string
   endTime: string
   breaks: BreakTime[]
+  currentSession: string
+  sessions: string[]
 }
 
 export interface RoutineSlot {
@@ -75,6 +77,8 @@ interface ClassState {
   institution: InstitutionSettings
   classes: ClassInfo[]
   routines: ClassRoutine[]
+  sessionClasses: Record<string, ClassInfo[]>
+  sessionRoutines: Record<string, ClassRoutine[]>
   updateInstitution: (data: Partial<InstitutionSettings>) => void
   addClass: (cls: ClassInfo) => void
   updateClass: (id: string, data: Partial<ClassInfo>) => void
@@ -85,6 +89,9 @@ interface ClassState {
   updateRoutine: (classId: string, routine: Partial<ClassRoutine>) => void
   setRoutineSlot: (classId: string, day: number, period: number, slot: RoutineSlot) => void
   clearRoutineSlot: (classId: string, day: number, period: number, sectionId?: string) => void
+  switchSession: (session: string) => void
+  addSession: (session: string) => void
+  removeSession: (session: string) => void
 }
 
 const defaultInstitution: InstitutionSettings = {
@@ -99,6 +106,8 @@ const defaultInstitution: InstitutionSettings = {
   breaks: [
     { id: 'BRK-1', label: 'Tiffin', start: '11:00', end: '11:30' },
   ],
+  currentSession: '2025-26',
+  sessions: ['2024-25', '2025-26'],
 }
 
 const defaultClasses: ClassInfo[] = [
@@ -154,10 +163,12 @@ const defaultRoutines: ClassRoutine[] = [
 
 export const useClassStore = create<ClassState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       institution: defaultInstitution,
       classes: defaultClasses,
       routines: defaultRoutines,
+      sessionClasses: { '2025-26': defaultClasses },
+      sessionRoutines: { '2025-26': defaultRoutines },
 
       updateInstitution: (data) =>
         set((state) => ({ institution: { ...state.institution, ...data } })),
@@ -240,10 +251,59 @@ export const useClassStore = create<ClassState>()(
           routines[idx] = { ...routines[idx], periods }
           return { routines }
         }),
+
+      switchSession: (session) =>
+        set((state) => {
+          const { institution, classes, routines, sessionClasses, sessionRoutines } = state
+          const prevSession = institution.currentSession
+          const newSessionClasses = { ...sessionClasses, [prevSession]: classes }
+          const newSessionRoutines = { ...sessionRoutines, [prevSession]: routines }
+          const targetClasses = newSessionClasses[session] || []
+          const targetRoutines = newSessionRoutines[session] || []
+          return {
+            institution: { ...institution, currentSession: session },
+            classes: targetClasses,
+            routines: targetRoutines,
+            sessionClasses: newSessionClasses,
+            sessionRoutines: newSessionRoutines,
+          }
+        }),
+
+      addSession: (session) =>
+        set((state) => {
+          const { institution } = state
+          if (institution.sessions.includes(session)) return state
+          return {
+            institution: {
+              ...institution,
+              sessions: [...institution.sessions, session],
+            },
+          }
+        }),
+
+      removeSession: (session) =>
+        set((state) => {
+          const { institution, sessionClasses, sessionRoutines } = state
+          const newSessions = institution.sessions.filter(s => s !== session)
+          const newSessionClasses = { ...sessionClasses }
+          const newSessionRoutines = { ...sessionRoutines }
+          delete newSessionClasses[session]
+          delete newSessionRoutines[session]
+          const newCurrent = institution.currentSession === session ? newSessions[0] || '' : institution.currentSession
+          const targetClasses = newSessionClasses[newCurrent] || state.classes
+          const targetRoutines = newSessionRoutines[newCurrent] || state.routines
+          return {
+            institution: { ...institution, sessions: newSessions, currentSession: newCurrent },
+            classes: targetClasses,
+            routines: targetRoutines,
+            sessionClasses: newSessionClasses,
+            sessionRoutines: newSessionRoutines,
+          }
+        }),
     }),
     {
       name: 'edutech-classes',
-      version: 1,
+      version: 2,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           const inst = persistedState?.institution
@@ -253,6 +313,17 @@ export const useClassStore = create<ClassState>()(
               : [{ id: 'BRK-1', label: 'Tiffin', start: '11:00', end: '11:30' }]
             delete inst.breakStart
             delete inst.breakEnd
+          }
+        }
+        if (version < 2) {
+          const inst = persistedState?.institution
+          if (inst && !inst.currentSession) {
+            inst.currentSession = '2025-26'
+            inst.sessions = ['2024-25', '2025-26']
+          }
+          if (!persistedState?.sessionClasses) {
+            persistedState.sessionClasses = { '2025-26': persistedState.classes || [] }
+            persistedState.sessionRoutines = { '2025-26': persistedState.routines || [] }
           }
         }
         return persistedState

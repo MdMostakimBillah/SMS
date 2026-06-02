@@ -5,7 +5,7 @@ import {
   CheckCircle2, Clock, UserCheck, UserX,
 } from "lucide-react"
 import { useAppStore } from "@/store/appStore"
-import { useAdmissionStore } from "@/store/admissionStore"
+import { useSessionStudents } from "@/store/admissionStore"
 import { useTeacherStore } from "@/store/teacherStore"
 import { useWindowSize } from "@/hooks/useWindowSize"
 import CircularChart from "@/components/ui/CircularChart"
@@ -52,7 +52,7 @@ function DashboardSkeleton() {
 
 export default function DashboardPage() {
   const { language } = useAppStore()
-  const { students } = useAdmissionStore()
+  const students = useSessionStudents()
   const { teachers } = useTeacherStore()
   const { isMobile, isTablet } = useWindowSize()
   const isBn = language === "bn"

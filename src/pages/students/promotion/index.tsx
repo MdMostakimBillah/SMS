@@ -3,11 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowUpCircle, Check, Info, User, Users } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useAdmissionStore } from '@/store/admissionStore'
+import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from '@/pages/students/admission/types'
-
-const SESSIONS = ['2024-25','2025-26','2026-27','2027-28']
 
 interface RollCellProps {
   value: string; onChange: (v: string) => void; isBn: boolean
@@ -30,8 +28,9 @@ export default function ClassPromotionPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { students, updateStudent } = useAdmissionStore()
-  const { classes } = useClassStore()
+  const { updateStudent } = useAdmissionStore()
+  const students = useSessionStudents()
+  const { classes, institution } = useClassStore()
   const isBn = language === 'bn'
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
@@ -39,11 +38,18 @@ export default function ClassPromotionPage() {
 
   const approved = useMemo(() => students.filter(s => s.status === 'approved'), [students])
 
+  const currentSession = institution.currentSession
+  const sessions = institution.sessions
+  const nextSession = useMemo(() => {
+    const idx = sessions.indexOf(currentSession)
+    return sessions[idx + 1] || ''
+  }, [sessions, currentSession])
+
   const [fromClass, setFromClass] = useState('')
   const [fromSection, setFromSection] = useState('')
   const [toClass, setToClass] = useState('')
   const [toSection, setToSection] = useState('')
-  const [newSession, setNewSession] = useState('2026-27')
+  const [newSession, setNewSession] = useState(nextSession)
   const [selected, setSelected] = useState<string[]>([])
   const [rollMap, setRollMap] = useState<Record<string, string>>({})
   const [promoted, setPromoted] = useState(false)
@@ -112,7 +118,7 @@ export default function ClassPromotionPage() {
             {isBn ? 'ক্লাস প্রমোশন' : 'Class Promotion'}
           </h1>
           <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
-            {isBn ? 'পরবর্তী শ্রেণিতে ছাত্রদের প্রমোট করুন' : 'Promote students to the next class'}
+            {isBn ? `${currentSession} থেকে পরবর্তী সেশনে ছাত্রদের প্রমোট করুন` : `Promote students from ${currentSession} to next session`}
           </p>
         </div>
         <button onClick={promote}
@@ -131,6 +137,10 @@ export default function ClassPromotionPage() {
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[12px] p-[14px]">
             <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-[10px]">
               ① {isBn ? 'বর্তমান শ্রেণি' : 'From Class'}
+            </div>
+            <div className="flex items-center gap-2 mb-[10px] py-[6px] px-3 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)]">
+              <span className="text-[11px] font-semibold text-[var(--brand)]">{currentSession}</span>
+              <span className="text-[10px] text-[var(--text-muted)]">{isBn ? 'বর্তমান সেশন' : 'Current Session'}</span>
             </div>
             <div className="flex flex-col gap-[8px]">
               <div>
@@ -172,8 +182,12 @@ export default function ClassPromotionPage() {
               <div>
                 <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">{isBn ? 'নতুন সেশন' : 'New Session'}</label>
                 <select value={newSession} onChange={e => setNewSession(e.target.value)} className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer">
-                  {SESSIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                  <option value="">{isBn ? 'বেছে নিন' : 'Select'}</option>
+                  {sessions.filter(s => s !== currentSession).map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
+                {nextSession && newSession !== nextSession && (
+                  <p className="text-[10px] text-[var(--amber)] mt-1">{isBn ? `পরবর্তী সেশন: ${nextSession}` : `Next session: ${nextSession}`}</p>
+                )}
               </div>
             </div>
           </div>

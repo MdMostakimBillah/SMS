@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Calendar, Check, CheckCircle, Droplets, Grid3X3, Hash, Image, Info, Save, School, Search, Star, Upload, User, Wand2, X, Zap } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useAdmissionStore } from '@/store/admissionStore'
+import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 
 
@@ -56,7 +56,8 @@ export default function BulkUpdatePage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { students, updateStudent } = useAdmissionStore()
+  const { updateStudent } = useAdmissionStore()
+  const students = useSessionStudents()
   const { classes } = useClassStore()
   const isBn = language === 'bn'
 

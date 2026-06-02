@@ -136,3 +136,9 @@ export const useAdmissionStore = create<AdmissionState>()(
     }
   )
 )
+
+export function useSessionStudents() {
+  const { students } = useAdmissionStore()
+  const currentSession = useClassStore(s => s.institution.currentSession)
+  return students.filter(s => s.academicYear === currentSession)
+}

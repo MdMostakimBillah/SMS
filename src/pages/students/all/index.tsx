@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
-import { useAdmissionStore } from '@/store/admissionStore'
+import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
 import { generateListPDF } from '@/pages/students/admission/listPdfTemplate'
@@ -20,7 +20,7 @@ export default function AllStudentsPage() {
   const navigate  = useNavigate()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { students } = useAdmissionStore()
+  const students = useSessionStudents()
   const { classes } = useClassStore()
   const isBn = language === 'bn'
 

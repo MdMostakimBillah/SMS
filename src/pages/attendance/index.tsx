@@ -1,12 +1,12 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Briefcase, Calendar, CalendarCheck, CalendarRange, CalendarX, CheckCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, CreditCard, ExternalLink, Eye, FileSpreadsheet, FileText, Fingerprint, GraduationCap, Layers, Loader, LogOut, Plus, RefreshCw, ScanFace, Search, Settings, Tag, User, Users, Wifi, WifiOff, X, XCircle } from 'lucide-react'
+import { ArrowLeft, Briefcase, Calendar, CalendarCheck, CalendarRange, CalendarX, CheckCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, CreditCard, ExternalLink, Eye, FileSpreadsheet, FileText, Fingerprint, GraduationCap, Layers, Loader, LogOut, Plus, RefreshCw, ScanFace, Search, Settings, Smartphone, Tag, User, Users, Wifi, WifiOff, X, XCircle } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
-import { useAdmissionStore } from '@/store/admissionStore'
+import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { AttendancePDFOptionsModal } from '@/components/shared/AttendancePDFOptionsModal'
@@ -140,7 +140,7 @@ export default function AttendancePage() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const { teachers, departments, attendance, markAllPresent } = useTeacherStore()
-  const { students } = useAdmissionStore()
+  const students = useSessionStudents()
   const { classes } = useClassStore()
   const isBn = language === 'bn'
   isBnGlobal = isBn
@@ -183,7 +183,7 @@ export default function AttendancePage() {
   ])
   const [showAddDevice, setShowAddDevice] = useState(false)
   const [newDevice, setNewDevice] = useState({name:'',model:'',ip:'',type:'rfid' as 'rfid'|'fingerprint'|'face'|'multi'})
-  const [deviceTab, setDeviceTab] = useState<'devices'|'rfid'|'fingerprint'|'face'>('devices')
+  const [deviceTab, setDeviceTab] = useState<'devices'|'rfid'|'fingerprint'|'face'|'mobile'>('devices')
   const [rfidEntries, setRfidEntries] = useState<{staffId:string;staffName:string;rfidCard:string;type:string;assigned:boolean}[]>([
     { staffId:'TCH-2026-001', staffName:'Dr. Rafiqul Islam', rfidCard:'CARD-1000', type:'Admin', assigned:true },
     { staffId:'TCH-2026-002', staffName:'Prof. Salma Khatun', rfidCard:'CARD-1001', type:'Faculty', assigned:true },
@@ -232,6 +232,27 @@ export default function AttendancePage() {
   const [newRFID, setNewRFID] = useState({staffId:'',rfidCard:''})
   const [newFP, setNewFP] = useState({staffId:''})
   const [newFace, setNewFace] = useState({staffId:''})
+  // Mobile WebAuthn state
+  const [mobileDevices, setMobileDevices] = useState<{id:string;staffId:string;staffName:string;deviceName:string;credentialId:string;registeredAt:string;lastAuth:string}[]>(() => {
+    try { return JSON.parse(localStorage.getItem('mobileAuthDevices') || '[]') } catch { return [] }
+  })
+  const [mobileRegStaff, setMobileRegStaff] = useState('')
+  const [mobileRegPending, setMobileRegPending] = useState(false)
+  const [mobileAuthStaff, setMobileAuthStaff] = useState('')
+  const [mobileAuthPending, setMobileAuthPending] = useState(false)
+  const [mobileAuthMsg, setMobileAuthMsg] = useState<{type:'success'|'error';text:string}|null>(null)
+  const [mobileSearch, setMobileSearch] = useState('')
+  const [kioskMode, setKioskMode] = useState(false)
+  const [kioskStaff, setKioskStaff] = useState('')
+  const [kioskPending, setKioskPending] = useState(false)
+  const [kioskMsg, setKioskMsg] = useState<{type:'success'|'error';text:string}|null>(null)
+  // WiFi verification state
+  const [institutionWifi, setInstitutionWifi] = useState(() => localStorage.getItem('institutionWifi') || '')
+  const [institutionGateway, setInstitutionGateway] = useState(() => localStorage.getItem('institutionGateway') || '')
+  const [wifiChecking, setWifiChecking] = useState(false)
+  const [wifiConnected, setWifiConnected] = useState<boolean | null>(null)
+  const [showWifiSettings, setShowWifiSettings] = useState(false)
+  const [authMode, setAuthMode] = useState<'kiosk' | 'personal'>('personal')
   useScrollLock(showMarkAll || viewPerson !== null || viewStudent !== null || showStudentPDF || showEmployeePDF || showAddDevice || showAddRFID || showAddFP || showAddFace)
 
   useEffect(() => { setEmpPage(1) }, [employeeSearch, fDeptEmp, empPerPage])
@@ -240,6 +261,222 @@ export default function AttendancePage() {
 
   const dayAtt = attendance[date] || {}
   const activeTeachers = useMemo(() => teachers.filter(t => t.status === 'active'), [teachers])
+
+  // WebAuthn helpers
+  const generateChallenge = () => {
+    const arr = new Uint8Array(32)
+    crypto.getRandomValues(arr)
+    return arr
+  }
+
+  const bufferToBase64 = (buf: ArrayBuffer) => {
+    return btoa(String.fromCharCode(...new Uint8Array(buf)))
+  }
+
+  const base64ToBuffer = (b64: string) => {
+    const bin = atob(b64)
+    const buf = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i)
+    return buf.buffer
+  }
+
+  // WiFi/Network verification - checks if device is on institution network
+  const checkInstitutionNetwork = async (): Promise<{ onNetwork: boolean; method: string; info: string }> => {
+    // Method 1: Check if gateway IP is reachable (most reliable for same network)
+    if (institutionGateway) {
+      try {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 3000)
+        const resp = await fetch(`http://${institutionGateway}/ping`, { method: 'HEAD', mode: 'no-cors', signal: controller.signal })
+        clearTimeout(timeout)
+        // If we get here (even with opaque response), the gateway is reachable
+        return { onNetwork: true, method: 'gateway', info: `Gateway ${institutionGateway} reachable` }
+      } catch {
+        // Gateway not reachable - might be on different network
+      }
+    }
+
+    // Method 2: Check if we can resolve internal DNS or reach local endpoints
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 2000)
+      // Try to reach the app's own origin (if hosted on institution network)
+      const resp = await fetch(window.location.origin, { method: 'HEAD', mode: 'no-cors', signal: controller.signal })
+      clearTimeout(timeout)
+      // If reachable, we're likely on the same network
+      return { onNetwork: true, method: 'origin', info: 'Connected to institution network' }
+    } catch {
+      // Not on same network
+    }
+
+    // Method 3: Use Network Information API if available
+    const nav = navigator as any
+    if (nav.connection) {
+      const conn = nav.connection
+      if (conn.type === 'wifi' || conn.type === 'ethernet') {
+        // Connected via WiFi or Ethernet - likely on institution network
+        // But we can't verify the SSID in browser
+        return { onNetwork: null, method: 'network-info', info: `Connected via ${conn.type} (cannot verify SSID)` }
+      }
+    }
+
+    return { onNetwork: false, method: 'none', info: 'Cannot verify network connection' }
+  }
+
+  // Save WiFi settings
+  const saveWifiSettings = () => {
+    localStorage.setItem('institutionWifi', institutionWifi)
+    localStorage.setItem('institutionGateway', institutionGateway)
+    setShowWifiSettings(false)
+  }
+
+  const handleRegisterDevice = async () => {
+    if (!mobileRegStaff) return
+    const teacher = activeTeachers.find(t => t.id === mobileRegStaff)
+    if (!teacher) return
+    setMobileRegPending(true)
+    setMobileAuthMsg(null)
+    try {
+      const challenge = generateChallenge()
+      const credential = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: 'EduTech Attendance', id: window.location.hostname },
+          user: {
+            id: new TextEncoder().encode(teacher.id),
+            name: teacher.id,
+            displayName: isBn ? (teacher.nameBn || teacher.nameEn) : teacher.nameEn,
+          },
+          pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
+          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+          timeout: 60000,
+        }
+      }) as PublicKeyCredential | null
+      if (credential) {
+        const rawId = bufferToBase64(credential.rawId)
+        const newDevice = {
+          id: `MOB-${Date.now()}`,
+          staffId: teacher.id,
+          staffName: isBn ? (teacher.nameBn || teacher.nameEn) : teacher.nameEn,
+          deviceName: navigator.userAgent.includes('iPhone') ? 'iPhone' : navigator.userAgent.includes('Android') ? 'Android Device' : 'Web Browser',
+          credentialId: rawId,
+          registeredAt: new Date().toISOString(),
+          lastAuth: '',
+        }
+        const updated = [...mobileDevices, newDevice]
+        setMobileDevices(updated)
+        localStorage.setItem('mobileAuthDevices', JSON.stringify(updated))
+        setMobileRegStaff('')
+        setMobileAuthMsg({ type: 'success', text: isBn ? `${newDevice.staffName} সফলভাবে নিবন্ধিত হয়েছে!` : `${newDevice.staffName} registered successfully!` })
+      }
+    } catch (err: any) {
+      setMobileAuthMsg({ type: 'error', text: err.name === 'NotAllowedError' ? (isBn ? 'ব্যবহারকারী বাতিল করেছেন' : 'User cancelled') : (isBn ? 'নিবন্ধন ব্যর্থ হয়েছে' : 'Registration failed') })
+    }
+    setMobileRegPending(false)
+  }
+
+  const handleMobileAuth = async () => {
+    if (!mobileAuthStaff) return
+    const device = mobileDevices.find(d => d.staffId === mobileAuthStaff)
+    if (!device) { setMobileAuthMsg({ type: 'error', text: isBn ? 'এই স্টাফের জন্য কোনো ডিভাইস নিবন্ধিত নেই' : 'No device registered for this staff' }); return }
+    
+    // WiFi verification for personal devices
+    if (institutionGateway || institutionWifi) {
+      setWifiChecking(true)
+      const networkCheck = await checkInstitutionNetwork()
+      setWifiChecking(false)
+      setWifiConnected(networkCheck.onNetwork)
+      
+      if (networkCheck.onNetwork === false) {
+        setMobileAuthMsg({ 
+          type: 'error', 
+          text: isBn 
+            ? `সংযোগ করা হয়নি! অনুগ্রহ করে প্রতিষ্ঠানের WiFi নেটওয়ার্কে সংযোগ করুন। (${networkCheck.info})`
+            : `Not connected! Please connect to institution WiFi network. (${networkCheck.info})`
+        })
+        return
+      }
+    }
+    
+    setMobileAuthPending(true)
+    setMobileAuthMsg(null)
+    try {
+      const challenge = generateChallenge()
+      const credential = await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          allowCredentials: [{ id: base64ToBuffer(device.credentialId), type: 'public-key' }],
+          userVerification: 'required',
+          timeout: 60000,
+        }
+      }) as PublicKeyCredential | null
+      if (credential) {
+        const now = new Date()
+        const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
+        const existing = attendance[date]?.[device.staffId]
+        const punches = existing?.punches || []
+        const lastPunch = punches[punches.length - 1]
+        const punchType = !lastPunch || lastPunch.type === 'out' ? 'in' : 'out'
+        const punchesNew = [...punches, { time: timeStr, type: punchType as 'in' | 'out' }]
+        const status = punchType === 'in' ? 'present' : existing?.status || 'present'
+        const updatedAttendance = { ...attendance, [date]: { ...attendance[date], [device.staffId]: { status: status as AttendanceStatus, punches: punchesNew } } }
+        useTeacherStore.setState({ attendance: updatedAttendance })
+        const updatedDevices = mobileDevices.map(d => d.id === device.id ? { ...d, lastAuth: now.toISOString() } : d)
+        setMobileDevices(updatedDevices)
+        localStorage.setItem('mobileAuthDevices', JSON.stringify(updatedDevices))
+        const wifiInfo = wifiConnected ? ' [WiFi ✓]' : ''
+        setMobileAuthMsg({ type: 'success', text: isBn ? `${device.staffName} ${punchType === 'in' ? 'চেক-ইন' : 'চেক-আউট'} সফল হয়েছে! (${timeStr})${wifiInfo}` : `${device.staffName} ${punchType === 'in' ? 'checked in' : 'checked out'} at ${timeStr}${wifiInfo}` })
+      }
+    } catch (err: any) {
+      setMobileAuthMsg({ type: 'error', text: err.name === 'NotAllowedError' ? (isBn ? 'ব্যবহারকারী বাতিল করেছেন' : 'User cancelled') : (isBn ? 'প্রমাণীকরণ ব্যর্থ হয়েছে' : 'Authentication failed') })
+    }
+    setMobileAuthPending(false)
+  }
+
+  const removeMobileDevice = (id: string) => {
+    const updated = mobileDevices.filter(d => d.id !== id)
+    setMobileDevices(updated)
+    localStorage.setItem('mobileAuthDevices', JSON.stringify(updated))
+  }
+
+  const handleKioskAuth = async () => {
+    if (!kioskStaff) return
+    const device = mobileDevices.find(d => d.staffId === kioskStaff)
+    if (!device) { setKioskMsg({ type: 'error', text: isBn ? 'এই স্টাফের জন্য কোনো ডিভাইস নিবন্ধিত নেই' : 'No device registered for this staff' }); return }
+    setKioskPending(true)
+    setKioskMsg(null)
+    try {
+      const challenge = generateChallenge()
+      const credential = await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          allowCredentials: [{ id: base64ToBuffer(device.credentialId), type: 'public-key' }],
+          userVerification: 'required',
+          timeout: 60000,
+        }
+      }) as PublicKeyCredential | null
+      if (credential) {
+        const now = new Date()
+        const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
+        const existing = attendance[date]?.[device.staffId]
+        const punches = existing?.punches || []
+        const lastPunch = punches[punches.length - 1]
+        const punchType = !lastPunch || lastPunch.type === 'out' ? 'in' : 'out'
+        const punchesNew = [...punches, { time: timeStr, type: punchType as 'in' | 'out' }]
+        const status = punchType === 'in' ? 'present' : existing?.status || 'present'
+        const updatedAttendance = { ...attendance, [date]: { ...attendance[date], [device.staffId]: { status: status as AttendanceStatus, punches: punchesNew } } }
+        useTeacherStore.setState({ attendance: updatedAttendance })
+        const updatedDevices = mobileDevices.map(d => d.id === device.id ? { ...d, lastAuth: now.toISOString() } : d)
+        setMobileDevices(updatedDevices)
+        localStorage.setItem('mobileAuthDevices', JSON.stringify(updatedDevices))
+        setKioskMsg({ type: 'success', text: `${device.staffName} ${punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : (isBn ? 'চেক-আউট' : 'CHECKED OUT')} ${timeStr}` })
+        setTimeout(() => { setKioskStaff(''); setKioskMsg(null) }, 3000)
+      }
+    } catch (err: any) {
+      setKioskMsg({ type: 'error', text: err.name === 'NotAllowedError' ? (isBn ? 'বাতিল করা হয়েছে' : 'Cancelled') : (isBn ? 'ব্যর্থ' : 'Failed') })
+    }
+    setKioskPending(false)
+  }
 
   const filteredStudents = useMemo(() => {
     let l = students.filter(s => s.status === 'approved')
@@ -1291,6 +1528,7 @@ export default function AttendancePage() {
               { key:'rfid' as const, lBn:'RFID কার্ড', lEn:'RFID Cards', Icon:CreditCard, color:'var(--brand)' },
               { key:'fingerprint' as const, lBn:'ফিঙ্গারপ্রিন্ট', lEn:'Fingerprint', Icon:Fingerprint, color:'var(--amber)' },
               { key:'face' as const, lBn:'ফেস স্ক্যান', lEn:'Face Scan', Icon:ScanFace, color:'var(--green)' },
+              { key:'mobile' as const, lBn:'মোবাইল', lEn:'Mobile', Icon:Wifi, color:'var(--teal)' },
             ].map(tab => (
               <button key={tab.key} onClick={() => setDeviceTab(tab.key)}
                 className={`px-3 py-1 rounded-lg text-[11px] cursor-pointer border ${
@@ -1319,6 +1557,11 @@ export default function AttendancePage() {
             {deviceTab === 'face' && (
               <button onClick={() => setShowAddFace(true)} className="flex items-center gap-[5px] px-3 py-[6px] rounded-lg bg-[var(--green)] text-white text-[11px] cursor-pointer font-medium">
                 <ScanFace size={12} />{isBn?'স্ক্যান':'Scan Face'}
+              </button>
+            )}
+            {deviceTab === 'mobile' && (
+              <button onClick={() => setKioskMode(true)} className="flex items-center gap-[5px] px-3 py-[6px] rounded-lg bg-[var(--teal)] text-white text-[11px] cursor-pointer font-medium">
+                <Wifi size={12} />{isBn?'কিওস্ক মোড':'Kiosk Mode'}
               </button>
             )}
           </div>
@@ -1758,6 +2001,231 @@ export default function AttendancePage() {
             </>
           )}
 
+          {/* ===== Mobile WebAuthn ===== */}
+          {deviceTab === 'mobile' && (
+            <>
+              {/* WiFi Settings Bar */}
+              <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3 mb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Wifi size={14} className="text-[var(--teal)]" />
+                    <span className="text-[12px] font-medium text-[var(--text-primary)]">{isBn ? 'নেটওয়ার্ক সেটিংস' : 'Network Settings'}</span>
+                    {institutionGateway && (
+                      <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${wifiConnected === true ? 'bg-[var(--green-light)] text-[var(--green)]' : wifiConnected === false ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'}`}>
+                        {wifiConnected === true ? (isBn ? 'সংযুক্ত' : 'Connected') : wifiConnected === false ? (isBn ? 'সংযুক্ত নয়' : 'Disconnected') : (isBn ? 'পরীক্ষাধীন' : 'Checking...')}
+                      </span>
+                    )}
+                  </div>
+                  <button onClick={() => setShowWifiSettings(!showWifiSettings)}
+                    className="text-[11px] text-[var(--teal)] cursor-pointer bg-transparent border-none font-[inherit] font-medium">
+                    {showWifiSettings ? (isBn ? 'বন্ধ করুন' : 'Close') : (isBn ? 'সেটিংস' : 'Settings')}
+                  </button>
+                </div>
+                {showWifiSettings && (
+                  <div className="mt-3 pt-3 border-t border-[var(--border)] space-y-2">
+                    <div>
+                      <label className="text-[10px] font-medium text-[var(--text-muted)] mb-1 block">{isBn ? 'WiFi নেটওয়ার্কের নাম' : 'WiFi Network Name (SSID)'}</label>
+                      <input value={institutionWifi} onChange={e => setInstitutionWifi(e.target.value)} placeholder="e.g. Institution-Guest"
+                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[11px] text-[var(--text-primary)] outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-[var(--text-muted)] mb-1 block">{isBn ? 'গেটওয়ে IP (ঐচ্ছিক)' : 'Gateway IP (Optional)'}</label>
+                      <input value={institutionGateway} onChange={e => setInstitutionGateway(e.target.value)} placeholder="e.g. 192.168.1.1"
+                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[11px] text-[var(--text-primary)] font-mono outline-none" />
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={saveWifiSettings} className="px-3 py-1.5 rounded-lg bg-[var(--teal)] text-white text-[11px] font-medium cursor-pointer border-none">
+                        {isBn ? 'সংরক্ষণ' : 'Save'}
+                      </button>
+                      <button onClick={async () => { setWifiChecking(true); const r = await checkInstitutionNetwork(); setWifiConnected(r.onNetwork); setWifiChecking(false) }}
+                        className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[11px] cursor-pointer">
+                        {wifiChecking ? (isBn ? 'পরীক্ষা হচ্ছে...' : 'Checking...') : (isBn ? 'পরীক্ষা করুন' : 'Test Connection')}
+                      </button>
+                    </div>
+                    <div className="text-[9px] text-[var(--text-muted)]">
+                      {isBn ? 'গেটওয়ে IP সেট করলে স্টাফদের প্রতিষ্ঠানের WiFi নেটওয়ার্কে থাকতে হবে।' : 'With gateway IP set, staff must be on institution WiFi network to check in.'}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Mode Selection */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <button onClick={() => setAuthMode('personal')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${authMode === 'personal' ? 'border-[var(--teal)] bg-[var(--teal-light)]' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--teal)]'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${authMode === 'personal' ? 'bg-[var(--teal)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--teal)]'}`}>
+                      <Smartphone size={16} />
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-semibold text-[var(--text-primary)]">{isBn ? 'ব্যক্তিগত ফোন' : 'Personal Phone'}</div>
+                      <div className="text-[10px] text-[var(--text-muted)]">{isBn ? 'নিজের ফোনে চেক ইন' : 'Check in on own phone'}</div>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-[var(--text-secondary)]">
+                    {isBn ? 'স্টাফ নিজের ফোনে ফিঙ্গারপ্রিন্ট দিয়ে চেক ইন করে। WiFi যাচাই সহ।' : 'Staff authenticates on own device. WiFi verification included.'}
+                  </div>
+                </button>
+                <button onClick={() => { setAuthMode('kiosk'); setKioskMode(true) }}
+                  className="p-4 rounded-xl border-2 border-[var(--border)] bg-[var(--bg-primary)] text-left transition-all hover:border-[var(--green)]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--green)]">
+                      <Layers size={16} />
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-semibold text-[var(--text-primary)]">{isBn ? 'কিওস্ক মোড' : 'Kiosk Mode'}</div>
+                      <div className="text-[10px] text-[var(--text-muted)]">{isBn ? 'শেয়ার্ড ডিভাইস' : 'Shared device at gate'}</div>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-[var(--text-secondary)]">
+                    {isBn ? 'একটি ফোন গেটে রাখুন। সবাই সেখানে আঙুল দিয়ে চেক ইন করবে।' : 'Place one phone at gate. All staff authenticate there.'}
+                  </div>
+                </button>
+              </div>
+
+              {/* Personal Mode Content */}
+              {authMode === 'personal' && (
+                <>
+                  {/* Info Banner */}
+                  <div className="bg-[var(--teal-light)] border border-[var(--teal)] rounded-xl p-3 mb-4">
+                    <div className="flex items-start gap-2">
+                      <Wifi size={16} className="text-[var(--teal)] mt-0.5 shrink-0" />
+                      <div>
+                        <div className="text-[12px] font-semibold text-[var(--teal)]">{isBn ? 'ব্যক্তিগত ডিভাইস মোড' : 'Personal Device Mode'}</div>
+                        <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
+                          {isBn 
+                            ? 'স্টাফরা তাদের নিজের ফোনে ফিঙ্গারপ্রিন্ট/ফেস আইডি দিয়ে চেক-ইন/আউট করবে। WiFi সংযোগ যাচাই করা হয়।'
+                            : 'Staff check in/out using their own phone biometric. WiFi connection is verified.'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-2.5 mb-4">
+                    {[
+                      { label: isBn?'নিবন্ধিত':'Registered', value: mobileDevices.length, icon: <Wifi size={15}/>, color: 'var(--teal)' },
+                      { label: isBn?'আজ চেক-ইন':'Today', value: mobileDevices.filter(d => d.lastAuth?.startsWith(date)).length, icon: <CheckCircle size={15}/>, color: 'var(--green)' },
+                      { label: isBn?'সক্রিয়':'Active', value: mobileDevices.filter(d => d.lastAuth).length, icon: <Clock size={15}/>, color: 'var(--brand)' },
+                    ].map((s,i) => (
+                      <div key={i} className="flex items-center gap-2.5 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background:`${s.color}15`, color:s.color }}>{s.icon}</div>
+                        <div>
+                          <div className="text-[16px] font-bold" style={{ color:s.color }}>{s.value}</div>
+                          <div className="text-[10px] text-[var(--text-muted)]">{s.label}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Message */}
+                  {mobileAuthMsg && (
+                    <div className={`mb-3 py-2 px-3 rounded-lg text-[12px] font-medium flex items-center gap-2 ${mobileAuthMsg.type === 'success' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
+                      {mobileAuthMsg.type === 'success' ? <CheckCircle size={14}/> : <XCircle size={14}/>}
+                      {mobileAuthMsg.text}
+                      <button onClick={() => setMobileAuthMsg(null)} className="ml-auto bg-transparent border-none cursor-pointer text-[inherit]"><X size={14}/></button>
+                    </div>
+                  )}
+
+                  {/* Register + Auth Side by Side */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                    {/* Register Device */}
+                    <div className="border border-[var(--border)] rounded-xl p-4 bg-[var(--bg-primary)]">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-[var(--teal-light)] flex items-center justify-center"><Wifi size={15} className="text-[var(--teal)]" /></div>
+                        <div>
+                          <div className="text-[13px] font-semibold text-[var(--text-primary)]">{isBn ? 'ডিভাইস নিবন্ধন' : 'Register Device'}</div>
+                          <div className="text-[10px] text-[var(--text-muted)]">{isBn ? 'ফিঙ্গারপ্রিন্ট/ফেস দিয়ে নিবন্ধন' : 'Register with biometric'}</div>
+                        </div>
+                      </div>
+                      <select value={mobileRegStaff} onChange={e => setMobileRegStaff(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] text-[var(--text-primary)] outline-none mb-2">
+                        <option value="">{isBn ? 'স্টাফ নির্বাচন করুন...' : 'Select staff...'}</option>
+                        {activeTeachers.filter(t => !mobileDevices.find(d => d.staffId === t.id)).map(t => (
+                          <option key={t.id} value={t.id}>{isBn ? (t.nameBn || t.nameEn) : t.nameEn} ({t.id})</option>
+                        ))}
+                      </select>
+                      <button onClick={handleRegisterDevice} disabled={!mobileRegStaff || mobileRegPending}
+                        className={`w-full py-2 rounded-lg text-[12px] font-semibold cursor-pointer border-none transition-all ${mobileRegPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileRegStaff ? 'bg-[var(--teal)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}>
+                        {mobileRegPending ? (isBn ? 'নিবন্ধন হচ্ছে...' : 'Registering...') : (isBn ? 'নিবন্ধন করুন' : 'Register Now')}
+                      </button>
+                    </div>
+
+                    {/* Check In */}
+                    <div className="border border-[var(--border)] rounded-xl p-4 bg-[var(--bg-primary)]">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-[var(--green-light)] flex items-center justify-center"><CheckCircle size={15} className="text-[var(--green)]" /></div>
+                        <div>
+                          <div className="text-[13px] font-semibold text-[var(--text-primary)]">{isBn ? 'চেক-ইন / আউট' : 'Check In / Out'}</div>
+                          <div className="text-[10px] text-[var(--text-muted)]">{isBn ? 'বায়োমেট্রিক + WiFi' : 'Biometric + WiFi verified'}</div>
+                        </div>
+                      </div>
+                      <select value={mobileAuthStaff} onChange={e => setMobileAuthStaff(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] text-[var(--text-primary)] outline-none mb-2">
+                        <option value="">{isBn ? 'নিবন্ধিত স্টাফ...' : 'Registered staff...'}</option>
+                        {mobileDevices.map(d => (
+                          <option key={d.staffId} value={d.staffId}>{d.staffName} ({d.staffId})</option>
+                        ))}
+                      </select>
+                      <button onClick={handleMobileAuth} disabled={!mobileAuthStaff || mobileAuthPending || wifiChecking}
+                        className={`w-full py-2 rounded-lg text-[12px] font-semibold cursor-pointer border-none transition-all ${mobileAuthPending || wifiChecking ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileAuthStaff ? 'bg-[var(--green)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}>
+                        {wifiChecking ? (isBn ? 'ওয়াইফাই যাচাই...' : 'Checking WiFi...') : mobileAuthPending ? (isBn ? 'প্রমাণীকরণ...' : 'Authenticating...') : (isBn ? 'বায়োমেট্রিক চেক' : 'Biometric Check')}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Devices List */}
+                  <div className="border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+                      <div className="text-[13px] font-semibold text-[var(--text-primary)]">{isBn ? 'নিবন্ধিত ডিভাইস' : 'Registered Devices'} ({mobileDevices.length})</div>
+                      <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-[5px]">
+                        <Search size={12} className="text-[var(--text-muted)]" />
+                        <input value={mobileSearch} onChange={e => setMobileSearch(e.target.value)} placeholder={isBn?'খুঁজুন...':'Search...'} className="flex-1 border-none bg-transparent outline-none text-[11px] text-[var(--text-primary)] w-[100px]" />
+                      </div>
+                    </div>
+                    <div className="overflow-auto max-h-[35vh]">
+                      <table className="w-full border-collapse text-[11px]">
+                        <thead>
+                          <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                            <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[35px]">#</th>
+                            <th className="p-2.5 text-left text-[10px] font-semibold text-[var(--text-muted)]">{isBn?'স্টাফ':'Staff'}</th>
+                            <th className="p-2.5 text-left text-[10px] font-semibold text-[var(--text-muted)]">{isBn?'ডিভাইস':'Device'}</th>
+                            <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">{isBn?'শেষ ব্যবহার':'Last Used'}</th>
+                            <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">{isBn?'অ্যাকশন':'Action'}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {mobileDevices.filter(d => !mobileSearch || d.staffName.toLowerCase().includes(mobileSearch.toLowerCase()) || d.staffId.toLowerCase().includes(mobileSearch.toLowerCase())).map((d,i) => (
+                            <tr key={d.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)] transition-colors">
+                              <td className="p-2.5 text-center text-[var(--text-muted)]">{i+1}</td>
+                              <td className="p-2.5">
+                                <div className="font-medium text-[var(--text-primary)]">{d.staffName}</div>
+                                <div className="text-[10px] text-[var(--text-muted)]">{d.staffId}</div>
+                              </td>
+                              <td className="p-2.5">
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--teal-light)] text-[var(--teal)] font-medium">{d.deviceName}</span>
+                              </td>
+                              <td className="p-2.5 text-center text-[10px] text-[var(--text-muted)]">
+                                {d.lastAuth ? new Date(d.lastAuth).toLocaleString() : <span className="text-[var(--amber)]">{isBn?'নতুন':'New'}</span>}
+                              </td>
+                              <td className="p-2.5 text-center">
+                                <button onClick={() => removeMobileDevice(d.id)}
+                                  className="px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[9px] font-semibold cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all">{isBn?'মুছুন':'Remove'}</button>
+                              </td>
+                            </tr>
+                          ))}
+                          {mobileDevices.length === 0 && (
+                            <tr><td colSpan={5} className="p-8 text-center text-[var(--text-muted)] text-[12px]">{isBn?'কোনো ডিভাইস নিবন্ধিত নেই':'No devices registered'}</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
           {/* Add Device Modal */}
           {showAddDevice && (
             <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
@@ -1899,6 +2367,59 @@ export default function AttendancePage() {
                       setNewFace({staffId:''})
                     }
                   }} className="px-3.5 py-2 rounded-lg bg-[var(--green)] border-0 text-white text-[12px] font-semibold cursor-pointer">{isBn?'স্ক্যান শুরু করুন':'Start Scan'}</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Kiosk Mode Modal */}
+          {kioskMode && (
+            <div className="fixed inset-0 flex items-center justify-center p-4 z-[800] bg-black/80">
+              <div className="bg-[var(--bg-primary)] rounded-2xl max-w-[420px] w-full p-6 border border-[var(--border)] shadow-2xl">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--teal-light)] flex items-center justify-center">
+                      <Wifi size={20} className="text-[var(--teal)]" />
+                    </div>
+                    <div>
+                      <h3 className="text-[16px] font-bold text-[var(--text-primary)]">{isBn ? 'কিওস্ক মোড' : 'Kiosk Mode'}</h3>
+                      <p className="text-[11px] text-[var(--text-muted)]">{isBn ? 'শেয়ার্ড ডিভাইস হিসেবে ব্যবহার করুন' : 'Use as shared device'}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => { setKioskMode(false); setKioskStaff(''); setKioskMsg(null) }}
+                    className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {kioskMsg && (
+                  <div className={`mb-4 py-3 px-4 rounded-xl text-center text-[14px] font-bold ${kioskMsg.type === 'success' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
+                    {kioskMsg.text}
+                  </div>
+                )}
+
+                <div className="mb-4">
+                  <label className="text-[12px] font-medium text-[var(--text-secondary)] mb-2 block">{isBn ? 'স্টাফ নির্বাচন করুন' : 'Select Staff'}</label>
+                  <select value={kioskStaff} onChange={e => { setKioskStaff(e.target.value); setKioskMsg(null) }}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[var(--border)] bg-[var(--bg-secondary)] text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--teal)]">
+                    <option value="">{isBn ? 'নাম নির্বাচন করুন...' : 'Choose name...'}</option>
+                    {mobileDevices.map(d => (
+                      <option key={d.staffId} value={d.staffId}>{d.staffName} ({d.staffId})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button onClick={handleKioskAuth} disabled={!kioskStaff || kioskPending}
+                  className={`w-full py-4 rounded-xl text-[15px] font-bold cursor-pointer border-none transition-all ${kioskPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : kioskStaff ? 'bg-[var(--teal)] text-white hover:shadow-lg hover:scale-[1.02]' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}>
+                  {kioskPending ? (
+                    <span className="flex items-center justify-center gap-2"><Loader size={18} className="animate-spin" />{isBn ? 'অপেক্ষা করুন...' : 'Authenticating...'}</span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2"><Fingerprint size={18} />{isBn ? 'বায়োমেট্রিক চেক করুন' : 'Tap for Biometric'}</span>
+                  )}
+                </button>
+
+                <div className="mt-4 text-center text-[10px] text-[var(--text-muted)]">
+                  {isBn ? `নিবন্ধিত স্টাফ: ${mobileDevices.length}` : `Registered staff: ${mobileDevices.length}`}
                 </div>
               </div>
             </div>

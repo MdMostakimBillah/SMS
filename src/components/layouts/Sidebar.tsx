@@ -7,7 +7,7 @@ import {
   BarChart2, FileBarChart, Crown, Settings, ChevronsUpDown, type LucideIcon,
 } from "lucide-react"
 import { useAppStore } from "@/store/appStore"
-import { useAdmissionStore } from "@/store/admissionStore"
+import { useSessionStudents } from "@/store/admissionStore"
 import { useTeacherStore } from "@/store/teacherStore"
 import { t } from "@/lib/i18n"
 import type { TranslationKey } from "@/lib/i18n"
@@ -43,7 +43,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 export default function Sidebar() {
   const { language } = useAppStore()
-  const { students } = useAdmissionStore()
+  const students = useSessionStudents()
   const { teachers } = useTeacherStore()
   const location = useLocation()
 

@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Settings, Clock, Users, Plus, Trash2, Save, Check, Building2, Phone, Globe, MapPin, Edit2, X, Signature, CalendarDays, Download, BookOpen } from 'lucide-react'
+import { ArrowLeft, Settings, Clock, Users, Plus, Trash2, Save, Check, Building2, Phone, Globe, MapPin, Edit2, X, Signature, CalendarDays, Download, BookOpen, Copy, ListChecks, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useClassStore } from '@/store/classStore'
@@ -12,7 +12,7 @@ export default function ClassesPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { institution, classes, routines, updateInstitution, addClass, updateClass, deleteClass, addSection, updateSection, deleteSection, updateRoutine, setRoutineSlot, clearRoutineSlot } = useClassStore()
+  const { institution, classes, routines, updateInstitution, addClass, updateClass, deleteClass, addSection, updateSection, deleteSection, updateRoutine, setRoutineSlot, clearRoutineSlot, switchSession, addSession, removeSession } = useClassStore()
   const { teachers, subjects } = useTeacherStore()
   const { students } = useAdmissionStore()
   const isBn = language === 'bn'
@@ -34,13 +34,26 @@ export default function ClassesPage() {
   const [secForm, setSecForm] = useState({ name: '', seatQuantity: 40, classTeacherId: '' })
   const [showSubjectModal, setShowSubjectModal] = useState<{ classId: string; sectionId: string } | null>(null)
   const [tempSelectedSubjects, setTempSelectedSubjects] = useState<string[]>([])
-  useScrollLock(showSubjectModal !== null)
+
+  // Bulk operations state
+  const [bulkMode, setBulkMode] = useState(false)
+  const [selectedClasses, setSelectedClasses] = useState<string[]>([])
+  const [showBulkTime, setShowBulkTime] = useState(false)
+  const [showBulkSubject, setShowBulkSubject] = useState(false)
+  const [showBulkSection, setShowBulkSection] = useState(false)
+  const [bulkTimeForm, setBulkTimeForm] = useState({ startTime: '07:30', endTime: '14:30' })
+  const [bulkSubjectIds, setBulkSubjectIds] = useState<string[]>([])
+  const [bulkSectionCount, setBulkSectionCount] = useState(2)
+  const [bulkSeatQuantity, setBulkSeatQuantity] = useState(40)
+  const [newSessionInput, setNewSessionInput] = useState('')
+
+  useScrollLock(showSubjectModal !== null || showBulkTime || showBulkSubject || showBulkSection)
 
   const getTeacher = useCallback((id: string) => teachers.find(t => t.id === id), [teachers])
 
   const getStudentCount = useCallback((classNum: string, sectionName: string) => {
-    return students.filter(s => s.status === 'approved' && s.class === classNum && s.section === sectionName).length
-  }, [students])
+    return students.filter(s => s.status === 'approved' && s.class === classNum && s.section === sectionName && s.academicYear === institution.currentSession).length
+  }, [students, institution.currentSession])
 
   const handleSaveInstitution = () => {
     updateInstitution(instForm)
@@ -73,6 +86,66 @@ export default function ClassesPage() {
   const handleSaveClassTime = (classId: string) => {
     updateClass(classId, classTimeForm)
     setEditingClassTime(null)
+  }
+
+  // Bulk operations handlers
+  const toggleSelectAll = () => {
+    if (selectedClasses.length === classes.length) {
+      setSelectedClasses([])
+    } else {
+      setSelectedClasses(classes.map(c => c.id))
+    }
+  }
+
+  const toggleSelectClass = (classId: string) => {
+    setSelectedClasses(prev =>
+      prev.includes(classId) ? prev.filter(id => id !== classId) : [...prev, classId]
+    )
+  }
+
+  const handleBulkTimeApply = () => {
+    selectedClasses.forEach(classId => {
+      updateClass(classId, { startTime: bulkTimeForm.startTime, endTime: bulkTimeForm.endTime })
+    })
+    setShowBulkTime(false)
+    setSelectedClasses([])
+    setBulkMode(false)
+  }
+
+  const handleBulkSubjectApply = () => {
+    selectedClasses.forEach(classId => {
+      const cls = classes.find(c => c.id === classId)
+      if (!cls) return
+      cls.sections.forEach(sec => {
+        const existing = sec.subjectIds || []
+        const merged = [...new Set([...existing, ...bulkSubjectIds])]
+        updateSection(classId, sec.id, { subjectIds: merged })
+      })
+    })
+    setShowBulkSubject(false)
+    setSelectedClasses([])
+    setBulkMode(false)
+  }
+
+  const handleBulkSectionApply = () => {
+    selectedClasses.forEach(classId => {
+      const cls = classes.find(c => c.id === classId)
+      if (!cls) return
+      const secLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+      for (let i = 0; i < bulkSectionCount; i++) {
+        const idx = cls.sections.length + i
+        const letter = secLetters[idx] || String(idx + 1)
+        const id = `SEC-${classId}-${letter}`
+        addSection(classId, { id, name: letter, seatQuantity: bulkSeatQuantity, classTeacherId: '', subjectIds: [] })
+      }
+    })
+    setShowBulkSection(false)
+    setSelectedClasses([])
+    setBulkMode(false)
+  }
+
+  const toggleTempSubject = (subId: string) => {
+    setBulkSubjectIds(prev => prev.includes(subId) ? prev.filter(s => s !== subId) : [...prev, subId])
   }
 
   const inputClass = "w-full py-[9px] px-[11px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none"
@@ -181,6 +254,16 @@ export default function ClassesPage() {
                   )}
                 </div>
               </div>
+              {/* Session/Year */}
+              <div style={{ padding: '10px', borderRadius: '8px', background: 'var(--bg-secondary)', gridColumn: isMobile ? 'auto' : '1 / -1' }}>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}><CalendarDays size={11} />{isBn ? 'একাডেমিক সেশন' : 'Academic Session'}</div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--brand)', background: 'var(--brand-light)', padding: '4px 12px', borderRadius: '6px' }}>{institution.currentSession}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{isBn ? 'বর্তমান সেশন' : 'Current Session'}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>·</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{institution.sessions.length} {isBn ? 'টি সেশন সংরক্ষিত' : 'sessions saved'}</span>
+                </div>
+              </div>
             </div>
           )}
 
@@ -219,44 +302,128 @@ export default function ClassesPage() {
                 <label className={labelClass}>{isBn ? 'ক্লাস শেষের সময়' : 'Class End Time'}</label>
                 <input type="time" value={instForm.endTime} onChange={e => setInstForm(p => ({ ...p, endTime: e.target.value }))} className={inputClass} />
               </div>
-              {/* Dynamic breaks */}
+              {/* Session/Year */}
               <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <label style={{ ...label, marginBottom: 0 }}>{isBn ? 'বিরতির সময়' : 'Break Times'}</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[11px] font-medium text-[var(--text-secondary)] m-0">{isBn ? 'একাডেমিক সেশন' : 'Academic Session'}</label>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <select value={instForm.currentSession} onChange={e => setInstForm(p => ({ ...p, currentSession: e.target.value }))}
+                      className="flex-1 py-[9px] px-[11px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none">
+                      {instForm.sessions.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input value={newSessionInput} onChange={e => setNewSessionInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          const val = newSessionInput.trim()
+                          if (val && !instForm.sessions.includes(val)) {
+                            setInstForm(p => ({ ...p, sessions: [...p.sessions, val].sort(), currentSession: val }))
+                            setNewSessionInput('')
+                          }
+                        }
+                      }}
+                      className="flex-1 py-[9px] px-[11px] rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none focus:border-[var(--brand)]"
+                      placeholder={isBn ? 'নতুন সেশন যোগ করুন (Enter চাপুন)' : 'Add new session (press Enter)'} />
+                    <button type="button" onClick={() => {
+                      const val = newSessionInput.trim()
+                      if (val && !instForm.sessions.includes(val)) {
+                        setInstForm(p => ({ ...p, sessions: [...p.sessions, val].sort(), currentSession: val }))
+                        setNewSessionInput('')
+                      }
+                    }}
+                      className="py-[9px] px-3 rounded-lg bg-[var(--brand)] border-none text-white text-[12px] font-medium cursor-pointer font-[inherit] shrink-0">
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {instForm.sessions.map(s => (
+                      <span key={s} className={`inline-flex items-center gap-1 text-[11px] py-1 px-2.5 rounded-md font-medium transition-all ${instForm.currentSession === s ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]'}`}>
+                        <span className="cursor-pointer" onClick={() => setInstForm(p => ({ ...p, currentSession: s }))}>{s}</span>
+                        {instForm.sessions.length > 1 && (
+                          <button type="button" onClick={() => {
+                            if (confirm(isBn ? `"${s}" সেশন মুছে ফেলতে চান? এই সেশনের সব ক্লাস ও রুটিন মুছে যাবে।` : `Delete session "${s}"? All classes and routines for this session will be removed.`)) {
+                              setInstForm(p => {
+                                const newSessions = p.sessions.filter(x => x !== s)
+                                const newCurrent = p.currentSession === s ? newSessions[0] || '' : p.currentSession
+                                return { ...p, sessions: newSessions, currentSession: newCurrent }
+                              })
+                            }
+                          }}
+                            className={`p-0 rounded-full border-none cursor-pointer flex items-center justify-center w-[14px] h-[14px] transition-all ${instForm.currentSession === s ? 'bg-white/30 text-white hover:bg-white/50' : 'bg-[var(--red-light)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white'}`}>
+                            <X size={9} />
+                          </button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Break Times - Redesigned */}
+              <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-[28px] h-[28px] rounded-[7px] bg-[var(--amber-light)] flex items-center justify-center">
+                      <Clock size={14} className="text-[var(--amber)]" />
+                    </div>
+                    <div>
+                      <label className="text-[13px] font-semibold text-[var(--text-primary)] m-0">{isBn ? 'বিরতির সময়' : 'Break Times'}</label>
+                      <p className="text-[10px] text-[var(--text-muted)] m-0">{instForm.breaks.length} {isBn ? 'টি বিরতি সেট করা আছে' : 'breaks configured'}</p>
+                    </div>
+                  </div>
                   <button type="button" onClick={() => setInstForm(p => ({
                     ...p,
                     breaks: [...p.breaks, { id: `BRK-${Date.now()}`, label: `${isBn ? 'বিরতি' : 'Break'} ${p.breaks.length + 1}`, start: '12:00', end: '12:30' }],
                   }))}
-                    style={{ display: 'flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '5px', background: 'var(--green-light)', border: '1px solid var(--green)', color: 'var(--green)', fontSize: '10px', cursor: 'pointer', fontFamily: 'inherit' }}>
-                    <Plus size={10} />{isBn ? 'বিরতি যোগ' : 'Add Break'}
+                    className="flex items-center gap-[5px] py-[6px] px-3 rounded-[7px] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[11px] font-medium cursor-pointer font-[inherit] transition-all duration-150 hover:shadow-sm">
+                    <Plus size={12} />{isBn ? 'বিরতি যোগ' : 'Add Break'}
                   </button>
                 </div>
+
                 {instForm.breaks.length === 0 ? (
-                  <div style={{ padding: '8px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px', background: 'var(--bg-secondary)', borderRadius: '6px' }}>
-                    {isBn ? 'কোনো বিরতি সেট করা হয়নি' : 'No breaks configured'}
+                  <div className="p-4 text-center rounded-[10px] border border-dashed border-[var(--border)] bg-[var(--bg-secondary)]">
+                    <Clock size={24} className="mx-auto mb-2 text-[var(--text-muted)] opacity-40" />
+                    <p className="text-[12px] text-[var(--text-muted)] m-0">{isBn ? 'কোনো বিরতি সেট করা হয়নি। "বিরতি যোগ" বাটনে ক্লিক করুন।' : 'No breaks configured. Click "Add Break" to get started.'}</p>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div className="flex flex-col gap-[8px]">
                     {instForm.breaks.map((brk, i) => (
-                      <div key={brk.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 8px', borderRadius: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+                      <div key={brk.id} className="flex items-center gap-[8px] p-[10px] rounded-[10px] bg-[var(--bg-secondary)] border border-[var(--border)] transition-all duration-150 hover:border-[var(--amber)] hover:shadow-sm group">
+                        <div className="w-[32px] h-[32px] rounded-[8px] bg-[var(--amber-light)] flex items-center justify-center flex-shrink-0">
+                          <span className="text-[11px] font-bold text-[var(--amber)]">B{i + 1}</span>
+                        </div>
                         <input value={brk.label} onChange={e => {
                           const breaks = [...instForm.breaks]; breaks[i] = { ...brk, label: e.target.value }; setInstForm(p => ({ ...p, breaks }))
                         }}
-                          style={{ width: '80px', padding: '4px 6px', borderRadius: '5px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '11px', fontFamily: 'inherit' }}
+                          className="w-[90px] py-[6px] px-[8px] rounded-[6px] border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[12px] font-medium font-[inherit] outline-none focus:border-[var(--amber)] transition-colors"
                           placeholder={isBn ? 'নাম' : 'Label'} />
-                        <input type="time" value={brk.start} onChange={e => {
-                          const breaks = [...instForm.breaks]; breaks[i] = { ...brk, start: e.target.value }; setInstForm(p => ({ ...p, breaks }))
-                        }}
-                          style={{ padding: '4px 6px', borderRadius: '5px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '11px', fontFamily: 'inherit' }} />
-                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>-</span>
-                        <input type="time" value={brk.end} onChange={e => {
-                          const breaks = [...instForm.breaks]; breaks[i] = { ...brk, end: e.target.value }; setInstForm(p => ({ ...p, breaks }))
-                        }}
-                          style={{ padding: '4px 6px', borderRadius: '5px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '11px', fontFamily: 'inherit' }} />
-                        <button type="button" onClick={() => setInstForm(p => ({ ...p, breaks: p.breaks.filter(b => b.id !== brk.id) }))}
-                          style={{ padding: '3px', borderRadius: '4px', background: 'var(--red-light)', border: 'none', cursor: 'pointer', color: 'var(--red)', marginLeft: 'auto' }}>
-                          <X size={11} />
-                        </button>
+                        <div className="flex items-center gap-[4px]">
+                          <input type="time" value={brk.start} onChange={e => {
+                            const breaks = [...instForm.breaks]; breaks[i] = { ...brk, start: e.target.value }; setInstForm(p => ({ ...p, breaks }))
+                          }}
+                            className="py-[6px] px-[8px] rounded-[6px] border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[12px] font-[inherit] outline-none focus:border-[var(--amber)] transition-colors" />
+                          <span className="text-[11px] font-medium text-[var(--text-muted)]">→</span>
+                          <input type="time" value={brk.end} onChange={e => {
+                            const breaks = [...instForm.breaks]; breaks[i] = { ...brk, end: e.target.value }; setInstForm(p => ({ ...p, breaks }))
+                          }}
+                            className="py-[6px] px-[8px] rounded-[6px] border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[12px] font-[inherit] outline-none focus:border-[var(--amber)] transition-colors" />
+                        </div>
+                        <div className="flex items-center gap-[4px] ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
+                          <span className="text-[10px] text-[var(--amber)] font-medium bg-[var(--amber-light)] py-[2px] px-[6px] rounded-[4px]">
+                            {(() => {
+                              const [sh, sm] = brk.start.split(':').map(Number)
+                              const [eh, em] = brk.end.split(':').map(Number)
+                              return (eh * 60 + em) - (sh * 60 + sm)
+                            })()} {isBn ? 'মিনিট' : 'min'}
+                          </span>
+                          <button type="button" onClick={() => setInstForm(p => ({ ...p, breaks: p.breaks.filter(b => b.id !== brk.id) }))}
+                            className="p-[5px] rounded-[6px] bg-[var(--red-light)] border border-[var(--red)] cursor-pointer text-[var(--red)] transition-all duration-150 hover:bg-[var(--red)] hover:text-white">
+                            <X size={12} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -270,19 +437,61 @@ export default function ClassesPage() {
       {/* Classes Tab */}
       {activeTab === 'classes' && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              {classes.length} {isBn ? 'টি শ্রেণি' : 'classes'} · {classes.reduce((s, c) => s + c.sections.length, 0)} {isBn ? 'টি সেকশন' : 'sections'}
+          {/* Session indicator */}
+          <div className="flex items-center gap-2 mb-3 py-2 px-3 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)]">
+            <CalendarDays size={14} className="text-[var(--brand)]" />
+            <span className="text-[12px] font-semibold text-[var(--brand)]">{institution.currentSession}</span>
+            <span className="text-[11px] text-[var(--text-muted)]">{isBn ? 'বর্তমান সেশন' : 'Current Session'}</span>
+            <div className="flex-1" />
+            <div className="flex gap-1">
+              {institution.sessions.filter(s => s !== institution.currentSession).map(s => (
+                <button key={s} onClick={() => switchSession(s)}
+                  className="text-[10px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] cursor-pointer font-[inherit] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all">
+                  {isBn ? 'পরিবর্তন' : 'Switch to'} {s}
+                </button>
+              ))}
             </div>
-            <button onClick={() => setShowAddClass(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-              <Plus size={14} />{isBn ? 'নতুন শ্রেণি' : 'Add Class'}
-            </button>
+          </div>
+
+          {/* Top bar */}
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div className="text-[12px] text-[var(--text-muted)]">
+              {classes.length} {isBn ? 'টি শ্রেণি' : 'classes'} · {classes.reduce((s, c) => s + c.sections.length, 0)} {isBn ? 'টি সেকশন' : 'sections'}
+              {bulkMode && selectedClasses.length > 0 && (
+                <span className="ml-2 text-[var(--teal)] font-semibold">· {selectedClasses.length} {isBn ? 'নির্বাচিত' : 'selected'}</span>
+              )}
+            </div>
+            <div className="flex gap-[6px] flex-wrap">
+              {bulkMode && selectedClasses.length > 0 && (
+                <>
+                  <button onClick={() => setShowBulkTime(true)}
+                    className="flex items-center gap-[4px] py-[5px] px-2.5 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[11px] font-medium cursor-pointer font-[inherit] hover:border-[var(--amber)] hover:text-[var(--amber)] transition-all">
+                    <Clock size={11} />{isBn ? 'সময়' : 'Time'}
+                  </button>
+                  <button onClick={() => setShowBulkSubject(true)}
+                    className="flex items-center gap-[4px] py-[5px] px-2.5 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[11px] font-medium cursor-pointer font-[inherit] hover:border-[var(--teal)] hover:text-[var(--teal)] transition-all">
+                    <BookOpen size={11} />{isBn ? 'বিষয়' : 'Subject'}
+                  </button>
+                  <button onClick={() => setShowBulkSection(true)}
+                    className="flex items-center gap-[4px] py-[5px] px-2.5 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[11px] font-medium cursor-pointer font-[inherit] hover:border-[var(--purple)] hover:text-[var(--purple)] transition-all">
+                    <ListChecks size={11} />{isBn ? 'সেকশন' : 'Section'}
+                  </button>
+                </>
+              )}
+              <button onClick={() => { setBulkMode(!bulkMode); if (bulkMode) setSelectedClasses([]) }}
+                className={`flex items-center gap-[4px] py-[5px] px-2.5 rounded-md border text-[11px] font-medium cursor-pointer font-[inherit] transition-all ${bulkMode ? 'bg-[var(--text-primary)] border-[var(--text-primary)] text-[var(--bg-primary)]' : 'bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]'}`}>
+                <ListChecks size={11} />{bulkMode ? (isBn ? 'বন্ধ' : 'Done') : (isBn ? 'বাল্ক' : 'Bulk')}
+              </button>
+              <button onClick={() => setShowAddClass(true)}
+                className="flex items-center gap-[5px] py-[7px] px-3 rounded-[8px] bg-[var(--brand)] border-none text-white text-[12px] font-medium cursor-pointer font-[inherit]">
+                <Plus size={14} />{isBn ? 'নতুন শ্রেণি' : 'Add Class'}
+              </button>
+            </div>
           </div>
 
           {/* Add class form */}
           {showAddClass && (
-            <div style={{ ...section, borderColor: 'var(--brand)' }}>
+            <div className={sectionClass} style={{ borderColor: 'var(--brand)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand)' }}>{isBn ? 'নতুন শ্রেণি যোগ' : 'Add New Class'}</div>
                 <button onClick={() => setShowAddClass(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={16} /></button>
@@ -304,15 +513,44 @@ export default function ClassesPage() {
             </div>
           )}
 
+          {/* Bulk mode: select all bar */}
+          {bulkMode && (
+            <div className="flex items-center gap-3 py-2 px-3 mb-3">
+              <button onClick={toggleSelectAll}
+                className="flex items-center gap-2 cursor-pointer bg-transparent border-none font-[inherit] text-[12px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+                <div className={`w-[18px] h-[18px] rounded-[4px] border-[1.5px] flex items-center justify-center transition-all ${selectedClasses.length === classes.length ? 'bg-[var(--brand)] border-[var(--brand)]' : 'border-[var(--border)]'}`}>
+                  {selectedClasses.length === classes.length && <Check size={11} className="text-white" />}
+                </div>
+                {isBn ? 'সব নির্বাচন' : 'Select All'}
+              </button>
+              {selectedClasses.length > 0 && (
+                <span className="text-[11px] text-[var(--brand)] font-medium">{selectedClasses.length} {isBn ? 'নির্বাচিত' : 'selected'}</span>
+              )}
+            </div>
+          )}
+
           {/* Class cards */}
           {classes.map(cls => {
             const isExpanded = expandedClass === cls.id
             const totalSeats = cls.sections.reduce((s, sec) => s + sec.seatQuantity, 0)
+            const isSelected = selectedClasses.includes(cls.id)
             return (
-              <div key={cls.id} style={{ ...section, marginBottom: '10px' }}>
+              <div key={cls.id} className={`mb-[10px] rounded-[10px] border bg-[var(--bg-primary)] p-[12px] transition-all duration-150 ${bulkMode && isSelected ? 'border-[var(--brand)]' : 'border-[var(--border)]'}`}>
                 {/* Class header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
-                  onClick={() => setExpandedClass(isExpanded ? null : cls.id)}>
+                  onClick={() => {
+                    if (bulkMode) {
+                      toggleSelectClass(cls.id)
+                    } else {
+                      setExpandedClass(isExpanded ? null : cls.id)
+                    }
+                  }}>
+                  {bulkMode && (
+                    <div className={`w-[18px] h-[18px] rounded-[4px] border-[1.5px] flex items-center justify-center flex-shrink-0 transition-all cursor-pointer ${isSelected ? 'bg-[var(--brand)] border-[var(--brand)]' : 'border-[var(--border)] hover:border-[var(--brand)]'}`}
+                      onClick={(e) => { e.stopPropagation(); toggleSelectClass(cls.id) }}>
+                      {isSelected && <Check size={10} className="text-white" />}
+                    </div>
+                  )}
                   <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--brand)' }}>{cls.id.replace('CLS-', '')}</span>
                   </div>
@@ -324,14 +562,23 @@ export default function ClassesPage() {
                       <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><Clock size={10} />{cls.startTime} - {cls.endTime}</span>
                     </div>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); setEditingClassTime(cls.id); setClassTimeForm({ startTime: cls.startTime, endTime: cls.endTime }) }}
-                    style={{ padding: '4px 8px', borderRadius: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'inherit' }}>
-                    <Clock size={11} />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); if(confirm(isBn ? 'এই শ্রেণি মুছে ফেলতে চান?' : 'Delete this class?')) deleteClass(cls.id) }}
-                    style={{ padding: '4px 8px', borderRadius: '6px', background: 'var(--red-light)', border: '1px solid var(--red)', cursor: 'pointer', fontSize: '10px', color: 'var(--red)', fontFamily: 'inherit' }}>
-                    <Trash2 size={11} />
-                  </button>
+                  {!bulkMode && (
+                    <>
+                      <button onClick={(e) => { e.stopPropagation(); setEditingClassTime(cls.id); setClassTimeForm({ startTime: cls.startTime, endTime: cls.endTime }) }}
+                        style={{ padding: '4px 8px', borderRadius: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'inherit' }}>
+                        <Clock size={11} />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); if(confirm(isBn ? 'এই শ্রেণি মুছে ফেলতে চান?' : 'Delete this class?')) deleteClass(cls.id) }}
+                        style={{ padding: '4px 8px', borderRadius: '6px', background: 'var(--red-light)', border: '1px solid var(--red)', cursor: 'pointer', fontSize: '10px', color: 'var(--red)', fontFamily: 'inherit' }}>
+                        <Trash2 size={11} />
+                      </button>
+                    </>
+                  )}
+                  {!bulkMode && (
+                    <div className="text-[var(--text-muted)] ml-1">
+                      {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </div>
+                  )}
                 </div>
 
                 {/* Edit class time */}
@@ -366,7 +613,7 @@ export default function ClassesPage() {
                 )}
 
                 {/* Sections */}
-                {isExpanded && (
+                {isExpanded && !bulkMode && (
                   <div style={{ marginTop: '12px', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                       <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -551,7 +798,190 @@ export default function ClassesPage() {
 
       {/* Routine Tab */}
       {activeTab === 'routine' && (
-        <RoutineTab classes={classes} routines={routines} teachers={teachers} subjects={subjects} institution={institution} updateRoutine={updateRoutine} setRoutineSlot={setRoutineSlot} clearRoutineSlot={clearRoutineSlot} isBn={isBn} isMobile={isMobile} />
+        <>
+          <div className="flex items-center gap-2 mb-3 py-2 px-3 rounded-lg bg-[var(--purple-light)] border border-[var(--purple)]">
+            <CalendarDays size={14} className="text-[var(--purple)]" />
+            <span className="text-[12px] font-semibold text-[var(--purple)]">{institution.currentSession}</span>
+            <span className="text-[11px] text-[var(--text-muted)]">{isBn ? 'রুটিন সেশন' : 'Routine Session'}</span>
+          </div>
+          <RoutineTab classes={classes} routines={routines} teachers={teachers} subjects={subjects} institution={institution} updateRoutine={updateRoutine} setRoutineSlot={setRoutineSlot} clearRoutineSlot={clearRoutineSlot} isBn={isBn} isMobile={isMobile} />
+        </>
+      )}
+
+      {/* ===== BULK TIME MODAL ===== */}
+      {showBulkTime && (
+        <div onClick={() => setShowBulkTime(false)} className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000] p-5 overflow-y-auto">
+          <div onClick={e => e.stopPropagation()} className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] w-full max-w-[400px] shadow-lg">
+            <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-[var(--amber-light)] flex items-center justify-center">
+                  <Clock size={18} className="text-[var(--amber)]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] m-0">{isBn ? 'বাল্ক সময় সেট' : 'Bulk Set Time'}</h3>
+                  <p className="text-[10px] text-[var(--text-muted)] m-0">{selectedClasses.length} {isBn ? 'টি শ্রেণিতে সময় পরিবর্তন হবে' : 'classes will be updated'}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowBulkTime(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)]">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শুরুর সময়' : 'Start Time'}</label>
+                  <input type="time" value={bulkTimeForm.startTime} onChange={e => setBulkTimeForm(p => ({ ...p, startTime: e.target.value }))}
+                    className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none focus:border-[var(--amber)]" />
+                </div>
+                <div>
+                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শেষের সময়' : 'End Time'}</label>
+                  <input type="time" value={bulkTimeForm.endTime} onChange={e => setBulkTimeForm(p => ({ ...p, endTime: e.target.value }))}
+                    className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none focus:border-[var(--amber)]" />
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] mb-4">
+                <div className="text-[11px] font-medium text-[var(--text-secondary)] mb-2">{isBn ? 'প্রভাবিত শ্রেণি' : 'Affected Classes'}</div>
+                <div className="flex flex-wrap gap-1">
+                  {selectedClasses.map(id => {
+                    const c = classes.find(cl => cl.id === id)
+                    return c ? (
+                      <span key={id} className="text-[10px] py-1 px-2 rounded bg-[var(--amber-light)] text-[var(--amber)] font-medium">{isBn ? c.nameBn : c.name}</span>
+                    ) : null
+                  })}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setShowBulkTime(false)}
+                  className="flex-1 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] font-medium cursor-pointer font-[inherit]">
+                  {isBn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button onClick={handleBulkTimeApply}
+                  className="flex-1 py-2 rounded-lg bg-[var(--amber)] border-none text-white text-[12px] font-semibold cursor-pointer font-[inherit] flex items-center justify-center gap-2">
+                  <Save size={13} />{isBn ? 'প্রয়োগ করুন' : 'Apply'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== BULK SUBJECT MODAL ===== */}
+      {showBulkSubject && (
+        <div onClick={() => setShowBulkSubject(false)} className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000] p-5 overflow-y-auto">
+          <div onClick={e => e.stopPropagation()} className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] w-full max-w-[420px] max-h-[80vh] flex flex-col shadow-lg">
+            <div className="p-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-[var(--teal-light)] flex items-center justify-center">
+                  <BookOpen size={18} className="text-[var(--teal)]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] m-0">{isBn ? 'বাল্ক বিষয় নির্ধারণ' : 'Bulk Assign Subjects'}</h3>
+                  <p className="text-[10px] text-[var(--text-muted)] m-0">{selectedClasses.length} {isBn ? 'টি শ্রেণির সব সেকশনে যোগ হবে' : 'classes, all sections will get these subjects'}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowBulkSubject(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)]">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1">
+              {subjects.length === 0 ? (
+                <div className="text-center py-5 text-[var(--text-muted)] text-[12px]">
+                  {isBn ? 'কোনো বিষয় পাওয়া যায়নি। প্রথমে শিক্ষক ব্যবস্থাপনায় বিষয় যোগ করুন।' : 'No subjects found. Add subjects in Teacher Management first.'}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-[6px]">
+                  {subjects.map(sub => {
+                    const isSelected = bulkSubjectIds.includes(sub.id)
+                    return (
+                      <button key={sub.id} onClick={() => toggleTempSubject(sub.id)}
+                        className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer text-left transition-all duration-150 font-[inherit]"
+                        style={{ borderColor: isSelected ? 'var(--teal)' : 'var(--border)', background: isSelected ? 'var(--teal-light)' : 'var(--bg-secondary)' }}>
+                        <div className="w-[18px] h-[18px] rounded-[5px] border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                          style={{ borderColor: isSelected ? 'var(--teal)' : 'var(--border)', background: isSelected ? 'var(--teal)' : 'transparent' }}>
+                          {isSelected && <Check size={11} className="text-white" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[12px] font-medium text-[var(--text-primary)]">{isBn ? sub.nameBn : sub.name}</div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-[var(--border)] flex gap-2 shrink-0">
+              <button onClick={() => setShowBulkSubject(false)}
+                className="flex-1 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] font-medium cursor-pointer font-[inherit]">
+                {isBn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button onClick={handleBulkSubjectApply} disabled={bulkSubjectIds.length === 0}
+                className="flex-1 py-2 rounded-lg border-none text-white text-[12px] font-semibold cursor-pointer font-[inherit] flex items-center justify-center gap-2"
+                style={{ background: bulkSubjectIds.length > 0 ? 'var(--teal)' : 'var(--border)' }}>
+                <Save size={13} />{isBn ? 'সেভ' : 'Save'} ({bulkSubjectIds.length})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== BULK SECTION MODAL ===== */}
+      {showBulkSection && (
+        <div onClick={() => setShowBulkSection(false)} className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000] p-5 overflow-y-auto">
+          <div onClick={e => e.stopPropagation()} className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] w-full max-w-[400px] shadow-lg">
+            <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-[var(--purple-light)] flex items-center justify-center">
+                  <ListChecks size={18} className="text-[var(--purple)]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] m-0">{isBn ? 'বাল্ক সেকশন যোগ' : 'Bulk Add Sections'}</h3>
+                  <p className="text-[10px] text-[var(--text-muted)] m-0">{selectedClasses.length} {isBn ? 'টি শ্রেণিতে সেকশন যোগ হবে' : 'classes will get new sections'}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowBulkSection(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)]">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন সংখ্যা' : 'Number of Sections'}</label>
+                  <input type="number" min={1} max={10} value={bulkSectionCount} onChange={e => setBulkSectionCount(Number(e.target.value) || 1)}
+                    className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none text-center focus:border-[var(--purple)]" />
+                </div>
+                <div>
+                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'প্রতি সেকশন আসন' : 'Seats per Section'}</label>
+                  <input type="number" min={1} value={bulkSeatQuantity} onChange={e => setBulkSeatQuantity(Number(e.target.value) || 1)}
+                    className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none text-center focus:border-[var(--purple)]" />
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] mb-4">
+                <div className="text-[11px] font-medium text-[var(--text-secondary)] mb-2">{isBn ? 'প্রভাবিত শ্রেণি' : 'Affected Classes'}</div>
+                <div className="flex flex-wrap gap-1">
+                  {selectedClasses.map(id => {
+                    const c = classes.find(cl => cl.id === id)
+                    return c ? (
+                      <span key={id} className="text-[10px] py-1 px-2 rounded bg-[var(--purple-light)] text-[var(--purple)] font-medium">{isBn ? c.nameBn : c.name}</span>
+                    ) : null
+                  })}
+                </div>
+                <div className="text-[10px] text-[var(--text-muted)] mt-2">
+                  {isBn ? `মোট ${selectedClasses.length * bulkSectionCount} টি নতুন সেকশন তৈরি হবে` : `${selectedClasses.length * bulkSectionCount} new sections will be created`}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setShowBulkSection(false)}
+                  className="flex-1 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] font-medium cursor-pointer font-[inherit]">
+                  {isBn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button onClick={handleBulkSectionApply}
+                  className="flex-1 py-2 rounded-lg bg-[var(--purple)] border-none text-white text-[12px] font-semibold cursor-pointer font-[inherit] flex items-center justify-center gap-2">
+                  <Plus size={13} />{isBn ? 'যোগ করুন' : 'Add Sections'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Subject Selection Modal */}
@@ -635,6 +1065,9 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
   const [selectedSection, setSelectedSection] = useState('')
   const [editSlot, setEditSlot] = useState<{ day: number; period: number } | null>(null)
   const [slotForm, setSlotForm] = useState({ subjectId: '', teacherId: '' })
+  const [showCopyDay, setShowCopyDay] = useState(false)
+  const [copyFrom, setCopyFrom] = useState(0)
+  const [copyTo, setCopyTo] = useState(1)
 
   const cls = classes.find(c => c.id === selectedClass)
   const sections = cls?.sections || []
@@ -642,6 +1075,7 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
   const routine = routines.find(r => r.classId === selectedClass && r.sectionId === effectiveSection)
   const periodDuration = routine?.periodDuration || 40
   const weekendDays = routine?.weekendDays || [5]
+
   const periods = routine?.periods || []
 
   const startTime = cls?.startTime || institution.startTime || '07:30'
@@ -683,6 +1117,20 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
       ? weekendDays.filter((d: number) => d !== dayIndex)
       : [...weekendDays, dayIndex]
     updateRoutine(selectedClass, { sectionId: effectiveSection, weekendDays: newWeekends })
+  }
+
+  const handleCopyDay = () => {
+    const sourceSlots = periods[copyFrom] || []
+    sourceSlots.forEach((slot: any, periodIdx: number) => {
+      if (slot?.subjectId) {
+        setRoutineSlot(selectedClass, copyTo, periodIdx, { ...slot, sectionId: effectiveSection })
+      }
+    })
+    setShowCopyDay(false)
+  }
+
+  const hasDayData = (dayIdx: number) => {
+    return (periods[dayIdx] || []).some((s: any) => s?.subjectId)
   }
 
   return (
@@ -829,7 +1277,11 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
               <select value={slotForm.subjectId} onChange={e => setSlotForm(p => ({ ...p, subjectId: e.target.value }))}
                 style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '12px', fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }}>
                 <option value="">{isBn ? 'বিষয় বাছুন' : 'Choose subject'}</option>
-                {subjects.map(s => <option key={s.id} value={s.id}>{isBn ? s.nameBn : s.name}</option>)}
+                {(() => {
+                  const classSubjectIds = [...new Set(cls?.sections?.flatMap((s: any) => s.subjectIds || []) || [])]
+                  if (classSubjectIds.length === 0) return subjects.map(s => <option key={s.id} value={s.id}>{isBn ? s.nameBn : s.name}</option>)
+                  return subjects.filter(s => classSubjectIds.includes(s.id)).map(s => <option key={s.id} value={s.id}>{isBn ? s.nameBn : s.name}</option>)
+                })()}
               </select>
             </div>
             <div>
@@ -841,15 +1293,15 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
                 <option value="">{isBn ? 'শিক্ষক বাছুন' : 'Choose teacher'}</option>
                 {(() => {
                   const active = teachers.filter(t => t.status === 'active')
-                  if (!slotForm.subjectId) return active.map(t => <option key={t.id} value={t.id}>{t.nameEn}</option>)
+                  if (!slotForm.subjectId) return active.map(t => <option key={t.id} value={t.id}>{t.nameEn} — {t.designation || ''}</option>)
                   const related = active.filter(t => t.subjectIds.includes(slotForm.subjectId))
                   const others = active.filter(t => !t.subjectIds.includes(slotForm.subjectId))
                   return [
-                    related.length > 0 && <optgroup key="related" label={isBn ? '★ বিষয় সম্পর্কিত' : '★ Subject Related'}>
+                    related.length > 0 && <optgroup key="related" label={isBn ? '★ সুপারিশকৃত' : '★ Recommended'}>
                       {related.map(t => <option key={t.id} value={t.id}>{t.nameEn} — {t.designation || ''}</option>)}
                     </optgroup>,
                     others.length > 0 && <optgroup key="others" label={isBn ? 'অন্যান্য' : 'Others'}>
-                      {others.map(t => <option key={t.id} value={t.id}>{t.nameEn}</option>)}
+                      {others.map(t => <option key={t.id} value={t.id}>{t.nameEn} — {t.designation || ''}</option>)}
                     </optgroup>
                   ]
                 })()}
@@ -884,19 +1336,29 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
       {/* Routine grid */}
       <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
         <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
-          <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
-            {isBn ? 'সাপ্তাহিক ছুটি দিন' : 'Weekend Days'}
-          </div>
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            {DAYS.map((d, i) => {
-              const isWeekend = weekendDays.includes(i)
-              return (
-                <button key={d} onClick={() => toggleWeekend(i)}
-                  style={{ padding: '4px 10px', borderRadius: '6px', border: `1px solid ${isWeekend ? 'var(--red)' : 'var(--border)'}`, background: isWeekend ? 'var(--red-light)' : 'var(--bg-primary)', color: isWeekend ? 'var(--red)' : 'var(--text-secondary)', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: isWeekend ? 600 : 400, transition: 'all 0.15s' }}>
-                  {isBn ? DAYS_BN[i] : d}
-                </button>
-              )
-            })}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                {isBn ? 'সাপ্তাহিক ছুটি দিন' : 'Weekend Days'}
+              </div>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {DAYS.map((d, i) => {
+                  const isWeekend = weekendDays.includes(i)
+                  return (
+                    <button key={d} onClick={() => toggleWeekend(i)}
+                      style={{ padding: '4px 10px', borderRadius: '6px', border: `1px solid ${isWeekend ? 'var(--red)' : 'var(--border)'}`, background: isWeekend ? 'var(--red-light)' : 'var(--bg-primary)', color: isWeekend ? 'var(--red)' : 'var(--text-secondary)', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: isWeekend ? 600 : 400, transition: 'all 0.15s' }}>
+                      {isBn ? DAYS_BN[i] : d}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <button onClick={() => setShowCopyDay(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '7px', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.color = 'var(--brand)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)' }}>
+              <Copy size={12} />{isBn ? 'দিন কপি' : 'Copy Day'}
+            </button>
           </div>
         </div>
         <div style={{ overflowX: 'auto' }}>
@@ -955,6 +1417,84 @@ function RoutineTab({ classes, routines, teachers, subjects, institution, update
           </table>
         </div>
       </div>
+
+      {/* Copy Day Modal */}
+      {showCopyDay && (
+        <div onClick={() => setShowCopyDay(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-primary)', borderRadius: '14px', border: '1px solid var(--border)', width: '100%', maxWidth: '380px', boxShadow: 'var(--shadow-lg)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Copy size={16} style={{ color: 'var(--brand)' }} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{isBn ? 'দিন কপি করুন' : 'Copy Day Routine'}</h3>
+                  <p style={{ fontSize: '10px', color: 'var(--text-muted)', margin: '2px 0 0' }}>{isBn ? 'একটি দিনের রুটিন অন্য দিনে কপি করুন' : 'Copy one day routine to another'}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowCopyDay(false)} style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={14} />
+              </button>
+            </div>
+            <div style={{ padding: '16px 20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>{isBn ? 'কোন দিন থেকে' : 'From Day'}</label>
+                  <select value={copyFrom} onChange={e => setCopyFrom(Number(e.target.value))}
+                    style={{ width: '100%', padding: '9px 11px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '12px', fontFamily: 'inherit' }}>
+                    {DAYS.map((d, i) => (
+                      <option key={i} value={i}>{isBn ? DAYS_BN[i] : d}{!hasDayData(i) ? ` (${isBn ? 'খালি' : 'empty'})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ marginTop: '18px', color: 'var(--text-muted)' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>{isBn ? 'কোন দিনে' : 'To Day'}</label>
+                  <select value={copyTo} onChange={e => setCopyTo(Number(e.target.value))}
+                    style={{ width: '100%', padding: '9px 11px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '12px', fontFamily: 'inherit' }}>
+                    {DAYS.map((d, i) => (
+                      <option key={i} value={i}>{isBn ? DAYS_BN[i] : d}{hasDayData(i) ? ` (${isBn ? 'আছে' : 'has data'})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {copyFrom === copyTo && (
+                <div style={{ padding: '8px 10px', borderRadius: '6px', background: 'var(--amber-light)', border: '1px solid var(--amber)', marginBottom: '14px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--amber)', fontWeight: 500 }}>{isBn ? 'উৎস এবং গন্তব্য একই দিন হতে হবে না' : 'Source and destination must be different days'}</span>
+                </div>
+              )}
+
+              {copyFrom !== copyTo && hasDayData(copyFrom) && (
+                <div style={{ padding: '10px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', marginBottom: '14px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>{isBn ? 'পূর্বরূপ' : 'Preview'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px' }}>
+                    <span style={{ color: 'var(--brand)', fontWeight: 600 }}>{isBn ? DAYS_BN[copyFrom] : DAYS[copyFrom]}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>→</span>
+                    <span style={{ color: 'var(--teal)', fontWeight: 600 }}>{isBn ? DAYS_BN[copyTo] : DAYS[copyTo]}</span>
+                    <span style={{ color: 'var(--text-muted)', marginLeft: 'auto' }}>
+                      {(periods[copyFrom] || []).filter((s: any) => s?.subjectId).length} {isBn ? 'টি পিরিয়ড কপি হবে' : 'periods will copy'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => setShowCopyDay(false)}
+                  style={{ flex: 1, padding: '9px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {isBn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button onClick={handleCopyDay} disabled={copyFrom === copyTo || !hasDayData(copyFrom)}
+                  style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: copyFrom !== copyTo && hasDayData(copyFrom) ? 'pointer' : 'not-allowed', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', background: copyFrom !== copyTo && hasDayData(copyFrom) ? 'var(--brand)' : 'var(--border)' }}>
+                  <Copy size={13} />{isBn ? 'কপি করুন' : 'Copy'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

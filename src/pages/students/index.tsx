@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { UserPlus, Users, User, UserPen, TableProperties, IdCard, ArrowUpCircle, ArrowRight } from "lucide-react"
 import { useAppStore } from "@/store/appStore"
 import { useWindowSize } from "@/hooks/useWindowSize"
-import { useAdmissionStore } from "@/store/admissionStore"
+import { useSessionStudents } from "@/store/admissionStore"
 import type { LucideIcon } from "lucide-react"
 import gsap from "gsap"
 
@@ -145,7 +145,7 @@ export default function StudentsPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { isMobile, isTablet } = useWindowSize()
-  const { students } = useAdmissionStore()
+  const students = useSessionStudents()
   const isBn = language === "bn"
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
