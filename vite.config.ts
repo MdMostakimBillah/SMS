@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import fs from 'fs'
 
+const keyPath = path.resolve(__dirname, 'key.pem')
+const certPath = path.resolve(__dirname, 'cert.pem')
+const httpsEnabled = fs.existsSync(keyPath) && fs.existsSync(certPath)
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -13,9 +17,11 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
-    https: {
-      key: fs.readFileSync(path.resolve(__dirname, 'key.pem')),
-      cert: fs.readFileSync(path.resolve(__dirname, 'cert.pem')),
-    },
+    ...(httpsEnabled ? {
+      https: {
+        key: fs.readFileSync(keyPath),
+        cert: fs.readFileSync(certPath),
+      },
+    } : {}),
   },
 })
