@@ -627,9 +627,9 @@ export default function HRPage() {
     { id: 'increment', icon: TrendingUp, label: 'Increment', labelBn: 'বেতন বৃদ্ধি', color: 'var(--green)' },
     { id: 'bonus', icon: Gift, label: 'Bonus', labelBn: 'বোনাস', color: 'var(--amber)' },
     { id: 'promotion', icon: Award, label: 'Promotion', labelBn: 'পদোন্নতি', color: 'var(--purple)' },
-    { id: 'fund', icon: HandCoins, label: 'Fund', labelBn: 'তহবিল', color: 'var(--brand)' },
     { id: 'facilities', icon: Briefcase, label: 'Facilities', labelBn: 'সুবিধা', color: 'var(--purple)' },
     { id: 'salary-setup', icon: Calculator, label: 'Salary Setup', labelBn: 'বেতন সেটআপ', color: 'var(--teal)' },
+    { id: 'fund', icon: HandCoins, label: 'Fund', labelBn: 'তহবিল', color: 'var(--brand)' },
   ]
 
   const quickStats = [
