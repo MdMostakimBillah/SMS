@@ -267,14 +267,16 @@ export default function AttendancePage() {
 
   const startKioskCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } })
+      if (kioskStreamRef.current) { kioskStreamRef.current.getTracks().forEach(t => t.stop()) }
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } })
       kioskStreamRef.current = stream
-      if (kioskVideoRef.current) {
-        kioskVideoRef.current.srcObject = stream
-        kioskVideoRef.current.onloadedmetadata = () => { kioskVideoRef.current?.play() }
-      }
       setKioskCamActive(true)
       setKioskCapturedPhoto(null)
+      await new Promise(r => setTimeout(r, 100))
+      if (kioskVideoRef.current) {
+        kioskVideoRef.current.srcObject = stream
+        try { await kioskVideoRef.current.play() } catch { /* autoplay blocked */ }
+      }
     } catch (err) {
       console.error('Camera error:', err)
       setKioskMsg({ type: 'error', text: isBn ? 'ক্যামেরা খুলতে ব্যর্থ। অনুমতি দিন।' : 'Failed to open camera. Allow permission.' })
@@ -2624,8 +2626,8 @@ export default function AttendancePage() {
 
           {/* Kiosk Mode Modal */}
           {kioskMode && (
-            <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-4 z-[800] bg-black/80 overflow-y-auto">
-              <div className="bg-[var(--bg-primary)] rounded-2xl w-full max-w-[420px] p-5 sm:p-6 border border-[var(--border)] shadow-2xl my-auto">
+            <div className="fixed inset-0 flex items-center justify-center z-[800] bg-[var(--bg-primary)] sm:bg-black/80 sm:p-4 overflow-y-auto" style={{ height: '100dvh' }}>
+              <div className="bg-[var(--bg-primary)] rounded-none sm:rounded-2xl w-full sm:max-w-[420px] min-h-[100dvh] sm:min-h-0 sm:h-auto sm:my-auto p-5 sm:p-6 border-0 sm:border border-[var(--border)] shadow-2xl">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[var(--teal-light)] flex items-center justify-center">
@@ -2679,10 +2681,10 @@ export default function AttendancePage() {
                 {/* Camera view */}
                 {kioskCamActive && !kioskIdentified && (
                   <div className="mb-4">
-                    <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] w-full max-w-[300px] mx-auto mb-3">
-                      <video ref={kioskVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                    <div className="relative rounded-2xl overflow-hidden bg-black w-full mb-3" style={{ aspectRatio: '4/3', maxHeight: '50vh' }}>
+                      <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
                       <canvas ref={kioskCanvasRef} className="hidden" />
-                      <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[10px] font-medium flex items-center gap-1.5">
+                      <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[10px] font-medium flex items-center gap-1.5 z-10">
                         <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
                         {isBn ? 'লাইভ' : 'LIVE'}
                       </div>
@@ -2783,8 +2785,8 @@ export default function AttendancePage() {
                         <>
                           {kioskCamActive ? (
                             <div className="space-y-3">
-                              <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] w-full max-w-[280px] mx-auto">
-                                <video ref={kioskVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                              <div className="relative rounded-2xl overflow-hidden bg-black w-full" style={{ aspectRatio: '4/3', maxHeight: '40vh' }}>
+                                <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
                                 <canvas ref={kioskCanvasRef} className="hidden" />
                                 <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[9px] flex items-center gap-1">
                                   <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />LIVE
