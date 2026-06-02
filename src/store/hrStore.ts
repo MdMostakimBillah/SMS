@@ -183,7 +183,7 @@ function generateDemoRecommendations(): HRRecommendation[] {
 
 export const useHRStore = create<HRState>()(
   persist(
-    (set) => ({
+    (set): HRState => ({
       increments: [
         { id: 'INC-001', teacherId: 'TCH-2026-001', type: 'annual', amount: 5000, percentage: 8, reason: 'Annual increment 2026', date: '2026-01-01', approvedBy: 'Admin' },
         { id: 'INC-002', teacherId: 'TCH-2026-008', type: 'performance', amount: 3000, percentage: 5, reason: 'Outstanding results', date: '2026-06-01', approvedBy: 'Admin' },
