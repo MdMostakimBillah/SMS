@@ -252,6 +252,8 @@ export default function AttendancePage() {
   const [kioskRegisteredFaces, setKioskRegisteredFaces] = useState<{staffId:string;staffName:string;photo:string}[]>(() => {
     try { return JSON.parse(localStorage.getItem('kioskFaces') || '[]') } catch { return [] }
   })
+  const [kioskEditFace, setKioskEditFace] = useState<string | null>(null)
+  const [kioskCountdown, setKioskCountdown] = useState<number | null>(null)
   // WiFi verification state
   const [institutionWifi, setInstitutionWifi] = useState(() => localStorage.getItem('institutionWifi') || '')
   const [institutionGateway, setInstitutionGateway] = useState(() => localStorage.getItem('institutionGateway') || '')
@@ -302,7 +304,7 @@ export default function AttendancePage() {
   useEffect(() => { setEmpPage(1) }, [employeeSearch, fDeptEmp, empPerPage])
   useEffect(() => { setStuPage(1) }, [studentSearch, fClass, fSection, stuPerPage])
   useEffect(() => { setEmpPage(1); setStuPage(1) }, [activeTab])
-  useEffect(() => { if (!kioskMode) { stopKioskCamera(); setKioskCapturedPhoto(null); setKioskRegMode(false) } }, [kioskMode])
+  useEffect(() => { if (!kioskMode) { stopKioskCamera(); setKioskCapturedPhoto(null); setKioskRegMode(false); setKioskCountdown(null) } }, [kioskMode])
 
   const dayAtt = attendance[date] || {}
   const activeTeachers = useMemo(() => teachers.filter(t => t.status === 'active'), [teachers])
@@ -546,6 +548,42 @@ export default function AttendancePage() {
     stopKioskCamera()
     setKioskCapturedPhoto(null)
     setTimeout(() => { setKioskMsg(null); setKioskIdentified(null) }, 4000)
+  }
+
+  const handleKioskDeleteFace = (staffId: string) => {
+    const updated = kioskRegisteredFaces.filter(f => f.staffId !== staffId)
+    setKioskRegisteredFaces(updated)
+    localStorage.setItem('kioskFaces', JSON.stringify(updated))
+    setKioskMsg({ type: 'success', text: isBn ? 'নিবন্ধন মুছে ফেলা হয়েছে' : 'Registration deleted' })
+    setTimeout(() => setKioskMsg(null), 2000)
+  }
+
+  const handleKioskUpdateFace = (staffId: string) => {
+    if (!kioskCapturedPhoto) return
+    const updated = kioskRegisteredFaces.map(f => f.staffId === staffId ? { ...f, photo: kioskCapturedPhoto } : f)
+    setKioskRegisteredFaces(updated)
+    localStorage.setItem('kioskFaces', JSON.stringify(updated))
+    setKioskEditFace(null)
+    setKioskCapturedPhoto(null)
+    stopKioskCamera()
+    setKioskMsg({ type: 'success', text: isBn ? 'ছবি আপডেট হয়েছে' : 'Photo updated' })
+    setTimeout(() => setKioskMsg(null), 2000)
+  }
+
+  const startKioskCountdown = () => {
+    setKioskCountdown(3)
+    let count = 3
+    const interval = setInterval(() => {
+      count--
+      if (count <= 0) {
+        clearInterval(interval)
+        setKioskCountdown(null)
+        const photo = captureKioskPhoto()
+        if (photo) setKioskCapturedPhoto(photo)
+      } else {
+        setKioskCountdown(count)
+      }
+    }, 1000)
   }
 
   const filteredStudents = useMemo(() => {
@@ -2688,21 +2726,49 @@ export default function AttendancePage() {
                         <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
                         {isBn ? 'লাইভ' : 'LIVE'}
                       </div>
+                      {/* Face guide overlay */}
+                      {!kioskCapturedPhoto && kioskCountdown === null && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                          <div className="w-32 h-40 border-2 border-dashed border-white/50 rounded-[50%]" />
+                        </div>
+                      )}
+                      {/* Countdown overlay */}
+                      {kioskCountdown !== null && kioskCountdown > 0 && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-20">
+                          <div className="text-white text-[64px] font-bold animate-pulse">{kioskCountdown}</div>
+                        </div>
+                      )}
                     </div>
                     {kioskCapturedPhoto ? (
                       <div className="space-y-2">
                         <img src={kioskCapturedPhoto} alt="" className="w-full max-w-[300px] mx-auto rounded-xl border-2 border-[var(--green)]" />
                         <p className="text-[12px] text-center text-[var(--green)] font-medium">{isBn ? 'ছবি তোলা হয়েছে — নাম নির্বাচন করুন' : 'Photo captured — Select your name below'}</p>
-                        <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
+                        <div className="grid grid-cols-1 gap-2 max-h-[250px] overflow-y-auto">
                           {kioskRegisteredFaces.map(f => (
-                            <button key={f.staffId} onClick={() => handleKioskPunch(f.staffId, f.staffName)}
-                              className="flex items-center gap-2 p-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--green)] hover:bg-[var(--green-light)] cursor-pointer transition-all text-left">
-                              <img src={f.photo} alt="" className="w-8 h-8 rounded-full object-cover border border-[var(--border)]" />
-                              <div>
-                                <div className="text-[11px] font-medium text-[var(--text-primary)]">{f.staffName}</div>
-                                <div className="text-[9px] text-[var(--text-muted)]">{f.staffId}</div>
+                            <div key={f.staffId} className="flex items-center gap-2 p-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+                              <img src={f.photo} alt="" className="w-10 h-10 rounded-full object-cover border border-[var(--border)] shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{f.staffName}</div>
+                                <div className="text-[10px] text-[var(--text-muted)]">{f.staffId}</div>
                               </div>
-                            </button>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button onClick={() => { setKioskEditFace(f.staffId); setKioskCapturedPhoto(null); startKioskCamera() }}
+                                  className="w-7 h-7 rounded-lg bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]"
+                                  title={isBn ? 'সম্পাদনা' : 'Edit'}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                </button>
+                                <button onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) handleKioskDeleteFace(f.staffId) }}
+                                  className="w-7 h-7 rounded-lg bg-[var(--red-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--red)]"
+                                  title={isBn ? 'মুছুন' : 'Delete'}>
+                                  <X size={12} />
+                                </button>
+                                <button onClick={() => handleKioskPunch(f.staffId, f.staffName)}
+                                  className="px-2 py-1 rounded-lg bg-[var(--green)] border-0 text-white text-[10px] font-semibold cursor-pointer"
+                                  title={isBn ? 'উপস্থিতি' : 'Punch'}>
+                                  {isBn ? 'পাঞ্চ' : 'Punch'}
+                                </button>
+                              </div>
+                            </div>
                           ))}
                         </div>
                         {kioskRegisteredFaces.length === 0 && (
@@ -2713,13 +2779,17 @@ export default function AttendancePage() {
                           {isBn ? 'আবার তুলুন' : 'Retake Photo'}
                         </button>
                       </div>
-                    ) : (
-                      <button onClick={() => { const photo = captureKioskPhoto(); if (photo) setKioskCapturedPhoto(photo) }}
+                    ) : kioskCountdown === null ? (
+                      <button onClick={startKioskCountdown}
                         className="w-full py-3 rounded-xl text-[14px] font-bold cursor-pointer bg-[var(--green)] text-white border-none hover:shadow-lg">
-                        📷 {isBn ? 'ছবি তুলুন' : 'Capture Photo'}
+                        📷 {isBn ? 'ছবি তুলুন' : 'Start Auto-Capture'}
                       </button>
+                    ) : (
+                      <div className="w-full py-3 rounded-xl text-[14px] font-bold bg-[var(--amber-light)] text-[var(--amber)] text-center">
+                        {isBn ? `ছবি তুলছে... ${kioskCountdown}` : `Capturing... ${kioskCountdown}`}
+                      </div>
                     )}
-                    <button onClick={() => { stopKioskCamera(); setKioskCapturedPhoto(null) }}
+                    <button onClick={() => { stopKioskCamera(); setKioskCapturedPhoto(null); setKioskCountdown(null) }}
                       className="w-full mt-2 py-2 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none underline">
                       {isBn ? 'বন্ধ করুন' : 'Cancel'}
                     </button>
@@ -2788,29 +2858,43 @@ export default function AttendancePage() {
                               <div className="relative rounded-2xl overflow-hidden bg-black w-full" style={{ aspectRatio: '4/3', maxHeight: '40vh' }}>
                                 <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
                                 <canvas ref={kioskCanvasRef} className="hidden" />
-                                <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[9px] flex items-center gap-1">
+                                <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[9px] flex items-center gap-1 z-10">
                                   <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />LIVE
                                 </div>
+                                {!kioskCapturedPhoto && kioskCountdown === null && (
+                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                    <div className="w-24 h-32 border-2 border-dashed border-white/50 rounded-[50%]" />
+                                  </div>
+                                )}
+                                {kioskCountdown !== null && kioskCountdown > 0 && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-20">
+                                    <div className="text-white text-[48px] font-bold animate-pulse">{kioskCountdown}</div>
+                                  </div>
+                                )}
                               </div>
                               {kioskCapturedPhoto ? (
                                 <div className="space-y-2">
                                   <img src={kioskCapturedPhoto} alt="" className="w-full max-w-[280px] mx-auto rounded-xl border-2 border-[var(--green)]" />
                                   <div className="flex gap-2">
-                                    <button onClick={() => setKioskCapturedPhoto(null)}
+                                    <button onClick={() => { setKioskCapturedPhoto(null); startKioskCountdown() }}
                                       className="flex-1 py-2 rounded-lg text-[12px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer">
                                       {isBn ? 'আবার' : 'Retake'}
                                     </button>
-                                    <button onClick={handleKioskRegister}
+                                    <button onClick={kioskEditFace ? () => handleKioskUpdateFace(kioskEditFace) : handleKioskRegister}
                                       className="flex-1 py-2 rounded-lg text-[12px] bg-[var(--green)] text-white border-none font-semibold cursor-pointer">
-                                      {isBn ? 'নিবন্ধন করুন' : 'Register'}
+                                      {kioskEditFace ? (isBn ? 'আপডেট' : 'Update') : (isBn ? 'নিবন্ধন করুন' : 'Register')}
                                     </button>
                                   </div>
                                 </div>
-                              ) : (
-                                <button onClick={() => { const photo = captureKioskPhoto(); if (photo) setKioskCapturedPhoto(photo) }}
+                              ) : kioskCountdown === null ? (
+                                <button onClick={startKioskCountdown}
                                   className="w-full py-2.5 rounded-xl text-[13px] font-bold bg-[var(--green)] text-white border-none cursor-pointer">
-                                  📷 {isBn ? 'ছবি তুলুন' : 'Capture'}
+                                  📷 {isBn ? 'অটো ক্যাপচার' : 'Start Auto-Capture'}
                                 </button>
+                              ) : (
+                                <div className="w-full py-2.5 rounded-xl text-[13px] font-bold bg-[var(--amber-light)] text-[var(--amber)] text-center">
+                                  {isBn ? `ছবি তুলছে... ${kioskCountdown}` : `Capturing... ${kioskCountdown}`}
+                                </div>
                               )}
                             </div>
                           ) : (
