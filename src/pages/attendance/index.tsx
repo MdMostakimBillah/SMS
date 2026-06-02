@@ -253,7 +253,10 @@ export default function AttendancePage() {
     try { return JSON.parse(localStorage.getItem('kioskFaces') || '[]') } catch { return [] }
   })
   const [kioskEditFace, setKioskEditFace] = useState<string | null>(null)
-  const [kioskCountdown, setKioskCountdown] = useState<number | null>(null)
+  const [, setKioskDetecting] = useState(false)
+  const [kioskFaceDetected, setKioskFaceDetected] = useState(false)
+  const kioskDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const kioskStableCountRef = useRef(0)
   // WiFi verification state
   const [institutionWifi, setInstitutionWifi] = useState(() => localStorage.getItem('institutionWifi') || '')
   const [institutionGateway, setInstitutionGateway] = useState(() => localStorage.getItem('institutionGateway') || '')
@@ -279,6 +282,7 @@ export default function AttendancePage() {
         kioskVideoRef.current.srcObject = stream
         try { await kioskVideoRef.current.play() } catch { /* autoplay blocked */ }
       }
+      startKioskDetectLoop()
     } catch (err) {
       console.error('Camera error:', err)
       setKioskMsg({ type: 'error', text: isBn ? 'ক্যামেরা খুলতে ব্যর্থ। অনুমতি দিন।' : 'Failed to open camera. Allow permission.' })
@@ -304,7 +308,7 @@ export default function AttendancePage() {
   useEffect(() => { setEmpPage(1) }, [employeeSearch, fDeptEmp, empPerPage])
   useEffect(() => { setStuPage(1) }, [studentSearch, fClass, fSection, stuPerPage])
   useEffect(() => { setEmpPage(1); setStuPage(1) }, [activeTab])
-  useEffect(() => { if (!kioskMode) { stopKioskCamera(); setKioskCapturedPhoto(null); setKioskRegMode(false); setKioskCountdown(null) } }, [kioskMode])
+  useEffect(() => { if (!kioskMode) { stopKioskCamera(); stopKioskDetectLoop(); setKioskCapturedPhoto(null); setKioskRegMode(false) } }, [kioskMode])
 
   const dayAtt = attendance[date] || {}
   const activeTeachers = useMemo(() => teachers.filter(t => t.status === 'active'), [teachers])
@@ -570,20 +574,57 @@ export default function AttendancePage() {
     setTimeout(() => setKioskMsg(null), 2000)
   }
 
-  const startKioskCountdown = () => {
-    setKioskCountdown(3)
-    let count = 3
-    const interval = setInterval(() => {
-      count--
-      if (count <= 0) {
-        clearInterval(interval)
-        setKioskCountdown(null)
-        const photo = captureKioskPhoto()
-        if (photo) setKioskCapturedPhoto(photo)
+  const detectFaceInCenter = (): boolean => {
+    const video = kioskVideoRef.current
+    const canvas = kioskCanvasRef.current
+    if (!video || !canvas || video.readyState < 2) return false
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return false
+    canvas.width = 160
+    canvas.height = 120
+    ctx.drawImage(video, 0, 0, 160, 120)
+    const cx = 40, cy = 20, cw = 80, ch = 80
+    const imageData = ctx.getImageData(cx, cy, cw, ch)
+    const d = imageData.data
+    let skinPixels = 0
+    const total = cw * ch
+    for (let i = 0; i < d.length; i += 16) {
+      const r = d[i], g = d[i+1], b = d[i+2]
+      if (r > 95 && g > 40 && b > 20 && r > g && r > b && Math.abs(r-g) > 15 && r-b > 15) skinPixels++
+    }
+    return (skinPixels / (total / 4)) > 0.25
+  }
+
+  const startKioskDetectLoop = () => {
+    if (kioskDetectIntervalRef.current) clearInterval(kioskDetectIntervalRef.current)
+    kioskStableCountRef.current = 0
+    setKioskDetecting(true)
+    setKioskFaceDetected(false)
+    kioskDetectIntervalRef.current = setInterval(() => {
+      const detected = detectFaceInCenter()
+      setKioskFaceDetected(detected)
+      if (detected) {
+        kioskStableCountRef.current++
+        if (kioskStableCountRef.current >= 5) {
+          if (kioskDetectIntervalRef.current) clearInterval(kioskDetectIntervalRef.current)
+          setKioskDetecting(false)
+          setKioskFaceDetected(false)
+          kioskStableCountRef.current = 0
+          const photo = captureKioskPhoto()
+          if (photo) setKioskCapturedPhoto(photo)
+        }
       } else {
-        setKioskCountdown(count)
+        kioskStableCountRef.current = 0
       }
-    }, 1000)
+    }, 200)
+  }
+
+  const stopKioskDetectLoop = () => {
+    if (kioskDetectIntervalRef.current) clearInterval(kioskDetectIntervalRef.current)
+    kioskDetectIntervalRef.current = null
+    kioskStableCountRef.current = 0
+    setKioskDetecting(false)
+    setKioskFaceDetected(false)
   }
 
   const filteredStudents = useMemo(() => {
@@ -2726,16 +2767,25 @@ export default function AttendancePage() {
                         <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
                         {isBn ? 'লাইভ' : 'LIVE'}
                       </div>
-                      {/* Face guide overlay */}
-                      {!kioskCapturedPhoto && kioskCountdown === null && (
+                      {/* Face guide grid overlay */}
+                      {!kioskCapturedPhoto && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                          <div className="w-32 h-40 border-2 border-dashed border-white/50 rounded-[50%]" />
-                        </div>
-                      )}
-                      {/* Countdown overlay */}
-                      {kioskCountdown !== null && kioskCountdown > 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-20">
-                          <div className="text-white text-[64px] font-bold animate-pulse">{kioskCountdown}</div>
+                          {/* Grid lines */}
+                          <div className="absolute inset-[15%] grid grid-cols-3 grid-rows-3">
+                            {[...Array(9)].map((_, i) => (
+                              <div key={i} className={`border ${kioskFaceDetected ? 'border-[var(--green)]/70' : 'border-white/30'} transition-colors duration-200`} />
+                            ))}
+                          </div>
+                          {/* Center oval guide */}
+                          <div className={`w-28 h-36 border-2 rounded-[50%] transition-all duration-300 ${
+                            kioskFaceDetected ? 'border-[var(--green)] shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'border-white/50'
+                          }`} />
+                          {/* Status label */}
+                          <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold ${
+                            kioskFaceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/60 text-white/70'
+                          } transition-colors duration-200`}>
+                            {kioskFaceDetected ? (isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...') : (isBn ? 'মুখ গ্রিডে রাখুন' : 'Position face in grid')}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -2779,17 +2829,14 @@ export default function AttendancePage() {
                           {isBn ? 'আবার তুলুন' : 'Retake Photo'}
                         </button>
                       </div>
-                    ) : kioskCountdown === null ? (
-                      <button onClick={startKioskCountdown}
-                        className="w-full py-3 rounded-xl text-[14px] font-bold cursor-pointer bg-[var(--green)] text-white border-none hover:shadow-lg">
-                        📷 {isBn ? 'ছবি তুলুন' : 'Start Auto-Capture'}
-                      </button>
                     ) : (
-                      <div className="w-full py-3 rounded-xl text-[14px] font-bold bg-[var(--amber-light)] text-[var(--amber)] text-center">
-                        {isBn ? `ছবি তুলছে... ${kioskCountdown}` : `Capturing... ${kioskCountdown}`}
+                      <div className="w-full py-3 rounded-xl text-[14px] font-bold bg-[var(--teal-light)] text-[var(--teal)] text-center">
+                        {kioskFaceDetected
+                          ? (isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold still...')
+                          : (isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid')}
                       </div>
                     )}
-                    <button onClick={() => { stopKioskCamera(); setKioskCapturedPhoto(null); setKioskCountdown(null) }}
+                    <button onClick={() => { stopKioskCamera(); stopKioskDetectLoop(); setKioskCapturedPhoto(null) }}
                       className="w-full mt-2 py-2 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none underline">
                       {isBn ? 'বন্ধ করুন' : 'Cancel'}
                     </button>
@@ -2803,7 +2850,7 @@ export default function AttendancePage() {
                       <ScanFace size={44} className="text-[var(--teal)]" />
                     </div>
                     <p className="text-[16px] font-bold text-[var(--text-primary)]">{isBn ? 'ক্যামেরায় মুখ দেখান' : 'Show your face'}</p>
-                    <p className="text-[12px] text-[var(--text-muted)] mt-1">{isBn ? 'ক্যামেরায় ছবি তুলে উপস্থিতি নিন' : 'Take a photo to mark attendance'}</p>
+                    <p className="text-[12px] text-[var(--text-muted)] mt-1">{isBn ? 'একবার ক্লিক করুন — গ্রিডে মুখ রাখলে অটো ছবি তোলবে' : 'One click — face in grid, photo auto-captured'}</p>
                   </div>
                 )}
 
@@ -2861,14 +2908,21 @@ export default function AttendancePage() {
                                 <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[9px] flex items-center gap-1 z-10">
                                   <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />LIVE
                                 </div>
-                                {!kioskCapturedPhoto && kioskCountdown === null && (
+                                {!kioskCapturedPhoto && (
                                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                                    <div className="w-24 h-32 border-2 border-dashed border-white/50 rounded-[50%]" />
-                                  </div>
-                                )}
-                                {kioskCountdown !== null && kioskCountdown > 0 && (
-                                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-20">
-                                    <div className="text-white text-[48px] font-bold animate-pulse">{kioskCountdown}</div>
+                                    <div className="absolute inset-[15%] grid grid-cols-3 grid-rows-3">
+                                      {[...Array(9)].map((_, i) => (
+                                        <div key={i} className={`border ${kioskFaceDetected ? 'border-[var(--green)]/70' : 'border-white/30'} transition-colors duration-200`} />
+                                      ))}
+                                    </div>
+                                    <div className={`w-24 h-32 border-2 rounded-[50%] transition-all duration-300 ${
+                                      kioskFaceDetected ? 'border-[var(--green)] shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'border-white/50'
+                                    }`} />
+                                    <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold ${
+                                      kioskFaceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/60 text-white/70'
+                                    } transition-colors duration-200`}>
+                                      {kioskFaceDetected ? (isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...') : (isBn ? 'মুখ গ্রিডে রাখুন' : 'Position face in grid')}
+                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -2876,7 +2930,7 @@ export default function AttendancePage() {
                                 <div className="space-y-2">
                                   <img src={kioskCapturedPhoto} alt="" className="w-full max-w-[280px] mx-auto rounded-xl border-2 border-[var(--green)]" />
                                   <div className="flex gap-2">
-                                    <button onClick={() => { setKioskCapturedPhoto(null); startKioskCountdown() }}
+                                    <button onClick={() => { setKioskCapturedPhoto(null); startKioskDetectLoop() }}
                                       className="flex-1 py-2 rounded-lg text-[12px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer">
                                       {isBn ? 'আবার' : 'Retake'}
                                     </button>
@@ -2886,14 +2940,11 @@ export default function AttendancePage() {
                                     </button>
                                   </div>
                                 </div>
-                              ) : kioskCountdown === null ? (
-                                <button onClick={startKioskCountdown}
-                                  className="w-full py-2.5 rounded-xl text-[13px] font-bold bg-[var(--green)] text-white border-none cursor-pointer">
-                                  📷 {isBn ? 'অটো ক্যাপচার' : 'Start Auto-Capture'}
-                                </button>
                               ) : (
-                                <div className="w-full py-2.5 rounded-xl text-[13px] font-bold bg-[var(--amber-light)] text-[var(--amber)] text-center">
-                                  {isBn ? `ছবি তুলছে... ${kioskCountdown}` : `Capturing... ${kioskCountdown}`}
+                                <div className="w-full py-2.5 rounded-xl text-[13px] font-bold bg-[var(--teal-light)] text-[var(--teal)] text-center">
+                                  {kioskFaceDetected
+                                    ? (isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold still...')
+                                    : (isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid')}
                                 </div>
                               )}
                             </div>
@@ -2918,8 +2969,63 @@ export default function AttendancePage() {
                   ) : null}
                 </div>
 
+                {/* Registered Staff Table */}
+                {kioskRegisteredFaces.length > 0 && (
+                  <div className="mt-4 border-t border-[var(--border)] pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[13px] font-bold text-[var(--text-primary)]">
+                        {isBn ? `নিবন্ধিত স্টাফ (${kioskRegisteredFaces.length})` : `Registered Staff (${kioskRegisteredFaces.length})`}
+                      </span>
+                    </div>
+                    <div className="border border-[var(--border)] rounded-xl overflow-hidden">
+                      <table className="w-full text-[11px]">
+                        <thead>
+                          <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                            <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[40px]">#</th>
+                            <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[44px]"></th>
+                            <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)]">{isBn?'নাম':'Name'}</th>
+                            <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)]">{isBn?'আইডি':'ID'}</th>
+                            <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[100px]">{isBn?'অ্যাকশন':'Actions'}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {kioskRegisteredFaces.map((f, i) => (
+                            <tr key={f.staffId} className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)] transition-colors">
+                              <td className="p-2 text-center text-[var(--text-muted)]">{i + 1}</td>
+                              <td className="p-2 text-center">
+                                <img src={f.photo} alt="" className="w-8 h-8 rounded-full object-cover border border-[var(--border)] mx-auto" />
+                              </td>
+                              <td className="p-2 font-medium text-[var(--text-primary)]">{f.staffName}</td>
+                              <td className="p-2 text-[var(--text-muted)] font-mono">{f.staffId}</td>
+                              <td className="p-2 text-center">
+                                <div className="flex items-center justify-center gap-1">
+                                  <button onClick={() => handleKioskPunch(f.staffId, f.staffName)}
+                                    className="px-2 py-1 rounded-md bg-[var(--green)] text-white text-[10px] font-semibold cursor-pointer border-none"
+                                    title={isBn?'পাঞ্চ':'Punch'}>
+                                    {isBn?'পাঞ্চ':'Punch'}
+                                  </button>
+                                  <button onClick={() => { setKioskEditFace(f.staffId); setKioskCapturedPhoto(null); startKioskCamera() }}
+                                    className="w-6 h-6 rounded-md bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]"
+                                    title={isBn?'সম্পাদনা':'Edit'}>
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                  </button>
+                                  <button onClick={() => { if(confirm(isBn?'মুছে ফেলবেন?':'Delete?')) handleKioskDeleteFace(f.staffId) }}
+                                    className="w-6 h-6 rounded-md bg-[var(--red-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--red)]"
+                                    title={isBn?'মুছুন':'Delete'}>
+                                    <X size={11} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
                 {/* Stats footer */}
-                <div className="mt-4 text-center text-[10px] text-[var(--text-muted)]">
+                <div className="mt-3 text-center text-[10px] text-[var(--text-muted)]">
                   {isBn ? `মোট স্টাফ: ${activeTeachers.length} · নিবন্ধিত: ${kioskRegisteredFaces.length}` : `Total staff: ${activeTeachers.length} · Registered: ${kioskRegisteredFaces.length}`}
                 </div>
               </div>
