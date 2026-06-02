@@ -350,7 +350,7 @@ export default function AttendancePage() {
             displayName: isBn ? (teacher.nameBn || teacher.nameEn) : teacher.nameEn,
           },
           pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
-          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+          authenticatorSelection: { userVerification: 'preferred' },
           timeout: 60000,
         }
       }) as PublicKeyCredential | null
@@ -466,7 +466,7 @@ export default function AttendancePage() {
       const credential = await navigator.credentials.get({
         publicKey: {
           challenge,
-          userVerification: 'required',
+          userVerification: 'preferred',
           timeout: 60000,
         }
       }) as PublicKeyCredential | null
@@ -519,7 +519,7 @@ export default function AttendancePage() {
             displayName: isBn ? (teacher.nameBn || teacher.nameEn) : teacher.nameEn,
           },
           pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
-          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+          authenticatorSelection: { userVerification: 'preferred' },
           timeout: 60000,
         }
       }) as PublicKeyCredential | null
@@ -550,11 +550,13 @@ export default function AttendancePage() {
     } catch (err: any) {
       const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost'
       if (!isSecure) {
-        setKioskMsg({ type: 'error', text: isBn ? '🔒 HTTPS প্রয়োজন!' : '🔒 HTTPS required!' })
+        setKioskMsg({ type: 'error', text: isBn ? '🔒 HTTPS প্রয়োজন! https:// দিয়ে খুলুন।' : '🔒 HTTPS required! Open with https://' })
       } else if (err.name === 'NotAllowedError') {
         setKioskMsg({ type: 'error', text: isBn ? 'বাতিল করা হয়েছে। আবার চেষ্টা করুন।' : 'Cancelled. Try again.' })
+      } else if (err.name === 'SecurityError') {
+        setKioskMsg({ type: 'error', text: isBn ? 'নিরাপত্তা ত্রুটি। HTTPS এবং সঠিক URL ব্যবহার করুন।' : 'Security error. Use HTTPS and correct URL.' })
       } else {
-        setKioskMsg({ type: 'error', text: `${isBn ? 'স্ক্যান ব্যর্থ' : 'Scan failed'}: ${err.message || err.name}` })
+        setKioskMsg({ type: 'error', text: isBn ? 'নিবন্ধন ব্যর্থ। ডিভাইসে বায়োমেট্রিক সেটআপ আছে কিনা দেখুন।' : 'Registration failed. Check if biometric is set up on this device.' })
       }
     }
     setKioskPending(false)
