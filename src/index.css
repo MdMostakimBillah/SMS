@@ -345,3 +345,53 @@ button { cursor: pointer; font-family: inherit; }
 .modal-content {
   animation: modalPopIn 0.2s ease-out;
 }
+
+/* ─── Tailwind CSS Variable Utilities ─── */
+@layer utilities {
+  .bg-primary    { background-color: var(--bg-primary); }
+  .bg-secondary  { background-color: var(--bg-secondary); }
+  .bg-tertiary   { background-color: var(--bg-tertiary); }
+  .bg-surface    { background-color: var(--surface); }
+  .bg-surface-2  { background-color: var(--surface-2); }
+  .bg-brand      { background-color: var(--brand); }
+  .bg-brand-light{ background-color: var(--brand-light); }
+  .bg-teal       { background-color: var(--teal); }
+  .bg-teal-light { background-color: var(--teal-light); }
+  .bg-green      { background-color: var(--green); }
+  .bg-green-light{ background-color: var(--green-light); }
+  .bg-red        { background-color: var(--red); }
+  .bg-red-light  { background-color: var(--red-light); }
+  .bg-amber      { background-color: var(--amber); }
+  .bg-amber-light{ background-color: var(--amber-light); }
+  .bg-purple     { background-color: var(--purple); }
+  .bg-purple-light{ background-color: var(--purple-light); }
+
+  .text-primary   { color: var(--text-primary); }
+  .text-secondary { color: var(--text-secondary); }
+  .text-muted     { color: var(--text-muted); }
+  .text-brand     { color: var(--brand); }
+  .text-teal      { color: var(--teal); }
+  .text-green     { color: var(--green); }
+  .text-red       { color: var(--red); }
+  .text-amber     { color: var(--amber); }
+  .text-purple    { color: var(--purple); }
+
+  .border-default { border-color: var(--border); }
+  .border-2       { border-color: var(--border-2); }
+
+  .shadow-xs  { box-shadow: var(--shadow-xs); }
+  .shadow-sm  { box-shadow: var(--shadow-sm); }
+  .shadow-md  { box-shadow: var(--shadow-md); }
+  .shadow-lg  { box-shadow: var(--shadow-lg); }
+
+  .ring-brand  { --tw-ring-color: var(--brand); }
+  .ring-teal   { --tw-ring-color: var(--teal); }
+  .ring-green  { --tw-ring-color: var(--green); }
+  .ring-red    { --tw-ring-color: var(--red); }
+  .ring-amber  { --tw-ring-color: var(--amber); }
+  .ring-purple { --tw-ring-color: var(--purple); }
+
+  .from-brand  { --tw-gradient-from: var(--brand); }
+  .to-brand    { --tw-gradient-to: var(--brand); }
+  .via-brand   { --tw-gradient-via: var(--brand); }
+}

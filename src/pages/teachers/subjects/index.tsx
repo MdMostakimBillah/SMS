@@ -7,11 +7,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import type { Subject } from '@/pages/teachers/types'
 
-const sel: React.CSSProperties = {
-  padding: '7px 9px', borderRadius: '8px', border: '1px solid var(--border)',
-  background: 'var(--bg-secondary)', color: 'var(--text-secondary)',
-  fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer', outline: 'none',
-}
+const sel = "py-[7px] px-[9px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs font-[inherit] cursor-pointer outline-none"
 
 export default function SubjectsPage() {
   const navigate = useNavigate()
@@ -65,58 +61,54 @@ export default function SubjectsPage() {
     setNewDeptIds(prev => prev.includes(deptId) ? prev.filter(id => id !== deptId) : [...prev, deptId])
   }
 
-  const input: React.CSSProperties = {
-    width: '100%', padding: '9px 11px', borderRadius: '8px',
-    border: '1px solid var(--border)', background: 'var(--bg-secondary)',
-    color: 'var(--text-primary)', fontSize: '13px', fontFamily: 'inherit', outline: 'none',
-  }
+  const input = "w-full py-[9px] px-[11px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none"
 
   return (
     <div>
       {/* Add/Edit Modal */}
       {(showAdd || editS) && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
-          <div className="modal-content" style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'400px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
-            <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)', marginBottom:'14px' }}>
+        <div className="fixed top-0 left-0 right-0 h-[100dvh] bg-black/50 z-[600] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[400px] w-full p-5 border border-[var(--border)]">
+            <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-[14px]">
               {editS ? (isBn?'বিষয় এডিট করুন':'Edit Subject') : (isBn?'নতুন বিষয়':'New Subject')}
             </h3>
-            <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+            <div className="flex flex-col gap-[10px]">
               <div>
-                <label style={{ fontSize:'11px', fontWeight:500, color:'var(--text-secondary)', marginBottom:'4px', display:'block' }}>
+                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn?'নাম (ইংরেজি) *':'Name (English) *'}
                 </label>
-                <input value={newName} onChange={e => setNewName(e.target.value)} style={input}
+                <input value={newName} onChange={e => setNewName(e.target.value)} className={input}
                   placeholder={isBn?'বিষয়ের নাম':'Subject name'} />
               </div>
               <div>
-                <label style={{ fontSize:'11px', fontWeight:500, color:'var(--text-secondary)', marginBottom:'4px', display:'block' }}>
+                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn?'নাম (বাংলা)':'Name (Bangla)'}
                 </label>
-                <input value={newNameBn} onChange={e => setNewNameBn(e.target.value)} style={input}
+                <input value={newNameBn} onChange={e => setNewNameBn(e.target.value)} className={input}
                   placeholder={isBn?'বাংলায় নাম':'Bangla name'} />
               </div>
               <div>
-                <label style={{ fontSize:'11px', fontWeight:500, color:'var(--text-secondary)', marginBottom:'4px', display:'block' }}>
+                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn?'বিভাগ * (একাধিক নির্বাচন করতে পারেন)':'Departments * (select multiple)'}
                 </label>
-                <div style={{ display:'flex', flexWrap:'wrap', gap:'8px', padding:'8px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', minHeight:'40px' }}>
+                <div className="flex flex-wrap gap-2 p-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg min-h-[40px]">
                   {departments.map(d => (
-                    <label key={d.id} style={{ display:'flex', alignItems:'center', gap:'5px', cursor:'pointer', padding:'4px 8px', borderRadius:'6px', background: newDeptIds.includes(d.id) ? 'var(--brand-light)' : 'var(--bg-primary)', border:`1px solid ${newDeptIds.includes(d.id) ? 'var(--brand)' : 'var(--border)'}`, fontSize:'12px', color: newDeptIds.includes(d.id) ? 'var(--brand)' : 'var(--text-secondary)', transition:'all 0.15s' }}>
-                      <input type="checkbox" checked={newDeptIds.includes(d.id)} onChange={() => toggleDept(d.id)} style={{ width:'14px', height:'14px', accentColor:'var(--brand)', cursor:'pointer' }} />
+                    <label key={d.id} className={`flex items-center gap-[5px] cursor-pointer py-1 px-2 rounded-md text-xs transition-all ${newDeptIds.includes(d.id) ? 'bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]'}`}>
+                      <input type="checkbox" checked={newDeptIds.includes(d.id)} onChange={() => toggleDept(d.id)} className="w-[14px] h-[14px] accent-[var(--brand)] cursor-pointer" />
                       {isBn?d.nameBn:d.name}
                     </label>
                   ))}
                 </div>
-                {newDeptIds.length === 0 && <div style={{ fontSize:'10px', color:'var(--red)', marginTop:'4px' }}>{isBn?'কমপক্ষে একটি বিভাগ নির্বাচন করুন':'Select at least one department'}</div>}
+                {newDeptIds.length === 0 && <div className="text-[10px] text-[var(--red)] mt-1">{isBn?'কমপক্ষে একটি বিভাগ নির্বাচন করুন':'Select at least one department'}</div>}
               </div>
             </div>
-            <div style={{ display:'flex', gap:'8px', justifyContent:'flex-end', marginTop:'16px' }}>
+            <div className="flex gap-2 justify-end mt-4">
               <button onClick={() => { setShowAdd(false); setEditS(null); setNewName(''); setNewNameBn(''); setNewDeptIds([]) }}
-                style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)', border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit' }}>
+                className="py-2 px-[14px] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]">
                 {isBn?'বাতিল':'Cancel'}
               </button>
               <button onClick={editS ? handleEdit : handleAdd}
-                style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--brand)', border:'none', color:'#fff', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+                className="py-2 px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]">
                 {editS ? (isBn?'সংরক্ষণ':'Save') : (isBn?'যোগ করুন':'Add')}
               </button>
             </div>
@@ -126,24 +118,24 @@ export default function SubjectsPage() {
 
       {/* Delete Confirmation */}
       {delConfirm && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
-          <div className="modal-content" style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'380px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
-              <div style={{ width:'36px', height:'36px', borderRadius:'8px', background:'var(--red-light)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <AlertTriangle size={18} style={{ color:'var(--red)' }} />
+        <div className="fixed top-0 left-0 right-0 h-[100dvh] bg-black/50 z-[700] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
+            <div className="flex items-center gap-[10px] mb-3">
+              <div className="w-9 h-9 rounded-lg bg-[var(--red-light)] flex items-center justify-center">
+                <AlertTriangle size={18} className="text-[var(--red)]" />
               </div>
-              <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?'মুছে ফেলুন?':'Delete?'}</h3>
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">{isBn?'মুছে ফেলুন?':'Delete?'}</h3>
             </div>
-            <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginBottom:'16px' }}>
+            <p className="text-[13px] text-[var(--text-secondary)] mb-4">
               {isBn?'এই বিষয়টি স্থায়ীভাবে মুছে ফেলা হবে।':'This subject will be permanently deleted.'}
             </p>
-            <div style={{ display:'flex', gap:'8px', justifyContent:'flex-end' }}>
+            <div className="flex gap-2 justify-end">
               <button onClick={() => setDelConfirm(null)}
-                style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)', border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
+                className="py-2 px-[14px] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer font-[inherit]">
                 {isBn?'বাতিল':'Cancel'}
               </button>
               <button onClick={() => { deleteSubject(delConfirm); setDelConfirm(null) }}
-                style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--red)', border:'none', color:'#fff', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+                className="py-2 px-[14px] rounded-lg bg-[var(--red)] border-none text-white text-[13px] font-semibold cursor-pointer font-[inherit]">
                 {isBn?'মুছে ফেলুন':'Delete'}
               </button>
             </div>
@@ -152,43 +144,37 @@ export default function SubjectsPage() {
       )}
 
       {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
+      <div className="flex items-center gap-[10px] mb-4 flex-wrap">
         <button onClick={() => navigate('/teachers')}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
-            background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px',
-            color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
+          className="flex items-center gap-[5px] py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] shrink-0">
           <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
-        <div style={{ flex:1 }}>
-          <h1 style={{ fontSize:'22px', fontWeight:600, color:'var(--text-primary)' }}>
+        <div className="flex-1">
+          <h1 className="text-[22px] font-semibold text-[var(--text-primary)]">
             {isBn?'বিষয় ব্যবস্থাপনা':'Subjects'}
           </h1>
-          <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginTop:'3px' }}>
+          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
             {isBn?`মোট ${filtered.length} টি বিষয়`:`${filtered.length} subjects`}
           </p>
         </div>
         <button onClick={() => { setShowAdd(true); setNewName(''); setNewNameBn(''); setNewDeptIds([]) }}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px',
-            background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)',
-            fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+          className="flex items-center gap-[5px] py-2 px-[14px] rounded-[9px] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[13px] cursor-pointer font-[inherit] font-medium">
           <Plus size={14} />{isBn?'নতুন যোগ করুন':'Add Subject'}
         </button>
       </div>
 
       {/* Filter */}
-      <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-          <Filter size={14} style={{ color:'var(--text-muted)' }} />
-          <select value={fDept} onChange={e => setFDept(e.target.value)} style={sel}>
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl py-3 px-[14px] mb-[10px]">
+        <div className="flex items-center gap-2">
+          <Filter size={14} className="text-[var(--text-muted)]" />
+          <select value={fDept} onChange={e => setFDept(e.target.value)} className={sel}>
             <option value="">{isBn?'সব বিভাগ':'All Departments'}</option>
             {departments.map(d => <option key={d.id} value={d.id}>{isBn?d.nameBn:d.name}</option>)}
           </select>
           {fDept && (
             <button onClick={() => setFDept('')}
-              style={{ display:'flex', alignItems:'center', gap:'4px', padding:'4px 10px', borderRadius:'6px',
-                background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
-                fontSize:'11px', cursor:'pointer', fontFamily:'inherit' }}>
+              className="flex items-center gap-1 py-1 px-[10px] rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[11px] cursor-pointer font-[inherit]">
               <X size={11} />{isBn?'ফিল্টার সরান':'Clear'}
             </button>
           )}
@@ -196,11 +182,11 @@ export default function SubjectsPage() {
       </div>
 
       {/* Table */}
-      <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-        <div style={{ overflowX:'auto', ...(isMobile ? { maxHeight:'60vh', overflowY:'auto' } : {}) }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px', minWidth: isMobile ? '500px' : undefined }}>
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden">
+        <div className={`overflow-x-auto ${isMobile ? 'max-h-[60vh] overflow-y-auto' : ''}`}>
+          <table className="w-full border-collapse text-xs min-w-[500px]">
             <thead>
-              <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
+              <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 {[
                   { l:'#', w:'50px', align:'center' as const },
                   { l:isBn?'নাম (ইংরেজি)':'Name (EN)', align:'left' as const },
@@ -209,9 +195,7 @@ export default function SubjectsPage() {
                   { l:isBn?'শিক্ষক':'Teachers', w:'80px', align:'center' as const },
                   { l:isBn?'অ্যাকশন':'Action', w:'90px', align:'center' as const },
                 ].map(h => (
-                  <th key={h.l} style={{ padding:'10px 12px', textAlign:h.align, fontSize:'10px', fontWeight:600,
-                    color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.4px',
-                    whiteSpace:'nowrap' }}>
+                  <th key={h.l} className={`py-3 px-3 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap text-${h.align}`}>
                     {h.l}
                   </th>
                 ))}
@@ -219,47 +203,45 @@ export default function SubjectsPage() {
             </thead>
             <tbody>
               {filtered.length === 0
-                ? <tr><td colSpan={6} style={{ padding:'40px', textAlign:'center', color:'var(--text-muted)' }}>
-                    <BookOpen size={28} style={{ display:'block', margin:'0 auto 8px', opacity:0.3 }} />
+                ? <tr><td colSpan={6} className="p-10 text-center text-[var(--text-muted)]">
+                    <BookOpen size={28} className="block mx-auto mb-2 opacity-30" />
                     {isBn?'কোনো বিষয় পাওয়া যায়নি':'No subjects found'}
                   </td></tr>
                 : filtered.map((s, i) => (
                   <tr key={s.id}
-                    style={{ borderBottom:'0.5px solid var(--border)' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding:'10px 12px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px', textAlign:'center' }}>{i+1}</td>
-                    <td style={{ padding:'10px 12px' }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                        <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:'var(--green-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                          <BookOpen size={16} style={{ color:'var(--green)' }} />
+                    className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)]">
+                    <td className="py-3 px-3 text-[var(--text-muted)] font-semibold text-[11px] text-center">{i+1}</td>
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-[var(--green-light)] flex items-center justify-center shrink-0">
+                          <BookOpen size={16} className="text-[var(--green)]" />
                         </div>
-                        <span style={{ fontSize:'13px', fontWeight:500, color:'var(--text-primary)' }}>{s.name}</span>
+                        <span className="text-[13px] font-medium text-[var(--text-primary)]">{s.name}</span>
                       </div>
                     </td>
-                    <td style={{ padding:'10px 12px', fontSize:'12px', color:'var(--text-secondary)' }}>{s.nameBn || '—'}</td>
-                    <td style={{ padding:'10px 12px' }}>
-                      <div style={{ display:'flex', flexWrap:'wrap', gap:'4px' }}>
+                    <td className="py-3 px-3 text-xs text-[var(--text-secondary)]">{s.nameBn || '—'}</td>
+                    <td className="py-3 px-3">
+                      <div className="flex flex-wrap gap-1">
                         {(s.departmentIds || [s.departmentId]).map(deptId => (
-                          <span key={deptId} style={{ fontSize:'10px', fontWeight:500, padding:'2px 6px', borderRadius:'4px', background:'var(--amber-light)', color:'var(--amber)' }}>
+                          <span key={deptId} className="text-[10px] font-medium py-[2px] px-[6px] rounded bg-[var(--amber-light)] text-[var(--amber)]">
                             {getDeptName(deptId)}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td style={{ padding:'10px 12px', textAlign:'center' }}>
-                      <span style={{ fontSize:'12px', fontWeight:600, color:'var(--brand)', background:'var(--brand-light)', padding:'3px 8px', borderRadius:'6px' }}>
+                    <td className="py-3 px-3 text-center">
+                      <span className="text-xs font-semibold text-[var(--brand)] bg-[var(--brand-light)] py-[3px] px-2 rounded-md">
                         {getSubjectTeacherCount(s.id)}
                       </span>
                     </td>
-                    <td style={{ padding:'10px 12px', textAlign:'center' }}>
-                      <div style={{ display:'flex', gap:'4px', justifyContent:'center' }}>
+                    <td className="py-3 px-3 text-center">
+                      <div className="flex gap-1 justify-center">
                         <button onClick={() => startEdit(s)} title={isBn?'এডিট':'Edit'}
-                          style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--amber)' }}>
+                          className="w-7 h-7 rounded-[7px] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]">
                           <Edit2 size={12} />
                         </button>
                         <button onClick={() => setDelConfirm(s.id)} title={isBn?'মুছুন':'Delete'}
-                          style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--red-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--red)' }}>
+                          className="w-7 h-7 rounded-[7px] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]">
                           <Trash2 size={12} />
                         </button>
                       </div>

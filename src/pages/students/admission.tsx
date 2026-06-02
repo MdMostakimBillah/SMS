@@ -8,9 +8,9 @@ import BulkAdmission from './admission/BulkAdmission'
 import AdmissionManage from './admission/AdmissionManage'
 
 const tabs = [
-  { id: 'general', bn: 'সাধারণ ভর্তি',  en: 'General Admission',  icon: <UserPlus size={15} /> },
-  { id: 'bulk',    bn: 'বাল্ক ভর্তি',   en: 'Bulk Admission',     icon: <Users size={15} /> },
-  { id: 'manage',  bn: 'ভর্তি ম্যানেজ', en: 'Manage Admissions',  icon: <ListChecks size={15} /> },
+  { id: 'general', bn: 'সাধারণ ভর্তি', en: 'General Admission', icon: <UserPlus size={15} /> },
+  { id: 'bulk', bn: 'বাল্ক ভর্তি', en: 'Bulk Admission', icon: <Users size={15} /> },
+  { id: 'manage', bn: 'ভর্তি ম্যানেজ', en: 'Manage Admissions', icon: <ListChecks size={15} /> },
 ]
 
 export default function StudentAdmission() {
@@ -21,39 +21,36 @@ export default function StudentAdmission() {
   const isBn = language === 'bn'
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      {/* Back + Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+    <div className="flex flex-col gap-[14px]">
+      <div className="flex items-center gap-[10px] flex-wrap">
         <button onClick={() => navigate('/students')}
-          style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '13px', color: 'var(--text-secondary)', fontFamily: 'inherit' }}>
+          className="flex items-center gap-[5px] px-3 py-[7px] rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit]">
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div>
-          <h1 style={{ fontSize: isMobile ? '17px' : '20px', fontWeight: 600, color: 'var(--text-primary)' }}>
+          <h1 className={`${isMobile ? 'text-[17px]' : 'text-[20px]'} font-semibold text-[var(--text-primary)]`}>
             {isBn ? 'ছাত্র ভর্তি' : 'Student Admission'}
           </h1>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+          <p className="text-[12px] text-[var(--text-secondary)] mt-[2px]">
             {isBn ? 'নতুন ছাত্র ভর্তি ও পরিচালনা' : 'Admit and manage students'}
           </p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '6px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '5px', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+      <div className={`flex gap-[6px] bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[5px] ${isMobile ? 'flex-wrap' : 'flex-nowrap'}`}>
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', padding: '9px 14px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: 'inherit', transition: 'all 0.15s', background: activeTab === tab.id ? 'var(--brand)' : 'transparent', color: activeTab === tab.id ? '#fff' : 'var(--text-secondary)', boxShadow: activeTab === tab.id ? '0 4px 12px rgba(99,102,241,0.3)' : 'none' }}>
+            className={`flex-1 flex items-center justify-center gap-[7px] px-[14px] py-[9px] rounded-[9px] border-none cursor-pointer text-[13px] font-medium font-[inherit] transition-all duration-150 ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-[0_4px_12px_rgba(99,102,241,0.3)]' : 'bg-transparent text-[var(--text-secondary)] shadow-none'}`}>
             {tab.icon}
             {isBn ? tab.bn : tab.en}
           </button>
         ))}
       </div>
 
-      {/* Content */}
       {activeTab === 'general' && <GeneralAdmission />}
-      {activeTab === 'bulk'    && <BulkAdmission />}
-      {activeTab === 'manage'  && <AdmissionManage />}
+      {activeTab === 'bulk' && <BulkAdmission />}
+      {activeTab === 'manage' && <AdmissionManage />}
     </div>
   )
 }

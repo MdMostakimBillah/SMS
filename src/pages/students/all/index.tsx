@@ -116,16 +116,12 @@ export default function AllStudentsPage() {
   }, [selected, filtered])
 
   const clearFilters = useCallback(() => {
-    setSearch(''); setFClass(''); setFSection(''); setFGender(''); setFActive('');
+    setSearch(''); setFClass(''); setFSection(''); setFGender(''); setFActive('')
     setFReligion(''); setFBlood(''); setPage(1)
   }, [])
   const hasFilter = search || fClass || fSection || fGender || fActive || fReligion || fBlood
 
-  const sel: React.CSSProperties = {
-    padding: '7px 9px', borderRadius: '8px', border: '1px solid var(--border)',
-    background: 'var(--bg-secondary)', color: 'var(--text-secondary)',
-    fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer', outline: 'none',
-  }
+  const sel = "px-2 py-[7px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs outline-none cursor-pointer"
 
   const statusBadge = (st: string) => {
     const m: Record<string,{b:string;c:string;l:string;lb:string}> = {
@@ -134,45 +130,46 @@ export default function AllStudentsPage() {
       rejected: { b:'var(--red-light)',   c:'var(--red)',    l:'Rejected', lb:'প্রত্যাখ্যাত' },
     }
     const x = m[st] || m.pending
-    return <span style={{ fontSize:'10px', fontWeight:600, padding:'2px 7px', borderRadius:'10px', background:x.b, color:x.c, whiteSpace:'nowrap' }}>{isBn?x.lb:x.l}</span>
+    return <span className="text-[10px] font-semibold px-[7px] py-[2px] rounded-[10px] whitespace-nowrap" style={{ background:x.b, color:x.c }}>{isBn?x.lb:x.l}</span>
   }
 
+  // sticky col style helpers
+  const sc = (left: string) => isMobile ? {} : { position: 'sticky' as const, left, zIndex: 4, background: 'var(--bg-primary)' }
+
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'calc(100vh - 60px)' }}>
-      {/* Modals */}
+    <div className="flex flex-col h-[calc(100vh-60px)]">
       {showPDF && <PDFOptionsModal count={selected.length||filtered.length} isBn={isBn} onClose={() => setShowPDF(false)} onDownload={handlePDF} />}
 
-      {/* View modal */}
       {viewSt && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
-          <div className="modal-content" style={{ background:'var(--bg-primary)', borderRadius:'16px', maxWidth:'560px', width:'100%', maxHeight:'90vh', overflow:'hidden', display:'flex', flexDirection:'column', border:'1px solid var(--border)', boxShadow:'var(--shadow-lg)', margin:'0 auto' }}>
-            <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--brand-light)' }}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto" style={{ background:'rgba(0,0,0,0.5)' }}>
+          <div className="bg-[var(--bg-primary)] rounded-2xl max-w-[560px] w-full max-h-[90vh] overflow-hidden flex flex-col border border-[var(--border)] shadow-[var(--shadow-lg)] modal-content">
+            <div className="flex items-center justify-between px-[18px] py-[14px] border-b border-[var(--border)]" style={{ background:'var(--brand-light)' }}>
               <div>
-                <div style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn ? viewSt.nameBn||viewSt.nameEn : viewSt.nameEn}</div>
-                <div style={{ fontSize:'11px', color:'var(--brand)', fontFamily:'monospace' }}>{viewSt.id}</div>
+                <div className="text-[15px] font-semibold text-[var(--text-primary)]">{isBn ? viewSt.nameBn||viewSt.nameEn : viewSt.nameEn}</div>
+                <div className="text-[11px] text-[var(--brand)] font-mono">{viewSt.id}</div>
               </div>
-              <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
+              <div className="flex items-center gap-2">
                 {statusBadge(viewSt.status)}
-                <button onClick={() => setViewSt(null)} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <X size={14} style={{ color:'var(--text-secondary)' }} />
+                <button onClick={() => setViewSt(null)} className="w-7 h-7 rounded-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center">
+                  <X size={14} className="text-[var(--text-secondary)]" />
                 </button>
               </div>
             </div>
-            <div style={{ flex:1, overflowY:'auto', padding:'16px 18px' }}>
-              <div style={{ display:'flex', gap:'14px', marginBottom:'14px' }}>
-                <div style={{ width:'80px', height:'95px', borderRadius:'8px', border:'1px solid var(--border)', overflow:'hidden', background:'var(--bg-secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  {viewSt.photo ? <img src={viewSt.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={28} style={{ color:'var(--text-muted)' }} />}
+            <div className="flex-1 overflow-y-auto p-[18px]">
+              <div className="flex gap-[14px] mb-[14px]">
+                <div className="w-[80px] h-[95px] rounded-lg border border-[var(--border)] overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center shrink-0">
+                  {viewSt.photo ? <img src={viewSt.photo} alt="" className="w-full h-full object-cover" /> : <User size={28} className="text-[var(--text-muted)]" />}
                 </div>
                 <div>
-                  <h3 style={{ fontSize:'16px', fontWeight:600, color:'var(--text-primary)' }}>{viewSt.nameEn}</h3>
-                  <p style={{ fontSize:'13px', color:'var(--text-secondary)' }}>{viewSt.nameBn}</p>
-                  <div style={{ display:'flex', gap:'5px', marginTop:'6px', flexWrap:'wrap' }}>
+                  <h3 className="text-base font-semibold text-[var(--text-primary)]">{viewSt.nameEn}</h3>
+                  <p className="text-[13px] text-[var(--text-secondary)]">{viewSt.nameBn}</p>
+                  <div className="flex gap-[5px] mt-1.5 flex-wrap">
                     {[
                       { t:`${viewSt.class}-${viewSt.section}`, c:'var(--brand)', b:'var(--brand-light)' },
                       { t:viewSt.gender.split(' / ')[0], c:'var(--teal)', b:'var(--teal-light)' },
                       { t:viewSt.bloodGroup, c:'var(--red)', b:'var(--red-light)' },
                     ].filter(x => x.t).map((x,i) => (
-                      <span key={i} style={{ fontSize:'11px', fontWeight:500, padding:'2px 8px', borderRadius:'5px', color:x.c, background:x.b }}>{x.t}</span>
+                      <span key={i} className="text-[11px] font-medium px-2 py-[2px] rounded-[5px]" style={{ color:x.c, background:x.b }}>{x.t}</span>
                     ))}
                   </div>
                 </div>
@@ -191,13 +188,13 @@ export default function AllStudentsPage() {
                 [isBn?'মাতার মোবাইল':"Mother Mobile", viewSt.motherPhone],
                 [isBn?'ভর্তির তারিখ':'Admission Date', viewSt.admissionDate],
               ].map(([l,v]) => v ? (
-                <div key={String(l)} style={{ display:'flex', gap:'8px', padding:'5px 0', borderBottom:'0.5px solid var(--border)' }}>
-                  <span style={{ fontSize:'11px', color:'var(--text-muted)', width:'120px', flexShrink:0 }}>{l}</span>
-                  <span style={{ fontSize:'12px', color:'var(--text-primary)', fontWeight:500 }}>{v}</span>
+                <div key={String(l)} className="flex gap-2 py-[5px] border-b border-[var(--border)]" style={{ borderBottomWidth:'0.5px' }}>
+                  <span className="text-[11px] text-[var(--text-muted)] w-[120px] shrink-0">{l}</span>
+                  <span className="text-xs font-medium text-[var(--text-primary)]">{v}</span>
                 </div>
               ) : null)}
             </div>
-            <div style={{ padding:'12px 18px', borderTop:'1px solid var(--border)', display:'flex', gap:'8px', justifyContent:'flex-end', flexWrap:'wrap' }}>
+            <div className="flex gap-2 justify-end flex-wrap px-[18px] py-3 border-t border-[var(--border)]">
               <button onClick={() => {
                 const win = window.open('','_blank')
                 if (!win) return
@@ -205,15 +202,15 @@ export default function AllStudentsPage() {
                 win.document.close()
                 setTimeout(() => { win.print() }, 600)
               }}
-                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'13px', fontWeight:500, cursor:'pointer', fontFamily:'inherit' }}>
+                className="flex items-center gap-[5px] px-3.5 py-2 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[13px] font-medium cursor-pointer">
                 <FileText size={13} />PDF
               </button>
               <button onClick={() => setViewSt(null)}
-                style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)', border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer">
                 {isBn?'বন্ধ':'Close'}
               </button>
               <button onClick={() => { navigate('/students/update', { state:{ studentId: viewSt.id } }); setViewSt(null) }}
-                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px', background:'var(--amber)', border:'none', color:'#fff', fontSize:'13px', fontWeight:500, cursor:'pointer', fontFamily:'inherit' }}>
+                className="flex items-center gap-[5px] px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[13px] font-medium cursor-pointer">
                 <Edit2 size={13} />{isBn?'এডিট':'Edit'}
               </button>
             </div>
@@ -221,20 +218,20 @@ export default function AllStudentsPage() {
         </div>
       )}
 
-      {/* Top Section - fixed, does not scroll */}
-      <div style={{ flexShrink:0 }}>
+      {/* Top Section - fixed */}
+      <div className="shrink-0">
         {/* Page header */}
-        <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
+        <div className="flex items-center gap-[10px] mb-4 flex-wrap">
         <button onClick={() => navigate('/students')}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px', background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px', color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
+          className="flex items-center gap-[5px] px-3 py-[7px] rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] shrink-0">
           <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
-        <div style={{ flex:1, minWidth:0 }}>
-          <h1 style={{ fontSize:isMobile?'18px':'22px', fontWeight:600, color:'var(--text-primary)' }}>
+        <div className="flex-1 min-w-0">
+          <h1 className={`${isMobile?'text-lg':'text-[22px]'} font-semibold text-[var(--text-primary)]`}>
             {isBn?'সকল ছাত্র':'All Students'}
           </h1>
-          <div style={{ display:'flex', flexWrap:'wrap', gap: isMobile ? '2px 8px' : '6px', marginTop:'4px' }}>
+          <div className="flex flex-wrap gap-1 mt-1">
             {[
               { label: isBn?'মোট':'Total', value: stats.total },
               { label: isBn?'অনুমোদিত':'Approved', value: stats.approved, color:'var(--green)' },
@@ -242,61 +239,61 @@ export default function AllStudentsPage() {
               { label: isBn?'ছেলে':'Male', value: stats.male, color:'var(--teal)' },
               { label: isBn?'মেয়ে':'Female', value: stats.female, color:'var(--purple)' },
             ].map(s => (
-              <span key={s.label} style={{ fontSize: isMobile ? '11px' : '12px', color: s.color || 'var(--text-secondary)', fontWeight: s.color ? 600 : 400, whiteSpace:'nowrap' }}>
+              <span key={s.label} className={`text-xs whitespace-nowrap ${s.color ? 'font-semibold' : ''}`} style={{ color: s.color || 'var(--text-secondary)' }}>
                 {s.label} {s.value}
               </span>
             ))}
           </div>
         </div>
-        <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+        <div className="flex gap-2 flex-wrap">
           <button onClick={() => navigate('/students/update')}
-            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px', background:'var(--amber-light)', border:'1px solid var(--amber)', color:'var(--amber)', fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+            className="flex items-center gap-[5px] px-3.5 py-2 rounded-[9px] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[13px] cursor-pointer font-medium">
             <Edit2 size={14} />{isBn?'আপডেট':'Update'}
           </button>
           <button onClick={() => navigate('/students/bulk-update')}
-            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+            className="flex items-center gap-[5px] px-3.5 py-2 rounded-[9px] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[13px] cursor-pointer font-medium">
             <Layers size={14} />{isBn?'বাল্ক আপডেট':'Bulk Update'}
           </button>
         </div>
       </div>
 
       {/* Sticky Filters + Toolbar */}
-      <div style={{ position:'sticky', top:0, zIndex:50, background:'var(--bg-primary)', paddingTop:'2px', paddingBottom:'4px' }}>
+      <div className="sticky top-0 z-50 bg-[var(--bg-primary)] pt-0.5 pb-1">
         {/* Filters */}
-        <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px', marginBottom:'10px' }}>
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(160px, 1fr))', gap:'8px' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'7px 10px' }}>
-            <Search size={14} style={{ color:'var(--text-muted)', flexShrink:0 }} />
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[14px] mb-2.5">
+        <div className="grid gap-2" style={{ gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(160px, 1fr))' }}>
+          <div className="flex items-center gap-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-[10px] py-[7px]">
+            <Search size={14} className="text-[var(--text-muted)] shrink-0" />
             <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
               placeholder={isBn?'নাম, আইডি, রোল, মোবাইল...':'Name, ID, roll, mobile...'}
-              style={{ flex:1, border:'none', background:'transparent', outline:'none', fontSize:'13px', color:'var(--text-primary)', fontFamily:'inherit' }} />
-            {search && <button onClick={() => setSearch('')} style={{ border:'none', background:'transparent', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}><X size={12} /></button>}
+              className="flex-1 border-none bg-transparent outline-none text-[13px] text-[var(--text-primary)]" />
+            {search && <button onClick={() => setSearch('')} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)] flex"><X size={12} /></button>}
           </div>
-          <select value={fClass} onChange={e => { setFClass(e.target.value); setFSection(''); setPage(1) }} style={sel}>
+          <select value={fClass} onChange={e => { setFClass(e.target.value); setFSection(''); setPage(1) }} className={sel}>
             <option value="">{isBn?'সব শ্রেণি':'All Classes'}</option>
             {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
-          <select value={fSection} onChange={e => { setFSection(e.target.value); setPage(1) }} style={sel}>
+          <select value={fSection} onChange={e => { setFSection(e.target.value); setPage(1) }} className={sel}>
             <option value="">{isBn?'সব সেকশন':'All Sections'}</option>
             {fClass ? (sectionsMap[fClass] || []).map(s => <option key={s} value={s}>{s}</option>) : allSections.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          <select value={fGender} onChange={e => { setFGender(e.target.value); setPage(1) }} style={sel}>
+          <select value={fGender} onChange={e => { setFGender(e.target.value); setPage(1) }} className={sel}>
             <option value="">{isBn?'সব লিঙ্গ':'All Genders'}</option>
             <option value="Male">{isBn?'ছেলে':'Male'}</option>
             <option value="Female">{isBn?'মেয়ে':'Female'}</option>
           </select>
-          <select value={fReligion} onChange={e => { setFReligion(e.target.value); setPage(1) }} style={sel}>
+          <select value={fReligion} onChange={e => { setFReligion(e.target.value); setPage(1) }} className={sel}>
             <option value="">{isBn?'সব ধর্ম':'All Religions'}</option>
             <option value="Islam">{isBn?'ইসলাম':'Islam'}</option>
             <option value="Hinduism">{isBn?'হিন্দু':'Hinduism'}</option>
             <option value="Christianity">{isBn?'খ্রিস্টান':'Christianity'}</option>
             <option value="Buddhism">{isBn?'বৌদ্ধ':'Buddhism'}</option>
           </select>
-          <select value={fBlood} onChange={e => { setFBlood(e.target.value); setPage(1) }} style={sel}>
+          <select value={fBlood} onChange={e => { setFBlood(e.target.value); setPage(1) }} className={sel}>
             <option value="">{isBn?'রক্তের গ্রুপ':'Blood Group'}</option>
             {BLOOD_GROUPS.map(b => <option key={b} value={b}>{b}</option>)}
           </select>
-          <select value={fActive} onChange={e => { setFActive(e.target.value); setPage(1) }} style={sel}>
+          <select value={fActive} onChange={e => { setFActive(e.target.value); setPage(1) }} className={sel}>
             <option value="">{isBn?'সব অবস্থা':'All Status'}</option>
             <option value="active">{isBn?'সক্রিয়':'Active'}</option>
             <option value="inactive">{isBn?'নিষ্ক্রিয়':'Inactive'}</option>
@@ -304,32 +301,32 @@ export default function AllStudentsPage() {
         </div>
         {hasFilter && (
           <button onClick={clearFilters}
-            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'4px 10px', borderRadius:'6px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'11px', cursor:'pointer', fontFamily:'inherit', marginTop:'8px' }}>
+            className="flex items-center gap-[5px] px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[11px] cursor-pointer mt-2">
             <X size={11} />{isBn?'ফিল্টার সরান':'Clear Filters'}
           </button>
         )}
       </div>
 
       {/* Toolbar */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px', flexWrap:'wrap', gap:'8px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
-          <span style={{ fontSize:'12px', color:'var(--text-secondary)' }}>{isBn?'প্রতি পাতায়:':'Per page:'}</span>
-          <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }} style={{ ...sel, padding:'5px 8px' }}>
+      <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs text-[var(--text-secondary)]">{isBn?'প্রতি পাতায়:':'Per page:'}</span>
+          <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1) }} className={`${sel} px-2 py-[5px]`}>
             {PER_PAGE_OPTS.map(n => <option key={n} value={n}>{n}</option>)}
           </select>
           {selected.length > 0 && (
-            <span style={{ fontSize:'12px', color:'var(--brand)', background:'var(--brand-light)', padding:'3px 10px', borderRadius:'6px', fontWeight:500 }}>
+            <span className="text-xs text-[var(--brand)] bg-[var(--brand-light)] px-[10px] py-[3px] rounded-md font-medium">
               {selected.length} {isBn?'নির্বাচিত':'selected'}
             </span>
           )}
         </div>
-        <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
+        <div className="flex gap-1.5 flex-wrap">
           <button onClick={exportExcel}
-            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--green-light)', border:'1px solid var(--green)', color:'var(--green)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+            className="flex items-center gap-[5px] px-3 py-[7px] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-xs cursor-pointer font-medium">
             <FileSpreadsheet size={13} />Excel
           </button>
           <button onClick={() => setShowPDF(true)}
-            style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'8px', background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+            className="flex items-center gap-[5px] px-3 py-[7px] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs cursor-pointer font-medium">
             <FileText size={13} />PDF {selected.length>0?`(${selected.length})`:`(${filtered.length})`}
           </button>
         </div>
@@ -338,30 +335,31 @@ export default function AllStudentsPage() {
       </div>
 
       {/* Table - scrollable */}
-      <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', marginTop:'4px' }}>
-        <div style={{ flex:1, overflowY:'auto', ...(isMobile ? { maxHeight:'50vh' } : {}) }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
+      <div className="flex-1 overflow-hidden flex flex-col bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] mt-1">
+        <div className={`flex-1 overflow-y-auto ${isMobile ? 'max-h-[50vh]' : ''}`}>
+          <table className="w-full border-collapse text-xs">
             <thead>
-              <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
-                <th style={{ padding:'10px 12px', width:'36px', ...(isMobile ? {} : { position:'sticky', left:0, zIndex:4, background:'var(--bg-primary)' }) }}>
+              <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                <th className="p-2.5 w-[36px]" style={sc('0')}>
                   <input type="checkbox" checked={allSel} onChange={toggleAll}
-                    style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:'var(--brand)' }} />
+                    className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
                 </th>
                 {[
-                  { l:'#', w:'36px', sticky:!isMobile, left:'36px' },
-                  { l:isBn?'ছবি':'Photo', w:'44px', sticky:!isMobile, left:'72px' },
-                  { l:isBn?'ছাত্র আইডি':'Student ID', w:'140px', sticky:!isMobile, left:'116px' },
-                  { l:isBn?'নাম':'Name', w:'160px', sticky:!isMobile, left:'256px' },
-                  { l:isBn?'শ্রেণি/রোল':'Class/Roll', w:'90px', sticky:!isMobile, left:'416px' },
-                  { l:isBn?'লিঙ্গ':'Gender', w:'65px' },
-                  { l:isBn?'রক্ত':'Blood', w:'55px' },
-                  { l:isBn?'মোবাইল':'Mobile', w:'108px' },
-                  { l:isBn?'পিতার মোবাইল':"Father Mobile", w:'108px' },
-                  { l:isBn?'জেলা':'District', w:'75px' },
-                  { l:isBn?'অবস্থা':'Status', w:'85px' },
-                  { l:isBn?'অ্যাকশন':'Action', w:'70px' },
+                  { l:'#', w:'36px', sticky:true, left:'36px' },
+                  { l:isBn?'ছবি':'Photo', w:'44px', sticky:true, left:'72px' },
+                  { l:isBn?'ছাত্র আইডি':'Student ID', w:'140px', sticky:true, left:'116px' },
+                  { l:isBn?'নাম':'Name', w:'160px', sticky:true, left:'256px' },
+                  { l:isBn?'শ্রেণি/রোল':'Class/Roll', w:'90px', sticky:true, left:'416px' },
+                  { l:isBn?'লিঙ্গ':'Gender', w:'65px', sticky:false },
+                  { l:isBn?'রক্ত':'Blood', w:'55px', sticky:false },
+                  { l:isBn?'মোবাইল':'Mobile', w:'108px', sticky:false },
+                  { l:isBn?'পিতার মোবাইল':"Father Mobile", w:'108px', sticky:false },
+                  { l:isBn?'জেলা':'District', w:'75px', sticky:false },
+                  { l:isBn?'অবস্থা':'Status', w:'85px', sticky:false },
+                  { l:isBn?'অ্যাকশন':'Action', w:'70px', sticky:false },
                 ].map(h => (
-                  <th key={h.l} style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.4px', whiteSpace:'nowrap', minWidth:h.w, ...(h.sticky ? { position:'sticky', left:h.left, zIndex:4, background:'var(--bg-primary)' } : {}) }}>
+                  <th key={h.l} className="py-2.5 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap"
+                    style={{ minWidth:h.w, ...(h.sticky ? sc(h.left) : {}) }}>
                     {h.l}
                   </th>
                 ))}
@@ -369,53 +367,53 @@ export default function AllStudentsPage() {
             </thead>
             <tbody>
               {paginated.length === 0
-                ? <tr><td colSpan={13} style={{ padding:'40px', textAlign:'center', color:'var(--text-muted)' }}>
-                    <Users size={28} style={{ display:'block', margin:'0 auto 8px', opacity:0.3 }} />
+                ? <tr><td colSpan={13} className="p-10 text-center text-[var(--text-muted)]">
+                    <Users size={28} className="block mx-auto mb-2 opacity-30" />
                     {isBn?'কোনো ছাত্র পাওয়া যায়নি':'No students found'}
                   </td></tr>
                 : paginated.map((s, i) => (
                   <tr key={s.id}
-                    style={{ borderBottom:'0.5px solid var(--border)', background:selected.includes(s.id)?'rgba(99,102,241,0.04)':'transparent', cursor:'default' }}
-                    onMouseEnter={e => { if (!selected.includes(s.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
-                    onMouseLeave={e => { if (!selected.includes(s.id)) e.currentTarget.style.background = 'transparent' }}>
-                    <td style={{ padding:'8px 12px', ...(isMobile ? {} : { position:'sticky', left:0, zIndex:3, background:'var(--bg-primary)' }) }}>
+                    className="border-b border-[var(--border)] group"
+                    style={{ background: selected.includes(s.id) ? 'rgba(99,102,241,0.04)' : undefined }}>
+                    <td className="p-2.5" style={sc('0')}>
                       <input type="checkbox" checked={selected.includes(s.id)} onChange={() => toggleOne(s.id)}
-                        style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:'var(--brand)' }} />
+                        className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
                     </td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px', ...(isMobile ? {} : { position:'sticky', left:'36px', zIndex:3, background:'var(--bg-primary)' }) }}>{(sp-1)*perPage+i+1}</td>
-                    <td style={{ padding:'7px 8px', ...(isMobile ? {} : { position:'sticky', left:'72px', zIndex:3, background:'var(--bg-primary)' }) }}>
-                      <div style={{ width:'30px', height:'36px', borderRadius:'5px', overflow:'hidden', background:'var(--bg-secondary)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                        {s.photo ? <img src={s.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={13} style={{ color:'var(--text-muted)' }} />}
+                    <td className="p-2 text-[var(--text-muted)] font-semibold text-[11px]" style={sc('36px')}>{(sp-1)*perPage+i+1}</td>
+                    <td className="p-2" style={sc('72px')}>
+                      <div className="w-[30px] h-[36px] rounded-[5px] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
+                        {s.photo ? <img src={s.photo} alt="" className="w-full h-full object-cover" /> : <User size={13} className="text-[var(--text-muted)]" />}
                       </div>
                     </td>
-                    <td style={{ padding:'8px 8px', ...(isMobile ? {} : { position:'sticky', left:'116px', zIndex:3, background:'var(--bg-primary)' }) }}>
-                      <span style={{ fontSize:'10px', fontFamily:'monospace', color:'var(--brand)', background:'var(--brand-light)', padding:'2px 5px', borderRadius:'4px' }}>{s.id}</span>
+                    <td className="p-2" style={sc('116px')}>
+                      <span className="text-[10px] font-mono text-[var(--brand)] bg-[var(--brand-light)] px-[5px] py-[2px] rounded">{s.id}</span>
                     </td>
-                    <td style={{ padding:'8px 8px', ...(isMobile ? {} : { position:'sticky', left:'256px', zIndex:3, background:'var(--bg-primary)' }) }}>
-                      <div style={{ fontSize:'12px', fontWeight:500, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'155px' }}>{isBn?s.nameBn||s.nameEn:s.nameEn}</div>
-                      <div style={{ fontSize:'10px', color:'var(--text-muted)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{isBn?s.nameEn:s.nameBn}</div>
+                    <td className="p-2" style={sc('256px')}>
+                      <div className="text-xs font-medium text-[var(--text-primary)] truncate max-w-[155px]">{isBn?s.nameBn||s.nameEn:s.nameEn}</div>
+                      <div className="text-[10px] text-[var(--text-muted)] truncate">{isBn?s.nameEn:s.nameBn}</div>
                     </td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px', whiteSpace:'nowrap', ...(isMobile ? {} : { position:'sticky', left:'416px', zIndex:3, background:'var(--bg-primary)' }) }}>
+                    <td className="p-2 text-[var(--text-secondary)] text-[11px] whitespace-nowrap" style={sc('416px')}>
                       {s.class}{s.section?`-${s.section}`:''}{s.roll?` / ${s.roll}`:''}
                     </td>
-                    <td style={{ padding:'8px 8px' }}>
-                      <span style={{ fontSize:'10px', padding:'2px 6px', borderRadius:'5px', background:s.gender.includes('Female')?'var(--purple-light)':'var(--teal-light)', color:s.gender.includes('Female')?'var(--purple)':'var(--teal)', fontWeight:500 }}>
+                    <td className="p-2">
+                      <span className="text-[10px] px-[6px] py-[2px] rounded-[5px] font-medium"
+                        style={{ background: s.gender.includes('Female')?'var(--purple-light)':'var(--teal-light)', color: s.gender.includes('Female')?'var(--purple)':'var(--teal)' }}>
                         {s.gender.includes('Female')?(isBn?'মেয়ে':'Female'):(isBn?'ছেলে':'Male')}
                       </span>
                     </td>
-                    <td style={{ padding:'8px 8px', fontSize:'11px', color:'var(--red)', fontWeight:500 }}>{s.bloodGroup||'—'}</td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontFamily:'monospace', fontSize:'11px' }}>{s.phone}</td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontFamily:'monospace', fontSize:'11px' }}>{s.fatherPhone}</td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px' }}>{s.district||'—'}</td>
-                    <td style={{ padding:'8px 8px' }}>{statusBadge(s.status)}</td>
-                    <td style={{ padding:'8px 8px' }}>
-                      <div style={{ display:'flex', gap:'3px' }}>
+                    <td className="p-2 text-[11px] text-[var(--red)] font-medium">{s.bloodGroup||'—'}</td>
+                    <td className="p-2 text-[var(--text-secondary)] font-mono text-[11px]">{s.phone}</td>
+                    <td className="p-2 text-[var(--text-secondary)] font-mono text-[11px]">{s.fatherPhone}</td>
+                    <td className="p-2 text-[var(--text-secondary)] text-[11px]">{s.district||'—'}</td>
+                    <td className="p-2">{statusBadge(s.status)}</td>
+                    <td className="p-2">
+                      <div className="flex gap-[3px]">
                         <button onClick={() => setViewSt(s)} title="View"
-                          style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--brand-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--brand)' }}>
+                          className="w-[26px] h-[26px] rounded-[6px] bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]">
                           <Eye size={12} />
                         </button>
                         <button onClick={() => navigate('/students/update', { state:{ studentId: s.id } })} title="Edit"
-                          style={{ width:'26px', height:'26px', borderRadius:'6px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--amber)' }}>
+                          className="w-[26px] h-[26px] rounded-[6px] bg-[var(--amber-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--amber)]">
                           <Edit2 size={12} />
                         </button>
                       </div>
@@ -426,14 +424,14 @@ export default function AllStudentsPage() {
           </table>
         </div>
         {/* Pagination */}
-        <div style={{ padding:'10px 14px', borderTop:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center', background:'var(--bg-secondary)', flexWrap:'wrap', gap:'8px' }}>
-          <span style={{ fontSize:'12px', color:'var(--text-muted)' }}>
+        <div className="flex justify-between items-center px-[14px] py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex-wrap gap-2">
+          <span className="text-xs text-[var(--text-muted)]">
             {(sp-1)*perPage+1}–{Math.min(sp*perPage,filtered.length)} / {filtered.length}
           </span>
-          <div style={{ display:'flex', gap:'3px' }}>
-            {([[<ChevronsLeft size={12} />,()=>setPage(1),sp===1] as [React.ReactNode,()=>void,boolean],[<ChevronLeft size={12} />,()=>setPage(p=>Math.max(1,p-1)),sp===1] as [React.ReactNode,()=>void,boolean]]).map(([ic,a,d],i)=>(
-              <button key={i} onClick={a} disabled={d}
-                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div className="flex gap-[3px]">
+            {([[<ChevronsLeft size={12} />,()=>setPage(1),sp===1],[<ChevronLeft size={12} />,()=>setPage(p=>Math.max(1,p-1)),sp===1]]).map(([ic,a,d],i)=>(
+              <button key={i} onClick={a} disabled={d as boolean}
+                className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer disabled:cursor-default disabled:text-[var(--text-muted)]">
                 {ic}
               </button>
             ))}
@@ -441,14 +439,14 @@ export default function AllStudentsPage() {
               const start = Math.max(1, Math.min(sp-2, totalPages-4))
               return Array.from({ length: Math.min(5, totalPages) }, (_,i) => start+i).map(p => (
                 <button key={p} onClick={()=>setPage(p)}
-                  style={{ width:'28px', height:'28px', borderRadius:'6px', border:`1px solid ${p===sp?'var(--brand)':'var(--border)'}`, background:p===sp?'var(--brand)':'var(--bg-primary)', color:p===sp?'#fff':'var(--text-secondary)', cursor:'pointer', fontSize:'12px', fontWeight:p===sp?600:400 }}>
+                  className={`w-7 h-7 rounded-md border bg-[var(--bg-primary)] text-xs cursor-pointer ${p===sp?'border-[var(--brand)] bg-[var(--brand)] text-white font-semibold':'border-[var(--border)] text-[var(--text-secondary)]'}`}>
                   {p}
                 </button>
               ))
             })()}
-            {([[<ChevronRight size={12} />,()=>setPage(p=>Math.min(totalPages,p+1)),sp===totalPages] as [React.ReactNode,()=>void,boolean],[<ChevronsRight size={12} />,()=>setPage(totalPages),sp===totalPages] as [React.ReactNode,()=>void,boolean]]).map(([ic,a,d],i)=>(
-              <button key={i} onClick={a} disabled={d}
-                style={{ width:'28px', height:'28px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--bg-primary)', color:d?'var(--text-muted)':'var(--text-secondary)', cursor:d?'default':'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            {([[<ChevronRight size={12} />,()=>setPage(p=>Math.min(totalPages,p+1)),sp===totalPages],[<ChevronsRight size={12} />,()=>setPage(totalPages),sp===totalPages]]).map(([ic,a,d],i)=>(
+              <button key={i} onClick={a} disabled={d as boolean}
+                className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer disabled:cursor-default disabled:text-[var(--text-muted)]">
                 {ic}
               </button>
             ))}

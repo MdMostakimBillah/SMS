@@ -105,36 +105,35 @@ function toBnNum(n: number): string {
   return String(n).replace(/\d/g, d => bn[+d])
 }
 
-// Skeleton Loading
 function StudentsSkeleton() {
   return (
     <div>
-      <div className="skeleton skeleton-title" style={{ width: "180px", marginBottom: "16px" }} />
-      <div className="skeleton skeleton-text" style={{ width: "140px", marginBottom: "20px" }} />
-      
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "20px" }}>
+      <div className="skeleton skeleton-title w-[180px] mb-4" />
+      <div className="skeleton skeleton-text w-[140px] mb-5" />
+
+      <div className="grid grid-cols-4 gap-[10px] mb-5">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="skeleton-card">
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div className="skeleton skeleton-circle" style={{ width: "32px", height: "32px" }} />
+            <div className="flex items-center gap-[10px]">
+              <div className="skeleton skeleton-circle w-8 h-8" />
               <div>
-                <div className="skeleton" style={{ width: "50px", height: "18px", marginBottom: "4px" }} />
-                <div className="skeleton skeleton-text" style={{ width: "40px", height: "10px" }} />
+                <div className="skeleton w-[50px] h-[18px] mb-1" />
+                <div className="skeleton skeleton-text w-[40px] h-[10px]" />
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="skeleton" style={{ width: "100px", height: "12px", marginBottom: "12px" }} />
-      
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+      <div className="skeleton w-[100px] h-[12px] mb-3" />
+
+      <div className="grid grid-cols-3 gap-3">
         {[1, 2, 3, 4, 5, 6].map(i => (
           <div key={i} className="skeleton-card">
-            <div className="skeleton skeleton-circle" style={{ width: "40px", height: "40px", marginBottom: "10px" }} />
-            <div className="skeleton" style={{ width: "80px", height: "14px", marginBottom: "6px" }} />
-            <div className="skeleton skeleton-text" style={{ width: "100%" }} />
-            <div className="skeleton skeleton-text" style={{ width: "60px", height: "10px" }} />
+            <div className="skeleton skeleton-circle w-10 h-10 mb-[10px]" />
+            <div className="skeleton w-[80px] h-[14px] mb-1.5" />
+            <div className="skeleton skeleton-text w-full" />
+            <div className="skeleton skeleton-text w-[60px] h-[10px]" />
           </div>
         ))}
       </div>
@@ -174,12 +173,12 @@ export default function StudentsPage() {
     if (isLoading || !containerRef.current) return
 
     const cards = containerRef.current.querySelectorAll('.gsap-fade-up')
-    gsap.fromTo(cards, 
+    gsap.fromTo(cards,
       { opacity: 0, y: 12 },
-      { 
-        opacity: 1, 
-        y: 0, 
-        duration: 0.5, 
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.5,
         stagger: 0.06,
         ease: "power2.out"
       }
@@ -192,66 +191,41 @@ export default function StudentsPage() {
 
   return (
     <div ref={containerRef}>
-      {/* Page header */}
-      <div className="gsap-fade-up" style={{ marginBottom: isMobile ? "16px" : "20px" }}>
-        <h1 style={{
-          fontSize: isMobile ? "18px" : "20px",
-          fontWeight: 600,
-          color: "var(--text-primary)",
-          letterSpacing: "-0.3px",
-        }}>
+      <div className={`gsap-fade-up ${isMobile ? "mb-4" : "mb-5"}`}>
+        <h1 className={`text-[var(--text-primary)] font-semibold tracking-[-0.3px] ${isMobile ? "text-lg" : "text-xl"}`}>
           {isBn ? "ছাত্র ব্যবস্থাপনা" : "Student Management"}
         </h1>
-        <p style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
+        <p className="text-xs text-[var(--text-secondary)] mt-1">
           {isBn ? "নিচের অপশন বেছে নিন" : "Select an option below"}
         </p>
       </div>
 
-      {/* Quick stats */}
-      <div className="gsap-fade-up" style={{
-        display: "grid",
-        gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
-        gap: isMobile ? "8px" : "10px",
-        marginBottom: isMobile ? "16px" : "20px",
-      }}>
+      <div className={`gsap-fade-up grid ${isMobile ? "grid-cols-2" : "grid-cols-4"} ${isMobile ? "gap-2" : "gap-[10px]"} ${isMobile ? "mb-4" : "mb-5"}`}>
         {statsData.map((s) => {
           const IconComp = s.icon
           return (
-            <div key={s.labelEn} style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-              borderRadius: "10px",
-              padding: isMobile ? "12px" : "14px",
-              display: "flex",
-              alignItems: "center",
-              gap: isMobile ? "8px" : "10px",
-              cursor: "default",
-              transition: "all 0.15s ease",
-              boxShadow: "var(--shadow-xs)",
-            }}
-            onMouseEnter={e => { 
-              e.currentTarget.style.borderColor = s.color; 
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={e => { 
-              e.currentTarget.style.borderColor = 'var(--border)'; 
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
+            <div key={s.labelEn}
+              className={`bg-[var(--surface)] border border-[var(--border)] rounded-[10px] flex items-center ${isMobile ? "gap-2" : "gap-[10px]"} cursor-default transition-all duration-150 shadow-[var(--shadow-xs)] ${isMobile ? "p-3" : "p-[14px]"}`}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = s.color;
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
             >
-              <div style={{
-                width: isMobile ? "28px" : "32px", height: isMobile ? "28px" : "32px",
-                borderRadius: "8px",
-                background: s.bg,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-              }}>
+              <div
+                className={`rounded-lg flex items-center justify-center flex-shrink-0 ${isMobile ? "w-7 h-7" : "w-8 h-8"}`}
+                style={{ background: s.bg }}
+              >
                 <IconComp size={isMobile ? 13 : 15} style={{ color: s.color }} />
               </div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1 }}>
+              <div className="min-w-0">
+                <div className={`text-[var(--text-primary)] leading-none font-bold ${isMobile ? "text-base" : "text-lg"}`}>
                   {isBn ? s.valueBn : s.valueEn}
                 </div>
-                <div style={{ fontSize: "10px", color: "var(--text-muted)", marginTop: "2px" }}>
+                <div className="text-[10px] text-[var(--text-muted)] mt-[2px]">
                   {isBn ? s.labelBn : s.labelEn}
                 </div>
               </div>
@@ -260,43 +234,18 @@ export default function StudentsPage() {
         })}
       </div>
 
-      {/* Section title */}
-      <div className="gsap-fade-up" style={{
-        fontSize: "12px",
-        fontWeight: 600,
-        color: "var(--text-muted)",
-        textTransform: "uppercase",
-        letterSpacing: "0.5px",
-        marginBottom: "10px",
-      }}>
+      <div className="gsap-fade-up text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-[10px]">
         {isBn ? "কী করতে চান?" : "Quick Actions"}
       </div>
 
-      {/* Option cards grid */}
-      <div className="gsap-fade-up" style={{
-        display: "grid",
-        gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : isTablet ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
-        gap: isMobile ? "8px" : "12px",
-      }}>
+      <div className={`gsap-fade-up grid ${isMobile ? "grid-cols-2" : isTablet ? "grid-cols-2" : "grid-cols-3"} ${isMobile ? "gap-2" : "gap-3"}`}>
         {options.map((opt) => {
           const IconComp = opt.icon
           return (
             <div
               key={opt.id}
               onClick={() => navigate(opt.path)}
-              style={{
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: "10px",
-                padding: isMobile ? "12px" : "16px",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-                boxShadow: "var(--shadow-xs)",
-                display: "flex",
-                flexDirection: isMobile ? "row" : "column",
-                alignItems: isMobile ? "center" : "flex-start",
-                gap: isMobile ? "12px" : "0",
-              }}
+              className={`bg-[var(--surface)] border border-[var(--border)] rounded-[10px] cursor-pointer transition-all duration-150 shadow-[var(--shadow-xs)] flex ${isMobile ? "flex-row items-center gap-3" : "flex-col items-start gap-0"} ${isMobile ? "p-3" : "p-4"}`}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = opt.iconColor
                 e.currentTarget.style.transform = "translateY(-2px)"
@@ -308,52 +257,27 @@ export default function StudentsPage() {
                 e.currentTarget.style.boxShadow = "var(--shadow-xs)"
               }}
             >
-              <div style={{
-                width: isMobile ? "44px" : "40px",
-                height: isMobile ? "44px" : "40px",
-                borderRadius: isMobile ? "12px" : "10px",
-                background: opt.iconBg,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                marginBottom: isMobile ? "0" : "10px",
-              }}>
+              <div
+                className={`rounded-[10px] flex items-center justify-center flex-shrink-0 ${isMobile ? "w-[44px] h-[44px] rounded-xl mb-0" : "w-10 h-10 mb-[10px]"}`}
+                style={{ background: opt.iconBg }}
+              >
                 <IconComp size={isMobile ? 21 : 19} style={{ color: opt.iconColor }} />
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontSize: isMobile ? "13px" : "14px",
-                  fontWeight: 600,
-                  color: "var(--text-primary)",
-                  marginBottom: isMobile ? "2px" : "4px",
-                }}>
+              <div className="flex-1 min-w-0">
+                <div className={`text-[var(--text-primary)] font-semibold ${isMobile ? "text-[13px] mb-[2px]" : "text-sm mb-1"}`}>
                   {isBn ? opt.titleBn : opt.titleEn}
                 </div>
-                <div style={{
-                  fontSize: "11px",
-                  color: "var(--text-secondary)",
-                  lineHeight: 1.5,
-                  marginBottom: isMobile ? "6px" : "8px",
-                }}>
+                <div className={`text-[11px] text-[var(--text-secondary)] leading-[1.5] ${isMobile ? "mb-1.5" : "mb-2"}`}>
                   {isBn ? opt.descBn : opt.descEn}
                 </div>
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}>
-                  <span style={{
-                    fontSize: "10px",
-                    color: opt.statColor,
-                    fontWeight: 500,
-                    background: `${opt.statColor}15`,
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                  }}>
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-[10px] font-medium rounded px-1.5 py-0.5"
+                    style={{ color: opt.statColor, background: `${opt.statColor}15` }}
+                  >
                     {isBn ? opt.statBn : opt.statEn}
                   </span>
-                  <ArrowRight size={14} style={{ color: "var(--text-muted)" }} />
+                  <ArrowRight size={14} className="text-[var(--text-muted)]" />
                 </div>
               </div>
             </div>

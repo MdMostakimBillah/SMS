@@ -18,26 +18,21 @@ function makeRow(nextNum: number): Row {
   }
 }
 
-// ✅ OUTSIDE parent — fixes input focus
 interface CellProps {
   value: string; onChange: (v: string) => void
   type?: string; options?: string[]; placeholder?: string
 }
 const Cell = React.memo(function Cell({ value, onChange, type = 'text', options, placeholder }: CellProps) {
-  const s: React.CSSProperties = {
-    width: '100%', padding: '6px 8px', borderRadius: '7px',
-    border: '1px solid var(--border)', background: 'var(--bg-secondary)',
-    color: 'var(--text-primary)', fontSize: '12px', fontFamily: 'inherit', outline: 'none',
-  }
+  const cls = 'w-full px-2 py-1.5 rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[12px] outline-none'
   if (options) return (
-    <select value={value} onChange={e => onChange(e.target.value)} style={{ ...s, cursor: 'pointer' }}>
+    <select value={value} onChange={e => onChange(e.target.value)} className={`${cls} cursor-pointer`}>
       <option value="">—</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
   )
   return (
     <input type={type} value={value} placeholder={placeholder}
-      onChange={e => onChange(e.target.value)} style={s}
+      onChange={e => onChange(e.target.value)} className={cls}
       onFocus={e => (e.target.style.borderColor = 'var(--brand)')}
       onBlur={e => (e.target.style.borderColor = 'var(--border)')} />
   )
@@ -94,18 +89,18 @@ export default function BulkAdmission() {
   }, [rows, addStudent, isBn])
 
   if (done) return (
-    <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '14px', padding: '40px', textAlign: 'center' }}>
-      <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-        <CheckCircle size={30} style={{ color: 'var(--green)' }} />
+    <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-10 text-center">
+      <div className="w-[60px] h-[60px] rounded-full bg-[var(--green-light)] flex items-center justify-center mx-auto mb-[14px]">
+        <CheckCircle size={30} className="text-[var(--green)]" />
       </div>
-      <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+      <h2 className="text-[20px] font-semibold text-[var(--text-primary)] mb-2">
         {isBn ? `${count} জন ছাত্র ভর্তি হয়েছে!` : `${count} Students Submitted!`}
       </h2>
-      <p style={{ fontSize: '13px', color: 'var(--teal)', marginBottom: '20px' }}>
+      <p className="text-[13px] text-[var(--teal)] mb-5">
         ✅ {isBn ? 'সকলের নম্বরে SMS পাঠানো হয়েছে' : 'SMS sent to all numbers'}
       </p>
       <button onClick={() => { setDone(false); setRows([makeRow(existing.length + 1)]) }}
-        style={{ padding: '10px 20px', borderRadius: '9px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+        className="px-5 py-2.5 rounded-[9px] bg-[var(--brand)] border-none text-white text-[13px] font-medium cursor-pointer font-[inherit]">
         {isBn ? 'আবার করুন' : 'Do Again'}
       </button>
     </div>
@@ -123,43 +118,41 @@ export default function BulkAdmission() {
 
   return (
     <div>
-      {/* Info */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--brand-light)', border: '1px solid var(--brand)', borderRadius: '10px', padding: '10px 14px', marginBottom: '12px' }}>
-        <Info size={16} style={{ color: 'var(--brand)', flexShrink: 0 }} />
-        <p style={{ fontSize: '13px', color: 'var(--brand)' }}>
+      <div className="flex items-center gap-2.5 bg-[var(--brand-light)] border border-[var(--brand)] rounded-[10px] px-3.5 py-2.5 mb-3">
+        <Info size={16} className="text-[var(--brand)] shrink-0" />
+        <p className="text-[13px] text-[var(--brand)]">
           {isBn ? 'প্রয়োজনীয় তথ্য দিন। বিস্তারিত পরে আপডেট করা যাবে।' : 'Enter essential info. Details can be updated later.'}
         </p>
       </div>
 
-      {/* Table */}
-      <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '14px', overflow: 'hidden', marginBottom: '12px' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden mb-3">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-[12px]">
             <thead>
-              <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 10px', textAlign: 'left', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600, width: '36px' }}>#</th>
-                <th style={{ padding: '10px 10px', textAlign: 'left', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600, minWidth: '155px' }}>
+              <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                <th className="px-2.5 py-2.5 text-left text-[var(--text-muted)] text-[11px] font-semibold w-[36px]">#</th>
+                <th className="px-2.5 py-2.5 text-left text-[var(--text-muted)] text-[11px] font-semibold min-w-[155px]">
                   {isBn ? 'ছাত্র আইডি' : 'Student ID'}
                 </th>
                 {cols.map(c => (
-                  <th key={c.key} style={{ padding: '10px 8px', textAlign: 'left', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600, minWidth: c.w }}>
-                    {isBn ? c.bn : c.en} <span style={{ color: 'var(--red)' }}>*</span>
+                  <th key={c.key} className="px-2 py-2.5 text-left text-[var(--text-muted)] text-[11px] font-semibold" style={{ minWidth: c.w }}>
+                    {isBn ? c.bn : c.en} <span className="text-[var(--red)]">*</span>
                   </th>
                 ))}
-                <th style={{ width: '40px' }} />
+                <th className="w-[40px]" />
               </tr>
             </thead>
             <tbody>
               {rows.map((row, i) => (
-                <tr key={row.id} style={{ borderBottom: '0.5px solid var(--border)' }}>
-                  <td style={{ padding: '7px 10px', color: 'var(--text-muted)', fontWeight: 600, fontSize: '12px' }}>{i + 1}</td>
-                  <td style={{ padding: '7px 10px' }}>
-                    <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--brand)', background: 'var(--brand-light)', padding: '3px 7px', borderRadius: '5px' }}>
+                <tr key={row.id} className="border-b border-[var(--border)] border-b-[0.5px]">
+                  <td className="px-2.5 py-[7px] text-[var(--text-muted)] font-semibold text-[12px]">{i + 1}</td>
+                  <td className="px-2.5 py-[7px]">
+                    <span className="text-[11px] font-mono text-[var(--brand)] bg-[var(--brand-light)] px-[7px] py-[3px] rounded-[5px]">
                       {row.id}
                     </span>
                   </td>
                   {cols.map(c => (
-                    <td key={c.key} style={{ padding: '5px 6px' }}>
+                    <td key={c.key} className="px-1.5 py-[5px]">
                       <Cell
                         value={(row as any)[c.key]}
                         onChange={v => update(i, c.key as keyof Row, v)}
@@ -168,10 +161,10 @@ export default function BulkAdmission() {
                       />
                     </td>
                   ))}
-                  <td style={{ padding: '5px 8px', textAlign: 'center' }}>
+                  <td className="px-2 py-[5px] text-center">
                     {rows.length > 1 && (
                       <button onClick={() => removeRow(i)} type="button"
-                        style={{ width: '26px', height: '26px', borderRadius: '7px', background: 'var(--red-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--red)' }}>
+                        className="w-[26px] h-[26px] rounded-[7px] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]">
                         <Trash2 size={12} />
                       </button>
                     )}
@@ -183,21 +176,20 @@ export default function BulkAdmission() {
         </div>
       </div>
 
-      {/* Actions */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+      <div className="flex justify-between items-center flex-wrap gap-2.5">
         <button onClick={addRow} type="button"
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px dashed var(--brand)', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+          className="flex items-center gap-1.5 px-4 py-[9px] rounded-[9px] bg-[var(--bg-primary)] border border-dashed border-[var(--brand)] text-[var(--brand)] text-[13px] cursor-pointer font-[inherit] font-medium">
           <Plus size={14} />
           {isBn ? 'সারি যোগ করুন' : 'Add Row'}
         </button>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 14px', borderRadius: '9px', background: 'var(--green-light)', border: '1px solid var(--green)', color: 'var(--green)', fontSize: '13px', cursor: 'pointer', fontWeight: 500 }}>
+        <div className="flex gap-2">
+          <label className="flex items-center gap-1.5 px-3.5 py-[9px] rounded-[9px] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[13px] cursor-pointer font-medium">
             <Upload size={14} />
             {isBn ? 'CSV আপলোড' : 'CSV Upload'}
-            <input type="file" accept=".csv" style={{ display: 'none' }} />
+            <input type="file" accept=".csv" className="hidden" />
           </label>
           <button onClick={handleSubmit} type="button"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 20px', borderRadius: '9px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}>
+            className="flex items-center gap-1.5 px-5 py-[9px] rounded-[9px] bg-[var(--brand)] border-none text-white text-[13px] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_14px_rgba(99,102,241,0.35)]">
             <Check size={14} />
             {isBn ? `${rows.length} জনকে ভর্তি করুন` : `Admit ${rows.length} Students`}
           </button>

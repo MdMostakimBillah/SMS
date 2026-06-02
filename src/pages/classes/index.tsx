@@ -75,47 +75,37 @@ export default function ClassesPage() {
     setEditingClassTime(null)
   }
 
-  const input: React.CSSProperties = {
-    width: '100%', padding: '9px 11px', borderRadius: '8px',
-    border: '1px solid var(--border)', background: 'var(--bg-secondary)',
-    color: 'var(--text-primary)', fontSize: '13px', fontFamily: 'inherit', outline: 'none',
-  }
-  const label: React.CSSProperties = {
-    fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)',
-    marginBottom: '5px', display: 'block',
-  }
-  const section: React.CSSProperties = {
-    background: 'var(--bg-primary)', border: '1px solid var(--border)',
-    borderRadius: '12px', padding: '16px', marginBottom: '14px',
-  }
+  const inputClass = "w-full py-[9px] px-[11px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none"
+  const labelClass = "text-[11px] font-medium text-[var(--text-secondary)] mb-[5px] block"
+  const sectionClass = "bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-4 mb-[14px]"
 
   return (
     <div>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <div className="flex items-center gap-[10px] mb-4 flex-wrap">
         <button onClick={() => navigate('/')}
-          style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '13px', color: 'var(--text-secondary)', fontFamily: 'inherit', flexShrink: 0 }}>
+          className="flex items-center gap-[5px] py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] shrink-0">
           <ArrowLeft size={14} />{isBn ? 'ফিরে যান' : 'Back'}
         </button>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: 600, color: 'var(--text-primary)' }}>
+        <div className="flex-1">
+          <h1 className={`${isMobile ? 'text-[18px]' : 'text-[22px]'} font-semibold text-[var(--text-primary)]`}>
             {isBn ? 'শ্রেণি ব্যবস্থাপনা' : 'Classes Management'}
           </h1>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+          <p className="text-[12px] text-[var(--text-secondary)] mt-[2px]">
             {isBn ? 'প্রতিষ্ঠান সেটিংস এবং শ্রেণি পরিচালনা' : 'Institution settings & class management'}
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', flexWrap: 'wrap' }}>
+      <div className="flex gap-[6px] mb-[14px] flex-wrap">
         {[
           { id: 'institution' as const, icon: Settings, label: isBn ? 'প্রতিষ্ঠান' : 'Institution', color: 'var(--brand)' },
           { id: 'classes' as const, icon: Users, label: isBn ? 'শ্রেণি' : 'Classes', color: 'var(--teal)' },
           { id: 'routine' as const, icon: CalendarDays, label: isBn ? 'রুটিন' : 'Routine', color: 'var(--purple)' },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: `1px solid ${activeTab === tab.id ? tab.color : 'var(--border)'}`, background: activeTab === tab.id ? `${tab.color}15` : 'var(--bg-secondary)', color: activeTab === tab.id ? tab.color : 'var(--text-secondary)', fontSize: '13px', fontWeight: activeTab === tab.id ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+            className={`flex items-center gap-[6px] py-2 px-4 rounded-lg border text-[13px] cursor-pointer font-[inherit] transition-all duration-150 ${activeTab === tab.id ? (tab.id === 'institution' ? 'border-[var(--brand)] bg-[var(--brand)15] text-[var(--brand)] font-semibold' : tab.id === 'classes' ? 'border-[var(--teal)] bg-[var(--teal)15] text-[var(--teal)] font-semibold' : 'border-[var(--purple)] bg-[var(--purple)15] text-[var(--purple)] font-semibold') : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}`}>
             <tab.icon size={15} />{tab.label}
           </button>
         ))}
@@ -123,25 +113,25 @@ export default function ClassesPage() {
 
       {/* Institution Tab */}
       {activeTab === 'institution' && (
-        <div style={section}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', paddingBottom: '8px', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Building2 size={18} style={{ color: 'var(--brand)' }} />
+        <div className={sectionClass}>
+          <div className="flex items-center justify-between mb-[14px] pb-2 border-b border-[var(--border)]">
+            <div className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
+              <Building2 size={18} className="text-[var(--brand)]" />
               {isBn ? 'প্রতিষ্ঠানের তথ্য' : 'Institution Information'}
             </div>
             {!editingInst ? (
               <button onClick={() => { setInstForm({ ...institution }); setEditingInst(true) }}
-                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '7px', background: 'var(--brand-light)', border: '1px solid var(--brand)', color: 'var(--brand)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                className="flex items-center gap-[5px] py-[6px] px-3 rounded-[7px] bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-xs cursor-pointer font-[inherit]">
                 <Edit2 size={13} />{isBn ? 'এডিট' : 'Edit'}
               </button>
             ) : (
-              <div style={{ display: 'flex', gap: '6px' }}>
+              <div className="flex gap-[6px]">
                 <button onClick={() => setEditingInst(false)}
-                  style={{ padding: '6px 12px', borderRadius: '7px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  className="py-[6px] px-3 rounded-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]">
                   {isBn ? 'বাতিল' : 'Cancel'}
                 </button>
                 <button onClick={handleSaveInstitution}
-                  style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '7px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  className="flex items-center gap-[5px] py-[6px] px-3 rounded-[7px] bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]">
                   {saved ? <Check size={13} /> : <Save size={13} />}{saved ? (isBn ? 'সেভ হয়েছে' : 'Saved') : (isBn ? 'সেভ' : 'Save')}
                 </button>
               </div>
@@ -198,36 +188,36 @@ export default function ClassesPage() {
           {editingInst && (
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '10px' }}>
               <div>
-                <label style={label}>{isBn ? 'প্রতিষ্ঠানের নাম (ইং)' : 'Name (EN)'}</label>
-                <input value={instForm.name} onChange={e => setInstForm(p => ({ ...p, name: e.target.value }))} style={input} />
+                <label className={labelClass}>{isBn ? 'প্রতিষ্ঠানের নাম (ইং)' : 'Name (EN)'}</label>
+                <input value={instForm.name} onChange={e => setInstForm(p => ({ ...p, name: e.target.value }))} className={inputClass} />
               </div>
               <div>
-                <label style={label}>{isBn ? 'প্রতিষ্ঠানের নাম (বাং)' : 'Name (BN)'}</label>
-                <input value={instForm.nameBn} onChange={e => setInstForm(p => ({ ...p, nameBn: e.target.value }))} style={input} />
+                <label className={labelClass}>{isBn ? 'প্রতিষ্ঠানের নাম (বাং)' : 'Name (BN)'}</label>
+                <input value={instForm.nameBn} onChange={e => setInstForm(p => ({ ...p, nameBn: e.target.value }))} className={inputClass} />
               </div>
               <div>
-                <label style={label}>{isBn ? 'ফোন' : 'Phone'}</label>
-                <input value={instForm.phone} onChange={e => setInstForm(p => ({ ...p, phone: e.target.value }))} style={input} />
+                <label className={labelClass}>{isBn ? 'ফোন' : 'Phone'}</label>
+                <input value={instForm.phone} onChange={e => setInstForm(p => ({ ...p, phone: e.target.value }))} className={inputClass} />
               </div>
               <div>
-                <label style={label}>Email</label>
-                <input value={instForm.email} onChange={e => setInstForm(p => ({ ...p, email: e.target.value }))} style={input} />
+                <label className={labelClass}>Email</label>
+                <input value={instForm.email} onChange={e => setInstForm(p => ({ ...p, email: e.target.value }))} className={inputClass} />
               </div>
               <div>
-                <label style={label}>{isBn ? 'ওয়েবসাইট' : 'Website'}</label>
-                <input value={instForm.website} onChange={e => setInstForm(p => ({ ...p, website: e.target.value }))} style={input} />
+                <label className={labelClass}>{isBn ? 'ওয়েবসাইট' : 'Website'}</label>
+                <input value={instForm.website} onChange={e => setInstForm(p => ({ ...p, website: e.target.value }))} className={inputClass} />
               </div>
               <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
-                <label style={label}>{isBn ? 'ঠিকানা' : 'Address'}</label>
-                <input value={instForm.address} onChange={e => setInstForm(p => ({ ...p, address: e.target.value }))} style={input} />
+                <label className={labelClass}>{isBn ? 'ঠিকানা' : 'Address'}</label>
+                <input value={instForm.address} onChange={e => setInstForm(p => ({ ...p, address: e.target.value }))} className={inputClass} />
               </div>
               <div>
-                <label style={label}>{isBn ? 'ক্লাস শুরুর সময়' : 'Class Start Time'}</label>
-                <input type="time" value={instForm.startTime} onChange={e => setInstForm(p => ({ ...p, startTime: e.target.value }))} style={input} />
+                <label className={labelClass}>{isBn ? 'ক্লাস শুরুর সময়' : 'Class Start Time'}</label>
+                <input type="time" value={instForm.startTime} onChange={e => setInstForm(p => ({ ...p, startTime: e.target.value }))} className={inputClass} />
               </div>
               <div>
-                <label style={label}>{isBn ? 'ক্লাস শেষের সময়' : 'Class End Time'}</label>
-                <input type="time" value={instForm.endTime} onChange={e => setInstForm(p => ({ ...p, endTime: e.target.value }))} style={input} />
+                <label className={labelClass}>{isBn ? 'ক্লাস শেষের সময়' : 'Class End Time'}</label>
+                <input type="time" value={instForm.endTime} onChange={e => setInstForm(p => ({ ...p, endTime: e.target.value }))} className={inputClass} />
               </div>
               {/* Dynamic breaks */}
               <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
@@ -299,12 +289,12 @@ export default function ClassesPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr auto', gap: '8px', alignItems: 'end' }}>
                 <div>
-                  <label style={label}>{isBn ? 'শ্রেণির নাম (ইং)' : 'Class Name (EN)'}</label>
-                  <input value={newClassName} onChange={e => setNewClassName(e.target.value)} style={input} placeholder="Class 11" />
+                  <label className={labelClass}>{isBn ? 'শ্রেণির নাম (ইং)' : 'Class Name (EN)'}</label>
+                  <input value={newClassName} onChange={e => setNewClassName(e.target.value)} className={inputClass} placeholder="Class 11" />
                 </div>
                 <div>
-                  <label style={label}>{isBn ? 'শ্রেণির নাম (বাং)' : 'Class Name (BN)'}</label>
-                  <input value={newClassNameBn} onChange={e => setNewClassNameBn(e.target.value)} style={input} placeholder="শ্রেণি ১১" />
+                  <label className={labelClass}>{isBn ? 'শ্রেণির নাম (বাং)' : 'Class Name (BN)'}</label>
+                  <input value={newClassNameBn} onChange={e => setNewClassNameBn(e.target.value)} className={inputClass} placeholder="শ্রেণি ১১" />
                 </div>
                 <button onClick={handleAddClass}
                   style={{ padding: '9px 18px', borderRadius: '8px', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>

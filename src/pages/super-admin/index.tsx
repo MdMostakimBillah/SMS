@@ -1,1 +1,1 @@
-export default function Page() { return <div style={{color:'var(--text-primary)',fontSize:'20px',fontWeight:500}}>Super Admin</div> }
+export default function Page() { return <div className="text-[var(--text-primary)] text-xl font-medium">Super Admin</div> }

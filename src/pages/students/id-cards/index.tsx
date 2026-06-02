@@ -40,102 +40,96 @@ function IDCard({ student, template, fields, institution, isBn }: {
   const show = (k: string) => fields.includes(k)
 
   return (
-    <div style={{
-      width: '340px', height: '210px', borderRadius: `${t.radius}px`,
-      border: `2px solid ${t.primary}`, overflow: 'hidden',
-      display: 'flex', flexDirection: 'column', fontFamily: 'Inter, sans-serif',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)', flexShrink: 0,
-      background: '#fff',
-    }}>
+    <div className="w-[340px] h-[210px] overflow-hidden flex flex-col font-['Inter',sans-serif] shadow-[0_2px_8px_rgba(0,0,0,0.08)] shrink-0 bg-white" style={{ borderRadius: `${t.radius}px`, border: `2px solid ${t.primary}` }}>
       {/* Header */}
-      <div style={{ background: t.primary, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, color: '#fff' }}>
+      <div className="py-2 px-3.5 flex items-center gap-2.5" style={{ background: t.primary }}>
+        <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-sm font-bold text-white">
           ET
         </div>
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', letterSpacing: '0.5px' }}>{institution}</div>
-          <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.7)', marginTop: '1px' }}>Student Identity Card</div>
+          <div className="text-[11px] font-bold text-white tracking-wider">{institution}</div>
+          <div className="text-[8px] text-white/70 mt-px">Student Identity Card</div>
         </div>
       </div>
 
       {/* Body */}
-      <div style={{ flex: 1, display: 'flex', padding: '8px 12px', gap: '10px', background: t.secondary }}>
+      <div className="flex-1 flex py-2 px-3 gap-2.5" style={{ background: t.secondary }}>
         {/* Photo */}
         {show('photo') && (
-          <div style={{ width: '65px', height: '80px', borderRadius: '8px', border: `2px solid ${t.primary}`, overflow: 'hidden', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div className="w-[65px] h-20 rounded-lg border-2 overflow-hidden bg-white flex items-center justify-center shrink-0" style={{ borderColor: t.primary }}>
             {student.photo
-              ? <img src={student.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <User size={24} style={{ color: t.primary, opacity: 0.4 }} />}
+              ? <img src={student.photo} alt="" className="w-full h-full object-cover" />
+              : <User size={24} className="opacity-40" style={{ color: t.primary }} />}
           </div>
         )}
 
         {/* Info */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
           {show('nameEn') && (
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div className="text-[13px] font-bold text-[#1a1a1a] overflow-hidden text-ellipsis whitespace-nowrap">
               {student.nameEn}
             </div>
           )}
           {show('nameBn') && student.nameBn && (
-            <div style={{ fontSize: '10px', color: '#666', marginBottom: '2px' }}>{student.nameBn}</div>
+            <div className="text-[10px] text-[#666] mb-0.5">{student.nameBn}</div>
           )}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '2px' }}>
+          <div className="flex flex-wrap gap-[3px] mt-0.5">
             {show('class') && (
-              <span style={{ fontSize: '8px', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', background: t.primary, color: '#fff' }}>
+              <span className="text-[8px] font-semibold py-0.5 px-1.5 rounded text-white" style={{ background: t.primary }}>
                 {isBn ? `শ্র ${student.class}-${student.section}` : `Cls ${student.class}-${student.section}`}
               </span>
             )}
             {show('roll') && student.roll && (
-              <span style={{ fontSize: '8px', fontWeight: 500, padding: '2px 6px', borderRadius: '4px', background: '#fff', color: t.primary, border: `1px solid ${t.primary}` }}>
+              <span className="text-[8px] font-medium py-0.5 px-1.5 rounded bg-white" style={{ color: t.primary, border: `1px solid ${t.primary}` }}>
                 {isBn ? `রোল ${student.roll}` : `Roll ${student.roll}`}
               </span>
             )}
             {show('bloodGroup') && student.bloodGroup && (
-              <span style={{ fontSize: '8px', fontWeight: 500, padding: '2px 6px', borderRadius: '4px', background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca' }}>
+              <span className="text-[8px] font-medium py-0.5 px-1.5 rounded bg-red-50 text-red-500 border border-red-200">
                 {student.bloodGroup}
               </span>
             )}
           </div>
-          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '1px' }}>
+          <div className="mt-auto flex flex-col gap-px">
             {show('id') && (
-              <div style={{ fontSize: '8px', color: '#888', fontFamily: 'monospace' }}>ID: {student.id}</div>
+              <div className="text-[8px] text-[#888] font-mono">ID: {student.id}</div>
             )}
             {show('fatherNameEn') && student.fatherNameEn && (
-              <div style={{ fontSize: '8px', color: '#666' }}>{isBn ? 'পিতা' : 'Father'}: {student.fatherNameEn}</div>
+              <div className="text-[8px] text-[#666]">{isBn ? 'পিতা' : 'Father'}: {student.fatherNameEn}</div>
             )}
             {show('fatherPhone') && student.fatherPhone && (
-              <div style={{ fontSize: '8px', color: '#666' }}>{isBn ? 'পিতার মোবাইল' : 'Father Mobile'}: {student.fatherPhone}</div>
+              <div className="text-[8px] text-[#666]">{isBn ? 'পিতার মোবাইল' : 'Father Mobile'}: {student.fatherPhone}</div>
             )}
             {show('motherNameEn') && student.motherNameEn && (
-              <div style={{ fontSize: '8px', color: '#666' }}>{isBn ? 'মাতা' : 'Mother'}: {student.motherNameEn}</div>
+              <div className="text-[8px] text-[#666]">{isBn ? 'মাতা' : 'Mother'}: {student.motherNameEn}</div>
             )}
             {show('phone') && student.phone && (
-              <div style={{ fontSize: '8px', color: '#666' }}>{isBn ? 'মোবাইল' : 'Mobile'}: {student.phone}</div>
+              <div className="text-[8px] text-[#666]">{isBn ? 'মোবাইল' : 'Mobile'}: {student.phone}</div>
             )}
             {show('dob') && student.dob && (
-              <div style={{ fontSize: '8px', color: '#666' }}>{isBn ? 'জন্ম' : 'DOB'}: {student.dob}</div>
+              <div className="text-[8px] text-[#666]">{isBn ? 'জন্ম' : 'DOB'}: {student.dob}</div>
             )}
             {show('religion') && student.religion && (
-              <div style={{ fontSize: '8px', color: '#666' }}>{isBn ? 'ধর্ম' : 'Religion'}: {student.religion.split(' / ')[0]}</div>
+              <div className="text-[8px] text-[#666]">{isBn ? 'ধর্ম' : 'Religion'}: {student.religion.split(' / ')[0]}</div>
             )}
             {show('address') && student.presentAddress && (
-              <div style={{ fontSize: '8px', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{isBn ? 'ঠিকানা' : 'Address'}: {student.presentAddress}</div>
+              <div className="text-[8px] text-[#666] overflow-hidden text-ellipsis whitespace-nowrap">{isBn ? 'ঠিকানা' : 'Address'}: {student.presentAddress}</div>
             )}
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '4px 12px', background: t.accent, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '7px', color: 'rgba(255,255,255,0.7)' }}>Academic Year 2025–26</span>
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ width: '50px', height: '1px', background: 'rgba(255,255,255,0.5)', marginBottom: '1px' }} />
-            <span style={{ fontSize: '6px', color: 'rgba(255,255,255,0.7)' }}>Principal</span>
+      <div className="py-1 px-3 flex justify-between items-center" style={{ background: t.accent }}>
+        <span className="text-[7px] text-white/70">Academic Year 2025–26</span>
+        <div className="flex gap-5">
+          <div className="text-center">
+            <div className="w-12 h-px bg-white/50 mb-px" />
+            <span className="text-[6px] text-white/70">Principal</span>
           </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ width: '50px', height: '1px', background: 'rgba(255,255,255,0.5)', marginBottom: '1px' }} />
-            <span style={{ fontSize: '6px', color: 'rgba(255,255,255,0.7)' }}>Seal</span>
+          <div className="text-center">
+            <div className="w-12 h-px bg-white/50 mb-px" />
+            <span className="text-[6px] text-white/70">Seal</span>
           </div>
         </div>
       </div>
@@ -229,57 +223,58 @@ export default function IDCardsPage() {
     win.document.close()
   }, [displayList, template, fields, institution])
 
-  const inp: React.CSSProperties = { width: '100%', padding: '7px 10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '12px', fontFamily: 'inherit', outline: 'none' }
+  const inp = "w-full py-[7px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-['inherit'] outline-none"
 
   return (
     <div>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px', flexWrap: 'wrap' }}>
+      <div className="flex items-center gap-2.5 mb-[18px] flex-wrap">
         <button onClick={() => navigate('/students')}
-          style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '9px', background: 'var(--bg-primary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '13px', color: 'var(--text-secondary)', fontFamily: 'inherit', flexShrink: 0 }}>
+          className="flex items-center gap-1.5 py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-['inherit'] shrink-0">
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: 600, color: 'var(--text-primary)' }}>
+        <div className="flex-1">
+          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[22px]'}`}>
             {isBn ? 'আইডি কার্ড' : 'ID Cards'}
           </h1>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '3px' }}>
+          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
             {isBn ? `${displayList.length} জন ছাত্রের আইডি কার্ড তৈরি করুন` : `Generate ID cards for ${displayList.length} students`}
           </p>
         </div>
         <button onClick={printCards} disabled={displayList.length === 0}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '9px', background: displayList.length === 0 ? 'var(--border-2)' : 'var(--brand)', border: 'none', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: displayList.length === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit', boxShadow: displayList.length > 0 ? '0 4px 12px rgba(99,102,241,0.3)' : 'none' }}>
+          className={`flex items-center gap-1.5 py-[9px] px-[18px] rounded-[9px] border-none text-white text-[13px] font-semibold font-['inherit'] ${displayList.length === 0 ? 'bg-[var(--border-2)] cursor-not-allowed' : 'bg-[var(--brand)] cursor-pointer shadow-[0_4px_12px_rgba(99,102,241,0.3)]'}`}>
           <Printer size={14} />
           {isBn ? 'প্রিন্ট করুন' : 'Print'}
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '280px 1fr', gap: '16px', alignItems: 'start' }}>
+      <div className={`grid gap-4 items-start ${isMobile ? 'grid-cols-1' : 'grid-cols-[280px_1fr]'}`}>
 
         {/* Left sidebar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="flex flex-col gap-3">
 
           {/* Institution name */}
-          <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5">
+            <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
               ① {isBn ? 'প্রতিষ্ঠানের নাম' : 'Institution Name'}
             </div>
-            <input value={institution} onChange={e => setInstitution(e.target.value)} style={inp} />
+            <input value={institution} onChange={e => setInstitution(e.target.value)} className={inp} />
           </div>
 
           {/* Template selector */}
-          <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5">
+            <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
               ② {isBn ? 'ডিজাইন টেমপ্লেট' : 'Design Template'}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+            <div className="grid grid-cols-2 gap-1.5">
               {TEMPLATES.map(t => (
                 <button key={t.id} onClick={() => setTemplate(t)}
-                  style={{ padding: '8px', borderRadius: '8px', border: `2px solid ${template.id === t.id ? t.primary : 'var(--border)'}`, background: template.id === t.id ? t.secondary : 'var(--bg-secondary)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', transition: 'all 0.12s' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: t.primary }} />
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: template.id === t.id ? t.primary : 'var(--text-secondary)' }}>{isBn ? t.nameBn : t.name}</span>
+                  className="p-2 rounded-lg border-2 cursor-pointer font-['inherit'] text-left transition-all duration-150"
+                  style={{ borderColor: template.id === t.id ? t.primary : 'var(--border)', background: template.id === t.id ? t.secondary : 'var(--bg-secondary)' }}>
+                  <div className="flex items-center gap-1.5 mb-[3px]">
+                    <div className="w-3 h-3 rounded-full" style={{ background: t.primary }} />
+                    <span className="text-[11px] font-semibold" style={{ color: template.id === t.id ? t.primary : 'var(--text-secondary)' }}>{isBn ? t.nameBn : t.name}</span>
                   </div>
                 </button>
               ))}
@@ -287,16 +282,18 @@ export default function IDCardsPage() {
           </div>
 
           {/* Field toggles */}
-          <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5">
+            <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
               ③ {isBn ? 'তথ্য অপশন' : 'Field Options'} ({fields.length}/{FIELDS.length})
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div className="flex flex-col gap-1">
               {FIELDS.map(f => (
-                <label key={f.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 8px', borderRadius: '6px', border: `1px solid ${fields.includes(f.key) ? 'var(--brand)' : 'var(--border)'}`, background: fields.includes(f.key) ? 'var(--brand-light)' : 'transparent', cursor: 'pointer', transition: 'all 0.1s' }}>
+                <label key={f.key}
+                  className="flex items-center gap-2 py-[5px] px-2 rounded-md cursor-pointer transition-all duration-100"
+                  style={{ border: `1px solid ${fields.includes(f.key) ? 'var(--brand)' : 'var(--border)'}`, background: fields.includes(f.key) ? 'var(--brand-light)' : 'transparent' }}>
                   <input type="checkbox" checked={fields.includes(f.key)} onChange={() => toggleField(f.key)}
-                    style={{ width: '12px', height: '12px', accentColor: 'var(--brand)', cursor: 'pointer' }} />
-                  <span style={{ fontSize: '11px', color: fields.includes(f.key) ? 'var(--brand)' : 'var(--text-secondary)', fontWeight: fields.includes(f.key) ? 500 : 400 }}>
+                    className="w-3 h-3 accent-[var(--brand)] cursor-pointer" />
+                  <span className={`text-[11px] ${fields.includes(f.key) ? 'font-medium text-[var(--brand)]' : 'font-normal text-[var(--text-secondary)]'}`}>
                     {isBn ? f.labelBn : f.label}
                   </span>
                 </label>
@@ -305,26 +302,27 @@ export default function IDCardsPage() {
           </div>
 
           {/* Filter */}
-          <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5">
+            <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
               ④ {isBn ? 'ফিল্টার' : 'Filter'}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '7px', padding: '6px 8px' }}>
-                <Search size={12} style={{ color: 'var(--text-muted)' }} />
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[7px] py-1.5 px-2">
+                <Search size={12} className="text-[var(--text-muted)]" />
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder={isBn ? 'নাম বা আইডি...' : 'Name or ID...'}
-                  style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '11px', color: 'var(--text-primary)', fontFamily: 'inherit' }} />
+                  className="flex-1 border-none bg-transparent outline-none text-[11px] text-[var(--text-primary)] font-['inherit']" />
               </div>
-              <select value={fClass} onChange={e => { setFClass(e.target.value); setFSection('') }} style={inp}>
+              <select value={fClass} onChange={e => { setFClass(e.target.value); setFSection('') }} className={inp}>
                 <option value="">{isBn ? 'সব শ্রেণি' : 'All Classes'}</option>
                 {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-              <select value={fSection} onChange={e => setFSection(e.target.value)} style={inp}>
+              <select value={fSection} onChange={e => setFSection(e.target.value)} className={inp}>
                 <option value="">{isBn ? 'সব সেকশন' : 'All Sections'}</option>
                 {(fClass ? (sectionsMap[fClass] || []) : allSections).map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               <button onClick={selectAll}
-                style={{ padding: '6px', borderRadius: '7px', border: `1px solid ${selected.length > 0 ? 'var(--brand)' : 'var(--border)'}`, background: selected.length > 0 ? 'var(--brand-light)' : 'var(--bg-secondary)', color: selected.length > 0 ? 'var(--brand)' : 'var(--text-secondary)', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+                className="py-1.5 rounded-[7px] text-[11px] cursor-pointer font-['inherit'] font-medium"
+                style={{ border: `1px solid ${selected.length > 0 ? 'var(--brand)' : 'var(--border)'}`, background: selected.length > 0 ? 'var(--brand-light)' : 'var(--bg-secondary)', color: selected.length > 0 ? 'var(--brand)' : 'var(--text-secondary)' }}>
                 {selected.length > 0 ? `${selected.length} ${isBn ? 'নির্বাচিত' : 'selected'}` : (isBn ? `সব বাছুন (${filtered.length})` : `Select All (${filtered.length})`)}
               </button>
             </div>
@@ -332,19 +330,19 @@ export default function IDCardsPage() {
         </div>
 
         {/* Right: Preview */}
-        <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-4">
+          <div className="flex items-center justify-between mb-3.5">
+            <span className="text-[13px] font-semibold text-[var(--text-primary)]">
               {isBn ? 'প্রিভিউ' : 'Preview'} ({displayList.length} {isBn ? 'জন' : 'cards'})
             </span>
           </div>
           {displayList.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-              <IdCard size={32} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
+            <div className="text-center p-10 text-[var(--text-muted)]">
+              <IdCard size={32} className="block mx-auto mb-2 opacity-30" />
               {isBn ? 'কোনো ছাত্র নির্বাচন করুন' : 'Select students to preview'}
             </div>
           ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'flex-start' }}>
+            <div className="flex flex-wrap gap-3 justify-start">
               {displayList.map(s => (
                 <IDCard key={s.id} student={s} template={template} fields={fields} institution={institution} isBn={isBn} />
               ))}

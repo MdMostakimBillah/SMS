@@ -44,44 +44,40 @@ export default function DesignationsPage() {
     setNewName(d.name); setNewNameBn(d.nameBn); setEditD(d)
   }
 
-  const input: React.CSSProperties = {
-    width: '100%', padding: '9px 11px', borderRadius: '8px',
-    border: '1px solid var(--border)', background: 'var(--bg-secondary)',
-    color: 'var(--text-primary)', fontSize: '13px', fontFamily: 'inherit', outline: 'none',
-  }
+  const input = "w-full px-[11px] py-[9px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none"
 
   return (
     <div>
       {/* Add/Edit Modal */}
       {(showAdd || editD) && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
-          <div className="modal-content" style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'400px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
-            <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)', marginBottom:'14px' }}>
+        <div className="fixed inset-0 bg-black/50 z-[600] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[400px] w-full p-5 border border-[var(--border)]">
+            <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-[14px]">
               {editD ? (isBn?'পদবি এডিট করুন':'Edit Designation') : (isBn?'নতুন পদবি':'New Designation')}
             </h3>
-            <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+            <div className="flex flex-col gap-[10px]">
               <div>
-                <label style={{ fontSize:'11px', fontWeight:500, color:'var(--text-secondary)', marginBottom:'4px', display:'block' }}>
+                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn?'নাম (ইংরেজি) *':'Name (English) *'}
                 </label>
-                <input value={newName} onChange={e => setNewName(e.target.value)} style={input}
+                <input value={newName} onChange={e => setNewName(e.target.value)} className={input}
                   placeholder={isBn?'পদবির নাম':'Designation name'} />
               </div>
               <div>
-                <label style={{ fontSize:'11px', fontWeight:500, color:'var(--text-secondary)', marginBottom:'4px', display:'block' }}>
+                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn?'নাম (বাংলা)':'Name (Bangla)'}
                 </label>
-                <input value={newNameBn} onChange={e => setNewNameBn(e.target.value)} style={input}
+                <input value={newNameBn} onChange={e => setNewNameBn(e.target.value)} className={input}
                   placeholder={isBn?'বাংলায় নাম':'Bangla name'} />
               </div>
             </div>
-            <div style={{ display:'flex', gap:'8px', justifyContent:'flex-end', marginTop:'16px' }}>
+            <div className="flex gap-2 justify-end mt-4">
               <button onClick={() => { setShowAdd(false); setEditD(null); setNewName(''); setNewNameBn('') }}
-                style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)', border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'12px', cursor:'pointer', fontFamily:'inherit' }}>
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]">
                 {isBn?'বাতিল':'Cancel'}
               </button>
               <button onClick={editD ? handleEdit : handleAdd}
-                style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--brand)', border:'none', color:'#fff', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+                className="px-3.5 py-2 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]">
                 {editD ? (isBn?'সংরক্ষণ':'Save') : (isBn?'যোগ করুন':'Add')}
               </button>
             </div>
@@ -91,24 +87,24 @@ export default function DesignationsPage() {
 
       {/* Delete Confirmation */}
       {delConfirm && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, height:'100dvh', background:'rgba(0,0,0,0.5)', zIndex:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px', overflowY:'auto' }}>
-          <div className="modal-content" style={{ background:'var(--bg-primary)', borderRadius:'14px', maxWidth:'380px', width:'100%', padding:'20px', border:'1px solid var(--border)' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
-              <div style={{ width:'36px', height:'36px', borderRadius:'8px', background:'var(--red-light)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <AlertTriangle size={18} style={{ color:'var(--red)' }} />
+        <div className="fixed inset-0 bg-black/50 z-[700] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
+            <div className="flex items-center gap-[10px] mb-3">
+              <div className="w-9 h-9 rounded-lg bg-[var(--red-light)] flex items-center justify-center">
+                <AlertTriangle size={18} className="text-[var(--red)]" />
               </div>
-              <h3 style={{ fontSize:'15px', fontWeight:600, color:'var(--text-primary)' }}>{isBn?'মুছে ফেলুন?':'Delete?'}</h3>
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">{isBn?'মুছে ফেলুন?':'Delete?'}</h3>
             </div>
-            <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginBottom:'16px' }}>
+            <p className="text-[13px] text-[var(--text-secondary)] mb-4">
               {isBn?'এই পদবিটি স্থায়ীভাবে মুছে ফেলা হবে।':'This designation will be permanently deleted.'}
             </p>
-            <div style={{ display:'flex', gap:'8px', justifyContent:'flex-end' }}>
+            <div className="flex gap-2 justify-end">
               <button onClick={() => setDelConfirm(null)}
-                style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--bg-secondary)', border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer font-[inherit]">
                 {isBn?'বাতিল':'Cancel'}
               </button>
               <button onClick={() => { deleteDesignation(delConfirm); setDelConfirm(null) }}
-                style={{ padding:'8px 14px', borderRadius:'8px', background:'var(--red)', border:'none', color:'#fff', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+                className="px-3.5 py-2 rounded-lg bg-[var(--red)] border-none text-white text-[13px] font-semibold cursor-pointer font-[inherit]">
                 {isBn?'মুছে ফেলুন':'Delete'}
               </button>
             </div>
@@ -117,36 +113,32 @@ export default function DesignationsPage() {
       )}
 
       {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
+      <div className="flex items-center gap-[10px] mb-4 flex-wrap">
         <button onClick={() => navigate('/teachers')}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
-            background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px',
-            color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
+          className="flex items-center gap-[5px] py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] shrink-0">
           <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
-        <div style={{ flex:1 }}>
-          <h1 style={{ fontSize:'22px', fontWeight:600, color:'var(--text-primary)' }}>
+        <div className="flex-1">
+          <h1 className="text-[22px] font-semibold text-[var(--text-primary)]">
             {isBn?'পদবি ব্যবস্থাপনা':'Designations'}
           </h1>
-          <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginTop:'3px' }}>
+          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
             {isBn?`মোট ${designations.length} টি পদবি`:`${designations.length} designations`}
           </p>
         </div>
         <button onClick={() => { setShowAdd(true); setNewName(''); setNewNameBn('') }}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px',
-            background:'var(--purple-light)', border:'1px solid var(--purple)', color:'var(--purple)',
-            fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+          className="flex items-center gap-[5px] px-3.5 py-2 rounded-[9px] bg-[var(--purple-light)] border border-[var(--purple)] text-[var(--purple)] text-[13px] cursor-pointer font-[inherit] font-medium">
           <Plus size={14} />{isBn?'নতুন যোগ করুন':'Add Designation'}
         </button>
       </div>
 
       {/* Table */}
-      <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-        <div style={{ overflowX:'auto', ...(isMobile ? { maxHeight:'60vh', overflowY:'auto' } : {}) }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px', minWidth: isMobile ? '500px' : undefined }}>
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden">
+        <div className={`overflow-x-auto ${isMobile ? 'max-h-[60vh] overflow-y-auto' : ''}`}>
+          <table className="w-full border-collapse text-xs min-w-[500px]">
             <thead>
-              <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
+              <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 {[
                   { l:'#', w:'50px', align:'center' as const },
                   { l:isBn?'নাম (ইংরেজি)':'Name (EN)', align:'left' as const },
@@ -154,9 +146,8 @@ export default function DesignationsPage() {
                   { l:isBn?'শিক্ষক':'Teachers', w:'80px', align:'center' as const },
                   { l:isBn?'অ্যাকশন':'Action', w:'90px', align:'center' as const },
                 ].map(h => (
-                  <th key={h.l} style={{ padding:'10px 12px', textAlign:h.align, fontSize:'10px', fontWeight:600,
-                    color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.4px',
-                    whiteSpace:'nowrap' }}>
+                  <th key={h.l} className="px-3 py-[10px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap"
+                    style={{ textAlign: h.align }}>
                     {h.l}
                   </th>
                 ))}
@@ -164,38 +155,38 @@ export default function DesignationsPage() {
             </thead>
             <tbody>
               {designations.length === 0
-                ? <tr><td colSpan={5} style={{ padding:'40px', textAlign:'center', color:'var(--text-muted)' }}>
-                    <Briefcase size={28} style={{ display:'block', margin:'0 auto 8px', opacity:0.3 }} />
+                ? <tr><td colSpan={5} className="p-10 text-center text-[var(--text-muted)]">
+                    <Briefcase size={28} className="block mx-auto mb-2 opacity-30" />
                     {isBn?'কোনো পদবি পাওয়া যায়নি':'No designations found'}
                   </td></tr>
                 : designations.map((d, i) => (
                   <tr key={d.id}
-                    style={{ borderBottom:'0.5px solid var(--border)' }}
+                    className="border-b border-[var(--border)]"
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding:'10px 12px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px', textAlign:'center' }}>{i+1}</td>
-                    <td style={{ padding:'10px 12px' }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                        <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:'var(--purple-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                          <Briefcase size={16} style={{ color:'var(--purple)' }} />
+                    <td className="px-3 py-[10px] text-[var(--text-muted)] font-semibold text-[11px] text-center">{i+1}</td>
+                    <td className="px-3 py-[10px]">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-[var(--purple-light)] flex items-center justify-center shrink-0">
+                          <Briefcase size={16} className="text-[var(--purple)]" />
                         </div>
-                        <span style={{ fontSize:'13px', fontWeight:500, color:'var(--text-primary)' }}>{d.name}</span>
+                        <span className="text-[13px] font-medium text-[var(--text-primary)]">{d.name}</span>
                       </div>
                     </td>
-                    <td style={{ padding:'10px 12px', fontSize:'12px', color:'var(--text-secondary)' }}>{d.nameBn || '—'}</td>
-                    <td style={{ padding:'10px 12px', textAlign:'center' }}>
-                      <span style={{ fontSize:'12px', fontWeight:600, color:'var(--brand)', background:'var(--brand-light)', padding:'3px 8px', borderRadius:'6px' }}>
+                    <td className="px-3 py-[10px] text-xs text-[var(--text-secondary)]">{d.nameBn || '—'}</td>
+                    <td className="px-3 py-[10px] text-center">
+                      <span className="text-xs font-semibold text-[var(--brand)] bg-[var(--brand-light)] py-[3px] px-2 rounded-md">
                         {getDesignationTeacherCount(d.name)}
                       </span>
                     </td>
-                    <td style={{ padding:'10px 12px', textAlign:'center' }}>
-                      <div style={{ display:'flex', gap:'4px', justifyContent:'center' }}>
+                    <td className="px-3 py-[10px] text-center">
+                      <div className="flex gap-1 justify-center">
                         <button onClick={() => startEdit(d)} title={isBn?'এডিট':'Edit'}
-                          style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--amber-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--amber)' }}>
+                          className="w-7 h-7 rounded-[7px] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]">
                           <Edit2 size={12} />
                         </button>
                         <button onClick={() => setDelConfirm(d.id)} title={isBn?'মুছুন':'Delete'}
-                          style={{ width:'28px', height:'28px', borderRadius:'7px', background:'var(--red-light)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--red)' }}>
+                          className="w-7 h-7 rounded-[7px] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]">
                           <Trash2 size={12} />
                         </button>
                       </div>

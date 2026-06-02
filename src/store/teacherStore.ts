@@ -319,7 +319,7 @@ function generateDemoAttendance(): Record<string, Record<string, DayAttendance>>
   const teacherIds = sampleTeachers.map(t => t.id)
   const inTimes = ['07:20','07:25','07:28','07:30','07:32','07:35','07:38','07:40','07:42','07:45','07:50','07:55','08:00','08:01','08:05']
   const now = new Date()
-  for (let i = 1; i <= 28; i++) {
+  for (let i = 0; i <= 28; i++) {
     const d = new Date(now)
     d.setDate(d.getDate() - i)
     const day = d.getDay()

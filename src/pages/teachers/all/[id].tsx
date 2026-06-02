@@ -26,13 +26,13 @@ export default function TeacherDetailPage() {
   }
 
   const statusBadge = (st: string) => {
-    const m: Record<string, {b:string;c:string;l:string;lb:string}> = {
-      'active': { b:'var(--green-light)', c:'var(--green)', l:'Active', lb:'সক্রিয়' },
-      'inactive': { b:'var(--red-light)', c:'var(--red)', l:'Inactive', lb:'নিষ্ক্রিয়' },
-      'on-leave': { b:'var(--amber-light)', c:'var(--amber)', l:'On Leave', lb:'ছুটিতে' },
+    const m: Record<string, {bg:string;tc:string;l:string;lb:string}> = {
+      'active': { bg:'bg-[var(--green-light)]', tc:'text-[var(--green)]', l:'Active', lb:'সক্রিয়' },
+      'inactive': { bg:'bg-[var(--red-light)]', tc:'text-[var(--red)]', l:'Inactive', lb:'নিষ্ক্রিয়' },
+      'on-leave': { bg:'bg-[var(--amber-light)]', tc:'text-[var(--amber)]', l:'On Leave', lb:'ছুটিতে' },
     }
     const x = m[st] || m['active']
-    return <span style={{ fontSize:'12px', fontWeight:600, padding:'4px 12px', borderRadius:'12px', background:x.b, color:x.c }}>{isBn?x.lb:x.l}</span>
+    return <span className={`text-xs font-semibold py-1 px-3 rounded-xl ${x.bg} ${x.tc}`}>{isBn?x.lb:x.l}</span>
   }
 
   const downloadPDF = () => {
@@ -84,10 +84,10 @@ ${teacher.photo ? `<div class="photo"><img src="${teacher.photo}" alt="${teacher
 
   if (!teacher) {
     return (
-      <div style={{ padding:'40px', textAlign:'center' }}>
-        <AlertCircle size={40} style={{ color:'var(--text-muted)', marginBottom:'12px' }} />
-        <p style={{ fontSize:'14px', color:'var(--text-secondary)' }}>{isBn?'শিক্ষক পাওয়া যায়নি':'Teacher not found'}</p>
-        <button onClick={() => navigate('/teachers/all')} style={{ marginTop:'12px', padding:'8px 16px', borderRadius:'8px', background:'var(--brand)', border:'none', color:'#fff', fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
+      <div className="p-10 text-center">
+        <AlertCircle size={40} className="text-[var(--text-muted)] mb-3" />
+        <p className="text-sm text-[var(--text-secondary)]">{isBn?'শিক্ষক পাওয়া যায়নি':'Teacher not found'}</p>
+        <button onClick={() => navigate('/teachers/all')} className="mt-3 py-2 px-4 rounded-lg bg-[var(--border)] border-none text-white text-[13px] cursor-pointer font-inherit">
           {isBn?'ফিরে যান':'Go Back'}
         </button>
       </div>
@@ -127,78 +127,69 @@ ${teacher.photo ? `<div class="photo"><img src="${teacher.photo}" alt="${teacher
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px', flexWrap:'wrap' }}>
+      <div className="flex items-center gap-2.5 mb-4 flex-wrap">
         <button onClick={() => navigate('/teachers/all')}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px',
-            background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px',
-            color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
+          className="flex items-center gap-1.5 py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-inherit shrink-0">
           <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
-        <div style={{ flex:1 }}>
-          <h1 style={{ fontSize:'22px', fontWeight:600, color:'var(--text-primary)' }}>
+        <div className="flex-1">
+          <h1 className="text-[22px] font-semibold text-[var(--text-primary)]">
             {isBn?'শিক্ষক প্রোফাইল':'Teacher Profile'}
           </h1>
-          <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginTop:'3px' }}>
+          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
             {teacher.id} · {getDeptName(teacher.departmentId)}
           </p>
         </div>
         <button onClick={downloadPDF}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'9px',
-            background:'var(--red-light)', border:'1px solid var(--red)', color:'var(--red)',
-            fontSize:'13px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+          className="flex items-center gap-1.5 py-2 px-3.5 rounded-[9px] bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[13px] cursor-pointer font-inherit font-medium">
           <FileText size={14} />PDF
         </button>
       </div>
 
-      {/* Profile Card */}
-      <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden' }}>
-        {/* Top Section */}
-        <div style={{ padding:'20px', background:'var(--brand-light)', borderBottom:'1px solid var(--border)', display:'flex', gap:'20px', alignItems:'flex-start', flexWrap:'wrap' }}>
-          <div style={{ width:'100px', height:'120px', borderRadius:'10px', border:'2px solid var(--brand)', overflow:'hidden', background:'var(--bg-secondary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-            {teacher.photo ? <img src={teacher.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <User size={36} style={{ color:'var(--text-muted)' }} />}
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden">
+        <div className="p-5 bg-[var(--brand-light)] border-b border-[var(--border)] flex gap-5 items-start flex-wrap">
+          <div className="w-[100px] h-[120px] rounded-[10px] border-2 border-[var(--brand)] overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center shrink-0">
+            {teacher.photo ? <img src={teacher.photo} alt="" className="w-full h-full object-cover" /> : <User size={36} className="text-[var(--text-muted)]" />}
           </div>
-          <div style={{ flex:1 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'6px', flexWrap:'wrap' }}>
-              <h2 style={{ fontSize:'20px', fontWeight:600, color:'var(--text-primary)' }}>{teacher.nameEn}</h2>
+          <div className="flex-1">
+            <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
+              <h2 className="text-xl font-semibold text-[var(--text-primary)]">{teacher.nameEn}</h2>
               {statusBadge(teacher.status)}
             </div>
-            <p style={{ fontSize:'14px', color:'var(--text-secondary)', marginBottom:'8px' }}>{teacher.nameBn}</p>
-            <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
+            <p className="text-sm text-[var(--text-secondary)] mb-2">{teacher.nameBn}</p>
+            <div className="flex gap-1.5 flex-wrap">
               {[
                 { t:getDeptName(teacher.departmentId), c:'var(--brand)', b:'var(--brand-light)' },
                 { t:teacher.designation, c:'var(--teal)', b:'var(--teal-light)' },
                 { t:teacher.gender==='Male'?(isBn?'পুরুষ':'Male'):(isBn?'মহিলা':'Female'), c:'var(--purple)', b:'var(--purple-light)' },
                 { t:teacher.bloodGroup, c:'var(--red)', b:'var(--red-light)' },
               ].filter(x => x.t).map((x,i) => (
-                <span key={i} style={{ fontSize:'12px', fontWeight:500, padding:'3px 10px', borderRadius:'6px', color:x.c, background:x.b }}>{x.t}</span>
+                <span key={i} className={`text-xs font-medium py-[3px] px-2.5 rounded-md text-[${x.c}] bg-[${x.b}]`}>{x.t}</span>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Info Grid */}
-        <div style={{ padding:'20px' }}>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:'12px' }}>
+        <div className="p-5">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3">
             {infoItems.map(([l, v]) => v ? (
-              <div key={String(l)} style={{ display:'flex', gap:'10px', padding:'8px 12px', borderRadius:'8px', background:'var(--bg-secondary)' }}>
-                <span style={{ fontSize:'11px', color:'var(--text-muted)', width:'110px', flexShrink:0 }}>{l}</span>
-                <span style={{ fontSize:'12px', color:'var(--text-primary)', fontWeight:500 }}>{v}</span>
+              <div key={String(l)} className="flex gap-2.5 py-2 px-3 rounded-lg bg-[var(--bg-secondary)]">
+                <span className="text-[11px] text-[var(--text-muted)] w-[110px] shrink-0">{l}</span>
+                <span className="text-xs text-[var(--text-primary)] font-medium">{v}</span>
               </div>
             ) : null)}
           </div>
 
-          {/* Parent Info */}
-          <div style={{ marginTop:'20px', paddingTop:'16px', borderTop:'1px solid var(--border)' }}>
-            <h3 style={{ fontSize:'14px', fontWeight:600, color:'var(--text-primary)', marginBottom:'12px' }}>
+          <div className="mt-5 pt-4 border-t border-[var(--border)]">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">
               {isBn?'অভিভাবক তথ্য':'Parent/Guardian Information'}
             </h3>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:'12px' }}>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3">
               {parentItems.map(([l, v]) => v ? (
-                <div key={String(l)} style={{ display:'flex', gap:'10px', padding:'8px 12px', borderRadius:'8px', background:'var(--bg-secondary)' }}>
-                  <span style={{ fontSize:'11px', color:'var(--text-muted)', width:'110px', flexShrink:0 }}>{l}</span>
-                  <span style={{ fontSize:'12px', color:'var(--text-primary)', fontWeight:500 }}>{v}</span>
+                <div key={String(l)} className="flex gap-2.5 py-2 px-3 rounded-lg bg-[var(--bg-secondary)]">
+                  <span className="text-[11px] text-[var(--text-muted)] w-[110px] shrink-0">{l}</span>
+                  <span className="text-xs text-[var(--text-primary)] font-medium">{v}</span>
                 </div>
               ) : null)}
             </div>

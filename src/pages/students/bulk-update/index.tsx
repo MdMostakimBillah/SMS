@@ -28,14 +28,13 @@ const STATIC_OPTS: Record<string,string[]> = {
 // ✅ OUTSIDE — prevents cell focus loss on re-render
 interface CellProps { value:string; onChange:(v:string)=>void; type?:string; opts?:string[] }
 const EditCell = React.memo(function EditCell({ value, onChange, type='text', opts }: CellProps) {
-  const s: React.CSSProperties = { width:'100%', padding:'6px 8px', borderRadius:'7px', border:'1px solid var(--border)', background:'var(--bg-secondary)', color:'var(--text-primary)', fontSize:'12px', fontFamily:'inherit', outline:'none' }
   if (opts) return (
-    <select value={value} onChange={e=>onChange(e.target.value)} style={{ ...s, cursor:'pointer' }}>
+    <select value={value} onChange={e=>onChange(e.target.value)} className="w-full px-2 py-1.5 rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer">
       <option value="">—</option>
       {opts.map(o=><option key={o} value={o}>{o}</option>)}
     </select>
   )
-  return <input type={type} value={value} onChange={e=>onChange(e.target.value)} style={s}
+  return <input type={type} value={value} onChange={e=>onChange(e.target.value)} className="w-full px-2 py-1.5 rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none"
     onFocus={e=>(e.target.style.borderColor='var(--brand)')}
     onBlur={e=>(e.target.style.borderColor='var(--border)')} />
 })
@@ -122,7 +121,7 @@ const handlePhotoUpload = useCallback(
       setPhotoMap((prev) => ({ ...prev, [id]: base64 }));
     } catch (error) {
       console.error("Image compression failed:", error);
-      alert(isBn ? "ছবি প্রসেস করতে সমস্যা হয়েছে" : "Failed to process image");
+      alert(isBn ? "ছবি প্রসেস করতে সমস্যা হয়েছে" : "Failed to process image");
     }
   },
   [isBn],
@@ -165,37 +164,35 @@ const handlePhotoUpload = useCallback(
     ? Object.keys(photoMap).length
     : Object.keys(rowEdits).filter(k=>rowEdits[k]).length
 
-  const inp: React.CSSProperties = { padding:'7px 9px', borderRadius:'8px', border:'1px solid var(--border)', background:'var(--bg-secondary)', color:'var(--text-secondary)', fontSize:'12px', fontFamily:'inherit', cursor:'pointer', outline:'none' }
-
   return (
     <div>
-      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'18px', flexWrap:'wrap' }}>
+      <div className="flex items-center gap-[10px] mb-[18px] flex-wrap">
         <button onClick={() => navigate('/students')}
-          style={{ display:'flex', alignItems:'center', gap:'5px', padding:'7px 12px', borderRadius:'9px', background:'var(--bg-primary)', border:'1px solid var(--border)', cursor:'pointer', fontSize:'13px', color:'var(--text-secondary)', fontFamily:'inherit', flexShrink:0 }}>
+          className="flex items-center gap-[5px] px-3 py-[7px] rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] flex-shrink-0">
           <ArrowLeft size={14} />
           {isBn?'ফিরে যান':'Back'}
         </button>
         <div>
-          <h1 style={{ fontSize:'22px', fontWeight:600, color:'var(--text-primary)' }}>
+          <h1 className="text-[22px] font-semibold text-[var(--text-primary)]">
             {isBn?'বাল্ক আপডেট':'Bulk Update'}
           </h1>
-          <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginTop:'3px' }}>
+          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
             {isBn?'একসাথে অনেক ছাত্রের তথ্য পরিবর্তন করুন':'Update multiple students at once'}
           </p>
         </div>
       </div>
 
       {/* ① Operation selector */}
-      <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', padding:'14px 16px', marginBottom:'12px' }}>
-        <div style={{ fontSize:'12px', fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'10px' }}>
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] px-4 py-[14px] mb-3">
+        <div className="text-[12px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-[10px]">
           ① {isBn?'কোন তথ্য পরিবর্তন করতে চান?':'What do you want to update?'}
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(4,1fr)':'repeat(7,1fr)', gap:'6px' }}>
+        <div className={`grid gap-[6px] ${isMobile ? 'grid-cols-4' : 'grid-cols-7'}`}>
           {OPS.map(o => (
             <button key={o.id} onClick={() => { setOp(o.id); setRowEdits({}); setPhotoMap({}); setBatchVal('') }}
-              style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'5px', padding:'10px 6px', borderRadius:'10px', border:`2px solid ${op===o.id?o.color:'var(--border)'}`, background:op===o.id?o.bg:'var(--bg-secondary)', cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s' }}>
-              <o.Icon size={18} style={{ color:op===o.id?o.color:'var(--text-muted)' }} />
-              <span style={{ fontSize:'10px', fontWeight:op===o.id?600:400, color:op===o.id?o.color:'var(--text-secondary)', textAlign:'center', lineHeight:1.2 }}>
+              className={`flex flex-col items-center gap-[5px] py-[10px] px-[6px] rounded-[10px] border-2 font-[inherit] transition-all ${op===o.id ? `border-[${o.color}] bg-[${o.bg}]` : 'border-[var(--border)] bg-[var(--bg-secondary)]'}`}>
+              <o.Icon size={18} className={op===o.id ? `text-[${o.color}]` : 'text-[var(--text-muted)]'} />
+              <span className={`text-[10px] text-center leading-[1.2] ${op===o.id ? `font-semibold text-[${o.color}]` : 'font-normal text-[var(--text-secondary)]'}`}>
                 {isBn?o.bn:o.en}
               </span>
             </button>
@@ -204,35 +201,35 @@ const handlePhotoUpload = useCallback(
       </div>
 
       {/* ② Filter + Batch apply row */}
-      <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'240px 1fr', gap:'10px', marginBottom:'10px' }}>
+      <div className={`grid gap-[10px] mb-[10px] ${isMobile ? 'grid-cols-1' : 'grid-cols-[240px_1fr]'}`}>
 
         {/* Filter */}
-        <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'12px', padding:'12px 14px' }}>
-          <div style={{ fontSize:'11px', fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'8px' }}>
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-[14px] py-3">
+          <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
             ② {isBn?'ছাত্র ফিল্টার':'Filter Students'}
           </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'7px', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'8px', padding:'6px 9px' }}>
-              <Search size={13} style={{ color:'var(--text-muted)', flexShrink:0 }} />
+          <div className="flex flex-col gap-[6px]">
+            <div className="flex items-center gap-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[8px] px-[9px] py-1.5">
+              <Search size={13} className="text-[var(--text-muted)] flex-shrink-0" />
               <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={isBn?'নাম বা আইডি...':'Name or ID...'}
-                style={{ flex:1, border:'none', background:'transparent', outline:'none', fontSize:'12px', color:'var(--text-primary)', fontFamily:'inherit' }} />
+                className="flex-1 border-none bg-transparent outline-none text-[12px] text-[var(--text-primary)] font-[inherit]" />
             </div>
-            <select value={fClass} onChange={e=>{ setFClass(e.target.value); setFSection('') }} style={inp}>
+            <select value={fClass} onChange={e=>{ setFClass(e.target.value); setFSection('') }} className="px-[9px] py-[7px] rounded-[8px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[12px] font-[inherit] cursor-pointer outline-none">
               <option value="">{isBn?'সব শ্রেণি':'All Classes'}</option>
               {classOptions.map(c=><option key={c} value={c}>{c}</option>)}
             </select>
-            <select value={fSection} onChange={e=>setFSection(e.target.value)} style={inp}>
+            <select value={fSection} onChange={e=>setFSection(e.target.value)} className="px-[9px] py-[7px] rounded-[8px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[12px] font-[inherit] cursor-pointer outline-none">
               <option value="">{isBn?'সব সেকশন':'All Sections'}</option>
               {(fClass ? (sectionsMap[fClass] || []) : allSections).map(s=><option key={s} value={s}>{s}</option>)}
             </select>
-            <div style={{ display:'flex', gap:'5px' }}>
+            <div className="flex gap-[5px]">
               <button onClick={toggleAll}
-                style={{ flex:1, padding:'6px 8px', borderRadius:'7px', border:`1px solid ${allSel?'var(--brand)':'var(--border)'}`, background:allSel?'var(--brand-light)':'var(--bg-secondary)', color:allSel?'var(--brand)':'var(--text-secondary)', fontSize:'11px', cursor:'pointer', fontFamily:'inherit', fontWeight:500 }}>
+                className={`flex-1 px-2 py-1.5 rounded-[7px] border bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[11px] cursor-pointer font-[inherit] font-medium ${allSel ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]' : 'border-[var(--border)]'}`}>
                 {allSel?(isBn?'সব বাদ':'Deselect All'):(isBn?'সব বাছুন':'Select All')} ({filtered.length})
               </button>
               {selected.length>0 && (
                 <button onClick={()=>setSelected([])}
-                  style={{ padding:'6px 10px', borderRadius:'7px', border:'1px solid var(--red)', background:'var(--red-light)', color:'var(--red)', fontSize:'11px', cursor:'pointer', fontFamily:'inherit' }}>
+                  className="px-[10px] py-1.5 rounded-[7px] border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] text-[11px] cursor-pointer font-[inherit]">
                   {selected.length} ✕
                 </button>
               )}
@@ -241,48 +238,48 @@ const handlePhotoUpload = useCallback(
         </div>
 
         {/* Batch operation */}
-        <div style={{ background:'var(--bg-primary)', border:`1px solid ${opInfo.color}`, borderRadius:'12px', padding:'12px 14px' }}>
-          <div style={{ fontSize:'11px', fontWeight:600, color:opInfo.color, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'10px' }}>
+        <div className="bg-[var(--bg-primary)] border rounded-xl px-[14px] py-3" style={{ borderColor: opInfo.color }}>
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-[10px]" style={{ color: opInfo.color }}>
             ③ {isBn?`এক সাথে ${opInfo.bn}`:` Batch ${opInfo.en}`}
-            {selected.length>0 && <span style={{ marginLeft:'6px', fontWeight:700 }}>— {selected.length} {isBn?'জন':'selected'}</span>}
+            {selected.length>0 && <span className="ml-[6px] font-bold">— {selected.length} {isBn?'জন':'selected'}</span>}
           </div>
 
           {op === 'photo' ? (
-            <div style={{ padding:'10px', background:opInfo.bg, borderRadius:'8px', fontSize:'13px', color:opInfo.color }}>
-              <Info size={14} style={{ display:'inline', marginRight:'5px', verticalAlign:'middle' }} />
+            <div className="py-[10px] px-[10px] rounded-[8px] text-[13px]" style={{ background: opInfo.bg, color: opInfo.color }}>
+              <Info size={14} className="inline mr-[5px] align-middle" />
               {isBn?'নিচের টেবিলে প্রতিটি ছাত্রের পাশের বাটনে ক্লিক করে ছবি আপলোড করুন':'Click the upload button next to each student in the table below'}
             </div>
           ) : op === 'roll' ? (
-            <div style={{ display:'flex', gap:'10px', alignItems:'center', flexWrap:'wrap' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:'7px' }}>
-                <span style={{ fontSize:'12px', color:'var(--text-muted)', whiteSpace:'nowrap' }}>{isBn?'শুরু থেকে:':'Start from:'}</span>
+            <div className="flex gap-[10px] items-center flex-wrap">
+              <div className="flex items-center gap-[7px]">
+                <span className="text-[12px] text-[var(--text-muted)] whitespace-nowrap">{isBn?'শুরু থেকে:':'Start from:'}</span>
                 <input type="number" min={1} value={autoStart} onChange={e=>setAutoStart(Math.max(1,Number(e.target.value)))}
-                  style={{ width:'60px', padding:'6px 8px', borderRadius:'7px', border:'1px solid var(--border)', background:'var(--bg-secondary)', color:'var(--text-primary)', fontSize:'13px', fontFamily:'inherit', outline:'none', textAlign:'center' }} />
+                  className="w-[60px] px-2 py-[6px] rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none text-center" />
               </div>
               <button onClick={applyAutoRoll}
-                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px', background:opInfo.color, border:'none', color:'#fff', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'inherit' }}>
+                className="flex items-center gap-[5px] px-[14px] py-2 rounded-[8px] text-white text-[12px] font-medium cursor-pointer font-[inherit]" style={{ background: opInfo.color }}>
                 <Wand2 size={13} />
                 {isBn?'ক্রমানুসারে রোল দিন':'Auto-assign Sequential Rolls'}
               </button>
-              <span style={{ fontSize:'11px', color:'var(--text-muted)' }}>
+              <span className="text-[11px] text-[var(--text-muted)]">
                 {isBn?'অথবা নিচে সরাসরি রোল লিখুন':'Or type rolls directly below'}
               </span>
             </div>
           ) : (
-            <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
+            <div className="flex gap-2 items-center flex-wrap">
               {OPTS[op] ? (
                 <select value={batchVal} onChange={e=>setBatchVal(e.target.value)}
-                  style={{ ...inp, flex:1, color:batchVal?'var(--text-primary)':'var(--text-secondary)' }}>
+                  className="px-[9px] py-[7px] rounded-[8px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] font-[inherit] cursor-pointer outline-none flex-1" style={{ color: batchVal ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                   <option value="">{isBn?'নতুন মান বেছে নিন':'Select new value'}</option>
                   {OPTS[op].map(o=><option key={o} value={o}>{o}</option>)}
                 </select>
               ) : (
                 <input value={batchVal} onChange={e=>setBatchVal(e.target.value)}
                   placeholder={isBn?'নতুন মান লিখুন':'Enter new value'}
-                  style={{ ...inp, flex:1, color:'var(--text-primary)' }} />
+                  className="flex-1 px-[9px] py-[7px] rounded-[8px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[12px] font-[inherit] outline-none" />
               )}
               <button onClick={applyBatch} disabled={!batchVal||selected.length===0}
-                style={{ display:'flex', alignItems:'center', gap:'5px', padding:'8px 14px', borderRadius:'8px', background:(!batchVal||selected.length===0)?'var(--border-2)':opInfo.color, border:'none', color:'#fff', fontSize:'12px', fontWeight:500, cursor:(!batchVal||selected.length===0)?'not-allowed':'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
+                className="flex items-center gap-[5px] px-[14px] py-2 rounded-[8px] border-none text-white text-[12px] font-medium font-[inherit] whitespace-nowrap disabled:cursor-not-allowed" style={{ background: (!batchVal || selected.length===0) ? 'var(--border-2)' : opInfo.color, cursor: (!batchVal || selected.length===0) ? 'not-allowed' : 'pointer' }}>
                 <Zap size={13} />
                 {isBn?`${selected.length} জনে লাগান`:`Apply to ${selected.length}`}
               </button>
@@ -292,87 +289,88 @@ const handlePhotoUpload = useCallback(
       </div>
 
       {/* Table */}
-      <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'14px', overflow:'hidden', marginBottom:'12px' }}>
-        <div style={{ padding:'10px 14px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--bg-secondary)' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-            <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:opInfo.color }} />
-            <span style={{ fontSize:'13px', fontWeight:500, color:'var(--text-primary)' }}>
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden mb-3">
+        <div className="px-[14px] py-[10px] border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-secondary)]">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full" style={{ background: opInfo.color }} />
+            <span className="text-[13px] font-medium text-[var(--text-primary)]">
               {filtered.length} {isBn?'জন ছাত্র':'students'}
-              {selected.length>0 && <span style={{ color:opInfo.color, marginLeft:'8px' }}>· {selected.length} {isBn?'নির্বাচিত':'selected'}</span>}
+              {selected.length>0 && <span className="ml-2" style={{ color: opInfo.color }}>· {selected.length} {isBn?'নির্বাচিত':'selected'}</span>}
             </span>
           </div>
           {readyCount>0 && (
-            <span style={{ fontSize:'12px', color:opInfo.color, background:opInfo.bg, padding:'3px 10px', borderRadius:'6px', fontWeight:500 }}>
+            <span className="text-[12px] px-[10px] py-[3px] rounded-[6px] font-medium" style={{ color: opInfo.color, background: opInfo.bg }}>
               {readyCount} {isBn?'টি পরিবর্তন প্রস্তুত':'changes ready'}
             </span>
           )}
         </div>
 
-        <div style={{ overflowX:'auto' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-[12px]">
             <thead>
-              <tr style={{ background:'var(--bg-secondary)', borderBottom:'1px solid var(--border)' }}>
-                <th style={{ padding:'10px 12px', width:'36px' }}>
+              <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                <th className="px-3 py-[10px] w-[36px]">
                   <input type="checkbox" checked={allSel} onChange={toggleAll}
-                    style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:opInfo.color }} />
+                    className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" style={{ accentColor: opInfo.color }} />
                 </th>
-                <th style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', width:'36px' }}>#</th>
-                <th style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', minWidth:'50px' }}>{isBn?'ছবি':'Photo'}</th>
-                <th style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', minWidth:'165px' }}>{isBn?'নাম / আইডি':'Name / ID'}</th>
-                <th style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600, color:'var(--text-muted)', textTransform:'uppercase', minWidth:'80px' }}>{isBn?'বর্তমান মান':'Current'}</th>
-                <th style={{ padding:'10px 8px', textAlign:'left', fontSize:'10px', fontWeight:600, color:opInfo.color, textTransform:'uppercase', minWidth:'200px', background:`${opInfo.bg}55` }}>
+                <th className="px-2 py-[10px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase w-[36px]">#</th>
+                <th className="px-2 py-[10px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase min-w-[50px]">{isBn?'ছবি':'Photo'}</th>
+                <th className="px-2 py-[10px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase min-w-[165px]">{isBn?'নাম / আইডি':'Name / ID'}</th>
+                <th className="px-2 py-[10px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase min-w-[80px]">{isBn?'বর্তমান মান':'Current'}</th>
+                <th className="px-2 py-[10px] text-left text-[10px] font-semibold uppercase min-w-[200px]" style={{ color: opInfo.color, background: `${opInfo.bg}55` }}>
                   ✏️ {isBn?opInfo.bn:opInfo.en}
                 </th>
               </tr>
             </thead>
             <tbody>
               {filtered.length===0
-                ? <tr><td colSpan={6} style={{ padding:'30px', textAlign:'center', color:'var(--text-muted)' }}>
+                ? <tr><td colSpan={6} className="px-[30px] py-[30px] text-center text-[var(--text-muted)]">
                     {isBn?'কোনো ছাত্র পাওয়া যায়নি':'No students found'}
                   </td></tr>
                 : filtered.map((s,i) => (
                   <tr key={s.id}
-                    style={{ borderBottom:'0.5px solid var(--border)', background:selected.includes(s.id)?`${opInfo.bg}44`:'transparent' }}
+                    className="border-b border-[var(--border)]"
+                    style={{ borderBottomWidth: '0.5px', background: selected.includes(s.id) ? `${opInfo.bg}44` : 'transparent' }}
                     onMouseEnter={e=>{if(!selected.includes(s.id))e.currentTarget.style.background='var(--bg-secondary)'}}
                     onMouseLeave={e=>{if(!selected.includes(s.id))e.currentTarget.style.background='transparent'}}>
-                    <td style={{ padding:'8px 12px' }}>
+                    <td className="px-3 py-2">
                       <input type="checkbox" checked={selected.includes(s.id)} onChange={()=>toggleOne(s.id)}
-                        style={{ width:'13px', height:'13px', cursor:'pointer', accentColor:opInfo.color }} />
+                        className="w-[13px] h-[13px] cursor-pointer" style={{ accentColor: opInfo.color }} />
                     </td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-muted)', fontWeight:600, fontSize:'11px' }}>{i+1}</td>
-                    <td style={{ padding:'7px 8px' }}>
-                      <div style={{ position:'relative', width:'32px', height:'38px', borderRadius:'6px', overflow:'visible', background:'var(--bg-secondary)', border:`1px solid ${photoMap[s.id]?opInfo.color:'var(--border)'}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <td className="px-2 py-2 text-[var(--text-muted)] font-semibold text-[11px]">{i+1}</td>
+                    <td className="px-2 py-[7px]">
+                      <div className="relative w-[32px] h-[38px] rounded-[6px] overflow-visible bg-[var(--bg-secondary)] border flex items-center justify-center" style={{ borderColor: photoMap[s.id] ? opInfo.color : 'var(--border)' }}>
                         {(photoMap[s.id]||s.photo)
-                          ? <img src={photoMap[s.id]||s.photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:'5px' }} />
-                          : <User size={14} style={{ color:'var(--text-muted)' }} />}
+                          ? <img src={photoMap[s.id]||s.photo} alt="" className="w-full h-full object-cover rounded-[5px]" />
+                          : <User size={14} className="text-[var(--text-muted)]" />}
                         {photoMap[s.id] && (
                           <button onClick={()=>setPhotoMap(p=>{const n={...p};delete n[s.id];return n})}
                             title={isBn?'ছবি সরান':'Remove photo'}
-                            style={{ position:'absolute', top:'-5px', right:'-5px', width:'18px', height:'18px', borderRadius:'50%', background:'var(--red)', border:'2px solid var(--bg-primary)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1, boxShadow:'0 1px 3px rgba(0,0,0,0.3)' }}>
-                            <X size={10} style={{ color:'#fff' }} />
+                            className="absolute -top-[5px] -right-[5px] w-[18px] h-[18px] rounded-full bg-[var(--red)] border-2 border-[var(--bg-primary)] cursor-pointer flex items-center justify-center z-10 shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+                            <X size={10} className="text-white" />
                           </button>
                         )}
                       </div>
                     </td>
-                    <td style={{ padding:'8px 8px' }}>
-                      <div style={{ fontSize:'12px', fontWeight:500, color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'160px' }}>
+                    <td className="px-2 py-2">
+                      <div className="text-[12px] font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap max-w-[160px]">
                         {isBn?s.nameBn||s.nameEn:s.nameEn}
                       </div>
-                      <div style={{ fontSize:'10px', color:'var(--brand)', fontFamily:'monospace' }}>{s.id}</div>
+                      <div className="text-[10px] text-[var(--brand)] font-mono">{s.id}</div>
                     </td>
-                    <td style={{ padding:'8px 8px', color:'var(--text-secondary)', fontSize:'11px' }}>
+                    <td className="px-2 py-2 text-[var(--text-secondary)] text-[11px]">
                       {op==='photo'
                         ? (s.photo?(isBn?'ছবি আছে':'Has photo'):(isBn?'নেই':'None'))
                         : (String((s as any)[op]||'—'))}
                     </td>
-                    <td style={{ padding:'6px 8px', background:selected.includes(s.id)?`${opInfo.bg}33`:'transparent' }}>
+                    <td className="px-2 py-[6px]" style={{ background: selected.includes(s.id) ? `${opInfo.bg}33` : 'transparent' }}>
                       {op==='photo' ? (
-                        <label style={{ display:'flex', alignItems:'center', gap:'5px', padding:'6px 10px', borderRadius:'7px', background:photoMap[s.id]?'var(--green-light)':opInfo.bg, border:`1px solid ${photoMap[s.id]?'var(--green)':opInfo.color}`, color:photoMap[s.id]?'var(--green)':opInfo.color, fontSize:'11px', cursor:'pointer', fontWeight:500, width:'fit-content' }}>
+                        <label className="flex items-center gap-[5px] px-[10px] py-[6px] rounded-[7px] border text-[11px] cursor-pointer font-medium w-fit" style={{ background: photoMap[s.id] ? 'var(--green-light)' : opInfo.bg, borderColor: photoMap[s.id] ? 'var(--green)' : opInfo.color, color: photoMap[s.id] ? 'var(--green)' : opInfo.color }}>
                           {photoMap[s.id] ? <CheckCircle size={12} /> : <Upload size={12} />}
                           {photoMap[s.id]?(isBn?'আপলোড হয়েছে ✓':'Uploaded ✓'):(isBn?'ছবি বেছে নিন':'Choose Photo')}
                           <input ref={el=>{fileRefs.current[s.id]=el}} type="file" accept="image/*"
                             onChange={e=>{const f=e.target.files?.[0];if(f)handlePhotoUpload(s.id,f)}}
-                            style={{ display:'none' }} />
+                            className="hidden" />
                         </label>
                       ) : (
                         <EditCell
@@ -390,19 +388,19 @@ const handlePhotoUpload = useCallback(
       </div>
 
       {/* Apply button */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:'10px' }}>
-        <div style={{ fontSize:'12px', color:'var(--text-muted)' }}>
+      <div className="flex items-center justify-between flex-wrap gap-[10px]">
+        <div className="text-[12px] text-[var(--text-muted)]">
           {readyCount>0
             ? `${readyCount} ${isBn?'টি পরিবর্তন সেভের জন্য প্রস্তুত':'changes ready to save'}`
             : (isBn?'কোনো পরিবর্তন নেই — উপরে তথ্য দিন':'No changes yet — add values above')}
         </div>
-        <div style={{ display:'flex', gap:'8px' }}>
+        <div className="flex gap-2">
           <button onClick={clearAll}
-            style={{ padding:'10px 18px', borderRadius:'9px', background:'var(--bg-secondary)', border:'1px solid var(--border)', color:'var(--text-secondary)', fontSize:'13px', cursor:'pointer', fontFamily:'inherit' }}>
+            className="px-[18px] py-[10px] rounded-[9px] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer font-[inherit]">
             {isBn?'পরিষ্কার করুন':'Clear All'}
           </button>
           <button onClick={applyChanges} disabled={readyCount===0}
-            style={{ display:'flex', alignItems:'center', gap:'7px', padding:'10px 22px', borderRadius:'9px', background:readyCount===0?'var(--border-2)':opInfo.color, border:'none', color:'#fff', fontSize:'13px', fontWeight:600, cursor:readyCount===0?'not-allowed':'pointer', fontFamily:'inherit', boxShadow:readyCount>0?`0 4px 14px ${opInfo.color}50`:'none' }}>
+            className="flex items-center gap-[7px] px-[22px] py-[10px] rounded-[9px] border-none text-white text-[13px] font-semibold font-[inherit] disabled:cursor-not-allowed" style={{ background: readyCount===0 ? 'var(--border-2)' : opInfo.color, cursor: readyCount===0 ? 'not-allowed' : 'pointer', boxShadow: readyCount>0 ? `0 4px 14px ${opInfo.color}50` : 'none' }}>
             {applied ? <Check size={15} /> : <Save size={15} />}
             {applied
               ? (isBn?'✓ সফলভাবে আপডেট হয়েছে!':'✓ Updated Successfully!')
