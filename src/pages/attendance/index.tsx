@@ -267,13 +267,17 @@ export default function AttendancePage() {
 
   const startKioskCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 320, height: 240 } })
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } })
       kioskStreamRef.current = stream
-      if (kioskVideoRef.current) kioskVideoRef.current.srcObject = stream
+      if (kioskVideoRef.current) {
+        kioskVideoRef.current.srcObject = stream
+        kioskVideoRef.current.onloadedmetadata = () => { kioskVideoRef.current?.play() }
+      }
       setKioskCamActive(true)
       setKioskCapturedPhoto(null)
-    } catch {
-      setKioskMsg({ type: 'error', text: isBn ? 'ক্যামেরা অনুমতি দিন।' : 'Allow camera access.' })
+    } catch (err) {
+      console.error('Camera error:', err)
+      setKioskMsg({ type: 'error', text: isBn ? 'ক্যামেরা খুলতে ব্যর্থ। অনুমতি দিন।' : 'Failed to open camera. Allow permission.' })
     }
   }
 
@@ -296,6 +300,7 @@ export default function AttendancePage() {
   useEffect(() => { setEmpPage(1) }, [employeeSearch, fDeptEmp, empPerPage])
   useEffect(() => { setStuPage(1) }, [studentSearch, fClass, fSection, stuPerPage])
   useEffect(() => { setEmpPage(1); setStuPage(1) }, [activeTab])
+  useEffect(() => { if (!kioskMode) { stopKioskCamera(); setKioskCapturedPhoto(null); setKioskRegMode(false) } }, [kioskMode])
 
   const dayAtt = attendance[date] || {}
   const activeTeachers = useMemo(() => teachers.filter(t => t.status === 'active'), [teachers])
@@ -2619,8 +2624,8 @@ export default function AttendancePage() {
 
           {/* Kiosk Mode Modal */}
           {kioskMode && (
-            <div className="fixed inset-0 flex items-center justify-center p-4 z-[800] bg-black/80">
-              <div className="bg-[var(--bg-primary)] rounded-2xl max-w-[440px] w-full p-6 border border-[var(--border)] shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-4 z-[800] bg-black/80 overflow-y-auto">
+              <div className="bg-[var(--bg-primary)] rounded-2xl w-full max-w-[420px] p-5 sm:p-6 border border-[var(--border)] shadow-2xl my-auto">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[var(--teal-light)] flex items-center justify-center">
@@ -2674,17 +2679,17 @@ export default function AttendancePage() {
                 {/* Camera view */}
                 {kioskCamActive && !kioskIdentified && (
                   <div className="mb-4">
-                    <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] max-w-[320px] mx-auto mb-3">
+                    <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] w-full max-w-[300px] mx-auto mb-3">
                       <video ref={kioskVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                       <canvas ref={kioskCanvasRef} className="hidden" />
-                      <div className="absolute top-3 left-3 bg-black/60 rounded-lg px-2.5 py-1 text-white text-[10px] font-medium flex items-center gap-1.5">
+                      <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[10px] font-medium flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
                         {isBn ? 'লাইভ' : 'LIVE'}
                       </div>
                     </div>
                     {kioskCapturedPhoto ? (
                       <div className="space-y-2">
-                        <img src={kioskCapturedPhoto} alt="" className="w-full max-w-[320px] mx-auto rounded-xl border-2 border-[var(--green)]" />
+                        <img src={kioskCapturedPhoto} alt="" className="w-full max-w-[300px] mx-auto rounded-xl border-2 border-[var(--green)]" />
                         <p className="text-[12px] text-center text-[var(--green)] font-medium">{isBn ? 'ছবি তোলা হয়েছে — নাম নির্বাচন করুন' : 'Photo captured — Select your name below'}</p>
                         <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
                           {kioskRegisteredFaces.map(f => (
@@ -2778,7 +2783,7 @@ export default function AttendancePage() {
                         <>
                           {kioskCamActive ? (
                             <div className="space-y-3">
-                              <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] max-w-[280px] mx-auto">
+                              <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] w-full max-w-[280px] mx-auto">
                                 <video ref={kioskVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                                 <canvas ref={kioskCanvasRef} className="hidden" />
                                 <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[9px] flex items-center gap-1">
