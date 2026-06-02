@@ -21,7 +21,12 @@ import PayrollPage from '@/pages/payroll'
 import ClassesPage from '@/pages/classes'
 import HRPage from '@/pages/hr'
 import AttendancePage from '@/pages/attendance'
-import ExamsPage from '@/pages/exams'
+import ExamDashboard from '@/pages/exams/index'
+import Step1Planning from '@/pages/exams/step1'
+import Step2Schedule from '@/pages/exams/step2'
+import Step3Evaluation from '@/pages/exams/step3'
+import Step4Results from '@/pages/exams/step4'
+import Step5Marksheet from '@/pages/exams/step5'
 
 function P({ name }: { name: string }) {
   return <div style={{ color:'var(--text-primary)', fontSize:'20px', fontWeight:500, padding:'20px' }}>{name}</div>
@@ -52,7 +57,12 @@ export default function App() {
         <Route path="/classes"               element={<ClassesPage />} />
         <Route path="/hr"                    element={<HRPage />} />
         <Route path="/attendance"            element={<AttendancePage />} />
-        <Route path="/exams"                 element={<ExamsPage />} />
+        <Route path="/exams"                 element={<ExamDashboard />} />
+        <Route path="/exams/planning"        element={<Step1Planning />} />
+        <Route path="/exams/scheduling"      element={<Step2Schedule />} />
+        <Route path="/exams/evaluation"      element={<Step3Evaluation />} />
+        <Route path="/exams/results"         element={<Step4Results />} />
+        <Route path="/exams/marksheet"       element={<Step5Marksheet />} />
         <Route path="/syllabus"              element={<P name="Syllabus" />} />
         <Route path="/assignments"           element={<P name="Assignments" />} />
         <Route path="/online"                element={<P name="Online Classes" />} />

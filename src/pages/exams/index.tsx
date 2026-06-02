@@ -1,617 +1,451 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback, memo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, Edit2, CheckCircle, Calendar, BookOpen, Users, Save, Settings, Loader } from 'lucide-react'
+import {
+  ClipboardList, Plus, Calendar, Settings, Edit2,
+  BarChart2, FileText, CheckCircle2, Clock, AlertTriangle,
+  ArrowRight, FileSpreadsheet, GraduationCap,
+} from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
-import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
-import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
-import type { ExamConfig, ExamType, SubjectMarkConfig } from '@/store/examStore'
+import { useSessionStudents } from '@/store/admissionStore'
+import StepProgress from '@/components/ui/StepProgress'
+import WorkflowCard from '@/components/ui/WorkflowCard'
+import gsap from 'gsap'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
-const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] mb-[14px]'
-const sectionTitleCls = 'flex items-center gap-2 text-[13px] font-semibold text-[var(--text-primary)]'
-const inputCls = 'h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border'
-const btnPrimary = 'flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
+const chartTooltipStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px', padding: '8px 12px' }
 
-const EXAM_TYPE_LABELS: Record<ExamType, { en: string; bn: string }> = {
-  'semester-1': { en: '1st Semester', bn: '১ম সেমিস্টার' },
-  'semester-2': { en: '2nd Semester', bn: '২য় সেমিস্টার' },
-  'annual': { en: 'Annual', bn: 'বার্ষিক' },
-  'midterm': { en: 'Mid-term', bn: 'মধ্যবর্তী' },
-  'final': { en: 'Final', bn: 'চূড়ান্ত' },
-  'custom': { en: 'Custom', bn: 'কাস্টম' },
+const SectionHead = memo(function SectionHead({ color }: { color: string }) {
+  return <div style={{ width: '3px', height: '14px', background: color, borderRadius: '2px', flexShrink: 0 }} />
+})
+
+const gradeColors: Record<string, string> = {
+  'A+': '#10b981', 'A': '#34d399', 'A-': '#6ee7b7',
+  'B': '#60a5fa', 'C': '#fbbf24', 'D': '#f97316', 'F': '#ef4444',
 }
 
-const GRADE_COLORS: Record<string, string> = {
-  'A+': 'bg-[#10b981] text-white',
-  'A': 'bg-[#34d399] text-white',
-  'A-': 'bg-[#6ee7b7] text-[#065f46]',
-  'B': 'bg-[#60a5fa] text-white',
-  'C': 'bg-[#fbbf24] text-[#78350f]',
-  'D': 'bg-[#f97316] text-white',
-  'F': 'bg-[#ef4444] text-white',
+function ExamSkeleton() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div><div className="skeleton skeleton-title" style={{ width: '220px' }} /><div className="skeleton skeleton-text" style={{ width: '160px' }} /></div>
+      <div className="skeleton" style={{ width: '100%', height: '60px', borderRadius: '12px' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
+        {[1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton-card" style={{ height: '80px' }} />)}
+      </div>
+    </div>
+  )
 }
 
-export default function ExamsPage() {
+export default function ExamDashboard() {
   const navigate = useNavigate()
   const { language } = useAppStore()
-  const { isMobile } = useWindowSize()
-  const { subjects } = useTeacherStore()
-  const { classes } = useClassStore()
+  const { isMobile, isTablet } = useWindowSize()
   const students = useSessionStudents()
+  const subjects = useTeacherStore(s => s.subjects)
+
+  const examConfigs = useExamStore(s => s.examConfigs)
+  const subjectMarkConfigs = useExamStore(s => s.subjectMarkConfigs)
+  const studentMarks = useExamStore(s => s.studentMarks)
+  const routines = useExamStore(s => s.routines)
+  const seatPlans = useExamStore(s => s.seatPlans)
+  const invigilators = useExamStore(s => s.invigilators)
+  const marksEntryStatuses = useExamStore(s => s.marksEntryStatuses)
+  const promotions = useExamStore(s => s.promotions)
+  const omrConfigs = useExamStore(s => s.omrConfigs)
+  const rooms = useExamStore(s => s.rooms)
+
   const isBn = language === 'bn'
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const {
-    examConfigs, subjectMarkConfigs, studentMarks,
-    addExamConfig, updateExamConfig, deleteExamConfig, toggleExamActive,
-    upsertSubjectMarkConfig, deleteSubjectMarkConfig,
-    addSubExamToSubject, removeSubExam,
-    saveBulkStudentMarks,
-  } = useExamStore()
-
-  type Tab = 'setup' | 'distribution' | 'entry'
-  const [activeTab, setActiveTab] = useState<Tab>('setup')
-  const [showExamForm, setShowExamForm] = useState(false)
-  const [editExam, setEditExam] = useState<ExamConfig | null>(null)
-  const [examForm, setExamForm] = useState({ name: '', nameBn: '', type: 'semester-1' as ExamType, session: '2025-26', startDate: '', endDate: '' })
-
-  // Mark Distribution state
-  const [distExamId, setDistExamId] = useState('')
-  const [distSubjectId, setDistSubjectId] = useState('')
-  const [distFullMarks, setDistFullMarks] = useState('100')
-  const [distPassMarks, setDistPassMarks] = useState('33')
-  const [showSubExamForm, setShowSubExamForm] = useState(false)
-  const [subExamForm, setSubExamForm] = useState({ name: '', nameBn: '', weight: '' })
-  const [editDistConfig, setEditDistConfig] = useState<SubjectMarkConfig | null>(null)
-
-  // Marks Entry state
-  const [entryExamId, setEntryExamId] = useState('')
-  const [entryClassId, setEntryClassId] = useState('')
-  const [entrySectionId, setEntrySectionId] = useState('')
-  const [entrySubjectId, setEntrySubjectId] = useState('')
-  const [markInputs, setMarkInputs] = useState<Record<string, Record<string, number>>>({})
-  const [saving, setSaving] = useState(false)
-  const [lastSaved, setLastSaved] = useState<string | null>(null)
-
-  const classOptions = useMemo(() => getClassOptions(classes), [classes])
-  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
-  const sectionOptions = useMemo(() => entryClassId ? (sectionsMap[entryClassId] || []) : [], [entryClassId, sectionsMap])
-
-  const classStudents = useMemo(() => {
-    if (!entryClassId || !entrySectionId) return []
-    return students.filter(s => s.status === 'approved' && s.class === entryClassId && s.section === entrySectionId)
-  }, [students, entryClassId, entrySectionId])
-
-  const distConfigs = useMemo(() => {
-    if (!distExamId) return []
-    return subjectMarkConfigs.filter(s => s.examId === distExamId)
-  }, [subjectMarkConfigs, distExamId])
-
-  const entrySubjectConfig = useMemo(() => {
-    if (!entryExamId || !entrySubjectId) return null
-    return subjectMarkConfigs.find(s => s.examId === entryExamId && s.subjectId === entrySubjectId)
-  }, [subjectMarkConfigs, entryExamId, entrySubjectId])
-
-  // Initialize mark inputs from existing marks
   useEffect(() => {
-    if (!entryExamId || !entryClassId || !entrySectionId || !entrySubjectId) { setMarkInputs({}); return }
-    const inputs: Record<string, Record<string, number>> = {}
-    classStudents.forEach(s => {
-      const existing = studentMarks.find(m => m.examId === entryExamId && m.studentId === s.id && m.subjectId === entrySubjectId && m.classId === entryClassId && m.sectionId === entrySectionId)
-      inputs[s.id] = existing?.subExamMarks || {}
-    })
-    setMarkInputs(inputs)
-  }, [entryExamId, entryClassId, entrySectionId, entrySubjectId, classStudents, studentMarks])
-
-  const handleSaveExam = () => {
-    if (!examForm.name || !examForm.startDate || !examForm.endDate) return
-    if (editExam) {
-      updateExamConfig(editExam.id, examForm)
-    } else {
-      addExamConfig({ ...examForm, isActive: false })
-    }
-    setShowExamForm(false)
-    setEditExam(null)
-    setExamForm({ name: '', nameBn: '', type: 'semester-1', session: '2025-26', startDate: '', endDate: '' })
-  }
-
-  const handleSaveDist = () => {
-    if (!distExamId || !distSubjectId || !distFullMarks) return
-    upsertSubjectMarkConfig({
-      examId: distExamId,
-      subjectId: distSubjectId,
-      fullMarks: Number(distFullMarks) || 100,
-      passMarks: Number(distPassMarks) || 33,
-      subExams: editDistConfig?.subExams || [],
-    })
-    setDistSubjectId('')
-    setDistFullMarks('100')
-    setDistPassMarks('33')
-    setEditDistConfig(null)
-  }
-
-  const handleAddSubExam = () => {
-    if (!editDistConfig || !subExamForm.name || !subExamForm.weight) return
-    addSubExamToSubject(editDistConfig.id, { name: subExamForm.name, nameBn: subExamForm.nameBn || subExamForm.name, weight: Number(subExamForm.weight) || 0 })
-    setSubExamForm({ name: '', nameBn: '', weight: '' })
-    setShowSubExamForm(false)
-  }
-
-  const handleMarkChange = useCallback((studentId: string, subExamId: string, value: string) => {
-    const num = value === '' ? 0 : Number(value)
-    setMarkInputs(prev => ({
-      ...prev,
-      [studentId]: { ...(prev[studentId] || {}), [subExamId]: num }
-    }))
+    const timer = setTimeout(() => setIsLoading(false), 700)
+    return () => clearTimeout(timer)
   }, [])
 
-  // Auto-save with debounce
   useEffect(() => {
-    if (!entryExamId || !entryClassId || !entrySectionId || !entrySubjectId || !entrySubjectConfig) return
-    const hasChanges = Object.keys(markInputs).some(sid => {
-      const marks = markInputs[sid]
-      return marks && Object.keys(marks).length > 0
-    })
-    if (!hasChanges) return
+    if (isLoading || !containerRef.current) return
+    const cards = containerRef.current.querySelectorAll('.gsap-fade-up')
+    gsap.fromTo(cards, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: 'power2.out' })
+  }, [isLoading])
 
-    const timer = setTimeout(() => {
-      const marksToSave = classStudents.map(s => ({
-        examId: entryExamId,
-        studentId: s.id,
-        subjectId: entrySubjectId,
-        classId: entryClassId,
-        sectionId: entrySectionId,
-        subExamMarks: markInputs[s.id] || {},
-        totalMarks: Object.values(markInputs[s.id] || {}).reduce((a, b) => a + b, 0),
-        enteredAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })).filter(m => Object.keys(m.subExamMarks).length > 0)
+  // ── Derived Stats (memoized) ──
+  const activeExam = useMemo(() => examConfigs.find(e => e.isActive), [examConfigs])
 
-      if (marksToSave.length > 0) {
-        saveBulkStudentMarks(marksToSave)
-        setSaving(true)
-        setTimeout(() => { setSaving(false); setLastSaved(new Date().toLocaleTimeString()) }, 600)
-      }
-    }, 1000)
+  const activeExamId = activeExam?.id
 
-    return () => clearTimeout(timer)
-  }, [markInputs, entryExamId, entryClassId, entrySectionId, entrySubjectId, classStudents, entrySubjectConfig, saveBulkStudentMarks])
+  const activeExamSubjects = useMemo(() =>
+    activeExamId ? subjectMarkConfigs.filter(s => s.examId === activeExamId) : []
+  , [subjectMarkConfigs, activeExamId])
+
+  const activeExamRoutines = useMemo(() =>
+    activeExamId ? routines.filter(r => r.examId === activeExamId) : []
+  , [routines, activeExamId])
+
+  const activeExamSeats = useMemo(() =>
+    activeExamId ? seatPlans.filter(sp => sp.examId === activeExamId) : []
+  , [seatPlans, activeExamId])
+
+  const completedRoutines = useMemo(() => activeExamRoutines.filter(r => r.status === 'completed').length, [activeExamRoutines])
+  const totalRoutines = activeExamRoutines.length
+  const totalSubjects = activeExamSubjects.length
+
+  const completedSubjects = useMemo(() =>
+    activeExamSubjects.filter(s => studentMarks.some(m => m.examId === s.examId && m.subjectId === s.subjectId)).length
+  , [activeExamSubjects, studentMarks])
+
+  const publishedResults = useMemo(() => examConfigs.filter(e => e.isActive).length, [examConfigs])
+  const pendingPromotions = useMemo(() => promotions.filter(p => p.status === 'eligible').length, [promotions])
+  const promotedCount = useMemo(() => promotions.filter(p => p.status === 'promoted').length, [promotions])
+  const notEligibleCount = useMemo(() => promotions.filter(p => p.status === 'not-eligible').length, [promotions])
+
+  // ── Step Status ──
+  const steps = useMemo(() => {
+    const s1 = examConfigs.length > 0 && subjectMarkConfigs.length > 0
+    const s2 = activeExamRoutines.length > 0 && completedRoutines === totalRoutines && totalRoutines > 0
+    const s3 = totalSubjects > 0 && completedSubjects === totalSubjects
+    const s4 = studentMarks.length > 0
+    const s5 = promotions.some(p => p.status === 'promoted')
+    return [
+      { key: 'planning', label: 'Planning', labelBn: 'পরিকল্পনা', icon: Settings, status: s1 ? 'completed' as const : 'current' as const },
+      { key: 'scheduling', label: 'Scheduling', labelBn: 'সময়সূচী', icon: Calendar, status: s1 ? (s2 ? 'completed' as const : 'current' as const) : 'upcoming' as const },
+      { key: 'evaluation', label: 'Evaluation', labelBn: 'মূল্যায়ন', icon: Edit2, status: s2 ? (s3 ? 'completed' as const : 'current' as const) : 'upcoming' as const },
+      { key: 'results', label: 'Results', labelBn: 'ফলাফল', icon: BarChart2, status: s3 ? (s4 ? 'completed' as const : 'current' as const) : 'upcoming' as const },
+      { key: 'promotion', label: 'Promotion', labelBn: 'প্রমোশন', icon: GraduationCap, status: s4 ? (s5 ? 'completed' as const : 'current' as const) : 'upcoming' as const },
+    ]
+  }, [examConfigs, subjectMarkConfigs, activeExamRoutines, completedRoutines, totalRoutines, totalSubjects, completedSubjects, studentMarks, promotions])
+
+  const handleStepClick = useCallback((key: string) => {
+    const routeMap: Record<string, string> = {
+      planning: '/exams/planning', scheduling: '/exams/scheduling',
+      evaluation: '/exams/evaluation', results: '/exams/results', promotion: '/exams/marksheet',
+    }
+    navigate(routeMap[key] || '/exams')
+  }, [navigate])
+
+  const col4 = isMobile ? '1fr 1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)'
+  const col2 = isMobile ? '1fr' : '1fr 1fr'
+  const gap = isMobile ? '10px' : '14px'
+
+  const card: React.CSSProperties = useMemo(() => ({
+    background: 'var(--surface)', border: '1px solid var(--border)',
+    borderRadius: '12px', padding: isMobile ? '14px' : '16px', boxShadow: 'var(--shadow-xs)',
+  }), [isMobile])
+
+  const gradeDistribution = useMemo(() => {
+    const gradeCount: Record<string, number> = {}
+    for (const m of studentMarks) gradeCount[m.grade] = (gradeCount[m.grade] || 0) + 1
+    return Object.entries(gradeCount).map(([name, value]) => ({ name, value, color: gradeColors[name] || '#94a3b8' }))
+  }, [studentMarks])
+
+  const completedCount = useMemo(() => steps.filter(s => s.status === 'completed').length, [steps])
+
+  // ── Subject map for O(n) lookups ──
+  const subjectMap = useMemo(() => {
+    const map = new Map<string, typeof subjects[0]>()
+    for (const s of subjects) map.set(s.id, s)
+    return map
+  }, [subjects])
+
+  // ── Pre-computed subject names for marksEntryStatuses ──
+  const entryStatusSubjects = useMemo(() =>
+    marksEntryStatuses.slice(0, 5).map(entry => ({
+      ...entry,
+      subjectName: subjectMap.get(entry.subjectId),
+    }))
+  , [marksEntryStatuses, subjectMap])
+
+  const approvedStudentCount = useMemo(() => students.filter(s => s.status === 'approved').length, [students])
+
+  // ── Handlers ──
+  const navPlanning = useCallback(() => navigate('/exams/planning'), [navigate])
+  const navScheduling = useCallback(() => navigate('/exams/scheduling'), [navigate])
+  const navEvaluation = useCallback(() => navigate('/exams/evaluation'), [navigate])
+  const navResults = useCallback(() => navigate('/exams/results'), [navigate])
+  const navMarksheet = useCallback(() => navigate('/exams/marksheet'), [navigate])
+
+  // ── Static stat data ──
+  const quickStats = useMemo(() => [
+    { labelBn: 'সক্রিয় পরীক্ষা', labelEn: 'Active Exams', value: publishedResults, color: 'var(--brand)', cardBg: 'var(--brand-light)' },
+    { labelBn: 'নির্ধারিত পরীক্ষা', labelEn: 'Scheduled', value: totalRoutines, color: 'var(--teal)', cardBg: 'var(--teal-light)' },
+    { labelBn: 'মার্কস বাকি', labelEn: 'Pending Entry', value: Math.max(0, (totalSubjects * 5) - studentMarks.length), color: 'var(--amber)', cardBg: 'var(--amber-light)' },
+    { labelBn: 'প্রকাশিত ফলাফল', labelEn: 'Published', value: publishedResults, color: 'var(--green)', cardBg: 'var(--green-light)' },
+    { labelBn: 'প্রমোশন বাকি', labelEn: 'Ready to Promote', value: pendingPromotions, color: 'var(--purple)', cardBg: 'var(--purple-light)' },
+  ], [publishedResults, totalRoutines, totalSubjects, studentMarks.length, pendingPromotions])
+
+  const progressItems = useMemo(() => {
+    if (!activeExam) return []
+    const invigCount = invigilators.filter(i => i.examId === activeExam.id).length
+    return [
+      { bn: 'বিষয় কনফিগারেশন', en: 'Subject Configuration', val: `${completedSubjects}/${totalSubjects}`, bar: totalSubjects > 0 ? Math.round((completedSubjects / totalSubjects) * 100) : 0, color: 'var(--brand)' },
+      { bn: 'রুটিন সম্পন্ন', en: 'Routine Completed', val: `${completedRoutines}/${totalRoutines}`, bar: totalRoutines > 0 ? Math.round((completedRoutines / totalRoutines) * 100) : 0, color: 'var(--teal)' },
+      { bn: 'আসন বরাদ্দ', en: 'Seats Assigned', val: `${activeExamSeats.length}/${approvedStudentCount}`, bar: approvedStudentCount > 0 ? Math.round((activeExamSeats.length / approvedStudentCount) * 100) : 0, color: 'var(--amber)' },
+      { bn: 'ইনভিজিলেটর', en: 'Invigilators', val: `${invigCount}`, bar: Math.min(100, invigCount * 33), color: 'var(--purple)' },
+    ]
+  }, [activeExam, completedSubjects, totalSubjects, completedRoutines, totalRoutines, activeExamSeats, approvedStudentCount, invigilators])
+
+  const checklist = useMemo(() => [
+    { done: examConfigs.length > 0, label: isBn ? 'পরীক্ষা তৈরি' : 'Exam Created', link: '/exams/planning' },
+    { done: subjectMarkConfigs.length > 0, label: isBn ? 'বিষয় কনফিগারেশন' : 'Subject Configured', link: '/exams/planning' },
+    { done: omrConfigs.length > 0, label: isBn ? 'OMR সেটআপ' : 'OMR Setup', link: '/exams/planning' },
+    { done: rooms.length > 0, label: isBn ? 'কক্ষ সেটআপ' : 'Room Setup', link: '/exams/scheduling' },
+    { done: activeExamRoutines.length > 0, label: isBn ? 'রুটিন তৈরি' : 'Routine Created', link: '/exams/scheduling' },
+    { done: invigilators.length > 0, label: isBn ? 'ইনভিজিলেটর নিয়োগ' : 'Invigilator Assigned', link: '/exams/scheduling' },
+    { done: studentMarks.length > 0, label: isBn ? 'মার্কস এন্ট্রি' : 'Marks Entered', link: '/exams/evaluation' },
+    { done: promotions.length > 0, label: isBn ? 'প্রমোশন সম্পন্ন' : 'Promotion Done', link: '/exams/marksheet' },
+  ], [examConfigs, subjectMarkConfigs, omrConfigs, rooms, activeExamRoutines, invigilators, studentMarks, promotions, isBn])
+
+  const promoSummary = useMemo(() => [
+    { label: isBn ? 'মোট শিক্ষার্থী' : 'Total Students', value: approvedStudentCount, color: 'var(--brand)' },
+    { label: isBn ? 'যোগ্য' : 'Eligible', value: promotions.filter(p => p.status === 'eligible').length, color: 'var(--green)' },
+    { label: isBn ? 'প্রমোটেড' : 'Promoted', value: promotedCount, color: 'var(--teal)' },
+    { label: isBn ? 'অযোগ্য' : 'Not Eligible', value: notEligibleCount, color: 'var(--red)' },
+  ], [approvedStudentCount, promotions, promotedCount, notEligibleCount, isBn])
+
+  if (isLoading) return <ExamSkeleton />
 
   return (
-    <div className="flex flex-col h-[calc(100vh-60px)]">
+    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-            <ArrowLeft size={16} />
-          </button>
-          <div>
-            <h1 className="text-[16px] font-bold text-[var(--text-primary)]">{isBn ? 'পরীক্ষা ও ফলাফল' : 'Exams & Results'}</h1>
-            <p className="text-[11px] text-[var(--text-muted)]">{isBn ? 'পরীক্ষা সেটআপ, মার্ক ডিস্ট্রিবিউশন ও মার্কস এন্ট্রি' : 'Exam setup, mark distribution & marks entry'}</p>
-          </div>
+      <div className="gsap-fade-up" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+        <div>
+          <h1 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ClipboardList size={20} style={{ color: 'var(--brand)' }} />
+            {isBn ? 'পরীক্ষা ও ফলাফল ব্যবস্থাপনা' : 'Examination & Results'}
+          </h1>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '3px' }}>
+            {isBn ? 'পরীক্ষার পুরো প্রক্রিয়া পরিচালনা করুন' : 'Manage the complete examination lifecycle'}
+          </p>
         </div>
+        <button className="btn-minimal" onClick={navPlanning}>
+          <Plus size={14} /> {isBn ? 'নতুন পরীক্ষা' : 'New Exam'}
+        </button>
       </div>
 
-      {/* Tabs */}
-      <div className="px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-primary)] flex gap-2 overflow-x-auto">
-        {([
-          { key: 'setup' as Tab, label: isBn ? 'পরীক্ষা সেটআপ' : 'Exam Setup', icon: <Calendar size={14} /> },
-          { key: 'distribution' as Tab, label: isBn ? 'মার্ক ডিস্ট্রিবিউশন' : 'Mark Distribution', icon: <BookOpen size={14} /> },
-          { key: 'entry' as Tab, label: isBn ? 'মার্কস এন্ট্রি' : 'Marks Entry', icon: <Edit2 size={14} /> },
-        ]).map(t => (
-          <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
-            {t.icon}{t.label}
-          </button>
+      {/* Active Exam Alert */}
+      {activeExam && (
+        <div className="gsap-fade-up" style={{
+          display: 'inline-flex', alignItems: 'center', gap: '8px',
+          background: 'var(--brand-light)', border: '1px solid rgba(99,102,241,0.12)',
+          borderRadius: '8px', padding: '8px 14px', fontSize: '12px',
+          color: 'var(--brand)', alignSelf: 'flex-start', fontWeight: 500,
+        }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--brand)', animation: 'pulse 2s infinite', flexShrink: 0 }} />
+          {isBn ? `সক্রিয় পরীক্ষা: ${activeExam.nameBn}` : `Active Exam: ${activeExam.name}`}
+          <span style={{ fontSize: '10px', color: 'var(--brand-2)', marginLeft: '4px' }}>
+            {activeExam.startDate} – {activeExam.endDate}
+          </span>
+        </div>
+      )}
+
+      {/* Workflow Progress */}
+      <div className="gsap-fade-up" style={card}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: isMobile ? '12px' : '14px' }}>
+          <SectionHead color="var(--brand)" />
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            {isBn ? 'পরীক্ষার ধাপসমূহ' : 'Examination Workflow'}
+          </span>
+          <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--green)', background: 'var(--green-light)', padding: '2px 8px', borderRadius: '6px', marginLeft: 'auto' }}>
+            {completedCount}/{steps.length} {isBn ? 'সম্পন্ন' : 'Done'}
+          </span>
+        </div>
+        <StepProgress steps={steps} onStepClick={handleStepClick} />
+      </div>
+
+      {/* Quick Stats */}
+      <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col4, gap }}>
+        {quickStats.map(s => (
+          <div key={s.labelEn} style={{ ...card, display: 'flex', alignItems: 'center', gap: '12px', cursor: 'default', transition: 'all 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-xs)' }}
+          >
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: s.cardBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: s.color, flexShrink: 0, fontSize: '16px' }}>
+              {s.labelEn === 'Active Exams' ? <ClipboardList size={16} /> : s.labelEn === 'Scheduled' ? <Calendar size={16} /> : s.labelEn === 'Pending Entry' ? <Edit2 size={16} /> : s.labelEn === 'Published' ? <FileText size={16} /> : <GraduationCap size={16} />}
+            </div>
+            <div>
+              <div style={{ fontSize: isMobile ? '20px' : '22px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>{isBn ? s.labelBn : s.labelEn}</div>
+            </div>
+          </div>
         ))}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">
-
-        {/* ══════════ TAB: EXAM SETUP ══════════ */}
-        {activeTab === 'setup' && (
-          <>
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-[12px] text-[var(--text-secondary)]">{isBn ? `মোট ${examConfigs.length}টি পরীক্ষা` : `${examConfigs.length} exams`}</span>
-              <button onClick={() => { setShowExamForm(true); setEditExam(null); setExamForm({ name: '', nameBn: '', type: 'semester-1', session: '2025-26', startDate: '', endDate: '' }) }}
-                className={btnPrimary}><Plus size={14} />{isBn ? 'নতুন পরীক্ষা' : 'New Exam'}</button>
+      {/* Grade Distribution + Active Exam Progress */}
+      <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col2, gap }}>
+        <div className="card--premium" style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <SectionHead color="var(--brand)" />
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'গ্রেড বিতরণ' : 'Grade Distribution'}</span>
+          </div>
+          {gradeDistribution.length > 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ width: isMobile ? 100 : 120, height: isMobile ? 100 : 120 }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie data={gradeDistribution} cx="50%" cy="50%" innerRadius={24} outerRadius={40} dataKey="value" paddingAngle={2}>
+                      {gradeDistribution.map((e, i) => <Cell key={i} fill={e.color} />)}
+                    </Pie>
+                    <Tooltip contentStyle={chartTooltipStyle} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                {gradeDistribution.map(g => (
+                  <div key={g.name} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: g.color, flexShrink: 0 }} />
+                    <span style={{ color: 'var(--text-secondary)', flex: 1 }}>{g.name}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{g.value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: '12px' }}>
+              <BarChart2 size={24} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
+              {isBn ? 'এখনো কোনো মার্কস এন্ট্রি হয়নি' : 'No marks entered yet'}
+            </div>
+          )}
+        </div>
 
-            <div className="grid gap-3">
-              {examConfigs.map(exam => (
-                <div key={exam.id} className={`${sectionCls} transition-all hover:shadow-sm`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-[14px] font-semibold text-[var(--text-primary)]">{isBn ? exam.nameBn : exam.name}</span>
-                        <span className={`text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium ${
-                          exam.type === 'semester-1' ? 'bg-[#dbeafe] text-[#1d4ed8]' :
-                          exam.type === 'semester-2' ? 'bg-[#fef3c7] text-[#b45309]' :
-                          exam.type === 'annual' ? 'bg-[#dcfce7] text-[#15803d]' :
-                          'bg-[var(--bg-secondary)] text-[var(--text-muted)]'
-                        }`}>{isBn ? EXAM_TYPE_LABELS[exam.type].bn : EXAM_TYPE_LABELS[exam.type].en}</span>
-                        {exam.isActive && <span className="text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium bg-[var(--green-light)] text-[var(--green)]">{isBn ? 'সক্রিয়' : 'Active'}</span>}
-                      </div>
-                      <div className="flex items-center gap-3 text-[11px] text-[var(--text-muted)] flex-wrap">
-                        <span>{isBn ? 'সেশন' : 'Session'}: {exam.session}</span>
-                        <span>{exam.startDate} – {exam.endDate}</span>
-                      </div>
-                      <div className="text-[10px] text-[var(--text-muted)] mt-1">
-                        {subjectMarkConfigs.filter(s => s.examId === exam.id).length} {isBn ? 'টি বিষয় কনফিগারড' : 'subjects configured'}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button onClick={() => toggleExamActive(exam.id)}
-                        className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer ${exam.isActive ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
-                        <CheckCircle size={13} />
-                      </button>
-                      <button onClick={() => { setEditExam(exam); setExamForm({ name: exam.name, nameBn: exam.nameBn, type: exam.type, session: exam.session, startDate: exam.startDate, endDate: exam.endDate }); setShowExamForm(true) }}
-                        className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]">
-                        <Edit2 size={12} />
-                      </button>
-                      <button onClick={() => { if (confirm(isBn ? 'এই পরীক্ষা মুছে ফেলবেন?' : 'Delete this exam?')) deleteExamConfig(exam.id) }}
-                        className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]">
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
+        <div className="card--premium" style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+            <SectionHead color="var(--green)" />
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'সক্রিয় পরীক্ষার অগ্রগতি' : 'Active Exam Progress'}</span>
+          </div>
+          {activeExam ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {progressItems.map(item => (
+                <div key={item.en}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{isBn ? item.bn : item.en}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)' }}>{item.val}</span>
+                  </div>
+                  <div style={{ height: '5px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${item.bar}%`, background: item.color, borderRadius: '3px', transition: 'width 0.6s ease' }} />
                   </div>
                 </div>
               ))}
             </div>
-
-            {/* Exam Form Modal */}
-            {showExamForm && (
-              <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-                <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[420px] w-full p-5 border border-[var(--border)]">
-                  <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">{editExam ? (isBn ? 'পরীক্ষা এডিট' : 'Edit Exam') : (isBn ? 'নতুন পরীক্ষা' : 'New Exam')}</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'নাম (ইংরেজি)' : 'Name (English)'}</label>
-                      <input value={examForm.name} onChange={e => setExamForm(p => ({ ...p, name: e.target.value }))} className={`${inputCls} w-full`} placeholder="e.g. 1st Semester Exam" />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'নাম (বাংলা)' : 'Name (Bangla)'}</label>
-                      <input value={examForm.nameBn} onChange={e => setExamForm(p => ({ ...p, nameBn: e.target.value }))} className={`${inputCls} w-full`} placeholder="e.g. ১ম সেমিস্টার পরীক্ষা" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ধরন' : 'Type'}</label>
-                        <select value={examForm.type} onChange={e => setExamForm(p => ({ ...p, type: e.target.value as ExamType }))} className={`${inputCls} w-full`}>
-                          {(Object.entries(EXAM_TYPE_LABELS) as [ExamType, { en: string; bn: string }][]).map(([k, v]) => (
-                            <option key={k} value={k}>{isBn ? v.bn : v.en}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেশন' : 'Session'}</label>
-                        <input value={examForm.session} onChange={e => setExamForm(p => ({ ...p, session: e.target.value }))} className={`${inputCls} w-full`} />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শুরু' : 'Start'}</label>
-                        <input type="date" value={examForm.startDate} onChange={e => setExamForm(p => ({ ...p, startDate: e.target.value }))} className={`${inputCls} w-full`} />
-                      </div>
-                      <div>
-                        <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শেষ' : 'End'}</label>
-                        <input type="date" value={examForm.endDate} onChange={e => setExamForm(p => ({ ...p, endDate: e.target.value }))} className={`${inputCls} w-full`} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 justify-end mt-4">
-                    <button onClick={() => { setShowExamForm(false); setEditExam(null) }} className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer">{isBn ? 'বাতিল' : 'Cancel'}</button>
-                    <button onClick={handleSaveExam} className={`${btnPrimary} text-[12px]`}>{isBn ? 'সংরক্ষণ' : 'Save'}</button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ══════════ TAB: MARK DISTRIBUTION ══════════ */}
-        {activeTab === 'distribution' && (
-          <>
-            <div className={sectionCls}>
-              <div className={sectionTitleCls}>
-                <Settings size={15} className="text-[var(--brand)]" />{isBn ? 'মার্ক ডিস্ট্রিবিউশন সেটআপ' : 'Mark Distribution Setup'}
-              </div>
-              <p className="text-[11px] text-[var(--text-muted)] mb-3">{isBn ? 'প্রতিটি বিষয়ের জন্য ফুল মার্কস, পাস মার্কস এবং সাব-এক্সাম সেট করুন' : 'Set full marks, pass marks and sub-exams for each subject'}</p>
-
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পরীক্ষা' : 'Exam'}</label>
-                  <select value={distExamId} onChange={e => { setDistExamId(e.target.value); setDistSubjectId('') }} className={`${inputCls} w-full`}>
-                    <option value="">{isBn ? 'নির্বাচন করুন...' : 'Select exam...'}</option>
-                    {examConfigs.map(e => <option key={e.id} value={e.id}>{isBn ? e.nameBn : e.name}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {distExamId && (
-                <>
-                  <div className="grid grid-cols-2 gap-3 mb-3">
-                    <div>
-                      <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিষয়' : 'Subject'}</label>
-                      <select value={distSubjectId} onChange={e => {
-                        setDistSubjectId(e.target.value)
-                        const existing = subjectMarkConfigs.find(s => s.examId === distExamId && s.subjectId === e.target.value)
-                        if (existing) { setEditDistConfig(existing); setDistFullMarks(String(existing.fullMarks)); setDistPassMarks(String(existing.passMarks)) }
-                        else { setEditDistConfig(null); setDistFullMarks('100'); setDistPassMarks('33') }
-                      }} className={`${inputCls} w-full`}>
-                        <option value="">{isBn ? 'বিষয় নির্বাচন...' : 'Select subject...'}</option>
-                        {subjects.map(s => {
-                          const configured = distConfigs.some(c => c.subjectId === s.id)
-                          return <option key={s.id} value={s.id}>{isBn ? s.nameBn : s.name}{configured ? ' ✓' : ''}</option>
-                        })}
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ফুল মার্কস' : 'Full Marks'}</label>
-                        <input type="number" value={distFullMarks} onChange={e => setDistFullMarks(e.target.value)} className={`${inputCls} w-full`} />
-                      </div>
-                      <div>
-                        <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পাস মার্কস' : 'Pass Marks'}</label>
-                        <input type="number" value={distPassMarks} onChange={e => setDistPassMarks(e.target.value)} className={`${inputCls} w-full`} />
-                      </div>
-                    </div>
-                  </div>
-                  <button onClick={handleSaveDist} disabled={!distSubjectId} className={`${btnPrimary} text-[12px] ${!distSubjectId ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    <Save size={13} />{editDistConfig ? (isBn ? 'আপডেট' : 'Update') : (isBn ? 'সেভ করুন' : 'Save')}
-                  </button>
-                </>
-              )}
+          ) : (
+            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: '12px' }}>
+              <AlertTriangle size={24} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
+              {isBn ? 'কোনো সক্রিয় পরীক্ষা নেই' : 'No active exam'}
             </div>
+          )}
+        </div>
+      </div>
 
-            {/* Configured subjects list */}
-            {distExamId && (
-              <div className={sectionCls}>
-                <div className={sectionTitleCls}>
-                  <BookOpen size={15} className="text-[var(--teal)]" />{isBn ? 'কনফিগার্ড বিষয়সমূহ' : 'Configured Subjects'}
-                </div>
-                {distConfigs.length === 0 ? (
-                  <div className="text-center py-8 text-[var(--text-muted)] text-[12px]">
-                    {isBn ? 'এই পরীক্ষায় কোনো বিষয় কনফিগার করা হয়নি' : 'No subjects configured for this exam'}
-                  </div>
-                ) : (
-                  <div className="space-y-2 mt-2">
-                    {distConfigs.map(config => {
-                      const subject = subjects.find(s => s.id === config.subjectId)
-                      return (
-                        <div key={config.id} className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-                          <div className="flex items-center justify-between mb-2">
-                            <div>
-                              <span className="text-[13px] font-semibold text-[var(--text-primary)]">{isBn ? subject?.nameBn : subject?.name}</span>
-                              <span className="text-[11px] text-[var(--text-muted)] ml-2">৳{config.fullMarks} / {isBn ? 'পাস' : 'Pass'}: {config.passMarks}</span>
-                            </div>
-                            <div className="flex gap-1">
-                              <button onClick={() => { setEditDistConfig(config); setDistSubjectId(config.subjectId); setDistFullMarks(String(config.fullMarks)); setDistPassMarks(String(config.passMarks)) }}
-                                className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]">
-                                <Edit2 size={11} />
-                              </button>
-                              <button onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteSubjectMarkConfig(config.id) }}
-                                className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]">
-                                <Trash2 size={11} />
-                              </button>
-                            </div>
-                          </div>
-                          {config.subExams.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mt-1">
-                              {config.subExams.map(se => (
-                                <div key={se.id} className="flex items-center gap-1 bg-[var(--bg-primary)] rounded-md px-2 py-1 text-[10px]">
-                                  <span className="font-medium text-[var(--text-primary)]">{isBn ? se.nameBn : se.name}</span>
-                                  <span className="text-[var(--text-muted)]">({se.weight}%)</span>
-                                  <button onClick={() => removeSubExam(config.id, se.id)} className="text-[var(--text-muted)] hover:text-[var(--red)] cursor-pointer ml-0.5">×</button>
-                                </div>
-                              ))}
-                              <button onClick={() => { setEditDistConfig(config); setShowSubExamForm(true) }}
-                                className="flex items-center gap-0.5 bg-[var(--brand-light)] rounded-md px-2 py-1 text-[10px] text-[var(--brand)] font-medium cursor-pointer">
-                                <Plus size={10} />{isBn ? 'যোগ' : 'Add'}
-                              </button>
-                            </div>
-                          )}
-                          {config.subExams.length === 0 && (
-                            <button onClick={() => { setEditDistConfig(config); setShowSubExamForm(true) }}
-                              className="mt-1 flex items-center gap-1 text-[10px] text-[var(--brand)] cursor-pointer hover:underline">
-                              <Plus size={10} />{isBn ? 'সাব-এক্সাম যোগ করুন' : 'Add sub-exams (CQ, MCQ, Oral...)'}
-                            </button>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
+      {/* Quick Actions */}
+      <div className="gsap-fade-up">
+        <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
+          {isBn ? 'দ্রুত কাজ' : 'Quick Actions'}
+        </div>
+        <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : isTablet ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)', gap: '10px' }}>
+          <WorkflowCard icon={Plus} iconColor="var(--brand)" iconBg="var(--brand-light)" title={isBn ? 'নতুন পরীক্ষা তৈরি' : 'Create Exam'} titleBn="নতুন পরীক্ষা" description={isBn ? 'পরীক্ষা সেটআপ শুরু করুন' : 'Start exam setup'} descriptionBn="পরীক্ষা সেটআপ" stat={`${examConfigs.length} ${isBn ? 'টি পরীক্ষা' : 'exams'}`} statColor="var(--brand)" onClick={navPlanning} />
+          <WorkflowCard icon={Calendar} iconColor="var(--teal)" iconBg="var(--teal-light)" title={isBn ? 'রুটিন তৈরি' : 'Generate Routine'} titleBn="রুটিন তৈরি" description={isBn ? 'পরীক্ষার সময়সূচী তৈরি' : 'Create exam timetable'} descriptionBn="সময়সূচী তৈরি" stat={`${totalRoutines} ${isBn ? 'টি রুটিন' : 'routines'}`} statColor="var(--teal)" onClick={navScheduling} />
+          <WorkflowCard icon={FileSpreadsheet} iconColor="var(--amber)" iconBg="var(--amber-light)" title={isBn ? 'আসন পরিকল্পনা' : 'Create Seat Plan'} titleBn="আসন পরিকল্পনা" description={isBn ? 'কক্ষ ও আসন বরাদ্দ' : 'Room & seat assignment'} descriptionBn="কক্ষ ও আসন বরাদ্দ" stat={`${activeExamSeats.length} ${isBn ? 'টি আসন' : 'seats'}`} statColor="var(--amber)" onClick={navScheduling} />
+          <WorkflowCard icon={Edit2} iconColor="var(--green)" iconBg="var(--green-light)" title={isBn ? 'মার্কস এন্ট্রি' : 'Enter Marks'} titleBn="মার্কস এন্ট্রি" description={isBn ? 'শিক্ষার্থীদের মার্কস প্রবেশ' : 'Enter student marks'} descriptionBn="মার্কস প্রবেশ" stat={`${studentMarks.length} ${isBn ? 'টি এন্ট্রি' : 'entries'}`} statColor="var(--green)" onClick={navEvaluation} />
+          <WorkflowCard icon={FileText} iconColor="var(--purple)" iconBg="var(--purple-light)" title={isBn ? 'ফলাফল প্রকাশ' : 'Publish Result'} titleBn="ফলাফল প্রকাশ" description={isBn ? 'ফলাফল প্রকাশ ও বিশ্লেষণ' : 'Publish & analyze results'} descriptionBn="ফলাফল প্রকাশ" stat={`${publishedResults} ${isBn ? 'টি প্রকাশিত' : 'published'}`} statColor="var(--purple)" onClick={navResults} />
+          <WorkflowCard icon={GraduationCap} iconColor="var(--red)" iconBg="var(--red-light)" title={isBn ? 'শিক্ষার্থী প্রমোশন' : 'Promote Students'} titleBn="প্রমোশন" description={isBn ? 'পরবর্তী ক্লাসে প্রমোট' : 'Promote to next class'} descriptionBn="পরবর্তী ক্লাসে প্রমোট" stat={`${promotedCount} ${isBn ? 'জন প্রমোটেড' : 'promoted'}`} statColor="var(--red)" onClick={navMarksheet} />
+        </div>
+      </div>
 
-            {/* Sub-exam form modal */}
-            {showSubExamForm && editDistConfig && (
-              <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-                <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[350px] w-full p-5 border border-[var(--border)]">
-                  <h3 className="text-[14px] font-semibold text-[var(--text-primary)] mb-3">{isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-Exam'}</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'নাম (ইংরেজি)' : 'Name'}</label>
-                      <input value={subExamForm.name} onChange={e => setSubExamForm(p => ({ ...p, name: e.target.value }))} className={`${inputCls} w-full`} placeholder="e.g. CQ, MCQ, Oral, Practical" />
+      {/* Marks Entry Status + Setup Checklist */}
+      <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col2, gap }}>
+        <div className="card--premium" style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+            <SectionHead color="var(--amber)" />
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'মার্কস এন্ট্রি অবস্থা' : 'Marks Entry Status'}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {entryStatusSubjects.map(entry => {
+              const statusColors: Record<string, { bg: string; color: string; label: string; labelBn: string }> = {
+                'completed': { bg: 'var(--green-light)', color: 'var(--green)', label: 'Completed', labelBn: 'সম্পন্ন' },
+                'in-progress': { bg: 'var(--amber-light)', color: 'var(--amber)', label: 'In Progress', labelBn: 'চলমান' },
+                'pending': { bg: 'var(--bg-secondary)', color: 'var(--text-muted)', label: 'Pending', labelBn: 'অপেক্ষমান' },
+                'locked': { bg: 'var(--red-light)', color: 'var(--red)', label: 'Locked', labelBn: 'লক' },
+              }
+              const st = statusColors[entry.status]
+              return (
+                <div key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', transition: 'all 0.15s', cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)' }}>
+                      {isBn ? entry.subjectName?.nameBn : entry.subjectName?.name} — {entry.classId} {entry.sectionId}
                     </div>
-                    <div>
-                      <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'নাম (বাংলা)' : 'Name (Bangla)'}</label>
-                      <input value={subExamForm.nameBn} onChange={e => setSubExamForm(p => ({ ...p, nameBn: e.target.value }))} className={`${inputCls} w-full`} placeholder="e.g. সিকিউ, এমসিকিউ, মৌখিক" />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ওয়েট (%)' : 'Weight (%)'}</label>
-                      <input type="number" value={subExamForm.weight} onChange={e => setSubExamForm(p => ({ ...p, weight: e.target.value }))} className={`${inputCls} w-full`} placeholder="e.g. 50" />
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                      {entry.enteredCount}/{entry.totalStudents} {isBn ? 'জন এন্ট্রি' : 'entered'}
                     </div>
                   </div>
-                  <div className="flex gap-2 justify-end mt-4">
-                    <button onClick={() => { setShowSubExamForm(false); setSubExamForm({ name: '', nameBn: '', weight: '' }) }} className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[11px] cursor-pointer">{isBn ? 'বাতিল' : 'Cancel'}</button>
-                    <button onClick={handleAddSubExam} className={`${btnPrimary} text-[11px] py-[6px] px-3`}>{isBn ? 'যোগ করুন' : 'Add'}</button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ══════════ TAB: MARKS ENTRY ══════════ */}
-        {activeTab === 'entry' && (
-          <>
-            <div className={sectionCls}>
-              <div className={sectionTitleCls}>
-                <Edit2 size={15} className="text-[var(--brand)]" />{isBn ? 'মার্কস এন্ট্রি' : 'Marks Entry'}
-              </div>
-              <div className="grid gap-3 mt-3" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)' }}>
-                <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পরীক্ষা' : 'Exam'}</label>
-                  <select value={entryExamId} onChange={e => { setEntryExamId(e.target.value); setEntryClassId(''); setEntrySectionId(''); setEntrySubjectId('') }} className={`${inputCls} w-full`}>
-                    <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                    {examConfigs.map(e => <option key={e.id} value={e.id}>{isBn ? e.nameBn : e.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
-                  <select value={entryClassId} onChange={e => { setEntryClassId(e.target.value); setEntrySectionId(''); setEntrySubjectId('') }} className={`${inputCls} w-full`} disabled={!entryExamId}>
-                    <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                    {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
-                  <select value={entrySectionId} onChange={e => { setEntrySectionId(e.target.value); setEntrySubjectId('') }} className={`${inputCls} w-full`} disabled={!entryClassId}>
-                    <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                    {sectionOptions.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিষয়' : 'Subject'}</label>
-                  <select value={entrySubjectId} onChange={e => setEntrySubjectId(e.target.value)} className={`${inputCls} w-full`} disabled={!entrySectionId}>
-                    <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                    {subjects.filter(s => subjectMarkConfigs.some(c => c.examId === entryExamId && c.subjectId === s.id)).map(s => (
-                      <option key={s.id} value={s.id}>{isBn ? s.nameBn : s.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Auto-save indicator */}
-              {saving && (
-                <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[var(--green)]">
-                  <Loader size={12} className="animate-spin" />{isBn ? 'সেভ হচ্ছে...' : 'Saving...'}
-                </div>
-              )}
-              {!saving && lastSaved && (
-                <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
-                  <CheckCircle size={12} />{isBn ? `শেষ সেভ: ${lastSaved}` : `Last saved: ${lastSaved}`}
-                </div>
-              )}
-            </div>
-
-            {/* Marks Entry Table */}
-            {entryExamId && entryClassId && entrySectionId && entrySubjectId && entrySubjectConfig && (
-              <div className={sectionCls}>
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <span className="text-[13px] font-semibold text-[var(--text-primary)]">{classStudents.length} {isBn ? 'জন শিক্ষার্থী' : 'students'}</span>
-                    <span className="text-[11px] text-[var(--text-muted)] ml-2">
-                      {isBn ? 'ফুল' : 'Full'}: {entrySubjectConfig.fullMarks} · {isBn ? 'পাস' : 'Pass'}: {entrySubjectConfig.passMarks}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '40px', height: '4px', background: 'var(--border)', borderRadius: '2px' }}>
+                      <div style={{ height: '100%', width: `${entry.totalStudents > 0 ? Math.round((entry.enteredCount / entry.totalStudents) * 100) : 0}%`, background: st.color, borderRadius: '2px' }} />
+                    </div>
+                    <span style={{ fontSize: '9px', fontWeight: 600, padding: '2px 6px', borderRadius: '6px', background: st.bg, color: st.color, whiteSpace: 'nowrap' }}>
+                      {isBn ? st.labelBn : st.label}
                     </span>
                   </div>
                 </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs min-w-[500px]">
-                    <thead>
-                      <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                        <th className="py-2 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] w-8">#</th>
-                        <th className="py-2 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[140px]">{isBn ? 'নাম' : 'Name'}</th>
-                        <th className="py-2 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[60px]">{isBn ? 'রোল' : 'Roll'}</th>
-                        {entrySubjectConfig.subExams.map(se => (
-                          <th key={se.id} className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[80px]">
-                            <div>{isBn ? se.nameBn : se.name}</div>
-                            <div className="font-normal text-[9px]">({se.weight}%)</div>
-                          </th>
-                        ))}
-                        <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[60px]">{isBn ? 'মোট' : 'Total'}</th>
-                        <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[50px]">{isBn ? 'গ্রেড' : 'Grade'}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {classStudents.map((student, idx) => {
-                        const marks = markInputs[student.id] || {}
-                        const total = Object.values(marks).reduce((a, b) => a + b, 0)
-                        const pct = entrySubjectConfig.fullMarks > 0 ? (total / entrySubjectConfig.fullMarks) * 100 : 0
-                        let grade = 'F'
-                        if (pct >= 80) grade = 'A+'
-                        else if (pct >= 70) grade = 'A'
-                        else if (pct >= 60) grade = 'A-'
-                        else if (pct >= 50) grade = 'B'
-                        else if (pct >= 40) grade = 'C'
-                        else if (pct >= 33) grade = 'D'
-
-                        return (
-                          <tr key={student.id} className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)] transition-colors">
-                            <td className="py-2 px-2 text-[var(--text-muted)]">{idx + 1}</td>
-                            <td className="py-2 px-2">
-                              <div className="text-[11px] font-medium text-[var(--text-primary)]">{isBn ? student.nameBn || student.nameEn : student.nameEn}</div>
-                              <div className="text-[9px] text-[var(--text-muted)]">{student.id}</div>
-                            </td>
-                            <td className="py-2 px-2 text-[var(--text-secondary)]">{student.roll || '—'}</td>
-                            {entrySubjectConfig.subExams.map(se => {
-                              const maxForSub = Math.round(entrySubjectConfig.fullMarks * se.weight / 100)
-                              return (
-                                <td key={se.id} className="py-2 px-2">
-                                  <input type="number" min={0} max={maxForSub}
-                                    value={marks[se.id] || ''}
-                                    onChange={e => handleMarkChange(student.id, se.id, e.target.value)}
-                                    className="w-[60px] h-7 px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[11px] text-center outline-none focus:border-[var(--brand)]"
-                                    placeholder={`0-${maxForSub}`} />
-                                </td>
-                              )
-                            })}
-                            <td className="py-2 px-2 text-center">
-                              <span className={`text-[12px] font-bold ${total >= entrySubjectConfig.passMarks ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>{total}</span>
-                            </td>
-                            <td className="py-2 px-2 text-center">
-                              <span className={`text-[10px] py-[2px] px-[5px] rounded font-medium ${GRADE_COLORS[grade] || 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>{grade}</span>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {classStudents.length === 0 && (
-                  <div className="text-center py-8 text-[var(--text-muted)] text-[12px]">
-                    <Users size={24} className="block mx-auto mb-2 opacity-30" />
-                    {isBn ? 'এই সেকশনে কোনো শিক্ষার্থী নেই' : 'No students in this section'}
-                  </div>
-                )}
+              )
+            })}
+            {marksEntryStatuses.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: '12px' }}>
+                <Clock size={24} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
+                {isBn ? 'এখনো মার্কস এন্ট্রি শুরু হয়নি' : 'No marks entry started yet'}
               </div>
             )}
+          </div>
+        </div>
 
-            {entryExamId && entryClassId && entrySectionId && entrySubjectId && !entrySubjectConfig && (
-              <div className={sectionCls}>
-                <div className="text-center py-8 text-[var(--text-muted)] text-[12px]">
-                  <Settings size={24} className="block mx-auto mb-2 opacity-30" />
-                  {isBn ? 'এই পরীক্ষা ও বিষয়ের জন্য মার্ক ডিস্ট্রিবিউশন কনফিগার করুন' : 'Configure mark distribution for this exam and subject'}
+        <div className="card--premium" style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+            <SectionHead color="var(--teal)" />
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'সেটআপ চেকলিস্ট' : 'Setup Checklist'}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {checklist.map((item, i) => (
+              <div key={i} onClick={() => navigate(item.link)}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '8px', background: item.done ? 'var(--green-light)' : 'var(--bg-secondary)', border: `1px solid ${item.done ? 'rgba(34,197,94,0.2)' : 'var(--border)'}`, cursor: 'pointer', transition: 'all 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateX(2px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}
+              >
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: item.done ? 'var(--green)' : 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {item.done && <CheckCircle2 size={11} color="#fff" />}
                 </div>
+                <span style={{ fontSize: '12px', flex: 1, color: item.done ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: item.done ? 500 : 400 }}>{item.label}</span>
+                <ArrowRight size={12} style={{ color: 'var(--text-muted)' }} />
               </div>
-            )}
-
-            {!entryExamId && (
-              <div className={sectionCls}>
-                <div className="text-center py-8 text-[var(--text-muted)] text-[12px]">
-                  <BookOpen size={24} className="block mx-auto mb-2 opacity-30" />
-                  {isBn ? 'পরীক্ষা, শ্রেণি, সেকশন ও বিষয় নির্বাচন করুন' : 'Select exam, class, section and subject to enter marks'}
-                </div>
-              </div>
-            )}
-          </>
-        )}
+            ))}
+          </div>
+        </div>
       </div>
+
+      {/* Promotion Summary */}
+      <div className="gsap-fade-up" style={card}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <SectionHead color="var(--purple)" />
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'প্রমোশন সারসংক্ষেপ' : 'Promotion Summary'}</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '10px' }}>
+          {promoSummary.map(item => (
+            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: `${item.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: item.color, flexShrink: 0 }}>
+                <GraduationCap size={15} />
+              </div>
+              <div>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{item.value}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{item.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }`}</style>
     </div>
   )
 }

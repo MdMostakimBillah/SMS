@@ -677,10 +677,10 @@ export default function HRPage() {
               <Calendar size={14} className="text-[var(--brand)] shrink-0" />
               <span className="text-xs font-medium text-[var(--text-secondary)]">{isBn ? 'তারিখ পরিসীমা:' : 'Date Range:'}</span>
               <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                className={`${inputCls} w-auto py-[6px] px-[10px] text-xs`} />
+                className={`${inputCls} w-auto max-w-[160px] py-[6px] px-[10px] text-xs`} />
               <span className="text-xs text-[var(--text-muted)]">—</span>
               <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                className={`${inputCls} w-auto py-[6px] px-[10px] text-xs`} />
+                className={`${inputCls} w-auto max-w-[160px] py-[6px] px-[10px] text-xs`} />
               <button onClick={() => { const d = new Date(); d.setDate(d.getDate() - 7); setDateFrom(d.toISOString().split('T')[0]); setDateTo(new Date().toISOString().split('T')[0]) }}
                 className="py-[5px] px-[10px] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[11px] cursor-pointer font-[inherit]">
                 {isBn ? '৭ দিন' : '7D'}
@@ -1131,10 +1131,10 @@ export default function HRPage() {
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <Calendar size={13} className="text-[var(--text-muted)]" />
             <input type="date" value={incDateFrom} onChange={e => { setIncDateFrom(e.target.value); setPage(1) }}
-              className={`${inputCls} w-auto h-[32px] py-0 px-2 text-[11px]`} />
+              className={`${inputCls} w-auto max-w-[160px] h-[32px] py-0 px-2 text-[11px]`} />
             <span className="text-[11px] text-[var(--text-muted)]">—</span>
             <input type="date" value={incDateTo} onChange={e => { setIncDateTo(e.target.value); setPage(1) }}
-              className={`${inputCls} w-auto h-[32px] py-0 px-2 text-[11px]`} />
+              className={`${inputCls} w-auto max-w-[160px] h-[32px] py-0 px-2 text-[11px]`} />
             <div className="flex h-[32px] shrink-0">
               <button onClick={() => { const d = new Date(); d.setMonth(d.getMonth() - 6); setIncDateFrom(d.toISOString().split('T')[0]); setIncDateTo(new Date().toISOString().split('T')[0]) }}
                 className="px-[10px] border border-[var(--border)] border-r-0 cursor-pointer font-[inherit] text-[11px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--brand-light)] hover:text-[var(--brand)] transition-all rounded-l-lg">
@@ -1281,10 +1281,10 @@ export default function HRPage() {
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <Calendar size={13} className="text-[var(--text-muted)]" />
             <input type="date" value={bonusDateFrom} onChange={e => { setBonusDateFrom(e.target.value); setPage(1) }}
-              className={`${inputCls} w-auto h-[32px] py-0 px-2 text-[11px]`} />
+              className={`${inputCls} w-auto max-w-[160px] h-[32px] py-0 px-2 text-[11px]`} />
             <span className="text-[11px] text-[var(--text-muted)]">—</span>
             <input type="date" value={bonusDateTo} onChange={e => { setBonusDateTo(e.target.value); setPage(1) }}
-              className={`${inputCls} w-auto h-[32px] py-0 px-2 text-[11px]`} />
+              className={`${inputCls} w-auto max-w-[160px] h-[32px] py-0 px-2 text-[11px]`} />
             <div className="flex h-[32px] shrink-0">
               <button onClick={() => { const d = new Date(); d.setMonth(d.getMonth() - 6); setBonusDateFrom(d.toISOString().split('T')[0]); setBonusDateTo(new Date().toISOString().split('T')[0]) }}
                 className="px-[10px] border border-[var(--border)] border-r-0 cursor-pointer font-[inherit] text-[11px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--brand-light)] hover:text-[var(--brand)] transition-all rounded-l-lg">
@@ -1421,10 +1421,10 @@ export default function HRPage() {
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <Calendar size={13} className="text-[var(--text-muted)]" />
             <input type="date" value={proDateFrom} onChange={e => { setProDateFrom(e.target.value); setPage(1) }}
-              className={`${inputCls} w-auto h-[32px] py-0 px-2 text-[11px]`} />
+              className={`${inputCls} w-auto max-w-[160px] h-[32px] py-0 px-2 text-[11px]`} />
             <span className="text-[11px] text-[var(--text-muted)]">—</span>
             <input type="date" value={proDateTo} onChange={e => { setProDateTo(e.target.value); setPage(1) }}
-              className={`${inputCls} w-auto h-[32px] py-0 px-2 text-[11px]`} />
+              className={`${inputCls} w-auto max-w-[160px] h-[32px] py-0 px-2 text-[11px]`} />
             <div className="flex h-[32px] shrink-0">
               <button onClick={() => { const d = new Date(); d.setMonth(d.getMonth() - 6); setProDateFrom(d.toISOString().split('T')[0]); setProDateTo(new Date().toISOString().split('T')[0]) }}
                 className="px-[10px] border border-[var(--border)] border-r-0 cursor-pointer font-[inherit] text-[11px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--brand-light)] hover:text-[var(--brand)] transition-all rounded-l-lg">
@@ -1731,7 +1731,7 @@ export default function HRPage() {
             </div>
             <div className="flex gap-2 items-center">
               <input type="month" value={salarySetupMonth} onChange={e => setSalarySetupMonth(e.target.value)}
-                className={`${inputCls} w-auto py-[6px] px-[10px] text-xs`} />
+                className={`${inputCls} w-auto max-w-[160px] py-[6px] px-[10px] text-xs`} />
               <button onClick={() => {
                 const configs: MonthlySalaryConfig[] = activeTeachers.map(t => {
                   const existing = monthlySalaryConfigs.find(c => c.teacherId === t.id && c.month === salarySetupMonth)
@@ -2162,10 +2162,10 @@ export default function HRPage() {
               </div>
               <div className="flex gap-1.5 items-center flex-wrap">
                 <input type="date" value={assignDateFrom} onChange={e => { setAssignDateFrom(e.target.value); setPage(1) }}
-                  className={`${inputCls} w-auto py-[5px] px-2 text-[11px]`} />
+                  className={`${inputCls} w-auto max-w-[160px] py-[5px] px-2 text-[11px]`} />
                 <span className="text-[11px] text-[var(--text-muted)]">—</span>
                 <input type="date" value={assignDateTo} onChange={e => { setAssignDateTo(e.target.value); setPage(1) }}
-                  className={`${inputCls} w-auto py-[5px] px-2 text-[11px]`} />
+                  className={`${inputCls} w-auto max-w-[160px] py-[5px] px-2 text-[11px]`} />
                 {selectedAssign.length > 0 && (
                   <button onClick={() => setShowPDFModal('assignment')}
                     className="flex items-center gap-[5px] py-[6px] px-[10px] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[11px] font-medium cursor-pointer font-[inherit]">
