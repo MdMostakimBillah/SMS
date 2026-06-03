@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Plus, Trash2, Edit2, CheckCircle, Settings,
   BookOpen, Save, X, ClipboardList, Award, ScanLine, AlertTriangle,
-  Copy,
+  Copy, Zap,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -115,6 +115,18 @@ export default function Step1Planning() {
       return { subject: sub, config: existing || null }
     }).sort((a, b) => (isBn ? a.subject.nameBn : a.subject.name).localeCompare(isBn ? b.subject.nameBn : b.subject.name))
   }, [subjects, distConfigs, isBn])
+
+  const QUICK_SUB_EXAMS = useMemo(() => [
+    { name: 'CQ', nameBn: 'সিকিউ', weight: 50 },
+    { name: 'MCQ', nameBn: 'এমসিকিউ', weight: 30 },
+    { name: 'Oral', nameBn: 'মৌখিক', weight: 20 },
+  ], [])
+
+  const handleQuickSetupSubExams = (config: SubjectMarkConfig) => {
+    QUICK_SUB_EXAMS.forEach(se => {
+      addSubExamToSubject(config.id, { name: se.name, nameBn: se.nameBn, weight: se.weight })
+    })
+  }
 
   const examClassStats = useMemo(() => {
     const totalSubjects = subjects.length || 1
@@ -427,9 +439,10 @@ export default function Step1Planning() {
 
                       {/* Table Header */}
                       <div className="grid gap-2 pb-2 border-b border-[var(--border)] text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider"
-                        style={{ gridTemplateColumns: '24px 1fr 80px 80px 44px' }}>
+                        style={{ gridTemplateColumns: '24px 1fr 100px 80px 80px 50px' }}>
                         <div className="text-center">#</div>
                         <div>{isBn ? 'বিষয়' : 'Subject'}</div>
+                        <div>{isBn ? 'সাব-এক্সাম (CQ/MCQ/Oral)' : 'Sub-Exam (CQ/MCQ/Oral)'}</div>
                         <div className="text-center">{isBn ? 'ফুল মার্কস' : 'Full Marks'}</div>
                         <div className="text-center">{isBn ? 'পাস মার্কস' : 'Pass Marks'}</div>
                         <div className="text-center">{isBn ? 'অ্যাকশন' : 'Action'}</div>
@@ -438,63 +451,90 @@ export default function Step1Planning() {
                       {/* Table Rows */}
                       <div className="divide-y divide-[var(--border)]">
                         {allSubjectsForClass.map(({ subject, config }, idx) => (
-                          <div key={subject.id} className={`grid items-center gap-2 py-2 transition-colors ${config ? 'bg-[var(--green-light)]/30' : 'hover:bg-[var(--bg-secondary)]'}`}
-                            style={{ gridTemplateColumns: '24px 1fr 80px 80px 44px' }}>
-                            <div className="text-center text-[10px] text-[var(--text-muted)]">{idx + 1}</div>
-                            <div className="min-w-0">
-                              <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{isBn ? subject.nameBn : subject.name}</div>
-                              {config && config.subExams.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-0.5">
-                                  {config.subExams.map(se => (
-                                    <span key={se.id} className="inline-flex items-center gap-0.5 text-[8px] px-1 py-0.5 rounded bg-[var(--brand-light)] text-[var(--brand)]">
-                                      {isBn ? se.nameBn : se.name} ({se.weight}%)
+                          <div key={subject.id} className={`transition-colors ${config ? 'bg-[var(--green-light)]/30' : 'hover:bg-[var(--bg-secondary)]'}`}>
+                            <div className="grid items-center gap-2 py-2"
+                              style={{ gridTemplateColumns: '24px 1fr 100px 80px 80px 50px' }}>
+                              <div className="text-center text-[10px] text-[var(--text-muted)]">{idx + 1}</div>
+                              <div className="min-w-0">
+                                <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{isBn ? subject.nameBn : subject.name}</div>
+                              </div>
+                              <div className="flex flex-wrap gap-1 items-center">
+                                {config && config.subExams.length > 0 ? (
+                                  config.subExams.map(se => (
+                                    <span key={se.id} className="inline-flex items-center gap-0.5 text-[8px] px-1.5 py-0.5 rounded-md bg-[var(--brand-light)] text-[var(--brand)] font-medium">
+                                      {isBn ? se.nameBn : se.name}: {config.fullMarks * se.weight / 100}
                                       <button onClick={() => removeSubExam(config.id, se.id)} className="ml-0.5 text-[var(--brand)] hover:text-[var(--red)] cursor-pointer">×</button>
                                     </span>
-                                  ))}
+                                  ))
+                                ) : config ? (
+                                  <span className="text-[9px] text-[var(--text-muted)] italic">{isBn ? 'সাব-এক্সাম নেই' : 'No sub-exams'}</span>
+                                ) : (
+                                  <span className="text-[9px] text-[var(--text-muted)]">—</span>
+                                )}
+                              </div>
+                              <div className="text-center">
+                                {config ? (
+                                  <span className="text-[12px] font-semibold text-[var(--text-primary)]">{config.fullMarks}</span>
+                                ) : (
+                                  <input type="number" min="0" value={distFullMarks} onChange={e => setDistFullMarks(e.target.value)}
+                                    className="w-full h-7 text-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none" />
+                                )}
+                              </div>
+                              <div className="text-center">
+                                {config ? (
+                                  <span className="text-[12px] font-semibold text-[var(--text-primary)]">{config.passMarks}</span>
+                                ) : (
+                                  <input type="number" min="0" value={distPassMarks} onChange={e => setDistPassMarks(e.target.value)}
+                                    className="w-full h-7 text-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none" />
+                                )}
+                              </div>
+                              <div className="flex items-center justify-center gap-1">
+                                {config ? (
+                                  <>
+                                    <button onClick={() => { setEditDistConfig(config); setDistSubjectId(config.subjectId); setDistFullMarks(String(config.fullMarks)); setDistPassMarks(String(config.passMarks)) }}
+                                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
+                                      title={isBn ? 'সম্পাদনা' : 'Edit'}>
+                                      <Edit2 size={10} />
+                                    </button>
+                                    <button onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteSubjectMarkConfig(config.id) }}
+                                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                                      title={isBn ? 'মুছুন' : 'Delete'}>
+                                      <Trash2 size={10} />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button onClick={() => { setDistSubjectId(subject.id); handleSaveDist() }}
+                                    disabled={!distFullMarks}
+                                    className="w-6 h-6 rounded bg-[var(--brand)] flex items-center justify-center cursor-pointer text-white border-none disabled:opacity-40"
+                                    title={isBn ? 'সেভ করুন' : 'Save'}>
+                                    <Save size={10} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            {/* Sub-exam action row */}
+                            {config && (
+                              <div className="flex items-center gap-2 pb-2 -mt-1">
+                                <div className="w-6" />
+                                <div className="flex items-center gap-1.5 flex-1">
                                   <button onClick={() => { setEditDistConfig(config); setShowSubExamForm(true) }}
-                                    className="text-[8px] px-1 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer">+</button>
+                                    className="inline-flex items-center gap-1 text-[9px] px-2 py-1 rounded-md bg-[var(--brand)] text-white border-none cursor-pointer font-medium hover:shadow-sm">
+                                    <Plus size={9} />{isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-Exam'}
+                                  </button>
+                                  {config.subExams.length === 0 && (
+                                    <button onClick={() => handleQuickSetupSubExams(config)}
+                                      className="inline-flex items-center gap-1 text-[9px] px-2 py-1 rounded-md bg-[var(--teal-light)] text-[var(--teal)] border border-[var(--teal)] cursor-pointer font-medium hover:shadow-sm">
+                                      <Zap size={9} />{isBn ? 'দ্রুত সেটআপ (CQ+MCQ+Oral)' : 'Quick Setup (CQ+MCQ+Oral)'}
+                                    </button>
+                                  )}
+                                  {config.subExams.length > 0 && (
+                                    <span className="text-[9px] text-[var(--text-muted)]">
+                                      {config.subExams.reduce((sum, se) => sum + se.weight, 0)}% / 100%
+                                    </span>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                            <div className="text-center">
-                              {config ? (
-                                <span className="text-[12px] font-semibold text-[var(--text-primary)]">{config.fullMarks}</span>
-                              ) : (
-                                <input type="number" min="0" value={distFullMarks} onChange={e => setDistFullMarks(e.target.value)}
-                                  className="w-full h-7 text-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none" />
-                              )}
-                            </div>
-                            <div className="text-center">
-                              {config ? (
-                                <span className="text-[12px] font-semibold text-[var(--text-primary)]">{config.passMarks}</span>
-                              ) : (
-                                <input type="number" min="0" value={distPassMarks} onChange={e => setDistPassMarks(e.target.value)}
-                                  className="w-full h-7 text-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none" />
-                              )}
-                            </div>
-                            <div className="flex items-center justify-center gap-1">
-                              {config ? (
-                                <>
-                                  <button onClick={() => { setEditDistConfig(config); setDistSubjectId(config.subjectId); setDistFullMarks(String(config.fullMarks)); setDistPassMarks(String(config.passMarks)) }}
-                                    className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
-                                    title={isBn ? 'সম্পাদনা' : 'Edit'}>
-                                    <Edit2 size={10} />
-                                  </button>
-                                  <button onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteSubjectMarkConfig(config.id) }}
-                                    className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                                    title={isBn ? 'মুছুন' : 'Delete'}>
-                                    <Trash2 size={10} />
-                                  </button>
-                                </>
-                              ) : (
-                                <button onClick={() => { setDistSubjectId(subject.id); handleSaveDist() }}
-                                  disabled={!distFullMarks}
-                                  className="w-6 h-6 rounded bg-[var(--brand)] flex items-center justify-center cursor-pointer text-white border-none disabled:opacity-40"
-                                  title={isBn ? 'সেভ করুন' : 'Save'}>
-                                  <Save size={10} />
-                                </button>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -510,15 +550,40 @@ export default function Step1Planning() {
                     {showSubExamForm && editDistConfig && (
                       <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShowSubExamForm(false)}>
                         <div className="bg-[var(--bg-primary)] rounded-2xl p-5 w-full max-w-sm shadow-xl border border-[var(--border)]" onClick={e => e.stopPropagation()}>
-                          <div className="flex items-center justify-between mb-4">
-                            <span className="text-[14px] font-bold text-[var(--text-primary)]">{isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-exam'}</span>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-[14px] font-bold text-[var(--text-primary)]">{isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-Exam'}</span>
                             <button onClick={() => setShowSubExamForm(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)]"><X size={14} /></button>
                           </div>
-                          <div className="space-y-3">
-                            <input value={subExamForm.name} onChange={e => setSubExamForm(p => ({ ...p, name: e.target.value }))} placeholder={isBn ? 'নাম (EN)' : 'Name (EN)'} className={`${inputCls} w-full`} />
-                            <input value={subExamForm.nameBn} onChange={e => setSubExamForm(p => ({ ...p, nameBn: e.target.value }))} placeholder={isBn ? 'নাম (BN)' : 'Name (BN)'} className={`${inputCls} w-full`} />
-                            <input type="number" value={subExamForm.weight} onChange={e => setSubExamForm(p => ({ ...p, weight: e.target.value }))} placeholder={isBn ? 'ওজন (%)' : 'Weight (%)'} className={`${inputCls} w-full`} />
-                            <button onClick={handleAddSubExam} disabled={!subExamForm.name || !subExamForm.weight} className={`${btnPrimary} w-full justify-center disabled:opacity-50`}>{isBn ? 'যোগ করুন' : 'Add'}</button>
+                          <div className="text-[11px] text-[var(--text-muted)] mb-3">
+                            {(() => { const sub = subjects.find(s => s.id === editDistConfig.subjectId); return sub ? `${isBn ? sub.nameBn : sub.name} — ${editDistConfig.fullMarks} ${isBn ? 'মার্কস' : 'marks'}` : '' })()}
+                          </div>
+                          {/* Quick add buttons */}
+                          <div className="flex gap-1.5 mb-3">
+                            {QUICK_SUB_EXAMS.map(se => {
+                              const alreadyAdded = editDistConfig.subExams.some(e => e.name === se.name)
+                              return (
+                                <button key={se.name} disabled={alreadyAdded}
+                                  onClick={() => { addSubExamToSubject(editDistConfig.id, { name: se.name, nameBn: se.nameBn, weight: se.weight }) }}
+                                  className={`flex-1 py-2 rounded-lg text-[10px] font-semibold border cursor-pointer ${alreadyAdded ? 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] opacity-50 cursor-not-allowed' : 'bg-[var(--brand-light)] text-[var(--brand)] border-[var(--brand)] hover:shadow-sm'}`}>
+                                  {se.name}<br /><span className="font-normal text-[9px]">{se.weight}%</span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                          <div className="border-t border-[var(--border)] pt-3">
+                            <div className="text-[10px] font-semibold text-[var(--text-muted)] mb-2">{isBn ? 'কাস্টম যোগ করুন' : 'Add Custom'}</div>
+                            <div className="space-y-2">
+                              <input value={subExamForm.name} onChange={e => setSubExamForm(p => ({ ...p, name: e.target.value }))} placeholder={isBn ? 'নাম (EN)' : 'Name (EN)'} className={`${inputCls} w-full`} />
+                              <input value={subExamForm.nameBn} onChange={e => setSubExamForm(p => ({ ...p, nameBn: e.target.value }))} placeholder={isBn ? 'নাম (BN)' : 'Name (BN)'} className={`${inputCls} w-full`} />
+                              <div className="flex gap-2">
+                                <input type="number" value={subExamForm.weight} onChange={e => setSubExamForm(p => ({ ...p, weight: e.target.value }))} placeholder={isBn ? 'ওজন (%)' : 'Weight (%)'} className={`${inputCls} flex-1`} />
+                                <button onClick={handleAddSubExam} disabled={!subExamForm.name || !subExamForm.weight}
+                                  className={`${btnPrimary} px-4 disabled:opacity-50`}>{isBn ? 'যোগ' : 'Add'}</button>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-3 text-[10px] text-[var(--text-muted)] text-right">
+                            {editDistConfig.subExams.reduce((sum, se) => sum + se.weight, 0)}% / 100%
                           </div>
                         </div>
                       </div>
