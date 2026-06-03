@@ -31,8 +31,8 @@ function ExamSkeleton() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div><div className="skeleton skeleton-title" style={{ width: '220px' }} /><div className="skeleton skeleton-text" style={{ width: '160px' }} /></div>
       <div className="skeleton" style={{ width: '100%', height: '60px', borderRadius: '12px' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
-        {[1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton-card" style={{ height: '80px' }} />)}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+        {[1, 2, 3, 4].map(i => <div key={i} className="skeleton-card" style={{ height: '80px' }} />)}
       </div>
     </div>
   )
@@ -168,12 +168,11 @@ export default function ExamDashboard() {
 
   // ── Static stat data ──
   const quickStats = useMemo(() => [
-    { labelBn: 'সক্রিয় পরীক্ষা', labelEn: 'Active Exams', value: publishedResults, color: 'var(--brand)', cardBg: 'var(--brand-light)' },
     { labelBn: 'নির্ধারিত পরীক্ষা', labelEn: 'Scheduled', value: totalRoutines, color: 'var(--teal)', cardBg: 'var(--teal-light)' },
     { labelBn: 'মার্কস বাকি', labelEn: 'Pending Entry', value: Math.max(0, (totalSubjects * 5) - studentMarks.length), color: 'var(--amber)', cardBg: 'var(--amber-light)' },
     { labelBn: 'প্রকাশিত ফলাফল', labelEn: 'Published', value: publishedResults, color: 'var(--green)', cardBg: 'var(--green-light)' },
     { labelBn: 'প্রমোশন বাকি', labelEn: 'Ready to Promote', value: pendingPromotions, color: 'var(--purple)', cardBg: 'var(--purple-light)' },
-  ], [publishedResults, totalRoutines, totalSubjects, studentMarks.length, pendingPromotions])
+  ], [totalRoutines, totalSubjects, studentMarks.length, publishedResults, pendingPromotions])
 
   const progressItems = useMemo(() => {
     if (!activeExam) return []
@@ -262,7 +261,7 @@ export default function ExamDashboard() {
             onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-xs)' }}
           >
             <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: s.cardBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: s.color, flexShrink: 0, fontSize: '16px' }}>
-              {s.labelEn === 'Active Exams' ? <ClipboardList size={16} /> : s.labelEn === 'Scheduled' ? <Calendar size={16} /> : s.labelEn === 'Pending Entry' ? <Edit2 size={16} /> : s.labelEn === 'Published' ? <FileText size={16} /> : <GraduationCap size={16} />}
+              {s.labelEn === 'Scheduled' ? <Calendar size={16} /> : s.labelEn === 'Pending Entry' ? <Edit2 size={16} /> : s.labelEn === 'Published' ? <FileText size={16} /> : <GraduationCap size={16} />}
             </div>
             <div>
               <div style={{ fontSize: isMobile ? '20px' : '22px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{s.value}</div>
