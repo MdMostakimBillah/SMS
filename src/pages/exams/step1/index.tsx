@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Plus, Trash2, Edit2, CheckCircle, Settings,
   BookOpen, Save, X, ClipboardList, Award, ScanLine, AlertTriangle,
+  Copy,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
-import { useClassStore, getClassOptions } from '@/store/classStore'
+import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useExamStore } from '@/store/examStore'
 import type { ExamConfig, ExamType, SubjectMarkConfig, OMRConfig } from '@/store/examStore'
 
@@ -58,7 +59,7 @@ export default function Step1Planning() {
   const [editExam, setEditExam] = useState<ExamConfig | null>(null)
   const [examForm, setExamForm] = useState({ name: '', nameBn: '', type: 'semester-1' as ExamType, session: '2025-26', startDate: '', endDate: '' })
 
-  // Subject Mark Distribution
+  // Subject Config
   const [distClassId, setDistClassId] = useState('')
   const [distSubjectId, setDistSubjectId] = useState('')
   const [distFullMarks, setDistFullMarks] = useState('100')
@@ -66,8 +67,10 @@ export default function Step1Planning() {
   const [editDistConfig, setEditDistConfig] = useState<SubjectMarkConfig | null>(null)
   const [showSubExamForm, setShowSubExamForm] = useState(false)
   const [subExamForm, setSubExamForm] = useState({ name: '', nameBn: '', weight: '' })
-  const [copyFromClassId, setCopyFromClassId] = useState('')
   const [showCopyConfirm, setShowCopyConfirm] = useState(false)
+  const [copyFromClassId, setCopyFromClassId] = useState('')
+  const [showCopyAllConfirm, setShowCopyAllConfirm] = useState(false)
+  const [copyAllToClassId, setCopyAllToClassId] = useState('')
 
   // OMR Form
   const [showOMRForm, setShowOMRForm] = useState(false)
@@ -97,12 +100,21 @@ export default function Step1Planning() {
 
   const activeExam = useMemo(() => examConfigs.find(e => e.isActive) || null, [examConfigs])
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
+  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
+  const selectedClassSections = useMemo(() => distClassId ? (sectionsMap[distClassId] || []) : [sectionsMap[distClassId]].filter(Boolean).flat(), [distClassId, sectionsMap])
 
   const distConfigs = useMemo(() => {
     if (!activeExam) return []
     if (!distClassId) return subjectMarkConfigs.filter(s => s.examId === activeExam.id)
     return subjectMarkConfigs.filter(s => s.examId === activeExam.id && s.classId === distClassId)
   }, [subjectMarkConfigs, activeExam, distClassId])
+
+  const allSubjectsForClass = useMemo(() => {
+    return subjects.map(sub => {
+      const existing = distConfigs.find(c => c.subjectId === sub.id)
+      return { subject: sub, config: existing || null }
+    }).sort((a, b) => (isBn ? a.subject.nameBn : a.subject.name).localeCompare(isBn ? b.subject.nameBn : b.subject.name))
+  }, [subjects, distConfigs, isBn])
 
   const examClassStats = useMemo(() => {
     const totalSubjects = subjects.length || 1
@@ -159,6 +171,13 @@ export default function Step1Planning() {
     copyClassMarkConfig(activeExam.id, copyFromClassId, distClassId)
     setShowCopyConfirm(false)
     setCopyFromClassId('')
+  }
+
+  const handleCopyAll = () => {
+    if (!activeExam || !copyAllToClassId || !distClassId || copyAllToClassId === distClassId) return
+    copyClassMarkConfig(activeExam.id, distClassId, copyAllToClassId)
+    setShowCopyAllConfirm(false)
+    setCopyAllToClassId('')
   }
 
   const handleAddSubExam = () => {
@@ -337,133 +356,173 @@ export default function Step1Planning() {
               <>
                 {/* Class Selector */}
                 <div className={sectionCls}>
-                  <div className={sectionTitleCls}>
-                    <Settings size={15} className="text-[var(--brand)]" />{isBn ? 'শ্রেণি নির্বাচন' : 'Select Class'}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className={sectionTitleCls}>
+                      <Settings size={15} className="text-[var(--brand)]" />{isBn ? 'শ্রেণি নির্বাচন করুন' : 'Select Class'}
+                    </div>
+                    {distClassId && distConfigs.length > 0 && (
+                      <button onClick={() => setShowCopyAllConfirm(true)}
+                        className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--green-light)] text-[var(--green)] border border-[var(--green)] text-[11px] font-medium cursor-pointer">
+                        <Copy size={12} />{isBn ? 'সব কপি করুন' : 'Copy All To...'}
+                      </button>
+                    )}
                   </div>
-                  <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
-                      <select value={distClassId} onChange={e => { setDistClassId(e.target.value); setDistSubjectId(''); setEditDistConfig(null) }} className={`${inputCls} w-full`}>
+                      <select value={distClassId} onChange={e => { setDistClassId(e.target.value); setDistSubjectId(''); setEditDistConfig(null); setCopyFromClassId('') }} className={`${inputCls} w-full`}>
                         <option value="">{isBn ? 'শ্রেণি নির্বাচন...' : 'Select class...'}</option>
                         {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
-                    <div className="flex items-end gap-2">
-                      <div className="flex-1">
-                        <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'কপি করুন (শ্রেণি)' : 'Copy from class'}</label>
-                        <select value={copyFromClassId} onChange={e => setCopyFromClassId(e.target.value)} className={`${inputCls} w-full`}>
-                          <option value="">{isBn ? 'শ্রেণি নির্বাচন...' : 'Select class...'}</option>
-                          {classOptions.filter(c => c !== distClassId).map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
+                    {distClassId && (
+                      <div>
+                        <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {selectedClassSections.length > 0 ? selectedClassSections.map(sec => (
+                            <span key={sec} className="px-2.5 py-1 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] text-[11px] text-[var(--text-primary)] font-medium">{sec}</span>
+                          )) : (
+                            <span className="text-[11px] text-[var(--text-muted)] italic">{isBn ? 'সেকশন নেই' : 'No sections'}</span>
+                          )}
+                        </div>
                       </div>
-                      <button onClick={() => { if (copyFromClassId && distClassId && copyFromClassId !== distClassId) setShowCopyConfirm(true) }}
-                        disabled={!copyFromClassId || !distClassId || copyFromClassId === distClassId}
-                        className={`py-2 px-3 rounded-lg border text-[11px] font-medium cursor-pointer ${copyFromClassId && distClassId && copyFromClassId !== distClassId ? 'bg-[var(--brand-light)] text-[var(--brand)] border-[var(--brand)]' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] opacity-50 cursor-not-allowed'}`}>
-                        {isBn ? 'কপি' : 'Copy'}
-                      </button>
-                    </div>
+                    )}
                   </div>
                 </div>
 
                 {distClassId && (
                   <>
-                    {/* Mark Distribution Form */}
+                    {/* Copy From Another Class */}
                     <div className={sectionCls}>
-                      <div className={sectionTitleCls}>
-                        <Settings size={15} className="text-[var(--brand)]" />{isBn ? 'মার্ক ডিস্ট্রিবিউশন সেটআপ' : 'Mark Distribution Setup'}
-                        <span className="ml-auto text-[10px] font-normal text-[var(--text-muted)]">{activeExam.nameBn || activeExam.name}</span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Copy size={14} className="text-[var(--teal)]" />
+                        <span className="text-[12px] font-semibold text-[var(--text-primary)]">{isBn ? 'অন্য শ্রেণি থেকে কপি' : 'Copy from another class'}</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 mt-3">
-                        <div>
-                          <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিষয়' : 'Subject'}</label>
-                          <select value={distSubjectId} onChange={e => {
-                            setDistSubjectId(e.target.value)
-                            const existing = subjectMarkConfigs.find(s => s.examId === activeExam.id && s.classId === distClassId && s.subjectId === e.target.value)
-                            if (existing) { setEditDistConfig(existing); setDistFullMarks(String(existing.fullMarks)); setDistPassMarks(String(existing.passMarks)) }
-                            else { setEditDistConfig(null); setDistFullMarks('100'); setDistPassMarks('33') }
-                          }} className={`${inputCls} w-full`}>
-                            <option value="">{isBn ? 'বিষয় নির্বাচন...' : 'Select subject...'}</option>
-                            {subjects.map(s => {
-                              const configured = distConfigs.some(c => c.subjectId === s.id)
-                              return <option key={s.id} value={s.id}>{isBn ? s.nameBn : s.name}{configured ? ' ✓' : ''}</option>
-                            })}
-                          </select>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ফুল মার্কস' : 'Full Marks'}</label>
-                            <input type="number" value={distFullMarks} onChange={e => setDistFullMarks(e.target.value)} className={`${inputCls} w-full`} />
-                          </div>
-                          <div>
-                            <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পাস মার্কস' : 'Pass Marks'}</label>
-                            <input type="number" value={distPassMarks} onChange={e => setDistPassMarks(e.target.value)} className={`${inputCls} w-full`} />
-                          </div>
-                        </div>
+                      <div className="flex items-end gap-2">
+                        <select value={copyFromClassId} onChange={e => setCopyFromClassId(e.target.value)} className={`${inputCls} flex-1`}>
+                          <option value="">{isBn ? 'শ্রেণি নির্বাচন...' : 'Select class...'}</option>
+                          {classOptions.filter(c => c !== distClassId).map(c => {
+                            const hasConfig = subjectMarkConfigs.some(s => s.examId === activeExam.id && s.classId === c)
+                            return <option key={c} value={c}>{c}{hasConfig ? ` ✓` : ''}</option>
+                          })}
+                        </select>
+                        <button onClick={() => { if (copyFromClassId && distClassId && copyFromClassId !== distClassId) setShowCopyConfirm(true) }}
+                          disabled={!copyFromClassId || copyFromClassId === distClassId}
+                          className={`py-2 px-4 rounded-lg text-[11px] font-medium cursor-pointer border ${copyFromClassId && copyFromClassId !== distClassId ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] opacity-50 cursor-not-allowed'}`}>
+                          {isBn ? 'কপি করুন' : 'Copy'}
+                        </button>
                       </div>
-                      <button onClick={handleSaveDist} disabled={!distSubjectId} className={`${btnPrimary} text-[12px] mt-3 ${!distSubjectId ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                        <Save size={13} />{editDistConfig ? (isBn ? 'আপডেট' : 'Update') : (isBn ? 'সেভ করুন' : 'Save')}
-                      </button>
                     </div>
 
-                    {/* Configured Subjects */}
+                    {/* All Subjects Table */}
                     <div className={sectionCls}>
-                      <div className={sectionTitleCls}>
-                        <BookOpen size={15} className="text-[var(--teal)]" />{isBn ? 'কনফিগার্ড বিষয়সমূহ' : 'Configured Subjects'}
-                        <span className="ml-auto text-[10px] font-normal text-[var(--text-muted)]">{distConfigs.length} {isBn ? 'টি বিষয়' : 'subjects'}</span>
-                      </div>
-                      {distConfigs.length === 0 ? (
-                        <div className="text-center py-8 text-[var(--text-muted)] text-[12px]">
-                          {isBn ? 'এই শ্রেণিতে কোনো বিষয় কনফিগার করা হয়নি' : 'No subjects configured for this class'}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className={sectionTitleCls}>
+                          <BookOpen size={15} className="text-[var(--teal)]" />{isBn ? 'সকল বিষয়' : 'All Subjects'}
+                          <span className="ml-2 text-[10px] font-normal text-[var(--text-muted)]">
+                            {distConfigs.length}/{subjects.length} {isBn ? 'কনফিগার্ড' : 'configured'}
+                          </span>
                         </div>
-                      ) : (
-                        <div className="space-y-2 mt-2">
-                          {distConfigs.map(config => {
-                            const subject = subjects.find(s => s.id === config.subjectId)
-                            return (
-                              <div key={config.id} className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div>
-                                    <span className="text-[13px] font-semibold text-[var(--text-primary)]">{isBn ? subject?.nameBn : subject?.name}</span>
-                                    <span className="text-[11px] text-[var(--text-muted)] ml-2">{config.fullMarks} / {isBn ? 'পাস' : 'Pass'}: {config.passMarks}</span>
-                                  </div>
-                                  <div className="flex gap-1">
-                                    <button onClick={() => { setEditDistConfig(config); setDistSubjectId(config.subjectId); setDistFullMarks(String(config.fullMarks)); setDistPassMarks(String(config.passMarks)) }}
-                                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]">
-                                      <Edit2 size={11} />
-                                    </button>
-                                    <button onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteSubjectMarkConfig(config.id) }}
-                                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]">
-                                      <Trash2 size={11} />
-                                    </button>
-                                  </div>
-                                </div>
-                                {config.subExams.length > 0 && (
-                                  <div className="flex flex-wrap gap-1.5 mt-1">
-                                    {config.subExams.map(se => (
-                                      <div key={se.id} className="flex items-center gap-1 bg-[var(--bg-primary)] rounded-md px-2 py-1 text-[10px]">
-                                        <span className="font-medium text-[var(--text-primary)]">{isBn ? se.nameBn : se.name}</span>
-                                        <span className="text-[var(--text-muted)]">({se.weight}%)</span>
-                                        <button onClick={() => removeSubExam(config.id, se.id)} className="text-[var(--text-muted)] hover:text-[var(--red)] cursor-pointer ml-0.5">×</button>
-                                      </div>
-                                    ))}
-                                    <button onClick={() => { setEditDistConfig(config); setShowSubExamForm(true) }}
-                                      className="flex items-center gap-0.5 bg-[var(--brand-light)] rounded-md px-2 py-1 text-[10px] text-[var(--brand)] font-medium cursor-pointer">
-                                      <Plus size={10} />{isBn ? 'যোগ' : 'Add'}
-                                    </button>
-                                  </div>
-                                )}
-                                {config.subExams.length === 0 && (
+                      </div>
+
+                      {/* Table Header */}
+                      <div className="grid gap-2 pb-2 border-b border-[var(--border)] text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider"
+                        style={{ gridTemplateColumns: '24px 1fr 80px 80px 44px' }}>
+                        <div className="text-center">#</div>
+                        <div>{isBn ? 'বিষয়' : 'Subject'}</div>
+                        <div className="text-center">{isBn ? 'ফুল মার্কস' : 'Full Marks'}</div>
+                        <div className="text-center">{isBn ? 'পাস মার্কস' : 'Pass Marks'}</div>
+                        <div className="text-center">{isBn ? 'অ্যাকশন' : 'Action'}</div>
+                      </div>
+
+                      {/* Table Rows */}
+                      <div className="divide-y divide-[var(--border)]">
+                        {allSubjectsForClass.map(({ subject, config }, idx) => (
+                          <div key={subject.id} className={`grid items-center gap-2 py-2 transition-colors ${config ? 'bg-[var(--green-light)]/30' : 'hover:bg-[var(--bg-secondary)]'}`}
+                            style={{ gridTemplateColumns: '24px 1fr 80px 80px 44px' }}>
+                            <div className="text-center text-[10px] text-[var(--text-muted)]">{idx + 1}</div>
+                            <div className="min-w-0">
+                              <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{isBn ? subject.nameBn : subject.name}</div>
+                              {config && config.subExams.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                  {config.subExams.map(se => (
+                                    <span key={se.id} className="inline-flex items-center gap-0.5 text-[8px] px-1 py-0.5 rounded bg-[var(--brand-light)] text-[var(--brand)]">
+                                      {isBn ? se.nameBn : se.name} ({se.weight}%)
+                                      <button onClick={() => removeSubExam(config.id, se.id)} className="ml-0.5 text-[var(--brand)] hover:text-[var(--red)] cursor-pointer">×</button>
+                                    </span>
+                                  ))}
                                   <button onClick={() => { setEditDistConfig(config); setShowSubExamForm(true) }}
-                                    className="mt-1 flex items-center gap-1 text-[10px] text-[var(--brand)] cursor-pointer hover:underline">
-                                    <Plus size={10} />{isBn ? 'সাব-এক্সাম যোগ করুন' : 'Add sub-exams (CQ, MCQ, Oral...)'}
+                                    className="text-[8px] px-1 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer">+</button>
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-center">
+                              {config ? (
+                                <span className="text-[12px] font-semibold text-[var(--text-primary)]">{config.fullMarks}</span>
+                              ) : (
+                                <input type="number" min="0" value={distFullMarks} onChange={e => setDistFullMarks(e.target.value)}
+                                  className="w-full h-7 text-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none" />
+                              )}
+                            </div>
+                            <div className="text-center">
+                              {config ? (
+                                <span className="text-[12px] font-semibold text-[var(--text-primary)]">{config.passMarks}</span>
+                              ) : (
+                                <input type="number" min="0" value={distPassMarks} onChange={e => setDistPassMarks(e.target.value)}
+                                  className="w-full h-7 text-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none" />
+                              )}
+                            </div>
+                            <div className="flex items-center justify-center gap-1">
+                              {config ? (
+                                <>
+                                  <button onClick={() => { setEditDistConfig(config); setDistSubjectId(config.subjectId); setDistFullMarks(String(config.fullMarks)); setDistPassMarks(String(config.passMarks)) }}
+                                    className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
+                                    title={isBn ? 'সম্পাদনা' : 'Edit'}>
+                                    <Edit2 size={10} />
                                   </button>
-                                )}
-                              </div>
-                            )
-                          })}
+                                  <button onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteSubjectMarkConfig(config.id) }}
+                                    className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                                    title={isBn ? 'মুছুন' : 'Delete'}>
+                                    <Trash2 size={10} />
+                                  </button>
+                                </>
+                              ) : (
+                                <button onClick={() => { setDistSubjectId(subject.id); handleSaveDist() }}
+                                  disabled={!distFullMarks}
+                                  className="w-6 h-6 rounded bg-[var(--brand)] flex items-center justify-center cursor-pointer text-white border-none disabled:opacity-40"
+                                  title={isBn ? 'সেভ করুন' : 'Save'}>
+                                  <Save size={10} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {subjects.length === 0 && (
+                        <div className="text-center py-8 text-[var(--text-muted)] text-[12px]">
+                          {isBn ? 'কোনো বিষয় পাওয়া যায়নি' : 'No subjects found'}
                         </div>
                       )}
                     </div>
+
+                    {/* Sub-exam Form Modal */}
+                    {showSubExamForm && editDistConfig && (
+                      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShowSubExamForm(false)}>
+                        <div className="bg-[var(--bg-primary)] rounded-2xl p-5 w-full max-w-sm shadow-xl border border-[var(--border)]" onClick={e => e.stopPropagation()}>
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="text-[14px] font-bold text-[var(--text-primary)]">{isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-exam'}</span>
+                            <button onClick={() => setShowSubExamForm(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)]"><X size={14} /></button>
+                          </div>
+                          <div className="space-y-3">
+                            <input value={subExamForm.name} onChange={e => setSubExamForm(p => ({ ...p, name: e.target.value }))} placeholder={isBn ? 'নাম (EN)' : 'Name (EN)'} className={`${inputCls} w-full`} />
+                            <input value={subExamForm.nameBn} onChange={e => setSubExamForm(p => ({ ...p, nameBn: e.target.value }))} placeholder={isBn ? 'নাম (BN)' : 'Name (BN)'} className={`${inputCls} w-full`} />
+                            <input type="number" value={subExamForm.weight} onChange={e => setSubExamForm(p => ({ ...p, weight: e.target.value }))} placeholder={isBn ? 'ওজন (%)' : 'Weight (%)'} className={`${inputCls} w-full`} />
+                            <button onClick={handleAddSubExam} disabled={!subExamForm.name || !subExamForm.weight} className={`${btnPrimary} w-full justify-center disabled:opacity-50`}>{isBn ? 'যোগ করুন' : 'Add'}</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </>
@@ -629,28 +688,23 @@ export default function Step1Planning() {
         </div>
       )}
 
-      {/* ═══ Sub-Exam Form Modal ═══ */}
-      {showSubExamForm && editDistConfig && (
+      {showCopyAllConfirm && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[350px] w-full p-5 border border-[var(--border)]">
-            <h3 className="text-[14px] font-semibold text-[var(--text-primary)] mb-3">{isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-Exam'}</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'নাম (ইংরেজি)' : 'Name'}</label>
-                <input value={subExamForm.name} onChange={e => setSubExamForm(p => ({ ...p, name: e.target.value }))} className={`${inputCls} w-full`} placeholder="e.g. CQ, MCQ, Oral, Practical" />
-              </div>
-              <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'নাম (বাংলা)' : 'Name (Bangla)'}</label>
-                <input value={subExamForm.nameBn} onChange={e => setSubExamForm(p => ({ ...p, nameBn: e.target.value }))} className={`${inputCls} w-full`} placeholder="e.g. সিকিউ, এমসিকিউ, মৌখিক" />
-              </div>
-              <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ওয়েট (%)' : 'Weight (%)'}</label>
-                <input type="number" value={subExamForm.weight} onChange={e => setSubExamForm(p => ({ ...p, weight: e.target.value }))} className={`${inputCls} w-full`} placeholder="e.g. 50" />
-              </div>
-            </div>
-            <div className="flex gap-2 justify-end mt-4">
-              <button onClick={() => { setShowSubExamForm(false); setSubExamForm({ name: '', nameBn: '', weight: '' }) }} className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[11px] cursor-pointer">{isBn ? 'বাতিল' : 'Cancel'}</button>
-              <button onClick={handleAddSubExam} className={`${btnPrimary} text-[11px] py-[6px] px-3`}>{isBn ? 'যোগ করুন' : 'Add'}</button>
+          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
+            <h3 className="text-[14px] font-semibold text-[var(--text-primary)] mb-2">{isBn ? 'সব কপি করুন' : 'Copy All To Another Class'}</h3>
+            <p className="text-[12px] text-[var(--text-muted)] mb-2">
+              {isBn
+                ? `${distClassId} থেকে অন্য শ্রেণিতে সব মার্ক কনফিগ কপি করুন।`
+                : `Copy all mark configs from ${distClassId} to another class.`}
+            </p>
+            <select value={copyAllToClassId} onChange={e => setCopyAllToClassId(e.target.value)} className={`${inputCls} w-full mb-4`}>
+              <option value="">{isBn ? 'শ্রেণি নির্বাচন...' : 'Select target class...'}</option>
+              {classOptions.filter(c => c !== distClassId).map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => { setShowCopyAllConfirm(false); setCopyAllToClassId('') }} className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[12px] text-[var(--text-secondary)] cursor-pointer">{isBn ? 'বাতিল' : 'Cancel'}</button>
+              <button onClick={handleCopyAll} disabled={!copyAllToClassId || copyAllToClassId === distClassId}
+                className="px-3 py-1.5 rounded-lg bg-[var(--green)] text-white text-[12px] font-medium cursor-pointer disabled:opacity-50">{isBn ? 'কপি করুন' : 'Copy'}</button>
             </div>
           </div>
         </div>
