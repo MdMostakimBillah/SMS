@@ -1,62 +1,65 @@
 export interface HRPDFColumn {
-  key: string; label: string; labelBn: string; default: boolean
+  key: string
+  label: string
+  labelBn: string
+  default: boolean
 }
 
 export const HR_INCREMENT_COLUMNS: HRPDFColumn[] = [
-  { key: 'serial',    label: '#',           labelBn: 'ক্রম',       default: true  },
-  { key: 'date',      label: 'Date',        labelBn: 'তারিখ',     default: true  },
-  { key: 'teacher',   label: 'Teacher',     labelBn: 'শিক্ষক',     default: true  },
-  { key: 'type',      label: 'Type',        labelBn: 'ধরন',       default: true  },
-  { key: 'percent',   label: '%',           labelBn: 'শতাংশ',     default: true  },
-  { key: 'amount',    label: 'Amount',      labelBn: 'পরিমাণ',    default: true  },
-  { key: 'reason',    label: 'Reason',      labelBn: 'কারণ',       default: false },
+  { key: 'serial', label: '#', labelBn: 'ক্রম', default: true },
+  { key: 'date', label: 'Date', labelBn: 'তারিখ', default: true },
+  { key: 'teacher', label: 'Teacher', labelBn: 'শিক্ষক', default: true },
+  { key: 'type', label: 'Type', labelBn: 'ধরন', default: true },
+  { key: 'percent', label: '%', labelBn: 'শতাংশ', default: true },
+  { key: 'amount', label: 'Amount', labelBn: 'পরিমাণ', default: true },
+  { key: 'reason', label: 'Reason', labelBn: 'কারণ', default: false },
 ]
 
 export const HR_BONUS_COLUMNS: HRPDFColumn[] = [
-  { key: 'serial',    label: '#',           labelBn: 'ক্রম',       default: true  },
-  { key: 'month',     label: 'Month',       labelBn: 'মাস',        default: true  },
-  { key: 'teacher',   label: 'Teacher',     labelBn: 'শিক্ষক',     default: true  },
-  { key: 'type',      label: 'Type',        labelBn: 'ধরন',       default: true  },
-  { key: 'amount',    label: 'Amount',      labelBn: 'পরিমাণ',    default: true  },
-  { key: 'reason',    label: 'Reason',      labelBn: 'কারণ',       default: false },
+  { key: 'serial', label: '#', labelBn: 'ক্রম', default: true },
+  { key: 'month', label: 'Month', labelBn: 'মাস', default: true },
+  { key: 'teacher', label: 'Teacher', labelBn: 'শিক্ষক', default: true },
+  { key: 'type', label: 'Type', labelBn: 'ধরন', default: true },
+  { key: 'amount', label: 'Amount', labelBn: 'পরিমাণ', default: true },
+  { key: 'reason', label: 'Reason', labelBn: 'কারণ', default: false },
 ]
 
 export const HR_PROMOTION_COLUMNS: HRPDFColumn[] = [
-  { key: 'serial',    label: '#',           labelBn: 'ক্রম',       default: true  },
-  { key: 'teacher',   label: 'Teacher',     labelBn: 'শিক্ষক',     default: true  },
-  { key: 'from',      label: 'From',        labelBn: 'বর্তমান',   default: true  },
-  { key: 'to',        label: 'To',          labelBn: 'নতুন',       default: true  },
-  { key: 'date',      label: 'Date',        labelBn: 'তারিখ',     default: true  },
-  { key: 'reason',    label: 'Reason',      labelBn: 'কারণ',       default: false },
+  { key: 'serial', label: '#', labelBn: 'ক্রম', default: true },
+  { key: 'teacher', label: 'Teacher', labelBn: 'শিক্ষক', default: true },
+  { key: 'from', label: 'From', labelBn: 'বর্তমান', default: true },
+  { key: 'to', label: 'To', labelBn: 'নতুন', default: true },
+  { key: 'date', label: 'Date', labelBn: 'তারিখ', default: true },
+  { key: 'reason', label: 'Reason', labelBn: 'কারণ', default: false },
 ]
 
 export const HR_FUND_COLUMNS: HRPDFColumn[] = [
-  { key: 'serial',    label: '#',           labelBn: 'ক্রম',       default: true  },
-  { key: 'date',      label: 'Date',        labelBn: 'তারিখ',     default: true  },
-  { key: 'type',      label: 'Type',        labelBn: 'ধরন',       default: true  },
-  { key: 'amount',    label: 'Amount',      labelBn: 'পরিমাণ',    default: true  },
-  { key: 'desc',      label: 'Description', labelBn: 'বিবরণ',     default: true  },
+  { key: 'serial', label: '#', labelBn: 'ক্রম', default: true },
+  { key: 'date', label: 'Date', labelBn: 'তারিখ', default: true },
+  { key: 'type', label: 'Type', labelBn: 'ধরন', default: true },
+  { key: 'amount', label: 'Amount', labelBn: 'পরিমাণ', default: true },
+  { key: 'desc', label: 'Description', labelBn: 'বিবরণ', default: true },
 ]
 
 export const HR_ASSIGNMENT_COLUMNS: HRPDFColumn[] = [
-  { key: 'serial',    label: '#',           labelBn: 'ক্রম',       default: true  },
-  { key: 'teacher',   label: 'Employee',    labelBn: 'কর্মচারী',   default: true  },
-  { key: 'facility',  label: 'Facility',    labelBn: 'সুবিধা',     default: true  },
-  { key: 'amount',    label: 'Amount',      labelBn: 'পরিমাণ',    default: true  },
+  { key: 'serial', label: '#', labelBn: 'ক্রম', default: true },
+  { key: 'teacher', label: 'Employee', labelBn: 'কর্মচারী', default: true },
+  { key: 'facility', label: 'Facility', labelBn: 'সুবিধা', default: true },
+  { key: 'amount', label: 'Amount', labelBn: 'পরিমাণ', default: true },
 ]
 
 export const HR_SALARY_COLUMNS: HRPDFColumn[] = [
-  { key: 'serial',    label: '#',           labelBn: 'ক্রম',       default: true  },
-  { key: 'teacher',   label: 'Employee',    labelBn: 'কর্মচারী',   default: true  },
-  { key: 'basic',     label: 'Basic',       labelBn: 'মূল বেতন',  default: true  },
-  { key: 'perf',      label: 'Perf.',       labelBn: 'কর্মদক্ষতা', default: true  },
-  { key: 'atten',     label: 'Atten.',      labelBn: 'উপস্থিতি',  default: true  },
-  { key: 'special',   label: 'Special',     labelBn: 'বিশেষ',      default: true  },
-  { key: 'festival',  label: 'Festival',    labelBn: 'উৎসব',      default: true  },
-  { key: 'totalBonus',label: 'Total B.',    labelBn: 'মোট বোনাস', default: true  },
-  { key: 'deduction', label: 'Deduction',   labelBn: 'কাটা',      default: true  },
-  { key: 'fund',      label: 'Fund',        labelBn: 'তহবিল',     default: true  },
-  { key: 'net',       label: 'Net Pay',     labelBn: 'নেট বেতন',  default: true  },
+  { key: 'serial', label: '#', labelBn: 'ক্রম', default: true },
+  { key: 'teacher', label: 'Employee', labelBn: 'কর্মচারী', default: true },
+  { key: 'basic', label: 'Basic', labelBn: 'মূল বেতন', default: true },
+  { key: 'perf', label: 'Perf.', labelBn: 'কর্মদক্ষতা', default: true },
+  { key: 'atten', label: 'Atten.', labelBn: 'উপস্থিতি', default: true },
+  { key: 'special', label: 'Special', labelBn: 'বিশেষ', default: true },
+  { key: 'festival', label: 'Festival', labelBn: 'উৎসব', default: true },
+  { key: 'totalBonus', label: 'Total B.', labelBn: 'মোট বোনাস', default: true },
+  { key: 'deduction', label: 'Deduction', labelBn: 'কাটা', default: true },
+  { key: 'fund', label: 'Fund', labelBn: 'তহবিল', default: true },
+  { key: 'net', label: 'Net Pay', labelBn: 'নেট বেতন', default: true },
 ]
 
 export interface HRListPDFOptions {
@@ -82,7 +85,11 @@ function getIncrementCell(row: any, key: string, idx: number, isBn: boolean, get
   if (key === 'serial') return String(idx + 1)
   if (key === 'teacher') return getTeacherName(row.teacherId)
   if (key === 'type') {
-    const m: Record<string, string> = { annual: isBn ? 'বার্ষিক' : 'Annual', performance: isBn ? 'কর্মদক্ষতা' : 'Performance', special: isBn ? 'বিশেষ' : 'Special' }
+    const m: Record<string, string> = {
+      annual: isBn ? 'বার্ষিক' : 'Annual',
+      performance: isBn ? 'কর্মদক্ষতা' : 'Performance',
+      special: isBn ? 'বিশেষ' : 'Special',
+    }
     return m[row.type] || row.type
   }
   if (key === 'percent') return `${row.percentage}%`
@@ -94,7 +101,12 @@ function getBonusCell(row: any, key: string, idx: number, isBn: boolean, getTeac
   if (key === 'serial') return String(idx + 1)
   if (key === 'teacher') return getTeacherName(row.teacherId)
   if (key === 'type') {
-    const m: Record<string, string> = { festival: isBn ? 'উৎসব' : 'Festival', performance: isBn ? 'কর্মদক্ষতা' : 'Performance', attendance: isBn ? 'উপস্থিতি' : 'Attendance', special: isBn ? 'বিশেষ' : 'Special' }
+    const m: Record<string, string> = {
+      festival: isBn ? 'উৎসব' : 'Festival',
+      performance: isBn ? 'কর্মদক্ষতা' : 'Performance',
+      attendance: isBn ? 'উপস্থিতি' : 'Attendance',
+      special: isBn ? 'বিশেষ' : 'Special',
+    }
     return m[row.type] || row.type
   }
   if (key === 'amount') return `৳${row.amount.toLocaleString()}`
@@ -117,7 +129,14 @@ function getFundCell(row: any, key: string, idx: number, isBn: boolean): string 
   return String(row[key] || '—')
 }
 
-function getAssignmentCell(row: any, key: string, idx: number, _isBn: boolean, getTeacherName: (id: string) => string, getFacilityName: (id: string) => string): string {
+function getAssignmentCell(
+  row: any,
+  key: string,
+  idx: number,
+  _isBn: boolean,
+  getTeacherName: (id: string) => string,
+  getFacilityName: (id: string) => string
+): string {
   if (key === 'serial') return String(idx + 1)
   if (key === 'teacher') return getTeacherName(row.teacherId)
   if (key === 'facility') return getFacilityName(row.facilityId)
@@ -146,41 +165,54 @@ function buildPDF(
   cols: HRPDFColumn[],
   opts: HRListPDFOptions,
   getCellFn: (row: any, key: string, idx: number, isBn: boolean) => string,
-  countLabel: string,
+  countLabel: string
 ): string {
   const isBn = opts.isBn
   const orientation = opts.orientation
   const totalCols = cols.length + opts.emptyColumns.length
 
-  const fontSize = orientation === 'landscape'
-    ? (totalCols > 12 ? '7.5px' : totalCols > 9 ? '9px' : '10px')
-    : (totalCols > 8 ? '7.5px' : totalCols > 6 ? '9px' : '10px')
+  const fontSize =
+    orientation === 'landscape'
+      ? totalCols > 12
+        ? '7.5px'
+        : totalCols > 9
+          ? '9px'
+          : '10px'
+      : totalCols > 8
+        ? '7.5px'
+        : totalCols > 6
+          ? '9px'
+          : '10px'
 
-  const dataHeaders = cols.map(c => `<th>${isBn ? c.labelBn : c.label}</th>`).join('')
-  const extraHeaders = opts.emptyColumns.map(h =>
-    `<th style="min-width:85px">${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`
-  ).join('')
+  const dataHeaders = cols.map((c) => `<th>${isBn ? c.labelBn : c.label}</th>`).join('')
+  const extraHeaders = opts.emptyColumns.map((h) => `<th style="min-width:85px">${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`).join('')
 
-  const dataRows = data.map((row, i) => {
-    const cells = cols.map(c => {
-      if (c.key === 'amount') {
-        const val = getCellFn(row, c.key, i, isBn)
-        const isNeg = val.startsWith('-')
-        return `<td><b style="color:${isNeg ? '#ef4444' : '#10b981'}">${val}</b></td>`
-      }
-      if (c.key === 'type' && row.type) {
-        const val = getCellFn(row, c.key, i, isBn)
-        return `<td><span style="background:#f3f4f6;padding:1px 5px;border-radius:3px;font-size:7px">${val}</span></td>`
-      }
-      return `<td>${getCellFn(row, c.key, i, isBn)}</td>`
-    }).join('')
-    const extra = opts.emptyColumns.map(() => '<td></td>').join('')
-    return `<tr class="${i % 2 === 1 ? 'alt' : ''}">${cells}${extra}</tr>`
-  }).join('')
+  const dataRows = data
+    .map((row, i) => {
+      const cells = cols
+        .map((c) => {
+          if (c.key === 'amount') {
+            const val = getCellFn(row, c.key, i, isBn)
+            const isNeg = val.startsWith('-')
+            return `<td><b style="color:${isNeg ? '#ef4444' : '#10b981'}">${val}</b></td>`
+          }
+          if (c.key === 'type' && row.type) {
+            const val = getCellFn(row, c.key, i, isBn)
+            return `<td><span style="background:#f3f4f6;padding:1px 5px;border-radius:3px;font-size:7px">${val}</span></td>`
+          }
+          return `<td>${getCellFn(row, c.key, i, isBn)}</td>`
+        })
+        .join('')
+      const extra = opts.emptyColumns.map(() => '<td></td>').join('')
+      return `<tr class="${i % 2 === 1 ? 'alt' : ''}">${cells}${extra}</tr>`
+    })
+    .join('')
 
   const blankRows = Array.from({ length: opts.emptyRows }, (_, i) => {
     const first = `<td style="color:#bbb;font-size:8px">${data.length + i + 1}</td>`
-    const rest = Array(totalCols - 1).fill('<td></td>').join('')
+    const rest = Array(totalCols - 1)
+      .fill('<td></td>')
+      .join('')
     return `<tr class="er">${first}${rest}</tr>`
   }).join('')
 
@@ -240,33 +272,68 @@ function buildPDF(
 }
 
 export function generateIncrementPDF(data: any[], opts: HRListPDFOptions, getTeacherName: (id: string) => string): string {
-  const cols = HR_INCREMENT_COLUMNS.filter(c => opts.selectedCols.includes(c.key))
-  return buildPDF(opts.title, data, cols, opts, (row, key, i, isBn) => getIncrementCell(row, key, i, isBn, getTeacherName), isBnLabel('জন', opts.isBn))
+  const cols = HR_INCREMENT_COLUMNS.filter((c) => opts.selectedCols.includes(c.key))
+  return buildPDF(
+    opts.title,
+    data,
+    cols,
+    opts,
+    (row, key, i, isBn) => getIncrementCell(row, key, i, isBn, getTeacherName),
+    isBnLabel('জন', opts.isBn)
+  )
 }
 
 export function generateBonusPDF(data: any[], opts: HRListPDFOptions, getTeacherName: (id: string) => string): string {
-  const cols = HR_BONUS_COLUMNS.filter(c => opts.selectedCols.includes(c.key))
-  return buildPDF(opts.title, data, cols, opts, (row, key, i, isBn) => getBonusCell(row, key, i, isBn, getTeacherName), isBnLabel('জন', opts.isBn))
+  const cols = HR_BONUS_COLUMNS.filter((c) => opts.selectedCols.includes(c.key))
+  return buildPDF(
+    opts.title,
+    data,
+    cols,
+    opts,
+    (row, key, i, isBn) => getBonusCell(row, key, i, isBn, getTeacherName),
+    isBnLabel('জন', opts.isBn)
+  )
 }
 
 export function generatePromotionPDF(data: any[], opts: HRListPDFOptions, getTeacherName: (id: string) => string): string {
-  const cols = HR_PROMOTION_COLUMNS.filter(c => opts.selectedCols.includes(c.key))
-  return buildPDF(opts.title, data, cols, opts, (row, key, i, isBn) => getPromotionCell(row, key, i, isBn, getTeacherName), isBnLabel('জন', opts.isBn))
+  const cols = HR_PROMOTION_COLUMNS.filter((c) => opts.selectedCols.includes(c.key))
+  return buildPDF(
+    opts.title,
+    data,
+    cols,
+    opts,
+    (row, key, i, isBn) => getPromotionCell(row, key, i, isBn, getTeacherName),
+    isBnLabel('জন', opts.isBn)
+  )
 }
 
 export function generateFundPDF(data: any[], opts: HRListPDFOptions): string {
-  const cols = HR_FUND_COLUMNS.filter(c => opts.selectedCols.includes(c.key))
+  const cols = HR_FUND_COLUMNS.filter((c) => opts.selectedCols.includes(c.key))
   return buildPDF(opts.title, data, cols, opts, (row, key, i, isBn) => getFundCell(row, key, i, isBn), isBnLabel('টি', opts.isBn))
 }
 
-export function generateAssignmentPDF(data: any[], opts: HRListPDFOptions, getTeacherName: (id: string) => string, getFacilityName: (id: string) => string): string {
-  const cols = HR_ASSIGNMENT_COLUMNS.filter(c => opts.selectedCols.includes(c.key))
-  return buildPDF(opts.title, data, cols, opts, (row, key, i, isBn) => getAssignmentCell(row, key, i, isBn, getTeacherName, getFacilityName), isBnLabel('টি', opts.isBn))
+export function generateAssignmentPDF(
+  data: any[],
+  opts: HRListPDFOptions,
+  getTeacherName: (id: string) => string,
+  getFacilityName: (id: string) => string
+): string {
+  const cols = HR_ASSIGNMENT_COLUMNS.filter((c) => opts.selectedCols.includes(c.key))
+  return buildPDF(
+    opts.title,
+    data,
+    cols,
+    opts,
+    (row, key, i, isBn) => getAssignmentCell(row, key, i, isBn, getTeacherName, getFacilityName),
+    isBnLabel('টি', opts.isBn)
+  )
 }
 
 export function generateSalaryPDF(data: any[], opts: HRListPDFOptions): string {
-  const cols = HR_SALARY_COLUMNS.filter(c => opts.selectedCols.includes(c.key))
+  const cols = HR_SALARY_COLUMNS.filter((c) => opts.selectedCols.includes(c.key))
   return buildPDF(opts.title, data, cols, opts, (row, key, i, isBn) => getSalaryCell(row, key, i, isBn), isBnLabel('জন', opts.isBn))
 }
 
-function isBnLabel(bn: string, isBn: boolean): string { return isBn ? bn : 'records' }
+function isBnLabel(bn: string, isBn: boolean): string {
+  return isBn ? bn : 'records'
+}

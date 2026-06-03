@@ -1,29 +1,32 @@
 import type { Teacher } from './types'
 
 export interface TeacherPDFColumn {
-  key: string; label: string; labelBn: string; default: boolean
+  key: string
+  label: string
+  labelBn: string
+  default: boolean
 }
 
 export const ALL_TEACHER_PDF_COLUMNS: TeacherPDFColumn[] = [
-  { key: 'serial',       label: '#',               labelBn: 'ক্রম',           default: true  },
-  { key: 'id',           label: 'Teacher ID',      labelBn: 'শিক্ষক আইডি',    default: true  },
-  { key: 'nameEn',       label: 'Name (EN)',       labelBn: 'নাম (ইং)',        default: true  },
-  { key: 'nameBn',       label: 'Name (BN)',       labelBn: 'নাম (বাং)',        default: true  },
-  { key: 'gender',       label: 'Gender',          labelBn: 'লিঙ্গ',           default: true  },
-  { key: 'phone',        label: 'Phone',           labelBn: 'মোবাইল',          default: true  },
-  { key: 'email',        label: 'Email',           labelBn: 'ইমেইল',           default: false },
-  { key: 'department',   label: 'Department',      labelBn: 'বিভাগ',           default: true  },
-  { key: 'designation',  label: 'Designation',     labelBn: 'পদবি',            default: true  },
-  { key: 'dob',          label: 'Date of Birth',   labelBn: 'জন্ম তারিখ',     default: false },
-  { key: 'bloodGroup',   label: 'Blood Group',     labelBn: 'রক্তের গ্রুপ',   default: false },
-  { key: 'religion',     label: 'Religion',        labelBn: 'ধর্ম',            default: false },
-  { key: 'qualification',label: 'Qualification',   labelBn: 'যোগ্যতা',         default: false },
-  { key: 'experience',   label: 'Experience',      labelBn: 'অভিজ্ঞতা',       default: false },
-  { key: 'joiningDate',  label: 'Joining Date',    labelBn: 'যোগদানের তারিখ', default: false },
-  { key: 'salary',       label: 'Salary',          labelBn: 'বেতন',            default: true  },
-  { key: 'inTime',       label: 'In Time',         labelBn: 'প্রবেশ সময়',    default: false },
-  { key: 'outTime',      label: 'Out Time',        labelBn: 'প্রস্থান সময়',  default: false },
-  { key: 'status',       label: 'Status',          labelBn: 'অবস্থা',          default: true  },
+  { key: 'serial', label: '#', labelBn: 'ক্রম', default: true },
+  { key: 'id', label: 'Teacher ID', labelBn: 'শিক্ষক আইডি', default: true },
+  { key: 'nameEn', label: 'Name (EN)', labelBn: 'নাম (ইং)', default: true },
+  { key: 'nameBn', label: 'Name (BN)', labelBn: 'নাম (বাং)', default: true },
+  { key: 'gender', label: 'Gender', labelBn: 'লিঙ্গ', default: true },
+  { key: 'phone', label: 'Phone', labelBn: 'মোবাইল', default: true },
+  { key: 'email', label: 'Email', labelBn: 'ইমেইল', default: false },
+  { key: 'department', label: 'Department', labelBn: 'বিভাগ', default: true },
+  { key: 'designation', label: 'Designation', labelBn: 'পদবি', default: true },
+  { key: 'dob', label: 'Date of Birth', labelBn: 'জন্ম তারিখ', default: false },
+  { key: 'bloodGroup', label: 'Blood Group', labelBn: 'রক্তের গ্রুপ', default: false },
+  { key: 'religion', label: 'Religion', labelBn: 'ধর্ম', default: false },
+  { key: 'qualification', label: 'Qualification', labelBn: 'যোগ্যতা', default: false },
+  { key: 'experience', label: 'Experience', labelBn: 'অভিজ্ঞতা', default: false },
+  { key: 'joiningDate', label: 'Joining Date', labelBn: 'যোগদানের তারিখ', default: false },
+  { key: 'salary', label: 'Salary', labelBn: 'বেতন', default: true },
+  { key: 'inTime', label: 'In Time', labelBn: 'প্রবেশ সময়', default: false },
+  { key: 'outTime', label: 'Out Time', labelBn: 'প্রস্থান সময়', default: false },
+  { key: 'status', label: 'Status', labelBn: 'অবস্থা', default: true },
 ]
 
 export interface TeacherListPDFOptions {
@@ -35,68 +38,88 @@ export interface TeacherListPDFOptions {
   isBn: boolean
 }
 
-function getCellValue(t: Teacher, key: string, idx: number, isBn: boolean, departments: {id:string;name:string;nameBn:string}[]): string {
-  if (key === 'serial')     return String(idx + 1)
+function getCellValue(
+  t: Teacher,
+  key: string,
+  idx: number,
+  isBn: boolean,
+  departments: { id: string; name: string; nameBn: string }[]
+): string {
+  if (key === 'serial') return String(idx + 1)
   if (key === 'department') {
-    const d = departments.find(x => x.id === t.departmentId)
+    const d = departments.find((x) => x.id === t.departmentId)
     return d ? (isBn ? d.nameBn : d.name) : '—'
   }
-  if (key === 'gender')     return t.gender === 'Male' ? (isBn ? 'পুরুষ' : 'Male') : (isBn ? 'মহিলা' : 'Female')
+  if (key === 'gender') return t.gender === 'Male' ? (isBn ? 'পুরুষ' : 'Male') : isBn ? 'মহিলা' : 'Female'
   if (key === 'status') {
-    const m: Record<string, string> = { active: isBn ? 'সক্রিয়' : 'Active', inactive: isBn ? 'নিষ্ক্রিয়' : 'Inactive', 'on-leave': isBn ? 'ছুটিতে' : 'On Leave' }
+    const m: Record<string, string> = {
+      active: isBn ? 'সক্রিয়' : 'Active',
+      inactive: isBn ? 'নিষ্ক্রিয়' : 'Inactive',
+      'on-leave': isBn ? 'ছুটিতে' : 'On Leave',
+    }
     return m[t.status] || t.status
   }
-  if (key === 'salary')     return t.salary ? `৳${t.salary.toLocaleString()}` : '—'
+  if (key === 'salary') return t.salary ? `৳${t.salary.toLocaleString()}` : '—'
   return String((t as any)[key] || '—')
 }
 
-const statusColor = (st: string) =>
-  st === 'active' ? '#10b981' : st === 'inactive' ? '#ef4444' : '#f59e0b'
+const statusColor = (st: string) => (st === 'active' ? '#10b981' : st === 'inactive' ? '#ef4444' : '#f59e0b')
 
 export function generateTeacherListPDF(
   teachers: Teacher[],
   opts: TeacherListPDFOptions,
-  departments: {id:string;name:string;nameBn:string}[]
+  departments: { id: string; name: string; nameBn: string }[]
 ): string {
-  const title         = opts.title        || (opts.isBn ? 'শিক্ষক তালিকা' : 'Teacher List')
-  const selectedCols  = opts.selectedCols  || []
-  const emptyRows     = opts.emptyRows     || 0
-  const emptyColumns  = opts.emptyColumns  || []
-  const orientation   = opts.orientation   || 'landscape'
-  const isBn          = opts.isBn         ?? false
+  const title = opts.title || (opts.isBn ? 'শিক্ষক তালিকা' : 'Teacher List')
+  const selectedCols = opts.selectedCols || []
+  const emptyRows = opts.emptyRows || 0
+  const emptyColumns = opts.emptyColumns || []
+  const orientation = opts.orientation || 'landscape'
+  const isBn = opts.isBn ?? false
 
-  const cols = ALL_TEACHER_PDF_COLUMNS.filter(c => selectedCols.includes(c.key))
+  const cols = ALL_TEACHER_PDF_COLUMNS.filter((c) => selectedCols.includes(c.key))
   const totalCols = cols.length + emptyColumns.length
 
-  const fontSize = orientation === 'landscape'
-    ? (totalCols > 12 ? '7.5px' : totalCols > 9 ? '9px' : '10px')
-    : (totalCols > 8  ? '7.5px' : totalCols > 6 ? '9px'  : '10px')
+  const fontSize =
+    orientation === 'landscape'
+      ? totalCols > 12
+        ? '7.5px'
+        : totalCols > 9
+          ? '9px'
+          : '10px'
+      : totalCols > 8
+        ? '7.5px'
+        : totalCols > 6
+          ? '9px'
+          : '10px'
 
-  const dataHeaders = cols.map(c => `<th>${isBn ? c.labelBn : c.label}</th>`).join('')
-  const extraHeaders = emptyColumns.map(h =>
-    `<th style="min-width:85px">${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`
-  ).join('')
+  const dataHeaders = cols.map((c) => `<th>${isBn ? c.labelBn : c.label}</th>`).join('')
+  const extraHeaders = emptyColumns.map((h) => `<th style="min-width:85px">${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`).join('')
 
-  const dataRows = teachers.map((t, i) => {
-    const cells = cols.map(c => {
-      if (c.key === 'status') {
-        const col = statusColor(t.status)
-        const lbl = getCellValue(t, c.key, i, isBn, departments)
-        return `<td><b style="color:${col}">${lbl}</b></td>`
-      }
-      if (c.key === 'id')
-        return `<td><span style="font-family:monospace;font-size:8px;color:#6366f1">${t.id}</span></td>`
-      if (c.key === 'nameEn' && isBn)
-        return `<td>${t.nameBn || t.nameEn}</td>`
-      return `<td>${getCellValue(t, c.key, i, isBn, departments)}</td>`
-    }).join('')
-    const extra = emptyColumns.map(() => '<td></td>').join('')
-    return `<tr class="${i % 2 === 1 ? 'alt' : ''}">${cells}${extra}</tr>`
-  }).join('')
+  const dataRows = teachers
+    .map((t, i) => {
+      const cells = cols
+        .map((c) => {
+          if (c.key === 'status') {
+            const col = statusColor(t.status)
+            const lbl = getCellValue(t, c.key, i, isBn, departments)
+            return `<td><b style="color:${col}">${lbl}</b></td>`
+          }
+          if (c.key === 'id') return `<td><span style="font-family:monospace;font-size:8px;color:#6366f1">${t.id}</span></td>`
+          if (c.key === 'nameEn' && isBn) return `<td>${t.nameBn || t.nameEn}</td>`
+          return `<td>${getCellValue(t, c.key, i, isBn, departments)}</td>`
+        })
+        .join('')
+      const extra = emptyColumns.map(() => '<td></td>').join('')
+      return `<tr class="${i % 2 === 1 ? 'alt' : ''}">${cells}${extra}</tr>`
+    })
+    .join('')
 
   const blankRows = Array.from({ length: emptyRows }, (_, i) => {
     const first = `<td style="color:#bbb;font-size:8px">${teachers.length + i + 1}</td>`
-    const rest  = Array(totalCols - 1).fill('<td></td>').join('')
+    const rest = Array(totalCols - 1)
+      .fill('<td></td>')
+      .join('')
     return `<tr class="er">${first}${rest}</tr>`
   }).join('')
 
@@ -135,7 +158,7 @@ export function generateTeacherListPDF(
     <div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div>
     <div>${isBn ? 'মোট:' : 'Total:'} ${teachers.length} ${isBn ? 'জন' : 'teachers'}</div>
     ${emptyColumns.length ? `<div>${isBn ? 'ফাঁকা কলাম:' : 'Empty cols:'} ${emptyColumns.length}</div>` : ''}
-    ${emptyRows        ? `<div>${isBn ? 'ফাঁকা সারি:' : 'Empty rows:'} ${emptyRows}</div>` : ''}
+    ${emptyRows ? `<div>${isBn ? 'ফাঁকা সারি:' : 'Empty rows:'} ${emptyRows}</div>` : ''}
     <div>A4 · ${orientation}</div>
   </div>
 </div>

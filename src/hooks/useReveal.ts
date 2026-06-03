@@ -11,7 +11,7 @@ export default function useReveal(rootSelector = '.reveal', baseDelay = 50) {
       })
     })
     return () => {
-      els.forEach(el => el.classList.remove('is-visible'))
+      els.forEach((el) => el.classList.remove('is-visible'))
     }
   }, [rootSelector, baseDelay])
 }

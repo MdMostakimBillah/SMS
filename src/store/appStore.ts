@@ -1,6 +1,6 @@
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
-import type { Theme, Language } from "@/types"
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import type { Theme, Language } from '@/types'
 
 interface AppState {
   theme: Theme
@@ -14,27 +14,26 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      theme: "dark",
-      language: "bn",
+      theme: 'dark',
+      language: 'bn',
       sidebarOpen: false,
 
       setTheme: (theme) => {
         set({ theme })
-        if (theme === "system") {
-          const dark = window.matchMedia("(prefers-color-scheme: dark)").matches
-          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light")
+        if (theme === 'system') {
+          const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
         } else {
-          document.documentElement.setAttribute("data-theme", theme)
+          document.documentElement.setAttribute('data-theme', theme)
         }
       },
 
       setLanguage: (language) => set({ language }),
 
-      toggleSidebar: () =>
-        set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
     }),
     {
-      name: "edutech-settings",
+      name: 'edutech-settings',
       partialize: (state) => ({
         theme: state.theme,
         language: state.language,

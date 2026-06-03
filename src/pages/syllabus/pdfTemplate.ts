@@ -1,25 +1,29 @@
-export function generateSyllabusPDF(syllabus: {
-  className: string
-  subjectName: string
-  sessionId: string
-  chapters: {
-    title: string
-    titleBn: string
-    description: string
-    descriptionBn: string
-    topics: {
+export function generateSyllabusPDF(
+  syllabus: {
+    className: string
+    subjectName: string
+    sessionId: string
+    chapters: {
       title: string
       titleBn: string
       description: string
       descriptionBn: string
-      marks: number
-      status: string
-      weekNo?: number
-      startDate?: string
-      endDate?: string
+      topics: {
+        title: string
+        titleBn: string
+        description: string
+        descriptionBn: string
+        marks: number
+        status: string
+        weekNo?: number
+        startDate?: string
+        endDate?: string
+      }[]
     }[]
-  }[]
-}, isBn: boolean, institutionName?: string) {
+  },
+  isBn: boolean,
+  institutionName?: string
+) {
   const schoolName = institutionName || (isBn ? 'এডুটেক স্কুল' : 'EduTech School')
 
   let topicRows = ''
@@ -28,12 +32,23 @@ export function generateSyllabusPDF(syllabus: {
   let completedMarks = 0
 
   syllabus.chapters.forEach((ch, ci) => {
-    ch.topics.forEach(t => {
+    ch.topics.forEach((t) => {
       sn++
       totalMarks += t.marks
       if (t.status === 'completed') completedMarks += t.marks
       const statusColor = t.status === 'completed' ? '#16a34a' : t.status === 'in-progress' ? '#d97706' : '#6b7280'
-      const statusLabel = t.status === 'completed' ? (isBn ? 'সম্পন্ন' : 'Done') : t.status === 'in-progress' ? (isBn ? 'চলমান' : 'Running') : (isBn ? 'বাকি' : 'Pending')
+      const statusLabel =
+        t.status === 'completed'
+          ? isBn
+            ? 'সম্পন্ন'
+            : 'Done'
+          : t.status === 'in-progress'
+            ? isBn
+              ? 'চলমান'
+              : 'Running'
+            : isBn
+              ? 'বাকি'
+              : 'Pending'
       topicRows += `
         <tr>
           <td style="padding:6px 8px;border:1px solid #e5e7eb;font-size:11px;color:#6b7280;">${sn}</td>

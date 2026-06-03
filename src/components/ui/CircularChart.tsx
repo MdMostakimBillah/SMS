@@ -1,5 +1,3 @@
-
-
 interface Props {
   value: number // 0-100
   size?: number
@@ -25,15 +23,7 @@ export default function CircularChart({ value, size = 72, stroke = 8, color = 'v
       </defs>
 
       {/* background ring */}
-      <circle
-        cx={cx}
-        cy={cy}
-        r={radius}
-        stroke="var(--bg-secondary)"
-        strokeWidth={stroke}
-        fill="none"
-        strokeLinecap="round"
-      />
+      <circle cx={cx} cy={cy} r={radius} stroke="var(--bg-secondary)" strokeWidth={stroke} fill="none" strokeLinecap="round" />
 
       {/* progress ring */}
       <circle
@@ -49,7 +39,13 @@ export default function CircularChart({ value, size = 72, stroke = 8, color = 'v
         style={{ transition: 'stroke-dasharray 600ms cubic-bezier(.2,.9,.22,1)' }}
       />
 
-      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" style={{ fontSize: Math.max(12, size * 0.22), fontWeight: 700, fill: 'var(--text-strong)' }}>
+      <text
+        x={cx}
+        y={cy}
+        textAnchor="middle"
+        dominantBaseline="central"
+        style={{ fontSize: Math.max(12, size * 0.22), fontWeight: 700, fill: 'var(--text-strong)' }}
+      >
         {Math.round(pct)}%
       </text>
     </svg>

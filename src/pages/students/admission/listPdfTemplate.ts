@@ -1,29 +1,32 @@
 import type { StudentAdmission } from './types'
 
 export interface PDFColumn {
-  key: string; label: string; labelBn: string; default: boolean
+  key: string
+  label: string
+  labelBn: string
+  default: boolean
 }
 
 export const ALL_PDF_COLUMNS: PDFColumn[] = [
-  { key: 'serial',       label: '#',               labelBn: 'ক্রম',           default: true  },
-  { key: 'id',           label: 'Student ID',      labelBn: 'ছাত্র আইডি',     default: true  },
-  { key: 'nameEn',       label: 'Name (EN)',       labelBn: 'নাম (ইং)',        default: true  },
-  { key: 'nameBn',       label: 'Name (BN)',       labelBn: 'নাম (বাং)',        default: true  },
-  { key: 'class',        label: 'Class',           labelBn: 'শ্রেণি',          default: true  },
-  { key: 'section',      label: 'Section',         labelBn: 'সেকশন',           default: false },
-  { key: 'roll',         label: 'Roll',            labelBn: 'রোল',             default: false },
-  { key: 'gender',       label: 'Gender',          labelBn: 'লিঙ্গ',           default: true  },
-  { key: 'dob',          label: 'Date of Birth',   labelBn: 'জন্ম তারিখ',     default: false },
-  { key: 'bloodGroup',   label: 'Blood Group',     labelBn: 'রক্তের গ্রুপ',   default: false },
-  { key: 'religion',     label: 'Religion',        labelBn: 'ধর্ম',            default: false },
-  { key: 'phone',        label: 'Mobile',          labelBn: 'মোবাইল',          default: true  },
-  { key: 'email',        label: 'Email',           labelBn: 'ইমেইল',           default: false },
-  { key: 'district',     label: 'District',        labelBn: 'জেলা',            default: false },
-  { key: 'fatherNameEn', label: "Father's Name",   labelBn: 'পিতার নাম',       default: false },
-  { key: 'fatherPhone',  label: "Father's Mobile", labelBn: 'পিতার মোবাইল',   default: false },
-  { key: 'motherNameEn', label: "Mother's Name",   labelBn: 'মাতার নাম',       default: false },
-  { key: 'admissionDate',label: 'Admission Date',  labelBn: 'ভর্তির তারিখ',   default: true  },
-  { key: 'status',       label: 'Status',          labelBn: 'অবস্থা',          default: true  },
+  { key: 'serial', label: '#', labelBn: 'ক্রম', default: true },
+  { key: 'id', label: 'Student ID', labelBn: 'ছাত্র আইডি', default: true },
+  { key: 'nameEn', label: 'Name (EN)', labelBn: 'নাম (ইং)', default: true },
+  { key: 'nameBn', label: 'Name (BN)', labelBn: 'নাম (বাং)', default: true },
+  { key: 'class', label: 'Class', labelBn: 'শ্রেণি', default: true },
+  { key: 'section', label: 'Section', labelBn: 'সেকশন', default: false },
+  { key: 'roll', label: 'Roll', labelBn: 'রোল', default: false },
+  { key: 'gender', label: 'Gender', labelBn: 'লিঙ্গ', default: true },
+  { key: 'dob', label: 'Date of Birth', labelBn: 'জন্ম তারিখ', default: false },
+  { key: 'bloodGroup', label: 'Blood Group', labelBn: 'রক্তের গ্রুপ', default: false },
+  { key: 'religion', label: 'Religion', labelBn: 'ধর্ম', default: false },
+  { key: 'phone', label: 'Mobile', labelBn: 'মোবাইল', default: true },
+  { key: 'email', label: 'Email', labelBn: 'ইমেইল', default: false },
+  { key: 'district', label: 'District', labelBn: 'জেলা', default: false },
+  { key: 'fatherNameEn', label: "Father's Name", labelBn: 'পিতার নাম', default: false },
+  { key: 'fatherPhone', label: "Father's Mobile", labelBn: 'পিতার মোবাইল', default: false },
+  { key: 'motherNameEn', label: "Mother's Name", labelBn: 'মাতার নাম', default: false },
+  { key: 'admissionDate', label: 'Admission Date', labelBn: 'ভর্তির তারিখ', default: true },
+  { key: 'status', label: 'Status', labelBn: 'অবস্থা', default: true },
 ]
 
 export interface ListPDFOptions {
@@ -36,9 +39,9 @@ export interface ListPDFOptions {
 }
 
 function getCellValue(s: StudentAdmission, key: string, idx: number): string {
-  if (key === 'serial')   return String(idx + 1)
-  if (key === 'class')    return s.class ? `Class ${s.class}` : '—'
-  if (key === 'gender')   return (s.gender || '').split(' / ')[0] || '—'
+  if (key === 'serial') return String(idx + 1)
+  if (key === 'class') return s.class ? `Class ${s.class}` : '—'
+  if (key === 'gender') return (s.gender || '').split(' / ')[0] || '—'
   if (key === 'religion') return (s.religion || '').split(' / ')[0] || '—'
   if (key === 'status') {
     const m: Record<string, string> = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' }
@@ -47,57 +50,69 @@ function getCellValue(s: StudentAdmission, key: string, idx: number): string {
   return String((s as any)[key] || '—')
 }
 
-const statusColor = (st: string) =>
-  st === 'approved' ? '#10b981' : st === 'rejected' ? '#ef4444' : '#f59e0b'
+const statusColor = (st: string) => (st === 'approved' ? '#10b981' : st === 'rejected' ? '#ef4444' : '#f59e0b')
 
 export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptions): string {
   // ✅ Defensive defaults so old calls without emptyColumns don't crash
-  const isBn          = opts.isBn         ?? false
-  const title         = opts.title        || (isBn ? 'ছাত্র তালিকা' : 'Student List')
-  const selectedCols  = opts.selectedCols  || []
-  const emptyRows     = opts.emptyRows     || 0
-  const emptyColumns  = opts.emptyColumns  || []
-  const orientation   = opts.orientation   || 'landscape'
+  const isBn = opts.isBn ?? false
+  const title = opts.title || (isBn ? 'ছাত্র তালিকা' : 'Student List')
+  const selectedCols = opts.selectedCols || []
+  const emptyRows = opts.emptyRows || 0
+  const emptyColumns = opts.emptyColumns || []
+  const orientation = opts.orientation || 'landscape'
 
   const statusBn: Record<string, string> = {
-    pending: 'অপেক্ষমান', approved: 'অনুমোদিত', rejected: 'প্রত্যাখ্যাত',
+    pending: 'অপেক্ষমান',
+    approved: 'অনুমোদিত',
+    rejected: 'প্রত্যাখ্যাত',
   }
 
-  const cols = ALL_PDF_COLUMNS.filter(c => selectedCols.includes(c.key))
+  const cols = ALL_PDF_COLUMNS.filter((c) => selectedCols.includes(c.key))
   const totalCols = cols.length + emptyColumns.length
 
-  const fontSize = orientation === 'landscape'
-    ? (totalCols > 12 ? '7.5px' : totalCols > 9 ? '9px' : '10px')
-    : (totalCols > 8  ? '7.5px' : totalCols > 6 ? '9px'  : '10px')
+  const fontSize =
+    orientation === 'landscape'
+      ? totalCols > 12
+        ? '7.5px'
+        : totalCols > 9
+          ? '9px'
+          : '10px'
+      : totalCols > 8
+        ? '7.5px'
+        : totalCols > 6
+          ? '9px'
+          : '10px'
 
   // Headers
-  const dataHeaders = cols.map(c => `<th>${isBn ? c.labelBn : c.label}</th>`).join('')
-  const extraHeaders = emptyColumns.map(h =>
-    `<th style="min-width:85px">${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`
-  ).join('')
+  const dataHeaders = cols.map((c) => `<th>${isBn ? c.labelBn : c.label}</th>`).join('')
+  const extraHeaders = emptyColumns.map((h) => `<th style="min-width:85px">${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`).join('')
 
   // Data rows
-  const dataRows = students.map((s, i) => {
-    const cells = cols.map(c => {
-      if (c.key === 'status') {
-        const col  = statusColor(s.status)
-        const lbl  = isBn ? statusBn[s.status] || s.status : getCellValue(s, c.key, i)
-        return `<td><b style="color:${col}">${lbl}</b></td>`
-      }
-      if (c.key === 'id')
-        return `<td><span style="font-family:monospace;font-size:8px;color:#6366f1">${s.id}</span></td>`
-      if (c.key === 'nameEn' && isBn)
-        return `<td>${s.nameBn || s.nameEn}</td>`
-      return `<td>${getCellValue(s, c.key, i)}</td>`
-    }).join('')
-    const extra = emptyColumns.map(() => '<td></td>').join('')
-    return `<tr class="${i % 2 === 1 ? 'alt' : ''}">${cells}${extra}</tr>`
-  }).join('')
+  const dataRows = students
+    .map((s, i) => {
+      const cells = cols
+        .map((c) => {
+          if (c.key === 'status') {
+            const col = statusColor(s.status)
+            const lbl = isBn ? statusBn[s.status] || s.status : getCellValue(s, c.key, i)
+            return `<td><b style="color:${col}">${lbl}</b></td>`
+          }
+          if (c.key === 'id') return `<td><span style="font-family:monospace;font-size:8px;color:#6366f1">${s.id}</span></td>`
+          if (c.key === 'nameEn' && isBn) return `<td>${s.nameBn || s.nameEn}</td>`
+          return `<td>${getCellValue(s, c.key, i)}</td>`
+        })
+        .join('')
+      const extra = emptyColumns.map(() => '<td></td>').join('')
+      return `<tr class="${i % 2 === 1 ? 'alt' : ''}">${cells}${extra}</tr>`
+    })
+    .join('')
 
   // Blank rows
   const blankRows = Array.from({ length: emptyRows }, (_, i) => {
     const first = `<td style="color:#bbb;font-size:8px">${students.length + i + 1}</td>`
-    const rest  = Array(totalCols - 1).fill('<td></td>').join('')
+    const rest = Array(totalCols - 1)
+      .fill('<td></td>')
+      .join('')
     return `<tr class="er">${first}${rest}</tr>`
   }).join('')
 
@@ -136,7 +151,7 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
     <div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div>
     <div>${isBn ? 'মোট:' : 'Total:'} ${students.length} ${isBn ? 'জন' : 'students'}</div>
     ${emptyColumns.length ? `<div>${isBn ? 'ফাঁকা কলাম:' : 'Empty cols:'} ${emptyColumns.length}</div>` : ''}
-    ${emptyRows        ? `<div>${isBn ? 'ফাঁকা সারি:' : 'Empty rows:'} ${emptyRows}</div>` : ''}
+    ${emptyRows ? `<div>${isBn ? 'ফাঁকা সারি:' : 'Empty rows:'} ${emptyRows}</div>` : ''}
     <div>A4 · ${orientation}</div>
   </div>
 </div>

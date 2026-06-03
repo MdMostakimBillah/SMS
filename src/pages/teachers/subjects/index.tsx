@@ -7,7 +7,8 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import type { Subject } from '@/pages/teachers/types'
 
-const sel = "py-[7px] px-[9px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs font-[inherit] cursor-pointer outline-none"
+const sel =
+  'py-[7px] px-[9px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs font-[inherit] cursor-pointer outline-none'
 
 export default function SubjectsPage() {
   const navigate = useNavigate()
@@ -25,43 +26,58 @@ export default function SubjectsPage() {
   const [newDeptIds, setNewDeptIds] = useState<string[]>([])
   useScrollLock(showAdd || editS !== null || delConfirm !== null)
 
-  const filtered = useMemo(() =>
-    fDept ? subjects.filter(s => s.departmentIds?.includes(fDept) || s.departmentId === fDept) : subjects
-  , [subjects, fDept])
+  const filtered = useMemo(
+    () => (fDept ? subjects.filter((s) => s.departmentIds?.includes(fDept) || s.departmentId === fDept) : subjects),
+    [subjects, fDept]
+  )
 
   const getDeptName = (id: string) => {
-    const d = departments.find(x => x.id === id)
+    const d = departments.find((x) => x.id === id)
     return d ? (isBn ? d.nameBn : d.name) : '—'
   }
 
-  const getSubjectTeacherCount = (id: string) => teachers.filter(t => t.subjectIds.includes(id)).length
+  const getSubjectTeacherCount = (id: string) => teachers.filter((t) => t.subjectIds.includes(id)).length
 
   const handleAdd = () => {
     if (!newName.trim() || newDeptIds.length === 0) return
     const now = new Date().toISOString().split('T')[0]
     addSubject({
       id: `SUB-${String(subjects.length + 1).padStart(3, '0')}`,
-      name: newName.trim(), nameBn: newNameBn.trim(), departmentId: newDeptIds[0], departmentIds: newDeptIds,
-      createdAt: now, updatedAt: now,
+      name: newName.trim(),
+      nameBn: newNameBn.trim(),
+      departmentId: newDeptIds[0],
+      departmentIds: newDeptIds,
+      createdAt: now,
+      updatedAt: now,
     })
-    setNewName(''); setNewNameBn(''); setNewDeptIds([]); setShowAdd(false)
+    setNewName('')
+    setNewNameBn('')
+    setNewDeptIds([])
+    setShowAdd(false)
   }
 
   const handleEdit = () => {
     if (!editS || !newName.trim() || newDeptIds.length === 0) return
     updateSubject(editS.id, { name: newName.trim(), nameBn: newNameBn.trim(), departmentId: newDeptIds[0], departmentIds: newDeptIds })
-    setEditS(null); setNewName(''); setNewNameBn(''); setNewDeptIds([])
+    setEditS(null)
+    setNewName('')
+    setNewNameBn('')
+    setNewDeptIds([])
   }
 
   const startEdit = (s: Subject) => {
-    setNewName(s.name); setNewNameBn(s.nameBn); setNewDeptIds(s.departmentIds || [s.departmentId]); setEditS(s)
+    setNewName(s.name)
+    setNewNameBn(s.nameBn)
+    setNewDeptIds(s.departmentIds || [s.departmentId])
+    setEditS(s)
   }
 
   const toggleDept = (deptId: string) => {
-    setNewDeptIds(prev => prev.includes(deptId) ? prev.filter(id => id !== deptId) : [...prev, deptId])
+    setNewDeptIds((prev) => (prev.includes(deptId) ? prev.filter((id) => id !== deptId) : [...prev, deptId]))
   }
 
-  const input = "w-full py-[9px] px-[11px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none"
+  const input =
+    'w-full py-[9px] px-[11px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none'
 
   return (
     <div>
@@ -70,46 +86,76 @@ export default function SubjectsPage() {
         <div className="fixed top-0 left-0 right-0 h-[100dvh] bg-black/50 z-[600] flex items-center justify-center p-4 overflow-y-auto">
           <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[400px] w-full p-5 border border-[var(--border)]">
             <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-[14px]">
-              {editS ? (isBn?'বিষয় এডিট করুন':'Edit Subject') : (isBn?'নতুন বিষয়':'New Subject')}
+              {editS ? (isBn ? 'বিষয় এডিট করুন' : 'Edit Subject') : isBn ? 'নতুন বিষয়' : 'New Subject'}
             </h3>
             <div className="flex flex-col gap-[10px]">
               <div>
                 <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
-                  {isBn?'নাম (ইংরেজি) *':'Name (English) *'}
+                  {isBn ? 'নাম (ইংরেজি) *' : 'Name (English) *'}
                 </label>
-                <input value={newName} onChange={e => setNewName(e.target.value)} className={input}
-                  placeholder={isBn?'বিষয়ের নাম':'Subject name'} />
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className={input}
+                  placeholder={isBn ? 'বিষয়ের নাম' : 'Subject name'}
+                />
               </div>
               <div>
                 <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
-                  {isBn?'নাম (বাংলা)':'Name (Bangla)'}
+                  {isBn ? 'নাম (বাংলা)' : 'Name (Bangla)'}
                 </label>
-                <input value={newNameBn} onChange={e => setNewNameBn(e.target.value)} className={input}
-                  placeholder={isBn?'বাংলায় নাম':'Bangla name'} />
+                <input
+                  value={newNameBn}
+                  onChange={(e) => setNewNameBn(e.target.value)}
+                  className={input}
+                  placeholder={isBn ? 'বাংলায় নাম' : 'Bangla name'}
+                />
               </div>
               <div>
                 <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
-                  {isBn?'বিভাগ * (একাধিক নির্বাচন করতে পারেন)':'Departments * (select multiple)'}
+                  {isBn ? 'বিভাগ * (একাধিক নির্বাচন করতে পারেন)' : 'Departments * (select multiple)'}
                 </label>
                 <div className="flex flex-wrap gap-2 p-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg min-h-[40px]">
-                  {departments.map(d => (
-                    <label key={d.id} className={`flex items-center gap-[5px] cursor-pointer py-1 px-2 rounded-md text-xs transition-all ${newDeptIds.includes(d.id) ? 'bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]'}`}>
-                      <input type="checkbox" checked={newDeptIds.includes(d.id)} onChange={() => toggleDept(d.id)} className="w-[14px] h-[14px] accent-[var(--brand)] cursor-pointer" />
-                      {isBn?d.nameBn:d.name}
+                  {departments.map((d) => (
+                    <label
+                      key={d.id}
+                      className={`flex items-center gap-[5px] cursor-pointer py-1 px-2 rounded-md text-xs transition-all ${newDeptIds.includes(d.id) ? 'bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]'}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={newDeptIds.includes(d.id)}
+                        onChange={() => toggleDept(d.id)}
+                        className="w-[14px] h-[14px] accent-[var(--brand)] cursor-pointer"
+                      />
+                      {isBn ? d.nameBn : d.name}
                     </label>
                   ))}
                 </div>
-                {newDeptIds.length === 0 && <div className="text-[10px] text-[var(--red)] mt-1">{isBn?'কমপক্ষে একটি বিভাগ নির্বাচন করুন':'Select at least one department'}</div>}
+                {newDeptIds.length === 0 && (
+                  <div className="text-[10px] text-[var(--red)] mt-1">
+                    {isBn ? 'কমপক্ষে একটি বিভাগ নির্বাচন করুন' : 'Select at least one department'}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex gap-2 justify-end mt-4">
-              <button onClick={() => { setShowAdd(false); setEditS(null); setNewName(''); setNewNameBn(''); setNewDeptIds([]) }}
-                className="py-2 px-[14px] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]">
-                {isBn?'বাতিল':'Cancel'}
+              <button
+                onClick={() => {
+                  setShowAdd(false)
+                  setEditS(null)
+                  setNewName('')
+                  setNewNameBn('')
+                  setNewDeptIds([])
+                }}
+                className="py-2 px-[14px] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]"
+              >
+                {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button onClick={editS ? handleEdit : handleAdd}
-                className="py-2 px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]">
-                {editS ? (isBn?'সংরক্ষণ':'Save') : (isBn?'যোগ করুন':'Add')}
+              <button
+                onClick={editS ? handleEdit : handleAdd}
+                className="py-2 px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
+              >
+                {editS ? (isBn ? 'সংরক্ষণ' : 'Save') : isBn ? 'যোগ করুন' : 'Add'}
               </button>
             </div>
           </div>
@@ -124,19 +170,26 @@ export default function SubjectsPage() {
               <div className="w-9 h-9 rounded-lg bg-[var(--red-light)] flex items-center justify-center">
                 <AlertTriangle size={18} className="text-[var(--red)]" />
               </div>
-              <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">{isBn?'মুছে ফেলুন?':'Delete?'}</h3>
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">{isBn ? 'মুছে ফেলুন?' : 'Delete?'}</h3>
             </div>
             <p className="text-[13px] text-[var(--text-secondary)] mb-4">
-              {isBn?'এই বিষয়টি স্থায়ীভাবে মুছে ফেলা হবে।':'This subject will be permanently deleted.'}
+              {isBn ? 'এই বিষয়টি স্থায়ীভাবে মুছে ফেলা হবে।' : 'This subject will be permanently deleted.'}
             </p>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setDelConfirm(null)}
-                className="py-2 px-[14px] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer font-[inherit]">
-                {isBn?'বাতিল':'Cancel'}
+              <button
+                onClick={() => setDelConfirm(null)}
+                className="py-2 px-[14px] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer font-[inherit]"
+              >
+                {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button onClick={() => { deleteSubject(delConfirm); setDelConfirm(null) }}
-                className="py-2 px-[14px] rounded-lg bg-[var(--red)] border-none text-white text-[13px] font-semibold cursor-pointer font-[inherit]">
-                {isBn?'মুছে ফেলুন':'Delete'}
+              <button
+                onClick={() => {
+                  deleteSubject(delConfirm)
+                  setDelConfirm(null)
+                }}
+                className="py-2 px-[14px] rounded-lg bg-[var(--red)] border-none text-white text-[13px] font-semibold cursor-pointer font-[inherit]"
+              >
+                {isBn ? 'মুছে ফেলুন' : 'Delete'}
               </button>
             </div>
           </div>
@@ -145,22 +198,30 @@ export default function SubjectsPage() {
 
       {/* Header */}
       <div className="flex items-center gap-[10px] mb-4 flex-wrap">
-        <button onClick={() => navigate('/teachers')}
-          className="flex items-center gap-[5px] py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] shrink-0">
+        <button
+          onClick={() => navigate('/teachers')}
+          className="flex items-center gap-[5px] py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] shrink-0"
+        >
           <ArrowLeft size={14} />
-          {isBn?'ফিরে যান':'Back'}
+          {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div className="flex-1">
-          <h1 className="text-[22px] font-semibold text-[var(--text-primary)]">
-            {isBn?'বিষয় ব্যবস্থাপনা':'Subjects'}
-          </h1>
+          <h1 className="text-[22px] font-semibold text-[var(--text-primary)]">{isBn ? 'বিষয় ব্যবস্থাপনা' : 'Subjects'}</h1>
           <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
-            {isBn?`মোট ${filtered.length} টি বিষয়`:`${filtered.length} subjects`}
+            {isBn ? `মোট ${filtered.length} টি বিষয়` : `${filtered.length} subjects`}
           </p>
         </div>
-        <button onClick={() => { setShowAdd(true); setNewName(''); setNewNameBn(''); setNewDeptIds([]) }}
-          className="flex items-center gap-[5px] py-2 px-[14px] rounded-[9px] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[13px] cursor-pointer font-[inherit] font-medium">
-          <Plus size={14} />{isBn?'নতুন যোগ করুন':'Add Subject'}
+        <button
+          onClick={() => {
+            setShowAdd(true)
+            setNewName('')
+            setNewNameBn('')
+            setNewDeptIds([])
+          }}
+          className="flex items-center gap-[5px] py-2 px-[14px] rounded-[9px] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[13px] cursor-pointer font-[inherit] font-medium"
+        >
+          <Plus size={14} />
+          {isBn ? 'নতুন যোগ করুন' : 'Add Subject'}
         </button>
       </div>
 
@@ -168,14 +229,21 @@ export default function SubjectsPage() {
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl py-3 px-[14px] mb-[10px]">
         <div className="flex items-center gap-2">
           <Filter size={14} className="text-[var(--text-muted)]" />
-          <select value={fDept} onChange={e => setFDept(e.target.value)} className={sel}>
-            <option value="">{isBn?'সব বিভাগ':'All Departments'}</option>
-            {departments.map(d => <option key={d.id} value={d.id}>{isBn?d.nameBn:d.name}</option>)}
+          <select value={fDept} onChange={(e) => setFDept(e.target.value)} className={sel}>
+            <option value="">{isBn ? 'সব বিভাগ' : 'All Departments'}</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {isBn ? d.nameBn : d.name}
+              </option>
+            ))}
           </select>
           {fDept && (
-            <button onClick={() => setFDept('')}
-              className="flex items-center gap-1 py-1 px-[10px] rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[11px] cursor-pointer font-[inherit]">
-              <X size={11} />{isBn?'ফিল্টার সরান':'Clear'}
+            <button
+              onClick={() => setFDept('')}
+              className="flex items-center gap-1 py-1 px-[10px] rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[11px] cursor-pointer font-[inherit]"
+            >
+              <X size={11} />
+              {isBn ? 'ফিল্টার সরান' : 'Clear'}
             </button>
           )}
         </div>
@@ -188,29 +256,34 @@ export default function SubjectsPage() {
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 {[
-                  { l:'#', w:'50px', align:'center' as const },
-                  { l:isBn?'নাম (ইংরেজি)':'Name (EN)', align:'left' as const },
-                  { l:isBn?'নাম (বাংলা)':'Name (BN)', align:'left' as const },
-                  { l:isBn?'বিভাগ':'Department', align:'left' as const },
-                  { l:isBn?'শিক্ষক':'Teachers', w:'80px', align:'center' as const },
-                  { l:isBn?'অ্যাকশন':'Action', w:'90px', align:'center' as const },
-                ].map(h => (
-                  <th key={h.l} className={`py-3 px-3 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap text-${h.align}`}>
+                  { l: '#', w: '50px', align: 'center' as const },
+                  { l: isBn ? 'নাম (ইংরেজি)' : 'Name (EN)', align: 'left' as const },
+                  { l: isBn ? 'নাম (বাংলা)' : 'Name (BN)', align: 'left' as const },
+                  { l: isBn ? 'বিভাগ' : 'Department', align: 'left' as const },
+                  { l: isBn ? 'শিক্ষক' : 'Teachers', w: '80px', align: 'center' as const },
+                  { l: isBn ? 'অ্যাকশন' : 'Action', w: '90px', align: 'center' as const },
+                ].map((h) => (
+                  <th
+                    key={h.l}
+                    className={`py-3 px-3 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap text-${h.align}`}
+                  >
                     {h.l}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0
-                ? <tr><td colSpan={6} className="p-10 text-center text-[var(--text-muted)]">
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-10 text-center text-[var(--text-muted)]">
                     <BookOpen size={28} className="block mx-auto mb-2 opacity-30" />
-                    {isBn?'কোনো বিষয় পাওয়া যায়নি':'No subjects found'}
-                  </td></tr>
-                : filtered.map((s, i) => (
-                  <tr key={s.id}
-                    className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)]">
-                    <td className="py-3 px-3 text-[var(--text-muted)] font-semibold text-[11px] text-center">{i+1}</td>
+                    {isBn ? 'কোনো বিষয় পাওয়া যায়নি' : 'No subjects found'}
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((s, i) => (
+                  <tr key={s.id} className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)]">
+                    <td className="py-3 px-3 text-[var(--text-muted)] font-semibold text-[11px] text-center">{i + 1}</td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-[var(--green-light)] flex items-center justify-center shrink-0">
@@ -222,8 +295,11 @@ export default function SubjectsPage() {
                     <td className="py-3 px-3 text-xs text-[var(--text-secondary)]">{s.nameBn || '—'}</td>
                     <td className="py-3 px-3">
                       <div className="flex flex-wrap gap-1">
-                        {(s.departmentIds || [s.departmentId]).map(deptId => (
-                          <span key={deptId} className="text-[10px] font-medium py-[2px] px-[6px] rounded bg-[var(--amber-light)] text-[var(--amber)]">
+                        {(s.departmentIds || [s.departmentId]).map((deptId) => (
+                          <span
+                            key={deptId}
+                            className="text-[10px] font-medium py-[2px] px-[6px] rounded bg-[var(--amber-light)] text-[var(--amber)]"
+                          >
                             {getDeptName(deptId)}
                           </span>
                         ))}
@@ -236,18 +312,25 @@ export default function SubjectsPage() {
                     </td>
                     <td className="py-3 px-3 text-center">
                       <div className="flex gap-1 justify-center">
-                        <button onClick={() => startEdit(s)} title={isBn?'এডিট':'Edit'}
-                          className="w-7 h-7 rounded-[7px] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]">
+                        <button
+                          onClick={() => startEdit(s)}
+                          title={isBn ? 'এডিট' : 'Edit'}
+                          className="w-7 h-7 rounded-[7px] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
+                        >
                           <Edit2 size={12} />
                         </button>
-                        <button onClick={() => setDelConfirm(s.id)} title={isBn?'মুছুন':'Delete'}
-                          className="w-7 h-7 rounded-[7px] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]">
+                        <button
+                          onClick={() => setDelConfirm(s.id)}
+                          title={isBn ? 'মুছুন' : 'Delete'}
+                          className="w-7 h-7 rounded-[7px] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
+                        >
                           <Trash2 size={12} />
                         </button>
                       </div>
                     </td>
                   </tr>
-                ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>

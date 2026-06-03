@@ -134,10 +134,14 @@ export function generateA4HTML(s: StudentAdmission, isBn = false): string {
     </div>
   </div>
 
-  ${s.status === 'pending' ? `
+  ${
+    s.status === 'pending'
+      ? `
   <div class="note-box">
     ⚠️ ${isBn ? 'এই আবেদনটি অনুমোদনের অপেক্ষায় আছে। অনুগ্রহ করে এই কপিটি প্রতিষ্ঠানে জমা দিন।' : 'This application is pending approval. Please bring this copy to the school.'}
-  </div>` : ''}
+  </div>`
+      : ''
+  }
 
   <!-- Footer / Signatures -->
   <div class="footer">

@@ -1,1 +1,3 @@
-export default function Page() { return <div className="text-[var(--text-primary)] text-xl font-medium">Student Portal</div> }
+export default function Page() {
+  return <div className="text-[var(--text-primary)] text-xl font-medium">Student Portal</div>
+}

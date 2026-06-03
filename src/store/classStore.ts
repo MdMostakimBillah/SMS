@@ -57,20 +57,20 @@ export interface ClassInfo {
 }
 
 export function getClassOptions(classes: ClassInfo[]): string[] {
-  return classes.map(cls => cls.name)
+  return classes.map((cls) => cls.name)
 }
 
 export function buildSectionsMap(classes: ClassInfo[]): Record<string, string[]> {
   const map: Record<string, string[]> = {}
-  classes.forEach(cls => {
-    map[cls.name] = cls.sections.map(s => s.name)
+  classes.forEach((cls) => {
+    map[cls.name] = cls.sections.map((s) => s.name)
   })
   return map
 }
 
 export function getAllSections(classes: ClassInfo[]): string[] {
   const sectionSet = new Set<string>()
-  classes.forEach(cls => cls.sections.forEach(s => sectionSet.add(s.name)))
+  classes.forEach((cls) => cls.sections.forEach((s) => sectionSet.add(s.name)))
   return Array.from(sectionSet).sort()
 }
 
@@ -104,62 +104,213 @@ const defaultInstitution: InstitutionSettings = {
   website: 'www.edutech.edu.bd',
   startTime: '07:30',
   endTime: '14:30',
-  breaks: [
-    { id: 'BRK-1', label: 'Tiffin', start: '11:00', end: '11:30' },
-  ],
+  breaks: [{ id: 'BRK-1', label: 'Tiffin', start: '11:00', end: '11:30' }],
   currentSession: '2025-26',
   sessions: ['2024-25', '2025-26'],
 }
 
 const defaultClasses: ClassInfo[] = [
-  { id: 'CLS-01', name: 'Class 1', nameBn: 'শ্রেণি ১', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004'], sections: [
-    { id: 'SEC-01-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-005', subjectIds: [] },
-    { id: 'SEC-01-B', name: 'B', seatQuantity: 40, classTeacherId: 'TCH-2026-009', subjectIds: [] },
-  ]},
-  { id: 'CLS-02', name: 'Class 2', nameBn: 'শ্রেণি ২', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004'], sections: [
-    { id: 'SEC-02-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-010', subjectIds: [] },
-    { id: 'SEC-02-B', name: 'B', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
-  ]},
-  { id: 'CLS-03', name: 'Class 3', nameBn: 'শ্রেণি ৩', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005'], sections: [
-    { id: 'SEC-03-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-003', subjectIds: [] },
-  ]},
-  { id: 'CLS-04', name: 'Class 4', nameBn: 'শ্রেণি ৪', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005'], sections: [
-    { id: 'SEC-04-A', name: 'A', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
-    { id: 'SEC-04-B', name: 'B', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
-  ]},
-  { id: 'CLS-05', name: 'Class 5', nameBn: 'শ্রেণি ৫', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005'], sections: [
-    { id: 'SEC-05-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-016', subjectIds: [] },
-  ]},
-  { id: 'CLS-06', name: 'Class 6', nameBn: 'শ্রেণি ৬', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007'], sections: [
-    { id: 'SEC-06-A', name: 'A', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
-    { id: 'SEC-06-B', name: 'B', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
-  ]},
-  { id: 'CLS-07', name: 'Class 7', nameBn: 'শ্রেণি ৭', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007'], sections: [
-    { id: 'SEC-07-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-017', subjectIds: [] },
-  ]},
-  { id: 'CLS-08', name: 'Class 8', nameBn: 'শ্রেণি ৮', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007', 'SUB-008'], sections: [
-    { id: 'SEC-08-A', name: 'A', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
-    { id: 'SEC-08-B', name: 'B', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
-  ]},
-  { id: 'CLS-09', name: 'Class 9', nameBn: 'শ্রেণি ৯', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007', 'SUB-008', 'SUB-009', 'SUB-010'], sections: [
-    { id: 'SEC-09-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-001', subjectIds: [] },
-    { id: 'SEC-09-B', name: 'B', seatQuantity: 40, classTeacherId: 'TCH-2026-004', subjectIds: [] },
-    { id: 'SEC-09-C', name: 'C', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
-  ]},
-      { id: 'CLS-10', name: 'Class 10', nameBn: 'শ্রেণি ১০', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007', 'SUB-008', 'SUB-009', 'SUB-010', 'SUB-011', 'SUB-012'], sections: [
-    { id: 'SEC-10-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-014', subjectIds: [] },
-    { id: 'SEC-10-B', name: 'B', seatQuantity: 40, classTeacherId: 'TCH-2026-015', subjectIds: [] },
-  ]},
+  {
+    id: 'CLS-01',
+    name: 'Class 1',
+    nameBn: 'শ্রেণি ১',
+    startTime: '07:30',
+    endTime: '14:30',
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004'],
+    sections: [
+      { id: 'SEC-01-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-005', subjectIds: [] },
+      { id: 'SEC-01-B', name: 'B', seatQuantity: 40, classTeacherId: 'TCH-2026-009', subjectIds: [] },
+    ],
+  },
+  {
+    id: 'CLS-02',
+    name: 'Class 2',
+    nameBn: 'শ্রেণি ২',
+    startTime: '07:30',
+    endTime: '14:30',
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004'],
+    sections: [
+      { id: 'SEC-02-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-010', subjectIds: [] },
+      { id: 'SEC-02-B', name: 'B', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
+    ],
+  },
+  {
+    id: 'CLS-03',
+    name: 'Class 3',
+    nameBn: 'শ্রেণি ৩',
+    startTime: '07:30',
+    endTime: '14:30',
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005'],
+    sections: [{ id: 'SEC-03-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-003', subjectIds: [] }],
+  },
+  {
+    id: 'CLS-04',
+    name: 'Class 4',
+    nameBn: 'শ্রেণি ৪',
+    startTime: '07:30',
+    endTime: '14:30',
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005'],
+    sections: [
+      { id: 'SEC-04-A', name: 'A', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
+      { id: 'SEC-04-B', name: 'B', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
+    ],
+  },
+  {
+    id: 'CLS-05',
+    name: 'Class 5',
+    nameBn: 'শ্রেণি ৫',
+    startTime: '07:30',
+    endTime: '14:30',
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005'],
+    sections: [{ id: 'SEC-05-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-016', subjectIds: [] }],
+  },
+  {
+    id: 'CLS-06',
+    name: 'Class 6',
+    nameBn: 'শ্রেণি ৬',
+    startTime: '07:30',
+    endTime: '14:30',
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007'],
+    sections: [
+      { id: 'SEC-06-A', name: 'A', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
+      { id: 'SEC-06-B', name: 'B', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
+    ],
+  },
+  {
+    id: 'CLS-07',
+    name: 'Class 7',
+    nameBn: 'শ্রেণি ৭',
+    startTime: '07:30',
+    endTime: '14:30',
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007'],
+    sections: [{ id: 'SEC-07-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-017', subjectIds: [] }],
+  },
+  {
+    id: 'CLS-08',
+    name: 'Class 8',
+    nameBn: 'শ্রেণি ৮',
+    startTime: '07:30',
+    endTime: '14:30',
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007', 'SUB-008'],
+    sections: [
+      { id: 'SEC-08-A', name: 'A', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
+      { id: 'SEC-08-B', name: 'B', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
+    ],
+  },
+  {
+    id: 'CLS-09',
+    name: 'Class 9',
+    nameBn: 'শ্রেণি ৯',
+    startTime: '07:30',
+    endTime: '14:30',
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007', 'SUB-008', 'SUB-009', 'SUB-010'],
+    sections: [
+      { id: 'SEC-09-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-001', subjectIds: [] },
+      { id: 'SEC-09-B', name: 'B', seatQuantity: 40, classTeacherId: 'TCH-2026-004', subjectIds: [] },
+      { id: 'SEC-09-C', name: 'C', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
+    ],
+  },
+  {
+    id: 'CLS-10',
+    name: 'Class 10',
+    nameBn: 'শ্রেণি ১০',
+    startTime: '07:30',
+    endTime: '14:30',
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    subjectIds: [
+      'SUB-001',
+      'SUB-002',
+      'SUB-003',
+      'SUB-004',
+      'SUB-005',
+      'SUB-006',
+      'SUB-007',
+      'SUB-008',
+      'SUB-009',
+      'SUB-010',
+      'SUB-011',
+      'SUB-012',
+    ],
+    sections: [
+      { id: 'SEC-10-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-014', subjectIds: [] },
+      { id: 'SEC-10-B', name: 'B', seatQuantity: 40, classTeacherId: 'TCH-2026-015', subjectIds: [] },
+    ],
+  },
 ]
 
 const defaultRoutines: ClassRoutine[] = [
-  { classId: 'CLS-09', sectionId: 'SEC-09-A', periodDuration: 40, weekendDays: [5], periods: [
-    [{ subjectId: 'SUB-001', teacherId: 'TCH-2026-001' }, { subjectId: 'SUB-003', teacherId: 'TCH-2026-004' }, { subjectId: 'SUB-004', teacherId: 'TCH-2026-016' }, { subjectId: 'SUB-005', teacherId: 'TCH-2026-015' }, { subjectId: 'SUB-008', teacherId: 'TCH-2026-006' }, { subjectId: 'SUB-002', teacherId: 'TCH-2026-003' }, { subjectId: 'SUB-006', teacherId: 'TCH-2026-008' }],
-    [{ subjectId: 'SUB-004', teacherId: 'TCH-2026-016' }, { subjectId: 'SUB-001', teacherId: 'TCH-2026-001' }, { subjectId: 'SUB-003', teacherId: 'TCH-2026-004' }, { subjectId: 'SUB-002', teacherId: 'TCH-2026-003' }, { subjectId: 'SUB-005', teacherId: 'TCH-2026-015' }, { subjectId: 'SUB-007', teacherId: 'TCH-2026-011' }, { subjectId: 'SUB-008', teacherId: 'TCH-2026-006' }],
-    [{ subjectId: 'SUB-003', teacherId: 'TCH-2026-004' }, { subjectId: 'SUB-005', teacherId: 'TCH-2026-015' }, { subjectId: 'SUB-001', teacherId: 'TCH-2026-001' }, { subjectId: 'SUB-004', teacherId: 'TCH-2026-016' }, { subjectId: 'SUB-006', teacherId: 'TCH-2026-008' }, { subjectId: 'SUB-002', teacherId: 'TCH-2026-003' }, { subjectId: 'SUB-007', teacherId: 'TCH-2026-011' }],
-    [{ subjectId: 'SUB-002', teacherId: 'TCH-2026-003' }, { subjectId: 'SUB-008', teacherId: 'TCH-2026-006' }, { subjectId: 'SUB-004', teacherId: 'TCH-2026-016' }, { subjectId: 'SUB-001', teacherId: 'TCH-2026-001' }, { subjectId: 'SUB-003', teacherId: 'TCH-2026-004' }, { subjectId: 'SUB-005', teacherId: 'TCH-2026-015' }, { subjectId: 'SUB-006', teacherId: 'TCH-2026-008' }],
-    [{ subjectId: 'SUB-005', teacherId: 'TCH-2026-015' }, { subjectId: 'SUB-004', teacherId: 'TCH-2026-016' }, { subjectId: 'SUB-002', teacherId: 'TCH-2026-003' }, { subjectId: 'SUB-003', teacherId: 'TCH-2026-004' }, { subjectId: 'SUB-001', teacherId: 'TCH-2026-001' }, { subjectId: 'SUB-007', teacherId: 'TCH-2026-011' }, { subjectId: 'SUB-008', teacherId: 'TCH-2026-006' }],
-  ]},
+  {
+    classId: 'CLS-09',
+    sectionId: 'SEC-09-A',
+    periodDuration: 40,
+    weekendDays: [5],
+    periods: [
+      [
+        { subjectId: 'SUB-001', teacherId: 'TCH-2026-001' },
+        { subjectId: 'SUB-003', teacherId: 'TCH-2026-004' },
+        { subjectId: 'SUB-004', teacherId: 'TCH-2026-016' },
+        { subjectId: 'SUB-005', teacherId: 'TCH-2026-015' },
+        { subjectId: 'SUB-008', teacherId: 'TCH-2026-006' },
+        { subjectId: 'SUB-002', teacherId: 'TCH-2026-003' },
+        { subjectId: 'SUB-006', teacherId: 'TCH-2026-008' },
+      ],
+      [
+        { subjectId: 'SUB-004', teacherId: 'TCH-2026-016' },
+        { subjectId: 'SUB-001', teacherId: 'TCH-2026-001' },
+        { subjectId: 'SUB-003', teacherId: 'TCH-2026-004' },
+        { subjectId: 'SUB-002', teacherId: 'TCH-2026-003' },
+        { subjectId: 'SUB-005', teacherId: 'TCH-2026-015' },
+        { subjectId: 'SUB-007', teacherId: 'TCH-2026-011' },
+        { subjectId: 'SUB-008', teacherId: 'TCH-2026-006' },
+      ],
+      [
+        { subjectId: 'SUB-003', teacherId: 'TCH-2026-004' },
+        { subjectId: 'SUB-005', teacherId: 'TCH-2026-015' },
+        { subjectId: 'SUB-001', teacherId: 'TCH-2026-001' },
+        { subjectId: 'SUB-004', teacherId: 'TCH-2026-016' },
+        { subjectId: 'SUB-006', teacherId: 'TCH-2026-008' },
+        { subjectId: 'SUB-002', teacherId: 'TCH-2026-003' },
+        { subjectId: 'SUB-007', teacherId: 'TCH-2026-011' },
+      ],
+      [
+        { subjectId: 'SUB-002', teacherId: 'TCH-2026-003' },
+        { subjectId: 'SUB-008', teacherId: 'TCH-2026-006' },
+        { subjectId: 'SUB-004', teacherId: 'TCH-2026-016' },
+        { subjectId: 'SUB-001', teacherId: 'TCH-2026-001' },
+        { subjectId: 'SUB-003', teacherId: 'TCH-2026-004' },
+        { subjectId: 'SUB-005', teacherId: 'TCH-2026-015' },
+        { subjectId: 'SUB-006', teacherId: 'TCH-2026-008' },
+      ],
+      [
+        { subjectId: 'SUB-005', teacherId: 'TCH-2026-015' },
+        { subjectId: 'SUB-004', teacherId: 'TCH-2026-016' },
+        { subjectId: 'SUB-002', teacherId: 'TCH-2026-003' },
+        { subjectId: 'SUB-003', teacherId: 'TCH-2026-004' },
+        { subjectId: 'SUB-001', teacherId: 'TCH-2026-001' },
+        { subjectId: 'SUB-007', teacherId: 'TCH-2026-011' },
+        { subjectId: 'SUB-008', teacherId: 'TCH-2026-006' },
+      ],
+    ],
+  },
 ]
 
 export const useClassStore = create<ClassState>()(
@@ -171,21 +322,16 @@ export const useClassStore = create<ClassState>()(
       sessionClasses: { '2025-26': defaultClasses },
       sessionRoutines: { '2025-26': defaultRoutines },
 
-      updateInstitution: (data) =>
-        set((state) => ({ institution: { ...state.institution, ...data } })),
+      updateInstitution: (data) => set((state) => ({ institution: { ...state.institution, ...data } })),
 
-      addClass: (cls) =>
-        set((state) => ({ classes: [...state.classes, cls] })),
+      addClass: (cls) => set((state) => ({ classes: [...state.classes, cls] })),
 
       updateClass: (id, data) =>
         set((state) => ({
-          classes: state.classes.map((c) =>
-            c.id === id ? { ...c, ...data, updatedAt: new Date().toISOString().split('T')[0] } : c
-          ),
+          classes: state.classes.map((c) => (c.id === id ? { ...c, ...data, updatedAt: new Date().toISOString().split('T')[0] } : c)),
         })),
 
-      deleteClass: (id) =>
-        set((state) => ({ classes: state.classes.filter((c) => c.id !== id) })),
+      deleteClass: (id) => set((state) => ({ classes: state.classes.filter((c) => c.id !== id) })),
 
       addSection: (classId, section) =>
         set((state) => ({
@@ -198,7 +344,11 @@ export const useClassStore = create<ClassState>()(
         set((state) => ({
           classes: state.classes.map((c) =>
             c.id === classId
-              ? { ...c, sections: c.sections.map((s) => (s.id === sectionId ? { ...s, ...data } : s)), updatedAt: new Date().toISOString().split('T')[0] }
+              ? {
+                  ...c,
+                  sections: c.sections.map((s) => (s.id === sectionId ? { ...s, ...data } : s)),
+                  updatedAt: new Date().toISOString().split('T')[0],
+                }
               : c
           ),
         })),
@@ -214,18 +364,29 @@ export const useClassStore = create<ClassState>()(
 
       updateRoutine: (classId, routine) =>
         set((state) => {
-          const existing = state.routines.find(r => r.classId === classId && r.sectionId === routine.sectionId)
+          const existing = state.routines.find((r) => r.classId === classId && r.sectionId === routine.sectionId)
           if (existing) {
-            return { routines: state.routines.map(r => r.classId === classId && r.sectionId === routine.sectionId ? { ...r, ...routine, weekendDays: routine.weekendDays ?? r.weekendDays } : r) }
+            return {
+              routines: state.routines.map((r) =>
+                r.classId === classId && r.sectionId === routine.sectionId
+                  ? { ...r, ...routine, weekendDays: routine.weekendDays ?? r.weekendDays }
+                  : r
+              ),
+            }
           }
-          return { routines: [...state.routines, { classId, sectionId: routine.sectionId || '', periodDuration: 40, weekendDays: [5], periods: [], ...routine }] }
+          return {
+            routines: [
+              ...state.routines,
+              { classId, sectionId: routine.sectionId || '', periodDuration: 40, weekendDays: [5], periods: [], ...routine },
+            ],
+          }
         }),
 
       setRoutineSlot: (classId, day, period, slot) =>
         set((state) => {
           const routines = [...state.routines]
-          const sectionId = slot.sectionId || state.routines.find(r => r.classId === classId)?.sectionId || ''
-          let idx = routines.findIndex(r => r.classId === classId && r.sectionId === sectionId)
+          const sectionId = slot.sectionId || state.routines.find((r) => r.classId === classId)?.sectionId || ''
+          let idx = routines.findIndex((r) => r.classId === classId && r.sectionId === sectionId)
           if (idx === -1) {
             routines.push({ classId, sectionId, periodDuration: 40, weekendDays: [5], periods: [] })
             idx = routines.length - 1
@@ -242,8 +403,8 @@ export const useClassStore = create<ClassState>()(
       clearRoutineSlot: (classId, day, period, sectionId) =>
         set((state) => {
           const routines = [...state.routines]
-          const sid = sectionId || state.routines.find(r => r.classId === classId)?.sectionId || ''
-          const idx = routines.findIndex(r => r.classId === classId && r.sectionId === sid)
+          const sid = sectionId || state.routines.find((r) => r.classId === classId)?.sectionId || ''
+          const idx = routines.findIndex((r) => r.classId === classId && r.sectionId === sid)
           if (idx === -1) return state
           const periods = [...routines[idx].periods]
           if (!periods[day]) return state
@@ -285,7 +446,7 @@ export const useClassStore = create<ClassState>()(
       removeSession: (session) =>
         set((state) => {
           const { institution, sessionClasses, sessionRoutines } = state
-          const newSessions = institution.sessions.filter(s => s !== session)
+          const newSessions = institution.sessions.filter((s) => s !== session)
           const newSessionClasses = { ...sessionClasses }
           const newSessionRoutines = { ...sessionRoutines }
           delete newSessionClasses[session]
@@ -329,7 +490,9 @@ export const useClassStore = create<ClassState>()(
         }
         if (version < 3) {
           const allClasses = persistedState?.sessionClasses?.['2025-26'] || persistedState?.classes || []
-          allClasses.forEach((c: any) => { if (!c.subjectIds) c.subjectIds = [] })
+          allClasses.forEach((c: any) => {
+            if (!c.subjectIds) c.subjectIds = []
+          })
         }
         return persistedState
       },

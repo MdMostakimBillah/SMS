@@ -8,18 +8,20 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import type { StudentAdmission } from '@/pages/students/admission/types'
 
 interface RollCellProps {
-  value: string; onChange: (v: string) => void; isBn: boolean
+  value: string
+  onChange: (v: string) => void
+  isBn: boolean
 }
 const RollCell = React.memo(function RollCell({ value, onChange, isBn }: RollCellProps) {
   return (
     <input
       type="text"
       value={value}
-      onChange={e => onChange(e.target.value)}
+      onChange={(e) => onChange(e.target.value)}
       placeholder={isBn ? 'রোল' : 'Roll'}
       className="w-[50px] p-[4px_6px] rounded-[6px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] font-mono outline-none text-center"
-      onFocus={e => (e.target.style.borderColor = 'var(--brand)')}
-      onBlur={e => (e.target.style.borderColor = 'var(--border)')}
+      onFocus={(e) => (e.target.style.borderColor = 'var(--brand)')}
+      onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
     />
   )
 })
@@ -36,7 +38,7 @@ export default function ClassPromotionPage() {
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
-  const approved = useMemo(() => students.filter(s => s.status === 'approved'), [students])
+  const approved = useMemo(() => students.filter((s) => s.status === 'approved'), [students])
 
   const currentSession = institution.currentSession
   const sessions = institution.sessions
@@ -55,24 +57,28 @@ export default function ClassPromotionPage() {
   const [promoted, setPromoted] = useState(false)
   const [promotedCount, setPromotedCount] = useState(0)
 
-  const filtered = useMemo(() => approved.filter(s => {
-    if (fromClass && s.class !== fromClass) return false
-    if (fromSection && s.section !== fromSection) return false
-    return true
-  }), [approved, fromClass, fromSection])
+  const filtered = useMemo(
+    () =>
+      approved.filter((s) => {
+        if (fromClass && s.class !== fromClass) return false
+        if (fromSection && s.section !== fromSection) return false
+        return true
+      }),
+    [approved, fromClass, fromSection]
+  )
 
-  const allSel = filtered.length > 0 && filtered.every(s => selected.includes(s.id))
+  const allSel = filtered.length > 0 && filtered.every((s) => selected.includes(s.id))
 
   const toggleAll = useCallback(() => {
-    setSelected(allSel ? [] : filtered.map(s => s.id))
+    setSelected(allSel ? [] : filtered.map((s) => s.id))
   }, [allSel, filtered])
 
   const toggleOne = useCallback((id: string) => {
-    setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
+    setSelected((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
   }, [])
 
   const updateRoll = useCallback((id: string, val: string) => {
-    setRollMap(p => ({ ...p, [id]: val }))
+    setRollMap((p) => ({ ...p, [id]: val }))
   }, [])
 
   const promote = useCallback(() => {
@@ -86,7 +92,7 @@ export default function ClassPromotionPage() {
     }
 
     let count = 0
-    selected.forEach(id => {
+    selected.forEach((id) => {
       const newRoll = rollMap[id]
       const updates: Partial<StudentAdmission> = {
         class: toClass,
@@ -108,8 +114,10 @@ export default function ClassPromotionPage() {
   return (
     <div>
       <div className="flex items-center gap-[10px] mb-[18px] flex-wrap">
-        <button onClick={() => navigate('/students')}
-          className="flex items-center gap-[5px] py-[7px] px-[12px] rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] shrink-0">
+        <button
+          onClick={() => navigate('/students')}
+          className="flex items-center gap-[5px] py-[7px] px-[12px] rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] shrink-0"
+        >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
@@ -121,19 +129,23 @@ export default function ClassPromotionPage() {
             {isBn ? `${currentSession} থেকে পরবর্তী সেশনে ছাত্রদের প্রমোট করুন` : `Promote students from ${currentSession} to next session`}
           </p>
         </div>
-        <button onClick={promote}
-          className={`flex items-center gap-[6px] py-[9px] px-[18px] rounded-[9px] border-none text-white text-[13px] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_12px_rgba(99,102,241,0.3)] ${promoted ? 'bg-[var(--green)]' : 'bg-[var(--brand)]'}`}>
+        <button
+          onClick={promote}
+          className={`flex items-center gap-[6px] py-[9px] px-[18px] rounded-[9px] border-none text-white text-[13px] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_12px_rgba(99,102,241,0.3)] ${promoted ? 'bg-[var(--green)]' : 'bg-[var(--brand)]'}`}
+        >
           {promoted ? <Check size={14} /> : <ArrowUpCircle size={14} />}
           {promoted
-            ? (isBn ? `✓ ${promotedCount} জন প্রমোট হয়েছে!` : `✓ ${promotedCount} Promoted!`)
-            : (isBn ? `${selected.length} জন প্রমোট করুন` : `Promote ${selected.length}`)}
+            ? isBn
+              ? `✓ ${promotedCount} জন প্রমোট হয়েছে!`
+              : `✓ ${promotedCount} Promoted!`
+            : isBn
+              ? `${selected.length} জন প্রমোট করুন`
+              : `Promote ${selected.length}`}
         </button>
       </div>
 
       <div className={`grid gap-[16px] items-start ${isMobile ? 'grid-cols-1' : 'grid-cols-[300px_1fr]'}`}>
-
         <div className="flex flex-col gap-[12px]">
-
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[12px] p-[14px]">
             <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-[10px]">
               ① {isBn ? 'বর্তমান শ্রেণি' : 'From Class'}
@@ -145,16 +157,42 @@ export default function ClassPromotionPage() {
             <div className="flex flex-col gap-[8px]">
               <div>
                 <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">{isBn ? 'শ্রেণি' : 'Class'}</label>
-                <select value={fromClass} onChange={e => { setFromClass(e.target.value); setSelected([]); setRollMap({}) }} className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer">
+                <select
+                  value={fromClass}
+                  onChange={(e) => {
+                    setFromClass(e.target.value)
+                    setSelected([])
+                    setRollMap({})
+                  }}
+                  className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
+                >
                   <option value="">{isBn ? 'সব শ্রেণি' : 'All Classes'}</option>
-                  {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                  {classOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">{isBn ? 'সেকশন' : 'Section'}</label>
-                <select value={fromSection} onChange={e => { setFromSection(e.target.value); setSelected([]); setRollMap({}) }} className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer">
+                <select
+                  value={fromSection}
+                  onChange={(e) => {
+                    setFromSection(e.target.value)
+                    setSelected([])
+                    setRollMap({})
+                  }}
+                  className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
+                >
                   <option value="">{isBn ? 'সব সেকশন' : 'All Sections'}</option>
-                  {(sectionsMap[fromClass] || classOptions.flatMap(c => sectionsMap[c] || [])).filter((s, i, a) => a.indexOf(s) === i).map(s => <option key={s} value={s}>{s}</option>)}
+                  {(sectionsMap[fromClass] || classOptions.flatMap((c) => sectionsMap[c] || []))
+                    .filter((s, i, a) => a.indexOf(s) === i)
+                    .map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
                 </select>
               </div>
             </div>
@@ -166,27 +204,59 @@ export default function ClassPromotionPage() {
             </div>
             <div className="flex flex-col gap-[8px]">
               <div>
-                <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">{isBn ? 'শ্রেণি' : 'Class'} <span className="text-[var(--red)]">*</span></label>
-                <select value={toClass} onChange={e => setToClass(e.target.value)} className={`w-full py-[7px] px-[10px] rounded-lg border bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer ${toClass ? 'border-[var(--brand)]' : 'border-[var(--border)]'}`}>
+                <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">
+                  {isBn ? 'শ্রেণি' : 'Class'} <span className="text-[var(--red)]">*</span>
+                </label>
+                <select
+                  value={toClass}
+                  onChange={(e) => setToClass(e.target.value)}
+                  className={`w-full py-[7px] px-[10px] rounded-lg border bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer ${toClass ? 'border-[var(--brand)]' : 'border-[var(--border)]'}`}
+                >
                   <option value="">{isBn ? 'বেছে নিন' : 'Select'}</option>
-                  {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                  {classOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">{isBn ? 'সেকশন' : 'Section'}</label>
-                <select value={toSection} onChange={e => setToSection(e.target.value)} className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer">
+                <select
+                  value={toSection}
+                  onChange={(e) => setToSection(e.target.value)}
+                  className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
+                >
                   <option value="">{isBn ? 'একই সেকশন' : 'Same Section'}</option>
-                  {(sectionsMap[toClass] || classOptions.flatMap(c => sectionsMap[c] || [])).filter((s, i, a) => a.indexOf(s) === i).map(s => <option key={s} value={s}>{s}</option>)}
+                  {(sectionsMap[toClass] || classOptions.flatMap((c) => sectionsMap[c] || []))
+                    .filter((s, i, a) => a.indexOf(s) === i)
+                    .map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
                 </select>
               </div>
               <div>
                 <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">{isBn ? 'নতুন সেশন' : 'New Session'}</label>
-                <select value={newSession} onChange={e => setNewSession(e.target.value)} className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer">
+                <select
+                  value={newSession}
+                  onChange={(e) => setNewSession(e.target.value)}
+                  className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
+                >
                   <option value="">{isBn ? 'বেছে নিন' : 'Select'}</option>
-                  {sessions.filter(s => s !== currentSession).map(s => <option key={s} value={s}>{s}</option>)}
+                  {sessions
+                    .filter((s) => s !== currentSession)
+                    .map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
                 </select>
                 {nextSession && newSession !== nextSession && (
-                  <p className="text-[10px] text-[var(--amber)] mt-1">{isBn ? `পরবর্তী সেশন: ${nextSession}` : `Next session: ${nextSession}`}</p>
+                  <p className="text-[10px] text-[var(--amber)] mt-1">
+                    {isBn ? `পরবর্তী সেশন: ${nextSession}` : `Next session: ${nextSession}`}
+                  </p>
                 )}
               </div>
             </div>
@@ -211,12 +281,18 @@ export default function ClassPromotionPage() {
               <div className={`w-[8px] h-[8px] rounded-full ${fromClass ? 'bg-[var(--brand)]' : 'bg-[var(--text-muted)]'}`} />
               <span className="text-[13px] font-medium text-[var(--text-primary)]">
                 {filtered.length} {isBn ? 'জন ছাত্র' : 'students'}
-                {selected.length > 0 && <span className="text-[var(--brand)] ml-[8px]">· {selected.length} {isBn ? 'নির্বাচিত' : 'selected'}</span>}
+                {selected.length > 0 && (
+                  <span className="text-[var(--brand)] ml-[8px]">
+                    · {selected.length} {isBn ? 'নির্বাচিত' : 'selected'}
+                  </span>
+                )}
               </span>
             </div>
-            <button onClick={toggleAll}
-              className={`py-[5px] px-[10px] rounded-[6px] border cursor-pointer text-[11px] font-[inherit] font-medium ${allSel ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]' : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)]'}`}>
-              {allSel ? (isBn ? 'সব বাদ' : 'Deselect') : (isBn ? 'সব বাছুন' : 'Select All')}
+            <button
+              onClick={toggleAll}
+              className={`py-[5px] px-[10px] rounded-[6px] border cursor-pointer text-[11px] font-[inherit] font-medium ${allSel ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]' : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)]'}`}
+            >
+              {allSel ? (isBn ? 'সব বাদ' : 'Deselect') : isBn ? 'সব বাছুন' : 'Select All'}
             </button>
           </div>
 
@@ -225,80 +301,116 @@ export default function ClassPromotionPage() {
               <thead>
                 <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                   <th className="p-[8px_10px] w-[36px]">
-                    <input type="checkbox" checked={allSel} onChange={toggleAll}
-                      className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
+                    <input
+                      type="checkbox"
+                      checked={allSel}
+                      onChange={toggleAll}
+                      className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                    />
                   </th>
                   <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase w-[30px]">#</th>
-                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase w-[38px]">{isBn ? 'ছবি' : 'Photo'}</th>
-                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase">{isBn ? 'নাম / আইডি' : 'Name / ID'}</th>
-                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase">{isBn ? 'বর্তমান' : 'Current'}</th>
-                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--brand)] uppercase">{isBn ? 'লক্ষ্য' : 'Target'}</th>
-                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--amber)] uppercase min-w-[70px]">{isBn ? 'নতুন রোল' : 'New Roll'}</th>
+                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase w-[38px]">
+                    {isBn ? 'ছবি' : 'Photo'}
+                  </th>
+                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase">
+                    {isBn ? 'নাম / আইডি' : 'Name / ID'}
+                  </th>
+                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase">
+                    {isBn ? 'বর্তমান' : 'Current'}
+                  </th>
+                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--brand)] uppercase">
+                    {isBn ? 'লক্ষ্য' : 'Target'}
+                  </th>
+                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--amber)] uppercase min-w-[70px]">
+                    {isBn ? 'নতুন রোল' : 'New Roll'}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={7} className="p-[40px] text-center text-[var(--text-muted)]">
-                    <Users size={28} className="block mx-auto mb-2 opacity-30" />
-                    {isBn ? 'উপরে শ্রেণি নির্বাচন করুন' : 'Select a class above to view students'}
-                  </td></tr>
-                ) : filtered.map((s, i) => (
-                  <tr key={s.id}
-                    className={`border-b-[0.5px] border-[var(--border)] ${selected.includes(s.id) ? 'bg-[rgba(99,102,241,0.04)]' : 'bg-transparent'}`}
-                    onMouseEnter={e => { if (!selected.includes(s.id)) e.currentTarget.style.background = 'var(--bg-secondary)' }}
-                    onMouseLeave={e => { if (!selected.includes(s.id)) e.currentTarget.style.background = 'transparent' }}>
-                    <td className="p-[8px_10px]">
-                      <input type="checkbox" checked={selected.includes(s.id)} onChange={() => toggleOne(s.id)}
-                        className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]" />
-                    </td>
-                    <td className="p-[8px_6px] text-[var(--text-muted)] font-semibold text-[11px]">{i + 1}</td>
-                    <td className="p-[6px]">
-                      <div className="w-[28px] h-[34px] rounded-[5px] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
-                        {s.photo
-                          ? <img src={s.photo} alt="" className="w-full h-full object-cover" />
-                          : <User size={12} className="text-[var(--text-muted)]" />}
-                      </div>
-                    </td>
-                    <td className="p-[8px_6px]">
-                      <div className="text-xs font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap max-w-[140px]">{s.nameEn}</div>
-                      <div className="text-[10px] text-[var(--text-muted)] font-mono">{s.id}</div>
-                    </td>
-                    <td className="p-[8px_6px]">
-                      <div className="flex gap-[3px] flex-wrap">
-                        <span className="text-[10px] font-semibold py-[2px] px-[6px] rounded-[5px] bg-[var(--brand-light)] text-[var(--brand)]">
-                          {s.class}
-                        </span>
-                        <span className="text-[10px] py-[2px] px-[5px] rounded-[5px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]">
-                          {s.section}
-                        </span>
-                        {s.roll && <span className="text-[10px] py-[2px] px-[5px] rounded-[5px] bg-[var(--bg-secondary)] text-[var(--text-secondary)]">R{s.roll}</span>}
-                      </div>
-                    </td>
-                    <td className="p-[8px_6px]">
-                      {toClass ? (
-                        <div className="flex gap-[3px] flex-wrap">
-                          <span className="text-[10px] font-semibold py-[2px] px-[6px] rounded-[5px] bg-[var(--green-light)] text-[var(--green)]">
-                            {toClass}
-                          </span>
-                          <span className="text-[10px] py-[2px] px-[5px] rounded-[5px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]">
-                            {toSection || s.section}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-[10px] text-[var(--text-muted)]">—</span>
-                      )}
-                    </td>
-                    <td className="p-[8px_6px]">
-                      {toClass && (
-                        <RollCell
-                          value={rollMap[s.id] !== undefined ? rollMap[s.id] : (s.roll || '')}
-                          onChange={v => updateRoll(s.id, v)}
-                          isBn={isBn}
-                        />
-                      )}
+                  <tr>
+                    <td colSpan={7} className="p-[40px] text-center text-[var(--text-muted)]">
+                      <Users size={28} className="block mx-auto mb-2 opacity-30" />
+                      {isBn ? 'উপরে শ্রেণি নির্বাচন করুন' : 'Select a class above to view students'}
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filtered.map((s, i) => (
+                    <tr
+                      key={s.id}
+                      className={`border-b-[0.5px] border-[var(--border)] ${selected.includes(s.id) ? 'bg-[rgba(99,102,241,0.04)]' : 'bg-transparent'}`}
+                      onMouseEnter={(e) => {
+                        if (!selected.includes(s.id)) e.currentTarget.style.background = 'var(--bg-secondary)'
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!selected.includes(s.id)) e.currentTarget.style.background = 'transparent'
+                      }}
+                    >
+                      <td className="p-[8px_10px]">
+                        <input
+                          type="checkbox"
+                          checked={selected.includes(s.id)}
+                          onChange={() => toggleOne(s.id)}
+                          className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                        />
+                      </td>
+                      <td className="p-[8px_6px] text-[var(--text-muted)] font-semibold text-[11px]">{i + 1}</td>
+                      <td className="p-[6px]">
+                        <div className="w-[28px] h-[34px] rounded-[5px] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
+                          {s.photo ? (
+                            <img src={s.photo} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <User size={12} className="text-[var(--text-muted)]" />
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-[8px_6px]">
+                        <div className="text-xs font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap max-w-[140px]">
+                          {s.nameEn}
+                        </div>
+                        <div className="text-[10px] text-[var(--text-muted)] font-mono">{s.id}</div>
+                      </td>
+                      <td className="p-[8px_6px]">
+                        <div className="flex gap-[3px] flex-wrap">
+                          <span className="text-[10px] font-semibold py-[2px] px-[6px] rounded-[5px] bg-[var(--brand-light)] text-[var(--brand)]">
+                            {s.class}
+                          </span>
+                          <span className="text-[10px] py-[2px] px-[5px] rounded-[5px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]">
+                            {s.section}
+                          </span>
+                          {s.roll && (
+                            <span className="text-[10px] py-[2px] px-[5px] rounded-[5px] bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
+                              R{s.roll}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-[8px_6px]">
+                        {toClass ? (
+                          <div className="flex gap-[3px] flex-wrap">
+                            <span className="text-[10px] font-semibold py-[2px] px-[6px] rounded-[5px] bg-[var(--green-light)] text-[var(--green)]">
+                              {toClass}
+                            </span>
+                            <span className="text-[10px] py-[2px] px-[5px] rounded-[5px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]">
+                              {toSection || s.section}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-[var(--text-muted)]">—</span>
+                        )}
+                      </td>
+                      <td className="p-[8px_6px]">
+                        {toClass && (
+                          <RollCell
+                            value={rollMap[s.id] !== undefined ? rollMap[s.id] : s.roll || ''}
+                            onChange={(v) => updateRoll(s.id, v)}
+                            isBn={isBn}
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
