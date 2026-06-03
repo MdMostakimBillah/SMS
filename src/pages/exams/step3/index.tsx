@@ -269,7 +269,7 @@ export default function Step3Evaluation() {
                             <div className="flex flex-wrap gap-1">
                               {config.subExams.map(se => (
                                 <span key={se.id} className="text-[9px] bg-[var(--bg-primary)] rounded px-1.5 py-0.5 text-[var(--text-secondary)]">
-                                  {isBn ? se.nameBn : se.name} ({se.weight}%)
+                                  {isBn ? se.nameBn : se.name} ({se.fullMarks})
                                 </span>
                               ))}
                             </div>
@@ -355,7 +355,7 @@ export default function Step3Evaluation() {
                         {entrySubjectConfig.subExams.map(se => (
                           <th key={se.id} className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[80px]">
                             <div>{isBn ? se.nameBn : se.name}</div>
-                            <div className="font-normal text-[9px]">({se.weight}%)</div>
+                            <div className="font-normal text-[9px]">({se.fullMarks})</div>
                           </th>
                         ))}
                         <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[60px]">{isBn ? 'মোট' : 'Total'}</th>
@@ -383,7 +383,7 @@ export default function Step3Evaluation() {
                             </td>
                             <td className="py-2 px-2 text-[var(--text-secondary)]">{student.roll || '—'}</td>
                             {entrySubjectConfig.subExams.map(se => {
-                              const maxForSub = Math.round(entrySubjectConfig.fullMarks * se.weight / 100)
+                              const maxForSub = se.fullMarks
                               return (
                                 <td key={se.id} className="py-2 px-2">
                                   <input type="number" min={0} max={maxForSub}

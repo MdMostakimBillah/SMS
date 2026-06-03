@@ -21,7 +21,8 @@ export interface SubExam {
   id: string
   name: string
   nameBn: string
-  weight: number
+  fullMarks: number
+  passMarks: number
 }
 
 export interface SubjectMarkConfig {
@@ -234,30 +235,30 @@ const defaultExamConfigs: ExamConfig[] = [
 
 const defaultSubjectMarkConfigs: SubjectMarkConfig[] = [
   { id: 'SMC-001', examId: 'EXAM-001', classId: 'Class-6', subjectId: 'SUB-001', fullMarks: 100, passMarks: 33, subExams: [
-    { id: 'SE-001', name: 'CQ', nameBn: 'সিকিউ', weight: 50 },
-    { id: 'SE-002', name: 'MCQ', nameBn: 'এমসিকিউ', weight: 25 },
-    { id: 'SE-003', name: 'Practical', nameBn: 'প্র্যাকটিক্যাল', weight: 25 },
+    { id: 'SE-001', name: 'CQ', nameBn: 'সিকিউ', fullMarks: 50, passMarks: 17 },
+    { id: 'SE-002', name: 'MCQ', nameBn: 'এমসিকিউ', fullMarks: 25, passMarks: 8 },
+    { id: 'SE-003', name: 'Practical', nameBn: 'প্র্যাকটিক্যাল', fullMarks: 25, passMarks: 8 },
   ]},
   { id: 'SMC-002', examId: 'EXAM-001', classId: 'Class-6', subjectId: 'SUB-002', fullMarks: 100, passMarks: 33, subExams: [
-    { id: 'SE-004', name: 'CQ', nameBn: 'সিকিউ', weight: 50 },
-    { id: 'SE-005', name: 'MCQ', nameBn: 'এমসিকিউ', weight: 25 },
-    { id: 'SE-006', name: 'Practical', nameBn: 'প্র্যাকটিক্যাল', weight: 25 },
+    { id: 'SE-004', name: 'CQ', nameBn: 'সিকিউ', fullMarks: 50, passMarks: 17 },
+    { id: 'SE-005', name: 'MCQ', nameBn: 'এমসিকিউ', fullMarks: 25, passMarks: 8 },
+    { id: 'SE-006', name: 'Practical', nameBn: 'প্র্যাকটিক্যাল', fullMarks: 25, passMarks: 8 },
   ]},
   { id: 'SMC-003', examId: 'EXAM-001', classId: 'Class-6', subjectId: 'SUB-003', fullMarks: 100, passMarks: 33, subExams: [
-    { id: 'SE-007', name: 'CQ', nameBn: 'সিকিউ', weight: 60 },
-    { id: 'SE-008', name: 'MCQ', nameBn: 'এমসিকিউ', weight: 40 },
+    { id: 'SE-007', name: 'CQ', nameBn: 'সিকিউ', fullMarks: 60, passMarks: 20 },
+    { id: 'SE-008', name: 'MCQ', nameBn: 'এমসিকিউ', fullMarks: 40, passMarks: 13 },
   ]},
   { id: 'SMC-004', examId: 'EXAM-001', classId: 'Class-6', subjectId: 'SUB-004', fullMarks: 100, passMarks: 33, subExams: [
-    { id: 'SE-009', name: 'CQ', nameBn: 'সিকিউ', weight: 50 },
-    { id: 'SE-010', name: 'MCQ', nameBn: 'এমসিকিউ', weight: 20 },
-    { id: 'SE-011', name: 'Oral', nameBn: 'মৌখিক', weight: 15 },
-    { id: 'SE-012', name: 'Assignment', nameBn: 'এসাইনমেন্ট', weight: 15 },
+    { id: 'SE-009', name: 'CQ', nameBn: 'সিকিউ', fullMarks: 50, passMarks: 17 },
+    { id: 'SE-010', name: 'MCQ', nameBn: 'এমসিকিউ', fullMarks: 20, passMarks: 7 },
+    { id: 'SE-011', name: 'Oral', nameBn: 'মৌখিক', fullMarks: 15, passMarks: 5 },
+    { id: 'SE-012', name: 'Assignment', nameBn: 'এসাইনমেন্ট', fullMarks: 15, passMarks: 5 },
   ]},
   { id: 'SMC-005', examId: 'EXAM-001', classId: 'Class-6', subjectId: 'SUB-005', fullMarks: 100, passMarks: 33, subExams: [
-    { id: 'SE-013', name: 'CQ', nameBn: 'সিকিউ', weight: 45 },
-    { id: 'SE-014', name: 'MCQ', nameBn: 'এমসিকিউ', weight: 20 },
-    { id: 'SE-015', name: 'Oral', nameBn: 'মৌখিক', weight: 20 },
-    { id: 'SE-016', name: 'Written', nameBn: 'লিখিত', weight: 15 },
+    { id: 'SE-013', name: 'CQ', nameBn: 'সিকিউ', fullMarks: 45, passMarks: 15 },
+    { id: 'SE-014', name: 'MCQ', nameBn: 'এমসিকিউ', fullMarks: 20, passMarks: 7 },
+    { id: 'SE-015', name: 'Oral', nameBn: 'মৌখিক', fullMarks: 20, passMarks: 7 },
+    { id: 'SE-016', name: 'Written', nameBn: 'লিখিত', fullMarks: 15, passMarks: 5 },
   ]},
 ]
 
@@ -781,6 +782,6 @@ export const useExamStore = create<ExamState>()(
         return state
       }),
     }),
-    { name: 'edutech-exams', version: 3 }
+    { name: 'edutech-exams', version: 4 }
   )
 )

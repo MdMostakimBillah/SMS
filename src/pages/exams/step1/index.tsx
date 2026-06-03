@@ -67,7 +67,7 @@ export default function Step1Planning() {
   const [distPassMarks, setDistPassMarks] = useState('')
   const [editDistConfig, setEditDistConfig] = useState<SubjectMarkConfig | null>(null)
   const [showSubExamForm, setShowSubExamForm] = useState(false)
-  const [subExamForm, setSubExamForm] = useState({ name: '', nameBn: '', weight: '' })
+  const [subExamForm, setSubExamForm] = useState({ name: '', nameBn: '', fullMarks: '', passMarks: '' })
   const [showCopyAllConfirm, setShowCopyAllConfirm] = useState(false)
   const [copyAllToClassId, setCopyAllToClassId] = useState('')
 
@@ -120,15 +120,21 @@ export default function Step1Planning() {
   }, [subjects, distConfigs, isBn])
 
   const QUICK_SUB_EXAMS = useMemo(() => [
-    { name: 'CQ', nameBn: 'সিকিউ', weight: 50 },
-    { name: 'MCQ', nameBn: 'এমসিকিউ', weight: 30 },
-    { name: 'Oral', nameBn: 'মৌখিক', weight: 20 },
+    { name: 'CQ', nameBn: 'সিকিউ', fullMarks: 0, passMarks: 0 },
+    { name: 'MCQ', nameBn: 'এমসিকিউ', fullMarks: 0, passMarks: 0 },
+    { name: 'Oral', nameBn: 'মৌখিক', fullMarks: 0, passMarks: 0 },
   ], [])
 
   const handleQuickSetupSubExams = (config: SubjectMarkConfig) => {
     QUICK_SUB_EXAMS.forEach(se => {
-      addSubExamToSubject(config.id, { name: se.name, nameBn: se.nameBn, weight: se.weight })
+      addSubExamToSubject(config.id, { name: se.name, nameBn: se.nameBn, fullMarks: 0, passMarks: 0 })
     })
+  }
+
+  const calcSubExamTotals = (subExams: { fullMarks: number; passMarks: number }[]) => {
+    const totalFull = subExams.reduce((sum, se) => sum + se.fullMarks, 0)
+    const totalPass = subExams.reduce((sum, se) => sum + se.passMarks, 0)
+    return { totalFull, totalPass }
   }
 
   const examClassStats = useMemo(() => {
@@ -189,9 +195,9 @@ export default function Step1Planning() {
   }
 
   const handleAddSubExam = () => {
-    if (!editDistConfig || !subExamForm.name || !subExamForm.weight) return
-    addSubExamToSubject(editDistConfig.id, { name: subExamForm.name, nameBn: subExamForm.nameBn || subExamForm.name, weight: Number(subExamForm.weight) || 0 })
-    setSubExamForm({ name: '', nameBn: '', weight: '' })
+    if (!editDistConfig || !subExamForm.name || !subExamForm.fullMarks) return
+    addSubExamToSubject(editDistConfig.id, { name: subExamForm.name, nameBn: subExamForm.nameBn || subExamForm.name, fullMarks: Number(subExamForm.fullMarks) || 0, passMarks: Number(subExamForm.passMarks) || 0 })
+    setSubExamForm({ name: '', nameBn: '', fullMarks: '', passMarks: '' })
     setShowSubExamForm(false)
   }
 
@@ -458,7 +464,7 @@ export default function Step1Planning() {
                                 {config && config.subExams.length > 0 ? (
                                   config.subExams.map(se => (
                                     <span key={se.id} className="inline-flex items-center gap-0.5 text-[8px] px-1.5 py-0.5 rounded-md bg-[var(--brand-light)] text-[var(--brand)] font-medium">
-                                      {isBn ? se.nameBn : se.name}: {config.fullMarks * se.weight / 100}
+                                      {isBn ? se.nameBn : se.name}: {se.fullMarks}/{se.passMarks}
                                       <button onClick={() => removeSubExam(config.id, se.id)} className="ml-0.5 text-[var(--brand)] hover:text-[var(--red)] cursor-pointer">×</button>
                                     </span>
                                   ))
@@ -525,11 +531,22 @@ export default function Step1Planning() {
                                       <Zap size={9} />{isBn ? 'দ্রুত সেটআপ (CQ+MCQ+Oral)' : 'Quick Setup (CQ+MCQ+Oral)'}
                                     </button>
                                   )}
-                                  {config.subExams.length > 0 && (
-                                    <span className="text-[9px] text-[var(--text-muted)]">
-                                      {config.subExams.reduce((sum, se) => sum + se.weight, 0)}% / 100%
-                                    </span>
-                                  )}
+                                  {config.subExams.length > 0 && (() => {
+                                    const { totalFull, totalPass } = calcSubExamTotals(config.subExams)
+                                    const isOver = totalFull > 100
+                                    return (
+                                      <div className="flex items-center gap-2">
+                                        <span className={`text-[9px] font-semibold ${isOver ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
+                                          {isBn ? 'মোট' : 'Total'}: {totalFull} {isBn ? 'ফুল' : 'Full'} / {totalPass} {isBn ? 'পাস' : 'Pass'}
+                                        </span>
+                                        {isOver && (
+                                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--red-light)] text-[var(--red)] font-bold animate-pulse">
+                                            ⚠ {isBn ? '১০০ এর বেশি!' : 'Over 100!'}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )
+                                  })()}
                                 </div>
                               </div>
                             )}
@@ -553,7 +570,7 @@ export default function Step1Planning() {
                             <button onClick={() => setShowSubExamForm(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)]"><X size={14} /></button>
                           </div>
                           <div className="text-[11px] text-[var(--text-muted)] mb-3">
-                            {(() => { const sub = subjects.find(s => s.id === editDistConfig.subjectId); return sub ? `${isBn ? sub.nameBn : sub.name} — ${editDistConfig.fullMarks} ${isBn ? 'মার্কস' : 'marks'}` : '' })()}
+                            {(() => { const sub = subjects.find(s => s.id === editDistConfig.subjectId); return sub ? `${isBn ? sub.nameBn : sub.name}` : '' })()}
                           </div>
                           {/* Quick add buttons */}
                           <div className="flex gap-1.5 mb-3">
@@ -561,9 +578,9 @@ export default function Step1Planning() {
                               const alreadyAdded = editDistConfig.subExams.some(e => e.name === se.name)
                               return (
                                 <button key={se.name} disabled={alreadyAdded}
-                                  onClick={() => { addSubExamToSubject(editDistConfig.id, { name: se.name, nameBn: se.nameBn, weight: se.weight }) }}
+                                  onClick={() => { addSubExamToSubject(editDistConfig.id, { name: se.name, nameBn: se.nameBn, fullMarks: 0, passMarks: 0 }) }}
                                   className={`flex-1 py-2 rounded-lg text-[10px] font-semibold border cursor-pointer ${alreadyAdded ? 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] opacity-50 cursor-not-allowed' : 'bg-[var(--brand-light)] text-[var(--brand)] border-[var(--brand)] hover:shadow-sm'}`}>
-                                  {se.name}<br /><span className="font-normal text-[9px]">{se.weight}%</span>
+                                  {se.name}
                                 </button>
                               )
                             })}
@@ -573,16 +590,30 @@ export default function Step1Planning() {
                             <div className="space-y-2">
                               <input value={subExamForm.name} onChange={e => setSubExamForm(p => ({ ...p, name: e.target.value }))} placeholder={isBn ? 'নাম (EN)' : 'Name (EN)'} className={`${inputCls} w-full`} />
                               <input value={subExamForm.nameBn} onChange={e => setSubExamForm(p => ({ ...p, nameBn: e.target.value }))} placeholder={isBn ? 'নাম (BN)' : 'Name (BN)'} className={`${inputCls} w-full`} />
-                              <div className="flex gap-2">
-                                <input type="number" value={subExamForm.weight} onChange={e => setSubExamForm(p => ({ ...p, weight: e.target.value }))} placeholder={isBn ? 'ওজন (%)' : 'Weight (%)'} className={`${inputCls} flex-1`} />
-                                <button onClick={handleAddSubExam} disabled={!subExamForm.name || !subExamForm.weight}
-                                  className={`${btnPrimary} px-4 disabled:opacity-50`}>{isBn ? 'যোগ' : 'Add'}</button>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="text-[9px] text-[var(--text-muted)] block mb-0.5">{isBn ? 'ফুল মার্কস' : 'Full Marks'}</label>
+                                  <input type="number" min="0" value={subExamForm.fullMarks} onChange={e => setSubExamForm(p => ({ ...p, fullMarks: e.target.value }))} placeholder="e.g. 70" className={`${inputCls} w-full`} />
+                                </div>
+                                <div>
+                                  <label className="text-[9px] text-[var(--text-muted)] block mb-0.5">{isBn ? 'পাস মার্কস' : 'Pass Marks'}</label>
+                                  <input type="number" min="0" value={subExamForm.passMarks} onChange={e => setSubExamForm(p => ({ ...p, passMarks: e.target.value }))} placeholder="e.g. 23" className={`${inputCls} w-full`} />
+                                </div>
                               </div>
+                              <button onClick={handleAddSubExam} disabled={!subExamForm.name || !subExamForm.fullMarks}
+                                className={`${btnPrimary} w-full justify-center disabled:opacity-50`}>{isBn ? 'যোগ করুন' : 'Add'}</button>
                             </div>
                           </div>
-                          <div className="mt-3 text-[10px] text-[var(--text-muted)] text-right">
-                            {editDistConfig.subExams.reduce((sum, se) => sum + se.weight, 0)}% / 100%
-                          </div>
+                          {editDistConfig.subExams.length > 0 && (() => {
+                            const { totalFull, totalPass } = calcSubExamTotals(editDistConfig.subExams)
+                            const isOver = totalFull > 100
+                            return (
+                              <div className={`mt-3 p-2 rounded-lg text-[11px] text-center font-semibold ${isOver ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--green-light)] text-[var(--green)]'}`}>
+                                {isBn ? 'মোট' : 'Total'}: {totalFull} {isBn ? 'ফুল' : 'Full'} / {totalPass} {isBn ? 'পাস' : 'Pass'}
+                                {isOver && <span className="ml-2">⚠ {isBn ? '১০০ এর বেশি!' : 'Over 100!'}</span>}
+                              </div>
+                            )
+                          })()}
                         </div>
                       </div>
                     )}
