@@ -78,12 +78,21 @@ export default function Step1Planning() {
   const [showGradeForm, setShowGradeForm] = useState(false)
 
   // Checklist
-  const checklist = [
-    { done: examConfigs.length > 0, label: isBn ? 'পরীক্ষা তৈরি হয়েছে' : 'Exam created' },
-    { done: subjectMarkConfigs.length > 0, label: isBn ? 'বিষয় কনফিগার হয়েছে' : 'Subjects configured' },
-    { done: subjectMarkConfigs.some(s => s.subExams.length > 0), label: isBn ? 'সাব-এক্সাম সেট আপ' : 'Sub-exams set up' },
-    { done: gradeScales.length > 0, label: isBn ? 'গ্রেড স্কেল সেট আপ' : 'Grade scale configured' },
-  ]
+  const checklist = useMemo(() => {
+    const totalSubjects = subjects.length || 1
+    const allConfigs = subjectMarkConfigs
+    const uniqueClassIds = new Set(allConfigs.map(c => c.classId))
+    const classesWithConfigs = uniqueClassIds.size || 1
+    const totalConfigured = allConfigs.length
+    const totalExpected = classesWithConfigs * totalSubjects
+    const subjectPct = totalExpected > 0 ? Math.round((totalConfigured / totalExpected) * 100) : 0
+    return [
+      { done: examConfigs.length > 0, label: isBn ? 'পরীক্ষা তৈরি হয়েছে' : 'Exam created' },
+      { done: subjectMarkConfigs.length > 0, label: isBn ? `বিষয় কনফিগ (${subjectPct}%)` : `Subjects configured (${subjectPct}%)`, pct: subjectPct },
+      { done: subjectMarkConfigs.some(s => s.subExams.length > 0), label: isBn ? 'সাব-এক্সাম সেট আপ' : 'Sub-exams set up' },
+      { done: gradeScales.length > 0, label: isBn ? 'গ্রেড স্কেল সেট আপ' : 'Grade scale configured' },
+    ]
+  }, [examConfigs, subjectMarkConfigs, gradeScales, subjects, isBn])
   const completionPct = Math.round((checklist.filter(c => c.done).length / checklist.length) * 100)
 
   const activeExam = useMemo(() => examConfigs.find(e => e.isActive) || null, [examConfigs])
@@ -94,6 +103,28 @@ export default function Step1Planning() {
     if (!distClassId) return subjectMarkConfigs.filter(s => s.examId === activeExam.id)
     return subjectMarkConfigs.filter(s => s.examId === activeExam.id && s.classId === distClassId)
   }, [subjectMarkConfigs, activeExam, distClassId])
+
+  const examClassStats = useMemo(() => {
+    const totalSubjects = subjects.length || 1
+    return examConfigs.map(exam => {
+      const configs = subjectMarkConfigs.filter(s => s.examId === exam.id)
+      const classMap = new Map<string, Set<string>>()
+      configs.forEach(c => {
+        if (!classMap.has(c.classId)) classMap.set(c.classId, new Set())
+        classMap.get(c.classId)!.add(c.subjectId)
+      })
+      const classStats = Array.from(classMap.entries()).map(([classId, subIds]) => ({
+        classId,
+        configured: subIds.size,
+        total: totalSubjects,
+        pct: Math.round((subIds.size / totalSubjects) * 100),
+      })).sort((a, b) => a.classId.localeCompare(b.classId, undefined, { numeric: true }))
+      const overallPct = classStats.length > 0
+        ? Math.round(classStats.reduce((sum, c) => sum + c.pct, 0) / classStats.length)
+        : 0
+      return { examId: exam.id, classStats, overallPct, totalConfigured: configs.length }
+    })
+  }, [examConfigs, subjectMarkConfigs, subjects])
 
   const handleSaveExam = () => {
     if (!examForm.name || !examForm.startDate || !examForm.endDate) return
@@ -217,7 +248,11 @@ export default function Step1Planning() {
             <div className="flex justify-between items-center">
               <span className="text-[12px] text-[var(--text-secondary)]">{isBn ? `মোট ${examConfigs.length}টি পরীক্ষা` : `${examConfigs.length} exams`}</span>
             </div>
-            {examConfigs.map(exam => (
+            {examConfigs.map(exam => {
+              const stats = examClassStats.find(s => s.examId === exam.id)
+              const classStats = stats?.classStats || []
+              const overallPct = stats?.overallPct || 0
+              return (
               <div key={exam.id} className={`${sectionCls} transition-all hover:shadow-sm`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -235,9 +270,28 @@ export default function Step1Planning() {
                       <span>{isBn ? 'সেশন' : 'Session'}: {exam.session}</span>
                       <span>{exam.startDate} – {exam.endDate}</span>
                     </div>
-                    <div className="text-[10px] text-[var(--text-muted)] mt-1">
-                      {subjectMarkConfigs.filter(s => s.examId === exam.id).length} {isBn ? 'টি বিষয় কনফিগারড' : 'subjects configured'}
+                    {/* Subject config summary */}
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className={`flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md ${overallPct === 100 ? 'bg-[var(--green-light)] text-[var(--green)]' : overallPct > 0 ? 'bg-[var(--amber-light)] text-[var(--amber)]' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
+                        {overallPct === 100 ? <CheckCircle size={11} /> : <Settings size={11} />}
+                        {isBn ? 'বিষয় কনফিগ' : 'Subjects Config'}
+                        <span className="font-bold">{overallPct}%</span>
+                      </div>
                     </div>
+                    {/* Per-class breakdown */}
+                    {classStats.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {classStats.map(cs => (
+                          <div key={cs.classId} className={`flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-md border ${cs.pct === 100 ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]' : cs.pct > 0 ? 'border-[var(--amber)] bg-[var(--amber-light)] text-[var(--amber)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
+                            {cs.pct === 100 ? <CheckCircle size={9} /> : <Settings size={9} />}
+                            {cs.classId}: {cs.configured}/{cs.total} ({cs.pct}%)
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {classStats.length === 0 && (
+                      <div className="mt-2 text-[10px] text-[var(--text-muted)] italic">{isBn ? 'কোনো বিষয় কনফিগার হয়নি' : 'No subjects configured yet'}</div>
+                    )}
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button onClick={() => toggleExamActive(exam.id)}
@@ -255,7 +309,8 @@ export default function Step1Planning() {
                   </div>
                 </div>
               </div>
-            ))}
+              )
+            })}
             {examConfigs.length === 0 && (
               <div className={`${sectionCls} text-center py-10`}>
                 <ClipboardList size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
