@@ -63,13 +63,11 @@ export default function Step1Planning() {
   const [distClassId, setDistClassId] = useState('')
   const [distSectionIds, setDistSectionIds] = useState<string[]>([])
   const [distSubjectId, setDistSubjectId] = useState('')
-  const [distFullMarks, setDistFullMarks] = useState('100')
-  const [distPassMarks, setDistPassMarks] = useState('33')
+  const [distFullMarks, setDistFullMarks] = useState('')
+  const [distPassMarks, setDistPassMarks] = useState('')
   const [editDistConfig, setEditDistConfig] = useState<SubjectMarkConfig | null>(null)
   const [showSubExamForm, setShowSubExamForm] = useState(false)
   const [subExamForm, setSubExamForm] = useState({ name: '', nameBn: '', weight: '' })
-  const [showCopyConfirm, setShowCopyConfirm] = useState(false)
-  const [copyFromClassId, setCopyFromClassId] = useState('')
   const [showCopyAllConfirm, setShowCopyAllConfirm] = useState(false)
   const [copyAllToClassId, setCopyAllToClassId] = useState('')
 
@@ -168,26 +166,19 @@ export default function Step1Planning() {
   }
 
   const handleSaveDist = () => {
-    if (!activeExam || !distClassId || !distSubjectId || !distFullMarks) return
+    if (!activeExam || !distClassId || !distSubjectId || !distFullMarks || !distPassMarks) return
     upsertSubjectMarkConfig({
       examId: activeExam.id,
       classId: distClassId,
       subjectId: distSubjectId,
-      fullMarks: Number(distFullMarks) || 100,
-      passMarks: Number(distPassMarks) || 33,
+      fullMarks: Number(distFullMarks),
+      passMarks: Number(distPassMarks),
       subExams: editDistConfig?.subExams || [],
     })
     setDistSubjectId('')
-    setDistFullMarks('100')
-    setDistPassMarks('33')
+    setDistFullMarks('')
+    setDistPassMarks('')
     setEditDistConfig(null)
-  }
-
-  const handleCopyConfig = () => {
-    if (!activeExam || !copyFromClassId || !distClassId || copyFromClassId === distClassId) return
-    copyClassMarkConfig(activeExam.id, copyFromClassId, distClassId)
-    setShowCopyConfirm(false)
-    setCopyFromClassId('')
   }
 
   const handleCopyAll = () => {
@@ -393,7 +384,7 @@ export default function Step1Planning() {
                       const secCount = clsObj?.sections.length || 0
                       const cfgCount = subjectMarkConfigs.filter(s => s.examId === activeExam?.id && s.classId === c).length
                       return (
-                        <button key={c} onClick={() => { setDistClassId(c); setDistSectionIds([]); setDistSubjectId(''); setEditDistConfig(null); setCopyFromClassId('') }}
+                        <button key={c} onClick={() => { setDistClassId(c); setDistSectionIds([]); setDistSubjectId(''); setEditDistConfig(null) }}
                           className={`relative p-3 rounded-xl border text-left cursor-pointer transition-all ${isActive ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-md' : 'bg-[var(--bg-secondary)] border-[var(--border)] hover:border-[var(--brand)] hover:shadow-sm text-[var(--text-primary)]'}`}>
                           <div className={`text-[12px] font-bold ${isActive ? 'text-white' : 'text-[var(--text-primary)]'}`}>{c}</div>
                           <div className={`text-[9px] mt-0.5 ${isActive ? 'text-white/70' : 'text-[var(--text-muted)]'}`}>
@@ -431,28 +422,6 @@ export default function Step1Planning() {
 
                 {distClassId && (
                   <>
-                    {/* Copy From Another Class */}
-                    <div className={sectionCls}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Copy size={14} className="text-[var(--teal)]" />
-                        <span className="text-[12px] font-semibold text-[var(--text-primary)]">{isBn ? 'অন্য শ্রেণি থেকে কপি' : 'Copy from another class'}</span>
-                      </div>
-                      <div className="flex items-end gap-2">
-                        <select value={copyFromClassId} onChange={e => setCopyFromClassId(e.target.value)} className={`${inputCls} flex-1`}>
-                          <option value="">{isBn ? 'শ্রেণি নির্বাচন...' : 'Select class...'}</option>
-                          {classOptions.filter(c => c !== distClassId).map(c => {
-                            const hasConfig = subjectMarkConfigs.some(s => s.examId === activeExam.id && s.classId === c)
-                            return <option key={c} value={c}>{c}{hasConfig ? ` ✓` : ''}</option>
-                          })}
-                        </select>
-                        <button onClick={() => { if (copyFromClassId && distClassId && copyFromClassId !== distClassId) setShowCopyConfirm(true) }}
-                          disabled={!copyFromClassId || copyFromClassId === distClassId}
-                          className={`py-2 px-4 rounded-lg text-[11px] font-medium cursor-pointer border ${copyFromClassId && copyFromClassId !== distClassId ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] opacity-50 cursor-not-allowed'}`}>
-                          {isBn ? 'কপি করুন' : 'Copy'}
-                        </button>
-                      </div>
-                    </div>
-
                     {/* All Subjects Table */}
                     <div className={sectionCls}>
                       <div className="flex items-center justify-between mb-3">
@@ -504,6 +473,7 @@ export default function Step1Planning() {
                                   <span className="text-[12px] font-semibold text-[var(--text-primary)]">{config.fullMarks}</span>
                                 ) : (
                                   <input type="number" min="0" value={distFullMarks} onChange={e => setDistFullMarks(e.target.value)}
+                                    placeholder={isBn ? 'ফুল' : 'Full'}
                                     className="w-full h-7 text-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none" />
                                 )}
                               </div>
@@ -512,6 +482,7 @@ export default function Step1Planning() {
                                   <span className="text-[12px] font-semibold text-[var(--text-primary)]">{config.passMarks}</span>
                                 ) : (
                                   <input type="number" min="0" value={distPassMarks} onChange={e => setDistPassMarks(e.target.value)}
+                                    placeholder={isBn ? 'পাস' : 'Pass'}
                                     className="w-full h-7 text-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none" />
                                 )}
                               </div>
@@ -531,7 +502,7 @@ export default function Step1Planning() {
                                   </>
                                 ) : (
                                   <button onClick={() => { setDistSubjectId(subject.id); handleSaveDist() }}
-                                    disabled={!distFullMarks}
+                                    disabled={!distFullMarks || !distPassMarks}
                                     className="w-6 h-6 rounded bg-[var(--brand)] flex items-center justify-center cursor-pointer text-white border-none disabled:opacity-40"
                                     title={isBn ? 'সেভ করুন' : 'Save'}>
                                     <Save size={10} />
@@ -757,24 +728,6 @@ export default function Step1Planning() {
             <div className="flex gap-2 justify-end mt-4">
               <button onClick={() => { setShowExamForm(false); setEditExam(null) }} className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer">{isBn ? 'বাতিল' : 'Cancel'}</button>
               <button onClick={handleSaveExam} className={`${btnPrimary} text-[12px]`}>{isBn ? 'সংরক্ষণ' : 'Save'}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ Copy Config Confirmation Modal ═══ */}
-      {showCopyConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
-            <h3 className="text-[14px] font-semibold text-[var(--text-primary)] mb-2">{isBn ? 'মার্ক কনফিগ কপি' : 'Copy Mark Config'}</h3>
-            <p className="text-[12px] text-[var(--text-muted)] mb-4">
-              {isBn
-                ? `${copyFromClassId} থেকে ${distClassId} এ সব মার্ক কনফিগ কপি করা হবে। বিদ্যমান কনফিগ মুছে ফেলা হবে।`
-                : `All mark configs from ${copyFromClassId} will be copied to ${distClassId}. Existing configs will be replaced.`}
-            </p>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowCopyConfirm(false)} className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[12px] text-[var(--text-secondary)] cursor-pointer">{isBn ? 'বাতিল' : 'Cancel'}</button>
-              <button onClick={handleCopyConfig} className="px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[12px] font-medium cursor-pointer">{isBn ? 'কপি করুন' : 'Copy'}</button>
             </div>
           </div>
         </div>
