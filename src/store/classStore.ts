@@ -49,6 +49,7 @@ export interface ClassInfo {
   name: string
   nameBn: string
   sections: ClassSection[]
+  subjectIds: string[]
   startTime: string
   endTime: string
   createdAt: string
@@ -111,41 +112,41 @@ const defaultInstitution: InstitutionSettings = {
 }
 
 const defaultClasses: ClassInfo[] = [
-  { id: 'CLS-01', name: 'Class 1', nameBn: 'শ্রেণি ১', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', sections: [
+  { id: 'CLS-01', name: 'Class 1', nameBn: 'শ্রেণি ১', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004'], sections: [
     { id: 'SEC-01-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-005', subjectIds: [] },
     { id: 'SEC-01-B', name: 'B', seatQuantity: 40, classTeacherId: 'TCH-2026-009', subjectIds: [] },
   ]},
-  { id: 'CLS-02', name: 'Class 2', nameBn: 'শ্রেণি ২', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', sections: [
+  { id: 'CLS-02', name: 'Class 2', nameBn: 'শ্রেণি ২', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004'], sections: [
     { id: 'SEC-02-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-010', subjectIds: [] },
     { id: 'SEC-02-B', name: 'B', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
   ]},
-  { id: 'CLS-03', name: 'Class 3', nameBn: 'শ্রেণি ৩', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', sections: [
+  { id: 'CLS-03', name: 'Class 3', nameBn: 'শ্রেণি ৩', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005'], sections: [
     { id: 'SEC-03-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-003', subjectIds: [] },
   ]},
-  { id: 'CLS-04', name: 'Class 4', nameBn: 'শ্রেণি ৪', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', sections: [
+  { id: 'CLS-04', name: 'Class 4', nameBn: 'শ্রেণি ৪', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005'], sections: [
     { id: 'SEC-04-A', name: 'A', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
     { id: 'SEC-04-B', name: 'B', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
   ]},
-  { id: 'CLS-05', name: 'Class 5', nameBn: 'শ্রেণি ৫', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', sections: [
+  { id: 'CLS-05', name: 'Class 5', nameBn: 'শ্রেণি ৫', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005'], sections: [
     { id: 'SEC-05-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-016', subjectIds: [] },
   ]},
-  { id: 'CLS-06', name: 'Class 6', nameBn: 'শ্রেণি ৬', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', sections: [
+  { id: 'CLS-06', name: 'Class 6', nameBn: 'শ্রেণি ৬', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007'], sections: [
     { id: 'SEC-06-A', name: 'A', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
     { id: 'SEC-06-B', name: 'B', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
   ]},
-  { id: 'CLS-07', name: 'Class 7', nameBn: 'শ্রেণি ৭', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', sections: [
+  { id: 'CLS-07', name: 'Class 7', nameBn: 'শ্রেণি ৭', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007'], sections: [
     { id: 'SEC-07-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-017', subjectIds: [] },
   ]},
-  { id: 'CLS-08', name: 'Class 8', nameBn: 'শ্রেণি ৮', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', sections: [
+  { id: 'CLS-08', name: 'Class 8', nameBn: 'শ্রেণি ৮', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007', 'SUB-008'], sections: [
     { id: 'SEC-08-A', name: 'A', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
     { id: 'SEC-08-B', name: 'B', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
   ]},
-  { id: 'CLS-09', name: 'Class 9', nameBn: 'শ্রেণি ৯', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', sections: [
+  { id: 'CLS-09', name: 'Class 9', nameBn: 'শ্রেণি ৯', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007', 'SUB-008', 'SUB-009', 'SUB-010'], sections: [
     { id: 'SEC-09-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-001', subjectIds: [] },
     { id: 'SEC-09-B', name: 'B', seatQuantity: 40, classTeacherId: 'TCH-2026-004', subjectIds: [] },
     { id: 'SEC-09-C', name: 'C', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
   ]},
-      { id: 'CLS-10', name: 'Class 10', nameBn: 'শ্রেণি ১০', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', sections: [
+      { id: 'CLS-10', name: 'Class 10', nameBn: 'শ্রেণি ১০', startTime: '07:30', endTime: '14:30', createdAt: '2026-01-01', updatedAt: '2026-01-01', subjectIds: ['SUB-001', 'SUB-002', 'SUB-003', 'SUB-004', 'SUB-005', 'SUB-006', 'SUB-007', 'SUB-008', 'SUB-009', 'SUB-010', 'SUB-011', 'SUB-012'], sections: [
     { id: 'SEC-10-A', name: 'A', seatQuantity: 40, classTeacherId: 'TCH-2026-014', subjectIds: [] },
     { id: 'SEC-10-B', name: 'B', seatQuantity: 40, classTeacherId: 'TCH-2026-015', subjectIds: [] },
   ]},
@@ -303,7 +304,7 @@ export const useClassStore = create<ClassState>()(
     }),
     {
       name: 'edutech-classes',
-      version: 2,
+      version: 3,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           const inst = persistedState?.institution
@@ -325,6 +326,10 @@ export const useClassStore = create<ClassState>()(
             persistedState.sessionClasses = { '2025-26': persistedState.classes || [] }
             persistedState.sessionRoutines = { '2025-26': persistedState.routines || [] }
           }
+        }
+        if (version < 3) {
+          const allClasses = persistedState?.sessionClasses?.['2025-26'] || persistedState?.classes || []
+          allClasses.forEach((c: any) => { if (!c.subjectIds) c.subjectIds = [] })
         }
         return persistedState
       },

@@ -69,7 +69,7 @@ export default function ClassesPage() {
     addClass({
       id, name: newClassName.trim(), nameBn: newClassNameBn.trim() || newClassName.trim(),
       startTime: institution.startTime, endTime: institution.endTime,
-      sections: [], createdAt: now, updatedAt: now,
+      sections: [], subjectIds: [], createdAt: now, updatedAt: now,
     })
     setNewClassName(''); setNewClassNameBn(''); setShowAddClass(false)
   }

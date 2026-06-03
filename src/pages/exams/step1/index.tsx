@@ -102,6 +102,11 @@ export default function Step1Planning() {
   const selectedClassObj = useMemo(() => classes.find(c => c.name === distClassId) || null, [classes, distClassId])
   const selectedClassSections = useMemo(() => selectedClassObj?.sections || [], [selectedClassObj])
 
+  const classSubjects = useMemo(() => {
+    if (!selectedClassObj || !selectedClassObj.subjectIds.length) return subjects
+    return subjects.filter(s => selectedClassObj.subjectIds.includes(s.id))
+  }, [selectedClassObj, subjects])
+
   const toggleSection = (secName: string) => {
     setDistSectionIds(prev => prev.includes(secName) ? prev.filter(s => s !== secName) : [...prev, secName])
   }
@@ -113,11 +118,11 @@ export default function Step1Planning() {
   }, [subjectMarkConfigs, activeExam, distClassId])
 
   const allSubjectsForClass = useMemo(() => {
-    return subjects.map(sub => {
+    return classSubjects.map(sub => {
       const existing = distConfigs.find(c => c.subjectId === sub.id)
       return { subject: sub, config: existing || null }
     }).sort((a, b) => (isBn ? a.subject.nameBn : a.subject.name).localeCompare(isBn ? b.subject.nameBn : b.subject.name))
-  }, [subjects, distConfigs, isBn])
+  }, [classSubjects, distConfigs, isBn])
 
   const QUICK_SUB_EXAMS = useMemo(() => [
     { name: 'CQ', nameBn: 'সিকিউ', fullMarks: 0, passMarks: 0 },
@@ -434,7 +439,7 @@ export default function Step1Planning() {
                         <div className={sectionTitleCls}>
                           <BookOpen size={15} className="text-[var(--teal)]" />{isBn ? 'সকল বিষয়' : 'All Subjects'}
                           <span className="ml-2 text-[10px] font-normal text-[var(--text-muted)]">
-                            {distConfigs.length}/{subjects.length} {isBn ? 'কনফিগার্ড' : 'configured'}
+                            {distConfigs.length}/{classSubjects.length} {isBn ? 'কনফিগার্ড' : 'configured'}
                           </span>
                         </div>
                       </div>
@@ -554,9 +559,9 @@ export default function Step1Planning() {
                         ))}
                       </div>
 
-                      {subjects.length === 0 && (
+                      {classSubjects.length === 0 && (
                         <div className="text-center py-8 text-[var(--text-muted)] text-[12px]">
-                          {isBn ? 'কোনো বিষয় পাওয়া যায়নি' : 'No subjects found'}
+                          {isBn ? 'এই শ্রেণিতে কোনো বিষয় নেই' : 'No subjects assigned to this class'}
                         </div>
                       )}
                     </div>
