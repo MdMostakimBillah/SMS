@@ -27,6 +27,7 @@ import Step2Schedule from '@/pages/exams/step2'
 import Step3Evaluation from '@/pages/exams/step3'
 import Step4Results from '@/pages/exams/step4'
 import Step5Marksheet from '@/pages/exams/step5'
+import SyllabusPage from '@/pages/syllabus'
 
 function P({ name }: { name: string }) {
   return <div style={{ color:'var(--text-primary)', fontSize:'20px', fontWeight:500, padding:'20px' }}>{name}</div>
@@ -63,7 +64,7 @@ export default function App() {
         <Route path="/exams/evaluation"      element={<Step3Evaluation />} />
         <Route path="/exams/results"         element={<Step4Results />} />
         <Route path="/exams/marksheet"       element={<Step5Marksheet />} />
-        <Route path="/syllabus"              element={<P name="Syllabus" />} />
+        <Route path="/syllabus"              element={<SyllabusPage />} />
         <Route path="/assignments"           element={<P name="Assignments" />} />
         <Route path="/online"                element={<P name="Online Classes" />} />
         <Route path="/finance"               element={<P name="Finance" />} />

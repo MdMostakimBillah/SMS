@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Plus, Trash2, Edit2, CheckCircle, Settings,
-  BookOpen, Save, X, ClipboardList, Award, ScanLine, AlertTriangle,
+  BookOpen, X, ClipboardList, Award, ScanLine, AlertTriangle,
   Copy, Zap,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
@@ -45,8 +45,7 @@ export default function Step1Planning() {
   const upsertSubjectMarkConfig = useExamStore(s => s.upsertSubjectMarkConfig)
   const deleteSubjectMarkConfig = useExamStore(s => s.deleteSubjectMarkConfig)
   const copyClassMarkConfig = useExamStore(s => s.copyClassMarkConfig)
-  const addSubExamToSubject = useExamStore(s => s.addSubExamToSubject)
-  const removeSubExam = useExamStore(s => s.removeSubExam)
+  const copySubjectConfig = useExamStore(s => s.copySubjectConfig)
   const upsertOMRConfig = useExamStore(s => s.upsertOMRConfig)
   const deleteOMRConfig = useExamStore(s => s.deleteOMRConfig)
   const addGradeScale = useExamStore(s => s.addGradeScale)
@@ -62,14 +61,14 @@ export default function Step1Planning() {
   // Subject Config
   const [distClassId, setDistClassId] = useState('')
   const [distSectionIds, setDistSectionIds] = useState<string[]>([])
-  const [distSubjectId, setDistSubjectId] = useState('')
-  const [distFullMarks, setDistFullMarks] = useState('')
-  const [distPassMarks, setDistPassMarks] = useState('')
   const [editDistConfig, setEditDistConfig] = useState<SubjectMarkConfig | null>(null)
   const [showSubExamForm, setShowSubExamForm] = useState(false)
   const [subExamForm, setSubExamForm] = useState({ name: '', nameBn: '', fullMarks: '', passMarks: '' })
   const [showCopyAllConfirm, setShowCopyAllConfirm] = useState(false)
   const [copyAllToClassId, setCopyAllToClassId] = useState('')
+  const [showCopySubjectModal, setShowCopySubjectModal] = useState(false)
+  const [copySourceSubjectId, setCopySourceSubjectId] = useState('')
+  const [copyTargetSubjectIds, setCopyTargetSubjectIds] = useState<string[]>([])
 
   // OMR Form
   const [showOMRForm, setShowOMRForm] = useState(false)
@@ -103,9 +102,27 @@ export default function Step1Planning() {
   const selectedClassSections = useMemo(() => selectedClassObj?.sections || [], [selectedClassObj])
 
   const classSubjects = useMemo(() => {
-    if (!selectedClassObj || !selectedClassObj.subjectIds.length) return subjects
-    return subjects.filter(s => selectedClassObj.subjectIds.includes(s.id))
+    if (!selectedClassObj) return []
+    const sectionSubjectIds = new Set<string>()
+    selectedClassObj.sections.forEach(sec => {
+      (sec.subjectIds || []).forEach(id => sectionSubjectIds.add(id))
+    })
+    const sourceIds = sectionSubjectIds.size > 0 ? sectionSubjectIds : new Set(selectedClassObj.subjectIds || [])
+    if (sourceIds.size === 0) return []
+    return subjects.filter(s => sourceIds.has(s.id))
   }, [selectedClassObj, subjects])
+
+  const filteredSubjects = useMemo(() => {
+    if (distSectionIds.length === 0) return classSubjects
+    const sectionSubjectIds = new Set<string>()
+    selectedClassObj?.sections.forEach(sec => {
+      if (distSectionIds.includes(sec.name)) {
+        (sec.subjectIds || []).forEach(id => sectionSubjectIds.add(id))
+      }
+    })
+    if (sectionSubjectIds.size === 0) return classSubjects
+    return subjects.filter(s => sectionSubjectIds.has(s.id))
+  }, [classSubjects, distSectionIds, selectedClassObj, subjects])
 
   const toggleSection = (secName: string) => {
     setDistSectionIds(prev => prev.includes(secName) ? prev.filter(s => s !== secName) : [...prev, secName])
@@ -118,79 +135,27 @@ export default function Step1Planning() {
   }, [subjectMarkConfigs, activeExam, distClassId])
 
   const allSubjectsForClass = useMemo(() => {
-    return classSubjects.map(sub => {
+    return filteredSubjects.map(sub => {
       const existing = distConfigs.find(c => c.subjectId === sub.id)
       return { subject: sub, config: existing || null }
     }).sort((a, b) => (isBn ? a.subject.nameBn : a.subject.name).localeCompare(isBn ? b.subject.nameBn : b.subject.name))
-  }, [classSubjects, distConfigs, isBn])
-
-  const QUICK_SUB_EXAMS = useMemo(() => [
-    { name: 'CQ', nameBn: 'সিকিউ', fullMarks: 0, passMarks: 0 },
-    { name: 'MCQ', nameBn: 'এমসিকিউ', fullMarks: 0, passMarks: 0 },
-    { name: 'Oral', nameBn: 'মৌখিক', fullMarks: 0, passMarks: 0 },
-  ], [])
-
-  const handleQuickSetupSubExams = (config: SubjectMarkConfig) => {
-    QUICK_SUB_EXAMS.forEach(se => {
-      addSubExamToSubject(config.id, { name: se.name, nameBn: se.nameBn, fullMarks: 0, passMarks: 0 })
-    })
-  }
-
-  const calcSubExamTotals = (subExams: { fullMarks: number; passMarks: number }[]) => {
-    const totalFull = subExams.reduce((sum, se) => sum + se.fullMarks, 0)
-    const totalPass = subExams.reduce((sum, se) => sum + se.passMarks, 0)
-    return { totalFull, totalPass }
-  }
+  }, [filteredSubjects, distConfigs, isBn])
 
   const examClassStats = useMemo(() => {
-    const totalSubjects = subjects.length || 1
     return examConfigs.map(exam => {
-      const configs = subjectMarkConfigs.filter(s => s.examId === exam.id)
-      const classMap = new Map<string, Set<string>>()
-      configs.forEach(c => {
-        if (!classMap.has(c.classId)) classMap.set(c.classId, new Set())
-        classMap.get(c.classId)!.add(c.subjectId)
+      const examConfigsForClass = subjectMarkConfigs.filter(c => c.examId === exam.id)
+      const classIds = [...new Set(examConfigsForClass.map(c => c.classId))]
+      const cStats = classIds.map(classId => {
+        const cls = classes.find(c => c.id === classId)
+        const configs = examConfigsForClass.filter(c => c.classId === classId)
+        const total = configs.length
+        const configured = configs.filter(c => c.fullMarks > 0).length
+        return { classId: cls?.name || classId, pct: total > 0 ? Math.round((configured / total) * 100) : 0, configured, total }
       })
-      const classStats = Array.from(classMap.entries()).map(([classId, subIds]) => ({
-        classId,
-        configured: subIds.size,
-        total: totalSubjects,
-        pct: Math.round((subIds.size / totalSubjects) * 100),
-      })).sort((a, b) => a.classId.localeCompare(b.classId, undefined, { numeric: true }))
-      const overallPct = classStats.length > 0
-        ? Math.round(classStats.reduce((sum, c) => sum + c.pct, 0) / classStats.length)
-        : 0
-      return { examId: exam.id, classStats, overallPct, totalConfigured: configs.length }
+      const overallPct = cStats.length > 0 ? Math.round(cStats.reduce((s, c) => s + c.pct, 0) / cStats.length) : 0
+      return { examId: exam.id, classStats: cStats, overallPct }
     })
-  }, [examConfigs, subjectMarkConfigs, subjects])
-
-  const handleSaveExam = () => {
-    if (!examForm.name || !examForm.startDate || !examForm.endDate) return
-    if (editExam) {
-      updateExamConfig(editExam.id, examForm)
-    } else {
-      addExamConfig({ ...examForm, isActive: false })
-    }
-    setShowExamForm(false)
-    setEditExam(null)
-    setExamForm({ name: '', nameBn: '', type: 'semester-1', session: '2025-26', startDate: '', endDate: '' })
-  }
-
-  const handleSaveDist = () => {
-    if (!activeExam || !distClassId || !distSubjectId || !distFullMarks || !distPassMarks) return
-    upsertSubjectMarkConfig({
-      examId: activeExam.id,
-      classId: distClassId,
-      subjectId: distSubjectId,
-      fullMarks: Number(distFullMarks),
-      passMarks: Number(distPassMarks),
-      subExams: editDistConfig?.subExams || [],
-    })
-    setDistSubjectId('')
-    setDistFullMarks('')
-    setDistPassMarks('')
-    setEditDistConfig(null)
-  }
+  }, [examConfigs, subjectMarkConfigs, classes])
 
   const handleCopyAll = () => {
     if (!activeExam || !copyAllToClassId || !distClassId || copyAllToClassId === distClassId) return
@@ -199,11 +164,76 @@ export default function Step1Planning() {
     setCopyAllToClassId('')
   }
 
+  const handleCopySubjectConfig = () => {
+    if (!activeExam || !distClassId || !copySourceSubjectId || copyTargetSubjectIds.length === 0) return
+    copySubjectConfig(activeExam.id, distClassId, copySourceSubjectId, copyTargetSubjectIds)
+    setShowCopySubjectModal(false)
+    setCopySourceSubjectId('')
+    setCopyTargetSubjectIds([])
+  }
+
+  const subjectsWithConfig = useMemo(() => {
+    if (!activeExam) return []
+    return filteredSubjects.filter(s => {
+      const cfg = distConfigs.find(c => c.subjectId === s.id)
+      return cfg && cfg.subExams.length > 0
+    })
+  }, [filteredSubjects, distConfigs, activeExam])
+
+  const subjectsWithoutConfig = useMemo(() => {
+    if (!activeExam || !copySourceSubjectId) return []
+    return filteredSubjects.filter(s => s.id !== copySourceSubjectId && !distConfigs.some(c => c.subjectId === s.id && c.subExams.length > 0))
+  }, [filteredSubjects, distConfigs, activeExam, copySourceSubjectId])
+
   const handleAddSubExam = () => {
     if (!editDistConfig || !subExamForm.name || !subExamForm.fullMarks) return
-    addSubExamToSubject(editDistConfig.id, { name: subExamForm.name, nameBn: subExamForm.nameBn || subExamForm.name, fullMarks: Number(subExamForm.fullMarks) || 0, passMarks: Number(subExamForm.passMarks) || 0 })
+    const fullMarks = Number(subExamForm.fullMarks) || 0
+    const passMarks = Number(subExamForm.passMarks) || 0
+    if (fullMarks <= 0) return
+    const newSub = { name: subExamForm.name, nameBn: subExamForm.nameBn || subExamForm.name, fullMarks, passMarks }
+    const newSubExams = [...editDistConfig.subExams, { ...newSub, id: `SE-${Date.now()}` }]
+    const totalFull = newSubExams.reduce((sum, se) => sum + se.fullMarks, 0)
+    const totalPass = newSubExams.reduce((sum, se) => sum + se.passMarks, 0)
+    upsertSubjectMarkConfig({ examId: editDistConfig.examId, classId: editDistConfig.classId, subjectId: editDistConfig.subjectId, fullMarks: totalFull, passMarks: totalPass, subExams: newSubExams })
+    setEditDistConfig({ ...editDistConfig, id: editDistConfig.id || `SMC-${Date.now()}`, subExams: newSubExams, fullMarks: totalFull, passMarks: totalPass })
     setSubExamForm({ name: '', nameBn: '', fullMarks: '', passMarks: '' })
     setShowSubExamForm(false)
+  }
+
+  const handleQuickSetupSubExams = (config: SubjectMarkConfig) => {
+    const defaults = [
+      { id: `SE-${Date.now()}-1`, name: 'CQ', nameBn: 'সিকিউ', fullMarks: 0, passMarks: 0 },
+      { id: `SE-${Date.now()}-2`, name: 'MCQ', nameBn: 'এমসিকিউ', fullMarks: 0, passMarks: 0 },
+      { id: `SE-${Date.now()}-3`, name: 'Oral', nameBn: 'মৌখিক', fullMarks: 0, passMarks: 0 },
+    ]
+    upsertSubjectMarkConfig({ examId: config.examId, classId: config.classId, subjectId: config.subjectId, fullMarks: 0, passMarks: 0, subExams: defaults })
+  }
+
+  const handleRemoveSubExam = (configId: string, subExamId: string) => {
+    const cfg = subjectMarkConfigs.find(c => c.id === configId)
+    if (!cfg) return
+    const newSubExams = cfg.subExams.filter(se => se.id !== subExamId)
+    const totalFull = newSubExams.reduce((sum, se) => sum + se.fullMarks, 0)
+    const totalPass = newSubExams.reduce((sum, se) => sum + se.passMarks, 0)
+    upsertSubjectMarkConfig({ examId: cfg.examId, classId: cfg.classId, subjectId: cfg.subjectId, fullMarks: totalFull, passMarks: totalPass, subExams: newSubExams })
+  }
+
+  const calcSubExamTotals = (subExams: { fullMarks: number; passMarks: number }[]) => {
+    const totalFull = subExams.reduce((sum, se) => sum + se.fullMarks, 0)
+    const totalPass = subExams.reduce((sum, se) => sum + se.passMarks, 0)
+    return { totalFull, totalPass }
+  }
+
+  const handleSaveExam = () => {
+    if (!examForm.name) return
+    if (editExam) {
+      updateExamConfig(editExam.id, { name: examForm.name, nameBn: examForm.nameBn || examForm.name, type: examForm.type, session: examForm.session, startDate: examForm.startDate, endDate: examForm.endDate })
+    } else {
+      addExamConfig({ name: examForm.name, nameBn: examForm.nameBn || examForm.name, type: examForm.type, session: examForm.session, startDate: examForm.startDate, endDate: examForm.endDate, isActive: false })
+    }
+    setShowExamForm(false)
+    setEditExam(null)
+    setExamForm({ name: '', nameBn: '', type: 'semester-1', session: '2025-26', startDate: '', endDate: '' })
   }
 
   const handleSaveOMR = () => {
@@ -380,10 +410,18 @@ export default function Step1Planning() {
                       <Settings size={15} className="text-[var(--brand)]" />{isBn ? 'শ্রেণি ও সেকশন নির্বাচন' : 'Select Class & Section'}
                     </div>
                     {distClassId && distConfigs.length > 0 && (
-                      <button onClick={() => setShowCopyAllConfirm(true)}
-                        className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--green-light)] text-[var(--green)] border border-[var(--green)] text-[11px] font-medium cursor-pointer">
-                        <Copy size={12} />{isBn ? 'সব কপি করুন' : 'Copy All To...'}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {subjectsWithConfig.length > 0 && (
+                          <button onClick={() => { setCopySourceSubjectId(subjectsWithConfig[0]?.id || ''); setCopyTargetSubjectIds([]); setShowCopySubjectModal(true) }}
+                            className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] text-[11px] font-medium cursor-pointer">
+                            <ClipboardList size={12} />{isBn ? 'বিষয়ে কপি' : 'Copy to Subjects'}
+                          </button>
+                        )}
+                        <button onClick={() => setShowCopyAllConfirm(true)}
+                          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--green-light)] text-[var(--green)] border border-[var(--green)] text-[11px] font-medium cursor-pointer">
+                          <Copy size={12} />{isBn ? 'শ্রেণিতে কপি' : 'Copy to Class'}
+                        </button>
+                      </div>
                     )}
                   </div>
 
@@ -395,7 +433,7 @@ export default function Step1Planning() {
                       const secCount = clsObj?.sections.length || 0
                       const cfgCount = subjectMarkConfigs.filter(s => s.examId === activeExam?.id && s.classId === c).length
                       return (
-                        <button key={c} onClick={() => { setDistClassId(c); setDistSectionIds([]); setDistSubjectId(''); setEditDistConfig(null) }}
+                        <button key={c} onClick={() => { setDistClassId(c); setDistSectionIds([]); setEditDistConfig(null) }}
                           className={`relative p-3 rounded-xl border text-left cursor-pointer transition-all ${isActive ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-md' : 'bg-[var(--bg-secondary)] border-[var(--border)] hover:border-[var(--brand)] hover:shadow-sm text-[var(--text-primary)]'}`}>
                           <div className={`text-[12px] font-bold ${isActive ? 'text-white' : 'text-[var(--text-primary)]'}`}>{c}</div>
                           <div className={`text-[9px] mt-0.5 ${isActive ? 'text-white/70' : 'text-[var(--text-muted)]'}`}>
@@ -439,28 +477,30 @@ export default function Step1Planning() {
                         <div className={sectionTitleCls}>
                           <BookOpen size={15} className="text-[var(--teal)]" />{isBn ? 'সকল বিষয়' : 'All Subjects'}
                           <span className="ml-2 text-[10px] font-normal text-[var(--text-muted)]">
-                            {distConfigs.length}/{classSubjects.length} {isBn ? 'কনফিগার্ড' : 'configured'}
+                            {distConfigs.length}/{filteredSubjects.length} {isBn ? 'কনফিগার্ড' : 'configured'}
                           </span>
                         </div>
                       </div>
 
                       {/* Table Header */}
                       <div className="grid gap-2 pb-2 border-b border-[var(--border)] text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider"
-                        style={{ gridTemplateColumns: '24px 1fr 100px 80px 80px 50px' }}>
+                        style={{ gridTemplateColumns: '24px 1fr 1fr 90px 44px' }}>
                         <div className="text-center">#</div>
                         <div>{isBn ? 'বিষয়' : 'Subject'}</div>
-                        <div>{isBn ? 'সাব-এক্সাম (CQ/MCQ/Oral)' : 'Sub-Exam (CQ/MCQ/Oral)'}</div>
-                        <div className="text-center">{isBn ? 'ফুল মার্কস' : 'Full Marks'}</div>
-                        <div className="text-center">{isBn ? 'পাস মার্কস' : 'Pass Marks'}</div>
+                        <div>{isBn ? 'সাব-এক্সাম' : 'Sub-Exams'}</div>
+                        <div className="text-center">{isBn ? 'মোট মার্কস' : 'Total Marks'}</div>
                         <div className="text-center">{isBn ? 'অ্যাকশন' : 'Action'}</div>
                       </div>
 
                       {/* Table Rows */}
                       <div className="divide-y divide-[var(--border)]">
-                        {allSubjectsForClass.map(({ subject, config }, idx) => (
-                          <div key={subject.id} className={`transition-colors ${config ? 'bg-[var(--green-light)]/30' : 'hover:bg-[var(--bg-secondary)]'}`}>
+                        {allSubjectsForClass.map(({ subject, config }, idx) => {
+                          const totals = config ? calcSubExamTotals(config.subExams) : null
+                          const isOver = totals ? totals.totalFull > 100 : false
+                          return (
+                          <div key={subject.id} className={`transition-colors ${config && config.subExams.length > 0 ? 'bg-[var(--green-light)]/30' : 'hover:bg-[var(--bg-secondary)]'}`}>
                             <div className="grid items-center gap-2 py-2"
-                              style={{ gridTemplateColumns: '24px 1fr 100px 80px 80px 50px' }}>
+                              style={{ gridTemplateColumns: '24px 1fr 1fr 90px 44px' }}>
                               <div className="text-center text-[10px] text-[var(--text-muted)]">{idx + 1}</div>
                               <div className="min-w-0">
                                 <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{isBn ? subject.nameBn : subject.name}</div>
@@ -470,59 +510,42 @@ export default function Step1Planning() {
                                   config.subExams.map(se => (
                                     <span key={se.id} className="inline-flex items-center gap-0.5 text-[8px] px-1.5 py-0.5 rounded-md bg-[var(--brand-light)] text-[var(--brand)] font-medium">
                                       {isBn ? se.nameBn : se.name}: {se.fullMarks}/{se.passMarks}
-                                      <button onClick={() => removeSubExam(config.id, se.id)} className="ml-0.5 text-[var(--brand)] hover:text-[var(--red)] cursor-pointer">×</button>
+                                      <button onClick={() => handleRemoveSubExam(config.id, se.id)} className="ml-0.5 text-[var(--brand)] hover:text-[var(--red)] cursor-pointer">×</button>
                                     </span>
                                   ))
-                                ) : config ? (
-                                  <span className="text-[9px] text-[var(--text-muted)] italic">{isBn ? 'সাব-এক্সাম নেই' : 'No sub-exams'}</span>
                                 ) : (
-                                  <span className="text-[9px] text-[var(--text-muted)]">—</span>
+                                  <span className="text-[9px] text-[var(--text-muted)] italic">{isBn ? 'সাব-এক্সাম যোগ করুন' : 'Add sub-exams'}</span>
                                 )}
                               </div>
                               <div className="text-center">
-                                {config ? (
-                                  <span className="text-[12px] font-semibold text-[var(--text-primary)]">{config.fullMarks}</span>
+                                {totals && totals.totalFull > 0 ? (
+                                  <div className="flex flex-col items-center">
+                                    <span className={`text-[12px] font-bold ${isOver ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
+                                      {totals.totalFull}/{totals.totalPass}
+                                    </span>
+                                    {isOver && <span className="text-[8px] text-[var(--red)] font-bold">⚠ {isBn ? '১০০+!' : '100+!'}</span>}
+                                  </div>
                                 ) : (
-                                  <input type="number" min="0" value={distFullMarks} onChange={e => setDistFullMarks(e.target.value)}
-                                    placeholder={isBn ? 'ফুল' : 'Full'}
-                                    className="w-full h-7 text-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none" />
-                                )}
-                              </div>
-                              <div className="text-center">
-                                {config ? (
-                                  <span className="text-[12px] font-semibold text-[var(--text-primary)]">{config.passMarks}</span>
-                                ) : (
-                                  <input type="number" min="0" value={distPassMarks} onChange={e => setDistPassMarks(e.target.value)}
-                                    placeholder={isBn ? 'পাস' : 'Pass'}
-                                    className="w-full h-7 text-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none" />
+                                  <span className="text-[10px] text-[var(--text-muted)]">—</span>
                                 )}
                               </div>
                               <div className="flex items-center justify-center gap-1">
-                                {config ? (
-                                  <>
-                                    <button onClick={() => { setEditDistConfig(config); setDistSubjectId(config.subjectId); setDistFullMarks(String(config.fullMarks)); setDistPassMarks(String(config.passMarks)) }}
-                                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
-                                      title={isBn ? 'সম্পাদনা' : 'Edit'}>
-                                      <Edit2 size={10} />
-                                    </button>
-                                    <button onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteSubjectMarkConfig(config.id) }}
-                                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                                      title={isBn ? 'মুছুন' : 'Delete'}>
-                                      <Trash2 size={10} />
-                                    </button>
-                                  </>
-                                ) : (
-                                  <button onClick={() => { setDistSubjectId(subject.id); handleSaveDist() }}
-                                    disabled={!distFullMarks || !distPassMarks}
-                                    className="w-6 h-6 rounded bg-[var(--brand)] flex items-center justify-center cursor-pointer text-white border-none disabled:opacity-40"
-                                    title={isBn ? 'সেভ করুন' : 'Save'}>
-                                    <Save size={10} />
+                                <button onClick={() => { setEditDistConfig(config || { id: '', examId: activeExam!.id, classId: distClassId, subjectId: subject.id, fullMarks: 0, passMarks: 0, subExams: [] }); setShowSubExamForm(true) }}
+                                  className="w-6 h-6 rounded bg-[var(--brand)] flex items-center justify-center cursor-pointer text-white border-none hover:shadow-sm"
+                                  title={isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-Exam'}>
+                                  <Plus size={10} />
+                                </button>
+                                {config && (
+                                  <button onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteSubjectMarkConfig(config.id) }}
+                                    className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                                    title={isBn ? 'মুছুন' : 'Delete'}>
+                                    <Trash2 size={10} />
                                   </button>
                                 )}
                               </div>
                             </div>
                             {/* Sub-exam action row */}
-                            {config && (
+                            {config && config.subExams.length === 0 && (
                               <div className="flex items-center gap-2 pb-2 -mt-1">
                                 <div className="w-6" />
                                 <div className="flex items-center gap-1.5 flex-1">
@@ -530,38 +553,21 @@ export default function Step1Planning() {
                                     className="inline-flex items-center gap-1 text-[9px] px-2 py-1 rounded-md bg-[var(--brand)] text-white border-none cursor-pointer font-medium hover:shadow-sm">
                                     <Plus size={9} />{isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-Exam'}
                                   </button>
-                                  {config.subExams.length === 0 && (
-                                    <button onClick={() => handleQuickSetupSubExams(config)}
-                                      className="inline-flex items-center gap-1 text-[9px] px-2 py-1 rounded-md bg-[var(--teal-light)] text-[var(--teal)] border border-[var(--teal)] cursor-pointer font-medium hover:shadow-sm">
-                                      <Zap size={9} />{isBn ? 'দ্রুত সেটআপ (CQ+MCQ+Oral)' : 'Quick Setup (CQ+MCQ+Oral)'}
-                                    </button>
-                                  )}
-                                  {config.subExams.length > 0 && (() => {
-                                    const { totalFull, totalPass } = calcSubExamTotals(config.subExams)
-                                    const isOver = totalFull > 100
-                                    return (
-                                      <div className="flex items-center gap-2">
-                                        <span className={`text-[9px] font-semibold ${isOver ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
-                                          {isBn ? 'মোট' : 'Total'}: {totalFull} {isBn ? 'ফুল' : 'Full'} / {totalPass} {isBn ? 'পাস' : 'Pass'}
-                                        </span>
-                                        {isOver && (
-                                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--red-light)] text-[var(--red)] font-bold animate-pulse">
-                                            ⚠ {isBn ? '১০০ এর বেশি!' : 'Over 100!'}
-                                          </span>
-                                        )}
-                                      </div>
-                                    )
-                                  })()}
+                                  <button onClick={() => handleQuickSetupSubExams(config)}
+                                    className="inline-flex items-center gap-1 text-[9px] px-2 py-1 rounded-md bg-[var(--teal-light)] text-[var(--teal)] border border-[var(--teal)] cursor-pointer font-medium hover:shadow-sm">
+                                    <Zap size={9} />{isBn ? 'দ্রুত সেটআপ (CQ+MCQ+Oral)' : 'Quick Setup (CQ+MCQ+Oral)'}
+                                  </button>
                                 </div>
                               </div>
                             )}
                           </div>
-                        ))}
+                          )
+                        })}
                       </div>
 
-                      {classSubjects.length === 0 && (
+                      {filteredSubjects.length === 0 && (
                         <div className="text-center py-8 text-[var(--text-muted)] text-[12px]">
-                          {isBn ? 'এই শ্রেণিতে কোনো বিষয় নেই' : 'No subjects assigned to this class'}
+                          {isBn ? 'এই শ্রেণিতে কোনো বিষয় নেই। ক্লাস ম্যানেজমেন্টে সেকশনে বিষয় যোগ করুন।' : 'No subjects for this class. Add subjects to sections in Class Management.'}
                         </div>
                       )}
                     </div>
@@ -577,24 +583,26 @@ export default function Step1Planning() {
                           <div className="text-[11px] text-[var(--text-muted)] mb-3">
                             {(() => { const sub = subjects.find(s => s.id === editDistConfig.subjectId); return sub ? `${isBn ? sub.nameBn : sub.name}` : '' })()}
                           </div>
-                          {/* Quick add buttons */}
+                          {/* Quick name buttons */}
                           <div className="flex gap-1.5 mb-3">
-                            {QUICK_SUB_EXAMS.map(se => {
-                              const alreadyAdded = editDistConfig.subExams.some(e => e.name === se.name)
+                            {(['CQ', 'MCQ', 'Oral', 'Practical'] as const).map(name => {
+                              const nameBn = name === 'CQ' ? 'সিকিউ' : name === 'MCQ' ? 'এমসিকিউ' : name === 'Oral' ? 'মৌখিক' : 'প্র্যাকটিক্যাল'
+                              const alreadyAdded = editDistConfig.subExams.some(e => e.name === name)
                               return (
-                                <button key={se.name} disabled={alreadyAdded}
-                                  onClick={() => { addSubExamToSubject(editDistConfig.id, { name: se.name, nameBn: se.nameBn, fullMarks: 0, passMarks: 0 }) }}
-                                  className={`flex-1 py-2 rounded-lg text-[10px] font-semibold border cursor-pointer ${alreadyAdded ? 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] opacity-50 cursor-not-allowed' : 'bg-[var(--brand-light)] text-[var(--brand)] border-[var(--brand)] hover:shadow-sm'}`}>
-                                  {se.name}
+                                <button key={name} disabled={alreadyAdded}
+                                  onClick={() => setSubExamForm(p => ({ ...p, name, nameBn }))}
+                                  className={`flex-1 py-2 rounded-lg text-[10px] font-semibold border cursor-pointer ${alreadyAdded ? 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] opacity-50 cursor-not-allowed' : subExamForm.name === name ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'bg-[var(--brand-light)] text-[var(--brand)] border-[var(--brand)] hover:shadow-sm'}`}>
+                                  {name}
                                 </button>
                               )
                             })}
                           </div>
                           <div className="border-t border-[var(--border)] pt-3">
-                            <div className="text-[10px] font-semibold text-[var(--text-muted)] mb-2">{isBn ? 'কাস্টম যোগ করুন' : 'Add Custom'}</div>
                             <div className="space-y-2">
-                              <input value={subExamForm.name} onChange={e => setSubExamForm(p => ({ ...p, name: e.target.value }))} placeholder={isBn ? 'নাম (EN)' : 'Name (EN)'} className={`${inputCls} w-full`} />
-                              <input value={subExamForm.nameBn} onChange={e => setSubExamForm(p => ({ ...p, nameBn: e.target.value }))} placeholder={isBn ? 'নাম (BN)' : 'Name (BN)'} className={`${inputCls} w-full`} />
+                              <div className="grid grid-cols-2 gap-2">
+                                <input value={subExamForm.name} onChange={e => setSubExamForm(p => ({ ...p, name: e.target.value }))} placeholder={isBn ? 'নাম (EN)' : 'Name (EN)'} className={`${inputCls} w-full`} />
+                                <input value={subExamForm.nameBn} onChange={e => setSubExamForm(p => ({ ...p, nameBn: e.target.value }))} placeholder={isBn ? 'নাম (BN)' : 'Name (BN)'} className={`${inputCls} w-full`} />
+                              </div>
                               <div className="grid grid-cols-2 gap-2">
                                 <div>
                                   <label className="text-[9px] text-[var(--text-muted)] block mb-0.5">{isBn ? 'ফুল মার্কস' : 'Full Marks'}</label>
@@ -606,7 +614,7 @@ export default function Step1Planning() {
                                 </div>
                               </div>
                               <button onClick={handleAddSubExam} disabled={!subExamForm.name || !subExamForm.fullMarks}
-                                className={`${btnPrimary} w-full justify-center disabled:opacity-50`}>{isBn ? 'যোগ করুন' : 'Add'}</button>
+                                className={`${btnPrimary} w-full justify-center disabled:opacity-40 disabled:cursor-not-allowed`}>{isBn ? 'যোগ করুন' : 'Add'}</button>
                             </div>
                           </div>
                           {editDistConfig.subExams.length > 0 && (() => {
@@ -786,6 +794,58 @@ export default function Step1Planning() {
               <button onClick={() => { setShowCopyAllConfirm(false); setCopyAllToClassId('') }} className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[12px] text-[var(--text-secondary)] cursor-pointer">{isBn ? 'বাতিল' : 'Cancel'}</button>
               <button onClick={handleCopyAll} disabled={!copyAllToClassId || copyAllToClassId === distClassId}
                 className="px-3 py-1.5 rounded-lg bg-[var(--green)] text-white text-[12px] font-medium cursor-pointer disabled:opacity-50">{isBn ? 'কপি করুন' : 'Copy'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCopySubjectModal && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
+          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[440px] w-full p-5 border border-[var(--border)]">
+            <h3 className="text-[14px] font-semibold text-[var(--text-primary)] mb-2">{isBn ? 'বিষয়ে কপি করুন' : 'Copy Config to Other Subjects'}</h3>
+            <p className="text-[11px] text-[var(--text-muted)] mb-3">
+              {isBn ? 'একটি বিষয়ের মার্ক কনফিগ অন্য সব বিষয়ে কপি করুন।' : 'Copy one subject\'s mark config to other subjects in this class.'}
+            </p>
+            <div className="mb-3">
+              <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'উৎস বিষয় (যার কনফিগ কপি হবে)' : 'Source Subject (copy from)'}</label>
+              <select value={copySourceSubjectId} onChange={e => { setCopySourceSubjectId(e.target.value); setCopyTargetSubjectIds([]) }} className={`${inputCls} w-full`}>
+                <option value="">{isBn ? '-- বিষয় নির্বাচন --' : '-- Select Subject --'}</option>
+                {subjectsWithConfig.map(s => (
+                  <option key={s.id} value={s.id}>{isBn ? s.nameBn : s.name}</option>
+                ))}
+              </select>
+            </div>
+            {copySourceSubjectId && (
+              <div className="mb-3">
+                <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'লক্ষ্য বিষয় (যেগুলোতে কপি হবে)' : 'Target Subjects (copy to)'}</label>
+                <div className="max-h-[160px] overflow-y-auto border border-[var(--border)] rounded-lg p-2 space-y-1">
+                  {subjectsWithoutConfig.length === 0 ? (
+                    <p className="text-[10px] text-[var(--text-muted)] italic py-2 text-center">
+                      {isBn ? 'অন্য কোনো বিষয় নেই (সব বিষয়ই ইতিমধ্যে কনফিগার্ড)' : 'No other unconfigured subjects'}
+                    </p>
+                  ) : (
+                    <>
+                      <button onClick={() => setCopyTargetSubjectIds(subjectsWithoutConfig.map(s => s.id))}
+                        className="text-[9px] text-[var(--brand)] cursor-pointer hover:underline mb-1">{isBn ? 'সব নির্বাচন' : 'Select All'}</button>
+                      {subjectsWithoutConfig.map(s => (
+                        <label key={s.id} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[var(--bg-secondary)] cursor-pointer">
+                          <input type="checkbox" checked={copyTargetSubjectIds.includes(s.id)}
+                            onChange={e => setCopyTargetSubjectIds(prev => e.target.checked ? [...prev, s.id] : prev.filter(id => id !== s.id))}
+                            className="rounded" />
+                          <span className="text-[11px] text-[var(--text-primary)]">{isBn ? s.nameBn : s.name}</span>
+                        </label>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => { setShowCopySubjectModal(false); setCopySourceSubjectId(''); setCopyTargetSubjectIds([]) }} className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[12px] text-[var(--text-secondary)] cursor-pointer">{isBn ? 'বাতিল' : 'Cancel'}</button>
+              <button onClick={handleCopySubjectConfig} disabled={!copySourceSubjectId || copyTargetSubjectIds.length === 0}
+                className="px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[12px] font-medium cursor-pointer disabled:opacity-50">
+                {isBn ? `${copyTargetSubjectIds.length}টি বিষয়ে কপি` : `Copy to ${copyTargetSubjectIds.length} subject(s)`}
+              </button>
             </div>
           </div>
         </div>
