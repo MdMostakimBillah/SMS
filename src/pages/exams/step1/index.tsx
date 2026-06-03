@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
-import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
+import { useClassStore, getClassOptions } from '@/store/classStore'
 import { useExamStore } from '@/store/examStore'
 import type { ExamConfig, ExamType, SubjectMarkConfig, OMRConfig } from '@/store/examStore'
 
@@ -61,6 +61,7 @@ export default function Step1Planning() {
 
   // Subject Config
   const [distClassId, setDistClassId] = useState('')
+  const [distSectionIds, setDistSectionIds] = useState<string[]>([])
   const [distSubjectId, setDistSubjectId] = useState('')
   const [distFullMarks, setDistFullMarks] = useState('100')
   const [distPassMarks, setDistPassMarks] = useState('33')
@@ -100,8 +101,12 @@ export default function Step1Planning() {
 
   const activeExam = useMemo(() => examConfigs.find(e => e.isActive) || null, [examConfigs])
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
-  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
-  const selectedClassSections = useMemo(() => distClassId ? (sectionsMap[distClassId] || []) : [sectionsMap[distClassId]].filter(Boolean).flat(), [distClassId, sectionsMap])
+  const selectedClassObj = useMemo(() => classes.find(c => c.name === distClassId) || null, [classes, distClassId])
+  const selectedClassSections = useMemo(() => selectedClassObj?.sections || [], [selectedClassObj])
+
+  const toggleSection = (secName: string) => {
+    setDistSectionIds(prev => prev.includes(secName) ? prev.filter(s => s !== secName) : [...prev, secName])
+  }
 
   const distConfigs = useMemo(() => {
     if (!activeExam) return []
@@ -370,7 +375,7 @@ export default function Step1Planning() {
                 <div className={sectionCls}>
                   <div className="flex items-center justify-between mb-3">
                     <div className={sectionTitleCls}>
-                      <Settings size={15} className="text-[var(--brand)]" />{isBn ? 'শ্রেণি নির্বাচন করুন' : 'Select Class'}
+                      <Settings size={15} className="text-[var(--brand)]" />{isBn ? 'শ্রেণি ও সেকশন নির্বাচন' : 'Select Class & Section'}
                     </div>
                     {distClassId && distConfigs.length > 0 && (
                       <button onClick={() => setShowCopyAllConfirm(true)}
@@ -379,27 +384,49 @@ export default function Step1Planning() {
                       </button>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
-                      <select value={distClassId} onChange={e => { setDistClassId(e.target.value); setDistSubjectId(''); setEditDistConfig(null); setCopyFromClassId('') }} className={`${inputCls} w-full`}>
-                        <option value="">{isBn ? 'শ্রেণি নির্বাচন...' : 'Select class...'}</option>
-                        {classOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
-                    {distClassId && (
-                      <div>
-                        <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
-                        <div className="flex flex-wrap gap-1.5 mt-1">
-                          {selectedClassSections.length > 0 ? selectedClassSections.map(sec => (
-                            <span key={sec} className="px-2.5 py-1 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] text-[11px] text-[var(--text-primary)] font-medium">{sec}</span>
-                          )) : (
-                            <span className="text-[11px] text-[var(--text-muted)] italic">{isBn ? 'সেকশন নেই' : 'No sections'}</span>
+
+                  {/* Class Cards */}
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                    {classOptions.map(c => {
+                      const isActive = distClassId === c
+                      const clsObj = classes.find(cl => cl.name === c)
+                      const secCount = clsObj?.sections.length || 0
+                      const cfgCount = subjectMarkConfigs.filter(s => s.examId === activeExam?.id && s.classId === c).length
+                      return (
+                        <button key={c} onClick={() => { setDistClassId(c); setDistSectionIds([]); setDistSubjectId(''); setEditDistConfig(null); setCopyFromClassId('') }}
+                          className={`relative p-3 rounded-xl border text-left cursor-pointer transition-all ${isActive ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-md' : 'bg-[var(--bg-secondary)] border-[var(--border)] hover:border-[var(--brand)] hover:shadow-sm text-[var(--text-primary)]'}`}>
+                          <div className={`text-[12px] font-bold ${isActive ? 'text-white' : 'text-[var(--text-primary)]'}`}>{c}</div>
+                          <div className={`text-[9px] mt-0.5 ${isActive ? 'text-white/70' : 'text-[var(--text-muted)]'}`}>
+                            {secCount > 0 ? `${secCount} ${isBn ? 'সেকশন' : 'sec'}` : isBn ? 'সেকশন নেই' : 'No sec'}
+                          </div>
+                          {cfgCount > 0 && (
+                            <div className={`absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-[var(--green-light)] text-[var(--green)]'}`}>
+                              {cfgCount}
+                            </div>
                           )}
-                        </div>
-                      </div>
-                    )}
+                        </button>
+                      )
+                    })}
                   </div>
+
+                  {/* Section Chips */}
+                  {distClassId && selectedClassSections.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-[var(--border)]">
+                      <div className="text-[10px] font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wider">{isBn ? 'সেকশন নির্বাচন করুন' : 'Select Sections'}</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedClassSections.map(sec => {
+                          const isSelected = distSectionIds.includes(sec.name)
+                          return (
+                            <button key={sec.id} onClick={() => toggleSection(sec.name)}
+                              className={`px-3 py-1.5 rounded-lg text-[11px] font-medium border cursor-pointer transition-all ${isSelected ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'bg-[var(--bg-secondary)] text-[var(--text-primary)] border-[var(--border)] hover:border-[var(--brand)]'}`}>
+                              {isBn ? `সেকশন ${sec.name}` : `Section ${sec.name}`}
+                              <span className="ml-1 text-[9px] opacity-60">({sec.seatQuantity})</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {distClassId && (
