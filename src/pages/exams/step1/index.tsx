@@ -1828,6 +1828,13 @@ export default function Step1Planning() {
                           showSetCode: true,
                           showSubjects: false,
                           showSubjectCode: false,
+                          showQRCode: true,
+                          showBarcode: false,
+                          showStudentPhoto: false,
+                          showStudentSignature: true,
+                          showExaminerSection: true,
+                          showAdditionalPaper: true,
+                          showInstructions: true,
                           subjects: [],
                         },
                         isBn

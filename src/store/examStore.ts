@@ -225,6 +225,47 @@ export interface MarksEntryStatus {
   lockedAt: string | null
 }
 
+// ─── OMR Template ───
+
+export interface OMRTemplate {
+  id: string
+  name: string
+  nameBn: string
+  examId: string
+  classId: string
+  subjectId: string
+  sessionName: string
+  className: string
+  classNameBn: string
+  examName: string
+  examNameBn: string
+  themeColor: string
+  serialNumber: string
+  totalQuestions: number
+  optionCount: number
+  sheetFormat: 'A' | 'B' | 'C' | 'D'
+  correctMark: number
+  negativeMark: number
+  totalCopy: number
+  showRollNo: boolean
+  showRegistrationNo: boolean
+  showSetCode: boolean
+  showSubjects: boolean
+  showSubjectCode: boolean
+  showQRCode: boolean
+  showBarcode: boolean
+  showStudentPhoto: boolean
+  showStudentSignature: boolean
+  showExaminerSection: boolean
+  showAdditionalPaper: boolean
+  showInstructions: boolean
+  isArchived: boolean
+  version: number
+  modifiedBy: string
+  createdAt: string
+  updatedAt: string
+}
+
 // ─── Demo Data ───
 
 const defaultExamConfigs: ExamConfig[] = [
@@ -535,6 +576,8 @@ const defaultOMRConfigs: OMRConfig[] = [
   },
 ]
 
+const defaultOMRTemplates: OMRTemplate[] = []
+
 const defaultExtraMarks: ExtraMarkEntry[] = [
   {
     id: 'EM-001',
@@ -822,6 +865,7 @@ interface ExamState {
   promotions: StudentPromotion[]
   cumulativeSheets: CumulativeMarksheet[]
   marksEntryStatuses: MarksEntryStatus[]
+  omrTemplates: OMRTemplate[]
 
   addExamConfig: (config: Omit<ExamConfig, 'id' | 'createdAt'>) => void
   updateExamConfig: (id: string, data: Partial<ExamConfig>) => void
@@ -859,6 +903,13 @@ interface ExamState {
 
   upsertOMRConfig: (config: Omit<OMRConfig, 'id' | 'createdAt'>) => void
   deleteOMRConfig: (id: string) => void
+
+  saveOMRTemplate: (template: Omit<OMRTemplate, 'id' | 'createdAt' | 'updatedAt' | 'version'>) => void
+  updateOMRTemplate: (id: string, data: Partial<OMRTemplate>) => void
+  deleteOMRTemplate: (id: string) => void
+  duplicateOMRTemplate: (id: string, name: string) => void
+  archiveOMRTemplate: (id: string) => void
+  restoreOMRTemplate: (id: string) => void
 
   addExtraMark: (entry: Omit<ExtraMarkEntry, 'id' | 'createdAt'>) => void
   updateExtraMark: (id: string, data: Partial<ExtraMarkEntry>) => void
@@ -917,6 +968,7 @@ export const useExamStore = create<ExamState>()(
       promotions: defaultPromotions,
       cumulativeSheets: defaultCumulativeSheets,
       marksEntryStatuses: defaultMarksEntryStatus,
+      omrTemplates: defaultOMRTemplates,
 
       // ─── Exam Config ───
       addExamConfig: (config) =>
@@ -1170,6 +1222,45 @@ export const useExamStore = create<ExamState>()(
           omrConfigs: state.omrConfigs.filter((o) => o.id !== id),
         })),
 
+      // ─── OMR Template ───
+      saveOMRTemplate: (template) =>
+        set((state) => ({
+          omrTemplates: [
+            ...state.omrTemplates,
+            { ...template, id: `OMRT-${Date.now()}`, version: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+          ],
+        })),
+      updateOMRTemplate: (id, data) =>
+        set((state) => ({
+          omrTemplates: state.omrTemplates.map((t) =>
+            t.id === id ? { ...t, ...data, version: t.version + 1, updatedAt: new Date().toISOString() } : t
+          ),
+        })),
+      deleteOMRTemplate: (id) =>
+        set((state) => ({
+          omrTemplates: state.omrTemplates.filter((t) => t.id !== id),
+        })),
+      duplicateOMRTemplate: (id, name) =>
+        set((state) => {
+          const src = state.omrTemplates.find((t) => t.id === id)
+          if (!src) return state
+          const now = new Date().toISOString()
+          return {
+            omrTemplates: [
+              ...state.omrTemplates,
+              { ...src, id: `OMRT-${Date.now()}`, name, nameBn: name, version: 1, isArchived: false, createdAt: now, updatedAt: now },
+            ],
+          }
+        }),
+      archiveOMRTemplate: (id) =>
+        set((state) => ({
+          omrTemplates: state.omrTemplates.map((t) => (t.id === id ? { ...t, isArchived: true, updatedAt: new Date().toISOString() } : t)),
+        })),
+      restoreOMRTemplate: (id) =>
+        set((state) => ({
+          omrTemplates: state.omrTemplates.map((t) => (t.id === id ? { ...t, isArchived: false, updatedAt: new Date().toISOString() } : t)),
+        })),
+
       // ─── Extra Marks ───
       addExtraMark: (entry) =>
         set((state) => ({
@@ -1326,6 +1417,6 @@ export const useExamStore = create<ExamState>()(
           return state
         }),
     }),
-    { name: 'edutech-exams', version: 4 }
+    { name: 'edutech-exams', version: 5 }
   )
 )
