@@ -1417,6 +1417,15 @@ export const useExamStore = create<ExamState>()(
           return state
         }),
     }),
-    { name: 'edutech-exams', version: 5 }
+    {
+      name: 'edutech-exams',
+      version: 5,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 5) {
+          if (!persistedState.omrTemplates) persistedState.omrTemplates = []
+        }
+        return persistedState
+      },
+    }
   )
 )
