@@ -234,32 +234,70 @@ export interface OMRTemplate {
   examId: string
   classId: string
   subjectId: string
+  totalCopy: number
+  // ── Institution ──
+  institutionName: string
+  institutionNameBn: string
+  institutionAddress: string
   sessionName: string
   className: string
   classNameBn: string
   examName: string
   examNameBn: string
+  subjectName: string
+  subjectNameBn: string
+  groupName: string
+  groupNameBn: string
+  sectionName: string
   themeColor: string
   serialNumber: string
+  sheetFormat: 'A' | 'B' | 'C' | 'D'
   totalQuestions: number
   optionCount: number
-  sheetFormat: 'A' | 'B' | 'C' | 'D'
   correctMark: number
   negativeMark: number
-  totalCopy: number
+  subjects: { name: string; nameBn: string }[]
+  // ── Student Info ──
+  showStudentName: boolean
   showRollNo: boolean
+  showStudentId: boolean
   showRegistrationNo: boolean
-  showSetCode: boolean
-  showSubjects: boolean
+  showClass: boolean
+  showSection: boolean
+  showGroup: boolean
+  showExamName: boolean
+  showSubjectName: boolean
   showSubjectCode: boolean
+  showSetCode: boolean
+  showDate: boolean
+  showStudentSignature: boolean
+  showStudentPhoto: boolean
+  // ── Identification ──
   showQRCode: boolean
   showBarcode: boolean
-  showStudentPhoto: boolean
-  showStudentSignature: boolean
-  showExaminerSection: boolean
+  showSerialNumber: boolean
+  showSecurityCode: boolean
+  // ── Examination ──
+  showTeacherCode: boolean
+  showRoomNumber: boolean
+  showSeatNumber: boolean
   showAdditionalPaper: boolean
+  showPresentAbsent: boolean
+  // ── Examiner ──
+  showExaminerSection: boolean
+  marksEntryStyle: 'abcd' | 'bn' | 'numbers' | 'custom'
+  customMarksValues: string
+  showExaminerSignature: boolean
+  showHeadExaminerSignature: boolean
+  showCheckedBy: boolean
+  showVerifiedBy: boolean
+  showTotalMarks: boolean
+  showPracticalMarks: boolean
+  showVivaMarks: boolean
   showInstructions: boolean
+  // ── Meta ──
   isArchived: boolean
+  isDefault: boolean
   version: number
   modifiedBy: string
   createdAt: string

@@ -8,29 +8,23 @@ import {
   Copy,
   Archive,
   RotateCcw,
-  Settings2,
-  FileText,
-  Maximize2,
-  Minimize2,
-  ZoomIn,
-  ZoomOut,
   ScanLine,
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
-  ChevronDown,
   ChevronRight,
   Layers,
-  Hash,
-  BookOpen,
-  Camera,
   PenTool,
   FileCheck,
-  ListChecks,
-  Info,
   Trash2,
   Loader2,
-  BarChart2,
+  User,
+  GraduationCap,
+  Stamp,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
@@ -48,7 +42,14 @@ const THEME_PRESETS = [
   { label: 'Cyan', value: '#0891b2' },
 ]
 
-type Section = 'filters' | 'content' | 'bulk' | 'templates' | 'preview'
+type WizardStep = 1 | 2 | 3 | 4
+
+const WIZARD_STEPS = [
+  { num: 1, key: 'exam' },
+  { num: 2, key: 'fields' },
+  { num: 3, key: 'examiner' },
+  { num: 4, key: 'generate' },
+] as const
 
 export default function OMRSheetPage() {
   const nav = useNavigate()
@@ -69,7 +70,10 @@ export default function OMRSheetPage() {
   const archiveOMRTemplate = useExamStore((s) => s.archiveOMRTemplate)
   const restoreOMRTemplate = useExamStore((s) => s.restoreOMRTemplate)
 
-  // ── Filter State ──
+  // ── Wizard State ──
+  const [currentStep, setCurrentStep] = useState<WizardStep>(1)
+
+  // ── Step 1: Exam Selection ──
   const [selectedExamId, setSelectedExamId] = useState(examConfigs[0]?.id || '')
   const [selectedClassId, setSelectedClassId] = useState(classes[0]?.id || '')
   const [selectedSubjectId, setSelectedSubjectId] = useState('')
@@ -81,30 +85,45 @@ export default function OMRSheetPage() {
   const [themeColor, setThemeColor] = useState('#d81b60')
   const [totalCopy, setTotalCopy] = useState(1)
   const [serialNumber, setSerialNumber] = useState('5853')
-
-  // ── Content Controls ──
-  const [showRollNo, setShowRollNo] = useState(true)
-  const [showRegistrationNo, setShowRegistrationNo] = useState(true)
-  const [showSetCode, setShowSetCode] = useState(true)
-  const [showSubjects, setShowSubjects] = useState(true)
-  const [showSubjectCode, setShowSubjectCode] = useState(true)
-  const [showQRCode, setShowQRCode] = useState(true)
-  const [showBarcode, setShowBarcode] = useState(false)
-  const [showStudentPhoto, setShowStudentPhoto] = useState(false)
-  const [showStudentSignature, setShowStudentSignature] = useState(true)
-  const [showExaminerSection, setShowExaminerSection] = useState(true)
-  const [showAdditionalPaper, setShowAdditionalPaper] = useState(true)
-  const [showInstructions, setShowInstructions] = useState(true)
-
-  // ── Sheet Language Version ──
   const [sheetLanguage, setSheetLanguage] = useState<'bn' | 'en'>(isBn ? 'bn' : 'en')
 
-  // ── PDF Confirm Dialog ──
-  const [showPdfConfirm, setShowPdfConfirm] = useState(false)
-  const [pdfCopyCount, setPdfCopyCount] = useState(1)
+  // ── Step 2: Field Selection ──
+  const [showStudentName, setShowStudentName] = useState(true)
+  const [showRollNo, setShowRollNo] = useState(true)
+  const [showStudentId, setShowStudentId] = useState(true)
+  const [showRegistrationNo, setShowRegistrationNo] = useState(true)
+  const [showClass, setShowClass] = useState(false)
+  const [showSection, setShowSection] = useState(false)
+  const [showGroup, setShowGroup] = useState(false)
+  const [showExamName, setShowExamName] = useState(false)
+  const [showSubjectName, setShowSubjectName] = useState(true)
+  const [showSubjectCode, setShowSubjectCode] = useState(false)
+  const [showSetCode, setShowSetCode] = useState(true)
+  const [showDate, setShowDate] = useState(true)
+  const [showStudentSignature, setShowStudentSignature] = useState(true)
+  const [showStudentPhoto, setShowStudentPhoto] = useState(false)
+  const [showQRCode, setShowQRCode] = useState(true)
+  const [showBarcode, setShowBarcode] = useState(false)
+  const [showSerialNumber, setShowSerialNumber] = useState(true)
+  const [showSecurityCode, setShowSecurityCode] = useState(false)
+  const [showTeacherCode, setShowTeacherCode] = useState(false)
+  const [showRoomNumber, setShowRoomNumber] = useState(false)
+  const [showSeatNumber, setShowSeatNumber] = useState(false)
+  const [showAdditionalPaper, setShowAdditionalPaper] = useState(true)
+  const [showPresentAbsent, setShowPresentAbsent] = useState(false)
 
-  // ── Bulk Generation ──
-  const [bulkMode, setBulkMode] = useState<'single' | 'multiple' | 'class' | 'exam'>('single')
+  // ── Step 3: Examiner Config ──
+  const [showExaminerSection, setShowExaminerSection] = useState(true)
+  const [marksEntryStyle, setMarksEntryStyle] = useState<'abcd' | 'bn' | 'numbers' | 'custom'>('abcd')
+  const [customMarksValues, setCustomMarksValues] = useState('')
+  const [showExaminerSignature, setShowExaminerSignature] = useState(true)
+  const [showHeadExaminerSignature, setShowHeadExaminerSignature] = useState(false)
+  const [showCheckedBy, setShowCheckedBy] = useState(true)
+  const [showVerifiedBy, setShowVerifiedBy] = useState(true)
+  const [showTotalMarks, setShowTotalMarks] = useState(true)
+  const [showPracticalMarks, setShowPracticalMarks] = useState(false)
+  const [showVivaMarks, setShowVivaMarks] = useState(false)
+  const [showInstructions, setShowInstructions] = useState(true)
 
   // ── Question Settings ──
   const [totalQuestions, setTotalQuestions] = useState(40)
@@ -124,13 +143,8 @@ export default function OMRSheetPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [zoom, setZoom] = useState(100)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [openSections, setOpenSections] = useState<Record<Section, boolean>>({
-    filters: true,
-    content: true,
-    bulk: false,
-    templates: false,
-    preview: true,
-  })
+  const [showPdfConfirm, setShowPdfConfirm] = useState(false)
+  const [pdfCopyCount, setPdfCopyCount] = useState(1)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   // ── Derived Data ──
@@ -143,12 +157,12 @@ export default function OMRSheetPage() {
   }, [selectedExamId, selectedClassId, subjectMarkConfigs, subjects])
 
   const activeSubjects = useMemo(() => {
-    if (bulkMode === 'single' && selectedSubjectId) {
+    if (selectedSubjectId) {
       const sub = examSubjects.find((s) => s.id === selectedSubjectId)
       return sub ? [sub] : []
     }
     return examSubjects
-  }, [bulkMode, selectedSubjectId, examSubjects])
+  }, [selectedSubjectId, examSubjects])
 
   const activeTemplates = useMemo(() => omrTemplates.filter((t) => !t.isArchived), [omrTemplates])
   const archivedTemplates = useMemo(() => omrTemplates.filter((t) => t.isArchived), [omrTemplates])
@@ -162,6 +176,9 @@ export default function OMRSheetPage() {
       subjectNameBn: activeSubjects[0]?.nameBn || '',
       className: className || '',
       classNameBn: classNameBn || className || '',
+      groupName: '',
+      groupNameBn: '',
+      sectionName: '',
       sessionName,
       totalQuestions,
       optionCount,
@@ -173,17 +190,39 @@ export default function OMRSheetPage() {
       institutionName: institution.name || 'EduTech School',
       institutionNameBn: institution.nameBn || 'এডুটেক স্কুল',
       institutionAddress: institution.address || '',
+      showStudentName,
       showRollNo,
+      showStudentId,
       showRegistrationNo,
-      showSetCode,
-      showSubjects,
+      showClass,
+      showSection,
+      showGroup,
+      showExamName,
+      showSubjectName,
       showSubjectCode,
+      showSetCode,
+      showDate,
+      showStudentSignature,
+      showStudentPhoto,
       showQRCode,
       showBarcode,
-      showStudentPhoto,
-      showStudentSignature,
-      showExaminerSection,
+      showSerialNumber,
+      showSecurityCode,
+      showTeacherCode,
+      showRoomNumber,
+      showSeatNumber,
       showAdditionalPaper,
+      showPresentAbsent,
+      showExaminerSection,
+      marksEntryStyle,
+      customMarksValues,
+      showExaminerSignature,
+      showHeadExaminerSignature,
+      showCheckedBy,
+      showVerifiedBy,
+      showTotalMarks,
+      showPracticalMarks,
+      showVivaMarks,
       showInstructions,
       subjects: activeSubjects,
     }),
@@ -201,17 +240,39 @@ export default function OMRSheetPage() {
       themeColor,
       serialNumber,
       institution,
+      showStudentName,
       showRollNo,
+      showStudentId,
       showRegistrationNo,
-      showSetCode,
-      showSubjects,
+      showClass,
+      showSection,
+      showGroup,
+      showExamName,
+      showSubjectName,
       showSubjectCode,
+      showSetCode,
+      showDate,
+      showStudentSignature,
+      showStudentPhoto,
       showQRCode,
       showBarcode,
-      showStudentPhoto,
-      showStudentSignature,
-      showExaminerSection,
+      showSerialNumber,
+      showSecurityCode,
+      showTeacherCode,
+      showRoomNumber,
+      showSeatNumber,
       showAdditionalPaper,
+      showPresentAbsent,
+      showExaminerSection,
+      marksEntryStyle,
+      customMarksValues,
+      showExaminerSignature,
+      showHeadExaminerSignature,
+      showCheckedBy,
+      showVerifiedBy,
+      showTotalMarks,
+      showPracticalMarks,
+      showVivaMarks,
       showInstructions,
       activeSubjects,
       selectedExam,
@@ -298,6 +359,7 @@ export default function OMRSheetPage() {
         subjectId: selectedSubjectId,
         totalCopy,
         isArchived: false,
+        isDefault: false,
         modifiedBy: 'Admin',
       })
       showNotify('success', isBn ? 'টেমপ্লেট সংরক্ষিত হয়েছে' : 'Template saved')
@@ -325,17 +387,39 @@ export default function OMRSheetPage() {
     setCorrectMark(tpl.correctMark)
     setNegativeMark(tpl.negativeMark)
     setTotalCopy(tpl.totalCopy)
+    setShowStudentName(tpl.showStudentName)
     setShowRollNo(tpl.showRollNo)
+    setShowStudentId(tpl.showStudentId)
     setShowRegistrationNo(tpl.showRegistrationNo)
-    setShowSetCode(tpl.showSetCode)
-    setShowSubjects(tpl.showSubjects)
+    setShowClass(tpl.showClass)
+    setShowSection(tpl.showSection)
+    setShowGroup(tpl.showGroup)
+    setShowExamName(tpl.showExamName)
+    setShowSubjectName(tpl.showSubjectName)
     setShowSubjectCode(tpl.showSubjectCode)
+    setShowSetCode(tpl.showSetCode)
+    setShowDate(tpl.showDate)
+    setShowStudentSignature(tpl.showStudentSignature)
+    setShowStudentPhoto(tpl.showStudentPhoto)
     setShowQRCode(tpl.showQRCode)
     setShowBarcode(tpl.showBarcode)
-    setShowStudentPhoto(tpl.showStudentPhoto)
-    setShowStudentSignature(tpl.showStudentSignature)
-    setShowExaminerSection(tpl.showExaminerSection)
+    setShowSerialNumber(tpl.showSerialNumber)
+    setShowSecurityCode(tpl.showSecurityCode)
+    setShowTeacherCode(tpl.showTeacherCode)
+    setShowRoomNumber(tpl.showRoomNumber)
+    setShowSeatNumber(tpl.showSeatNumber)
     setShowAdditionalPaper(tpl.showAdditionalPaper)
+    setShowPresentAbsent(tpl.showPresentAbsent)
+    setShowExaminerSection(tpl.showExaminerSection)
+    setMarksEntryStyle(tpl.marksEntryStyle)
+    setCustomMarksValues(tpl.customMarksValues)
+    setShowExaminerSignature(tpl.showExaminerSignature)
+    setShowHeadExaminerSignature(tpl.showHeadExaminerSignature)
+    setShowCheckedBy(tpl.showCheckedBy)
+    setShowVerifiedBy(tpl.showVerifiedBy)
+    setShowTotalMarks(tpl.showTotalMarks)
+    setShowPracticalMarks(tpl.showPracticalMarks)
+    setShowVivaMarks(tpl.showVivaMarks)
     setShowInstructions(tpl.showInstructions)
     showNotify('success', isBn ? 'টেমপ্লেট লোড হয়েছে' : 'Template loaded')
   }
@@ -359,23 +443,43 @@ export default function OMRSheetPage() {
     setCorrectMark(1)
     setNegativeMark(0.25)
     setTotalCopy(1)
+    setShowStudentName(true)
     setShowRollNo(true)
+    setShowStudentId(true)
     setShowRegistrationNo(true)
+    setShowClass(false)
+    setShowSection(false)
+    setShowGroup(false)
+    setShowExamName(false)
+    setShowSubjectName(true)
+    setShowSubjectCode(false)
     setShowSetCode(true)
-    setShowSubjects(true)
-    setShowSubjectCode(true)
+    setShowDate(true)
+    setShowStudentSignature(true)
+    setShowStudentPhoto(false)
     setShowQRCode(true)
     setShowBarcode(false)
-    setShowStudentPhoto(false)
-    setShowStudentSignature(true)
-    setShowExaminerSection(true)
+    setShowSerialNumber(true)
+    setShowSecurityCode(false)
+    setShowTeacherCode(false)
+    setShowRoomNumber(false)
+    setShowSeatNumber(false)
     setShowAdditionalPaper(true)
+    setShowPresentAbsent(false)
+    setShowExaminerSection(true)
+    setMarksEntryStyle('abcd')
+    setCustomMarksValues('')
+    setShowExaminerSignature(true)
+    setShowHeadExaminerSignature(false)
+    setShowCheckedBy(true)
+    setShowVerifiedBy(true)
+    setShowTotalMarks(true)
+    setShowPracticalMarks(false)
+    setShowVivaMarks(false)
     setShowInstructions(true)
-    setBulkMode('single')
+    setCurrentStep(1)
     showNotify('success', isBn ? 'রিসেট সম্পন্ন' : 'Reset complete')
   }
-
-  const toggleSection = (s: Section) => setOpenSections((p) => ({ ...p, [s]: !p[s] }))
 
   // ── Style Helpers ──
   const inputCls =
@@ -383,7 +487,6 @@ export default function OMRSheetPage() {
   const selectCls = `${inputCls} cursor-pointer`
   const labelCls = 'text-[10px] font-medium text-[var(--text-secondary)] mb-1 block'
   const cardCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden'
-  const sectionHeaderCls = 'flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors'
   const toggle = (checked: boolean, onChange: (v: boolean) => void) => (
     <button
       onClick={() => onChange(!checked)}
@@ -459,28 +562,69 @@ export default function OMRSheetPage() {
 
       <div className="max-w-[1800px] mx-auto px-4 py-3">
         <div className={`grid gap-4 ${isFullscreen ? '' : 'grid-cols-[380px_1fr]'}`}>
-          {/* ═══ CONFIGURATION PANEL ═══ */}
+          {/* ═══ WIZARD PANEL ═══ */}
           {!isFullscreen && (
             <div className="flex flex-col gap-3 max-h-[calc(100vh-80px)] overflow-y-auto pr-1">
-              {/* ── Filters Section ── */}
-              <div className={cardCls}>
-                <div className={sectionHeaderCls} onClick={() => toggleSection('filters')}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-[var(--brand-light)] flex items-center justify-center">
-                      <Settings2 size={13} className="text-[var(--brand)]" />
+              {/* ── Step Indicator ── */}
+              <div className={`${cardCls} px-4 py-3`}>
+                <div className="flex items-center gap-1">
+                  {WIZARD_STEPS.map((step, idx) => (
+                    <div key={step.key} className="flex items-center flex-1">
+                      <button
+                        onClick={() => setCurrentStep(step.num as WizardStep)}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold cursor-pointer transition-all ${
+                          currentStep === step.num
+                            ? 'bg-[var(--brand)] text-white'
+                            : currentStep > step.num
+                              ? 'bg-[var(--green-light)] text-[var(--green)]'
+                              : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'
+                        }`}
+                      >
+                        {currentStep > step.num ? (
+                          <CheckCircle2 size={11} />
+                        ) : (
+                          <span className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold border border-current">
+                            {step.num}
+                          </span>
+                        )}
+                        <span className="hidden sm:inline">
+                          {step.key === 'exam'
+                            ? isBn
+                              ? 'পরীক্ষা'
+                              : 'Exam'
+                            : step.key === 'fields'
+                              ? isBn
+                                ? 'ফিল্ড'
+                                : 'Fields'
+                              : step.key === 'examiner'
+                                ? isBn
+                                  ? 'পরীক্ষক'
+                                  : 'Examiner'
+                                : isBn
+                                  ? 'জেনারেট'
+                                  : 'Generate'}
+                        </span>
+                      </button>
+                      {idx < WIZARD_STEPS.length - 1 && <div className="flex-1 h-px bg-[var(--border)] mx-1" />}
                     </div>
-                    <span className="text-[12px] font-semibold text-[var(--text-primary)]">
-                      {isBn ? 'ফিল্টার ও সেটিংস' : 'Filters & Settings'}
-                    </span>
-                  </div>
-                  {openSections.filters ? (
-                    <ChevronDown size={14} className="text-[var(--text-muted)]" />
-                  ) : (
-                    <ChevronRight size={14} className="text-[var(--text-muted)]" />
-                  )}
+                  ))}
                 </div>
-                {openSections.filters && (
-                  <div className="px-4 pb-4 space-y-3">
+              </div>
+
+              {/* ═══ STEP 1: Exam & Institution ═══ */}
+              {currentStep === 1 && (
+                <div className={cardCls}>
+                  <div className="px-4 py-3 bg-[var(--brand-light)] border-b border-[var(--border)]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-[var(--brand)] flex items-center justify-center">
+                        <GraduationCap size={13} className="text-white" />
+                      </div>
+                      <span className="text-[12px] font-semibold text-[var(--text-primary)]">
+                        {isBn ? 'ধাপ ১: পরীক্ষা ও প্রতিষ্ঠান' : 'Step 1: Exam & Institution'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="px-4 pb-4 space-y-3 pt-3">
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className={labelCls}>{isBn ? 'একাডেমিক সেশন' : 'Academic Session'}</label>
@@ -602,29 +746,43 @@ export default function OMRSheetPage() {
                         <input value={examName} onChange={(e) => setExamName(e.target.value)} className={`${inputCls} w-full`} />
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              {/* ── Content Controls ── */}
-              <div className={cardCls}>
-                <div className={sectionHeaderCls} onClick={() => toggleSection('content')}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-[var(--teal-light)] flex items-center justify-center">
-                      <Layers size={13} className="text-[var(--teal)]" />
+                    <div className="p-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
+                      <div className="text-[10px] text-[var(--text-muted)]">
+                        {isBn ? 'উত্পাদন:' : 'Output:'}{' '}
+                        <span className="font-semibold text-[var(--text-primary)]">
+                          {activeSubjects.length > 0 ? activeSubjects.length : 1} {isBn ? 'পৃষ্ঠা' : 'page(s)'}
+                        </span>{' '}
+                        × {totalCopy} {isBn ? 'কপি' : 'copies'} ={' '}
+                        <span className="font-bold text-[var(--brand)]">
+                          {(activeSubjects.length > 0 ? activeSubjects.length : 1) * totalCopy}
+                        </span>{' '}
+                        {isBn ? 'শিট' : 'sheets'}
+                      </div>
                     </div>
-                    <span className="text-[12px] font-semibold text-[var(--text-primary)]">
-                      {isBn ? 'কন্টেন্ট কন্ট্রোল' : 'Content Controls'}
-                    </span>
+                    <button
+                      onClick={() => setCurrentStep(2)}
+                      className="w-full px-3 py-2 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer hover:shadow-md transition-all flex items-center justify-center gap-1"
+                    >
+                      {isBn ? 'পরবর্তী ধাপ' : 'Next Step'} <ChevronRight size={14} />
+                    </button>
                   </div>
-                  {openSections.content ? (
-                    <ChevronDown size={14} className="text-[var(--text-muted)]" />
-                  ) : (
-                    <ChevronRight size={14} className="text-[var(--text-muted)]" />
-                  )}
                 </div>
-                {openSections.content && (
-                  <div className="px-4 pb-4 space-y-3">
+              )}
+
+              {/* ═══ STEP 2: Field Selection ═══ */}
+              {currentStep === 2 && (
+                <div className={cardCls}>
+                  <div className="px-4 py-3 bg-[var(--teal-light)] border-b border-[var(--border)]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-[var(--teal)] flex items-center justify-center">
+                        <Layers size={13} className="text-white" />
+                      </div>
+                      <span className="text-[12px] font-semibold text-[var(--text-primary)]">
+                        {isBn ? 'ধাপ ২: ফিল্ড নির্বাচন' : 'Step 2: Field Selection'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="px-4 pb-4 space-y-3 pt-3">
                     {/* Question Settings */}
                     <div>
                       <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
@@ -694,327 +852,462 @@ export default function OMRSheetPage() {
                         ))}
                       </div>
                     </div>
-                    {/* Toggles */}
+                    {/* Student Info */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-                          {isBn ? 'উপাদান দৃশ্যমানতা' : 'Element Visibility'}
+                        <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1">
+                          <User size={11} /> {isBn ? 'শিক্ষার্থীর তথ্য' : 'Student Info'}
                         </div>
                         <button
                           onClick={() => {
-                            const v = !showRollNo
+                            const v = !showStudentName
+                            setShowStudentName(v)
                             setShowRollNo(v)
+                            setShowStudentId(v)
                             setShowRegistrationNo(v)
-                            setShowSetCode(v)
-                            setShowSubjects(v)
+                            setShowClass(v)
+                            setShowSection(v)
+                            setShowGroup(v)
+                            setShowExamName(v)
+                            setShowSubjectName(v)
                             setShowSubjectCode(v)
-                            setShowQRCode(v)
-                            setShowBarcode(v)
-                            setShowStudentPhoto(v)
+                            setShowSetCode(v)
+                            setShowDate(v)
                             setShowStudentSignature(v)
-                            setShowExaminerSection(v)
-                            setShowAdditionalPaper(v)
-                            setShowInstructions(v)
+                            setShowStudentPhoto(v)
                           }}
                           className="text-[9px] text-[var(--brand)] font-medium cursor-pointer hover:underline"
                         >
-                          {isBn ? 'সব টগল করুন' : 'Toggle All'}
+                          {isBn ? 'সব টগল' : 'Toggle All'}
                         </button>
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1">
                         {[
-                          { label: isBn ? 'রোল নম্বর' : 'Roll Number', icon: Hash, val: showRollNo, set: setShowRollNo },
-                          {
-                            label: isBn ? 'রেজিস্ট্রেশন নম্বর' : 'Registration No',
-                            icon: Hash,
-                            val: showRegistrationNo,
-                            set: setShowRegistrationNo,
-                          },
-                          { label: isBn ? 'সেট কোড' : 'Set Code', icon: BookOpen, val: showSetCode, set: setShowSetCode },
-                          { label: isBn ? 'বিষয় তালিকা' : 'Subject List', icon: ListChecks, val: showSubjects, set: setShowSubjects },
-                          { label: isBn ? 'বিষয় কোড' : 'Subject Code', icon: BookOpen, val: showSubjectCode, set: setShowSubjectCode },
-                          { label: isBn ? 'QR কোড' : 'QR Code', icon: ScanLine, val: showQRCode, set: setShowQRCode },
-                          { label: isBn ? 'বারকোড' : 'Barcode', icon: BarChart2, val: showBarcode, set: setShowBarcode },
-                          {
-                            label: isBn ? 'শিক্ষার্থীর ছবি' : 'Student Photo',
-                            icon: Camera,
-                            val: showStudentPhoto,
-                            set: setShowStudentPhoto,
-                          },
-                          {
-                            label: isBn ? 'শিক্ষার্থীর স্বাক্ষর' : 'Student Signature',
-                            icon: PenTool,
-                            val: showStudentSignature,
-                            set: setShowStudentSignature,
-                          },
-                          {
-                            label: isBn ? 'পরীক্ষকের অংশ' : 'Examiner Section',
-                            icon: FileCheck,
-                            val: showExaminerSection,
-                            set: setShowExaminerSection,
-                          },
-                          {
-                            label: isBn ? 'অতিরিক্ত উত্তর পত্র' : 'Additional Papers',
-                            icon: FileText,
-                            val: showAdditionalPaper,
-                            set: setShowAdditionalPaper,
-                          },
-                          { label: isBn ? 'নির্দেশনা' : 'Instructions', icon: Info, val: showInstructions, set: setShowInstructions },
+                          { label: isBn ? 'শিক্ষার্থীর নাম' : 'Student Name', val: showStudentName, set: setShowStudentName },
+                          { label: isBn ? 'রোল নম্বর' : 'Roll Number', val: showRollNo, set: setShowRollNo },
+                          { label: isBn ? 'শিক্ষার্থী আইডি' : 'Student ID', val: showStudentId, set: setShowStudentId },
+                          { label: isBn ? 'রেজিস্ট্রেশন' : 'Registration', val: showRegistrationNo, set: setShowRegistrationNo },
+                          { label: isBn ? 'শ্রেণি' : 'Class', val: showClass, set: setShowClass },
+                          { label: isBn ? 'শাখা' : 'Section', val: showSection, set: setShowSection },
+                          { label: isBn ? 'গ্রুপ' : 'Group', val: showGroup, set: setShowGroup },
+                          { label: isBn ? 'পরীক্ষার নাম' : 'Exam Name', val: showExamName, set: setShowExamName },
+                          { label: isBn ? 'বিষয়ের নাম' : 'Subject Name', val: showSubjectName, set: setShowSubjectName },
+                          { label: isBn ? 'বিষয় কোড' : 'Subject Code', val: showSubjectCode, set: setShowSubjectCode },
+                          { label: isBn ? 'সেট কোড' : 'Set Code', val: showSetCode, set: setShowSetCode },
+                          { label: isBn ? 'তারিখ' : 'Date', val: showDate, set: setShowDate },
+                          { label: isBn ? 'স্বাক্ষর' : 'Signature', val: showStudentSignature, set: setShowStudentSignature },
+                          { label: isBn ? 'ছবি' : 'Photo', val: showStudentPhoto, set: setShowStudentPhoto },
                         ].map((item) => (
                           <div
                             key={item.label}
                             className="flex items-center justify-between py-1 px-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors"
                           >
-                            <div className="flex items-center gap-2">
-                              <item.icon size={12} className="text-[var(--text-muted)]" />
-                              <span className="text-[11px] text-[var(--text-primary)]">{item.label}</span>
-                            </div>
+                            <span className="text-[11px] text-[var(--text-primary)]">{item.label}</span>
                             {toggle(item.val, item.set)}
                           </div>
                         ))}
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              {/* ── Bulk Generation ── */}
-              <div className={cardCls}>
-                <div className={sectionHeaderCls} onClick={() => toggleSection('bulk')}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-[var(--amber-light)] flex items-center justify-center">
-                      <Layers size={13} className="text-[var(--amber)]" />
-                    </div>
-                    <span className="text-[12px] font-semibold text-[var(--text-primary)]">
-                      {isBn ? 'বাল্ক জেনারেশন' : 'Bulk Generation'}
-                    </span>
-                  </div>
-                  {openSections.bulk ? (
-                    <ChevronDown size={14} className="text-[var(--text-muted)]" />
-                  ) : (
-                    <ChevronRight size={14} className="text-[var(--text-muted)]" />
-                  )}
-                </div>
-                {openSections.bulk && (
-                  <div className="px-4 pb-4 space-y-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        {
-                          key: 'single' as const,
-                          label: isBn ? 'একক বিষয়' : 'Single Subject',
-                          desc: isBn ? 'একটি বিষয়ের OMR' : 'One subject OMR',
-                        },
-                        {
-                          key: 'multiple' as const,
-                          label: isBn ? 'একাধিক বিষয়' : 'Multiple Subjects',
-                          desc: isBn ? 'সব বিষয়ের OMR' : 'All subjects OMR',
-                        },
-                        {
-                          key: 'class' as const,
-                          label: isBn ? 'সম্পূর্ণ শ্রেণি' : 'Entire Class',
-                          desc: isBn ? 'শ্রেণির সব বিষয়' : 'All class subjects',
-                        },
-                        {
-                          key: 'exam' as const,
-                          label: isBn ? 'সম্পূর্ণ পরীক্ষা' : 'Entire Exam',
-                          desc: isBn ? 'পরীক্ষার সব শ্রেণি' : 'All exam classes',
-                        },
-                      ].map((mode) => (
-                        <button
-                          key={mode.key}
-                          onClick={() => setBulkMode(mode.key)}
-                          className={`p-2 rounded-lg border text-left cursor-pointer transition-all ${bulkMode === mode.key ? 'border-[var(--brand)] bg-[var(--brand-light)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/50'}`}
-                        >
-                          <div className="text-[11px] font-semibold text-[var(--text-primary)]">{mode.label}</div>
-                          <div className="text-[9px] text-[var(--text-muted)]">{mode.desc}</div>
-                        </button>
-                      ))}
-                    </div>
-                    <div className="p-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-                      <div className="text-[10px] text-[var(--text-muted)]">
-                        {isBn ? 'উত্পাদন:' : 'Output:'}{' '}
-                        <span className="font-semibold text-[var(--text-primary)]">
-                          {bulkMode === 'single'
-                            ? `1 ${isBn ? 'পৃষ্ঠা' : 'page'}`
-                            : bulkMode === 'multiple'
-                              ? `${activeSubjects.length} ${isBn ? 'পৃষ্ঠা' : 'pages'}`
-                              : bulkMode === 'class'
-                                ? `${activeSubjects.length} ${isBn ? 'বিষয়' : 'subjects'}`
-                                : `${examConfigs.length * activeSubjects.length} ${isBn ? 'পৃষ্ঠা' : 'pages'}`}
-                        </span>{' '}
-                        × {totalCopy} {isBn ? 'কপি' : 'copies'} ={' '}
-                        <span className="font-bold text-[var(--brand)]">
-                          {bulkMode === 'single'
-                            ? totalCopy
-                            : bulkMode === 'multiple'
-                              ? activeSubjects.length * totalCopy
-                              : bulkMode === 'class'
-                                ? activeSubjects.length * totalCopy
-                                : examConfigs.length * activeSubjects.length * totalCopy}
-                        </span>{' '}
-                        {isBn ? 'শিট' : 'sheets'}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* ── Template Management ── */}
-              <div className={cardCls}>
-                <div className={sectionHeaderCls} onClick={() => toggleSection('templates')}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-[var(--purple-light)] flex items-center justify-center">
-                      <Save size={13} className="text-[var(--purple)]" />
-                    </div>
-                    <span className="text-[12px] font-semibold text-[var(--text-primary)]">
-                      {isBn ? 'টেমপ্লেট ম্যানেজমেন্ট' : 'Template Management'}
-                    </span>
-                  </div>
-                  {openSections.templates ? (
-                    <ChevronDown size={14} className="text-[var(--text-muted)]" />
-                  ) : (
-                    <ChevronRight size={14} className="text-[var(--text-muted)]" />
-                  )}
-                </div>
-                {openSections.templates && (
-                  <div className="px-4 pb-4 space-y-3">
-                    {/* Save / Update */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setShowSaveDialog(true)}
-                        className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer hover:shadow-md transition-all flex items-center justify-center gap-1"
-                      >
-                        <Save size={12} /> {activeTemplateId ? (isBn ? 'আপডেট' : 'Update') : isBn ? 'সংরক্ষণ' : 'Save'}
-                      </button>
-                      {activeTemplateId && (
+                    {/* Identification */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1">
+                          <ScanLine size={11} /> {isBn ? 'শনাক্তকরণ' : 'Identification'}
+                        </div>
                         <button
                           onClick={() => {
-                            setActiveTemplateId(null)
-                            setTemplateName('')
+                            const v = !showQRCode
+                            setShowQRCode(v)
+                            setShowBarcode(v)
+                            setShowSerialNumber(v)
+                            setShowSecurityCode(v)
                           }}
-                          className="px-3 py-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] text-[11px] cursor-pointer hover:text-[var(--text-primary)]"
+                          className="text-[9px] text-[var(--brand)] font-medium cursor-pointer hover:underline"
                         >
-                          {isBn ? 'নতুন' : 'New'}
+                          {isBn ? 'সব টগল' : 'Toggle All'}
                         </button>
+                      </div>
+                      <div className="space-y-1">
+                        {[
+                          { label: isBn ? 'QR কোড' : 'QR Code', val: showQRCode, set: setShowQRCode },
+                          { label: isBn ? 'বারকোড' : 'Barcode', val: showBarcode, set: setShowBarcode },
+                          { label: isBn ? 'সিরিয়াল নম্বর' : 'Serial Number', val: showSerialNumber, set: setShowSerialNumber },
+                          { label: isBn ? 'সিকিউরিটি কোড' : 'Security Code', val: showSecurityCode, set: setShowSecurityCode },
+                        ].map((item) => (
+                          <div
+                            key={item.label}
+                            className="flex items-center justify-between py-1 px-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors"
+                          >
+                            <span className="text-[11px] text-[var(--text-primary)]">{item.label}</span>
+                            {toggle(item.val, item.set)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Examination */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1">
+                          <FileCheck size={11} /> {isBn ? 'পরীক্ষা' : 'Examination'}
+                        </div>
+                        <button
+                          onClick={() => {
+                            const v = !showTeacherCode
+                            setShowTeacherCode(v)
+                            setShowRoomNumber(v)
+                            setShowSeatNumber(v)
+                            setShowAdditionalPaper(v)
+                            setShowPresentAbsent(v)
+                          }}
+                          className="text-[9px] text-[var(--brand)] font-medium cursor-pointer hover:underline"
+                        >
+                          {isBn ? 'সব টগল' : 'Toggle All'}
+                        </button>
+                      </div>
+                      <div className="space-y-1">
+                        {[
+                          { label: isBn ? 'শিক্ষক কোড' : 'Teacher Code', val: showTeacherCode, set: setShowTeacherCode },
+                          { label: isBn ? 'রুম নম্বর' : 'Room Number', val: showRoomNumber, set: setShowRoomNumber },
+                          { label: isBn ? 'সিট নম্বর' : 'Seat Number', val: showSeatNumber, set: setShowSeatNumber },
+                          { label: isBn ? 'অতিরিক্ত পত্র' : 'Additional Paper', val: showAdditionalPaper, set: setShowAdditionalPaper },
+                          { label: isBn ? 'উপস্থিতি' : 'Present/Absent', val: showPresentAbsent, set: setShowPresentAbsent },
+                        ].map((item) => (
+                          <div
+                            key={item.label}
+                            className="flex items-center justify-between py-1 px-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors"
+                          >
+                            <span className="text-[11px] text-[var(--text-primary)]">{item.label}</span>
+                            {toggle(item.val, item.set)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setCurrentStep(1)}
+                        className="flex-1 px-3 py-2 rounded-lg border border-[var(--border)] text-[11px] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all"
+                      >
+                        {isBn ? 'আগের ধাপ' : 'Previous'}
+                      </button>
+                      <button
+                        onClick={() => setCurrentStep(3)}
+                        className="flex-1 px-3 py-2 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer hover:shadow-md transition-all flex items-center justify-center gap-1"
+                      >
+                        {isBn ? 'পরবর্তী ধাপ' : 'Next Step'} <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ STEP 3: Examiner Config ═══ */}
+              {currentStep === 3 && (
+                <div className={cardCls}>
+                  <div className="px-4 py-3 bg-[var(--amber-light)] border-b border-[var(--border)]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-[var(--amber)] flex items-center justify-center">
+                        <Stamp size={13} className="text-white" />
+                      </div>
+                      <span className="text-[12px] font-semibold text-[var(--text-primary)]">
+                        {isBn ? 'ধাপ ৩: পরীক্ষক কনফিগ' : 'Step 3: Examiner Config'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="px-4 pb-4 space-y-3 pt-3">
+                    {/* Marks Entry Style */}
+                    <div>
+                      <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+                        {isBn ? 'উত্তর প্রবেশ ধরন' : 'Marks Entry Style'}
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {[
+                          { key: 'abcd' as const, label: isBn ? 'ক,খ,গ,ঘ' : 'A,B,C,D' },
+                          { key: 'bn' as const, label: isBn ? 'ক-ঙ (৫)' : 'ক-ঙ (5)' },
+                          { key: 'numbers' as const, label: isBn ? 'সংখ্যা' : 'Numbers' },
+                          { key: 'custom' as const, label: isBn ? 'কাস্টম' : 'Custom' },
+                        ].map((style) => (
+                          <button
+                            key={style.key}
+                            onClick={() => setMarksEntryStyle(style.key)}
+                            className={`py-1.5 rounded-lg text-[10px] font-semibold border cursor-pointer transition-all ${
+                              marksEntryStyle === style.key
+                                ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
+                                : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--brand)]/50'
+                            }`}
+                          >
+                            {style.label}
+                          </button>
+                        ))}
+                      </div>
+                      {marksEntryStyle === 'custom' && (
+                        <div className="mt-2">
+                          <label className={labelCls}>{isBn ? 'কাস্টম মান (কমা দিয়ে আলাদা)' : 'Custom values (comma separated)'}</label>
+                          <input
+                            value={customMarksValues}
+                            onChange={(e) => setCustomMarksValues(e.target.value)}
+                            placeholder="e.g. 1,2,3,4,5"
+                            className={`${inputCls} w-full`}
+                          />
+                        </div>
                       )}
                     </div>
+                    {/* Examiner Visibility */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1">
+                          <PenTool size={11} /> {isBn ? 'পরীক্ষক অংশ' : 'Examiner Section'}
+                        </div>
+                        <button
+                          onClick={() => {
+                            const v = !showExaminerSection
+                            setShowExaminerSection(v)
+                            setShowExaminerSignature(v)
+                            setShowHeadExaminerSignature(v)
+                            setShowCheckedBy(v)
+                            setShowVerifiedBy(v)
+                            setShowTotalMarks(v)
+                            setShowPracticalMarks(v)
+                            setShowVivaMarks(v)
+                          }}
+                          className="text-[9px] text-[var(--brand)] font-medium cursor-pointer hover:underline"
+                        >
+                          {isBn ? 'সব টগল' : 'Toggle All'}
+                        </button>
+                      </div>
+                      <div className="space-y-1">
+                        {[
+                          { label: isBn ? 'পরীক্ষক অংশ' : 'Examiner Section', val: showExaminerSection, set: setShowExaminerSection },
+                          {
+                            label: isBn ? 'পরীক্ষকের স্বাক্ষর' : 'Examiner Signature',
+                            val: showExaminerSignature,
+                            set: setShowExaminerSignature,
+                          },
+                          {
+                            label: isBn ? 'প্রধান পরীক্ষকের স্বাক্ষর' : 'Head Examiner Signature',
+                            val: showHeadExaminerSignature,
+                            set: setShowHeadExaminerSignature,
+                          },
+                          { label: isBn ? 'চেক করেছেন' : 'Checked By', val: showCheckedBy, set: setShowCheckedBy },
+                          { label: isBn ? 'যাচাই করেছেন' : 'Verified By', val: showVerifiedBy, set: setShowVerifiedBy },
+                          { label: isBn ? 'মোট নম্বর' : 'Total Marks', val: showTotalMarks, set: setShowTotalMarks },
+                          { label: isBn ? 'ব্যবহারিক নম্বর' : 'Practical Marks', val: showPracticalMarks, set: setShowPracticalMarks },
+                          { label: isBn ? 'মৌখিক নম্বর' : 'Viva Marks', val: showVivaMarks, set: setShowVivaMarks },
+                          { label: isBn ? 'নির্দেশনা' : 'Instructions', val: showInstructions, set: setShowInstructions },
+                        ].map((item) => (
+                          <div
+                            key={item.label}
+                            className="flex items-center justify-between py-1 px-2 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors"
+                          >
+                            <span className="text-[11px] text-[var(--text-primary)]">{item.label}</span>
+                            {toggle(item.val, item.set)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setCurrentStep(2)}
+                        className="flex-1 px-3 py-2 rounded-lg border border-[var(--border)] text-[11px] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all"
+                      >
+                        {isBn ? 'আগের ধাপ' : 'Previous'}
+                      </button>
+                      <button
+                        onClick={() => setCurrentStep(4)}
+                        className="flex-1 px-3 py-2 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer hover:shadow-md transition-all flex items-center justify-center gap-1"
+                      >
+                        {isBn ? 'পরবর্তী ধাপ' : 'Next Step'} <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-                    {/* Save Dialog */}
-                    {showSaveDialog && (
-                      <div className="p-3 rounded-lg border border-[var(--brand)]/30 bg-[var(--brand-light)]/30 space-y-2">
-                        <input
-                          value={templateName}
-                          onChange={(e) => setTemplateName(e.target.value)}
-                          placeholder={isBn ? 'টেমপ্লেটের নাম...' : 'Template name...'}
-                          className={`${inputCls} w-full`}
-                        />
+              {/* ═══ STEP 4: Generate & Templates ═══ */}
+              {currentStep === 4 && (
+                <>
+                  {/* Quick Actions */}
+                  <div className={cardCls}>
+                    <div className="px-4 py-3 bg-[var(--green-light)] border-b border-[var(--border)]">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-md bg-[var(--green)] flex items-center justify-center">
+                          <Download size={13} className="text-white" />
+                        </div>
+                        <span className="text-[12px] font-semibold text-[var(--text-primary)]">
+                          {isBn ? 'ধাপ ৪: জেনারেট ও টেমপ্লেট' : 'Step 4: Generate & Template'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="px-4 pb-4 space-y-3 pt-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={handlePrint}
+                          className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer hover:border-[var(--brand)]/50 transition-all text-center"
+                        >
+                          <Printer size={18} className="text-[var(--brand)] mx-auto mb-1" />
+                          <div className="text-[11px] font-semibold text-[var(--text-primary)]">{isBn ? 'প্রিন্ট' : 'Print'}</div>
+                        </button>
+                        <button
+                          onClick={handleDownloadClick}
+                          className="p-3 rounded-lg border border-[var(--brand)] bg-[var(--brand-light)] cursor-pointer hover:shadow-md transition-all text-center"
+                        >
+                          <Download size={18} className="text-[var(--brand)] mx-auto mb-1" />
+                          <div className="text-[11px] font-semibold text-[var(--text-primary)]">
+                            {isBn ? 'ডাউনলোড PDF' : 'Download PDF'}
+                          </div>
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => setCurrentStep(3)}
+                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] text-[11px] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all"
+                      >
+                        {isBn ? 'আগের ধাপ' : 'Previous'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Template Management */}
+                  <div className={cardCls}>
+                    <div className="px-4 py-3">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Save size={13} className="text-[var(--purple)]" />
+                        <span className="text-[12px] font-semibold text-[var(--text-primary)]">
+                          {isBn ? 'টেমপ্লেট ম্যানেজমেন্ট' : 'Template Management'}
+                        </span>
+                      </div>
+                      <div className="space-y-2">
                         <div className="flex gap-2">
                           <button
-                            onClick={handleSaveTemplate}
-                            className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer"
+                            onClick={() => setShowSaveDialog(true)}
+                            className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer hover:shadow-md transition-all flex items-center justify-center gap-1"
                           >
-                            {isBn ? 'সংরক্ষণ' : 'Save'}
+                            <Save size={12} /> {activeTemplateId ? (isBn ? 'আপডেট' : 'Update') : isBn ? 'সংরক্ষণ' : 'Save'}
                           </button>
-                          <button
-                            onClick={() => setShowSaveDialog(false)}
-                            className="px-3 py-1.5 rounded-lg border border-[var(--border)] text-[11px] cursor-pointer"
-                          >
-                            {isBn ? 'বাতিল' : 'Cancel'}
-                          </button>
+                          {activeTemplateId && (
+                            <button
+                              onClick={() => {
+                                setActiveTemplateId(null)
+                                setTemplateName('')
+                              }}
+                              className="px-3 py-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] text-[11px] cursor-pointer hover:text-[var(--text-primary)]"
+                            >
+                              {isBn ? 'নতুন' : 'New'}
+                            </button>
+                          )}
                         </div>
+                        {showSaveDialog && (
+                          <div className="p-3 rounded-lg border border-[var(--brand)]/30 bg-[var(--brand-light)]/30 space-y-2">
+                            <input
+                              value={templateName}
+                              onChange={(e) => setTemplateName(e.target.value)}
+                              placeholder={isBn ? 'টেমপ্লেটের নাম...' : 'Template name...'}
+                              className={`${inputCls} w-full`}
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={handleSaveTemplate}
+                                className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer"
+                              >
+                                {isBn ? 'সংরক্ষণ' : 'Save'}
+                              </button>
+                              <button
+                                onClick={() => setShowSaveDialog(false)}
+                                className="px-3 py-1.5 rounded-lg border border-[var(--border)] text-[11px] cursor-pointer"
+                              >
+                                {isBn ? 'বাতিল' : 'Cancel'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
-
-                    {/* Template List */}
-                    {activeTemplates.length > 0 && (
-                      <div className="space-y-1.5">
-                        <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-                          {isBn ? 'সংরক্ষিত টেমপ্লেট' : 'Saved Templates'}
-                        </div>
-                        {activeTemplates.map((tpl) => (
-                          <div
-                            key={tpl.id}
-                            className={`flex items-center gap-2 p-2 rounded-lg border transition-all cursor-pointer ${activeTemplateId === tpl.id ? 'border-[var(--brand)] bg-[var(--brand-light)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/50'}`}
-                            onClick={() => handleLoadTemplate(tpl)}
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="text-[11px] font-medium text-[var(--text-primary)] truncate">{tpl.name}</div>
-                              <div className="text-[9px] text-[var(--text-muted)]">
-                                v{tpl.version} • {tpl.updatedAt ? new Date(tpl.updatedAt).toLocaleDateString() : ''}
+                      {/* Template List */}
+                      {activeTemplates.length > 0 && (
+                        <div className="space-y-1.5 mt-3">
+                          <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                            {isBn ? 'সংরক্ষিত টেমপ্লেট' : 'Saved Templates'}
+                          </div>
+                          {activeTemplates.map((tpl) => (
+                            <div
+                              key={tpl.id}
+                              className={`flex items-center gap-2 p-2 rounded-lg border transition-all cursor-pointer ${activeTemplateId === tpl.id ? 'border-[var(--brand)] bg-[var(--brand-light)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/50'}`}
+                              onClick={() => handleLoadTemplate(tpl)}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[11px] font-medium text-[var(--text-primary)] truncate">{tpl.name}</div>
+                                <div className="text-[9px] text-[var(--text-muted)]">
+                                  v{tpl.version} • {tpl.updatedAt ? new Date(tpl.updatedAt).toLocaleDateString() : ''}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => {
+                                    const n = prompt(isBn ? 'নতুন নাম:' : 'New name:', tpl.name)
+                                    if (n) duplicateOMRTemplate(tpl.id, n)
+                                  }}
+                                  className="p-1 rounded hover:bg-[var(--bg-primary)]"
+                                  title={isBn ? 'ডুপ্লিকেট' : 'Duplicate'}
+                                >
+                                  <Copy size={11} className="text-[var(--text-muted)]" />
+                                </button>
+                                <button
+                                  onClick={() => archiveOMRTemplate(tpl.id)}
+                                  className="p-1 rounded hover:bg-[var(--bg-primary)]"
+                                  title={isBn ? 'আর্কাইভ' : 'Archive'}
+                                >
+                                  <Archive size={11} className="text-[var(--text-muted)]" />
+                                </button>
+                                <button
+                                  onClick={() => setShowDeleteConfirm(tpl.id)}
+                                  className="p-1 rounded hover:bg-[var(--bg-primary)]"
+                                  title={isBn ? 'মুছুন' : 'Delete'}
+                                >
+                                  <Trash2 size={11} className="text-[var(--red)]" />
+                                </button>
                               </div>
                             </div>
-                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          ))}
+                        </div>
+                      )}
+                      {/* Archived */}
+                      {archivedTemplates.length > 0 && (
+                        <div className="space-y-1.5 mt-3">
+                          <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                            {isBn ? 'আর্কাইভ' : 'Archived'}
+                          </div>
+                          {archivedTemplates.map((tpl) => (
+                            <div
+                              key={tpl.id}
+                              className="flex items-center gap-2 p-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] opacity-60"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[11px] font-medium text-[var(--text-primary)] truncate">{tpl.name}</div>
+                              </div>
                               <button
-                                onClick={() => {
-                                  const n = prompt(isBn ? 'নতুন নাম:' : 'New name:', tpl.name)
-                                  if (n) duplicateOMRTemplate(tpl.id, n)
-                                }}
+                                onClick={() => restoreOMRTemplate(tpl.id)}
                                 className="p-1 rounded hover:bg-[var(--bg-primary)]"
-                                title={isBn ? 'ডুপ্লিকেট' : 'Duplicate'}
+                                title={isBn ? 'রিস্টোর' : 'Restore'}
                               >
-                                <Copy size={11} className="text-[var(--text-muted)]" />
+                                <RotateCcw size={11} className="text-[var(--text-muted)]" />
                               </button>
                               <button
-                                onClick={() => archiveOMRTemplate(tpl.id)}
-                                className="p-1 rounded hover:bg-[var(--bg-primary)]"
-                                title={isBn ? 'আর্কাইভ' : 'Archive'}
-                              >
-                                <Archive size={11} className="text-[var(--text-muted)]" />
-                              </button>
-                              <button
-                                onClick={() => setShowDeleteConfirm(tpl.id)}
+                                onClick={() => deleteOMRTemplate(tpl.id)}
                                 className="p-1 rounded hover:bg-[var(--bg-primary)]"
                                 title={isBn ? 'মুছুন' : 'Delete'}
                               >
                                 <Trash2 size={11} className="text-[var(--red)]" />
                               </button>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Archived */}
-                    {archivedTemplates.length > 0 && (
-                      <div className="space-y-1.5">
-                        <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-                          {isBn ? 'আর্কাইভ' : 'Archived'}
+                          ))}
                         </div>
-                        {archivedTemplates.map((tpl) => (
-                          <div
-                            key={tpl.id}
-                            className="flex items-center gap-2 p-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] opacity-60"
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="text-[11px] font-medium text-[var(--text-primary)] truncate">{tpl.name}</div>
-                            </div>
-                            <button
-                              onClick={() => restoreOMRTemplate(tpl.id)}
-                              className="p-1 rounded hover:bg-[var(--bg-primary)]"
-                              title={isBn ? 'রিস্টোর' : 'Restore'}
-                            >
-                              <RotateCcw size={11} className="text-[var(--text-muted)]" />
-                            </button>
-                            <button
-                              onClick={() => deleteOMRTemplate(tpl.id)}
-                              className="p-1 rounded hover:bg-[var(--bg-primary)]"
-                              title={isBn ? 'মুছুন' : 'Delete'}
-                            >
-                              <Trash2 size={11} className="text-[var(--red)]" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {activeTemplates.length === 0 && archivedTemplates.length === 0 && (
-                      <div className="text-center py-4 text-[11px] text-[var(--text-muted)]">
-                        {isBn ? 'এখনো কোনো টেমপ্লেট সংরক্ষিত হয়নি' : 'No templates saved yet'}
-                      </div>
-                    )}
+                      )}
+                      {activeTemplates.length === 0 && archivedTemplates.length === 0 && (
+                        <div className="text-center py-4 text-[11px] text-[var(--text-muted)]">
+                          {isBn ? 'এখনো কোনো টেমপ্লেট সংরক্ষিত হয়নি' : 'No templates saved yet'}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
           )}
 
