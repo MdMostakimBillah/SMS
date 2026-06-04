@@ -7,106 +7,6 @@ import { useSessionStudents } from '@/store/admissionStore'
 import type { LucideIcon } from 'lucide-react'
 import gsap from 'gsap'
 
-const options: {
-  id: string
-  path: string
-  icon: LucideIcon
-  iconColor: string
-  iconBg: string
-  titleBn: string
-  titleEn: string
-  descBn: string
-  descEn: string
-  statBn: string
-  statEn: string
-  statColor: string
-}[] = [
-  {
-    id: 'admission',
-    path: '/students/admission',
-    icon: UserPlus,
-    iconColor: 'var(--teal)',
-    iconBg: 'var(--teal-light)',
-    titleBn: 'নতুন ভর্তি',
-    titleEn: 'New Admission',
-    descBn: 'নতুন ছাত্র ভর্তি করুন।',
-    descEn: 'Admit a new student.',
-    statBn: '৪৮ জন এই মাসে',
-    statEn: '48 this month',
-    statColor: 'var(--teal)',
-  },
-  {
-    id: 'all',
-    path: '/students/all',
-    icon: Users,
-    iconColor: 'var(--brand)',
-    iconBg: 'var(--brand-light)',
-    titleBn: 'সকল ছাত্র',
-    titleEn: 'All Students',
-    descBn: 'সকল ছাত্রের তালিকা।',
-    descEn: 'View all students.',
-    statBn: '১,২৪৮ জন',
-    statEn: '1,248 total',
-    statColor: 'var(--brand)',
-  },
-  {
-    id: 'update',
-    path: '/students/update',
-    icon: UserPen,
-    iconColor: 'var(--amber)',
-    iconBg: 'var(--amber-light)',
-    titleBn: 'তথ্য আপডেট',
-    titleEn: 'Update Student',
-    descBn: 'ছাত্রের তথ্য আপডেট করুন।',
-    descEn: 'Update student info.',
-    statBn: '১২টি আজ',
-    statEn: '12 today',
-    statColor: 'var(--amber)',
-  },
-  {
-    id: 'bulk-update',
-    path: '/students/bulk-update',
-    icon: TableProperties,
-    iconColor: 'var(--green)',
-    iconBg: 'var(--green-light)',
-    titleBn: 'বাল্ক আপডেট',
-    titleEn: 'Bulk Update',
-    descBn: 'একসাথে আপডেট করুন।',
-    descEn: 'Update at once.',
-    statBn: 'CSV সাপোর্ট',
-    statEn: 'CSV supported',
-    statColor: 'var(--green)',
-  },
-  {
-    id: 'id-cards',
-    path: '/students/id-cards',
-    icon: IdCard,
-    iconColor: 'var(--purple)',
-    iconBg: 'var(--purple-light)',
-    titleBn: 'ID কার্ড',
-    titleEn: 'ID Cards',
-    descBn: 'ID কার্ড তৈরি করুন।',
-    descEn: 'Generate ID cards.',
-    statBn: 'PDF সাপোর্ট',
-    statEn: 'PDF supported',
-    statColor: 'var(--purple)',
-  },
-  {
-    id: 'promotion',
-    path: '/students/promotion',
-    icon: ArrowUpCircle,
-    iconColor: 'var(--red)',
-    iconBg: 'var(--red-light)',
-    titleBn: 'প্রমোশন',
-    titleEn: 'Promotion',
-    descBn: 'পরবর্তী ক্লাসে প্রমোট করুন।',
-    descEn: 'Promote to next class.',
-    statBn: 'পরীক্ষার পরে',
-    statEn: 'After exams',
-    statColor: 'var(--red)',
-  },
-]
-
 function toBnNum(n: number): string {
   const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
   return String(n).replace(/\d/g, (d) => bn[+d])
@@ -163,6 +63,111 @@ export default function StudentsPage() {
   const femaleStudents = approvedStudents.filter((s) => s.gender === 'Female').length
   const currentMonth = new Date().toISOString().slice(0, 7)
   const newStudents = approvedStudents.filter((s) => s.admissionDate?.startsWith(currentMonth)).length
+
+  // Dynamic stats for options
+  const admissionThisMonth = newStudents
+  const allStudentsCount = totalStudents
+  const pendingStudents = students.filter((s) => s.status === 'pending').length
+
+  const options: {
+    id: string
+    path: string
+    icon: LucideIcon
+    iconColor: string
+    iconBg: string
+    titleBn: string
+    titleEn: string
+    descBn: string
+    descEn: string
+    statBn: string
+    statEn: string
+    statColor: string
+  }[] = [
+    {
+      id: 'admission',
+      path: '/students/admission',
+      icon: UserPlus,
+      iconColor: 'var(--teal)',
+      iconBg: 'var(--teal-light)',
+      titleBn: 'নতুন ভর্তি',
+      titleEn: 'New Admission',
+      descBn: 'নতুন ছাত্র ভর্তি করুন।',
+      descEn: 'Admit a new student.',
+      statBn: `${toBnNum(admissionThisMonth)} জন এই মাসে`,
+      statEn: `${admissionThisMonth} this month`,
+      statColor: 'var(--teal)',
+    },
+    {
+      id: 'all',
+      path: '/students/all',
+      icon: Users,
+      iconColor: 'var(--brand)',
+      iconBg: 'var(--brand-light)',
+      titleBn: 'সকল ছাত্র',
+      titleEn: 'All Students',
+      descBn: 'সকল ছাত্রের তালিকা।',
+      descEn: 'View all students.',
+      statBn: `${toBnNum(allStudentsCount)} জন`,
+      statEn: `${allStudentsCount} total`,
+      statColor: 'var(--brand)',
+    },
+    {
+      id: 'update',
+      path: '/students/update',
+      icon: UserPen,
+      iconColor: 'var(--amber)',
+      iconBg: 'var(--amber-light)',
+      titleBn: 'তথ্য আপডেট',
+      titleEn: 'Update Student',
+      descBn: 'ছাত্রের তথ্য আপডেট করুন।',
+      descEn: 'Update student info.',
+      statBn: `${toBnNum(pendingStudents)} টি অপেক্ষমান`,
+      statEn: `${pendingStudents} pending`,
+      statColor: 'var(--amber)',
+    },
+    {
+      id: 'bulk-update',
+      path: '/students/bulk-update',
+      icon: TableProperties,
+      iconColor: 'var(--green)',
+      iconBg: 'var(--green-light)',
+      titleBn: 'বাল্ক আপডেট',
+      titleEn: 'Bulk Update',
+      descBn: 'একসাথে আপডেট করুন।',
+      descEn: 'Update at once.',
+      statBn: 'CSV সাপোর্ট',
+      statEn: 'CSV supported',
+      statColor: 'var(--green)',
+    },
+    {
+      id: 'id-cards',
+      path: '/students/id-cards',
+      icon: IdCard,
+      iconColor: 'var(--purple)',
+      iconBg: 'var(--purple-light)',
+      titleBn: 'ID কার্ড',
+      titleEn: 'ID Cards',
+      descBn: 'ID কার্ড তৈরি করুন।',
+      descEn: 'Generate ID cards.',
+      statBn: `${toBnNum(allStudentsCount)} জন`,
+      statEn: `${allStudentsCount} students`,
+      statColor: 'var(--purple)',
+    },
+    {
+      id: 'promotion',
+      path: '/students/promotion',
+      icon: ArrowUpCircle,
+      iconColor: 'var(--red)',
+      iconBg: 'var(--red-light)',
+      titleBn: 'প্রমোশন',
+      titleEn: 'Promotion',
+      descBn: 'পরবর্তী ক্লাসে প্রমোট করুন।',
+      descEn: 'Promote to next class.',
+      statBn: 'পরীক্ষার পরে',
+      statEn: 'After exams',
+      statColor: 'var(--red)',
+    },
+  ]
 
   const statsData = [
     {

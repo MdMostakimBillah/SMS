@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   BookOpen,
   Plus,
@@ -12,11 +12,11 @@ import {
   Download,
   ArrowLeft,
   X,
-  FileText,
   Layers,
+  GraduationCap,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
-import { useClassStore, getClassOptions } from '@/store/classStore'
+import { useClassStore, extractClassNumber } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useSyllabusStore } from '@/store/syllabusStore'
 import type { SyllabusEntry, SyllabusChapter, SyllabusTopic } from '@/store/syllabusStore'
@@ -29,17 +29,17 @@ const inputCls =
 const selectCls = `${inputCls} cursor-pointer`
 const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] mb-[14px]'
 
-type View = 'list' | 'detail'
+type View = 'home' | 'sections' | 'subjects' | 'detail'
 
 export default function SyllabusPage() {
   const { language } = useAppStore()
   const isBn = language === 'bn'
   const classes = useClassStore((s) => s.classes)
+  const currentSession = useClassStore((s) => s.institution.currentSession)
   const subjects = useTeacherStore((s) => s.subjects)
   const {
-    syllabi,
+    syllabi: allSyllabi,
     addSyllabus,
-    deleteSyllabus,
     addChapter,
     updateChapter,
     deleteChapter,
@@ -49,17 +49,20 @@ export default function SyllabusPage() {
     updateTopicStatus,
   } = useSyllabusStore()
 
-  const [view, setView] = useState<View>('list')
+  const syllabi = useMemo(() => allSyllabi.filter((s) => s.sessionId === currentSession), [allSyllabi, currentSession])
+
+  const [view, setView] = useState<View>('home')
+  const [selectedClass, setSelectedClass] = useState('')
+  const [selectedSection, setSelectedSection] = useState('')
+  const [selectedSubject, setSelectedSubject] = useState('')
   const [selectedSyllabus, setSelectedSyllabus] = useState<SyllabusEntry | null>(null)
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
-  const [showCreateModal, setShowCreateModal] = useState(false)
   const [showChapterModal, setShowChapterModal] = useState(false)
   const [showTopicModal, setShowTopicModal] = useState(false)
   const [editChapter, setEditChapter] = useState<SyllabusChapter | null>(null)
   const [editTopic, setEditTopic] = useState<SyllabusTopic | null>(null)
   const [activeChapterId, setActiveChapterId] = useState('')
 
-  const [syllabusForm, setSyllabusForm] = useState({ classId: '', subjectId: '', sessionId: '2025-26' })
   const [chapterForm, setChapterForm] = useState({ title: '', titleBn: '', description: '', descriptionBn: '', order: '1' })
   const [topicForm, setTopicForm] = useState({
     title: '',
@@ -73,7 +76,37 @@ export default function SyllabusPage() {
     endDate: '',
   })
 
-  const classOptions = useMemo(() => getClassOptions(classes), [classes])
+  // Get class numbers
+  const classNumbers = useMemo(() => {
+    return classes.map((cls) => extractClassNumber(cls.name))
+  }, [classes])
+
+  // Get sections for selected class
+  const classSections = useMemo(() => {
+    const cls = classes.find((c) => extractClassNumber(c.name) === selectedClass)
+    return cls ? cls.sections.map((s) => s.name) : []
+  }, [classes, selectedClass])
+
+  // Get subjects for selected class
+  const classSubjects = useMemo(() => {
+    const cls = classes.find((c) => extractClassNumber(c.name) === selectedClass)
+    if (!cls) return subjects
+    // Filter subjects by class-level subjectIds if available
+    const classSubjectIds = cls.sections[0]?.subjectIds || []
+    if (classSubjectIds.length > 0) {
+      return subjects.filter((s) => classSubjectIds.includes(s.id))
+    }
+    return subjects
+  }, [classes, selectedClass, subjects])
+
+  // Get syllabus for current selection
+  useEffect(() => {
+    if (!selectedClass || !selectedSection || !selectedSubject) return
+    const s = syllabi.find(
+      (sy) => sy.classId === selectedClass && sy.sectionId === selectedSection && sy.subjectId === selectedSubject
+    ) || null
+    setSelectedSyllabus(s)
+  }, [syllabi, selectedClass, selectedSection, selectedSubject])
 
   const getSubjectName = useCallback(
     (id: string) => {
@@ -81,6 +114,15 @@ export default function SyllabusPage() {
       return s ? (isBn ? s.nameBn : s.name) : id
     },
     [subjects, isBn]
+  )
+
+  const getClassName = useCallback(
+    (classNum: string) => {
+      const cls = classes.find((c) => extractClassNumber(c.name) === classNum)
+      if (!cls) return classNum
+      return isBn ? cls.nameBn : cls.name
+    },
+    [classes, isBn]
   )
 
   const toggleChapter = (id: string) => {
@@ -92,38 +134,60 @@ export default function SyllabusPage() {
     })
   }
 
-  const openDetail = (s: SyllabusEntry) => {
-    setSelectedSyllabus(s)
-    setView('detail')
-    setExpandedChapters(new Set(s.chapters.map((c) => c.id)))
+  // Navigation handlers
+  const selectClass = (classNum: string) => {
+    setSelectedClass(classNum)
+    setSelectedSection('')
+    setSelectedSubject('')
+    setSelectedSyllabus(null)
+    setView('sections')
   }
 
-  const openCreateModal = () => {
-    setSyllabusForm({ classId: classOptions[0] || '', subjectId: '', sessionId: '2025-26' })
-    setShowCreateModal(true)
+  const selectSection = (section: string) => {
+    setSelectedSection(section)
+    setSelectedSubject('')
+    setSelectedSyllabus(null)
+    setView('subjects')
   }
 
-  const handleCreateSyllabus = () => {
-    if (!syllabusForm.classId || !syllabusForm.subjectId) return
-    const existing = syllabi.find((s) => s.classId === syllabusForm.classId && s.subjectId === syllabusForm.subjectId)
+  const selectSubject = (subjectId: string) => {
+    setSelectedSubject(subjectId)
+    // Find or create syllabus
+    const existing = syllabi.find(
+      (s) => s.classId === selectedClass && s.sectionId === selectedSection && s.subjectId === subjectId
+    )
     if (existing) {
-      alert(isBn ? 'এই শ্রেণি ও বিষয়ের জন্য ইতিমধ্যে সিলেবাস আছে!' : 'Syllabus already exists for this class and subject!')
-      return
+      setSelectedSyllabus(existing)
+      setExpandedChapters(new Set(existing.chapters.map((c) => c.id)))
+    } else {
+      // Create new syllabus
+      const id = addSyllabus({
+        classId: selectedClass,
+        sectionId: selectedSection,
+        subjectId,
+        sessionId: currentSession,
+        chapters: [],
+      })
+      const created = useSyllabusStore.getState().syllabi.find((s) => s.id === id)
+      if (created) setSelectedSyllabus(created)
     }
-    const id = addSyllabus({
-      classId: syllabusForm.classId,
-      subjectId: syllabusForm.subjectId,
-      sessionId: syllabusForm.sessionId,
-      chapters: [],
-    })
-    const created = useSyllabusStore.getState().syllabi.find((s) => s.id === id)
-    if (created) {
-      setSelectedSyllabus(created)
-      setView('detail')
-    }
-    setShowCreateModal(false)
+    setView('detail')
   }
 
+  const goBack = () => {
+    if (view === 'detail') {
+      setView('subjects')
+      setSelectedSyllabus(null)
+    } else if (view === 'subjects') {
+      setView('sections')
+      setSelectedSection('')
+    } else if (view === 'sections') {
+      setView('home')
+      setSelectedClass('')
+    }
+  }
+
+  // Chapter handlers
   const openAddChapter = () => {
     setEditChapter(null)
     setChapterForm({
@@ -180,6 +244,7 @@ export default function SyllabusPage() {
     if (updated) setSelectedSyllabus(updated)
   }
 
+  // Topic handlers
   const openAddTopic = (chapterId: string) => {
     setEditTopic(null)
     setActiveChapterId(chapterId)
@@ -253,24 +318,14 @@ export default function SyllabusPage() {
     if (updated) setSelectedSyllabus(updated)
   }
 
-  const handleDeleteSyllabus = (id: string) => {
-    if (!confirm(isBn ? 'সিলেবাস মুছে ফেলবেন?' : 'Delete syllabus?')) return
-    deleteSyllabus(id)
-    if (selectedSyllabus?.id === id) {
-      setSelectedSyllabus(null)
-      setView('list')
-    }
-  }
-
-  const handleDownloadPDF = (s?: SyllabusEntry) => {
-    const target = s || selectedSyllabus
-    if (!target) return
+  const handleDownloadPDF = () => {
+    if (!selectedSyllabus) return
     generateSyllabusPDF(
       {
-        className: target.classId,
-        subjectName: getSubjectName(target.subjectId),
-        sessionId: target.sessionId,
-        chapters: target.chapters.map((ch) => ({
+        className: `${getClassName(selectedClass)} - ${selectedSection}`,
+        subjectName: getSubjectName(selectedSubject),
+        sessionId: selectedSyllabus.sessionId,
+        chapters: selectedSyllabus.chapters.map((ch) => ({
           title: ch.title,
           titleBn: ch.titleBn,
           description: ch.description,
@@ -305,17 +360,24 @@ export default function SyllabusPage() {
         ? 'bg-[var(--amber-light)] text-[var(--amber)]'
         : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'
 
+  // Get syllabus count for a class
+  const getSyllabusCount = (classNum: string) => {
+    return syllabi.filter((s) => s.classId === classNum).length
+  }
+
+  // Get syllabus count for a class+section
+  const getSectionSyllabusCount = (classNum: string, section: string) => {
+    return syllabi.filter((s) => s.classId === classNum && s.sectionId === section).length
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-60px)]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
         <div className="flex items-center gap-3">
-          {view === 'detail' && (
+          {view !== 'home' && (
             <button
-              onClick={() => {
-                setView('list')
-                setSelectedSyllabus(null)
-              }}
+              onClick={goBack}
               className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             >
               <ArrowLeft size={16} />
@@ -327,52 +389,32 @@ export default function SyllabusPage() {
               {isBn ? 'পাঠ্যক্রম ব্যবস্থাপনা' : 'Syllabus Management'}
             </h1>
             <p className="text-[11px] text-[var(--text-muted)]">
-              {view === 'detail' && selectedSyllabus
-                ? `${selectedSyllabus.classId} — ${getSubjectName(selectedSyllabus.subjectId)}`
-                : isBn
-                  ? 'শ্রেণি ও বিষয় অনুযায়ী পাঠ্যক্রম তৈরি ও পরিচালনা করুন'
-                  : 'Create and manage syllabus by class and subject'}
+              {view === 'home' && (isBn ? 'শ্রেণি নির্বাচন করুন' : 'Select a class')}
+              {view === 'sections' && `${getClassName(selectedClass)} — ${isBn ? 'সেকশন নির্বাচন করুন' : 'Select Section'}`}
+              {view === 'subjects' && `${getClassName(selectedClass)} - ${selectedSection} — ${isBn ? 'বিষয় নির্বাচন করুন' : 'Select Subject'}`}
+              {view === 'detail' && selectedSyllabus && `${getClassName(selectedClass)} - ${selectedSection} — ${getSubjectName(selectedSubject)}`}
             </p>
           </div>
         </div>
-        {view === 'list' ? (
-          <button onClick={openCreateModal} className={btnPri}>
-            <Plus size={14} />
-            {isBn ? 'নতুন সিলেবাস' : 'New Syllabus'}
+        {view === 'detail' && selectedSyllabus && (
+          <button onClick={handleDownloadPDF} className={btnPri}>
+            <Download size={14} />
+            {isBn ? 'PDF' : 'PDF'}
           </button>
-        ) : (
-          selectedSyllabus && (
-            <button onClick={() => handleDownloadPDF()} className={btnPri}>
-              <Download size={14} />
-              {isBn ? 'PDF ডাউনলোড' : 'Download PDF'}
-            </button>
-          )
         )}
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
-        {view === 'list' ? (
+        {/* ═══ HOME VIEW - Class Cards ═══ */}
+        {view === 'home' && (
           <>
-            {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
               {[
-                { label: isBn ? 'মোট সিলেবাস' : 'Total Syllabi', value: syllabi.length, color: 'var(--brand)' },
-                {
-                  label: isBn ? 'মোট অধ্যায়' : 'Total Chapters',
-                  value: syllabi.reduce((s, sy) => s + sy.totalChapters, 0),
-                  color: 'var(--green)',
-                },
-                {
-                  label: isBn ? 'মোট টপিক' : 'Total Topics',
-                  value: syllabi.reduce((s, sy) => s + sy.totalTopics, 0),
-                  color: 'var(--amber)',
-                },
-                {
-                  label: isBn ? 'সম্পন্ন' : 'Completed',
-                  value: syllabi.reduce((s, sy) => s + sy.completedTopics, 0),
-                  color: 'var(--purple)',
-                },
+                { label: isBn ? 'মোট শ্রেণি' : 'Total Classes', value: classes.length, color: 'var(--brand)' },
+                { label: isBn ? 'মোট সিলেবাস' : 'Total Syllabi', value: syllabi.length, color: 'var(--green)' },
+                { label: isBn ? 'মোট অধ্যায়' : 'Total Chapters', value: syllabi.reduce((s, sy) => s + sy.totalChapters, 0), color: 'var(--amber)' },
+                { label: isBn ? 'সম্পন্ন' : 'Completed', value: syllabi.reduce((s, sy) => s + sy.completedTopics, 0), color: 'var(--purple)' },
               ].map((st, i) => (
                 <div key={i} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3">
                   <div className="text-[18px] font-bold" style={{ color: st.color }}>
@@ -383,320 +425,280 @@ export default function SyllabusPage() {
               ))}
             </div>
 
-            {/* Syllabus Cards */}
-            {syllabi.length === 0 ? (
-              <div className="text-center py-16">
-                <FileText size={40} className="mx-auto text-[var(--text-muted)] mb-3 opacity-40" />
-                <p className="text-[13px] text-[var(--text-muted)]">{isBn ? 'কোনো সিলেবাস নেই' : 'No syllabi yet'}</p>
-                <button onClick={openCreateModal} className={`${btnPri} mt-3 mx-auto`}>
+            <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-3">
+              {isBn ? 'শ্রেণি নির্বাচন করুন' : 'Select Class'}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {classNumbers.map((classNum) => {
+                const count = getSyllabusCount(classNum)
+                return (
+                  <div
+                    key={classNum}
+                    onClick={() => selectClass(classNum)}
+                    className="bg-[var(--bg-primary)] border-2 border-dashed border-[var(--border)] rounded-2xl p-5 cursor-pointer hover:border-[var(--brand)] hover:shadow-md transition-all text-center group"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-[var(--brand-light)] flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                      <GraduationCap size={24} className="text-[var(--brand)]" />
+                    </div>
+                    <div className="text-[14px] font-bold text-[var(--text-primary)] mb-1">
+                      {getClassName(classNum)}
+                    </div>
+                    <div className="text-[10px] text-[var(--text-muted)]">
+                      {count} {isBn ? 'টি সিলেবাস' : 'syllabi'}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+
+        {/* ═══ SECTIONS VIEW ═══ */}
+        {view === 'sections' && (
+          <>
+            <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-3">
+              {isBn ? 'সেকশন নির্বাচন করুন' : 'Select Section'}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {classSections.map((section) => {
+                const count = getSectionSyllabusCount(selectedClass, section)
+                return (
+                  <div
+                    key={section}
+                    onClick={() => selectSection(section)}
+                    className="bg-[var(--bg-primary)] border-2 border-dashed border-[var(--border)] rounded-2xl p-5 cursor-pointer hover:border-[var(--teal)] hover:shadow-md transition-all text-center group"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-[var(--teal-light)] flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                      <span className="text-[18px] font-bold text-[var(--teal)]">{section}</span>
+                    </div>
+                    <div className="text-[14px] font-bold text-[var(--text-primary)] mb-1">
+                      {isBn ? 'সেকশন' : 'Section'} {section}
+                    </div>
+                    <div className="text-[10px] text-[var(--text-muted)]">
+                      {count} {isBn ? 'টি সিলেবাস' : 'syllabi'}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+
+        {/* ═══ SUBJECTS VIEW ═══ */}
+        {view === 'subjects' && (
+          <>
+            <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-3">
+              {isBn ? 'বিষয় নির্বাচন করুন' : 'Select Subject'}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {classSubjects.map((subject) => {
+                const existing = syllabi.find(
+                  (s) => s.classId === selectedClass && s.sectionId === selectedSection && s.subjectId === subject.id
+                )
+                const pct = existing && existing.totalTopics > 0
+                  ? Math.round((existing.completedTopics / existing.totalTopics) * 100)
+                  : 0
+
+                return (
+                  <div
+                    key={subject.id}
+                    onClick={() => selectSubject(subject.id)}
+                    className="bg-[var(--bg-primary)] border-2 border-dashed border-[var(--border)] rounded-2xl p-5 cursor-pointer hover:border-[var(--purple)] hover:shadow-md transition-all text-center group"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-[var(--purple-light)] flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                      <BookOpen size={22} className="text-[var(--purple)]" />
+                    </div>
+                    <div className="text-[13px] font-bold text-[var(--text-primary)] mb-1">
+                      {isBn ? subject.nameBn : subject.name}
+                    </div>
+                    {existing ? (
+                      <div className="mt-2">
+                        <div className="text-[11px] font-semibold mb-1" style={{ color: pct === 100 ? 'var(--green)' : 'var(--brand)' }}>
+                          {pct}%
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{ width: `${pct}%`, background: pct === 100 ? 'var(--green)' : 'var(--brand)' }}
+                          />
+                        </div>
+                        <div className="text-[9px] text-[var(--text-muted)] mt-1">
+                          {existing.totalChapters} {isBn ? 'অধ্যায়' : 'ch'} · {existing.totalTopics} {isBn ? 'টপিক' : 'tp'}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-[var(--text-muted)] mt-2 italic">
+                        {isBn ? 'নতুন সিলেবাস' : 'New syllabus'}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+
+        {/* ═══ DETAIL VIEW ═══ */}
+        {view === 'detail' && selectedSyllabus && (
+          <div className="grid gap-3">
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 mb-2">
+              {[
+                { label: isBn ? 'অধ্যায়' : 'Chapters', value: selectedSyllabus.totalChapters, color: 'var(--brand)' },
+                { label: isBn ? 'টপিক' : 'Topics', value: selectedSyllabus.totalTopics, color: 'var(--amber)' },
+                { label: isBn ? 'সম্পন্ন' : 'Done', value: selectedSyllabus.completedTopics, color: 'var(--green)' },
+              ].map((st, i) => (
+                <div key={i} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3 text-center">
+                  <div className="text-[16px] font-bold" style={{ color: st.color }}>{st.value}</div>
+                  <div className="text-[10px] text-[var(--text-muted)]">{st.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Chapter Header */}
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] text-[var(--text-muted)]">
+                {isBn ? `মোট ${selectedSyllabus.chapters.length}টি অধ্যায়` : `${selectedSyllabus.chapters.length} chapters`}
+              </div>
+              <button onClick={openAddChapter} className={btnPri}>
+                <Plus size={14} />
+                {isBn ? 'অধ্যায় যোগ' : 'Add Chapter'}
+              </button>
+            </div>
+
+            {/* Chapters */}
+            {selectedSyllabus.chapters.length === 0 ? (
+              <div className="text-center py-12">
+                <Layers size={36} className="mx-auto text-[var(--text-muted)] mb-3 opacity-40" />
+                <p className="text-[12px] text-[var(--text-muted)]">{isBn ? 'কোনো অধ্যায় নেই' : 'No chapters yet'}</p>
+                <button onClick={openAddChapter} className={`${btnPri} mt-3 mx-auto`}>
                   <Plus size={14} />
-                  {isBn ? 'প্রথম সিলেবাস তৈরি করুন' : 'Create First Syllabus'}
+                  {isBn ? 'প্রথম অধ্যায় যোগ' : 'Add First Chapter'}
                 </button>
               </div>
             ) : (
-              <div className="grid gap-3 md:grid-cols-2">
-                {syllabi.map((s) => {
-                  const totalTopics = s.totalTopics
-                  const completed = s.completedTopics
-                  const pct = totalTopics > 0 ? Math.round((completed / totalTopics) * 100) : 0
-                  const totalMarks = s.chapters.reduce((sum, ch) => sum + ch.topics.reduce((ts, t) => ts + t.marks, 0), 0)
+              selectedSyllabus.chapters
+                .sort((a, b) => a.order - b.order)
+                .map((ch) => {
+                  const isExpanded = expandedChapters.has(ch.id)
+                  const chTotal = ch.topics.reduce((s, t) => s + t.marks, 0)
+                  const chDone = ch.topics.filter((t) => t.status === 'completed').length
                   return (
-                    <div key={s.id} className={`${sectionCls} cursor-pointer hover:shadow-md transition-all`} onClick={() => openDetail(s)}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[13px] font-semibold text-[var(--text-primary)]">{s.classId}</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--brand-light)] text-[var(--brand)] font-medium">
-                              {getSubjectName(s.subjectId)}
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-[var(--text-muted)] mb-2">
-                            {isBn ? 'সেশন' : 'Session'}: {s.sessionId}
-                          </div>
-                          <div className="flex items-center gap-3 text-[10px] text-[var(--text-muted)]">
-                            <span>
-                              {s.totalChapters} {isBn ? 'অধ্যায়' : 'chapters'}
-                            </span>
-                            <span>
-                              {totalTopics} {isBn ? 'টপিক' : 'topics'}
-                            </span>
-                            <span>
-                              {totalMarks} {isBn ? 'মার্কস' : 'marks'}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <div
-                            className="text-[18px] font-bold"
-                            style={{ color: pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--amber)' : 'var(--text-muted)' }}
-                          >
-                            {pct}%
-                          </div>
-                          <div className="w-16 h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all"
-                              style={{ width: `${pct}%`, background: pct === 100 ? 'var(--green)' : 'var(--brand)' }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--border)]">
-                        <div className="flex gap-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDownloadPDF(s)
-                            }}
-                            className="text-[9px] px-2 py-1 rounded-md bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] cursor-pointer font-medium hover:shadow-sm flex items-center gap-1"
-                          >
-                            <Download size={9} />
-                            {isBn ? 'PDF' : 'PDF'}
-                          </button>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteSyllabus(s.id)
-                          }}
-                          className="text-[9px] px-2 py-1 rounded-md bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)] cursor-pointer font-medium hover:shadow-sm"
-                        >
-                          {isBn ? 'মুছুন' : 'Delete'}
+                    <div key={ch.id} className={sectionCls}>
+                      {/* Chapter Header */}
+                      <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleChapter(ch.id)}>
+                        <button className="text-[var(--text-muted)]">
+                          {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                         </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </>
-        ) : (
-          /* DETAIL VIEW */
-          selectedSyllabus && (
-            <div className="grid gap-3">
-              {/* Chapter Header */}
-              <div className="flex items-center justify-between">
-                <div className="text-[11px] text-[var(--text-muted)]">
-                  {isBn ? `মোট ${selectedSyllabus.chapters.length}টি অধ্যায়` : `${selectedSyllabus.chapters.length} chapters`}
-                </div>
-                <button onClick={openAddChapter} className={btnPri}>
-                  <Plus size={14} />
-                  {isBn ? 'অধ্যায় যোগ' : 'Add Chapter'}
-                </button>
-              </div>
-
-              {/* Chapters */}
-              {selectedSyllabus.chapters.length === 0 ? (
-                <div className="text-center py-12">
-                  <Layers size={36} className="mx-auto text-[var(--text-muted)] mb-3 opacity-40" />
-                  <p className="text-[12px] text-[var(--text-muted)]">{isBn ? 'কোনো অধ্যায় নেই' : 'No chapters yet'}</p>
-                  <button onClick={openAddChapter} className={`${btnPri} mt-3 mx-auto`}>
-                    <Plus size={14} />
-                    {isBn ? 'প্রথম অধ্যায় যোগ' : 'Add First Chapter'}
-                  </button>
-                </div>
-              ) : (
-                selectedSyllabus.chapters
-                  .sort((a, b) => a.order - b.order)
-                  .map((ch) => {
-                    const isExpanded = expandedChapters.has(ch.id)
-                    const chTotal = ch.topics.reduce((s, t) => s + t.marks, 0)
-                    const chDone = ch.topics.filter((t) => t.status === 'completed').length
-                    return (
-                      <div key={ch.id} className={sectionCls}>
-                        {/* Chapter Header */}
-                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleChapter(ch.id)}>
-                          <button className="text-[var(--text-muted)]">
-                            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                          </button>
-                          <span className="text-[9px] font-bold text-white bg-[var(--brand)] rounded-md px-1.5 py-0.5">{ch.order}</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-[12px] font-semibold text-[var(--text-primary)]">{isBn ? ch.titleBn : ch.title}</div>
-                            <div className="text-[9px] text-[var(--text-muted)] truncate">{isBn ? ch.descriptionBn : ch.description}</div>
-                          </div>
-                          <span className="text-[9px] text-[var(--text-muted)]">
-                            {chDone}/{ch.topics.length} {isBn ? 'টপিক' : 'topics'}
-                          </span>
-                          <span className="text-[9px] font-semibold text-[var(--brand)]">
-                            {chTotal} {isBn ? 'মা.' : 'mk'}
-                          </span>
-                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              onClick={() => openEditChapter(ch)}
-                              className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
-                            >
-                              <Edit2 size={10} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteChapter(ch.id)}
-                              className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                            >
-                              <Trash2 size={10} />
-                            </button>
-                          </div>
+                        <span className="text-[9px] font-bold text-white bg-[var(--brand)] rounded-md px-1.5 py-0.5">{ch.order}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[12px] font-semibold text-[var(--text-primary)]">{isBn ? ch.titleBn : ch.title}</div>
+                          <div className="text-[9px] text-[var(--text-muted)] truncate">{isBn ? ch.descriptionBn : ch.description}</div>
                         </div>
+                        <span className="text-[9px] text-[var(--text-muted)]">
+                          {chDone}/{ch.topics.length} {isBn ? 'টপিক' : 'topics'}
+                        </span>
+                        <span className="text-[9px] font-semibold text-[var(--brand)]">
+                          {chTotal} {isBn ? 'মা.' : 'mk'}
+                        </span>
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => openEditChapter(ch)}
+                            className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
+                          >
+                            <Edit2 size={10} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteChapter(ch.id)}
+                            className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                          >
+                            <Trash2 size={10} />
+                          </button>
+                        </div>
+                      </div>
 
-                        {/* Topics */}
-                        {isExpanded && (
-                          <div className="mt-3 ml-6">
-                            {ch.topics.length === 0 ? (
-                              <div className="text-center py-6 text-[10px] text-[var(--text-muted)] italic">
-                                {isBn ? 'এই অধ্যায়ে কোনো টপিক নেই' : 'No topics in this chapter'}
-                              </div>
-                            ) : (
-                              <div className="divide-y divide-[var(--border)]">
-                                {ch.topics.map((t) => (
-                                  <div key={t.id} className="flex items-center gap-2 py-2 group">
-                                    <button
-                                      onClick={() => handleStatusToggle(ch.id, t.id, t.status)}
-                                      className="cursor-pointer bg-transparent border-none p-0 flex items-center"
-                                      title={isBn ? 'অবস্থা পরিবর্তন' : 'Toggle status'}
-                                    >
-                                      {statusIcon(t.status)}
-                                    </button>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="text-[11px] font-medium text-[var(--text-primary)]">{isBn ? t.titleBn : t.title}</div>
-                                      <div className="text-[9px] text-[var(--text-muted)]">{isBn ? t.descriptionBn : t.description}</div>
-                                      <div className="flex items-center gap-2 mt-0.5">
-                                        {t.weekNo && (
-                                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">
-                                            {isBn ? 'সপ্তাহ' : 'Wk'} {t.weekNo}
-                                          </span>
-                                        )}
-                                        {t.startDate && (
-                                          <span className="text-[8px] text-[var(--text-muted)]">
-                                            {t.startDate}
-                                            {t.endDate ? ` – ${t.endDate}` : ''}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <span className="text-[10px] font-semibold text-[var(--brand)] whitespace-nowrap">
-                                      {t.marks} {isBn ? 'মা.' : 'mk'}
-                                    </span>
-                                    <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-medium ${statusColor(t.status)}`}>
-                                      {t.status === 'completed'
-                                        ? isBn
-                                          ? 'সম্পন্ন'
-                                          : 'Done'
-                                        : t.status === 'in-progress'
-                                          ? isBn
-                                            ? 'চলমান'
-                                            : 'Running'
-                                          : isBn
-                                            ? 'বাকি'
-                                            : 'Pending'}
-                                    </span>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <button
-                                        onClick={() => openEditTopic(ch.id, t)}
-                                        className="w-5 h-5 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
-                                      >
-                                        <Edit2 size={8} />
-                                      </button>
-                                      <button
-                                        onClick={() => handleDeleteTopic(ch.id, t.id)}
-                                        className="w-5 h-5 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                                      >
-                                        <Trash2 size={8} />
-                                      </button>
+                      {/* Topics */}
+                      {isExpanded && (
+                        <div className="mt-3 ml-6">
+                          {ch.topics.length === 0 ? (
+                            <div className="text-center py-6 text-[10px] text-[var(--text-muted)] italic">
+                              {isBn ? 'এই অধ্যায়ে কোনো টপিক নেই' : 'No topics in this chapter'}
+                            </div>
+                          ) : (
+                            <div className="divide-y divide-[var(--border)]">
+                              {ch.topics.map((t) => (
+                                <div key={t.id} className="flex items-center gap-2 py-2 group">
+                                  <button
+                                    onClick={() => handleStatusToggle(ch.id, t.id, t.status)}
+                                    className="cursor-pointer bg-transparent border-none p-0 flex items-center"
+                                    title={isBn ? 'অবস্থা পরিবর্তন' : 'Toggle status'}
+                                  >
+                                    {statusIcon(t.status)}
+                                  </button>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-[11px] font-medium text-[var(--text-primary)]">{isBn ? t.titleBn : t.title}</div>
+                                    <div className="text-[9px] text-[var(--text-muted)]">{isBn ? t.descriptionBn : t.description}</div>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      {t.weekNo && (
+                                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">
+                                          {isBn ? 'সপ্তাহ' : 'Wk'} {t.weekNo}
+                                        </span>
+                                      )}
+                                      {t.startDate && (
+                                        <span className="text-[8px] text-[var(--text-muted)]">
+                                          {t.startDate}
+                                          {t.endDate ? ` – ${t.endDate}` : ''}
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
-                                ))}
-                              </div>
-                            )}
-                            <button
-                              onClick={() => openAddTopic(ch.id)}
-                              className="mt-2 flex items-center gap-1 text-[9px] px-2 py-1 rounded-md bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] cursor-pointer font-medium hover:shadow-sm"
-                            >
-                              <Plus size={9} />
-                              {isBn ? 'টপিক যোগ' : 'Add Topic'}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })
-              )}
-            </div>
-          )
+                                  <span className="text-[10px] font-semibold text-[var(--brand)] whitespace-nowrap">
+                                    {t.marks} {isBn ? 'মা.' : 'mk'}
+                                  </span>
+                                  <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-medium ${statusColor(t.status)}`}>
+                                    {t.status === 'completed'
+                                      ? isBn ? 'সম্পন্ন' : 'Done'
+                                      : t.status === 'in-progress'
+                                        ? isBn ? 'চলমান' : 'Running'
+                                        : isBn ? 'বাকি' : 'Pending'}
+                                  </span>
+                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                      onClick={() => openEditTopic(ch.id, t)}
+                                      className="w-5 h-5 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
+                                    >
+                                      <Edit2 size={8} />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteTopic(ch.id, t.id)}
+                                      className="w-5 h-5 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                                    >
+                                      <Trash2 size={8} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <button
+                            onClick={() => openAddTopic(ch.id)}
+                            className="mt-2 flex items-center gap-1 text-[9px] px-2 py-1 rounded-md bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] cursor-pointer font-medium hover:shadow-sm"
+                          >
+                            <Plus size={9} />
+                            {isBn ? 'টপিক যোগ' : 'Add Topic'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })
+            )}
+          </div>
         )}
       </div>
-
-      {/* ═══ Create Syllabus Modal ═══ */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShowCreateModal(false)}>
-          <div
-            className="bg-[var(--bg-primary)] rounded-2xl p-5 w-full max-w-sm shadow-xl border border-[var(--border)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[14px] font-bold text-[var(--text-primary)]">{isBn ? 'নতুন সিলেবাস' : 'New Syllabus'}</span>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)]"
-              >
-                <X size={14} />
-              </button>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
-                <select
-                  value={syllabusForm.classId}
-                  onChange={(e) => setSyllabusForm((p) => ({ ...p, classId: e.target.value }))}
-                  className={`${selectCls} w-full`}
-                >
-                  <option value="">{isBn ? '-- শ্রেণি নির্বাচন --' : '-- Select Class --'}</option>
-                  {classOptions.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিষয়' : 'Subject'}</label>
-                <select
-                  value={syllabusForm.subjectId}
-                  onChange={(e) => setSyllabusForm((p) => ({ ...p, subjectId: e.target.value }))}
-                  className={`${selectCls} w-full`}
-                >
-                  <option value="">{isBn ? '-- বিষয় নির্বাচন --' : '-- Select Subject --'}</option>
-                  {subjects.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {isBn ? s.nameBn : s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেশন' : 'Session'}</label>
-                <input
-                  value={syllabusForm.sessionId}
-                  onChange={(e) => setSyllabusForm((p) => ({ ...p, sessionId: e.target.value }))}
-                  className={`${inputCls} w-full`}
-                  placeholder="2025-26"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2 justify-end mt-4">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
-              >
-                {isBn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button
-                onClick={handleCreateSyllabus}
-                disabled={!syllabusForm.classId || !syllabusForm.subjectId}
-                className={`${btnPri} disabled:opacity-40 disabled:cursor-not-allowed`}
-              >
-                {isBn ? 'তৈরি করুন' : 'Create'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ═══ Chapter Modal ═══ */}
       {showChapterModal && (

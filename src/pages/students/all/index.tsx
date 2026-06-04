@@ -36,7 +36,8 @@ export default function AllStudentsPage() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const students = useSessionStudents()
-  const { classes } = useClassStore()
+  const { classes, institution } = useClassStore()
+  const currentSession = institution.currentSession
   const isBn = language === 'bn'
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
@@ -45,6 +46,17 @@ export default function AllStudentsPage() {
     const sectionSet = new Set<string>()
     classes.forEach((cls) => cls.sections.forEach((s) => sectionSet.add(s.name)))
     return Array.from(sectionSet).sort()
+  }, [classes])
+
+  // Map class number to full class name (e.g., "1" → { en: "Class 1", bn: "শ্রেণি ১" })
+  const classNameMap = useMemo(() => {
+    const map: Record<string, { en: string; bn: string }> = {}
+    classes.forEach((cls) => {
+      const match = cls.name.match(/\d+/)
+      const classNum = match ? match[0] : cls.name
+      map[classNum] = { en: cls.name, bn: cls.nameBn || cls.name }
+    })
+    return map
   }, [classes])
 
   const [search, setSearch] = useState('')
@@ -64,6 +76,7 @@ export default function AllStudentsPage() {
   const filtered = useMemo(
     () =>
       students.filter((s) => {
+        if (s.academicYear !== currentSession) return false
         if (s.status !== 'approved') return false
         if (search) {
           const q = search.toLowerCase()
@@ -87,7 +100,7 @@ export default function AllStudentsPage() {
         if (fBlood && s.bloodGroup !== fBlood) return false
         return true
       }),
-    [students, search, fClass, fSection, fGender, fActive, fReligion, fBlood]
+    [students, currentSession, search, fClass, fSection, fGender, fActive, fReligion, fBlood]
   )
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
@@ -121,7 +134,7 @@ export default function AllStudentsPage() {
       'Student ID': s.id,
       'Name EN': s.nameEn,
       'Name BN': s.nameBn,
-      Class: s.class,
+      Class: classNameMap[s.class] ? (isBn ? classNameMap[s.class].bn : classNameMap[s.class].en) : s.class,
       Section: s.section,
       Roll: s.roll,
       Gender: s.gender.split(' / ')[0],
@@ -238,7 +251,7 @@ export default function AllStudentsPage() {
                   <p className="text-[13px] text-[var(--text-secondary)]">{viewSt.nameBn}</p>
                   <div className="flex gap-[5px] mt-1.5 flex-wrap">
                     {[
-                      { t: `${viewSt.class}-${viewSt.section}`, c: 'var(--brand)', b: 'var(--brand-light)' },
+                      { t: `${classNameMap[viewSt.class] ? (isBn ? classNameMap[viewSt.class].bn : classNameMap[viewSt.class].en) : viewSt.class}-${viewSt.section}`, c: 'var(--brand)', b: 'var(--brand-light)' },
                       { t: viewSt.gender.split(' / ')[0], c: 'var(--teal)', b: 'var(--teal-light)' },
                       { t: viewSt.bloodGroup, c: 'var(--red)', b: 'var(--red-light)' },
                     ]
@@ -625,7 +638,7 @@ export default function AllStudentsPage() {
                       <div className="text-[10px] text-[var(--text-muted)] truncate">{isBn ? s.nameEn : s.nameBn}</div>
                     </td>
                     <td className="p-2 text-[var(--text-secondary)] text-[11px] whitespace-nowrap" style={sc('416px')}>
-                      {s.class}
+                      {classNameMap[s.class] ? (isBn ? classNameMap[s.class].bn : classNameMap[s.class].en) : s.class}
                       {s.section ? `-${s.section}` : ''}
                       {s.roll ? ` / ${s.roll}` : ''}
                     </td>

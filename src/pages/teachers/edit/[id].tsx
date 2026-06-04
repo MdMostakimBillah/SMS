@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CheckCircle, Camera, Clock, Users, Save, Briefcase, X, IdCard } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
@@ -154,8 +154,7 @@ export default function EditTeacherPage() {
     reader.readAsDataURL(file)
   }
 
-  const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
       if (!teacher || !nameEn.trim() || !phone.trim() || !departmentId) {
         alert(isBn ? 'অনুগ্রহ করে প্রয়োজনীয় তথ্য পূরণ করুন' : 'Please fill in required fields')
@@ -199,9 +198,7 @@ export default function EditTeacherPage() {
       })
       setSaved(true)
       setTimeout(() => navigate(`/teachers/all`), 1200)
-    },
-    [teacher, nameEn, phone, departmentId, updateTeacher, navigate, isBn]
-  )
+    }
 
   // ── helpers ──
   const g = (n: number) => `grid ${isMobile ? 'grid-cols-1' : `grid-cols-${n}`} gap-3`
@@ -408,14 +405,15 @@ export default function EditTeacherPage() {
           <FormField
             labelEn="Department"
             labelBn="বিভাগ"
-            value={departmentId}
+            value={departments.find((d) => d.id === departmentId)?.name || ''}
             onChange={(v) => {
-              setDepartmentId(v)
+              const dept = departments.find((d) => d.name === v)
+              setDepartmentId(dept?.id || '')
               setSubjectIds([])
             }}
             required
             isBn={isBn}
-            options={departments.map((d) => d.id)}
+            options={departments.map((d) => d.name)}
           />
           <FormField
             labelEn="Designation"

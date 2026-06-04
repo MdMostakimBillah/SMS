@@ -251,6 +251,7 @@ export interface OMRTemplate {
   sectionName: string
   themeColor: string
   serialNumber: string
+  paperSize: 'A4' | 'Legal' | 'Letter'
   sheetFormat: 'A' | 'B' | 'C' | 'D'
   totalQuestions: number
   optionCount: number
@@ -277,18 +278,22 @@ export interface OMRTemplate {
   showBarcode: boolean
   showSerialNumber: boolean
   showSecurityCode: boolean
+  showVerificationCode: boolean
   // ── Examination ──
   showTeacherCode: boolean
+  showInvigilatorCode: boolean
   showRoomNumber: boolean
   showSeatNumber: boolean
   showAdditionalPaper: boolean
   showPresentAbsent: boolean
+  showExaminerRemarks: boolean
   // ── Examiner ──
   showExaminerSection: boolean
   marksEntryStyle: 'abcd' | 'bn' | 'numbers' | 'custom'
   customMarksValues: string
   showExaminerSignature: boolean
   showHeadExaminerSignature: boolean
+  showVerificationSignature: boolean
   showCheckedBy: boolean
   showVerifiedBy: boolean
   showTotalMarks: boolean
@@ -422,99 +427,7 @@ const defaultSubjectMarkConfigs: SubjectMarkConfig[] = [
   },
 ]
 
-const defaultRoutines: ExamRoutine[] = [
-  {
-    id: 'RT-001',
-    examId: 'EXAM-001',
-    classId: 'Class-1',
-    sectionId: 'A',
-    subjectId: 'SUB-001',
-    date: '2025-06-15',
-    startTime: '09:00',
-    endTime: '12:00',
-    roomNo: 'R-101',
-    status: 'completed',
-    createdAt: '2025-06-01',
-  },
-  {
-    id: 'RT-002',
-    examId: 'EXAM-001',
-    classId: 'Class-1',
-    sectionId: 'A',
-    subjectId: 'SUB-002',
-    date: '2025-06-16',
-    startTime: '09:00',
-    endTime: '12:00',
-    roomNo: 'R-101',
-    status: 'completed',
-    createdAt: '2025-06-01',
-  },
-  {
-    id: 'RT-003',
-    examId: 'EXAM-001',
-    classId: 'Class-1',
-    sectionId: 'A',
-    subjectId: 'SUB-003',
-    date: '2025-06-17',
-    startTime: '09:00',
-    endTime: '11:00',
-    roomNo: 'R-102',
-    status: 'completed',
-    createdAt: '2025-06-01',
-  },
-  {
-    id: 'RT-004',
-    examId: 'EXAM-001',
-    classId: 'Class-1',
-    sectionId: 'A',
-    subjectId: 'SUB-004',
-    date: '2025-06-18',
-    startTime: '09:00',
-    endTime: '12:00',
-    roomNo: 'R-101',
-    status: 'completed',
-    createdAt: '2025-06-01',
-  },
-  {
-    id: 'RT-005',
-    examId: 'EXAM-001',
-    classId: 'Class-1',
-    sectionId: 'A',
-    subjectId: 'SUB-005',
-    date: '2025-06-19',
-    startTime: '14:00',
-    endTime: '16:00',
-    roomNo: 'R-103',
-    status: 'completed',
-    createdAt: '2025-06-01',
-  },
-  {
-    id: 'RT-006',
-    examId: 'EXAM-001',
-    classId: 'Class-2',
-    sectionId: 'A',
-    subjectId: 'SUB-001',
-    date: '2025-06-20',
-    startTime: '09:00',
-    endTime: '12:00',
-    roomNo: 'R-201',
-    status: 'in-progress',
-    createdAt: '2025-06-01',
-  },
-  {
-    id: 'RT-007',
-    examId: 'EXAM-002',
-    classId: 'Class-1',
-    sectionId: 'A',
-    subjectId: 'SUB-001',
-    date: '2025-11-10',
-    startTime: '09:00',
-    endTime: '12:00',
-    roomNo: 'R-101',
-    status: 'upcoming',
-    createdAt: '2025-10-01',
-  },
-]
+const defaultRoutines: ExamRoutine[] = []
 
 const defaultRooms: ExamRoom[] = [
   { id: 'RM-001', roomNo: 'R-101', roomName: 'Room 101', capacity: 40, building: 'Main', floor: '1st', isActive: true },

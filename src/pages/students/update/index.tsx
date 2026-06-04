@@ -71,7 +71,7 @@ export default function UpdateStudentPage() {
   const location = useLocation()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { updateStudent } = useAdmissionStore()
+  const updateStudent = useAdmissionStore((s) => s.updateStudent)
   const students = useSessionStudents()
   const { classes } = useClassStore()
   const isBn = language === 'bn'

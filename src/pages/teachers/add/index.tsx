@@ -417,14 +417,15 @@ export default function AddTeacherPage() {
           <FormField
             labelEn="Department"
             labelBn="বিভাগ"
-            value={departmentId}
+            value={departments.find((d) => d.id === departmentId)?.name || ''}
             onChange={(v) => {
-              setDepartmentId(v)
+              const dept = departments.find((d) => d.name === v)
+              setDepartmentId(dept?.id || '')
               setSubjectIds([])
             }}
             required
             isBn={isBn}
-            options={departments.map((d) => d.id)}
+            options={departments.map((d) => d.name)}
           />
           <FormField
             labelEn="Designation"

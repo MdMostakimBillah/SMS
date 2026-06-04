@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, IdCard, Printer, Search, User } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useSessionStudents } from '@/store/admissionStore'
+import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 
@@ -148,7 +148,7 @@ function IDCard({
 
       {/* Footer */}
       <div className="py-1 px-3 flex justify-between items-center" style={{ background: t.accent }}>
-        <span className="text-[7px] text-white/70">Academic Year 2025–26</span>
+        <span className="text-[7px] text-white/70">Academic Year {student.academicYear?.replace('-', '–')}</span>
         <div className="flex gap-5">
           <div className="text-center">
             <div className="w-12 h-px bg-white/50 mb-px" />
@@ -168,9 +168,19 @@ export default function IDCardsPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const students = useSessionStudents()
-  const { classes } = useClassStore()
+  const allStudents = useAdmissionStore((s) => s.students)
+  const { classes, institution } = useClassStore()
   const isBn = language === 'bn'
+
+  const currentSession = institution.currentSession
+  const sessions = institution.sessions
+
+  const [fSession, setFSession] = useState(currentSession)
+
+  const students = useMemo(
+    () => allStudents.filter((s) => s.academicYear === fSession),
+    [allStudents, fSession]
+  )
 
   const approved = useMemo(() => students.filter((s) => s.status === 'approved'), [students])
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
@@ -183,7 +193,7 @@ export default function IDCardsPage() {
 
   const [template, setTemplate] = useState(TEMPLATES[0])
   const [fields, setFields] = useState<string[]>(FIELDS.filter((f) => f.default).map((f) => f.key))
-  const [institution, setInstitution] = useState('EduTech — Sunrise Academy')
+  const [institutionName, setInstitutionName] = useState('EduTech — Sunrise Academy')
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
   const [search, setSearch] = useState('')
@@ -223,7 +233,7 @@ export default function IDCardsPage() {
         return `<div style="width:340px;height:210px;border-radius:${t.radius}px;border:2px solid ${t.primary};overflow:hidden;display:inline-flex;flex-direction:column;font-family:Arial,sans-serif;margin:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);page-break-inside:avoid;background:#fff">
         <div style="background:${t.primary};padding:8px 14px;display:flex;align-items:center;gap:10px">
           <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff">ET</div>
-          <div><div style="font-size:11px;font-weight:700;color:#fff">${institution}</div><div style="font-size:8px;color:rgba(255,255,255,0.7)">Student Identity Card</div></div>
+          <div><div style="font-size:11px;font-weight:700;color:#fff">${institutionName}</div><div style="font-size:8px;color:rgba(255,255,255,0.7)">Student Identity Card</div></div>
         </div>
         <div style="flex:1;display:flex;padding:8px 12px;gap:10px;background:${t.secondary}">
           ${show('photo') ? `<div style="width:65px;height:80px;border-radius:8px;border:2px solid ${t.primary};overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">${s.photo ? `<img src="${s.photo}" style="width:100%;height:100%;object-fit:cover" />` : `<span style="font-size:24px;color:${t.primary};opacity:0.4">👤</span>`}</div>` : ''}
@@ -245,7 +255,7 @@ export default function IDCardsPage() {
           </div>
         </div>
         <div style="padding:4px 12px;background:${t.accent};display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:7px;color:rgba(255,255,255,0.7)">Academic Year 2025–26</span>
+          <span style="font-size:7px;color:rgba(255,255,255,0.7)">Academic Year ${s.academicYear?.replace('-', '–')}</span>
           <div style="display:flex;gap:20px"><div style="text-align:center"><div style="width:50px;height:1px;background:rgba(255,255,255,0.5)"></div><span style="font-size:6px;color:rgba(255,255,255,0.7)">Principal</span></div><div style="text-align:center"><div style="width:50px;height:1px;background:rgba(255,255,255,0.5)"></div><span style="font-size:6px;color:rgba(255,255,255,0.7)">Seal</span></div></div>
         </div>
       </div>`
@@ -256,7 +266,7 @@ export default function IDCardsPage() {
       `<!DOCTYPE html><html><head><title>ID Cards</title><style>@page{size:auto;margin:10mm}body{margin:0;padding:0;font-family:Arial,sans-serif}.cards{display:flex;flex-wrap:wrap;justify-content:center;gap:0}</style></head><body><div class="cards">${cards}</div><script>setTimeout(()=>window.print(),500)</script></body></html>`
     )
     win.document.close()
-  }, [displayList, template, fields, institution])
+  }, [displayList, template, fields, institutionName])
 
   const inp =
     "w-full py-[7px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-['inherit'] outline-none"
@@ -298,7 +308,7 @@ export default function IDCardsPage() {
             <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
               ① {isBn ? 'প্রতিষ্ঠানের নাম' : 'Institution Name'}
             </div>
-            <input value={institution} onChange={(e) => setInstitution(e.target.value)} className={inp} />
+              <input value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} className={inp} />
           </div>
 
           {/* Template selector */}
@@ -368,6 +378,22 @@ export default function IDCardsPage() {
               ④ {isBn ? 'ফিল্টার' : 'Filter'}
             </div>
             <div className="flex flex-col gap-1.5">
+              <select
+                value={fSession}
+                onChange={(e) => {
+                  setFSession(e.target.value)
+                  setFClass('')
+                  setFSection('')
+                  setSelected([])
+                }}
+                className={`${inp} border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)] font-medium`}
+              >
+                {sessions.map((s) => (
+                  <option key={s} value={s}>
+                    {s} {s === currentSession ? (isBn ? '(বর্তমান)' : '(Current)') : ''}
+                  </option>
+                ))}
+              </select>
               <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[7px] py-1.5 px-2">
                 <Search size={12} className="text-[var(--text-muted)]" />
                 <input
@@ -434,7 +460,7 @@ export default function IDCardsPage() {
           ) : (
             <div className="flex flex-wrap gap-3 justify-start">
               {displayList.map((s) => (
-                <IDCard key={s.id} student={s} template={template} fields={fields} institution={institution} isBn={isBn} />
+                <IDCard key={s.id} student={s} template={template} fields={fields} institution={institutionName} isBn={isBn} />
               ))}
             </div>
           )}

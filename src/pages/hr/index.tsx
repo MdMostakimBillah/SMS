@@ -1838,7 +1838,7 @@ export default function HRPage() {
               <tfoot>
                 <tr className="bg-[var(--bg-secondary)] border-t border-t-2 border-[var(--border)]">
                   <td className="py-2 px-2"></td>
-                  <td colSpan={3} className="py-2 px-2 text-[11px] font-bold text-[var(--text-primary)]">
+                  <td colSpan={4} className="py-2 px-2 text-[11px] font-bold text-[var(--text-primary)]">
                     {isBn ? 'মোট' : 'Total'}
                   </td>
                   <td className="py-2 px-2 text-xs font-bold text-[var(--green)] text-right">
@@ -3524,7 +3524,7 @@ export default function HRPage() {
                 {isBn ? 'সকল বরাদ্দ' : 'All Assignments'}
                 <span className="text-[11px] font-medium text-[var(--text-muted)] ml-2">({filteredAssignments.length})</span>
               </div>
-              <div className="flex gap-1.5 items-center flex-wrap">
+              <div className="flex gap-1.5 items-center shrink-0">
                 <input
                   type="date"
                   value={assignDateFrom}
@@ -3532,9 +3532,9 @@ export default function HRPage() {
                     setAssignDateFrom(e.target.value)
                     setPage(1)
                   }}
-                  className={`${inputCls} w-auto max-w-[160px] py-[5px] px-2 text-[11px]`}
+                  className={`${inputCls} w-[130px] shrink-0 py-[5px] px-2 text-[11px]`}
                 />
-                <span className="text-[11px] text-[var(--text-muted)]">—</span>
+                <span className="text-[11px] text-[var(--text-muted)] shrink-0">—</span>
                 <input
                   type="date"
                   value={assignDateTo}
@@ -3542,12 +3542,12 @@ export default function HRPage() {
                     setAssignDateTo(e.target.value)
                     setPage(1)
                   }}
-                  className={`${inputCls} w-auto max-w-[160px] py-[5px] px-2 text-[11px]`}
+                  className={`${inputCls} w-[130px] shrink-0 py-[5px] px-2 text-[11px]`}
                 />
                 {selectedAssign.length > 0 && (
                   <button
                     onClick={() => setShowPDFModal('assignment')}
-                    className="flex items-center gap-[5px] py-[6px] px-[10px] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[11px] font-medium cursor-pointer font-[inherit]"
+                    className="flex items-center gap-[5px] py-[6px] px-[10px] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[11px] font-medium cursor-pointer font-[inherit] shrink-0"
                   >
                     <FileText size={12} />
                     PDF ({selectedAssign.length})
@@ -3584,7 +3584,8 @@ export default function HRPage() {
                       ].map((h) => (
                         <th
                           key={h.l}
-                          className="p-2 h.align text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap"
+                          className={`p-2 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap ${h.align === 'center' ? 'text-center' : h.align === 'right' ? 'text-right' : 'text-left'}`}
+                          style={h.w ? { width: h.w } : undefined}
                         >
                           {h.l}
                         </th>

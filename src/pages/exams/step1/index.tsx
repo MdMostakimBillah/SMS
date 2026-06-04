@@ -1861,6 +1861,11 @@ export default function Step1Planning() {
                           showVivaMarks: false,
                           showInstructions: true,
                           subjects: [],
+                          paperSize: 'A4' as const,
+                          showVerificationCode: false,
+                          showInvigilatorCode: false,
+                          showExaminerRemarks: false,
+                          showVerificationSignature: false,
                         },
                         isBn
                       )

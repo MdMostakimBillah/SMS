@@ -9,7 +9,7 @@ import { generateA4HTML } from './a4Template'
 
 type FormData = Omit<StudentAdmission, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'approvedAt'>
 
-const initForm = (): FormData => ({
+const initForm = (currentSession: string): FormData => ({
   photo: '',
   nameEn: '',
   nameBn: '',
@@ -23,7 +23,7 @@ const initForm = (): FormData => ({
   class: '',
   section: '',
   roll: '',
-  academicYear: '2025-26',
+  academicYear: currentSession,
   previousSchool: '',
   admissionDate: new Date().toISOString().split('T')[0],
   presentAddress: '',
@@ -102,8 +102,11 @@ export default function GeneralAdmission() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const { addStudent, getNextId } = useAdmissionStore()
-  const { classes } = useClassStore()
+  const { classes, institution } = useClassStore()
   const isBn = language === 'bn'
+
+  const currentSession = institution.currentSession
+  const sessions = institution.sessions
 
   const classOptions = useMemo(() => classes.map((cls) => cls.name), [classes])
   const sectionsMap = useMemo(() => {
@@ -114,7 +117,7 @@ export default function GeneralAdmission() {
     return map
   }, [classes])
 
-  const [form, setForm] = useState<FormData>(initForm)
+  const [form, setForm] = useState<FormData>(() => initForm(currentSession))
   const [studentId] = useState(() => getNextId())
   const [done, setDone] = useState(false)
   const [doneId, setDoneId] = useState('')
@@ -212,7 +215,7 @@ export default function GeneralAdmission() {
           <button
             onClick={() => {
               setDone(false)
-              setForm(initForm())
+              setForm(initForm(currentSession))
             }}
             className="py-[10px] px-[18px] rounded-[9px] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer font-[inherit]"
           >
@@ -424,7 +427,7 @@ export default function GeneralAdmission() {
             onChange={(v) => set('academicYear', v)}
             required
             isBn={isBn}
-            options={['2024-25', '2025-26', '2026-27']}
+            options={sessions.map((s) => s === currentSession ? `${s} (${isBn ? 'সক্রিয়' : 'Active'})` : s)}
           />
           <FormField
             labelEn="Admission Date"
@@ -567,7 +570,7 @@ export default function GeneralAdmission() {
       <div className="flex gap-[10px] justify-end flex-wrap">
         <button
           type="button"
-          onClick={() => setForm(initForm())}
+          onClick={() => setForm(initForm(currentSession))}
           className="py-[10px] px-5 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer font-[inherit]"
         >
           {isBn ? 'রিসেট' : 'Reset'}

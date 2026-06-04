@@ -9,9 +9,9 @@ const bn = (n: number): string => {
 }
 
 export type MarksEntryStyle = 'abcd' | 'bn' | 'numbers' | 'custom'
+export type PaperSize = 'A4' | 'Legal' | 'Letter'
 
 export interface OMRConfig {
-  // ── Institution ──
   institutionName: string
   institutionNameBn: string
   institutionAddress: string
@@ -27,13 +27,13 @@ export interface OMRConfig {
   sectionName: string
   themeColor: string
   serialNumber: string
+  paperSize: PaperSize
   sheetFormat: 'A' | 'B' | 'C' | 'D'
   totalQuestions: number
   optionCount: number
   correctMark: number
   negativeMark: number
   subjects: { name: string; nameBn: string }[]
-  // ── Student Info Fields ──
   showStudentName: boolean
   showRollNo: boolean
   showStudentId: boolean
@@ -48,23 +48,24 @@ export interface OMRConfig {
   showDate: boolean
   showStudentSignature: boolean
   showStudentPhoto: boolean
-  // ── Identification Fields ──
   showQRCode: boolean
   showBarcode: boolean
   showSerialNumber: boolean
   showSecurityCode: boolean
-  // ── Examination Fields ──
+  showVerificationCode: boolean
   showTeacherCode: boolean
+  showInvigilatorCode: boolean
   showRoomNumber: boolean
   showSeatNumber: boolean
   showAdditionalPaper: boolean
   showPresentAbsent: boolean
-  // ── Examiner Section ──
+  showExaminerRemarks: boolean
   showExaminerSection: boolean
   marksEntryStyle: MarksEntryStyle
   customMarksValues: string
   showExaminerSignature: boolean
   showHeadExaminerSignature: boolean
+  showVerificationSignature: boolean
   showCheckedBy: boolean
   showVerifiedBy: boolean
   showTotalMarks: boolean
@@ -73,7 +74,6 @@ export interface OMRConfig {
   showInstructions: boolean
 }
 
-/* ── Helper: Bengali digit circle grid ── */
 function digitGrid(c: string, cols: number, sz: number): string {
   let html = ''
   for (let d = 0; d < 10; d++) {
@@ -86,7 +86,6 @@ function digitGrid(c: string, cols: number, sz: number): string {
   return `<table style="border-collapse:separate;border-spacing:1px;"><tbody>${html}</tbody></table>`
 }
 
-/* ── Helper: Option circles (generic) ── */
 function optionGrid(c: string, opts: string[], sz: number = 16): string {
   let cells = ''
   opts.forEach((l, i) => {
@@ -96,7 +95,6 @@ function optionGrid(c: string, opts: string[], sz: number = 16): string {
   return `<table style="border-collapse:separate;border-spacing:2px;"><tbody><tr>${cells}</tr></tbody></table>`
 }
 
-/* ── Helper: Subject Code A-Z ── */
 function subjectCodeGrid(c: string): string {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
   let cells = ''
@@ -107,7 +105,6 @@ function subjectCodeGrid(c: string): string {
   return `<table style="border-collapse:separate;border-spacing:1px;"><tbody><tr>${cells}</tr></tbody></table>`
 }
 
-/* ── Helper: Subject list with selection circles ── */
 function subjectListTable(c: string, subjects: { name: string; nameBn: string }[], isBn: boolean): string {
   if (subjects.length === 0) return ''
   let rows = ''
@@ -120,7 +117,6 @@ function subjectListTable(c: string, subjects: { name: string; nameBn: string }[
   return `<table style="width:100%;border-collapse:collapse;">${rows}</table>`
 }
 
-/* ── Helper: Examiner question columns ── */
 function buildExaminerColumns(c: string, totalQ: number, options: string[], qPerCol: number, isBn: boolean): string {
   const numCols = Math.ceil(totalQ / qPerCol)
   let html = ''
@@ -138,10 +134,10 @@ function buildExaminerColumns(c: string, totalQ: number, options: string[], qPer
         <td style="padding:1px;"><table style="border-collapse:separate;border-spacing:1px;"><tbody><tr>${bubs}</tr></tbody></table></td>
       </tr>`
     }
-    html += `<div style="flex:1;border:1.5px solid ${c};border-radius:4px;overflow:hidden;">
+    html += `<div style="flex:1;min-width:100px;border:1.5px solid ${c};border-radius:4px;overflow:hidden;">
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:${c};color:white;">
-          <th style="padding:3px;font-size:8px;border:1px solid ${c};width:22px;">${isBn ? 'প্রশ্ন' : 'Q. No'}</th>
+          <th style="padding:3px;font-size:8px;border:1px solid ${c};width:22px;">${isBn ? 'প্রশ্ন' : 'Q'}</th>
           <th style="padding:3px;font-size:8px;border:1px solid ${c};">${isBn ? 'উত্তর' : 'Ans'}</th>
         </tr></thead>
         <tbody>${rows}</tbody>
@@ -151,30 +147,28 @@ function buildExaminerColumns(c: string, totalQ: number, options: string[], qPer
   return html
 }
 
-/* ── Helper: Bottom marks table ── */
 function bottomMarksTable(c: string, totalQ: number, isBn: boolean): string {
   const qCount = Math.min(totalQ, 20)
   let qCells = ''
   for (let i = 1; i <= qCount; i++) {
-    qCells += `<td style="padding:3px;border:1px solid ${c}33;text-align:center;font-size:8px;font-weight:700;color:#111827;width:28px;">${i}</td>`
+    qCells += `<td style="padding:2px;border:1px solid ${c}33;text-align:center;font-size:7px;font-weight:700;color:#111827;width:24px;">${i}</td>`
   }
   let mCells = ''
   for (let i = 0; i < qCount; i++) {
-    mCells += `<td style="padding:3px;border:1px solid ${c}33;text-align:center;"><div style="width:14px;height:14px;border:1.5px solid ${c};border-radius:50%;display:inline-block;"></div></td>`
+    mCells += `<td style="padding:2px;border:1px solid ${c}33;text-align:center;"><div style="width:12px;height:12px;border:1.5px solid ${c};border-radius:50%;display:inline-block;"></div></td>`
   }
   return `<table style="width:100%;border-collapse:collapse;">
     <thead><tr style="background:${c}11;">
-      <th style="padding:3px;border:1px solid ${c}33;font-size:8px;width:30px;">${isBn ? 'প্রশ্ন' : 'Q. No'}</th>
+      <th style="padding:2px;border:1px solid ${c}33;font-size:7px;width:24px;">${isBn ? 'প্রশ্ন' : 'Q'}</th>
       ${qCells}
     </tr></thead>
     <tbody><tr>
-      <td style="padding:3px;border:1px solid ${c}33;font-size:8px;font-weight:700;color:#111827;">${isBn ? 'নম্বর' : 'Mark'}</td>
+      <td style="padding:2px;border:1px solid ${c}33;font-size:7px;font-weight:700;color:#111827;">${isBn ? 'নম্বর' : 'Mark'}</td>
       ${mCells}
     </tr></tbody>
   </table>`
 }
 
-/* ── Helper: Barcode placeholder ── */
 function barcodePlaceholder(c: string): string {
   let bars = ''
   for (let i = 0; i < 40; i++) {
@@ -184,7 +178,6 @@ function barcodePlaceholder(c: string): string {
   return `<div style="display:flex;align-items:flex-end;gap:0.5px;">${bars}</div>`
 }
 
-/* ── Resolve marks entry options ── */
 function getMarksOptions(style: MarksEntryStyle, custom: string, isBn: boolean): string[] {
   switch (style) {
     case 'bn':
@@ -203,17 +196,25 @@ function getMarksOptions(style: MarksEntryStyle, custom: string, isBn: boolean):
   }
 }
 
-/* ── Main: Generate OMR HTML ── */
+function getPaperSizeStyle(paperSize: PaperSize): string {
+  switch (paperSize) {
+    case 'Legal': return 'size:legal;margin:5mm 5mm;'
+    case 'Letter': return 'size:letter;margin:5mm 5mm;'
+    case 'A4':
+    default: return 'size:A4;margin:5mm 5mm;'
+  }
+}
+
 export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copyNumber: number = 1): Promise<string> {
-  const c = cfg.themeColor || '#d81b60'
+  const c = cfg.themeColor || '#6366f1'
   const marksOpts = getMarksOptions(cfg.marksEntryStyle, cfg.customMarksValues, isBn)
   const qPerCol = 10
   const schoolName = isBn ? cfg.institutionNameBn : cfg.institutionName
   const schoolAddr = cfg.institutionAddress || ''
   const uniqueSN = `${cfg.serialNumber}-${String(copyNumber).padStart(4, '0')}`
   const securityToken = `SEC-${uniqueSN}-${Date.now().toString(36).toUpperCase()}`
+  const verificationCode = `VER-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
 
-  // ── QR Codes (unique per copy) ──
   let qrStudentDataUrl = ''
   let qrExaminerDataUrl = ''
   if (cfg.showQRCode) {
@@ -224,6 +225,7 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
       sub: cfg.subjectName,
       fmt: cfg.sheetFormat,
       sec: securityToken,
+      ver: verificationCode,
     })
     const examinerPayload = JSON.stringify({ sn: uniqueSN, session: cfg.sessionName, role: 'EXAMINER', sec: securityToken })
     try {
@@ -251,7 +253,6 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
 
   const subListHtml = subjectListTable(c, cfg.subjects, isBn)
 
-  // ── Student Info Row ──
   const infoParts: string[] = []
   if (cfg.showStudentName)
     infoParts.push(`<span style="flex:2;">${isBn ? 'শিক্ষার্থীর নাম' : 'Student Name'}: __________________________________________</span>`)
@@ -259,7 +260,6 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
   if (cfg.showDate) infoParts.push(`<span>${isBn ? 'তারিখ' : 'Date'}: ______________</span>`)
   const studentInfoFields = infoParts.join('')
 
-  // ── Student Bubble Area ──
   const sbp: string[] = []
   const box = (title: string, content: string) =>
     `<div style="border:1.5px solid ${c};border-radius:4px;padding:4px;"><div style="text-align:center;font-size:7px;font-weight:800;color:${c};margin-bottom:3px;border-bottom:1px solid ${c}33;padding-bottom:2px;">${title}</div>${content}</div>`
@@ -268,6 +268,7 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
   if (cfg.showStudentId) sbp.push(box(isBn ? 'শিক্ষার্থী আইডি' : 'Student ID', digitGrid(c, 10, 14)))
   if (cfg.showRegistrationNo) sbp.push(box(isBn ? 'রেজিস্ট্রেশন' : 'Reg. No', digitGrid(c, 10, 14)))
   if (cfg.showTeacherCode) sbp.push(box(isBn ? 'শিক্ষক কোড' : 'Teacher Code', digitGrid(c, 6, 14)))
+  if (cfg.showInvigilatorCode) sbp.push(box(isBn ? 'পরিদর্শক কোড' : 'Invigilator Code', digitGrid(c, 6, 14)))
   if (cfg.showSetCode) sbp.push(box(isBn ? 'সেট কোড' : 'Set Code', optionGrid(c, ['A', 'B', 'C', 'D'], 20)))
   if (cfg.showSubjectCode) sbp.push(box(isBn ? 'বিষয় কোড' : 'Subject Code', subjectCodeGrid(c)))
   if (cfg.showSubjectName && subListHtml)
@@ -275,11 +276,10 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
       `<div style="flex:1;border:1.5px solid ${c};border-radius:4px;padding:4px;min-width:140px;"><div style="text-align:center;font-size:7px;font-weight:800;color:${c};margin-bottom:3px;border-bottom:1px solid ${c}33;padding-bottom:2px;">${isBn ? 'বিষয়' : 'Subject Name'}</div>${subListHtml}</div>`
     )
   if (cfg.showAdditionalPaper)
-    sbp.push(box(`${isBn ? 'অতিরিক্ত' : 'Additional'}<br/>${isBn ? 'উত্তর পত্র' : 'Papers'}`, digitGrid(c, 2, 12)))
+    sbp.push(box(`${isBn ? 'অতিরিক্ত' : 'Extra'}<br/>${isBn ? 'উত্তর পত্র' : 'Papers'}`, digitGrid(c, 2, 12)))
   if (cfg.showRoomNumber) sbp.push(box(isBn ? 'কক্ষ নং' : 'Room No', digitGrid(c, 3, 12)))
   if (cfg.showSeatNumber) sbp.push(box(isBn ? 'আসন নং' : 'Seat No', digitGrid(c, 3, 12)))
 
-  // QR + Photo + Signature
   const qrBlock: string[] = []
   if (cfg.showQRCode && qrImg) qrBlock.push(qrImg)
   if (cfg.showStudentPhoto)
@@ -294,16 +294,14 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
     )
   }
 
-  // ── Examiner Bubble Area ──
   const ep: string[] = []
   if (cfg.showAdditionalPaper)
-    ep.push(box(`${isBn ? 'অতিরিক্ত' : 'Additional'}<br/>${isBn ? 'উত্তর পত্র' : 'Papers'}`, digitGrid(c, 2, 12)))
+    ep.push(box(`${isBn ? 'অতিরিক্ত' : 'Extra'}<br/>${isBn ? 'উত্তর পত্র' : 'Papers'}`, digitGrid(c, 2, 12)))
   if (cfg.showQRCode && qrImg2)
     ep.push(
       `<div style="border:1.5px solid ${c};border-radius:4px;padding:4px;display:flex;flex-direction:column;align-items:center;gap:2px;">${qrImg2}<div style="font-size:7px;color:#6b7280;font-weight:600;">SN</div></div>`
     )
 
-  // Examiner signature boxes
   const sigBoxes: string[] = []
   if (cfg.showExaminerSignature)
     sigBoxes.push(
@@ -313,9 +311,18 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
     sigBoxes.push(
       `<div style="flex:1;border:1.5px solid ${c};border-radius:3px;padding:4px;text-align:center;"><div style="font-size:7px;font-weight:700;color:${c};margin-bottom:3px;">${isBn ? 'প্রধান পরীক্ষক' : 'Head Examiner'}</div><div style="font-size:6px;color:#6b7280;">(${isBn ? 'স্বাক্ষর' : 'Sign'})</div><div style="border-bottom:1px dashed #d1d5db;margin-top:10px;"></div></div>`
     )
+  if (cfg.showVerificationSignature)
+    sigBoxes.push(
+      `<div style="flex:1;border:1.5px solid ${c};border-radius:3px;padding:4px;text-align:center;"><div style="font-size:7px;font-weight:700;color:${c};margin-bottom:3px;">${isBn ? 'নিশ্চিতকারী' : 'Verifier'}</div><div style="font-size:6px;color:#6b7280;">(${isBn ? 'স্বাক্ষর' : 'Sign'})</div><div style="border-bottom:1px dashed #d1d5db;margin-top:10px;"></div></div>`
+    )
   if (sigBoxes.length > 0) ep.push(`<div style="display:flex;gap:3px;">${sigBoxes.join('')}</div>`)
 
-  // ── Verification Area ──
+  if (cfg.showExaminerRemarks) {
+    ep.push(
+      `<div style="border:1.5px solid ${c};border-radius:4px;padding:6px;text-align:center;"><div style="font-size:7px;font-weight:700;color:${c};margin-bottom:4px;">${isBn ? 'পরীক্ষকের মন্তব্য' : "Examiner's Remarks"}</div><div style="border:1px dashed ${c}55;border-radius:2px;height:40px;"></div></div>`
+    )
+  }
+
   const verifyParts: string[] = []
   if (cfg.showCheckedBy)
     verifyParts.push(
@@ -323,10 +330,9 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
     )
   if (cfg.showVerifiedBy)
     verifyParts.push(
-      `<div style="flex:1;border:1.5px solid ${c};border-radius:4px;padding:6px;text-align:center;"><div style="font-size:7px;font-weight:700;color:${c};margin-bottom:4px;">${isBn ? 'যাচাইকারী' : 'Verified By'}</div><div style="font-size:6px;color:#6b7280;">(${isBn ? 'নাম ও স্বাক্ষর' : 'Name & Sign'})</div><div style="border-bottom:1px dashed #d1d5db;margin-top:12px;"></div></div>`
+      `<div style="flex:1;border:1.5px solid ${c};border-radius:4px;padding:6px;text-align:center;"><div style="font-size:7px;font-weight:700;color:${c};margin-bottom:4px;">${isBn ? 'প্রত্যায়নকারী' : 'Verified By'}</div><div style="font-size:6px;color:#6b7280;">(${isBn ? 'নাম ও স্বাক্ষর' : 'Name & Sign'})</div><div style="border-bottom:1px dashed #d1d5db;margin-top:12px;"></div></div>`
     )
 
-  // ── Right Side Summary ──
   const summaryParts: string[] = []
   if (cfg.showTotalMarks)
     summaryParts.push(
@@ -349,23 +355,24 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
     )
   }
 
-  // ── Instructions ──
   const instructionsHtml = cfg.showInstructions
     ? `<div style="margin-top:6px;padding:6px 10px;border:1px dashed ${c}55;border-radius:4px;font-size:7px;color:#6b7280;">
       <div style="font-weight:700;color:${c};margin-bottom:4px;text-align:center;font-size:8px;">${isBn ? 'শিক্ষার্থীদের জন্য নির্দেশনা' : 'Instructions for Students'}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 20px;">
-        <div>1. ${isBn ? 'কালো বা লাল বলপয়েন্ট কলম ব্যবহার করুন' : 'Use a black ballpoint pen to fill the circles.'}</div>
-        <div>3. ${isBn ? 'করেকশন ফ্লুইড বা ইরেজার ব্যবহার করবেন না' : 'Do not use correction fluid or eraser.'}</div>
-        <div>2. ${isBn ? 'বৃত্ত সম্পূর্ণ ভর্তি করুন' : 'Fill the circle completely.'}</div>
-        <div>4. ${isBn ? 'শিট মোড়াবেন না বা ক্ষতিগ্রস্ত করবেন না' : 'Do not fold or damage the OMR sheet.'}</div>
+        <div>1. ${isBn ? 'কালো বা নীল বলপয়েন্ট কলম ব্যবহার করুন' : 'Use black/blue ballpoint pen'}</div>
+        <div>3. ${isBn ? 'করেকশন ফ্লুইড বা ইরেজার ব্যবহার করবেন না' : 'No correction fluid/eraser'}</div>
+        <div>2. ${isBn ? 'বৃত্ত সম্পূর্ণ ভর্তি করুন' : 'Fill circles completely'}</div>
+        <div>4. ${isBn ? 'শিট মোড়াবেন না বা ক্ষতিগ্রস্ত করবেন না' : 'Do not fold or damage'}</div>
       </div>
     </div>`
     : ''
 
+  const paperSizeStyle = getPaperSizeStyle(cfg.paperSize || 'A4')
+
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"/>
 <style>
-  @page{size:A4;margin:5mm 5mm;}
+  @page{${paperSizeStyle}}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#1f2937;font-size:8px;background:white;}
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:white;}}
@@ -381,7 +388,7 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
 
 <div style="border:2px solid ${c};padding:10px;position:relative;max-width:210mm;margin:0 auto;">
 
-  <!-- ═══ HEADER ═══ -->
+  <!-- HEADER -->
   <div style="text-align:center;margin-bottom:6px;padding-bottom:5px;border-bottom:2px solid ${c};">
     <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:4px;">
       <div style="width:60px;height:60px;border-radius:50%;border:2px solid ${c};display:flex;align-items:center;justify-content:center;font-size:7px;color:${c};font-weight:700;overflow:hidden;">LOGO</div>
@@ -394,16 +401,18 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
     <div style="font-size:10px;color:#374151;margin-bottom:2px;">${cfg.sessionName}</div>
     ${cfg.showClass ? `<div style="font-size:15px;font-weight:800;color:#111827;margin-bottom:2px;">${isBn ? cfg.classNameBn : cfg.className}</div>` : ''}
     ${cfg.showGroup && cfg.groupName ? `<div style="font-size:10px;color:#374151;margin-bottom:1px;">${isBn ? cfg.groupNameBn : cfg.groupName}</div>` : ''}
+    ${cfg.showSection && cfg.sectionName ? `<div style="font-size:10px;color:#374151;margin-bottom:1px;">${isBn ? 'শাখা' : 'Section'}: ${cfg.sectionName}</div>` : ''}
     ${cfg.showExamName ? `<div style="font-size:12px;font-weight:700;color:${c};margin-bottom:3px;">${isBn ? cfg.examNameBn : cfg.examName}</div>` : ''}
     ${cfg.showSubjectName ? `<div style="font-size:10px;color:#374151;margin-bottom:2px;">${isBn ? cfg.subjectNameBn : cfg.subjectName}</div>` : ''}
-    <div style="font-size:7px;color:#6b7280;">${isBn ? 'অবশ্যই কালো বা লাল পয়েন্ট কলম দিয়ে বৃত্ত ভর্তি করতে হবে' : 'Fill bubbles with black or red pen only'}</div>
+    <div style="font-size:7px;color:#6b7280;">${isBn ? 'অবশ্যই কালো বা নীল পয়েন্ট কলম দিয়ে বৃত্ত ভর্তি করতে হবে' : 'Fill bubbles with black or blue pen'}</div>
   </div>
 
-  <!-- SERIAL + SECURITY -->
-  ${cfg.showSerialNumber ? `<div style="position:absolute;top:14px;right:14px;text-align:right;"><div style="font-size:11px;font-weight:800;color:${c};">#SN : ${uniqueSN}</div></div>` : ''}
-  ${cfg.showSecurityCode ? `<div style="position:absolute;top:28px;right:14px;text-align:right;"><div style="font-size:7px;color:#9ca3af;">SEC: ${securityToken}</div></div>` : ''}
+  <!-- SERIAL + SECURITY + VERIFICATION -->
+  ${cfg.showSerialNumber ? `<div style="position:absolute;top:10px;right:14px;text-align:right;"><div style="font-size:11px;font-weight:800;color:${c};">#${uniqueSN}</div></div>` : ''}
+  ${cfg.showSecurityCode ? `<div style="position:absolute;top:24px;right:14px;text-align:right;"><div style="font-size:6px;color:#9ca3af;">SEC: ${securityToken}</div></div>` : ''}
+  ${cfg.showVerificationCode ? `<div style="position:absolute;top:36px;right:14px;text-align:right;"><div style="font-size:6px;color:#9ca3af;">VER: ${verificationCode}</div></div>` : ''}
 
-  <!-- ═══ STUDENT PART ═══ -->
+  <!-- STUDENT PART -->
   <div style="margin-bottom:6px;">
     <div style="font-size:9px;font-weight:800;color:${c};margin-bottom:4px;border-bottom:1px solid ${c}33;padding-bottom:2px;">
       ${isBn ? 'শিক্ষার্থীর অংশ' : 'Student Part'}
@@ -414,7 +423,7 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
     </div>
   </div>
 
-  <!-- ═══ EXAMINER'S PART ═══ -->
+  <!-- EXAMINER'S PART -->
   ${
     cfg.showExaminerSection
       ? `<div style="margin-bottom:6px;">
@@ -422,28 +431,30 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
       ${isBn ? 'পরীক্ষকের অংশ' : "Examiner's Part"}
     </div>
     <div style="display:flex;gap:5px;align-items:flex-start;flex-wrap:wrap;">
-      <div style="flex:1;display:flex;gap:3px;">
+      <div style="flex:1;display:flex;gap:3px;flex-wrap:wrap;">
         ${buildExaminerColumns(c, cfg.totalQuestions, marksOpts, qPerCol, isBn)}
       </div>
-      ${ep.join('')}
+      <div style="display:flex;flex-direction:column;gap:3px;min-width:80px;">
+        ${ep.join('')}
+      </div>
     </div>
   </div>`
       : ''
   }
 
-  <!-- ═══ BOTTOM: RESULT TABLE + SUMMARY ═══ -->
+  <!-- BOTTOM: RESULT TABLE + SUMMARY -->
   <div style="display:flex;gap:5px;padding:4px;border:1.5px solid ${c};border-radius:4px;margin-bottom:4px;">
     <div style="flex:1;">${bottomMarksTable(c, cfg.totalQuestions, isBn)}</div>
     ${summaryParts.length > 0 ? `<div style="width:90px;display:flex;flex-direction:column;gap:3px;font-size:7px;color:#6b7280;">${summaryParts.join('')}</div>` : ''}
   </div>
 
-  <!-- ═══ VERIFICATION ═══ -->
+  <!-- VERIFICATION -->
   ${verifyParts.length > 0 ? `<div style="display:flex;gap:5px;margin-bottom:4px;">${verifyParts.join('')}</div>` : ''}
 
-  <!-- ═══ INSTRUCTIONS ═══ -->
+  <!-- INSTRUCTIONS -->
   ${instructionsHtml}
 
-  <!-- ═══ FOOTER ═══ -->
+  <!-- FOOTER -->
   <div style="text-align:center;margin-top:5px;padding-top:3px;border-top:1.5px solid ${c};font-size:7px;color:#9ca3af;">
     ${schoolName} &bull; OMR Sheet &bull; ${isBn ? 'ফরম্যাট' : 'Format'}: ${cfg.sheetFormat} &bull; ${uniqueSN}
   </div>

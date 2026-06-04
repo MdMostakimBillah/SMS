@@ -20,6 +20,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useExamStore } from '@/store/examStore'
 import { useSessionStudents } from '@/store/admissionStore'
+import { useClassStore } from '@/store/classStore'
 import StepProgress from '@/components/ui/StepProgress'
 import WorkflowCard from '@/components/ui/WorkflowCard'
 import gsap from 'gsap'
@@ -70,8 +71,10 @@ export default function ExamDashboard() {
   const { isMobile, isTablet } = useWindowSize()
   const students = useSessionStudents()
   const subjects = useTeacherStore((s) => s.subjects)
+  const currentSession = useClassStore((s) => s.institution.currentSession)
 
-  const examConfigs = useExamStore((s) => s.examConfigs)
+  const allExamConfigs = useExamStore((s) => s.examConfigs)
+  const examConfigs = useMemo(() => allExamConfigs.filter((e) => e.session === currentSession), [allExamConfigs, currentSession])
   const subjectMarkConfigs = useExamStore((s) => s.subjectMarkConfigs)
   const studentMarks = useExamStore((s) => s.studentMarks)
   const routines = useExamStore((s) => s.routines)

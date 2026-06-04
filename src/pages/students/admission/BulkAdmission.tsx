@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react'
-import { CheckCircle, Info, Trash2, Plus, Upload, Check } from 'lucide-react'
+import { CheckCircle, Info, Trash2, Plus, Upload, Check, Calendar } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -66,9 +66,13 @@ const Cell = React.memo(function Cell({ value, onChange, type = 'text', options,
 
 export default function BulkAdmission() {
   const { language } = useAppStore()
-  const { addStudent, students: existing } = useAdmissionStore()
-  const { classes } = useClassStore()
+  const addStudent = useAdmissionStore((s) => s.addStudent)
+  const existing = useAdmissionStore((s) => s.students)
+  const { classes, institution } = useClassStore()
   const isBn = language === 'bn'
+
+  const currentSession = institution.currentSession
+  const sessions = institution.sessions
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
@@ -79,6 +83,7 @@ export default function BulkAdmission() {
   })
   const [done, setDone] = useState(false)
   const [count, setCount] = useState(0)
+  const [session, setSession] = useState(currentSession)
 
   const update = useCallback((i: number, key: keyof Row, val: string) => {
     setRows((p) => p.map((r, idx) => (idx === i ? { ...r, [key]: val } : r)))
@@ -115,7 +120,7 @@ export default function BulkAdmission() {
         class: r.class,
         section: r.section,
         roll: '',
-        academicYear: '2025-26',
+        academicYear: session,
         previousSchool: '',
         admissionDate: now,
         presentAddress: '',
@@ -180,6 +185,30 @@ export default function BulkAdmission() {
         <p className="text-[13px] text-[var(--brand)]">
           {isBn ? 'প্রয়োজনীয় তথ্য দিন। বিস্তারিত পরে আপডেট করা যাবে।' : 'Enter essential info. Details can be updated later.'}
         </p>
+      </div>
+
+      {/* Session Selector */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <Calendar size={14} className="text-[var(--brand)]" />
+          <span className="text-[12px] font-medium text-[var(--text-secondary)]">
+            {isBn ? 'সেশন' : 'Session'}:
+          </span>
+        </div>
+        <select
+          value={session}
+          onChange={(e) => setSession(e.target.value)}
+          className="px-3 py-1.5 rounded-lg text-[12px] border border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)] outline-none cursor-pointer font-medium"
+        >
+          {sessions.map((s) => (
+            <option key={s} value={s}>
+              {s} {s === currentSession ? (isBn ? '(সক্রিয়)' : '(Active)') : ''}
+            </option>
+          ))}
+        </select>
+        <span className="text-[10px] text-[var(--text-muted)]">
+          {isBn ? 'সকল ছাত্র এই সেশনে ভর্তি হবে' : 'All students will be admitted to this session'}
+        </span>
       </div>
 
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden mb-3">

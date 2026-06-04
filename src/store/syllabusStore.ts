@@ -27,6 +27,7 @@ export interface SyllabusChapter {
 export interface SyllabusEntry {
   id: string
   classId: string
+  sectionId: string
   subjectId: string
   sessionId: string
   totalChapters: number
@@ -56,7 +57,7 @@ interface SyllabusState {
   deleteTopic: (syllabusId: string, chapterId: string, topicId: string) => void
   updateTopicStatus: (syllabusId: string, chapterId: string, topicId: string, status: SyllabusTopic['status']) => void
 
-  getSyllabusForClass: (classId: string, subjectId: string) => SyllabusEntry | undefined
+  getSyllabusForClass: (classId: string, sectionId: string, subjectId: string) => SyllabusEntry | undefined
 }
 
 function recalcStats(chapters: SyllabusChapter[]) {
@@ -72,7 +73,8 @@ function recalcStats(chapters: SyllabusChapter[]) {
 const demoSyllabi: SyllabusEntry[] = [
   {
     id: 'SYL-001',
-    classId: 'Class 6',
+    classId: '6',
+    sectionId: 'A',
     subjectId: 'SUB-001',
     sessionId: '2025-26',
     totalChapters: 2,
@@ -165,7 +167,8 @@ const demoSyllabi: SyllabusEntry[] = [
   },
   {
     id: 'SYL-002',
-    classId: 'Class 6',
+    classId: '6',
+    sectionId: 'B',
     subjectId: 'SUB-003',
     sessionId: '2025-26',
     totalChapters: 1,
@@ -359,8 +362,8 @@ export const useSyllabusStore = create<SyllabusState>()(
           }),
         })),
 
-      getSyllabusForClass: (classId, subjectId) => {
-        return get().syllabi.find((s) => s.classId === classId && s.subjectId === subjectId)
+      getSyllabusForClass: (classId, sectionId, subjectId) => {
+        return get().syllabi.find((s) => s.classId === classId && s.sectionId === sectionId && s.subjectId === subjectId)
       },
     }),
     { name: 'edutech-syllabus', version: 1 }

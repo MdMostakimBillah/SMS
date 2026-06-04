@@ -774,9 +774,11 @@ const ViewModal = React.memo(function ViewModal({
 export default function AdmissionManage() {
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { updateStudent, approveStudent } = useAdmissionStore()
+  const updateStudent = useAdmissionStore((s) => s.updateStudent)
+  const approveStudent = useAdmissionStore((s) => s.approveStudent)
   const students = useSessionStudents()
-  const { classes } = useClassStore()
+  const { classes, institution } = useClassStore()
+  const currentSession = institution.currentSession
   const isBn = language === 'bn'
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
@@ -809,6 +811,7 @@ export default function AdmissionManage() {
   const filtered = useMemo(
     () =>
       students.filter((s) => {
+        if (s.academicYear !== currentSession) return false
         if (search) {
           const q = search.toLowerCase()
           if (!s.nameEn.toLowerCase().includes(q) && !s.nameBn.includes(search) && !s.id.includes(search) && !s.phone.includes(search))
@@ -829,7 +832,7 @@ export default function AdmissionManage() {
         }
         return true
       }),
-    [students, search, fClass, fSection, fGender, fReligion, fStatus, fDate, dateFrom, dateTo]
+    [students, currentSession, search, fClass, fSection, fGender, fReligion, fStatus, fDate, dateFrom, dateTo]
   )
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))

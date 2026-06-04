@@ -1,11 +1,10 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowUpCircle, Check, Info, User, Users } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
+import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
-import type { StudentAdmission } from '@/pages/students/admission/types'
 
 interface RollCellProps {
   value: string
@@ -30,32 +29,50 @@ export default function ClassPromotionPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { updateStudent } = useAdmissionStore()
-  const students = useSessionStudents()
-  const { classes, institution } = useClassStore()
+  const addStudent = useAdmissionStore((s) => s.addStudent)
+  const allStudents = useAdmissionStore((s) => s.students)
+  const { classes, institution, sessionClasses } = useClassStore()
   const isBn = language === 'bn'
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
-  const approved = useMemo(() => students.filter((s) => s.status === 'approved'), [students])
-
   const currentSession = institution.currentSession
   const sessions = institution.sessions
-  const nextSession = useMemo(() => {
-    const idx = sessions.indexOf(currentSession)
-    return sessions[idx + 1] || ''
-  }, [sessions, currentSession])
+
+  const [fSession, setFSession] = useState(currentSession)
+
+  const students = useMemo(
+    () => allStudents.filter((s) => s.academicYear === fSession),
+    [allStudents, fSession]
+  )
+
+  const approved = useMemo(() => students.filter((s) => s.status === 'approved'), [students])
 
   const [fromClass, setFromClass] = useState('')
   const [fromSection, setFromSection] = useState('')
   const [toClass, setToClass] = useState('')
   const [toSection, setToSection] = useState('')
-  const [newSession, setNewSession] = useState(nextSession)
+  const [newSession, setNewSession] = useState('')
   const [selected, setSelected] = useState<string[]>([])
   const [rollMap, setRollMap] = useState<Record<string, string>>({})
   const [promoted, setPromoted] = useState(false)
   const [promotedCount, setPromotedCount] = useState(0)
+
+  const toClassOptions = useMemo(() => {
+    const targetClasses = newSession ? sessionClasses[newSession] || [] : classes
+    return getClassOptions(targetClasses)
+  }, [newSession, sessionClasses, classes])
+
+  const toSectionsMap = useMemo(() => {
+    const targetClasses = newSession ? sessionClasses[newSession] || [] : classes
+    return buildSectionsMap(targetClasses)
+  }, [newSession, sessionClasses, classes])
+
+  useEffect(() => {
+    setToClass('')
+    setToSection('')
+  }, [newSession])
 
   const filtered = useMemo(
     () =>
@@ -90,26 +107,47 @@ export default function ClassPromotionPage() {
       alert(isBn ? 'অনুগ্রহ করে লক্ষ্য শ্রেণি নির্বাচন করুন' : 'Please select target class')
       return
     }
+    if (!newSession) {
+      alert(isBn ? 'অনুগ্রহ করে নতুন সেশন নির্বাচন করুন' : 'Please select new session')
+      return
+    }
 
-    let count = 0
+    const now = new Date().toISOString()
+    const today = now.split('T')[0]
+
+    // Count existing students in the target session to avoid duplicate IDs
+    const sessionPrefix = `ET-${newSession.replace('-', '')}-`
+    const existingInSession = allStudents.filter((s) => s.id.startsWith(sessionPrefix))
+    let count = existingInSession.length
+
     selected.forEach((id) => {
+      const student = students.find((s) => s.id === id)
+      if (!student) return
+
       const newRoll = rollMap[id]
-      const updates: Partial<StudentAdmission> = {
-        class: toClass,
-        section: toSection || undefined,
-        academicYear: newSession,
-      }
-      if (newRoll !== undefined && newRoll.trim() !== '') {
-        updates.roll = newRoll.trim()
-      }
-      updateStudent(id, updates)
+      // Generate new student ID for the new session (avoid duplicates)
       count++
+      const newId = `${sessionPrefix}${String(count).padStart(4, '0')}`
+
+      // Copy all student data to new session
+      addStudent({
+        ...student,
+        id: newId,
+        createdAt: now,
+        updatedAt: now,
+        class: toClass,
+        section: toSection || student.section,
+        academicYear: newSession,
+        roll: newRoll !== undefined && newRoll.trim() !== '' ? newRoll.trim() : student.roll,
+        status: 'approved',
+        approvedAt: today,
+      })
     })
 
     setPromotedCount(count)
     setPromoted(true)
     setTimeout(() => setPromoted(false), 3000)
-  }, [selected, toClass, toSection, newSession, rollMap, updateStudent, isBn])
+  }, [selected, toClass, toSection, newSession, rollMap, students, allStudents, addStudent, isBn])
 
   return (
     <div>
@@ -126,7 +164,7 @@ export default function ClassPromotionPage() {
             {isBn ? 'ক্লাস প্রমোশন' : 'Class Promotion'}
           </h1>
           <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
-            {isBn ? `${currentSession} থেকে পরবর্তী সেশনে ছাত্রদের প্রমোট করুন` : `Promote students from ${currentSession} to next session`}
+            {isBn ? `${fSession} থেকে পরবর্তী সেশনে ছাত্রদের প্রমোট করুন` : `Promote students from ${fSession} to next session`}
           </p>
         </div>
         <button
@@ -150,9 +188,27 @@ export default function ClassPromotionPage() {
             <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-[10px]">
               ① {isBn ? 'বর্তমান শ্রেণি' : 'From Class'}
             </div>
-            <div className="flex items-center gap-2 mb-[10px] py-[6px] px-3 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)]">
-              <span className="text-[11px] font-semibold text-[var(--brand)]">{currentSession}</span>
-              <span className="text-[10px] text-[var(--text-muted)]">{isBn ? 'বর্তমান সেশন' : 'Current Session'}</span>
+            <div className="flex flex-col gap-[8px] mb-[10px]">
+              <div>
+                <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">{isBn ? 'সেশন' : 'Session'}</label>
+                <select
+                  value={fSession}
+                  onChange={(e) => {
+                    setFSession(e.target.value)
+                    setSelected([])
+                    setRollMap({})
+                    setFromClass('')
+                    setFromSection('')
+                  }}
+                  className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)] text-xs font-[inherit] outline-none cursor-pointer font-medium"
+                >
+                  {sessions.map((s) => (
+                    <option key={s} value={s}>
+                      {s} {s === currentSession ? (isBn ? '(বর্তমান)' : '(Current)') : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="flex flex-col gap-[8px]">
               <div>
@@ -213,7 +269,7 @@ export default function ClassPromotionPage() {
                   className={`w-full py-[7px] px-[10px] rounded-lg border bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer ${toClass ? 'border-[var(--brand)]' : 'border-[var(--border)]'}`}
                 >
                   <option value="">{isBn ? 'বেছে নিন' : 'Select'}</option>
-                  {classOptions.map((c) => (
+                  {toClassOptions.map((c) => (
                     <option key={c} value={c}>
                       {c}
                     </option>
@@ -228,7 +284,7 @@ export default function ClassPromotionPage() {
                   className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
                 >
                   <option value="">{isBn ? 'একই সেকশন' : 'Same Section'}</option>
-                  {(sectionsMap[toClass] || classOptions.flatMap((c) => sectionsMap[c] || []))
+                  {(toSectionsMap[toClass] || toClassOptions.flatMap((c) => toSectionsMap[c] || []))
                     .filter((s, i, a) => a.indexOf(s) === i)
                     .map((s) => (
                       <option key={s} value={s}>
@@ -242,22 +298,15 @@ export default function ClassPromotionPage() {
                 <select
                   value={newSession}
                   onChange={(e) => setNewSession(e.target.value)}
-                  className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
+                  className={`w-full py-[7px] px-[10px] rounded-lg border bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer ${newSession ? 'border-[var(--brand)]' : 'border-[var(--border)]'}`}
                 >
                   <option value="">{isBn ? 'বেছে নিন' : 'Select'}</option>
-                  {sessions
-                    .filter((s) => s !== currentSession)
-                    .map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
+                  {sessions.map((s) => (
+                    <option key={s} value={s}>
+                      {s} {s === currentSession ? (isBn ? '(বর্তমান)' : '(Current)') : ''}
+                    </option>
+                  ))}
                 </select>
-                {nextSession && newSession !== nextSession && (
-                  <p className="text-[10px] text-[var(--amber)] mt-1">
-                    {isBn ? `পরবর্তী সেশন: ${nextSession}` : `Next session: ${nextSession}`}
-                  </p>
-                )}
               </div>
             </div>
           </div>
@@ -265,12 +314,12 @@ export default function ClassPromotionPage() {
           <div className="bg-[var(--brand-light)] border border-[var(--brand)] rounded-[12px] p-[14px]">
             <div className="flex items-center gap-[8px] mb-[6px]">
               <Info size={14} className="text-[var(--brand)]" />
-              <span className="text-[11px] font-semibold text-[var(--brand)]">{isBn ? 'রোল নম্বর' : 'Roll Numbers'}</span>
+              <span className="text-[11px] font-semibold text-[var(--brand)]">{isBn ? 'প্রমোশন পদ্ধতি' : 'Promotion Method'}</span>
             </div>
             <p className="text-[11px] text-[var(--brand)] leading-[1.5]">
               {isBn
-                ? 'প্রতিটি ছাত্রের নতুন রোল নম্বর ম্যানুয়ালি লিখুন। টেবিলের "নতুন রোল" কলামে টাইপ করুন।'
-                : 'Write new roll numbers manually for each student in the "New Roll" column.'}
+                ? 'ছাত্রদের ডেটা কপি করা হবে। পূর্ববর্তী সেশনের সকল তথ্য (শ্রেণি, রুটিন, পরীক্ষা, উপস্থিতি) অক্ষুণ্ণ থাকবে। নতুন সেশনে ছাত্র নতুন আইডিসহ যুক্ত হবে।'
+                : 'Student data will be copied. Previous session data (class, routine, exams, attendance) remains intact. Student is added to new session with a new ID.'}
             </p>
           </div>
         </div>

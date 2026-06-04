@@ -34,10 +34,12 @@ export default function Step3Evaluation() {
   const { isMobile } = useWindowSize()
   const subjects = useTeacherStore((s) => s.subjects)
   const { classes } = useClassStore()
+  const currentSession = useClassStore((s) => s.institution.currentSession)
   const students = useSessionStudents()
   const isBn = language === 'bn'
 
-  const examConfigs = useExamStore((s) => s.examConfigs)
+  const allExamConfigs = useExamStore((s) => s.examConfigs)
+  const examConfigs = useMemo(() => allExamConfigs.filter((e) => e.session === currentSession), [allExamConfigs, currentSession])
   const subjectMarkConfigs = useExamStore((s) => s.subjectMarkConfigs)
   const studentMarks = useExamStore((s) => s.studentMarks)
   const marksEntryStatuses = useExamStore((s) => s.marksEntryStatuses)

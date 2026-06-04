@@ -56,14 +56,21 @@ export interface ClassInfo {
   updatedAt: string
 }
 
+/** Extract class number from name like "Class 1" → "1" */
+export function extractClassNumber(className: string): string {
+  const match = className.match(/\d+/)
+  return match ? match[0] : className
+}
+
 export function getClassOptions(classes: ClassInfo[]): string[] {
-  return classes.map((cls) => cls.name)
+  return classes.map((cls) => extractClassNumber(cls.name))
 }
 
 export function buildSectionsMap(classes: ClassInfo[]): Record<string, string[]> {
   const map: Record<string, string[]> = {}
   classes.forEach((cls) => {
-    map[cls.name] = cls.sections.map((s) => s.name)
+    const classNum = extractClassNumber(cls.name)
+    map[classNum] = cls.sections.map((s) => s.name)
   })
   return map
 }

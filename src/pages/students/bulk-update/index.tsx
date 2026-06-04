@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react'
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
+import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 
 type Op = 'photo' | 'roll' | 'class' | 'section' | 'bloodGroup' | 'religion' | 'academicYear'
@@ -108,9 +108,10 @@ export default function BulkUpdatePage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
   const { isMobile } = useWindowSize()
-  const { updateStudent } = useAdmissionStore()
-  const students = useSessionStudents()
-  const { classes } = useClassStore()
+  const updateStudent = useAdmissionStore((s) => s.updateStudent)
+  const allStudents = useAdmissionStore((s) => s.students)
+  const classes = useClassStore((s) => s.classes)
+  const institution = useClassStore((s) => s.institution)
   const isBn = language === 'bn'
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
@@ -121,19 +122,14 @@ export default function BulkUpdatePage() {
     return Array.from(set).sort()
   }, [classes])
 
-  const OPTS: Record<string, string[]> = useMemo(
-    () => ({
-      ...STATIC_OPTS,
-      class: classOptions,
-      section: allSections,
-    }),
-    [classOptions, allSections]
-  )
+  const currentSession = institution.currentSession
+  const sessions = institution.sessions
 
   const [op, setOp] = useState<Op>('roll')
   const [search, setSearch] = useState('')
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
+  const [fSession, setFSession] = useState(currentSession)
   const [selected, setSelected] = useState<string[]>([])
   const [batchVal, setBatchVal] = useState('')
   const [rowEdits, setRowEdits] = useState<Record<string, string>>({})
@@ -142,7 +138,19 @@ export default function BulkUpdatePage() {
   const [autoStart, setAutoStart] = useState(1)
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
+  useEffect(() => {
+    setFSession(currentSession)
+    setFClass('')
+    setFSection('')
+    setSelected([])
+  }, [currentSession])
+
   const opInfo = OPS.find((x) => x.id === op)!
+
+  const students = useMemo(
+    () => allStudents.filter((s) => s.academicYear === fSession),
+    [allStudents, fSession]
+  )
 
   const filtered = useMemo(
     () =>
@@ -298,6 +306,22 @@ export default function BulkUpdatePage() {
               />
             </div>
             <select
+              value={fSession}
+              onChange={(e) => {
+                setFSession(e.target.value)
+                setFClass('')
+                setFSection('')
+                setSelected([])
+              }}
+              className="px-[9px] py-[7px] rounded-[8px] border border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)] text-[12px] font-[inherit] cursor-pointer outline-none font-medium"
+            >
+              {sessions.map((s) => (
+                <option key={s} value={s}>
+                  {s} {s === currentSession ? (isBn ? '(বর্তমান)' : '(Current)') : ''}
+                </option>
+              ))}
+            </select>
+            <select
               value={fClass}
               onChange={(e) => {
                 setFClass(e.target.value)
@@ -387,7 +411,7 @@ export default function BulkUpdatePage() {
             </div>
           ) : (
             <div className="flex gap-2 items-center flex-wrap">
-              {OPTS[op] ? (
+              {STATIC_OPTS[op] ? (
                 <select
                   value={batchVal}
                   onChange={(e) => setBatchVal(e.target.value)}
@@ -395,7 +419,7 @@ export default function BulkUpdatePage() {
                   style={{ color: batchVal ? 'var(--text-primary)' : 'var(--text-secondary)' }}
                 >
                   <option value="">{isBn ? 'নতুন মান বেছে নিন' : 'Select new value'}</option>
-                  {OPTS[op].map((o) => (
+                  {STATIC_OPTS[op].map((o) => (
                     <option key={o} value={o}>
                       {o}
                     </option>
@@ -584,7 +608,7 @@ export default function BulkUpdatePage() {
                         <EditCell
                           value={rowEdits[s.id] !== undefined ? rowEdits[s.id] : (s as any)[op] || ''}
                           onChange={(v) => updateRowEdit(s.id, v)}
-                          opts={OPTS[op]}
+                          opts={STATIC_OPTS[op]}
                         />
                       )}
                     </td>

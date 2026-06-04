@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   GraduationCap,
@@ -26,11 +27,13 @@ import {
   Crown,
   Settings,
   ChevronsUpDown,
+  Check,
   type LucideIcon,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useClassStore } from '@/store/classStore'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
 
@@ -65,14 +68,43 @@ const iconMap: Record<string, LucideIcon> = {
 
 export default function Sidebar() {
   const { language } = useAppStore()
+  const isBn = language === 'bn'
   const students = useSessionStudents()
   const { teachers } = useTeacherStore()
   const location = useLocation()
+  const { institution, switchSession, addSession } = useClassStore()
+  const [showSessionDropdown, setShowSessionDropdown] = useState(false)
+  const [newSession, setNewSession] = useState('')
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const studentCount = students.length
   const pendingCount = students.filter((s) => s.status === 'pending').length
   const teacherCount = teachers.length
   const activeTeacherCount = teachers.filter((t) => t.status === 'active').length
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowSessionDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSwitchSession = (session: string) => {
+    switchSession(session)
+    setShowSessionDropdown(false)
+  }
+
+  const handleAddSession = () => {
+    const trimmed = newSession.trim()
+    if (!trimmed || institution.sessions.includes(trimmed)) return
+    addSession(trimmed)
+    switchSession(trimmed)
+    setNewSession('')
+    setShowSessionDropdown(false)
+  }
 
   const navGroups = [
     {
@@ -237,58 +269,166 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Tenant */}
-        <div
-          style={{
-            background: 'var(--bg-secondary)',
-            borderRadius: '8px',
-            padding: '8px 10px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            border: '1px solid var(--border)',
-          }}
-        >
+        {/* Tenant / Session Switcher */}
+        <div ref={dropdownRef} style={{ position: 'relative' }}>
           <div
+            onClick={() => setShowSessionDropdown(!showSessionDropdown)}
             style={{
-              width: '26px',
-              height: '26px',
-              borderRadius: '6px',
-              background: 'var(--teal)',
+              background: 'var(--bg-secondary)',
+              borderRadius: '8px',
+              padding: '8px 10px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '9px',
-              fontWeight: 600,
-              color: '#fff',
-              flexShrink: 0,
+              gap: '8px',
+              border: '1px solid var(--border)',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--surface-2)'
+              e.currentTarget.style.borderColor = 'var(--brand)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--bg-secondary)'
+              e.currentTarget.style.borderColor = 'var(--border)'
             }}
           >
-            SA
-          </div>
-          <div style={{ minWidth: 0 }}>
             <div
               style={{
-                fontSize: '11px',
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                width: '26px',
+                height: '26px',
+                borderRadius: '6px',
+                background: 'var(--teal)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '9px',
+                fontWeight: 600,
+                color: '#fff',
+                flexShrink: 0,
               }}
             >
-              Sunrise Academy
+              SA
             </div>
-            <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>{t('academic_year', language)}</div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  color: 'var(--text-primary)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Sunrise Academy
+              </div>
+              <div style={{ fontSize: '9px', color: 'var(--brand)', fontWeight: 600 }}>
+                {institution.currentSession || 'No Session'}
+              </div>
+            </div>
+            <ChevronsUpDown
+              size={11}
+              style={{
+                color: 'var(--text-muted)',
+                flexShrink: 0,
+                transition: 'transform 0.2s',
+                transform: showSessionDropdown ? 'rotate(180deg)' : 'rotate(0)',
+              }}
+            />
           </div>
-          <ChevronsUpDown
-            size={11}
-            style={{
-              color: 'var(--text-muted)',
-              marginLeft: 'auto',
-              flexShrink: 0,
-            }}
-          />
+
+          {showSessionDropdown && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                marginTop: '4px',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: '10px',
+                boxShadow: 'var(--shadow-lg)',
+                zIndex: 100,
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                  {t('academic_year', language)}
+                </div>
+                {institution.sessions.map((s) => (
+                  <div
+                    key={s}
+                    onClick={() => handleSwitchSession(s)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '6px 8px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      fontWeight: s === institution.currentSession ? 600 : 400,
+                      color: s === institution.currentSession ? 'var(--brand)' : 'var(--text-primary)',
+                      background: s === institution.currentSession ? 'var(--brand-light)' : 'transparent',
+                      transition: 'all 0.12s',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (s !== institution.currentSession) e.currentTarget.style.background = 'var(--bg-secondary)'
+                    }}
+                    onMouseLeave={(e) => {
+                      if (s !== institution.currentSession) e.currentTarget.style.background = 'transparent'
+                    }}
+                  >
+                    <span style={{ flex: 1 }}>{s}</span>
+                    {s === institution.currentSession && <Check size={12} style={{ color: 'var(--brand)' }} />}
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: '8px 10px' }}>
+                <div style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                  {isBn ? 'নতুন সেশন' : 'New Session'}
+                </div>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <input
+                    value={newSession}
+                    onChange={(e) => setNewSession(e.target.value)}
+                    placeholder="e.g. 2026-27"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddSession()}
+                    style={{
+                      flex: 1,
+                      padding: '5px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-secondary)',
+                      fontSize: '11px',
+                      color: 'var(--text-primary)',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    onClick={handleAddSession}
+                    disabled={!newSession.trim() || institution.sessions.includes(newSession.trim())}
+                    style={{
+                      padding: '5px 10px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: 'var(--brand)',
+                      color: '#fff',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      opacity: !newSession.trim() || institution.sessions.includes(newSession.trim()) ? 0.5 : 1,
+                    }}
+                  >
+                    {isBn ? 'যোগ' : 'Add'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

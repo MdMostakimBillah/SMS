@@ -537,7 +537,8 @@ export default function PayrollPage() {
             {isBn ? 'বিভাগ অনুযায়ী বেতন' : 'Department-wise Salary'}
           </div>
           <div
-            className={`grid ${isMobile ? 'grid-cols-2' : `grid-cols-[repeat(${Math.min(Object.keys(stats.deptMap).length, 4)},1fr)]`} gap-2`}
+            className={`grid gap-2 ${isMobile ? 'grid-cols-2' : ''}`}
+            style={isMobile ? undefined : { gridTemplateColumns: `repeat(${Math.min(Object.keys(stats.deptMap).length, 4)}, 1fr)` }}
           >
             {Object.entries(stats.deptMap)
               .sort((a, b) => b[1] - a[1])
