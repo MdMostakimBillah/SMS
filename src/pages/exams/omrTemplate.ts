@@ -88,8 +88,8 @@ function subjectListTable(c: string, subjects: { name: string; nameBn: string }[
   return `<table style="width:100%;border-collapse:collapse;">${rows}</table>`
 }
 
-/* ── Helper: Examiner question columns — marks bubbles (0,1,2,3,5) ── */
-function buildExaminerColumns(c: string, totalQ: number, marks: string[], qPerCol: number, isBn: boolean): string {
+/* ── Helper: Examiner question columns — option bubbles (ক,খ,গ,ঘ or A,B,C,D) ── */
+function buildExaminerColumns(c: string, totalQ: number, options: string[], qPerCol: number, isBn: boolean): string {
   const numCols = Math.ceil(totalQ / qPerCol)
   let html = ''
   for (let ci = 0; ci < Math.min(numCols, 4); ci++) {
@@ -98,7 +98,7 @@ function buildExaminerColumns(c: string, totalQ: number, marks: string[], qPerCo
     let rows = ''
     for (let q = start; q <= end; q++) {
       let bubs = ''
-      marks.forEach((m) => {
+      options.forEach((m) => {
         bubs += `<td style="width:20px;height:20px;text-align:center;vertical-align:middle;padding:1px;"><div style="width:16px;height:16px;border:1.5px solid ${c};border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:${c};background:white;">${m}</div></td>`
       })
       rows += `<tr>
@@ -110,7 +110,7 @@ function buildExaminerColumns(c: string, totalQ: number, marks: string[], qPerCo
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:${c};color:white;">
           <th style="padding:3px;font-size:8px;border:1px solid ${c};width:22px;">${isBn ? 'প্রশ্ন' : 'Q. No'}</th>
-          <th style="padding:3px;font-size:8px;border:1px solid ${c};">${isBn ? 'নম্বর' : 'Marks'}</th>
+          <th style="padding:3px;font-size:8px;border:1px solid ${c};">${isBn ? 'উত্তর' : 'Ans'}</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -143,27 +143,29 @@ function bottomMarksTable(c: string, totalQ: number, isBn: boolean): string {
 }
 
 /* ── Main: Generate OMR HTML ── */
-export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true): Promise<string> {
+export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copyNumber: number = 1): Promise<string> {
   const c = cfg.themeColor || '#d81b60'
-  const marks = ['0', '1', '2', '3', '5']
+  const bnOpts4 = ['ক', 'খ', 'গ', 'ঘ']
+  const bnOpts5 = ['ক', 'খ', 'গ', 'ঘ', 'ঙ']
+  const enOpts4 = ['A', 'B', 'C', 'D']
+  const enOpts5 = ['A', 'B', 'C', 'D', 'E']
+  const options = isBn ? (cfg.optionCount === 5 ? bnOpts5 : bnOpts4) : cfg.optionCount === 5 ? enOpts5 : enOpts4
   const qPerCol = 10
   const schoolName = isBn ? cfg.institutionNameBn : cfg.institutionName
   const schoolAddr = cfg.institutionAddress || ''
+  const uniqueSN = `${cfg.serialNumber}-${String(copyNumber).padStart(4, '0')}`
 
-  // Generate QR codes
+  // Generate QR codes — unique per copy
   let qrStudentDataUrl = ''
   let qrExaminerDataUrl = ''
   if (cfg.showQRCode) {
     try {
-      qrStudentDataUrl = await QRCode.toDataURL(`${cfg.serialNumber}|${cfg.className}|${cfg.examName}|${cfg.sheetFormat}`, {
-        width: 80,
-        margin: 1,
-      })
+      qrStudentDataUrl = await QRCode.toDataURL(`${uniqueSN}|${cfg.className}|${cfg.examName}|${cfg.sheetFormat}`, { width: 80, margin: 1 })
     } catch {
       qrStudentDataUrl = ''
     }
     try {
-      qrExaminerDataUrl = await QRCode.toDataURL(`${cfg.serialNumber}|${cfg.sessionName}|EXAMINER`, { width: 60, margin: 1 })
+      qrExaminerDataUrl = await QRCode.toDataURL(`${uniqueSN}|${cfg.sessionName}|EXAMINER`, { width: 60, margin: 1 })
     } catch {
       qrExaminerDataUrl = ''
     }
@@ -322,7 +324,7 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true): Pro
 
   <!-- SERIAL NUMBER -->
   <div style="position:absolute;top:14px;right:14px;text-align:right;">
-    <div style="font-size:11px;font-weight:800;color:${c};">#SN : ${cfg.serialNumber}</div>
+    <div style="font-size:11px;font-weight:800;color:${c};">#SN : ${uniqueSN}</div>
   </div>
 
   <!-- ═══ STUDENT PART ═══ -->
@@ -347,7 +349,7 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true): Pro
     </div>
     <div style="display:flex;gap:5px;align-items:flex-start;flex-wrap:wrap;">
       <div style="flex:1;display:flex;gap:3px;">
-        ${buildExaminerColumns(c, cfg.totalQuestions, marks, qPerCol, isBn)}
+        ${buildExaminerColumns(c, cfg.totalQuestions, options, qPerCol, isBn)}
       </div>
       ${examinerParts.join('')}
     </div>
@@ -395,15 +397,15 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true): Pro
 
   <!-- ═══ FOOTER ═══ -->
   <div style="text-align:center;margin-top:5px;padding-top:3px;border-top:1.5px solid ${c};font-size:7px;color:#9ca3af;">
-    ${schoolName} &bull; OMR Sheet &bull; ${isBn ? 'ফরম্যাট' : 'Format'}: ${cfg.sheetFormat} &bull; ${cfg.serialNumber}
+    ${schoolName} &bull; OMR Sheet &bull; ${isBn ? 'ফরম্যাট' : 'Format'}: ${cfg.sheetFormat} &bull; ${uniqueSN}
   </div>
 
 </div>
 </body></html>`
 }
 
-export function generateOMRSheet(cfg: OMRConfig, isBn: boolean = true) {
-  generateOMRHtml(cfg, isBn).then((html) => {
+export function generateOMRSheet(cfg: OMRConfig, isBn: boolean = true, copyNumber: number = 1) {
+  generateOMRHtml(cfg, isBn, copyNumber).then((html) => {
     const w = window.open('', '_blank')
     if (w) {
       w.document.write(html)
@@ -411,4 +413,15 @@ export function generateOMRSheet(cfg: OMRConfig, isBn: boolean = true) {
       setTimeout(() => w.print(), 600)
     }
   })
+}
+
+/* ── Generate multiple copies as single PDF ── */
+export async function generateOMRSheetMultiCopy(cfg: OMRConfig, isBn: boolean, totalCopies: number): Promise<string> {
+  let allHtml = ''
+  for (let i = 1; i <= totalCopies; i++) {
+    const html = await generateOMRHtml(cfg, isBn, i)
+    allHtml += html.replace('</body></html>', '') + '<div style="page-break-after:always;"></div>'
+  }
+  allHtml += '</body></html>'
+  return allHtml
 }

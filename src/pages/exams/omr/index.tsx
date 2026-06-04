@@ -37,7 +37,7 @@ import { useAppStore } from '@/store/appStore'
 import { useExamStore, type OMRTemplate } from '@/store/examStore'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
-import { generateOMRHtml, generateOMRSheet, type OMRConfig } from '@/pages/exams/omrTemplate'
+import { generateOMRHtml, generateOMRSheet, generateOMRSheetMultiCopy, type OMRConfig } from '@/pages/exams/omrTemplate'
 
 const THEME_PRESETS = [
   { label: 'Red', value: '#d81b60' },
@@ -95,6 +95,13 @@ export default function OMRSheetPage() {
   const [showExaminerSection, setShowExaminerSection] = useState(true)
   const [showAdditionalPaper, setShowAdditionalPaper] = useState(true)
   const [showInstructions, setShowInstructions] = useState(true)
+
+  // ── Sheet Language Version ──
+  const [sheetLanguage, setSheetLanguage] = useState<'bn' | 'en'>(isBn ? 'bn' : 'en')
+
+  // ── PDF Confirm Dialog ──
+  const [showPdfConfirm, setShowPdfConfirm] = useState(false)
+  const [pdfCopyCount, setPdfCopyCount] = useState(1)
 
   // ── Bulk Generation ──
   const [bulkMode, setBulkMode] = useState<'single' | 'multiple' | 'class' | 'exam'>('single')
@@ -212,17 +219,18 @@ export default function OMRSheetPage() {
   )
 
   // ── Generate Preview ──
+  const sheetIsBn = sheetLanguage === 'bn'
   const handleGenerate = useCallback(async () => {
     setIsGenerating(true)
     try {
-      const html = await generateOMRHtml(omrConfig, isBn)
+      const html = await generateOMRHtml(omrConfig, sheetIsBn)
       setPreviewHtml(html)
     } catch {
       showNotify('error', isBn ? 'জেনারেট ব্যর্থ' : 'Generation failed')
     } finally {
       setIsGenerating(false)
     }
-  }, [omrConfig, isBn])
+  }, [omrConfig, sheetIsBn, isBn])
 
   useEffect(() => {
     handleGenerate()
@@ -245,7 +253,26 @@ export default function OMRSheetPage() {
   }
 
   // ── Actions ──
-  const handleDownload = () => generateOMRSheet(omrConfig, isBn)
+  const handleDownloadClick = () => {
+    setPdfCopyCount(totalCopy)
+    setShowPdfConfirm(true)
+  }
+
+  const handleConfirmDownload = async () => {
+    setShowPdfConfirm(false)
+    if (pdfCopyCount <= 1) {
+      generateOMRSheet(omrConfig, sheetIsBn, 1)
+    } else {
+      const html = await generateOMRSheetMultiCopy(omrConfig, sheetIsBn, pdfCopyCount)
+      const w = window.open('', '_blank')
+      if (w) {
+        w.document.write(html)
+        w.document.close()
+        setTimeout(() => w.print(), 600)
+      }
+    }
+    showNotify('success', isBn ? `${pdfCopyCount} কপি জেনারেট হচ্ছে...` : `Generating ${pdfCopyCount} copies...`)
+  }
 
   const handlePrint = () => {
     const w = window.open('', '_blank')
@@ -420,7 +447,7 @@ export default function OMRSheetPage() {
               <Printer size={12} /> {isBn ? 'প্রিন্ট' : 'Print'}
             </button>
             <button
-              onClick={handleDownload}
+              onClick={handleDownloadClick}
               className="px-4 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer hover:shadow-md transition-all flex items-center gap-1"
             >
               <Download size={12} />
@@ -519,7 +546,7 @@ export default function OMRSheetPage() {
                         </select>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-4 gap-2">
                       <div>
                         <label className={labelCls}>{isBn ? 'থিম রঙ' : 'Theme Color'}</label>
                         <div className="flex items-center gap-1">
@@ -537,6 +564,17 @@ export default function OMRSheetPage() {
                             className="w-7 h-7 rounded cursor-pointer border border-[var(--border)] p-0"
                           />
                         </div>
+                      </div>
+                      <div>
+                        <label className={labelCls}>{isBn ? 'শিট ভাষা' : 'Sheet Language'}</label>
+                        <select
+                          value={sheetLanguage}
+                          onChange={(e) => setSheetLanguage(e.target.value as 'bn' | 'en')}
+                          className={`${selectCls} w-full`}
+                        >
+                          <option value="bn">বাংলা (Bangla)</option>
+                          <option value="en">English</option>
+                        </select>
                       </div>
                       <div>
                         <label className={labelCls}>{isBn ? 'মোট কপি' : 'Total Copy'}</label>
@@ -1080,6 +1118,57 @@ export default function OMRSheetPage() {
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(null)}
+                className="flex-1 px-3 py-1.5 rounded-lg border border-[var(--border)] text-[11px] cursor-pointer"
+              >
+                {isBn ? 'বাতিল' : 'Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PDF Generation Confirm Modal */}
+      {showPdfConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center" onClick={() => setShowPdfConfirm(false)}>
+          <div
+            className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-5 w-[380px] shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Download size={16} className="text-[var(--brand)]" />
+              <span className="text-[13px] font-semibold text-[var(--text-primary)]">{isBn ? 'PDF জেনারেট করুন' : 'Generate PDF'}</span>
+            </div>
+            <p className="text-[11px] text-[var(--text-muted)] mb-4">
+              {isBn
+                ? 'কতটি PDF কপি প্রয়োজন? প্রতিটি কপিতে ইউনিক QR কোড থাকবে।'
+                : 'How many PDF copies needed? Each copy will have a unique QR code.'}
+            </p>
+            <div className="mb-4">
+              <label className={labelCls}>{isBn ? 'কপি সংখ্যা' : 'Number of Copies'}</label>
+              <input
+                type="number"
+                min="1"
+                max="500"
+                value={pdfCopyCount}
+                onChange={(e) => setPdfCopyCount(Number(e.target.value) || 1)}
+                className={`${inputCls} w-full`}
+              />
+              <div className="text-[9px] text-[var(--text-muted)] mt-1">
+                {isBn
+                  ? `শিট ভাষা: ${sheetLanguage === 'bn' ? 'বাংলা' : 'English'}`
+                  : `Sheet language: ${sheetLanguage === 'bn' ? 'Bangla' : 'English'}`}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleConfirmDownload}
+                className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer flex items-center justify-center gap-1"
+              >
+                <Download size={12} />
+                {isBn ? `ডাউনলোড (${pdfCopyCount} কপি)` : `Download (${pdfCopyCount} copies)`}
+              </button>
+              <button
+                onClick={() => setShowPdfConfirm(false)}
                 className="flex-1 px-3 py-1.5 rounded-lg border border-[var(--border)] text-[11px] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
