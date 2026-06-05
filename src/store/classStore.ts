@@ -508,7 +508,7 @@ export const useClassStore = create<ClassState>()(
     }),
     {
       name: 'edutech-classes',
-      version: 3,
+      version: 4,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           const inst = persistedState?.institution
@@ -536,6 +536,16 @@ export const useClassStore = create<ClassState>()(
           allClasses.forEach((c: any) => {
             if (!c.subjectIds) c.subjectIds = []
           })
+        }
+        if (version < 4) {
+          const currentSession = persistedState?.institution?.currentSession
+          if (currentSession && persistedState?.sessionRoutines?.[currentSession]) {
+            const sourceRoutines = persistedState.sessionRoutines[currentSession]
+            const sourceClasses = persistedState?.sessionClasses?.[currentSession] || []
+            const classIds = new Set(sourceClasses.map((c: any) => c.id))
+            const filteredRoutines = sourceRoutines.filter((r: any) => classIds.has(r.classId))
+            persistedState.sessionRoutines[currentSession] = filteredRoutines
+          }
         }
         return persistedState
       },
