@@ -2262,13 +2262,13 @@ function RoutineTab({
     return periods.map((daySlots: any[]) =>
       (daySlots || []).map((slot: any) => {
         if (!slot?.teacherId) return slot
-        if (slot.teacherName) return slot
+        if (slot.teacherName && !slot.teacherName.startsWith('TCH-')) return slot
         const teacher = teachers.find((t) => t.id === slot.teacherId)
         if (teacher) return { ...slot, teacherName: teacher.nameEn }
-        return slot
+        return { ...slot, teacherName: slot.teacherName || slot.teacherId }
       })
     )
-  }, [periods, teachers])
+  }, [periods, teachers, routines])
 
   const startTime = cls?.startTime || institution.startTime || '07:30'
 
