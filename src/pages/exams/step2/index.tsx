@@ -176,6 +176,17 @@ export default function Step2Schedule() {
     [routines, selectedExamId]
   )
 
+  // Room usage on selected date
+  const roomUsage = useMemo(() => {
+    if (!routineForm.date) return {}
+    const usage: Record<string, number> = {}
+    const dayRoutines = filteredRoutines.filter((r) => r.date === routineForm.date)
+    for (const r of dayRoutines) {
+      usage[r.roomNo] = (usage[r.roomNo] || 0) + 1
+    }
+    return usage
+  }, [filteredRoutines, routineForm.date])
+
   const filteredSeatPlans = useMemo(
     () => (selectedExamId ? seatPlans.filter((sp) => sp.examId === selectedExamId) : seatPlans),
     [seatPlans, selectedExamId]
@@ -1491,11 +1502,15 @@ export default function Step2Schedule() {
                   className={`${selectCls} w-full`}
                 >
                   <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                  {rooms.map((r) => (
-                    <option key={r.id} value={r.roomNo}>
-                      {r.roomNo} ({r.capacity})
-                    </option>
-                  ))}
+                  {rooms.map((r) => {
+                    const used = roomUsage[r.roomNo] || 0
+                    const pct = r.capacity > 0 ? Math.round((used / r.capacity) * 100) : 0
+                    return (
+                      <option key={r.id} value={r.roomNo}>
+                        {r.roomNo} ({r.capacity}) {used > 0 ? `- ${pct}% ${isBn ? 'ব্যবহৃত' : 'used'}` : ''}
+                      </option>
+                    )
+                  })}
                 </select>
                 {routineForm.classId && routineStudentCount > 0 && (
                   <p className="text-[10px] text-[var(--text-muted)] mt-1">
