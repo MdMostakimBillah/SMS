@@ -121,6 +121,20 @@ export default function Step2Schedule() {
   })
   const [routineOrientation, setRoutineOrientation] = useState<'landscape' | 'portrait'>('landscape')
 
+  // Student count for routine form class/section
+  const routineStudentCount = useMemo(() => {
+    if (!routineForm.classId) return 0
+    return students.filter(
+      (s) => s.status === 'approved' && s.class === routineForm.classId && (!routineForm.sectionId || s.section === routineForm.sectionId)
+    ).length
+  }, [students, routineForm.classId, routineForm.sectionId])
+
+  // Auto-suggest room based on student count
+  const suggestedRoom = useMemo(() => {
+    if (routineStudentCount === 0) return null
+    return rooms.find((r) => r.isActive && r.capacity >= routineStudentCount) || null
+  }, [rooms, routineStudentCount])
+
   // Room form
   const [showRoomForm, setShowRoomForm] = useState(false)
   const [editRoom, setEditRoom] = useState<ExamRoom | null>(null)
@@ -1379,7 +1393,12 @@ export default function Step2Schedule() {
                   <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
                   <select
                     value={routineForm.classId}
-                    onChange={(e) => setRoutineForm((p) => ({ ...p, classId: e.target.value, sectionId: '', subjectId: '' }))}
+                    onChange={(e) => {
+                      const classId = e.target.value
+                      const count = students.filter((s) => s.status === 'approved' && s.class === classId).length
+                      const room = rooms.find((r) => r.isActive && r.capacity >= count)
+                      setRoutineForm((p) => ({ ...p, classId, sectionId: '', subjectId: '', roomNo: room?.roomNo || '' }))
+                    }}
                     className={`${selectCls} w-full`}
                   >
                     <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
@@ -1394,7 +1413,12 @@ export default function Step2Schedule() {
                   <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
                   <select
                     value={routineForm.sectionId}
-                    onChange={(e) => setRoutineForm((p) => ({ ...p, sectionId: e.target.value, subjectId: '' }))}
+                    onChange={(e) => {
+                      const sectionId = e.target.value
+                      const count = students.filter((s) => s.status === 'approved' && s.class === routineForm.classId && s.section === sectionId).length
+                      const room = rooms.find((r) => r.isActive && r.capacity >= count)
+                      setRoutineForm((p) => ({ ...p, sectionId, subjectId: '', roomNo: room?.roomNo || '' }))
+                    }}
                     className={`${selectCls} w-full`}
                     disabled={!routineForm.classId}
                   >
@@ -1473,6 +1497,16 @@ export default function Step2Schedule() {
                     </option>
                   ))}
                 </select>
+                {routineForm.classId && routineStudentCount > 0 && (
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                    {isBn ? `শিক্ষার্থী: ${routineStudentCount} জন` : `Students: ${routineStudentCount}`}
+                    {suggestedRoom && routineForm.roomNo !== suggestedRoom.roomNo && (
+                      <span className="text-[var(--brand)] ml-1 cursor-pointer hover:underline" onClick={() => setRoutineForm((p) => ({ ...p, roomNo: suggestedRoom.roomNo }))}>
+                        {isBn ? `(${suggestedRoom.roomNo} সাজেস্টেড)` : `(Suggest: ${suggestedRoom.roomNo})`}
+                      </span>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex gap-2 justify-end mt-4">
