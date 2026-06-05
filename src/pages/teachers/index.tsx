@@ -16,23 +16,10 @@ import {
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import type { LucideIcon } from 'lucide-react'
+
 import gsap from 'gsap'
 
-const options: {
-  id: string
-  path: string
-  icon: LucideIcon
-  iconColor: string
-  iconBg: string
-  titleBn: string
-  titleEn: string
-  descBn: string
-  descEn: string
-  statBn: string
-  statEn: string
-  statColor: string
-}[] = [
+const STATIC_OPTIONS = [
   {
     id: 'add',
     path: '/teachers/add',
@@ -43,8 +30,6 @@ const options: {
     titleEn: 'Add Teacher',
     descBn: 'নতুন শিক্ষক যোগ করুন।',
     descEn: 'Add a new teacher.',
-    statBn: '৫ জন এই মাসে',
-    statEn: '5 this month',
     statColor: 'var(--teal)',
   },
   {
@@ -57,8 +42,6 @@ const options: {
     titleEn: 'All Teachers',
     descBn: 'সকল শিক্ষকের তালিকা।',
     descEn: 'View all teachers.',
-    statBn: '৫ জন মোট',
-    statEn: '5 total',
     statColor: 'var(--brand)',
   },
   {
@@ -71,8 +54,6 @@ const options: {
     titleEn: 'Departments',
     descBn: 'বিভাগ পরিচালনা করুন।',
     descEn: 'Manage departments.',
-    statBn: '৪টি বিভাগ',
-    statEn: '4 departments',
     statColor: 'var(--amber)',
   },
   {
@@ -85,8 +66,6 @@ const options: {
     titleEn: 'Subjects',
     descBn: 'বিষয় পরিচালনা করুন।',
     descEn: 'Manage subjects.',
-    statBn: '৮টি বিষয়',
-    statEn: '8 subjects',
     statColor: 'var(--green)',
   },
   {
@@ -99,8 +78,6 @@ const options: {
     titleEn: 'Designations',
     descBn: 'পদবি পরিচালনা করুন।',
     descEn: 'Manage designations.',
-    statBn: '৬টি পদবি',
-    statEn: '6 designations',
     statColor: 'var(--purple)',
   },
   {
@@ -113,8 +90,6 @@ const options: {
     titleEn: 'Bulk Update',
     descBn: 'একসাথে অনেক শিক্ষকের তথ্য পরিবর্তন করুন।',
     descEn: 'Update multiple teachers at once.',
-    statBn: '৫ জন+ একসাথে',
-    statEn: '5+ at once',
     statColor: 'var(--purple)',
   },
   {
@@ -127,8 +102,6 @@ const options: {
     titleEn: 'Attendance',
     descBn: 'উপস্থিতি ট্র্যাক করুন।',
     descEn: 'Track attendance.',
-    statBn: 'শীঘ্রই',
-    statEn: 'Coming soon',
     statColor: 'var(--red)',
   },
   {
@@ -141,8 +114,6 @@ const options: {
     titleEn: 'Payroll',
     descBn: 'বেতন পরিচালনা করুন।',
     descEn: 'Manage payroll.',
-    statBn: 'শীঘ্রই',
-    statEn: 'Coming soon',
     statColor: 'var(--purple)',
   },
 ]
@@ -192,7 +163,7 @@ function TeachersSkeleton() {
 export default function TeachersPage() {
   const navigate = useNavigate()
   const { language } = useAppStore()
-  const { teachers } = useTeacherStore()
+  const { teachers, departments, subjects, designations } = useTeacherStore()
   const { isMobile, isTablet } = useWindowSize()
   const isBn = language === 'bn'
   const containerRef = useRef<HTMLDivElement>(null)
@@ -224,6 +195,40 @@ export default function TeachersPage() {
   const maleTeachers = teachers.filter((t) => t.gender === 'Male').length
   const femaleTeachers = teachers.filter((t) => t.gender === 'Female').length
   const totalSalary = teachers.reduce((sum, t) => sum + t.salary, 0)
+
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  const teachersThisMonth = teachers.filter((t) => t.createdAt.startsWith(currentMonth)).length
+
+  const options = STATIC_OPTIONS.map((opt) => {
+    let statBn = ''
+    let statEn = ''
+    if (opt.id === 'add') {
+      statBn = `${toBnNum(teachersThisMonth)} জন এই মাসে`
+      statEn = `${teachersThisMonth} this month`
+    } else if (opt.id === 'all') {
+      statBn = `${toBnNum(teachers.length)} জন মোট`
+      statEn = `${teachers.length} total`
+    } else if (opt.id === 'departments') {
+      statBn = `${toBnNum(departments.length)}টি বিভাগ`
+      statEn = `${departments.length} departments`
+    } else if (opt.id === 'subjects') {
+      statBn = `${toBnNum(subjects.length)}টি বিষয়`
+      statEn = `${subjects.length} subjects`
+    } else if (opt.id === 'designations') {
+      statBn = `${toBnNum(designations.length)}টি পদবি`
+      statEn = `${designations.length} designations`
+    } else if (opt.id === 'bulk-update') {
+      statBn = `${toBnNum(teachers.length)} জন+ একসাথে`
+      statEn = `${teachers.length}+ at once`
+    } else if (opt.id === 'attendance') {
+      statBn = 'শীঘ্রই'
+      statEn = 'Coming soon'
+    } else if (opt.id === 'payroll') {
+      statBn = 'শীঘ্রই'
+      statEn = 'Coming soon'
+    }
+    return { ...opt, statBn, statEn }
+  })
 
   const statsData = [
     {
