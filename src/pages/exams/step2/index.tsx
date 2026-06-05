@@ -45,6 +45,8 @@ const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded
 const sectionTitleCls = 'flex items-center gap-2 text-[13px] font-semibold text-[var(--text-primary)]'
 const inputCls =
   'h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border'
+const selectCls =
+  'h-8 px-2 pr-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border appearance-none cursor-pointer bg-[url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2712%27%20height%3D%2712%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%2394a3b8%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")] bg-no-repeat bg-[position:right_8px_center] hover:border-[var(--brand)] focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20 transition-all'
 const btnPrimary =
   'flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
 
@@ -543,7 +545,7 @@ export default function Step2Schedule() {
 
       {/* Exam Selector */}
       <div className="px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-primary)]">
-        <select value={selectedExamId} onChange={(e) => setSelectedExamId(e.target.value)} className={`${inputCls} max-w-[300px]`}>
+        <select value={selectedExamId} onChange={(e) => setSelectedExamId(e.target.value)} className={`${selectCls} max-w-[300px]`}>
           <option value="">{isBn ? 'সকল পরীক্ষা' : 'All Exams'}</option>
           {examConfigs.map((e) => (
             <option key={e.id} value={e.id}>
@@ -667,7 +669,7 @@ export default function Step2Schedule() {
                   <select
                     value={routineOrientation}
                     onChange={(e) => setRoutineOrientation(e.target.value as 'landscape' | 'portrait')}
-                    className="h-7 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] cursor-pointer"
+                    className="h-7 px-2 pr-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2710%27%20height%3D%2710%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%2394a3b8%27%20stroke-width%3D%272%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_6px_center] hover:border-[var(--brand)] transition-all"
                   >
                     <option value="landscape">{isBn ? 'ল্যান্ডস্কেপ' : 'Landscape'}</option>
                     <option value="portrait">{isBn ? 'পোর্ট্রেট' : 'Portrait'}</option>
@@ -1071,7 +1073,7 @@ export default function Step2Schedule() {
                       setSeatClassId(e.target.value)
                       setSeatSectionId('')
                     }}
-                    className={`${inputCls} w-full`}
+                    className={`${selectCls} w-full`}
                   >
                     <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
                     {classOptions.map((c) => (
@@ -1086,7 +1088,7 @@ export default function Step2Schedule() {
                   <select
                     value={seatSectionId}
                     onChange={(e) => setSeatSectionId(e.target.value)}
-                    className={`${inputCls} w-full`}
+                    className={`${selectCls} w-full`}
                     disabled={!seatClassId}
                   >
                     <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
@@ -1242,7 +1244,7 @@ export default function Step2Schedule() {
                       <select
                         value={assignRoomId}
                         onChange={(e) => setAssignRoomId(e.target.value)}
-                        className={`${inputCls} w-full`}
+                        className={`${selectCls} w-full`}
                       >
                         <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
                         {rooms.filter((r) => r.isActive).map((r) => (
@@ -1378,7 +1380,7 @@ export default function Step2Schedule() {
                   <select
                     value={routineForm.classId}
                     onChange={(e) => setRoutineForm((p) => ({ ...p, classId: e.target.value, sectionId: '', subjectId: '' }))}
-                    className={`${inputCls} w-full`}
+                    className={`${selectCls} w-full`}
                   >
                     <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
                     {classOptions.map((c) => (
@@ -1393,7 +1395,7 @@ export default function Step2Schedule() {
                   <select
                     value={routineForm.sectionId}
                     onChange={(e) => setRoutineForm((p) => ({ ...p, sectionId: e.target.value, subjectId: '' }))}
-                    className={`${inputCls} w-full`}
+                    className={`${selectCls} w-full`}
                     disabled={!routineForm.classId}
                   >
                     <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
@@ -1410,7 +1412,7 @@ export default function Step2Schedule() {
                 <select
                   value={routineForm.subjectId}
                   onChange={(e) => setRoutineForm((p) => ({ ...p, subjectId: e.target.value }))}
-                  className={`${inputCls} w-full`}
+                  className={`${selectCls} w-full`}
                   disabled={!routineForm.classId}
                 >
                   <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
@@ -1462,7 +1464,7 @@ export default function Step2Schedule() {
                 <select
                   value={routineForm.roomNo}
                   onChange={(e) => setRoutineForm((p) => ({ ...p, roomNo: e.target.value }))}
-                  className={`${inputCls} w-full`}
+                  className={`${selectCls} w-full`}
                 >
                   <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
                   {rooms.map((r) => (
@@ -1598,7 +1600,7 @@ export default function Step2Schedule() {
                 <select
                   value={invigForm.teacherId}
                   onChange={(e) => setInvigForm((p) => ({ ...p, teacherId: e.target.value }))}
-                  className={`${inputCls} w-full`}
+                  className={`${selectCls} w-full`}
                 >
                   <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
                   {teachers.map((t) => (
@@ -1613,7 +1615,7 @@ export default function Step2Schedule() {
                 <select
                   value={invigForm.roomId}
                   onChange={(e) => setInvigForm((p) => ({ ...p, roomId: e.target.value }))}
-                  className={`${inputCls} w-full`}
+                  className={`${selectCls} w-full`}
                 >
                   <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
                   {rooms.map((r) => (
@@ -1638,7 +1640,7 @@ export default function Step2Schedule() {
                   <select
                     value={invigForm.shift}
                     onChange={(e) => setInvigForm((p) => ({ ...p, shift: e.target.value as 'morning' | 'afternoon' }))}
-                    className={`${inputCls} w-full`}
+                    className={`${selectCls} w-full`}
                   >
                     <option value="morning">{isBn ? 'সকাল' : 'Morning'}</option>
                     <option value="afternoon">{isBn ? 'বিকাল' : 'Afternoon'}</option>
