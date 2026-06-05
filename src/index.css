@@ -156,16 +156,16 @@
 }
 
 html {
-  font-size: 14px;
+  font-size: 16px;
 }
 @media (min-width: 1440px) {
-  html { font-size: 15px; }
+  html { font-size: 17px; }
 }
 @media (min-width: 1920px) {
-  html { font-size: 16px; }
+  html { font-size: 18px; }
 }
 @media (min-width: 2560px) {
-  html { font-size: 17px; }
+  html { font-size: 19px; }
 }
 
 body {
@@ -173,7 +173,7 @@ body {
   background: var(--bg-tertiary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
-  font-size: 1rem;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
