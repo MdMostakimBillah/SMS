@@ -30,7 +30,7 @@ export function getAvatarGradient(id: string): string {
 }
 
 export const sectionCls = (isMobile: boolean) =>
-  `bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl ${isMobile ? 'p-[14px]' : 'p-4'} mb-3.5`
+  `bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl ${isMobile ? 'p-[14px]' : 'p-4'} mb-3.5 overflow-hidden`
 
 export const sectionTitleCls =
   'text-sm font-semibold text-[var(--text-primary)] mb-3.5 pb-2 border-b border-[var(--border)] flex items-center gap-2'
