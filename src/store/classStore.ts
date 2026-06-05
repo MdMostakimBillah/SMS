@@ -100,6 +100,7 @@ interface ClassState {
   switchSession: (session: string) => void
   addSession: (session: string) => void
   removeSession: (session: string) => void
+  importFromSession: (fromSession: string) => void
 }
 
 const defaultInstitution: InstitutionSettings = {
@@ -467,6 +468,32 @@ export const useClassStore = create<ClassState>()(
             routines: targetRoutines,
             sessionClasses: newSessionClasses,
             sessionRoutines: newSessionRoutines,
+          }
+        }),
+
+      importFromSession: (fromSession) =>
+        set((state) => {
+          const { institution, sessionClasses, sessionRoutines } = state
+          const currentSession = institution.currentSession
+          const sourceClasses = sessionClasses[fromSession] || []
+          const sourceRoutines = sessionRoutines[fromSession] || []
+          if (sourceClasses.length === 0) return state
+
+          const now = new Date().toISOString().split('T')[0]
+          const newClasses = sourceClasses.map((cls) => ({
+            ...cls,
+            id: cls.id,
+            sections: cls.sections.map((sec) => ({ ...sec, classTeacherId: '' })),
+            createdAt: now,
+            updatedAt: now,
+          }))
+          const newRoutines = sourceRoutines.map((r) => ({ ...r }))
+
+          return {
+            classes: newClasses,
+            routines: newRoutines,
+            sessionClasses: { ...sessionClasses, [currentSession]: newClasses },
+            sessionRoutines: { ...sessionRoutines, [currentSession]: newRoutines },
           }
         }),
     }),

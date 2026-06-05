@@ -51,6 +51,7 @@ export default function ClassesPage() {
     setRoutineSlot,
     clearRoutineSlot,
     switchSession,
+    importFromSession,
   } = useClassStore()
   const { teachers, subjects } = useTeacherStore()
   const { students } = useAdmissionStore()
@@ -787,6 +788,43 @@ export default function ClassesPage() {
                 ))}
             </div>
           </div>
+
+          {/* Import from previous session prompt */}
+          {classes.length === 0 && institution.sessions.filter((s) => s !== institution.currentSession).length > 0 && (
+            <div className="flex items-center gap-3 mb-3 py-3 px-4 rounded-xl bg-[var(--purple-light)] border border-[var(--purple)] border-dashed">
+              <div className="w-9 h-9 rounded-lg bg-[var(--purple)] flex items-center justify-center shrink-0">
+                <Download size={16} className="text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-semibold text-[var(--purple)]">
+                  {isBn ? 'আগের বছর থেকে আমদানি করুন' : 'Import from Previous Session'}
+                </div>
+                <div className="text-[11px] text-[var(--text-muted)]">
+                  {isBn
+                    ? 'এই সেশনে কোনো শ্রেণি নেই। আগের সেশন থেকে শ্রেণি ও রুটিন আমদানি করুন।'
+                    : 'No classes in this session. Import classes and routines from a previous session.'}
+                </div>
+              </div>
+              <div className="flex gap-1.5 shrink-0">
+                {institution.sessions
+                  .filter((s) => s !== institution.currentSession)
+                  .map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => {
+                        if (window.confirm(isBn ? `"${s}" থেকে সব শ্রেণি ও রুটিন আমদানি করবেন?` : `Import all classes and routines from "${s}"?`)) {
+                          importFromSession(s)
+                        }
+                      }}
+                      className="flex items-center gap-[4px] py-[6px] px-3 rounded-lg bg-[var(--purple)] border-none text-white text-[11px] font-medium cursor-pointer font-[inherit] hover:opacity-90 transition-all"
+                    >
+                      <Download size={11} />
+                      {isBn ? `${s} থেকে আমদানি` : `Import from ${s}`}
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
 
           {/* Top bar */}
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
