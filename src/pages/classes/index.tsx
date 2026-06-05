@@ -2253,7 +2253,7 @@ function RoutineTab({
   const sections = cls?.sections || []
   const effectiveSection = selectedSection || sections[0]?.id || ''
   const routine = routines.find((r) => r.classId === selectedClass && r.sectionId === effectiveSection)
-  const periodDuration = routine?.periodDuration || 40
+  const defaultDuration = routine?.periodDuration || 40
   const weekendDays = routine?.weekendDays || [5]
 
   const periods = routine?.periods || []
@@ -2272,6 +2272,22 @@ function RoutineTab({
 
   const startTime = cls?.startTime || institution.startTime || '07:30'
 
+  const totalPeriods = useMemo(() => {
+    const [sh, sm] = (cls?.startTime || institution.startTime || '07:30').split(':').map(Number)
+    const [eh, em] = (cls?.endTime || institution.endTime || '14:30').split(':').map(Number)
+    const totalMin = eh * 60 + em - (sh * 60 + sm)
+    return Math.floor(totalMin / defaultDuration) || 7
+  }, [cls, institution, defaultDuration])
+
+  const periodDurations = useMemo(() => {
+    const saved = routine?.periodDurations
+    if (saved && saved.length > 0) {
+      while (saved.length < totalPeriods) saved.push(defaultDuration)
+      return saved.slice(0, totalPeriods)
+    }
+    return Array(totalPeriods).fill(defaultDuration)
+  }, [routine?.periodDurations, defaultDuration, totalPeriods])
+
   const activeDays = useMemo(
     () => DAYS.map((d, i) => ({ name: d, nameBn: DAYS_BN[i], index: i })).filter((d) => !weekendDays.includes(d.index)),
     [weekendDays]
@@ -2279,18 +2295,14 @@ function RoutineTab({
 
   const getPeriodTime = (periodIndex: number) => {
     const [h, m] = startTime.split(':').map(Number)
-    const startMin = h * 60 + m + periodIndex * periodDuration
-    const endMin = startMin + periodDuration
+    let startMin = h * 60 + m
+    for (let i = 0; i < periodIndex; i++) {
+      startMin += periodDurations[i] || defaultDuration
+    }
+    const endMin = startMin + (periodDurations[periodIndex] || defaultDuration)
     const pad = (n: number) => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`
     return { start: pad(startMin), end: pad(endMin) }
   }
-
-  const totalPeriods = useMemo(() => {
-    const [sh, sm] = (cls?.startTime || institution.startTime || '07:30').split(':').map(Number)
-    const [eh, em] = (cls?.endTime || institution.endTime || '14:30').split(':').map(Number)
-    const totalMin = eh * 60 + em - (sh * 60 + sm)
-    return Math.floor(totalMin / periodDuration) || 7
-  }, [cls, institution, periodDuration])
 
   const breakPositions = useMemo(() => {
     const breaks = institution.breaks || []
@@ -2300,13 +2312,19 @@ function RoutineTab({
     return breaks.map((brk: any) => {
       const [bh, bm] = brk.start.split(':').map(Number)
       const breakMin = bh * 60 + bm
-      const periodAfterBreak = Math.floor((breakMin - schoolStartMin) / periodDuration)
+      let elapsed = 0
+      let periodIdx = 0
+      while (periodIdx < totalPeriods) {
+        elapsed += periodDurations[periodIdx] || defaultDuration
+        if (schoolStartMin + elapsed > breakMin) break
+        periodIdx++
+      }
       return {
         ...brk,
-        afterPeriod: Math.max(0, Math.min(periodAfterBreak - 1, totalPeriods - 1)),
+        afterPeriod: Math.max(0, Math.min(periodIdx, totalPeriods - 1)),
       }
     }).sort((a: any, b: any) => a.afterPeriod - b.afterPeriod)
-  }, [institution.breaks, startTime, periodDuration, totalPeriods])
+  }, [institution.breaks, startTime, periodDurations, defaultDuration, totalPeriods])
 
   const getSubjectName = (id: string) => subjects.find((s) => s.id === id)?.name || id
   const getTeacherName = (id: string) => teachers.find((t) => t.id === id)?.nameEn || id
@@ -2320,7 +2338,14 @@ function RoutineTab({
   }
 
   const handlePeriodDurationChange = (val: number) => {
-    updateRoutine(selectedClass, { sectionId: effectiveSection, periodDuration: val })
+    updateRoutine(selectedClass, { sectionId: effectiveSection, periodDuration: val, periodDurations: Array(totalPeriods).fill(val) })
+  }
+
+  const handlePeriodDurationUpdate = (periodIndex: number, val: number) => {
+    const newDurations = [...periodDurations]
+    while (newDurations.length <= periodIndex) newDurations.push(defaultDuration)
+    newDurations[periodIndex] = val
+    updateRoutine(selectedClass, { sectionId: effectiveSection, periodDurations: newDurations })
   }
 
   const toggleWeekend = (dayIndex: number) => {
@@ -2435,21 +2460,19 @@ function RoutineTab({
           >
             {isBn ? 'পিরিয়ড সময়কাল' : 'Period Duration'}
           </div>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
             {[30, 35, 40, 45, 50, 60].map((d) => (
               <button
                 key={d}
                 onClick={() => handlePeriodDurationChange(d)}
                 style={{
-                  flex: '1 1 auto',
-                  minWidth: '44px',
-                  padding: '8px',
-                  borderRadius: '7px',
-                  border: `1px solid ${periodDuration === d ? 'var(--purple)' : 'var(--border)'}`,
-                  background: periodDuration === d ? 'var(--purple-light)' : 'var(--bg-secondary)',
-                  color: periodDuration === d ? 'var(--purple)' : 'var(--text-secondary)',
-                  fontSize: '12px',
-                  fontWeight: periodDuration === d ? 600 : 400,
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '11px',
+                  fontWeight: 500,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
                 }}
@@ -2457,50 +2480,59 @@ function RoutineTab({
                 {d}m
               </button>
             ))}
-            <div style={{ position: 'relative', flex: '1 1 auto', minWidth: '60px' }}>
-              <input
-                type="number"
-                min={10}
-                max={120}
-                value={periodDuration}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 40
-                  handlePeriodDurationChange(Math.max(10, Math.min(120, val)))
-                }}
-                style={{
-                  width: '100%',
-                  padding: '8px 28px 8px 8px',
-                  borderRadius: '7px',
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '12px',
-                  fontFamily: 'inherit',
-                  outline: 'none',
-                  textAlign: 'center',
-                }}
-              />
-              <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', color: 'var(--text-muted)' }}>min</span>
-            </div>
+          </div>
+          <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            {Array.from({ length: totalPeriods }, (_, i) => {
+              const time = getPeriodTime(i)
+              const dur = periodDurations[i] || defaultDuration
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 8px', borderRadius: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--purple)', minWidth: '20px' }}>P{i + 1}</span>
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', minWidth: '70px' }}>{time.start} - {time.end}</span>
+                  <div style={{ flex: 1 }} />
+                  <input
+                    type="number"
+                    min={10}
+                    max={120}
+                    value={dur}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || defaultDuration
+                      handlePeriodDurationUpdate(i, Math.max(10, Math.min(120, val)))
+                    }}
+                    style={{
+                      width: '48px',
+                      padding: '3px 4px',
+                      borderRadius: '4px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '11px',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                      textAlign: 'center',
+                    }}
+                  />
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>min</span>
+                </div>
+              )
+            })}
           </div>
           {(() => {
             const [sh, sm] = startTime.split(':').map(Number)
             const [eh, em] = (cls?.endTime || institution.endTime || '14:30').split(':').map(Number)
             const totalMin = eh * 60 + em - (sh * 60 + sm)
-            const usedMin = totalPeriods * periodDuration
+            const usedMin = periodDurations.slice(0, totalPeriods).reduce((sum: number, d: number) => sum + d, 0)
             const remainder = totalMin - usedMin
             return (
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '6px' }}>
-                <span>{isBn
-                  ? `প্রতি পিরিয়ড ${periodDuration} মিনিট · ${totalPeriods} পিরিয়ড/দিন`
-                  : `Each period ${periodDuration} min · ${totalPeriods} periods/day`}</span>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>{isBn ? `মোট ${usedMin} মিনিট` : `Total ${usedMin} min`}</span>
                 {remainder > 0 && (
-                  <span style={{ color: 'var(--amber)', marginLeft: '8px' }}>
-                    · {isBn ? `বাকি ${remainder} মিনিট` : `${remainder} min remaining`}
+                  <span style={{ color: 'var(--amber)', fontWeight: 500 }}>
+                    · {isBn ? `বাকি ${remainder} মিনিট` : `${remainder} min left`}
                   </span>
                 )}
                 {remainder < 0 && (
-                  <span style={{ color: 'var(--red)', marginLeft: '8px' }}>
+                  <span style={{ color: 'var(--red)', fontWeight: 500 }}>
                     · {isBn ? `${Math.abs(remainder)} মিনিট বেশি` : `${Math.abs(remainder)} min over`}
                   </span>
                 )}
@@ -2551,6 +2583,8 @@ function RoutineTab({
                 ? `<div style="margin-top:12px;padding:8px 12px;background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;font-size:9px;color:#92400e"><strong>${isBn ? 'বিরতির সময়:' : 'Break Times:'}</strong> ${(institution.breaks || []).map((b: any) => `${b.label}: ${b.start} - ${b.end}`).join(' · ')}</div>`
                 : ''
 
+              const usedMin = periodDurations.slice(0, totalPeriods).reduce((sum: number, d: number) => sum + d, 0)
+
               const win = window.open('', '_blank')
               if (!win) return
               win.document.write(`<!DOCTYPE html><html><head><title>Routine - ${clsObj?.name} ${secName}</title>
@@ -2570,7 +2604,7 @@ function RoutineTab({
     </div>
     <div style="text-align:right">
       <div style="font-size:13px;font-weight:600;color:#1a1a1a">${clsObj?.name || ''} — ${isBn ? 'সেকশন' : 'Section'} ${secName}</div>
-      <div style="font-size:10px;color:#6b7280">${isBn ? 'প্রতি পিরিয়ড' : 'Period'}: ${periodDuration} ${isBn ? 'মিনিট' : 'min'} · Generated: ${new Date().toLocaleDateString()}</div>
+      <div style="font-size:10px;color:#6b7280">${isBn ? 'পিরিয়ড' : 'Periods'}: ${totalPeriods} · ${usedMin} ${isBn ? 'মিনিট মোট' : 'min total'} · Generated: ${new Date().toLocaleDateString()}</div>
     </div>
   </div>
   <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb">

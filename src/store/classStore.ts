@@ -32,6 +32,7 @@ export interface ClassRoutine {
   classId: string
   sectionId: string
   periodDuration: number
+  periodDurations?: number[]
   weekendDays: number[]
   periods: RoutineSlot[][]
 }
