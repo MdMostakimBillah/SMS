@@ -1429,24 +1429,31 @@ export default function Step2Schedule() {
                                 </td>
                                 {examDays.map((d) => {
                                   const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-                                  const assigned = filteredInvigilators.find((inv) => inv.assignType === 'room' && inv.roomId === room.id && inv.date === dateStr)
-                                  const teacher = assigned ? teacherMap.get(assigned.teacherId) : null
+                                  const assignedList = filteredInvigilators.filter((inv) => inv.assignType === 'room' && inv.roomId === room.id && inv.date === dateStr)
                                   const dayRoutines = filteredRoutines.filter((r) => r.date === dateStr && r.roomNo === room.roomNo)
                                   const studentCount = dayRoutines.reduce((sum, r) => {
                                     return sum + students.filter((s) => s.status === 'approved' && s.class === r.classId && s.section === r.sectionId).length
                                   }, 0)
                                   return (
                                     <td key={d} className="text-center p-1.5 border-b border-l border-[var(--border)]">
-                                      {assigned && teacher ? (
-                                        <div
-                                          className="rounded-lg p-1.5 bg-[var(--brand-light)] border border-[var(--brand)]/20 cursor-pointer hover:shadow-sm transition-all"
-                                          onClick={() => {
-                                            if (confirm(isBn ? 'এই নিয়োগ মুছে ফেলবেন?' : 'Remove this assignment?')) removeInvigilator(assigned.id)
-                                          }}
-                                        >
-                                          <div className="text-[0.5625rem] font-semibold text-[var(--brand)] truncate">{teacher.nameEn}</div>
+                                      {assignedList.length > 0 ? (
+                                        <div className="space-y-1">
+                                          {assignedList.map((inv) => {
+                                            const teacher = teacherMap.get(inv.teacherId)
+                                            return (
+                                              <div
+                                                key={inv.id}
+                                                className="rounded-lg p-1.5 bg-[var(--brand-light)] border border-[var(--brand)]/20 cursor-pointer hover:shadow-sm transition-all"
+                                                onClick={() => {
+                                                  if (confirm(isBn ? 'এই নিয়োগ মুছে ফেলবেন?' : 'Remove this assignment?')) removeInvigilator(inv.id)
+                                                }}
+                                              >
+                                                <div className="text-[0.5625rem] font-semibold text-[var(--brand)] truncate">{teacher?.nameEn || inv.teacherId}</div>
+                                              </div>
+                                            )
+                                          })}
                                           {studentCount > 0 && (
-                                            <div className="text-[0.5rem] text-[var(--text-muted)] mt-0.5">{studentCount} {isBn ? 'জন ছাত্র' : 'students'}</div>
+                                            <div className="text-[0.5rem] text-[var(--text-muted)]">{studentCount} {isBn ? 'জন ছাত্র' : 'students'}</div>
                                           )}
                                         </div>
                                       ) : (
@@ -1511,22 +1518,29 @@ export default function Step2Schedule() {
                                   </td>
                                   {examDays.map((d) => {
                                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-                                    const assigned = filteredInvigilators.find((inv) => inv.assignType === 'class' && inv.classSection === cs.label && inv.date === dateStr)
-                                    const teacher = assigned ? teacherMap.get(assigned.teacherId) : null
+                                    const assignedList = filteredInvigilators.filter((inv) => inv.assignType === 'class' && inv.classSection === cs.label && inv.date === dateStr)
                                     const dayRoutine = filteredRoutines.find((r) => r.date === dateStr && r.classId === cs.classId && r.sectionId === cs.sectionId)
                                     const subject = dayRoutine ? subjectMap.get(dayRoutine.subjectId) : null
                                     return (
                                       <td key={d} className="text-center p-1.5 border-b border-l border-[var(--border)]">
-                                        {assigned && teacher ? (
-                                          <div
-                                            className="rounded-lg p-1.5 bg-[var(--brand-light)] border border-[var(--brand)]/20 cursor-pointer hover:shadow-sm transition-all"
-                                            onClick={() => {
-                                              if (confirm(isBn ? 'এই নিয়োগ মুছে ফেলবেন?' : 'Remove this assignment?')) removeInvigilator(assigned.id)
-                                            }}
-                                          >
-                                            <div className="text-[0.5625rem] font-semibold text-[var(--brand)] truncate">{teacher.nameEn}</div>
+                                        {assignedList.length > 0 ? (
+                                          <div className="space-y-1">
+                                            {assignedList.map((inv) => {
+                                              const teacher = teacherMap.get(inv.teacherId)
+                                              return (
+                                                <div
+                                                  key={inv.id}
+                                                  className="rounded-lg p-1.5 bg-[var(--brand-light)] border border-[var(--brand)]/20 cursor-pointer hover:shadow-sm transition-all"
+                                                  onClick={() => {
+                                                    if (confirm(isBn ? 'এই নিয়োগ মুছে ফেলবেন?' : 'Remove this assignment?')) removeInvigilator(inv.id)
+                                                  }}
+                                                >
+                                                  <div className="text-[0.5625rem] font-semibold text-[var(--brand)] truncate">{teacher?.nameEn || inv.teacherId}</div>
+                                                </div>
+                                              )
+                                            })}
                                             {subject && (
-                                              <div className="text-[0.5rem] text-[var(--text-muted)] mt-0.5 truncate">
+                                              <div className="text-[0.5rem] text-[var(--text-muted)] truncate">
                                                 {isBn ? subject.nameBn : subject.name}
                                               </div>
                                             )}
