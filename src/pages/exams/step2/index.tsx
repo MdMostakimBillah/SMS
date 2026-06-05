@@ -1431,12 +1431,21 @@ export default function Step2Schedule() {
                                   const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
                                   const assignedList = filteredInvigilators.filter((inv) => inv.assignType === 'room' && inv.roomId === room.id && inv.date === dateStr)
                                   const dayRoutines = filteredRoutines.filter((r) => r.date === dateStr && r.roomNo === room.roomNo)
+                                  const hasExam = dayRoutines.length > 0
                                   const studentCount = dayRoutines.reduce((sum, r) => {
                                     return sum + students.filter((s) => s.status === 'approved' && s.class === r.classId && s.section === r.sectionId).length
                                   }, 0)
+                                  const subjectNames = [...new Set(dayRoutines.map((r) => {
+                                    const subj = subjectMap.get(r.subjectId)
+                                    return subj ? (isBn ? subj.nameBn : subj.name) : ''
+                                  }).filter(Boolean))]
                                   return (
                                     <td key={d} className="text-center p-1.5 border-b border-l border-[var(--border)]">
-                                      {assignedList.length > 0 ? (
+                                      {!hasExam ? (
+                                        <div className="w-full h-10 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[0.5rem] text-[var(--text-muted)] opacity-30">
+                                          —
+                                        </div>
+                                      ) : assignedList.length > 0 ? (
                                         <div className="space-y-1">
                                           {assignedList.map((inv) => {
                                             const teacher = teacherMap.get(inv.teacherId)
@@ -1452,6 +1461,11 @@ export default function Step2Schedule() {
                                               </div>
                                             )
                                           })}
+                                          {subjectNames.length > 0 && (
+                                            <div className="text-[0.5rem] text-[var(--text-muted)] truncate">
+                                              {subjectNames.join(', ')}
+                                            </div>
+                                          )}
                                           {studentCount > 0 && (
                                             <div className="text-[0.5rem] text-[var(--text-muted)]">{studentCount} {isBn ? 'জন ছাত্র' : 'students'}</div>
                                           )}
@@ -1521,9 +1535,14 @@ export default function Step2Schedule() {
                                     const assignedList = filteredInvigilators.filter((inv) => inv.assignType === 'class' && inv.classSection === cs.label && inv.date === dateStr)
                                     const dayRoutine = filteredRoutines.find((r) => r.date === dateStr && r.classId === cs.classId && r.sectionId === cs.sectionId)
                                     const subject = dayRoutine ? subjectMap.get(dayRoutine.subjectId) : null
+                                    const hasExam = !!dayRoutine
                                     return (
                                       <td key={d} className="text-center p-1.5 border-b border-l border-[var(--border)]">
-                                        {assignedList.length > 0 ? (
+                                        {!hasExam ? (
+                                          <div className="w-full h-10 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[0.5rem] text-[var(--text-muted)] opacity-30">
+                                            —
+                                          </div>
+                                        ) : assignedList.length > 0 ? (
                                           <div className="space-y-1">
                                             {assignedList.map((inv) => {
                                               const teacher = teacherMap.get(inv.teacherId)
