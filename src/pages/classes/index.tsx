@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, Fragment } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -2292,6 +2292,22 @@ function RoutineTab({
     return Math.floor(totalMin / periodDuration) || 7
   }, [cls, institution, periodDuration])
 
+  const breakPositions = useMemo(() => {
+    const breaks = institution.breaks || []
+    if (breaks.length === 0) return []
+    const [sh, sm] = startTime.split(':').map(Number)
+    const schoolStartMin = sh * 60 + sm
+    return breaks.map((brk: any) => {
+      const [bh, bm] = brk.start.split(':').map(Number)
+      const breakMin = bh * 60 + bm
+      const periodAfterBreak = Math.floor((breakMin - schoolStartMin) / periodDuration)
+      return {
+        ...brk,
+        afterPeriod: Math.max(0, Math.min(periodAfterBreak - 1, totalPeriods - 1)),
+      }
+    }).sort((a: any, b: any) => a.afterPeriod - b.afterPeriod)
+  }, [institution.breaks, startTime, periodDuration, totalPeriods])
+
   const getSubjectName = (id: string) => subjects.find((s) => s.id === id)?.name || id
   const getTeacherName = (id: string) => teachers.find((t) => t.id === id)?.nameEn || id
 
@@ -2910,71 +2926,119 @@ function RoutineTab({
             <tbody>
               {Array.from({ length: totalPeriods }, (_, p) => {
                 const time = getPeriodTime(p)
+                const breakAfter = breakPositions.filter((b: any) => b.afterPeriod === p)
                 return (
-                  <tr key={p} style={{ borderBottom: '0.5px solid var(--border)' }}>
-                    <td
-                      style={{
-                        padding: '8px',
-                        fontSize: '10px',
-                        color: 'var(--text-muted)',
-                        position: 'sticky',
-                        left: 0,
-                        background: 'var(--bg-primary)',
-                        zIndex: 1,
-                      }}
-                    >
-                      <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>P{p + 1}</div>
-                      <div>{time.start}</div>
-                      <div>{time.end}</div>
-                    </td>
-                    {activeDays.map((d) => {
-                    const slot = resolvedPeriods[d.index]?.[p]
-                      const hasSubject = slot?.subjectId
-                      return (
-                        <td key={d.index} style={{ padding: '4px', textAlign: 'center', verticalAlign: 'top' }}>
-                          <button
-                            onClick={() => {
-                              setEditSlot({ day: d.index, period: p })
-                              setSlotForm({ subjectId: slot?.subjectId || '', teacherId: slot?.teacherId || '' })
-                            }}
+                  <Fragment key={p}>
+                    <tr style={{ borderBottom: '0.5px solid var(--border)' }}>
+                      <td
+                        style={{
+                          padding: '8px',
+                          fontSize: '10px',
+                          color: 'var(--text-muted)',
+                          position: 'sticky',
+                          left: 0,
+                          background: 'var(--bg-primary)',
+                          zIndex: 1,
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>P{p + 1}</div>
+                        <div>{time.start}</div>
+                        <div>{time.end}</div>
+                      </td>
+                      {activeDays.map((d) => {
+                      const slot = resolvedPeriods[d.index]?.[p]
+                        const hasSubject = slot?.subjectId
+                        return (
+                          <td key={d.index} style={{ padding: '4px', textAlign: 'center', verticalAlign: 'top' }}>
+                            <button
+                              onClick={() => {
+                                setEditSlot({ day: d.index, period: p })
+                                setSlotForm({ subjectId: slot?.subjectId || '', teacherId: slot?.teacherId || '' })
+                              }}
+                              style={{
+                                width: '100%',
+                                minHeight: '48px',
+                                padding: '6px',
+                                borderRadius: '6px',
+                                border: `1px solid ${hasSubject ? 'var(--purple)' : 'var(--border)'}`,
+                                background: hasSubject ? 'var(--purple-light)' : 'var(--bg-secondary)',
+                                cursor: 'pointer',
+                                fontFamily: 'inherit',
+                                textAlign: 'center',
+                                transition: 'all 0.15s',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--purple)'
+                                e.currentTarget.style.transform = 'scale(1.02)'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = hasSubject ? 'var(--purple)' : 'var(--border)'
+                                e.currentTarget.style.transform = 'scale(1)'
+                              }}
+                            >
+                              {hasSubject ? (
+                                <>
+                                  <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--purple)', lineHeight: 1.2 }}>
+                                    {getSubjectName(slot.subjectId)}
+                                  </div>
+                                  <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.2 }}>
+                                    {slot.teacherName || getTeacherName(slot.teacherId)}
+                                  </div>
+                                </>
+                              ) : (
+                                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>+</span>
+                              )}
+                            </button>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                    {breakAfter.map((brk: any) => (
+                      <tr key={`break-${brk.id}`} style={{ borderBottom: '0.5px solid var(--border)' }}>
+                        <td
+                          style={{
+                            padding: '8px',
+                            fontSize: '10px',
+                            color: 'var(--amber)',
+                            position: 'sticky',
+                            left: 0,
+                            background: 'var(--bg-primary)',
+                            zIndex: 1,
+                          }}
+                        >
+                          <div style={{ fontWeight: 600 }}>{isBn ? 'বিরতি' : 'Break'}</div>
+                          <div>{brk.start}</div>
+                          <div>{brk.end}</div>
+                        </td>
+                        {activeDays.map((d) => (
+                          <td
+                            key={d.index}
+                            colSpan={1}
                             style={{
-                              width: '100%',
-                              minHeight: '48px',
-                              padding: '6px',
-                              borderRadius: '6px',
-                              border: `1px solid ${hasSubject ? 'var(--purple)' : 'var(--border)'}`,
-                              background: hasSubject ? 'var(--purple-light)' : 'var(--bg-secondary)',
-                              cursor: 'pointer',
-                              fontFamily: 'inherit',
+                              padding: '4px',
                               textAlign: 'center',
-                              transition: 'all 0.15s',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = 'var(--purple)'
-                              e.currentTarget.style.transform = 'scale(1.02)'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = hasSubject ? 'var(--purple)' : 'var(--border)'
-                              e.currentTarget.style.transform = 'scale(1)'
+                              verticalAlign: 'middle',
                             }}
                           >
-                            {hasSubject ? (
-                              <>
-                                <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--purple)', lineHeight: 1.2 }}>
-                                  {getSubjectName(slot.subjectId)}
-                                </div>
-                                <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.2 }}>
-                                  {slot.teacherName || getTeacherName(slot.teacherId)}
-                                </div>
-                              </>
-                            ) : (
-                              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>+</span>
-                            )}
-                          </button>
-                        </td>
-                      )
-                    })}
-                  </tr>
+                            <div
+                              style={{
+                                width: '100%',
+                                padding: '6px',
+                                borderRadius: '6px',
+                                border: '1px dashed var(--amber)',
+                                background: 'var(--amber-light)',
+                                fontSize: '10px',
+                                fontWeight: 600,
+                                color: 'var(--amber)',
+                              }}
+                            >
+                              {brk.label}
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </Fragment>
                 )
               })}
             </tbody>
