@@ -870,7 +870,7 @@ export default function HRPage() {
               setActiveTab(tab.id)
               setPage(1)
             }}
-            className={`flex items-center justify-center gap-[7px] py-[9px] px-[14px] rounded-[9px] border-none cursor-pointer text-[13px] font-medium font-[inherit] transition-all whitespace-nowrap shrink-0 ${activeTab === tab.id ? 'bg-[var(--brand)]' : 'bg-transparent'} ${activeTab === tab.id ? 'text-white' : 'text-[var(--text-secondary)]'} ${activeTab === tab.id ? 'shadow-[0_4px_12px_rgba(99,102,241,0.3)]' : 'shadow-none'}`}
+            className={`flex items-center justify-center gap-[7px] py-[9px] px-[14px] rounded-[9px] border-none cursor-pointer text-[13px] font-medium font-[inherit] transition-all whitespace-nowrap ${isMobile ? 'shrink-0' : 'flex-1'} ${activeTab === tab.id ? 'bg-[var(--brand)]' : 'bg-transparent'} ${activeTab === tab.id ? 'text-white' : 'text-[var(--text-secondary)]'} ${activeTab === tab.id ? 'shadow-[0_4px_12px_rgba(99,102,241,0.3)]' : 'shadow-none'}`}
           >
             <tab.icon size={15} />
             {isBn ? tab.labelBn : tab.label}
