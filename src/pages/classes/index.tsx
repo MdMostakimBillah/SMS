@@ -51,7 +51,8 @@ export default function ClassesPage() {
     setRoutineSlot,
     clearRoutineSlot,
     switchSession,
-    importFromSession,
+    importClassesFromSession,
+    importRoutinesFromSession,
   } = useClassStore()
   const { teachers, subjects } = useTeacherStore()
   const { students } = useAdmissionStore()
@@ -801,8 +802,8 @@ export default function ClassesPage() {
                 </div>
                 <div className="text-[11px] text-[var(--text-muted)]">
                   {isBn
-                    ? 'এই সেশনে কোনো শ্রেণি নেই। আগের সেশন থেকে শ্রেণি ও রুটিন আমদানি করুন।'
-                    : 'No classes in this session. Import classes and routines from a previous session.'}
+                    ? 'এই সেশনে কোনো শ্রেণি নেই। আগের সেশন থেকে শ্রেণি আমদানি করুন।'
+                    : 'No classes in this session. Import classes from a previous session.'}
                 </div>
               </div>
               <div className="flex gap-1.5 shrink-0">
@@ -812,8 +813,8 @@ export default function ClassesPage() {
                     <button
                       key={s}
                       onClick={() => {
-                        if (window.confirm(isBn ? `"${s}" থেকে সব শ্রেণি ও রুটিন আমদানি করবেন?` : `Import all classes and routines from "${s}"?`)) {
-                          importFromSession(s)
+                        if (window.confirm(isBn ? `"${s}" থেকে সব শ্রেণি আমদানি করবেন?` : `Import all classes from "${s}"?`)) {
+                          importClassesFromSession(s)
                         }
                       }}
                       className="flex items-center gap-[4px] py-[6px] px-3 rounded-lg bg-[var(--purple)] border-none text-white text-[11px] font-medium cursor-pointer font-[inherit] hover:opacity-90 transition-all"
@@ -1735,7 +1736,7 @@ export default function ClassesPage() {
                       key={s}
                       onClick={() => {
                         if (window.confirm(isBn ? `"${s}" থেকে সব রুটিন আমদানি করবেন?` : `Import all routines from "${s}"?`)) {
-                          importFromSession(s)
+                          importRoutinesFromSession(s)
                         }
                       }}
                       className="flex items-center gap-[4px] py-[6px] px-3 rounded-lg bg-[var(--purple)] border-none text-white text-[11px] font-medium cursor-pointer font-[inherit] hover:opacity-90 transition-all"
