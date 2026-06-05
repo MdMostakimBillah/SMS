@@ -92,11 +92,15 @@ export interface ExamSeatPlan {
 export interface InvigilatorAssignment {
   id: string
   examId: string
-  roomId: string
   teacherId: string
   date: string
-  session: string
   shift: 'morning' | 'afternoon'
+  /** 'room' = room/hall wise, 'class' = class/section wise */
+  assignType: 'room' | 'class'
+  /** Room ID (when assignType === 'room') */
+  roomId: string
+  /** Class section key like "8-A" (when assignType === 'class') */
+  classSection: string
 }
 
 // ─── Step 4: OMR ───
@@ -496,11 +500,7 @@ const defaultSeatPlans: ExamSeatPlan[] = [
   },
 ]
 
-const defaultInvigilators: InvigilatorAssignment[] = [
-  { id: 'INV-001', examId: 'EXAM-001', roomId: 'RM-001', teacherId: 'TCH-001', date: '2025-06-15', session: 'morning', shift: 'morning' },
-  { id: 'INV-002', examId: 'EXAM-001', roomId: 'RM-002', teacherId: 'TCH-002', date: '2025-06-15', session: 'morning', shift: 'morning' },
-  { id: 'INV-003', examId: 'EXAM-001', roomId: 'RM-003', teacherId: 'TCH-003', date: '2025-06-16', session: 'morning', shift: 'morning' },
-]
+const defaultInvigilators: InvigilatorAssignment[] = []
 
 const defaultOMRConfigs: OMRConfig[] = [
   {

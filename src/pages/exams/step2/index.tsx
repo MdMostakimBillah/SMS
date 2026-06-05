@@ -18,6 +18,7 @@ import {
   ChevronRight,
   BookOpen,
   Download,
+  GraduationCap,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -148,7 +149,8 @@ export default function Step2Schedule() {
 
   // Invigilator form
   const [showInvigForm, setShowInvigForm] = useState(false)
-  const [invigForm, setInvigForm] = useState({ roomId: '', teacherId: '', date: '', shift: 'morning' as 'morning' | 'afternoon' })
+  const [invigAssignType, setInvigAssignType] = useState<'room' | 'class'>('room')
+  const [invigForm, setInvigForm] = useState({ roomId: '', teacherId: '', date: '', shift: 'morning' as 'morning' | 'afternoon', classSection: '' })
 
   const selectedExam = useMemo(() => examConfigs.find((e) => e.id === selectedExamId) || null, [examConfigs, selectedExamId])
 
@@ -451,17 +453,20 @@ export default function Step2Schedule() {
   }
 
   const handleSaveInvig = () => {
-    if (!selectedExamId || !invigForm.roomId || !invigForm.teacherId || !invigForm.date) return
+    if (!selectedExamId || !invigForm.teacherId || !invigForm.date) return
+    if (invigAssignType === 'room' && !invigForm.roomId) return
+    if (invigAssignType === 'class' && !invigForm.classSection) return
     addInvigilator({
       examId: selectedExamId,
-      roomId: invigForm.roomId,
       teacherId: invigForm.teacherId,
       date: invigForm.date,
-      session: invigForm.shift,
       shift: invigForm.shift,
+      assignType: invigAssignType,
+      roomId: invigAssignType === 'room' ? invigForm.roomId : '',
+      classSection: invigAssignType === 'class' ? invigForm.classSection : '',
     })
     setShowInvigForm(false)
-    setInvigForm({ roomId: '', teacherId: '', date: '', shift: 'morning' })
+    setInvigForm({ roomId: '', teacherId: '', date: '', shift: 'morning', classSection: '' })
   }
 
   const subjectMap = useMemo(() => {
@@ -1306,14 +1311,35 @@ export default function Step2Schedule() {
         {/* ═══ INVIGILATORS TAB ═══ */}
         {activeSubTab === 'invigilators' && (
           <>
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-[0.75rem] text-[var(--text-secondary)]">
-                {filteredInvigilators.length} {isBn ? 'জন ইনভিজিলেটর' : 'invigilators'}
-              </span>
+            {/* Mode Toggle */}
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                onClick={() => setInvigAssignType('room')}
+                className={`px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium border cursor-pointer transition-all ${
+                  invigAssignType === 'room'
+                    ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
+                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]'
+                }`}
+              >
+                <MapPin size={12} className="inline mr-1" />
+                {isBn ? 'কক্ষ/হল ভিত্তিক' : 'Room / Hall Wise'}
+              </button>
+              <button
+                onClick={() => setInvigAssignType('class')}
+                className={`px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium border cursor-pointer transition-all ${
+                  invigAssignType === 'class'
+                    ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
+                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]'
+                }`}
+              >
+                <GraduationCap size={12} className="inline mr-1" />
+                {isBn ? 'শ্রেণি/সেকশন ভিত্তিক' : 'Class / Section Wise'}
+              </button>
+              <div className="flex-1" />
               <button
                 onClick={() => {
                   setShowInvigForm(true)
-                  setInvigForm({ roomId: '', teacherId: '', date: '', shift: 'morning' })
+                  setInvigForm({ roomId: '', teacherId: '', date: '', shift: 'morning', classSection: '' })
                 }}
                 className={btnPrimary}
               >
@@ -1321,54 +1347,269 @@ export default function Step2Schedule() {
                 {isBn ? 'নতুন নিয়োগ' : 'New Assignment'}
               </button>
             </div>
-            <div className="space-y-2">
-              {filteredInvigilators.map((inv) => {
-                const teacher = teacherMap.get(inv.teacherId)
-                const room = roomMap.get(inv.roomId)
-                return (
-                  <div key={inv.id} className={`${sectionCls} flex items-center justify-between`}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[var(--brand-light)] flex items-center justify-center">
-                        <UserCheck size={14} className="text-[var(--brand)]" />
-                      </div>
-                      <div>
-                        <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{teacher?.nameEn || inv.teacherId}</div>
-                        <div className="flex items-center gap-2 text-[0.625rem] text-[var(--text-muted)]">
-                          <span className="flex items-center gap-1">
-                            <MapPin size={10} />
-                            {room?.roomNo || inv.roomId}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar size={10} />
-                            {inv.date}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock size={10} />
-                            {inv.shift}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Remove?')) removeInvigilator(inv.id)
-                      }}
-                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                    >
-                      <Trash2 size={11} />
-                    </button>
-                  </div>
-                )
-              })}
-              {filteredInvigilators.length === 0 && (
-                <div className={`${sectionCls} text-center py-10`}>
-                  <UserCheck size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                  <p className="text-[0.8125rem] text-[var(--text-muted)]">
-                    {isBn ? 'কোনো ইনভিজিলেটর নিয়োগ হয়নি' : 'No invigilators assigned'}
-                  </p>
-                </div>
-              )}
+
+            {/* Info hint */}
+            <div className="text-[0.625rem] text-[var(--text-muted)] mb-3">
+              {invigAssignType === 'room'
+                ? (isBn ? 'প্রতিটি কক্ষ/হলে কোন শিক্ষক পরিদর্শক হবে তা নির্ধারণ করুন' : 'Assign which teacher guards each room/hall')
+                : (isBn ? 'প্রতিটি শ্রেণি/সেকশনে কোন শিক্ষক পরিদর্শক হবে তা নির্ধারণ করুন' : 'Assign which teacher guards each class/section')
+              }
             </div>
+
+            {/* Calendar Grid */}
+            {calendarRange ? (
+              <div className={`${sectionCls} overflow-x-auto`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <button
+                    onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
+                    className="w-7 h-7 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-secondary)] hover:text-[var(--brand)]"
+                  >
+                    ‹
+                  </button>
+                  <span className="text-[0.75rem] font-semibold text-[var(--text-primary)] min-w-[10rem] text-center">
+                    {currentMonth.toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { month: 'long', year: 'numeric' })}
+                  </span>
+                  <button
+                    onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                    className="w-7 h-7 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-secondary)] hover:text-[var(--brand)]"
+                  >
+                    ›
+                  </button>
+                </div>
+
+                {/* Get exam days in current month */}
+                {(() => {
+                  const year = currentMonth.getFullYear()
+                  const month = currentMonth.getMonth()
+                  const daysInMonth = new Date(year, month + 1, 0).getDate()
+                  const examDays: number[] = []
+                  for (let d = 1; d <= daysInMonth; d++) {
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+                    if (dateStr >= calendarRange.start.toISOString().slice(0, 10) && dateStr <= calendarRange.end.toISOString().slice(0, 10)) {
+                      const dayRoutines = filteredRoutines.filter((r) => r.date === dateStr)
+                      if (dayRoutines.length > 0) examDays.push(d)
+                    }
+                  }
+
+                  if (invigAssignType === 'room') {
+                    // Room-wise grid: rows = rooms, columns = exam days
+                    const activeRooms = rooms.filter((r) => r.isActive)
+                    return (
+                      <div className="min-w-[40rem]">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr>
+                              <th className="text-left text-[0.625rem] font-semibold text-[var(--text-muted)] p-2 border-b border-[var(--border)] sticky left-0 bg-[var(--bg-primary)] z-10 min-w-[8rem]">
+                                {isBn ? 'কক্ষ/হল' : 'Room / Hall'}
+                              </th>
+                              {examDays.map((d) => {
+                                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+                                const dayRoutines = filteredRoutines.filter((r) => r.date === dateStr)
+                                const subjectNames = [...new Set(dayRoutines.map((r) => {
+                                  const subj = subjectMap.get(r.subjectId)
+                                  return subj ? (isBn ? subj.nameBn : subj.name) : ''
+                                }).filter(Boolean))]
+                                return (
+                                  <th key={d} className="text-center text-[0.5625rem] p-2 border-b border-l border-[var(--border)] min-w-[6rem]">
+                                    <div className="font-semibold text-[var(--text-primary)]">{d}</div>
+                                    <div className="text-[0.5rem] text-[var(--text-muted)] mt-0.5">
+                                      {subjectNames.slice(0, 2).join(', ')}{subjectNames.length > 2 ? '...' : ''}
+                                    </div>
+                                  </th>
+                                )
+                              })}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {activeRooms.map((room) => (
+                              <tr key={room.id}>
+                                <td className="text-[0.6875rem] font-medium text-[var(--text-primary)] p-2 border-b border-[var(--border)] sticky left-0 bg-[var(--bg-primary)] z-10">
+                                  <div>{room.roomNo}</div>
+                                  <div className="text-[0.5rem] text-[var(--text-muted)]">{room.roomName} · {room.capacity} {isBn ? 'সিট' : 'seats'}</div>
+                                </td>
+                                {examDays.map((d) => {
+                                  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+                                  const assigned = filteredInvigilators.find((inv) => inv.assignType === 'room' && inv.roomId === room.id && inv.date === dateStr)
+                                  const teacher = assigned ? teacherMap.get(assigned.teacherId) : null
+                                  const dayRoutines = filteredRoutines.filter((r) => r.date === dateStr && r.roomNo === room.roomNo)
+                                  const studentCount = dayRoutines.reduce((sum, r) => {
+                                    return sum + students.filter((s) => s.status === 'approved' && s.class === r.classId && s.section === r.sectionId).length
+                                  }, 0)
+                                  return (
+                                    <td key={d} className="text-center p-1.5 border-b border-l border-[var(--border)]">
+                                      {assigned && teacher ? (
+                                        <div
+                                          className="rounded-lg p-1.5 bg-[var(--brand-light)] border border-[var(--brand)]/20 cursor-pointer hover:shadow-sm transition-all"
+                                          onClick={() => {
+                                            if (confirm(isBn ? 'এই নিয়োগ মুছে ফেলবেন?' : 'Remove this assignment?')) removeInvigilator(assigned.id)
+                                          }}
+                                        >
+                                          <div className="text-[0.5625rem] font-semibold text-[var(--brand)] truncate">{teacher.nameEn}</div>
+                                          {studentCount > 0 && (
+                                            <div className="text-[0.5rem] text-[var(--text-muted)] mt-0.5">{studentCount} {isBn ? 'জন ছাত্র' : 'students'}</div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <button
+                                          onClick={() => {
+                                            setInvigForm((p) => ({ ...p, date: dateStr }))
+                                            setShowInvigForm(true)
+                                          }}
+                                          className="w-full h-10 rounded-lg border border-dashed border-[var(--border)] text-[0.5rem] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all flex items-center justify-center"
+                                        >
+                                          +
+                                        </button>
+                                      )}
+                                    </td>
+                                  )
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )
+                  } else {
+                    // Class-wise grid: rows = class-sections, columns = exam days
+                    const classSections = classOptions.flatMap((c) =>
+                      (sectionsMap[c] || []).map((s) => ({ classId: c, sectionId: s, label: `${c}-${s}` }))
+                    )
+                    return (
+                      <div className="min-w-[40rem]">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr>
+                              <th className="text-left text-[0.625rem] font-semibold text-[var(--text-muted)] p-2 border-b border-[var(--border)] sticky left-0 bg-[var(--bg-primary)] z-10 min-w-[8rem]">
+                                {isBn ? 'শ্রেণি-সেকশন' : 'Class-Section'}
+                              </th>
+                              {examDays.map((d) => {
+                                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+                                const dayRoutines = filteredRoutines.filter((r) => r.date === dateStr)
+                                const subjectNames = [...new Set(dayRoutines.map((r) => {
+                                  const subj = subjectMap.get(r.subjectId)
+                                  return subj ? (isBn ? subj.nameBn : subj.name) : ''
+                                }).filter(Boolean))]
+                                return (
+                                  <th key={d} className="text-center text-[0.5625rem] p-2 border-b border-l border-[var(--border)] min-w-[6rem]">
+                                    <div className="font-semibold text-[var(--text-primary)]">{d}</div>
+                                    <div className="text-[0.5rem] text-[var(--text-muted)] mt-0.5">
+                                      {subjectNames.slice(0, 2).join(', ')}{subjectNames.length > 2 ? '...' : ''}
+                                    </div>
+                                  </th>
+                                )
+                              })}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {classSections.map((cs) => {
+                              const studentCount = students.filter((s) => s.status === 'approved' && s.class === cs.classId && s.section === cs.sectionId).length
+                              return (
+                                <tr key={cs.label}>
+                                  <td className="text-[0.6875rem] font-medium text-[var(--text-primary)] p-2 border-b border-[var(--border)] sticky left-0 bg-[var(--bg-primary)] z-10">
+                                    <div>{cs.classId} - {cs.sectionId}</div>
+                                    <div className="text-[0.5rem] text-[var(--text-muted)]">{studentCount} {isBn ? 'জন ছাত্র' : 'students'}</div>
+                                  </td>
+                                  {examDays.map((d) => {
+                                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+                                    const assigned = filteredInvigilators.find((inv) => inv.assignType === 'class' && inv.classSection === cs.label && inv.date === dateStr)
+                                    const teacher = assigned ? teacherMap.get(assigned.teacherId) : null
+                                    const dayRoutine = filteredRoutines.find((r) => r.date === dateStr && r.classId === cs.classId && r.sectionId === cs.sectionId)
+                                    const subject = dayRoutine ? subjectMap.get(dayRoutine.subjectId) : null
+                                    return (
+                                      <td key={d} className="text-center p-1.5 border-b border-l border-[var(--border)]">
+                                        {assigned && teacher ? (
+                                          <div
+                                            className="rounded-lg p-1.5 bg-[var(--brand-light)] border border-[var(--brand)]/20 cursor-pointer hover:shadow-sm transition-all"
+                                            onClick={() => {
+                                              if (confirm(isBn ? 'এই নিয়োগ মুছে ফেলবেন?' : 'Remove this assignment?')) removeInvigilator(assigned.id)
+                                            }}
+                                          >
+                                            <div className="text-[0.5625rem] font-semibold text-[var(--brand)] truncate">{teacher.nameEn}</div>
+                                            {subject && (
+                                              <div className="text-[0.5rem] text-[var(--text-muted)] mt-0.5 truncate">
+                                                {isBn ? subject.nameBn : subject.name}
+                                              </div>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <button
+                                            onClick={() => {
+                                              setInvigForm((p) => ({ ...p, date: dateStr, classSection: cs.label }))
+                                              setShowInvigForm(true)
+                                            }}
+                                            className="w-full h-10 rounded-lg border border-dashed border-[var(--border)] text-[0.5rem] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all flex items-center justify-center"
+                                          >
+                                            +
+                                          </button>
+                                        )}
+                                      </td>
+                                    )
+                                  })}
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )
+                  }
+                })()}
+              </div>
+            ) : (
+              <div className={`${sectionCls} text-center py-10`}>
+                <Calendar size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
+                <p className="text-[0.8125rem] text-[var(--text-muted)]">
+                  {isBn ? 'পরীক্ষা নির্বাচন করুন এবং তারিখ সীমা সেট করুন' : 'Select an exam and set date range'}
+                </p>
+              </div>
+            )}
+
+            {/* Assigned list summary */}
+            {filteredInvigilators.length > 0 && (
+              <div className="mt-3">
+                <div className="text-[0.6875rem] font-semibold text-[var(--text-primary)] mb-2">
+                  {isBn ? 'সকল নিয়োগ' : 'All Assignments'} ({filteredInvigilators.length})
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {filteredInvigilators.map((inv) => {
+                    const teacher = teacherMap.get(inv.teacherId)
+                    const room = inv.assignType === 'room' ? roomMap.get(inv.roomId) : null
+                    return (
+                      <div key={inv.id} className="flex items-center gap-2 p-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]">
+                        <div className="w-7 h-7 rounded-full bg-[var(--brand-light)] flex items-center justify-center flex-shrink-0">
+                          <UserCheck size={12} className="text-[var(--brand)]" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] truncate">{teacher?.nameEn || inv.teacherId}</div>
+                          <div className="text-[0.5rem] text-[var(--text-muted)]">
+                            {inv.assignType === 'room'
+                              ? `${room?.roomNo || inv.roomId}`
+                              : inv.classSection
+                            } · {inv.date} · {inv.shift}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Remove?')) removeInvigilator(inv.id)
+                          }}
+                          className="w-5 h-5 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)] flex-shrink-0"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+            {filteredInvigilators.length === 0 && calendarRange && (
+              <div className={`${sectionCls} text-center py-6`}>
+                <UserCheck size={28} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
+                <p className="text-[0.75rem] text-[var(--text-muted)]">
+                  {isBn ? 'কোনো ইনভিজিলেটর নিয়োগ হয়নি' : 'No invigilators assigned'}
+                </p>
+              </div>
+            )}
           </>
         )}
 
@@ -1646,6 +1887,25 @@ export default function Step2Schedule() {
               </button>
             </div>
             <div className="space-y-3">
+              {/* Assign type toggle */}
+              <div className="flex gap-1.5 bg-[var(--bg-secondary)] rounded-lg p-1">
+                <button
+                  onClick={() => setInvigAssignType('room')}
+                  className={`flex-1 py-1.5 rounded-md text-[0.6875rem] font-medium cursor-pointer transition-all ${
+                    invigAssignType === 'room' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-secondary)]'
+                  }`}
+                >
+                  {isBn ? 'কক্ষ ভিত্তিক' : 'Room Wise'}
+                </button>
+                <button
+                  onClick={() => setInvigAssignType('class')}
+                  className={`flex-1 py-1.5 rounded-md text-[0.6875rem] font-medium cursor-pointer transition-all ${
+                    invigAssignType === 'class' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-secondary)]'
+                  }`}
+                >
+                  {isBn ? 'শ্রেণি ভিত্তিক' : 'Class Wise'}
+                </button>
+              </div>
               <div>
                 <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শিক্ষক' : 'Teacher'}</label>
                 <select
@@ -1654,28 +1914,48 @@ export default function Step2Schedule() {
                   className={`${selectCls} w-full`}
                 >
                   <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                  {teachers.map((t) => (
+                  {teachers.filter((t) => t.status === 'active').map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.nameEn}
                     </option>
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'কক্ষ' : 'Room'}</label>
-                <select
-                  value={invigForm.roomId}
-                  onChange={(e) => setInvigForm((p) => ({ ...p, roomId: e.target.value }))}
-                  className={`${selectCls} w-full`}
-                >
-                  <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                  {rooms.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.roomNo}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {invigAssignType === 'room' ? (
+                <div>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'কক্ষ' : 'Room'}</label>
+                  <select
+                    value={invigForm.roomId}
+                    onChange={(e) => setInvigForm((p) => ({ ...p, roomId: e.target.value }))}
+                    className={`${selectCls} w-full`}
+                  >
+                    <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
+                    {rooms.filter((r) => r.isActive).map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.roomNo} ({r.roomName}) - {r.capacity} {isBn ? 'সিট' : 'seats'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি-সেকশন' : 'Class-Section'}</label>
+                  <select
+                    value={invigForm.classSection}
+                    onChange={(e) => setInvigForm((p) => ({ ...p, classSection: e.target.value }))}
+                    className={`${selectCls} w-full`}
+                  >
+                    <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
+                    {classOptions.flatMap((c) =>
+                      (sectionsMap[c] || []).map((s) => (
+                        <option key={`${c}-${s}`} value={`${c}-${s}`}>
+                          {c} - {s} ({students.filter((st) => st.status === 'approved' && st.class === c && st.section === s).length} {isBn ? 'জন' : 'students'})
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'তারিখ' : 'Date'}</label>
@@ -1684,6 +1964,8 @@ export default function Step2Schedule() {
                     value={invigForm.date}
                     onChange={(e) => setInvigForm((p) => ({ ...p, date: e.target.value }))}
                     className={`${inputCls} w-full`}
+                    min={selectedExam?.startDate || ''}
+                    max={selectedExam?.endDate || ''}
                   />
                 </div>
                 <div>
