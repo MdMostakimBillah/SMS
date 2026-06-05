@@ -291,12 +291,15 @@ export default function Step2Schedule() {
       (sp) => sp.classId === seatClassId && sp.sectionId === seatSectionId
     )
     for (const sp of existing) removeSeatPlan(sp.id)
-    // Create seat plans without rooms (room assigned manually later)
+    // Find room from routine for this class/section
+    const routine = routines.find((r) => r.examId === selectedExamId && r.classId === seatClassId && r.sectionId === seatSectionId)
+    const matchedRoom = routine ? rooms.find((rm) => rm.roomNo === routine.roomNo && rm.isActive) : null
+    // Create seat plans
     let seatNo = 1
     for (const student of sectionStu) {
       addSeatPlan({
         examId: selectedExamId,
-        roomId: '',
+        roomId: matchedRoom?.id || '',
         studentId: student.id,
         classId: seatClassId,
         sectionId: seatSectionId,
@@ -394,10 +397,6 @@ export default function Step2Schedule() {
                 <div style="font-size:8px;color:#94a3b8;margin-top:2px">${today}</div>
               </div>
             </div>
-            ${isAssigned ? `<div style="background:#f8fafc;padding:6px;text-align:center;border-top:1px solid #e2e8f0">
-              <div style="font-size:8px;color:#94a3b8">${isBn ? 'কক্ষ' : 'Room'}</div>
-              <div style="font-size:11px;font-weight:700;color:#1e293b">${room?.roomNo || (isBn ? 'বরাদ্দ হয়নি' : 'Not Assigned')}</div>
-            </div>` : ''}
           </div>`
         }).join('')
 
@@ -1236,13 +1235,6 @@ export default function Step2Schedule() {
                           </div>
                         </div>
 
-                        {/* Room Name */}
-                        {isAssigned && (
-                          <div className="bg-[var(--bg-secondary)] px-3 py-1.5 text-center border-t border-[var(--border)]">
-                            <div className="text-[0.5rem] text-[var(--text-muted)]">{isBn ? 'কক্ষ' : 'Room'}</div>
-                            <div className="text-[0.6875rem] font-bold text-[var(--text-primary)]">{room?.roomNo || (isBn ? 'বরাদ্দ হয়নি' : 'Not Assigned')}</div>
-                          </div>
-                        )}
                       </div>
                     </div>
                   )
