@@ -117,6 +117,7 @@ export default function Step2Schedule() {
     endTime: '',
     roomNo: '',
   })
+  const [routineOrientation, setRoutineOrientation] = useState<'landscape' | 'portrait'>('landscape')
 
   // Room form
   const [showRoomForm, setShowRoomForm] = useState(false)
@@ -662,6 +663,15 @@ export default function Step2Schedule() {
                 </button>
               </div>
               {filteredRoutines.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <select
+                    value={routineOrientation}
+                    onChange={(e) => setRoutineOrientation(e.target.value as 'landscape' | 'portrait')}
+                    className="h-7 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] cursor-pointer"
+                  >
+                    <option value="landscape">{isBn ? 'ল্যান্ডস্কেপ' : 'Landscape'}</option>
+                    <option value="portrait">{isBn ? 'পোর্ট্রেট' : 'Portrait'}</option>
+                  </select>
                 <button
                   onClick={() => {
                     const examName = selectedExam ? (isBn ? selectedExam.nameBn : selectedExam.name) : ''
@@ -708,7 +718,7 @@ export default function Step2Schedule() {
                       <title>${examName} - Routine</title>
                       <style>
                         *{margin:0;padding:0;box-sizing:border-box}
-                        @page{size:A4 landscape;margin:10mm}
+                        @page{size:A4 ${routineOrientation};margin:10mm}
                         body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:15px;color:#1e293b;background:#fff;font-size:10px}
                         .header{text-align:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid ${brandColor}}
                         h1{font-size:16px;color:${brandColor};margin-bottom:2px}
@@ -720,7 +730,7 @@ export default function Step2Schedule() {
                         .footer{margin-top:12px;padding-top:8px;border-top:1px solid #e2e8f0;text-align:center;font-size:8px;color:#94a3b8}
                         @media print{
                           body{padding:0;margin:0}
-                          @page{size:A4 landscape;margin:8mm}
+                          @page{size:A4 ${routineOrientation};margin:8mm}
                           th{color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
                           td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
                         }
@@ -756,6 +766,7 @@ export default function Step2Schedule() {
                   <Download size={13} />
                   {isBn ? 'রুটিন ডাউনলোড' : 'Download Routine'}
                 </button>
+                </div>
               )}
             </div>
 
