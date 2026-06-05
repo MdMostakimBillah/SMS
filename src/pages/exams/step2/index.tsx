@@ -394,9 +394,9 @@ export default function Step2Schedule() {
                 <div style="font-size:8px;color:#94a3b8;margin-top:2px">${today}</div>
               </div>
             </div>
-            ${isAssigned && room ? `<div style="background:#f8fafc;padding:6px;text-align:center;border-top:1px solid #e2e8f0">
+            ${isAssigned ? `<div style="background:#f8fafc;padding:6px;text-align:center;border-top:1px solid #e2e8f0">
               <div style="font-size:8px;color:#94a3b8">${isBn ? 'কক্ষ' : 'Room'}</div>
-              <div style="font-size:11px;font-weight:700;color:#1e293b">${room.roomNo}</div>
+              <div style="font-size:11px;font-weight:700;color:#1e293b">${room?.roomNo || (isBn ? 'বরাদ্দ হয়নি' : 'Not Assigned')}</div>
             </div>` : ''}
           </div>`
         }).join('')
@@ -1237,10 +1237,10 @@ export default function Step2Schedule() {
                         </div>
 
                         {/* Room Name */}
-                        {isAssigned && room && (
+                        {isAssigned && (
                           <div className="bg-[var(--bg-secondary)] px-3 py-1.5 text-center border-t border-[var(--border)]">
                             <div className="text-[0.5rem] text-[var(--text-muted)]">{isBn ? 'কক্ষ' : 'Room'}</div>
-                            <div className="text-[0.6875rem] font-bold text-[var(--text-primary)]">{room.roomNo}</div>
+                            <div className="text-[0.6875rem] font-bold text-[var(--text-primary)]">{room?.roomNo || (isBn ? 'বরাদ্দ হয়নি' : 'Not Assigned')}</div>
                           </div>
                         )}
                       </div>
