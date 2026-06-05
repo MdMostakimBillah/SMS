@@ -330,34 +330,24 @@ export default function Step2Schedule() {
   }
 
   const downloadSeatPlanPDF = () => {
-    if (!selectedExamId) return
+    if (!selectedExamId || !seatClassId || !seatSectionId) return
     const examName = selectedExam ? (isBn ? selectedExam.nameBn : selectedExam.name) : ''
     const brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#4f46e5'
 
-    // Group seat plans by class-section
-    const grouped = new Map<string, typeof filteredSeatPlans>()
-    for (const sp of filteredSeatPlans) {
-      const key = `${sp.classId}-${sp.sectionId}`
-      const existing = grouped.get(key) || []
-      existing.push(sp)
-      grouped.set(key, existing)
-    }
+    // Only seat plans for selected class-section
+    const plans = filteredSeatPlans
+      .filter((sp) => sp.classId === seatClassId && sp.sectionId === seatSectionId)
+      .sort((a, b) => a.seatNo - b.seatNo)
 
-    for (const [, plans] of grouped) {
-      plans.sort((a, b) => a.seatNo - b.seatNo)
-    }
+    if (plans.length === 0) return
 
     const CARDS_PER_PAGE = 20
-    const allGroups = Array.from(grouped.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+    const totalPages = Math.ceil(plans.length / CARDS_PER_PAGE)
 
     let pagesHTML = ''
-    for (const [groupKey, plans] of allGroups) {
-      const [cls, sec] = groupKey.split('-')
-      const totalPages = Math.ceil(plans.length / CARDS_PER_PAGE)
-
-      for (let page = 0; page < totalPages; page++) {
-        const startIdx = page * CARDS_PER_PAGE
-        const pagePlans = plans.slice(startIdx, startIdx + CARDS_PER_PAGE)
+    for (let page = 0; page < totalPages; page++) {
+      const startIdx = page * CARDS_PER_PAGE
+      const pagePlans = plans.slice(startIdx, startIdx + CARDS_PER_PAGE)
 
         const cards = pagePlans.map((sp) => {
           const student = studentMap.get(sp.studentId)
@@ -393,7 +383,7 @@ export default function Step2Schedule() {
               <div style="display:flex;justify-content:center;margin-bottom:8px">${photoHTML}</div>
               <div style="font-size:13px;font-weight:700;color:#1e293b;line-height:1.2;margin-bottom:4px">${student?.nameEn || '-'}</div>
               <div style="font-size:10px;color:#64748b;margin-bottom:2px">
-                ${isBn ? 'শ্রেণি' : 'Class'}: <b>${cls}</b> ${isBn ? 'সেকশন' : 'Sec'}: <b>${sec}</b>
+                ${isBn ? 'শ্রেণি' : 'Class'}: <b>${seatClassId}</b> ${isBn ? 'সেকশন' : 'Sec'}: <b>${seatSectionId}</b>
               </div>
               <div style="font-size:10px;color:#64748b;margin-bottom:8px">
                 ${isBn ? 'রোল' : 'Roll'}: <b>${sp.roll}</b>
@@ -415,7 +405,7 @@ export default function Step2Schedule() {
           <div class="page">
             <div class="header">
               <h1>${examName}</h1>
-              <h2>${isBn ? 'আসন পরিকল্পনা' : 'Seat Plan'} — ${cls} ${isBn ? 'শ্রেণি' : 'Class'} ${sec} ${isBn ? 'সেকশন' : 'Section'}</h2>
+              <h2>${isBn ? 'আসন পরিকল্পনা' : 'Seat Plan'} — ${seatClassId} ${isBn ? 'শ্রেণি' : 'Class'} ${seatSectionId} ${isBn ? 'সেকশন' : 'Section'}</h2>
               <div class="info">${isBn ? 'মোট শিক্ষার্থী' : 'Total Students'}: ${plans.length} ${isBn ? 'জন' : ''} ${totalPages > 1 ? `| ${isBn ? 'পৃষ্ঠা' : 'Page'} ${page + 1}/${totalPages}` : ''}</div>
             </div>
             <div class="cards-grid">${cards}</div>
@@ -426,7 +416,6 @@ export default function Step2Schedule() {
           </div>
         `
       }
-    }
 
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
       <title>${examName} - Seat Plan</title>
@@ -1148,7 +1137,7 @@ export default function Step2Schedule() {
                     <LayoutGrid size={13} />
                     {isBn ? 'অটো বরাদ্দ' : 'Auto Assign'}
                   </button>
-                  {filteredSeatPlans.length > 0 && (
+                  {seatClassId && seatSectionId && filteredSeatPlans.some((sp) => sp.classId === seatClassId && sp.sectionId === seatSectionId) && (
                     <button
                       onClick={downloadSeatPlanPDF}
                       className="px-3 py-2 rounded-lg bg-[var(--teal-light)] border border-[var(--teal)]/20 text-[var(--teal)] text-[0.6875rem] font-medium cursor-pointer hover:shadow-sm flex items-center gap-1.5"
