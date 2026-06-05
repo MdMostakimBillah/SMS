@@ -27,6 +27,7 @@ import {
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useClassStore } from '@/store/classStore'
+import type { ClassSection } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -66,6 +67,7 @@ export default function ClassesPage() {
   const [showAddClass, setShowAddClass] = useState(false)
   const [newClassName, setNewClassName] = useState('')
   const [newClassNameBn, setNewClassNameBn] = useState('')
+  const [copyFromClassId, setCopyFromClassId] = useState('')
   const [editingClassTime, setEditingClassTime] = useState<string | null>(null)
   const [classTimeForm, setClassTimeForm] = useState({ startTime: '', endTime: '' })
   const [editingSection, setEditingSection] = useState<string | null>(null)
@@ -109,19 +111,36 @@ export default function ClassesPage() {
     if (!newClassName.trim()) return
     const id = `CLS-${String(classes.length + 1).padStart(2, '0')}`
     const now = new Date().toISOString().split('T')[0]
+
+    let sections: ClassSection[] = []
+    let subjectIds: string[] = []
+
+    if (copyFromClassId) {
+      const sourceClass = classes.find((c) => c.id === copyFromClassId)
+      if (sourceClass) {
+        sections = sourceClass.sections.map((sec) => ({
+          ...sec,
+          id: `SEC-${id}-${sec.name}`,
+          classTeacherId: '',
+        }))
+        subjectIds = [...sourceClass.subjectIds]
+      }
+    }
+
     addClass({
       id,
       name: newClassName.trim(),
       nameBn: newClassNameBn.trim() || newClassName.trim(),
       startTime: institution.startTime,
       endTime: institution.endTime,
-      sections: [],
-      subjectIds: [],
+      sections,
+      subjectIds,
       createdAt: now,
       updatedAt: now,
     })
     setNewClassName('')
     setNewClassNameBn('')
+    setCopyFromClassId('')
     setShowAddClass(false)
   }
 
@@ -837,6 +856,27 @@ export default function ClassesPage() {
                 >
                   <X size={16} />
                 </button>
+              </div>
+              <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Copy size={12} />
+                {isBn ? 'আগের শ্রেণি থেকে কপি করুন (ঐচ্ছিক)' : 'Copy from existing class (optional)'}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'end', marginBottom: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <select
+                    value={copyFromClassId}
+                    onChange={(e) => setCopyFromClassId(e.target.value)}
+                    className={inputClass}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="">{isBn ? '-- কোনো শ্রেণি নয় --' : '-- None --'}</option>
+                    {classes.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.nameBn}) — {c.sections.length} {isBn ? 'সেকশন' : 'sections'}, {c.subjectIds.length} {isBn ? 'বিষয়' : 'subjects'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr auto', gap: '8px', alignItems: 'end' }}>
                 <div>
