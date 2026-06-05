@@ -59,8 +59,8 @@ export default function StudentsPage() {
 
   const approvedStudents = students.filter((s) => s.status === 'approved')
   const totalStudents = approvedStudents.length
-  const maleStudents = approvedStudents.filter((s) => s.gender === 'Male').length
-  const femaleStudents = approvedStudents.filter((s) => s.gender === 'Female').length
+  const maleStudents = approvedStudents.filter((s) => s.gender.includes('Male')).length
+  const femaleStudents = approvedStudents.filter((s) => s.gender.includes('Female')).length
   const currentMonth = new Date().toISOString().slice(0, 7)
   const newStudents = approvedStudents.filter((s) => s.admissionDate?.startsWith(currentMonth)).length
 
