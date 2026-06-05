@@ -1710,6 +1710,44 @@ export default function ClassesPage() {
             <span className="text-[12px] font-semibold text-[var(--purple)]">{institution.currentSession}</span>
             <span className="text-[11px] text-[var(--text-muted)]">{isBn ? 'রুটিন সেশন' : 'Routine Session'}</span>
           </div>
+
+          {/* Import routines from previous session prompt */}
+          {routines.length === 0 && classes.length > 0 && institution.sessions.filter((s) => s !== institution.currentSession).length > 0 && (
+            <div className="flex items-center gap-3 mb-3 py-3 px-4 rounded-xl bg-[var(--purple-light)] border border-[var(--purple)] border-dashed">
+              <div className="w-9 h-9 rounded-lg bg-[var(--purple)] flex items-center justify-center shrink-0">
+                <Download size={16} className="text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-semibold text-[var(--purple)]">
+                  {isBn ? 'আগের সেশন থেকে রুটিন আমদানি করুন' : 'Import Routines from Previous Session'}
+                </div>
+                <div className="text-[11px] text-[var(--text-muted)]">
+                  {isBn
+                    ? 'এই সেশনে কোনো রুটিন নেই। আগের সেশন থেকে রুটিন আমদানি করুন।'
+                    : 'No routines in this session. Import routines from a previous session.'}
+                </div>
+              </div>
+              <div className="flex gap-1.5 shrink-0">
+                {institution.sessions
+                  .filter((s) => s !== institution.currentSession)
+                  .map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => {
+                        if (window.confirm(isBn ? `"${s}" থেকে সব রুটিন আমদানি করবেন?` : `Import all routines from "${s}"?`)) {
+                          importFromSession(s)
+                        }
+                      }}
+                      className="flex items-center gap-[4px] py-[6px] px-3 rounded-lg bg-[var(--purple)] border-none text-white text-[11px] font-medium cursor-pointer font-[inherit] hover:opacity-90 transition-all"
+                    >
+                      <Download size={11} />
+                      {isBn ? `${s} থেকে আমদানি` : `Import from ${s}`}
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
           <RoutineTab
             classes={classes}
             routines={routines}
