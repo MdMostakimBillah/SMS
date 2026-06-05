@@ -51,8 +51,7 @@ export default function ClassesPage() {
     setRoutineSlot,
     clearRoutineSlot,
     switchSession,
-    importClassesFromSession,
-    importRoutinesFromSession,
+    importFromSession,
   } = useClassStore()
   const { teachers, subjects } = useTeacherStore()
   const { students } = useAdmissionStore()
@@ -802,8 +801,8 @@ export default function ClassesPage() {
                 </div>
                 <div className="text-[11px] text-[var(--text-muted)]">
                   {isBn
-                    ? 'এই সেশনে কোনো শ্রেণি নেই। আগের সেশন থেকে শ্রেণি আমদানি করুন।'
-                    : 'No classes in this session. Import classes from a previous session.'}
+                    ? 'এই সেশনে কোনো শ্রেণি নেই। আগের সেশন থেকে শ্রেণি ও রুটিন আমদানি করুন।'
+                    : 'No classes in this session. Import classes and routines from a previous session.'}
                 </div>
               </div>
               <div className="flex gap-1.5 shrink-0">
@@ -813,8 +812,8 @@ export default function ClassesPage() {
                     <button
                       key={s}
                       onClick={() => {
-                        if (window.confirm(isBn ? `"${s}" থেকে সব শ্রেণি আমদানি করবেন?` : `Import all classes from "${s}"?`)) {
-                          importClassesFromSession(s)
+                        if (window.confirm(isBn ? `"${s}" থেকে সব শ্রেণি ও রুটিন আমদানি করবেন?` : `Import all classes and routines from "${s}"?`)) {
+                          importFromSession(s)
                         }
                       }}
                       className="flex items-center gap-[4px] py-[6px] px-3 rounded-lg bg-[var(--purple)] border-none text-white text-[11px] font-medium cursor-pointer font-[inherit] hover:opacity-90 transition-all"
@@ -1735,8 +1734,8 @@ export default function ClassesPage() {
                     <button
                       key={s}
                       onClick={() => {
-                        if (window.confirm(isBn ? `"${s}" থেকে সব রুটিন আমদানি করবেন?` : `Import all routines from "${s}"?`)) {
-                          importRoutinesFromSession(s)
+                        if (window.confirm(isBn ? `"${s}" থেকে সব শ্রেণি ও রুটিন আমদানি করবেন?` : `Import all classes and routines from "${s}"?`)) {
+                          importFromSession(s)
                         }
                       }}
                       className="flex items-center gap-[4px] py-[6px] px-3 rounded-lg bg-[var(--purple)] border-none text-white text-[11px] font-medium cursor-pointer font-[inherit] hover:opacity-90 transition-all"
@@ -2259,6 +2258,18 @@ function RoutineTab({
 
   const periods = routine?.periods || []
 
+  const resolvedPeriods = useMemo(() => {
+    return periods.map((daySlots: any[]) =>
+      (daySlots || []).map((slot: any) => {
+        if (!slot?.teacherId) return slot
+        if (slot.teacherName) return slot
+        const teacher = teachers.find((t) => t.id === slot.teacherId)
+        if (teacher) return { ...slot, teacherName: teacher.nameEn }
+        return slot
+      })
+    )
+  }, [periods, teachers])
+
   const startTime = cls?.startTime || institution.startTime || '07:30'
 
   const activeDays = useMemo(
@@ -2302,7 +2313,7 @@ function RoutineTab({
   }
 
   const handleCopyDay = () => {
-    const sourceSlots = periods[copyFrom] || []
+    const sourceSlots = resolvedPeriods[copyFrom] || []
     sourceSlots.forEach((slot: any, periodIdx: number) => {
       if (slot?.subjectId) {
         setRoutineSlot(selectedClass, copyTo, periodIdx, { ...slot, sectionId: effectiveSection })
@@ -2312,7 +2323,7 @@ function RoutineTab({
   }
 
   const hasDayData = (dayIdx: number) => {
-    return (periods[dayIdx] || []).some((s: any) => s?.subjectId)
+    return (resolvedPeriods[dayIdx] || []).some((s: any) => s?.subjectId)
   }
 
   return (
@@ -2439,7 +2450,7 @@ function RoutineTab({
       </div>
 
       {/* Download button */}
-      {periods.some((day: any) => day?.some((slot: any) => slot?.subjectId)) && (
+      {resolvedPeriods.some((day: any) => day?.some((slot: any) => slot?.subjectId)) && (
         <div style={{ marginBottom: '14px' }}>
           <button
             onClick={() => {
@@ -2450,13 +2461,13 @@ function RoutineTab({
               const gridRows = activeDays
                 .map((d) => {
                   const cells = Array.from({ length: totalPeriods }, (_, p) => {
-                    const slot = periods[d.index]?.[p]
+                    const slot = resolvedPeriods[d.index]?.[p]
                     const time = getPeriodTime(p)
                     if (slot?.subjectId) {
                       return `<td style="padding:10px 8px;border:1px solid #e5e7eb;text-align:center;vertical-align:middle">
                     <div style="font-size:9px;color:#8b5cf6;font-weight:600;margin-bottom:3px">P${p + 1} · ${time.start}</div>
                     <div style="font-size:11px;font-weight:600;color:#1a1a1a;margin-bottom:2px">${getSubjectName(slot.subjectId)}</div>
-                    <div style="font-size:9px;color:#6b7280">${getTeacherName(slot.teacherId)}</div>
+                    <div style="font-size:9px;color:#6b7280">${slot.teacherName || getTeacherName(slot.teacherId)}</div>
                   </td>`
                     }
                     return `<td style="padding:10px 8px;border:1px solid #e5e7eb;text-align:center;vertical-align:middle"><span style="font-size:10px;color:#d1d5db">—</span></td>`
@@ -2917,7 +2928,7 @@ function RoutineTab({
                       <div>{time.end}</div>
                     </td>
                     {activeDays.map((d) => {
-                      const slot = periods[d.index]?.[p]
+                    const slot = resolvedPeriods[d.index]?.[p]
                       const hasSubject = slot?.subjectId
                       return (
                         <td key={d.index} style={{ padding: '4px', textAlign: 'center', verticalAlign: 'top' }}>
@@ -2953,7 +2964,7 @@ function RoutineTab({
                                   {getSubjectName(slot.subjectId)}
                                 </div>
                                 <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.2 }}>
-                                  {getTeacherName(slot.teacherId)}
+                                  {slot.teacherName || getTeacherName(slot.teacherId)}
                                 </div>
                               </>
                             ) : (
@@ -3155,7 +3166,7 @@ function RoutineTab({
                     <span style={{ color: 'var(--text-muted)' }}>→</span>
                     <span style={{ color: 'var(--teal)', fontWeight: 600 }}>{isBn ? DAYS_BN[copyTo] : DAYS[copyTo]}</span>
                     <span style={{ color: 'var(--text-muted)', marginLeft: 'auto' }}>
-                      {(periods[copyFrom] || []).filter((s: any) => s?.subjectId).length}{' '}
+                      {(resolvedPeriods[copyFrom] || []).filter((s: any) => s?.subjectId).length}{' '}
                       {isBn ? 'টি পিরিয়ড কপি হবে' : 'periods will copy'}
                     </span>
                   </div>

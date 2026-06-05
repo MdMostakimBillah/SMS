@@ -100,8 +100,7 @@ interface ClassState {
   switchSession: (session: string) => void
   addSession: (session: string) => void
   removeSession: (session: string) => void
-  importClassesFromSession: (fromSession: string) => void
-  importRoutinesFromSession: (fromSession: string) => void
+  importFromSession: (fromSession: string) => void
 }
 
 const defaultInstitution: InstitutionSettings = {
@@ -472,12 +471,13 @@ export const useClassStore = create<ClassState>()(
           }
         }),
 
-      importClassesFromSession: (fromSession) =>
+      importFromSession: (fromSession) =>
         set((state) => {
-          const { institution, sessionClasses } = state
+          const { institution, sessionClasses, sessionRoutines } = state
           const currentSession = institution.currentSession
           const sourceClasses = sessionClasses[fromSession] || []
-          if (sourceClasses.length === 0) return state
+          const sourceRoutines = sessionRoutines[fromSession] || []
+          if (sourceClasses.length === 0 && sourceRoutines.length === 0) return state
 
           const now = new Date().toISOString().split('T')[0]
           const newClasses = sourceClasses.map((cls) => ({
@@ -486,23 +486,21 @@ export const useClassStore = create<ClassState>()(
             createdAt: now,
             updatedAt: now,
           }))
+          const newRoutines = sourceRoutines.map((r) => ({
+            ...r,
+            periods: (r.periods || []).map((daySlots: any[]) =>
+              (daySlots || []).map((slot: any) => {
+                if (!slot?.teacherId) return slot
+                return { ...slot, teacherName: slot.teacherName || '' }
+              })
+            ),
+          }))
 
           return {
             classes: newClasses,
+            routines: newRoutines,
             sessionClasses: { ...sessionClasses, [currentSession]: newClasses },
-          }
-        }),
-
-      importRoutinesFromSession: (fromSession) =>
-        set((state) => {
-          const { institution, sessionRoutines } = state
-          const currentSession = institution.currentSession
-          const sourceRoutines = sessionRoutines[fromSession] || []
-          if (sourceRoutines.length === 0) return state
-
-          return {
-            routines: sourceRoutines,
-            sessionRoutines: { ...sessionRoutines, [currentSession]: sourceRoutines },
+            sessionRoutines: { ...sessionRoutines, [currentSession]: newRoutines },
           }
         }),
     }),
