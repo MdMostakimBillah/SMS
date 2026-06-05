@@ -366,33 +366,51 @@ export default function Step2Schedule() {
           const initials = (student?.nameEn || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
           const photoHTML = student?.photo
-            ? `<img src="${student.photo}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0"/>`
-            : `<div style="width:56px;height:56px;border-radius:50%;background:${brandColor}15;color:${brandColor};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;border:2px solid ${brandColor}20">${initials}</div>`
+            ? `<img src="${student.photo}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid ${brandColor}"/>`
+            : `<div style="width:64px;height:64px;border-radius:50%;background:${brandColor}15;color:${brandColor};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;border:2px solid ${brandColor}">${initials}</div>`
 
-          const seatBadge = isAssigned
-            ? `<div style="position:absolute;top:-8px;right:-8px;width:28px;height:28px;border-radius:50%;background:${brandColor};color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;box-shadow:0 2px 6px ${brandColor}40">${sp.seatNo}</div>`
+          const seatRoomHTML = isAssigned
+            ? `<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:8px 0">
+                <div style="background:${brandColor};color:#fff;border-radius:8px;padding:4px 12px;text-align:center">
+                  <div style="font-size:8px;opacity:0.8">${isBn ? 'আসন নং' : 'SEAT'}</div>
+                  <div style="font-size:16px;font-weight:700;line-height:1">${sp.seatNo}</div>
+                </div>
+                <div style="background:#ccfbf1;color:#0d9488;border-radius:8px;padding:4px 12px;text-align:center;border:1px solid #99f6e4">
+                  <div style="font-size:8px;opacity:0.8">${isBn ? 'কক্ষ' : 'ROOM'}</div>
+                  <div style="font-size:14px;font-weight:700;line-height:1">${room?.roomNo || '-'}</div>
+                </div>
+              </div>`
             : ''
 
-          const bottomBadges = isAssigned
-            ? `<div style="margin-top:12px;display:flex;align-items:center;justify-content:center;gap:6px">
-                <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:${brandColor};color:#fff;font-weight:500">${isBn ? 'আসন' : 'Seat'}: ${sp.seatNo}</span>
-                <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#ccfbf1;color:#0d9488;font-weight:500">${room?.roomNo || '?'}</span>
-              </div>`
-            : `<div style="margin-top:12px;text-align:center"><span style="font-size:9px;color:#94a3b8;font-style:italic">${isBn ? 'আসন বরাদ্দ হয়নি' : 'Not assigned'}</span></div>`
+          const today = new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
-          const borderColor = isAssigned ? '#22c55e' : '#e2e8f0'
-          const bgColor = isAssigned ? '#f0fdf4' : '#fff'
-
-          return `<div style="position:relative;width:140px;border:2px solid ${borderColor};border-radius:16px;padding:16px;background:${bgColor};page-break-inside:avoid">
-            ${seatBadge}
-            <div style="display:flex;justify-content:center;margin-bottom:12px">${photoHTML}</div>
-            <div style="text-align:center">
-              <div style="font-size:12px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${student?.nameEn || '-'}</div>
-              <div style="font-size:10px;color:#64748b;margin-top:2px">${cls} - ${sec}</div>
-              <div style="font-size:10px;color:#64748b">${isBn ? 'রোল' : 'Roll'}: ${sp.roll}</div>
-              <div style="font-size:9px;color:#94a3b8;margin-top:4px">${examName}</div>
+          return `<div style="width:180px;border:2px solid ${brandColor};border-radius:12px;overflow:hidden;page-break-inside:avoid;background:#fff">
+            <div style="background:${brandColor};color:#fff;text-align:center;padding:8px">
+              <div style="font-size:9px;font-weight:700;letter-spacing:1px">${isBn ? 'আসন পরিকল্পনা' : 'SEAT PLAN'}</div>
+              <div style="font-size:8px;opacity:0.8;margin-top:2px">${isBn ? 'সানরাইজ একাডেমি' : 'Sunrise Academy'}</div>
             </div>
-            ${bottomBadges}
+            <div style="padding:12px;text-align:center">
+              <div style="display:flex;justify-content:center;margin-bottom:8px">${photoHTML}</div>
+              <div style="font-size:13px;font-weight:700;color:#1e293b;line-height:1.2;margin-bottom:4px">${student?.nameEn || '-'}</div>
+              <div style="font-size:10px;color:#64748b;margin-bottom:2px">
+                ${isBn ? 'শ্রেণি' : 'Class'}: <b>${cls}</b> ${isBn ? 'সেকশন' : 'Sec'}: <b>${sec}</b>
+              </div>
+              <div style="font-size:10px;color:#64748b;margin-bottom:8px">
+                ${isBn ? 'রোল' : 'Roll'}: <b>${sp.roll}</b>
+              </div>
+              ${seatRoomHTML}
+              <div style="border-top:1px solid #e2e8f0;padding-top:8px;margin-top:8px">
+                <div style="font-size:10px;font-weight:600;color:${brandColor}">${examName}</div>
+                <div style="font-size:8px;color:#94a3b8;margin-top:2px">${today}</div>
+              </div>
+            </div>
+            <div style="border-top:1px dashed #e2e8f0;margin:0 12px"/>
+            <div style="background:#f8fafc;padding:12px;text-align:center;min-height:80px">
+              <div style="font-size:8px;color:#94a3b8;font-style:italic">${isBn ? 'শিক্ষক/ইনভিজিলেটর কার্ড' : 'Teacher / Invigilator Card'}</div>
+              <div style="margin-top:8px;border:1px dashed #cbd5e1;border-radius:8px;padding:8px 12px;min-height:48px;display:flex;align-items:center;justify-content:center">
+                <span style="font-size:8px;color:#cbd5e1">${isBn ? 'এখানে লিখুন' : 'Write Here'}</span>
+              </div>
+            </div>
           </div>`
         }).join('')
 
@@ -1148,7 +1166,7 @@ export default function Step2Schedule() {
 
             {/* Student Cards Grid */}
             {seatClassId && seatSectionId ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {sectionStudents.map((student) => {
                   const seatPlan = seatPlanByStudent.get(student.id)
                   const room = seatPlan ? roomMap.get(seatPlan.roomId) : null
@@ -1156,84 +1174,96 @@ export default function Step2Schedule() {
                   const initials = student.nameEn.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 
                   return (
-                    <div
-                      key={student.id}
-                      className={`
-                        relative rounded-2xl border-2 p-4 transition-all cursor-pointer
-                        ${isAssigned
-                          ? 'border-[var(--green)] bg-[var(--green-light)]/30 hover:shadow-md'
-                          : 'border-dashed border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)] hover:shadow-sm'
-                        }
-                      `}
-                      onClick={() => {
-                        if (!isAssigned) {
-                          setAssignRoomStudentId(student.id)
-                          setAssignRoomId('')
-                        }
-                      }}
-                    >
-                      {/* Seat badge */}
-                      {isAssigned && (
-                        <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[var(--brand)] text-white flex items-center justify-center text-[0.625rem] font-bold shadow-md">
-                          {seatPlan.seatNo}
-                        </div>
-                      )}
-
-                      {/* Photo / Avatar */}
-                      <div className="flex justify-center mb-3">
-                        {student.photo ? (
-                          <img src={student.photo} alt={student.nameEn} className="w-14 h-14 rounded-full object-cover border-2 border-[var(--border)]" />
-                        ) : (
-                          <div className="w-14 h-14 rounded-full bg-[var(--brand-light)] flex items-center justify-center text-[var(--brand)] text-[1rem] font-bold border-2 border-[var(--brand)]/20">
-                            {initials}
+                    <div key={student.id} className="relative">
+                      {/* Main Seat Card */}
+                      <div
+                        className={`
+                          relative rounded-xl border-2 overflow-hidden transition-all
+                          ${isAssigned
+                            ? 'border-[var(--brand)] shadow-md'
+                            : 'border-dashed border-[var(--border)] opacity-60'
+                          }
+                        `}
+                      >
+                        {/* Header */}
+                        <div className="bg-[var(--brand)] text-white text-center py-2 px-3">
+                          <div className="text-[0.5625rem] font-bold tracking-widest uppercase">
+                            {isBn ? 'আসন পরিকল্পনা' : 'SEAT PLAN'}
                           </div>
-                        )}
+                          <div className="text-[0.5rem] opacity-80 mt-0.5">
+                            {isBn ? 'সানরাইজ একাডেমি' : 'Sunrise Academy'}
+                          </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="bg-white p-3 text-center">
+                          {/* Avatar */}
+                          <div className="flex justify-center mb-2">
+                            {student.photo ? (
+                              <img src={student.photo} alt={student.nameEn} className="w-16 h-16 rounded-full object-cover border-2 border-[var(--brand)]" />
+                            ) : (
+                              <div className="w-16 h-16 rounded-full bg-[var(--brand-light)] flex items-center justify-center text-[var(--brand)] text-[1.125rem] font-bold border-2 border-[var(--brand)]">
+                                {initials}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Name */}
+                          <div className="text-[0.8125rem] font-bold text-[var(--text-primary)] leading-tight mb-1">
+                            {student.nameEn}
+                          </div>
+
+                          {/* Details */}
+                          <div className="space-y-0.5 mb-2">
+                            <div className="text-[0.625rem] text-[var(--text-secondary)]">
+                              {isBn ? 'শ্রেণি' : 'Class'}: <span className="font-semibold text-[var(--text-primary)]">{student.class}</span>
+                              {' '}{isBn ? 'সেকশন' : 'Sec'}: <span className="font-semibold text-[var(--text-primary)]">{student.section}</span>
+                            </div>
+                            <div className="text-[0.625rem] text-[var(--text-secondary)]">
+                              {isBn ? 'রোল' : 'Roll'}: <span className="font-semibold text-[var(--text-primary)]">{student.roll || '-'}</span>
+                            </div>
+                          </div>
+
+                          {/* Seat & Room */}
+                          {isAssigned && (
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                              <div className="bg-[var(--brand)] text-white rounded-lg px-3 py-1.5 text-center">
+                                <div className="text-[0.5rem] opacity-80">{isBn ? 'আসন নং' : 'SEAT'}</div>
+                                <div className="text-[1rem] font-bold leading-none">{seatPlan.seatNo}</div>
+                              </div>
+                              <div className="bg-[var(--teal-light)] text-[var(--teal)] rounded-lg px-3 py-1.5 text-center border border-[var(--teal)]/20">
+                                <div className="text-[0.5rem] opacity-80">{isBn ? 'কক্ষ' : 'ROOM'}</div>
+                                <div className="text-[0.875rem] font-bold leading-none">{room?.roomNo || '-'}</div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Exam Name */}
+                          <div className="border-t border-[var(--border)] pt-2">
+                            <div className="text-[0.625rem] font-semibold text-[var(--brand)]">
+                              {selectedExam ? (isBn ? selectedExam.nameBn : selectedExam.name) : ''}
+                            </div>
+                            <div className="text-[0.5rem] text-[var(--text-muted)] mt-0.5">
+                              {new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dotted cut line */}
+                        <div className="border-t border-dashed border-[var(--border)] mx-3" />
+
+                        {/* Second Card Space - Empty for printing */}
+                        <div className="bg-[var(--bg-secondary)] p-3 text-center min-h-[6rem]">
+                          <div className="text-[0.5rem] text-[var(--text-muted)] italic opacity-50">
+                            {isBn ? 'শিক্ষক/ইনভিজিলেটর কার্ড' : 'Teacher / Invigilator Card'}
+                          </div>
+                          <div className="mt-2 border border-dashed border-[var(--border)] rounded-lg p-2 mx-4 min-h-[3rem] flex items-center justify-center">
+                            <span className="text-[0.5rem] text-[var(--text-muted)] opacity-40">
+                              {isBn ? 'এখানে লিখুন' : 'Write Here'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-
-                      {/* Info */}
-                      <div className="text-center">
-                        <div className="text-[0.75rem] font-semibold text-[var(--text-primary)] truncate">{student.nameEn}</div>
-                        <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
-                          {student.class} - {student.section}
-                        </div>
-                        <div className="text-[0.625rem] text-[var(--text-muted)]">
-                          {isBn ? 'রোল' : 'Roll'}: {student.roll}
-                        </div>
-                        <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1 truncate">
-                          {selectedExam ? (isBn ? selectedExam.nameBn : selectedExam.name) : ''}
-                        </div>
-                      </div>
-
-                      {/* Seat / Room info */}
-                      {isAssigned ? (
-                        <div className="mt-3 flex items-center justify-center gap-1.5">
-                          <span className="text-[0.5625rem] px-2 py-0.5 rounded-full bg-[var(--brand)] text-white font-medium">
-                            {isBn ? 'আসন' : 'Seat'}: {seatPlan.seatNo}
-                          </span>
-                          <span className="text-[0.5625rem] px-2 py-0.5 rounded-full bg-[var(--teal-light)] text-[var(--teal)] font-medium">
-                            {room?.roomNo || '?'}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="mt-3 text-center">
-                          <span className="text-[0.5625rem] text-[var(--text-muted)] italic">
-                            {isBn ? 'আসন বরাদ্দ হয়নি' : 'Click to assign'}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Remove button */}
-                      {isAssigned && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (confirm(isBn ? 'আসন বাতিল করবেন?' : 'Remove seat?')) removeSeatPlan(seatPlan.id)
-                          }}
-                          className="absolute top-2 left-2 w-5 h-5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)] opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X size={10} />
-                        </button>
-                      )}
                     </div>
                   )
                 })}
