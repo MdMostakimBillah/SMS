@@ -1712,7 +1712,7 @@ export default function ClassesPage() {
           </div>
 
           {/* Import routines from previous session prompt */}
-          {routines.length === 0 && classes.length > 0 && institution.sessions.filter((s) => s !== institution.currentSession).length > 0 && (
+          {routines.length === 0 && institution.sessions.filter((s) => s !== institution.currentSession).length > 0 && (
             <div className="flex items-center gap-3 mb-3 py-3 px-4 rounded-xl bg-[var(--purple-light)] border border-[var(--purple)] border-dashed">
               <div className="w-9 h-9 rounded-lg bg-[var(--purple)] flex items-center justify-center shrink-0">
                 <Download size={16} className="text-white" />
