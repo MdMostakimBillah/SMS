@@ -404,13 +404,10 @@ export default function Step2Schedule() {
                 <div style="font-size:8px;color:#94a3b8;margin-top:2px">${today}</div>
               </div>
             </div>
-            <div style="border-top:1px dashed #e2e8f0;margin:0 12px"/>
-            <div style="background:#f8fafc;padding:12px;text-align:center;min-height:80px">
-              <div style="font-size:8px;color:#94a3b8;font-style:italic">${isBn ? 'শিক্ষক/ইনভিজিলেটর কার্ড' : 'Teacher / Invigilator Card'}</div>
-              <div style="margin-top:8px;border:1px dashed #cbd5e1;border-radius:8px;padding:8px 12px;min-height:48px;display:flex;align-items:center;justify-content:center">
-                <span style="font-size:8px;color:#cbd5e1">${isBn ? 'এখানে লিখুন' : 'Write Here'}</span>
-              </div>
-            </div>
+            ${isAssigned && room ? `<div style="background:#f8fafc;padding:6px;text-align:center;border-top:1px solid #e2e8f0">
+              <div style="font-size:8px;color:#94a3b8">${isBn ? 'কক্ষ' : 'Room'}</div>
+              <div style="font-size:11px;font-weight:700;color:#1e293b">${room.roomNo}</div>
+            </div>` : ''}
           </div>`
         }).join('')
 
@@ -1249,20 +1246,13 @@ export default function Step2Schedule() {
                           </div>
                         </div>
 
-                        {/* Dotted cut line */}
-                        <div className="border-t border-dashed border-[var(--border)] mx-3" />
-
-                        {/* Second Card Space - Empty for printing */}
-                        <div className="bg-[var(--bg-secondary)] p-3 text-center min-h-[6rem]">
-                          <div className="text-[0.5rem] text-[var(--text-muted)] italic opacity-50">
-                            {isBn ? 'শিক্ষক/ইনভিজিলেটর কার্ড' : 'Teacher / Invigilator Card'}
+                        {/* Room Name */}
+                        {isAssigned && room && (
+                          <div className="bg-[var(--bg-secondary)] px-3 py-1.5 text-center border-t border-[var(--border)]">
+                            <div className="text-[0.5rem] text-[var(--text-muted)]">{isBn ? 'কক্ষ' : 'Room'}</div>
+                            <div className="text-[0.6875rem] font-bold text-[var(--text-primary)]">{room.roomNo}</div>
                           </div>
-                          <div className="mt-2 border border-dashed border-[var(--border)] rounded-lg p-2 mx-4 min-h-[3rem] flex items-center justify-center">
-                            <span className="text-[0.5rem] text-[var(--text-muted)] opacity-40">
-                              {isBn ? 'এখানে লিখুন' : 'Write Here'}
-                            </span>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </div>
                   )
