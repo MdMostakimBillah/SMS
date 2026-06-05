@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { useWindowSize } from '@/hooks/useWindowSize'
 import {
   GraduationCap,
   LayoutDashboard,
@@ -69,6 +70,9 @@ const iconMap: Record<string, LucideIcon> = {
 export default function Sidebar() {
   const { language } = useAppStore()
   const isBn = language === 'bn'
+  const { width: screenWidth } = useWindowSize()
+  const isLargeScreen = screenWidth >= 1600
+  const isXLargeScreen = screenWidth >= 1920
   const students = useSessionStudents()
   const { teachers } = useTeacherStore()
   const location = useLocation()
@@ -205,7 +209,7 @@ export default function Sidebar() {
   return (
     <aside
       style={{
-        width: '13.75rem',
+        width: isXLargeScreen ? '17.5rem' : isLargeScreen ? '16rem' : '13.75rem',
         height: '100%',
         background: 'var(--glass)',
         backdropFilter: 'blur(16px) saturate(180%)',
