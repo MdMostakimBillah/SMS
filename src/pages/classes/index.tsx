@@ -2542,15 +2542,26 @@ function RoutineTab({
               >
                 <option value="">{isBn ? 'বিষয় বাছুন' : 'Choose subject'}</option>
                 {(() => {
-                  const classSubjectIds = [...new Set(cls?.sections?.flatMap((s: any) => s.subjectIds || []) || [])]
-                  if (classSubjectIds.length === 0)
-                    return subjects.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {isBn ? s.nameBn : s.name}
-                      </option>
-                    ))
+                  const currentSection = cls?.sections?.find((s: any) => s.id === effectiveSection)
+                  const sectionSubjectIds = currentSection?.subjectIds || []
+                  if (sectionSubjectIds.length === 0) {
+                    const classSubjectIds = [...new Set(cls?.sections?.flatMap((s: any) => s.subjectIds || []) || [])]
+                    if (classSubjectIds.length === 0)
+                      return subjects.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {isBn ? s.nameBn : s.name}
+                        </option>
+                      ))
+                    return subjects
+                      .filter((s) => classSubjectIds.includes(s.id))
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {isBn ? s.nameBn : s.name}
+                        </option>
+                      ))
+                  }
                   return subjects
-                    .filter((s) => classSubjectIds.includes(s.id))
+                    .filter((s) => sectionSubjectIds.includes(s.id))
                     .map((s) => (
                       <option key={s.id} value={s.id}>
                         {isBn ? s.nameBn : s.name}
