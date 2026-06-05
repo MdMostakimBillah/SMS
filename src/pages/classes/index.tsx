@@ -2435,13 +2435,14 @@ function RoutineTab({
           >
             {isBn ? 'পিরিয়ড সময়কাল' : 'Period Duration'}
           </div>
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {[30, 35, 40, 45, 50, 60].map((d) => (
               <button
                 key={d}
                 onClick={() => handlePeriodDurationChange(d)}
                 style={{
-                  flex: 1,
+                  flex: '1 1 auto',
+                  minWidth: '44px',
                   padding: '8px',
                   borderRadius: '7px',
                   border: `1px solid ${periodDuration === d ? 'var(--purple)' : 'var(--border)'}`,
@@ -2456,12 +2457,56 @@ function RoutineTab({
                 {d}m
               </button>
             ))}
+            <div style={{ position: 'relative', flex: '1 1 auto', minWidth: '60px' }}>
+              <input
+                type="number"
+                min={10}
+                max={120}
+                value={periodDuration}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 40
+                  handlePeriodDurationChange(Math.max(10, Math.min(120, val)))
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px 28px 8px 8px',
+                  borderRadius: '7px',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '12px',
+                  fontFamily: 'inherit',
+                  outline: 'none',
+                  textAlign: 'center',
+                }}
+              />
+              <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', color: 'var(--text-muted)' }}>min</span>
+            </div>
           </div>
-          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '6px' }}>
-            {isBn
-              ? `প্রতি পিরিয়ড ${periodDuration} মিনিট · ${totalPeriods} পিরিয়ড/দিন`
-              : `Each period ${periodDuration} min · ${totalPeriods} periods/day`}
-          </div>
+          {(() => {
+            const [sh, sm] = startTime.split(':').map(Number)
+            const [eh, em] = (cls?.endTime || institution.endTime || '14:30').split(':').map(Number)
+            const totalMin = eh * 60 + em - (sh * 60 + sm)
+            const usedMin = totalPeriods * periodDuration
+            const remainder = totalMin - usedMin
+            return (
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '6px' }}>
+                <span>{isBn
+                  ? `প্রতি পিরিয়ড ${periodDuration} মিনিট · ${totalPeriods} পিরিয়ড/দিন`
+                  : `Each period ${periodDuration} min · ${totalPeriods} periods/day`}</span>
+                {remainder > 0 && (
+                  <span style={{ color: 'var(--amber)', marginLeft: '8px' }}>
+                    · {isBn ? `বাকি ${remainder} মিনিট` : `${remainder} min remaining`}
+                  </span>
+                )}
+                {remainder < 0 && (
+                  <span style={{ color: 'var(--red)', marginLeft: '8px' }}>
+                    · {isBn ? `${Math.abs(remainder)} মিনিট বেশি` : `${Math.abs(remainder)} min over`}
+                  </span>
+                )}
+              </div>
+            )
+          })()}
         </div>
       </div>
 
