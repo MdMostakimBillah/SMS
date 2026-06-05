@@ -486,11 +486,11 @@ export default function Step2Schedule() {
 
   const roomCapacityMap = useMemo(() => {
     const map = new Map<string, number>()
-    for (const sp of seatPlans) {
-      map.set(sp.roomId, (map.get(sp.roomId) || 0) + 1)
+    for (const r of filteredRoutines) {
+      map.set(r.roomNo, (map.get(r.roomNo) || 0) + 1)
     }
     return map
-  }, [seatPlans])
+  }, [filteredRoutines])
 
   // ── Calendar computations ──
   const calendarDays = useMemo(() => {
@@ -1016,7 +1016,7 @@ export default function Step2Schedule() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               {rooms.map((room) => {
-                const assignedSeats = roomCapacityMap.get(room.id) || 0
+                const assignedSeats = roomCapacityMap.get(room.roomNo) || 0
                 const utilization = room.capacity > 0 ? Math.round((assignedSeats / room.capacity) * 100) : 0
                 return (
                   <div key={room.id} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] transition-all hover:shadow-sm">
