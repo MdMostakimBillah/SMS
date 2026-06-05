@@ -429,9 +429,10 @@ export default function Step2Schedule() {
         h1{font-size:16px;color:${brandColor};margin-bottom:2px}
         h2{font-size:11px;color:#64748b;font-weight:400;margin-top:2px}
         .info{font-size:10px;color:#94a3b8;margin-top:4px}
-        .cards-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+        .cards-grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
         .footer{margin-top:12px;padding-top:8px;border-top:1px solid #e2e8f0;text-align:center;font-size:8px;color:#94a3b8}
         @media print{
+          *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
           body{padding:0;margin:0}
           @page{size:A4 portrait;margin:8mm}
           .page{padding:10px}
@@ -1152,7 +1153,7 @@ export default function Step2Schedule() {
 
             {/* Student Cards Grid */}
             {seatClassId && seatSectionId ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {sectionStudents.map((student) => {
                   const seatPlan = seatPlanByStudent.get(student.id)
                   const room = seatPlan ? roomMap.get(seatPlan.roomId) : null
@@ -1182,7 +1183,7 @@ export default function Step2Schedule() {
                         </div>
 
                         {/* Content */}
-                        <div className="bg-white p-3 text-center">
+                        <div className="bg-[var(--bg-primary)] p-4 text-center">
                           {/* Avatar */}
                           <div className="flex justify-center mb-2">
                             {student.photo ? (
