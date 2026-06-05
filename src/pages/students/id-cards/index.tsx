@@ -269,7 +269,7 @@ export default function IDCardsPage() {
   }, [displayList, template, fields, institutionName])
 
   const inp =
-    "w-full py-[7px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-['inherit'] outline-none"
+    "w-full py-[7px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-['Inter',sans-serif] outline-none"
 
   return (
     <div>
@@ -277,7 +277,7 @@ export default function IDCardsPage() {
       <div className="flex items-center gap-2.5 mb-[18px] flex-wrap">
         <button
           onClick={() => navigate('/students')}
-          className="flex items-center gap-1.5 py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-['inherit'] shrink-0"
+          className="flex items-center gap-1.5 py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-['Inter',sans-serif] shrink-0"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
@@ -293,7 +293,7 @@ export default function IDCardsPage() {
         <button
           onClick={printCards}
           disabled={displayList.length === 0}
-          className={`flex items-center gap-1.5 py-[9px] px-[18px] rounded-[9px] border-none text-white text-[13px] font-semibold font-['inherit'] ${displayList.length === 0 ? 'bg-[var(--border-2)] cursor-not-allowed' : 'bg-[var(--brand)] cursor-pointer shadow-[0_4px_12px_rgba(99,102,241,0.3)]'}`}
+          className={`flex items-center gap-1.5 py-[9px] px-[18px] rounded-[9px] border-none text-white text-[13px] font-semibold font-['Inter',sans-serif] ${displayList.length === 0 ? 'bg-[var(--border-2)] cursor-not-allowed' : 'bg-[var(--brand)] cursor-pointer shadow-[0_4px_12px_rgba(99,102,241,0.3)]'}`}
         >
           <Printer size={14} />
           {isBn ? 'প্রিন্ট করুন' : 'Print'}
@@ -321,7 +321,7 @@ export default function IDCardsPage() {
                 <button
                   key={t.id}
                   onClick={() => setTemplate(t)}
-                  className="p-2 rounded-lg border-2 cursor-pointer font-['inherit'] text-left transition-all duration-150"
+                  className="p-2 rounded-lg border-2 cursor-pointer font-['Inter',sans-serif] text-left transition-all duration-150"
                   style={{
                     borderColor: template.id === t.id ? t.primary : 'var(--border)',
                     background: template.id === t.id ? t.secondary : 'var(--bg-secondary)',
@@ -400,7 +400,7 @@ export default function IDCardsPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={isBn ? 'নাম বা আইডি...' : 'Name or ID...'}
-                  className="flex-1 border-none bg-transparent outline-none text-[11px] text-[var(--text-primary)] font-['inherit']"
+                  className="flex-1 border-none bg-transparent outline-none text-[11px] text-[var(--text-primary)] font-['Inter',sans-serif]"
                 />
               </div>
               <select
@@ -428,7 +428,7 @@ export default function IDCardsPage() {
               </select>
               <button
                 onClick={selectAll}
-                className="py-1.5 rounded-[7px] text-[11px] cursor-pointer font-['inherit'] font-medium"
+                className="py-1.5 rounded-[7px] text-[11px] cursor-pointer font-['Inter',sans-serif] font-medium"
                 style={{
                   border: `1px solid ${selected.length > 0 ? 'var(--brand)' : 'var(--border)'}`,
                   background: selected.length > 0 ? 'var(--brand-light)' : 'var(--bg-secondary)',

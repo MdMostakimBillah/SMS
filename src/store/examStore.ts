@@ -826,6 +826,7 @@ interface ExamState {
   upsertSubjectMarkConfig: (config: Omit<SubjectMarkConfig, 'id'>) => void
   deleteSubjectMarkConfig: (id: string) => void
   copyClassMarkConfig: (examId: string, fromClassId: string, toClassId: string) => void
+  copyExamPlan: (fromExamId: string, toExamId: string) => void
   copySubjectConfig: (examId: string, classId: string, sourceSubjectId: string, targetSubjectIds: string[]) => void
   addSubExamToSubject: (configId: string, subExam: Omit<SubExam, 'id'>) => void
   removeSubExam: (configId: string, subExamId: string) => void
@@ -973,6 +974,18 @@ export const useExamStore = create<ExamState>()(
             subExams: s.subExams.map((se) => ({ ...se, id: `SE-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` })),
           }))
           const withoutTarget = state.subjectMarkConfigs.filter((s) => !(s.examId === examId && s.classId === toClassId))
+          return { subjectMarkConfigs: [...withoutTarget, ...newConfigs] }
+        }),
+      copyExamPlan: (fromExamId, toExamId) =>
+        set((state) => {
+          const sourceConfigs = state.subjectMarkConfigs.filter((s) => s.examId === fromExamId)
+          const newConfigs = sourceConfigs.map((s) => ({
+            ...s,
+            id: `SMC-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            examId: toExamId,
+            subExams: s.subExams.map((se) => ({ ...se, id: `SE-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` })),
+          }))
+          const withoutTarget = state.subjectMarkConfigs.filter((s) => s.examId !== toExamId)
           return { subjectMarkConfigs: [...withoutTarget, ...newConfigs] }
         }),
       copySubjectConfig: (examId, classId, sourceSubjectId, targetSubjectIds) =>

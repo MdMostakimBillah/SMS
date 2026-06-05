@@ -2248,6 +2248,7 @@ function RoutineTab({
   const [showCopyDay, setShowCopyDay] = useState(false)
   const [copyFrom, setCopyFrom] = useState(0)
   const [copyTo, setCopyTo] = useState(1)
+  const [showCustomDuration, setShowCustomDuration] = useState(false)
 
   const cls = classes.find((c) => c.id === selectedClass)
   const sections = cls?.sections || []
@@ -2370,18 +2371,9 @@ function RoutineTab({
   return (
     <div>
       {/* Class + Section selector + Period config */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '180px 180px 1fr', gap: '10px', marginBottom: '14px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '10px', marginBottom: '14px' }}>
         <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px' }}>
-          <div
-            style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              color: 'var(--text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              marginBottom: '8px',
-            }}
-          >
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
             {isBn ? 'শ্রেণি নির্বাচন' : 'Select Class'}
           </div>
           <select
@@ -2410,16 +2402,7 @@ function RoutineTab({
           </select>
         </div>
         <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px' }}>
-          <div
-            style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              color: 'var(--text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              marginBottom: '8px',
-            }}
-          >
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
             {isBn ? 'সেকশন' : 'Section'}
           </div>
           <select
@@ -2447,20 +2430,11 @@ function RoutineTab({
             ))}
           </select>
         </div>
-        <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
-          <div
-            style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              color: 'var(--text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              marginBottom: '8px',
-            }}
-          >
+        <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
             {isBn ? 'পিরিয়ড সময়কাল' : 'Period Duration'}
           </div>
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
             {[30, 35, 40, 45, 50, 60].map((d) => (
               <button
                 key={d}
@@ -2481,42 +2455,15 @@ function RoutineTab({
               </button>
             ))}
           </div>
-          <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-            {Array.from({ length: totalPeriods }, (_, i) => {
-              const time = getPeriodTime(i)
-              const dur = periodDurations[i] || defaultDuration
-              return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 8px', borderRadius: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--purple)', minWidth: '20px' }}>P{i + 1}</span>
-                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', minWidth: '70px' }}>{time.start} - {time.end}</span>
-                  <div style={{ flex: 1 }} />
-                  <input
-                    type="number"
-                    min={10}
-                    max={120}
-                    value={dur}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value) || defaultDuration
-                      handlePeriodDurationUpdate(i, Math.max(10, Math.min(120, val)))
-                    }}
-                    style={{
-                      width: '48px',
-                      padding: '3px 4px',
-                      borderRadius: '4px',
-                      border: '1px solid var(--border)',
-                      background: 'var(--bg-primary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '11px',
-                      fontFamily: 'inherit',
-                      outline: 'none',
-                      textAlign: 'center',
-                    }}
-                  />
-                  <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>min</span>
-                </div>
-              )
-            })}
-          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '11px', color: 'var(--text-secondary)' }}>
+            <input
+              type="checkbox"
+              checked={showCustomDuration}
+              onChange={(e) => setShowCustomDuration(e.target.checked)}
+              style={{ width: '14px', height: '14px', accentColor: 'var(--purple)' }}
+            />
+            {isBn ? 'কাস্টম সময় সেট করুন' : 'Set custom time'}
+          </label>
           {(() => {
             const [sh, sm] = startTime.split(':').map(Number)
             const [eh, em] = (cls?.endTime || institution.endTime || '14:30').split(':').map(Number)
@@ -2524,7 +2471,7 @@ function RoutineTab({
             const usedMin = periodDurations.slice(0, totalPeriods).reduce((sum: number, d: number) => sum + d, 0)
             const remainder = totalMin - usedMin
             return (
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span>{isBn ? `মোট ${usedMin} মিনিট` : `Total ${usedMin} min`}</span>
                 {remainder > 0 && (
                   <span style={{ color: 'var(--amber)', fontWeight: 500 }}>
@@ -2541,6 +2488,53 @@ function RoutineTab({
           })()}
         </div>
       </div>
+
+      {/* Custom period durations */}
+      {showCustomDuration && (
+        <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', marginBottom: '14px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+            {isBn ? 'প্রতি পিরিয়ডে সময় সেট করুন' : 'Set time per period'}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '4px' }}>
+            {Array.from({ length: totalPeriods }, (_, i) => {
+              const time = getPeriodTime(i)
+              const dur = periodDurations[i] || defaultDuration
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 8px', borderRadius: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--purple)', minWidth: '20px' }}>P{i + 1}</span>
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', minWidth: '75px' }}>{time.start}-{time.end}</span>
+                  <div style={{ flex: 1 }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                    <input
+                      type="number"
+                      min={10}
+                      max={120}
+                      value={dur}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || defaultDuration
+                        handlePeriodDurationUpdate(i, Math.max(10, Math.min(120, val)))
+                      }}
+                      style={{
+                        width: '44px',
+                        padding: '4px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg-primary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '11px',
+                        fontFamily: 'inherit',
+                        outline: 'none',
+                        textAlign: 'center',
+                      }}
+                    />
+                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>min</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Download button */}
       {resolvedPeriods.some((day: any) => day?.some((slot: any) => slot?.subjectId)) && (

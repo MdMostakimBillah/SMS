@@ -188,7 +188,7 @@ export default function Step2Schedule() {
     return map
   }, [filteredSeatPlans])
 
-  // Subjects filtered by selected class/section in routine form
+  // Subjects filtered by selected class/section in routine form, excluding subjects already scheduled on the selected date
   const routineFormSections = useMemo(
     () => (routineForm.classId ? sectionsMap[routineForm.classId] || [] : []),
     [routineForm.classId, sectionsMap]
@@ -199,20 +199,30 @@ export default function Step2Schedule() {
     const classObj = classes.find((c) => c.name === routineForm.classId)
     if (!classObj) return subjects
 
+    let classSubjects: typeof subjects = []
+
     // Check if section has its own subjectIds
     if (routineForm.sectionId) {
       const section = classObj.sections.find((s) => s.name === routineForm.sectionId)
       if (section?.subjectIds && section.subjectIds.length > 0) {
-        return subjects.filter((s) => section.subjectIds!.includes(s.id))
+        classSubjects = subjects.filter((s) => section.subjectIds!.includes(s.id))
       }
     }
 
     // Fall back to class-level subjectIds
-    if (classObj.subjectIds?.length > 0) {
-      return subjects.filter((s) => classObj.subjectIds.includes(s.id))
+    if (classSubjects.length === 0 && classObj.subjectIds?.length > 0) {
+      classSubjects = subjects.filter((s) => classObj.subjectIds.includes(s.id))
     }
-    return subjects
-  }, [classes, routineForm.classId, routineForm.sectionId, subjects])
+    if (classSubjects.length === 0) classSubjects = subjects
+
+    // Filter out subjects already scheduled on any day for this exam
+    const scheduledSubjectIds = new Set(
+      filteredRoutines
+        .filter((r) => r.classId === routineForm.classId && r.sectionId === (routineForm.sectionId || 'A'))
+        .map((r) => r.subjectId)
+    )
+    return classSubjects.filter((s) => !scheduledSubjectIds.has(s.id))
+  }, [classes, routineForm.classId, routineForm.sectionId, routineForm.date, subjects, filteredRoutines])
 
   const handleSaveRoutine = useCallback(() => {
     if (!selectedExamId || !routineForm.classId || !routineForm.subjectId || !routineForm.date) return

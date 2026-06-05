@@ -23,7 +23,7 @@ import { useExamStore } from '@/store/examStore'
 import type { ExamConfig, ExamType, SubjectMarkConfig, OMRConfig as OMRExamConfig } from '@/store/examStore'
 import { generateOMRSheet, type OMRConfig } from '@/pages/exams/omrTemplate'
 
-const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] mb-[14px]'
+const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] mb-[8px]'
 const sectionTitleCls = 'flex items-center gap-2 text-[13px] font-semibold text-[var(--text-primary)]'
 const inputCls =
   'h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border'
@@ -59,6 +59,7 @@ export default function Step1Planning() {
   const upsertSubjectMarkConfig = useExamStore((s) => s.upsertSubjectMarkConfig)
   const deleteSubjectMarkConfig = useExamStore((s) => s.deleteSubjectMarkConfig)
   const copyClassMarkConfig = useExamStore((s) => s.copyClassMarkConfig)
+  const copyExamPlan = useExamStore((s) => s.copyExamPlan)
   const copySubjectConfig = useExamStore((s) => s.copySubjectConfig)
   const upsertOMRConfig = useExamStore((s) => s.upsertOMRConfig)
   const deleteOMRConfig = useExamStore((s) => s.deleteOMRConfig)
@@ -76,6 +77,7 @@ export default function Step1Planning() {
     name: '',
     nameBn: '',
     type: 'semester-1' as ExamType,
+    customType: '',
     session: '2025-26',
     startDate: '',
     endDate: '',
@@ -92,6 +94,11 @@ export default function Step1Planning() {
   const [showCopySubjectModal, setShowCopySubjectModal] = useState(false)
   const [copySourceSubjectId, setCopySourceSubjectId] = useState('')
   const [copyTargetSubjectIds, setCopyTargetSubjectIds] = useState<string[]>([])
+
+  // Copy Exam Plan
+  const [showCopyExamPlanModal, setShowCopyExamPlanModal] = useState(false)
+  const [copyExamPlanFromId, setCopyExamPlanFromId] = useState('')
+  const [copyExamPlanToId, setCopyExamPlanToId] = useState('')
 
   // OMR Form
   const [showOMRForm, setShowOMRForm] = useState(false)
@@ -134,28 +141,25 @@ export default function Step1Planning() {
   ])
 
   // Checklist
+  const activeExam = useMemo(() => examConfigs.find((e) => e.isActive) || null, [examConfigs])
+
   const checklist = useMemo(() => {
-    const totalSubjects = subjects.length || 1
-    const allConfigs = subjectMarkConfigs
-    const uniqueClassIds = new Set(allConfigs.map((c) => c.classId))
-    const classesWithConfigs = uniqueClassIds.size || 1
-    const totalConfigured = allConfigs.length
-    const totalExpected = classesWithConfigs * totalSubjects
-    const subjectPct = totalExpected > 0 ? Math.round((totalConfigured / totalExpected) * 100) : 0
+    const activeExamConfigs = activeExam ? subjectMarkConfigs.filter((s) => s.examId === activeExam.id) : []
+    const uniqueClassIds = new Set(activeExamConfigs.map((c) => c.classId))
+    const classesWithConfigs = uniqueClassIds.size || 0
+    const totalConfigured = activeExamConfigs.length
+    const subjectPct = classesWithConfigs > 0 ? Math.round((totalConfigured / (classesWithConfigs * (subjects.length || 1))) * 100) : 0
+    const subExamPct = activeExamConfigs.length > 0 ? Math.round((activeExamConfigs.filter((s) => s.subExams.length > 0).length / activeExamConfigs.length) * 100) : 0
     return [
-      { done: examConfigs.length > 0, label: isBn ? 'পরীক্ষা তৈরি হয়েছে' : 'Exam created' },
-      {
-        done: subjectMarkConfigs.length > 0,
-        label: isBn ? `বিষয় কনফিগ (${subjectPct}%)` : `Subjects configured (${subjectPct}%)`,
-        pct: subjectPct,
-      },
-      { done: subjectMarkConfigs.some((s) => s.subExams.length > 0), label: isBn ? 'সাব-এক্সাম সেট আপ' : 'Sub-exams set up' },
+      { done: !!activeExam, label: isBn ? 'সক্রিয় পরীক্ষা নির্বাচিত' : 'Active exam selected' },
+      { done: activeExamConfigs.length > 0, label: isBn ? `বিষয় ও মার্কস কনফিগ (${subjectPct}%)` : `Subject & Mark Config (${subjectPct}%)`, pct: subjectPct },
+      { done: activeExamConfigs.some((s) => s.subExams.length > 0), label: isBn ? `সাব-এক্সাম (${subExamPct}%)` : `Sub-exams (${subExamPct}%)`, pct: subExamPct },
       { done: gradeScales.length > 0, label: isBn ? 'গ্রেড স্কেল সেট আপ' : 'Grade scale configured' },
+      { done: activeExam?.startDate && activeExam?.endDate ? true : false, label: isBn ? 'পরীক্ষার সময়সূচী নির্ধারিত' : 'Exam schedule set' },
     ]
-  }, [examConfigs, subjectMarkConfigs, gradeScales, subjects, isBn])
+  }, [activeExam, subjectMarkConfigs, gradeScales, subjects, isBn])
   const completionPct = Math.round((checklist.filter((c) => c.done).length / checklist.length) * 100)
 
-  const activeExam = useMemo(() => examConfigs.find((e) => e.isActive) || null, [examConfigs])
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const selectedClassObj = useMemo(() => classes.find((c) => c.name === distClassId) || null, [classes, distClassId])
   const selectedClassSections = useMemo(() => selectedClassObj?.sections || [], [selectedClassObj])
@@ -316,11 +320,12 @@ export default function Step1Planning() {
 
   const handleSaveExam = () => {
     if (!examForm.name) return
+    const examType = examForm.type === 'custom' ? (examForm.customType || 'custom') : examForm.type
     if (editExam) {
       updateExamConfig(editExam.id, {
         name: examForm.name,
         nameBn: examForm.nameBn || examForm.name,
-        type: examForm.type,
+        type: examType as ExamType,
         session: examForm.session,
         startDate: examForm.startDate,
         endDate: examForm.endDate,
@@ -329,7 +334,7 @@ export default function Step1Planning() {
       addExamConfig({
         name: examForm.name,
         nameBn: examForm.nameBn || examForm.name,
-        type: examForm.type,
+        type: examType as ExamType,
         session: examForm.session,
         startDate: examForm.startDate,
         endDate: examForm.endDate,
@@ -338,7 +343,7 @@ export default function Step1Planning() {
     }
     setShowExamForm(false)
     setEditExam(null)
-    setExamForm({ name: '', nameBn: '', type: 'semester-1', session: '2025-26', startDate: '', endDate: '' })
+    setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: '2025-26', startDate: '', endDate: '' })
   }
 
   const handleSaveOMR = () => {
@@ -381,7 +386,7 @@ export default function Step1Planning() {
               {isBn ? 'ধাপ ১: পরিকল্পনা ও প্রস্তুতি' : 'Step 1: Planning & Preparation'}
             </h1>
             <p className="text-[11px] text-[var(--text-muted)]">
-              {isBn ? 'পরীক্ষা সেটআপ, বিষয় কনফিগারেশন ও গ্রেড স্কেল' : 'Exam setup, subject configuration & grade scale'}
+              {isBn ? 'পরীক্ষা সেটআপ, বিষয় ও মার্কস কনফিগারেশন ও গ্রেড স্কেল' : 'Exam setup, subject & mark configuration & grade scale'}
             </p>
           </div>
         </div>
@@ -400,7 +405,7 @@ export default function Step1Planning() {
               setActiveSubTab('exams')
               setShowExamForm(true)
               setEditExam(null)
-              setExamForm({ name: '', nameBn: '', type: 'semester-1', session: '2025-26', startDate: '', endDate: '' })
+              setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: '2025-26', startDate: '', endDate: '' })
             }}
             className={btnPrimary}
           >
@@ -414,7 +419,7 @@ export default function Step1Planning() {
       <div className="px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-primary)] flex gap-2 overflow-x-auto">
         {[
           { key: 'exams' as SubTab, label: isBn ? 'পরীক্ষা' : 'Exams', icon: <ClipboardList size={14} /> },
-          { key: 'subjects' as SubTab, label: isBn ? 'বিষয় কনফিগ' : 'Subject Config', icon: <BookOpen size={14} /> },
+          { key: 'subjects' as SubTab, label: isBn ? 'বিষয় ও মার্কস কনফিগ' : 'Subject & Mark Config', icon: <BookOpen size={14} /> },
           { key: 'grade-scale' as SubTab, label: isBn ? 'গ্রেড স্কেল' : 'Grade Scale', icon: <Award size={14} /> },
           { key: 'omr' as SubTab, label: isBn ? 'OMR' : 'OMR Setup', icon: <ScanLine size={14} /> },
         ].map((t) => (
@@ -493,7 +498,7 @@ export default function Step1Planning() {
                                   : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'
                           }`}
                         >
-                          {isBn ? EXAM_TYPE_LABELS[exam.type].bn : EXAM_TYPE_LABELS[exam.type].en}
+                          {isBn ? (EXAM_TYPE_LABELS[exam.type]?.bn || exam.type) : (EXAM_TYPE_LABELS[exam.type]?.en || exam.type)}
                         </span>
                         {exam.isActive && (
                           <span className="text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium bg-[var(--green-light)] text-[var(--green)]">
@@ -515,7 +520,7 @@ export default function Step1Planning() {
                           className={`flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md ${overallPct === 100 ? 'bg-[var(--green-light)] text-[var(--green)]' : overallPct > 0 ? 'bg-[var(--amber-light)] text-[var(--amber)]' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
                         >
                           {overallPct === 100 ? <CheckCircle size={11} /> : <Settings size={11} />}
-                          {isBn ? 'বিষয় কনফিগ' : 'Subjects Config'}
+                          {isBn ? 'বিষয় ও মার্কস কনফিগ' : 'Subject & Mark Config'}
                           <span className="font-bold">{overallPct}%</span>
                         </div>
                       </div>
@@ -535,7 +540,7 @@ export default function Step1Planning() {
                       )}
                       {classStats.length === 0 && (
                         <div className="mt-2 text-[10px] text-[var(--text-muted)] italic">
-                          {isBn ? 'কোনো বিষয় কনফিগার হয়নি' : 'No subjects configured yet'}
+                          {isBn ? 'কোনো বিষয় বা মার্কস কনফিগার হয়নি' : 'No subject & mark config yet'}
                         </div>
                       )}
                     </div>
@@ -553,6 +558,7 @@ export default function Step1Planning() {
                             name: exam.name,
                             nameBn: exam.nameBn,
                             type: exam.type,
+                            customType: '',
                             session: exam.session,
                             startDate: exam.startDate,
                             endDate: exam.endDate,
@@ -562,6 +568,16 @@ export default function Step1Planning() {
                         className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
                       >
                         <Edit2 size={12} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setCopyExamPlanFromId(exam.id)
+                          setCopyExamPlanToId('')
+                          setShowCopyExamPlanModal(true)
+                        }}
+                        className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
+                      >
+                        <Copy size={12} />
                       </button>
                       <button
                         onClick={() => {
@@ -583,7 +599,7 @@ export default function Step1Planning() {
                 <button
                   onClick={() => {
                     setShowExamForm(true)
-                    setExamForm({ name: '', nameBn: '', type: 'semester-1', session: '2025-26', startDate: '', endDate: '' })
+              setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: '2025-26', startDate: '', endDate: '' })
                   }}
                   className={`${btnPrimary} mt-3 text-[11px]`}
                 >
@@ -1228,6 +1244,14 @@ export default function Step1Planning() {
                       </option>
                     ))}
                   </select>
+                  {examForm.type === 'custom' && (
+                    <input
+                      value={(examForm as any).customType || ''}
+                      onChange={(e) => setExamForm((p) => ({ ...p, customType: e.target.value }))}
+                      className={`${inputCls} w-full mt-1.5`}
+                      placeholder={isBn ? 'কাস্টম ধরন লিখুন' : 'Enter custom type'}
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেশন' : 'Session'}</label>
@@ -1407,6 +1431,89 @@ export default function Step1Planning() {
                 className="px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[12px] font-medium cursor-pointer disabled:opacity-50"
               >
                 {isBn ? `${copyTargetSubjectIds.length}টি বিষয়ে কপি` : `Copy to ${copyTargetSubjectIds.length} subject(s)`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Copy Exam Plan Modal ═══ */}
+      {showCopyExamPlanModal && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
+          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[400px] w-full p-5 border border-[var(--border)]">
+            <h3 className="text-[14px] font-semibold text-[var(--text-primary)] mb-2">
+              {isBn ? 'পরীক্ষার প্ল্যান কপি করুন' : 'Copy Exam Plan'}
+            </h3>
+            <p className="text-[11px] text-[var(--text-muted)] mb-3">
+              {isBn
+                ? 'একটি পরীক্ষার সব মার্কস ও বিষয় কনফিগ অন্য পরীক্ষায় কপি করুন।'
+                : 'Copy all subject & mark configs from one exam to another.'}
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  {isBn ? 'উৎস পরীক্ষা (যার কনফিগ কপি হবে)' : 'Source Exam (copy from)'}
+                </label>
+                <select
+                  value={copyExamPlanFromId}
+                  onChange={(e) => setCopyExamPlanFromId(e.target.value)}
+                  className={`${inputCls} w-full`}
+                >
+                  <option value="">{isBn ? 'পরীক্ষা নির্বাচন...' : 'Select exam...'}</option>
+                  {examConfigs.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {isBn ? e.nameBn : e.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  {isBn ? 'লক্ষ্য পরীক্ষা (যেখানে কপি হবে)' : 'Target Exam (copy to)'}
+                </label>
+                <select
+                  value={copyExamPlanToId}
+                  onChange={(e) => setCopyExamPlanToId(e.target.value)}
+                  className={`${inputCls} w-full`}
+                >
+                  <option value="">{isBn ? 'পরীক্ষা নির্বাচন...' : 'Select exam...'}</option>
+                  {examConfigs
+                    .filter((e) => e.id !== copyExamPlanFromId)
+                    .map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {isBn ? e.nameBn : e.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+            {copyExamPlanFromId && copyExamPlanToId && (
+              <p className="text-[10px] text-[var(--amber)] mt-2">
+                {isBn ? '⚠ লক্ষ্য পরীক্ষার আগের কনফিগ মুছে নতুন কনফিগ বসানো হবে।' : '⚠ Existing configs in target exam will be replaced.'}
+              </p>
+            )}
+            <div className="flex gap-2 justify-end mt-4">
+              <button
+                onClick={() => {
+                  setShowCopyExamPlanModal(false)
+                  setCopyExamPlanFromId('')
+                  setCopyExamPlanToId('')
+                }}
+                className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[12px] text-[var(--text-secondary)] cursor-pointer"
+              >
+                {isBn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => {
+                  copyExamPlan(copyExamPlanFromId, copyExamPlanToId)
+                  setShowCopyExamPlanModal(false)
+                  setCopyExamPlanFromId('')
+                  setCopyExamPlanToId('')
+                }}
+                disabled={!copyExamPlanFromId || !copyExamPlanToId || copyExamPlanFromId === copyExamPlanToId}
+                className="px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[12px] font-medium cursor-pointer disabled:opacity-50"
+              >
+                {isBn ? 'কপি করুন' : 'Copy Plan'}
               </button>
             </div>
           </div>

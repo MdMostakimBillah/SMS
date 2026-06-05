@@ -71,7 +71,7 @@ const WorkflowCard = memo(function WorkflowCard({
         display: 'flex',
         flexDirection: isMobile ? 'row' : 'column',
         alignItems: isMobile ? 'center' : 'flex-start',
-        gap: isMobile ? '12px' : '0',
+        gap: isMobile ? '12px' : '12px',
         padding: isMobile ? '12px' : '16px',
       }}
       onMouseEnter={handleEnter}
