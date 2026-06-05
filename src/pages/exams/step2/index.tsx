@@ -94,7 +94,7 @@ export default function Step2Schedule() {
   const addInvigilator = useExamStore((s) => s.addInvigilator)
   const removeInvigilator = useExamStore((s) => s.removeInvigilator)
 
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('routine')
+  const [activeSubTab, setActiveSubTab] = useState<SubTab>('rooms')
   const [selectedExamId, setSelectedExamId] = useState(examConfigs.find((e) => e.isActive)?.id || '')
 
   // Calendar state
@@ -563,8 +563,8 @@ export default function Step2Schedule() {
       {/* Sub-tabs */}
       <div className="px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-primary)] flex gap-2 overflow-x-auto">
         {[
-          { key: 'routine' as SubTab, label: isBn ? 'রুটিন' : 'Routine', icon: <Calendar size={14} />, count: filteredRoutines.length },
           { key: 'rooms' as SubTab, label: isBn ? 'কক্ষ' : 'Rooms', icon: <Building size={14} />, count: rooms.length },
+          { key: 'routine' as SubTab, label: isBn ? 'রুটিন' : 'Routine', icon: <Calendar size={14} />, count: filteredRoutines.length },
           {
             key: 'seats' as SubTab,
             label: isBn ? 'আসন পরিকল্পনা' : 'Seat Plan',
@@ -597,7 +597,7 @@ export default function Step2Schedule() {
         {activeSubTab === 'routine' && (
           <div className="flex flex-col h-full">
             {/* Stats Row */}
-            <div className="grid grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <div className={`${sectionCls} !mb-0 flex items-center gap-3`}>
                 <div className="w-9 h-9 rounded-xl bg-[var(--brand-light)] flex items-center justify-center">
                   <Calendar size={16} className="text-[var(--brand)]" />
