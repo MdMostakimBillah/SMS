@@ -861,7 +861,7 @@ export default function HRPage() {
 
       {/* Tabs */}
       <div
-        className={`flex gap-1.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[5px] mb-[14px] overflow-x-auto ${isMobile ? 'flex-wrap' : 'flex-nowrap'}`}
+        className="flex gap-1.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[5px] mb-[14px] overflow-x-auto flex-nowrap"
       >
         {tabs.map((tab) => (
           <button
@@ -870,7 +870,7 @@ export default function HRPage() {
               setActiveTab(tab.id)
               setPage(1)
             }}
-            className={`flex-1 flex items-center justify-center gap-[7px] py-[9px] px-[14px] rounded-[9px] border-none cursor-pointer text-[13px] font-medium font-[inherit] transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)]' : 'bg-transparent'} ${activeTab === tab.id ? 'text-white' : 'text-[var(--text-secondary)]'} ${activeTab === tab.id ? 'shadow-[0_4px_12px_rgba(99,102,241,0.3)]' : 'shadow-none'}`}
+            className={`flex items-center justify-center gap-[7px] py-[9px] px-[14px] rounded-[9px] border-none cursor-pointer text-[13px] font-medium font-[inherit] transition-all whitespace-nowrap shrink-0 ${activeTab === tab.id ? 'bg-[var(--brand)]' : 'bg-transparent'} ${activeTab === tab.id ? 'text-white' : 'text-[var(--text-secondary)]'} ${activeTab === tab.id ? 'shadow-[0_4px_12px_rgba(99,102,241,0.3)]' : 'shadow-none'}`}
           >
             <tab.icon size={15} />
             {isBn ? tab.labelBn : tab.label}
