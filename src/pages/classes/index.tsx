@@ -2497,8 +2497,14 @@ function RoutineTab({
 
               const headerCells = Array.from({ length: totalPeriods }, (_, p) => {
                 const time = getPeriodTime(p)
-                return `<th style="padding:8px 6px;font-size:10px;font-weight:600;text-align:center;border:1px solid #e5e7eb;background:#f3f4f6">P${p + 1}<br/><span style="font-weight:400;color:#6b7280">${time.start}</span></th>`
+                const breakAfter = breakPositions.filter((b: any) => b.afterPeriod === p)
+                const breakLabel = breakAfter.map((b: any) => `${isBn ? 'বিরতি' : 'Break'} ${b.start}-${b.end}`).join(', ')
+                return `<th style="padding:8px 6px;font-size:10px;font-weight:600;text-align:center;border:1px solid #e5e7eb;background:#f3f4f6;min-width:100px">P${p + 1}<br/><span style="font-weight:400;color:#6b7280">${time.start}</span>${breakLabel ? `<br/><span style="font-weight:400;color:#d97706;font-size:8px">${breakLabel}</span>` : ''}</th>`
               }).join('')
+
+              const breaksInfo = (institution.breaks || []).length > 0
+                ? `<div style="margin-top:12px;padding:8px 12px;background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;font-size:9px;color:#92400e"><strong>${isBn ? 'বিরতির সময়:' : 'Break Times:'}</strong> ${(institution.breaks || []).map((b: any) => `${b.label}: ${b.start} - ${b.end}`).join(' · ')}</div>`
+                : ''
 
               const win = window.open('', '_blank')
               if (!win) return
@@ -2526,6 +2532,7 @@ function RoutineTab({
     <thead><tr><th style="padding:8px 12px;font-size:10px;font-weight:600;text-align:center;border:1px solid #e5e7eb;background:#f3f4f6;min-width:80px">${isBn ? 'দিন' : 'Day'}</th>${headerCells}</tr></thead>
     <tbody>${gridRows}</tbody>
   </table>
+  ${breaksInfo}
   <div style="margin-top:16px;padding-top:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between">
     <div style="font-size:9px;color:#9ca3af">EduTech School Management System</div>
     <div style="font-size:9px;color:#9ca3af">${isBn ? 'মুদ্রণের তারিখ' : 'Printed'}: ${new Date().toLocaleDateString()}</div>
