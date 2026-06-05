@@ -1019,7 +1019,7 @@ export default function Step2Schedule() {
                 const assignedSeats = roomCapacityMap.get(room.id) || 0
                 const utilization = room.capacity > 0 ? Math.round((assignedSeats / room.capacity) * 100) : 0
                 return (
-                  <div key={room.id} className={`${sectionCls} transition-all hover:shadow-sm`}>
+                  <div key={room.id} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] transition-all hover:shadow-sm">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <div className="text-[13px] font-semibold text-[var(--text-primary)]">{room.roomNo}</div>
@@ -1065,11 +1065,11 @@ export default function Step2Schedule() {
                         {utilization}% {isBn ? 'ব্যবহৃত' : 'used'}
                       </span>
                     </div>
-                    <div className="mt-2 h-[4px] bg-[var(--border)] rounded-[2px]">
+                    <div className="mt-2 h-[5px] bg-[var(--border)] rounded-[3px]">
                       <div
-                        className="h-full rounded-[2px] transition-all"
+                        className="h-full rounded-[3px] transition-all"
                         style={{
-                          width: `${utilization}%`,
+                          width: utilization > 0 ? `${Math.max(utilization, 5)}%` : '0%',
                           background: utilization > 90 ? 'var(--red)' : utilization > 70 ? 'var(--amber)' : 'var(--green)',
                         }}
                       />
