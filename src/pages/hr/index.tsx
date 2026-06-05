@@ -837,7 +837,7 @@ export default function HRPage() {
   ]
 
   return (
-    <div className="px-4">
+    <div>
       {/* Header */}
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
