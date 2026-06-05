@@ -702,8 +702,7 @@ export default function Step2Schedule() {
                       </tr>`
                     }).join('')
 
-                    const colWidth = Math.floor(170 / (classNames.length + 1))
-                    const classHeaders = classNames.map((cls) => `<th style="background:${brandColor};color:#fff;padding:5px 8px;border:1px solid ${brandColor};text-align:center;font-weight:600;font-size:10px;width:${colWidth}%">${cls}</th>`).join('')
+                    const classHeaders = classNames.map((cls) => `<th style="background:${brandColor};color:#fff;padding:5px 8px;border:1px solid ${brandColor};text-align:center;font-weight:600;font-size:10px;white-space:nowrap">${cls}</th>`).join('')
 
                     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
                       <title>${examName} - Routine</title>
@@ -715,7 +714,7 @@ export default function Step2Schedule() {
                         h1{font-size:16px;color:${brandColor};margin-bottom:2px}
                         h2{font-size:11px;color:#64748b;font-weight:400;margin-top:2px}
                         .info{font-size:10px;color:#94a3b8;margin-top:4px}
-                        table{width:100%;border-collapse:collapse;font-size:9px}
+                        table{width:auto;border-collapse:collapse;font-size:9px}
                         th{padding:5px 8px;border:1px solid ${brandColor};text-align:center;font-weight:600;font-size:10px}
                         td{border:1px solid #e2e8f0;text-align:center}
                         .footer{margin-top:12px;padding-top:8px;border-top:1px solid #e2e8f0;text-align:center;font-size:8px;color:#94a3b8}
@@ -732,13 +731,15 @@ export default function Step2Schedule() {
                         <h2>${isBn ? 'পরীক্ষার সময়সূচী' : 'Exam Routine'}</h2>
                         <div class="info">${selectedExam?.startDate || ''} — ${selectedExam?.endDate || ''}</div>
                       </div>
+                      <div style="display:flex;justify-content:center">
                       <table>
                         <thead><tr>
-                          <th style="background:${brandColor};color:#fff;padding:5px 8px;border:1px solid ${brandColor};text-align:center;font-weight:600;font-size:10px;width:${colWidth}%">${isBn ? 'তারিখ' : 'Date'}</th>
+                          <th style="background:${brandColor};color:#fff;padding:5px 8px;border:1px solid ${brandColor};text-align:center;font-weight:600;font-size:10px;white-space:nowrap">${isBn ? 'তারিখ' : 'Date'}</th>
                           ${classHeaders}
                         </tr></thead>
                         <tbody>${dateRows}</tbody>
                       </table>
+                      </div>
                       <div class="footer">${isBn ? 'ইহা সিস্টেম দ্বারা নির্মিত' : 'System Generated'} • ${new Date().toLocaleDateString()}</div>
                     </body></html>`
 
