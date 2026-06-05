@@ -1926,34 +1926,93 @@ export default function Step2Schedule() {
                   <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'কক্ষ' : 'Room'}</label>
                   <select
                     value={invigForm.roomId}
-                    onChange={(e) => setInvigForm((p) => ({ ...p, roomId: e.target.value }))}
+                    onChange={(e) => {
+                      const roomId = e.target.value
+                      const room = rooms.find((r) => r.id === roomId)
+                      if (room) {
+                        const routine = filteredRoutines.find((r) => r.roomNo === room.roomNo)
+                        if (routine) {
+                          const shift: 'morning' | 'afternoon' = routine.startTime < '12:00' ? 'morning' : 'afternoon'
+                          setInvigForm((p) => ({ ...p, roomId, date: routine.date, shift }))
+                        } else {
+                          setInvigForm((p) => ({ ...p, roomId }))
+                        }
+                      } else {
+                        setInvigForm((p) => ({ ...p, roomId: '' }))
+                      }
+                    }}
                     className={`${selectCls} w-full`}
                   >
                     <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                    {rooms.filter((r) => r.isActive).map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.roomNo} ({r.roomName}) - {r.capacity} {isBn ? 'সিট' : 'seats'}
-                      </option>
-                    ))}
+                    {rooms.filter((r) => r.isActive).map((r) => {
+                      const routine = filteredRoutines.find((rt) => rt.roomNo === r.roomNo)
+                      const subject = routine ? subjectMap.get(routine.subjectId) : null
+                      return (
+                        <option key={r.id} value={r.id}>
+                          {r.roomNo} ({r.roomName}){subject ? ` - ${isBn ? subject.nameBn : subject.name}` : ''}
+                        </option>
+                      )
+                    })}
                   </select>
+                  {invigForm.roomId && (() => {
+                    const room = rooms.find((r) => r.id === invigForm.roomId)
+                    const routine = room ? filteredRoutines.find((r) => r.roomNo === room.roomNo) : null
+                    const subject = routine ? subjectMap.get(routine.subjectId) : null
+                    if (!routine) return null
+                    return (
+                      <div className="mt-1.5 p-2 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)]/20">
+                        <div className="text-[0.5625rem] text-[var(--brand)] font-medium">
+                          {subject ? (isBn ? subject.nameBn : subject.name) : ''} · {routine.date} · {routine.startTime} - {routine.endTime}
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               ) : (
                 <div>
                   <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি-সেকশন' : 'Class-Section'}</label>
                   <select
                     value={invigForm.classSection}
-                    onChange={(e) => setInvigForm((p) => ({ ...p, classSection: e.target.value }))}
+                    onChange={(e) => {
+                      const classSection = e.target.value
+                      const [classId, sectionId] = classSection.split('-')
+                      const routine = filteredRoutines.find((r) => r.classId === classId && r.sectionId === sectionId)
+                      if (routine) {
+                        const shift: 'morning' | 'afternoon' = routine.startTime < '12:00' ? 'morning' : 'afternoon'
+                        setInvigForm((p) => ({ ...p, classSection, date: routine.date, shift }))
+                      } else {
+                        setInvigForm((p) => ({ ...p, classSection }))
+                      }
+                    }}
                     className={`${selectCls} w-full`}
                   >
                     <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
                     {classOptions.flatMap((c) =>
-                      (sectionsMap[c] || []).map((s) => (
-                        <option key={`${c}-${s}`} value={`${c}-${s}`}>
-                          {c} - {s} ({students.filter((st) => st.status === 'approved' && st.class === c && st.section === s).length} {isBn ? 'জন' : 'students'})
-                        </option>
-                      ))
+                      (sectionsMap[c] || []).map((s) => {
+                        const label = `${c}-${s}`
+                        const routine = filteredRoutines.find((r) => r.classId === c && r.sectionId === s)
+                        const subject = routine ? subjectMap.get(routine.subjectId) : null
+                        return (
+                          <option key={label} value={label}>
+                            {c} - {s}{subject ? ` (${isBn ? subject.nameBn : subject.name})` : ''}
+                          </option>
+                        )
+                      })
                     )}
                   </select>
+                  {invigForm.classSection && (() => {
+                    const [classId, sectionId] = invigForm.classSection.split('-')
+                    const routine = filteredRoutines.find((r) => r.classId === classId && r.sectionId === sectionId)
+                    const subject = routine ? subjectMap.get(routine.subjectId) : null
+                    if (!routine) return null
+                    return (
+                      <div className="mt-1.5 p-2 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)]/20">
+                        <div className="text-[0.5625rem] text-[var(--brand)] font-medium">
+                          {subject ? (isBn ? subject.nameBn : subject.name) : ''} · {routine.date} · {routine.startTime} - {routine.endTime}
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3">
