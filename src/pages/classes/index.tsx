@@ -2370,8 +2370,8 @@ function RoutineTab({
   return (
     <div>
       {/* Class + Section selector + Period config */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '10px', marginBottom: '14px' }}>
-        <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '180px 180px 1fr', gap: '10px', marginBottom: '14px', alignItems: 'start' }}>
+        <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px' }}>
           <div
             style={{
               fontSize: '11px',
@@ -2393,7 +2393,7 @@ function RoutineTab({
             }}
             style={{
               width: '100%',
-              padding: '9px 11px',
+              padding: '8px 10px',
               borderRadius: '8px',
               border: '1px solid var(--border)',
               background: 'var(--bg-secondary)',
@@ -2409,7 +2409,7 @@ function RoutineTab({
             ))}
           </select>
         </div>
-        <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
+        <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px' }}>
           <div
             style={{
               fontSize: '11px',
@@ -2430,7 +2430,7 @@ function RoutineTab({
             }}
             style={{
               width: '100%',
-              padding: '9px 11px',
+              padding: '8px 10px',
               borderRadius: '8px',
               border: '1px solid var(--border)',
               background: 'var(--bg-secondary)',
