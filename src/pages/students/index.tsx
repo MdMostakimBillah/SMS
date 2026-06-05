@@ -15,32 +15,32 @@ function toBnNum(n: number): string {
 function StudentsSkeleton() {
   return (
     <div>
-      <div className="skeleton skeleton-title w-[180px] mb-4" />
-      <div className="skeleton skeleton-text w-[140px] mb-5" />
+      <div className="skeleton skeleton-title w-[11.25rem] mb-4" />
+      <div className="skeleton skeleton-text w-[8.75rem] mb-5" />
 
-      <div className="grid grid-cols-4 gap-[10px] mb-5">
+      <div className="grid grid-cols-4 gap-[0.625rem] mb-5">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="skeleton-card">
-            <div className="flex items-center gap-[10px]">
+            <div className="flex items-center gap-[0.625rem]">
               <div className="skeleton skeleton-circle w-8 h-8" />
               <div>
-                <div className="skeleton w-[50px] h-[18px] mb-1" />
-                <div className="skeleton skeleton-text w-[40px] h-[10px]" />
+                <div className="skeleton w-[3.125rem] h-[1.125rem] mb-1" />
+                <div className="skeleton skeleton-text w-[2.5rem] h-[0.625rem]" />
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="skeleton w-[100px] h-[12px] mb-3" />
+      <div className="skeleton w-[6.25rem] h-[0.75rem] mb-3" />
 
       <div className="grid grid-cols-3 gap-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className="skeleton-card">
-            <div className="skeleton skeleton-circle w-10 h-10 mb-[10px]" />
-            <div className="skeleton w-[80px] h-[14px] mb-1.5" />
+            <div className="skeleton skeleton-circle w-10 h-10 mb-[0.625rem]" />
+            <div className="skeleton w-[5rem] h-[0.875rem] mb-1.5" />
             <div className="skeleton skeleton-text w-full" />
-            <div className="skeleton skeleton-text w-[60px] h-[10px]" />
+            <div className="skeleton skeleton-text w-[3.75rem] h-[0.625rem]" />
           </div>
         ))}
       </div>
@@ -244,14 +244,14 @@ export default function StudentsPage() {
       </div>
 
       <div
-        className={`gsap-fade-up grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} ${isMobile ? 'gap-2' : 'gap-[10px]'} ${isMobile ? 'mb-4' : 'mb-5'}`}
+        className={`gsap-fade-up grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} ${isMobile ? 'gap-2' : 'gap-[0.625rem]'} ${isMobile ? 'mb-4' : 'mb-5'}`}
       >
         {statsData.map((s) => {
           const IconComp = s.icon
           return (
             <div
               key={s.labelEn}
-              className={`bg-[var(--surface)] border border-[var(--border)] rounded-[10px] flex items-center ${isMobile ? 'gap-2' : 'gap-[10px]'} cursor-default transition-all duration-150 shadow-[var(--shadow-xs)] ${isMobile ? 'p-3' : 'p-[14px]'}`}
+              className={`bg-[var(--surface)] border border-[var(--border)] rounded-[0.625rem] flex items-center ${isMobile ? 'gap-2' : 'gap-[0.625rem]'} cursor-default transition-all duration-150 shadow-[var(--shadow-xs)] ${isMobile ? 'p-3' : 'p-[0.875rem]'}`}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = s.color
                 e.currentTarget.style.transform = 'translateY(-1px)'
@@ -271,14 +271,14 @@ export default function StudentsPage() {
                 <div className={`text-[var(--text-primary)] leading-none font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>
                   {isBn ? s.valueBn : s.valueEn}
                 </div>
-                <div className="text-[10px] text-[var(--text-muted)] mt-[2px]">{isBn ? s.labelBn : s.labelEn}</div>
+                <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{isBn ? s.labelBn : s.labelEn}</div>
               </div>
             </div>
           )
         })}
       </div>
 
-      <div className="gsap-fade-up text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-[10px]">
+      <div className="gsap-fade-up text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-[0.625rem]">
         {isBn ? 'কী করতে চান?' : 'Quick Actions'}
       </div>
 
@@ -291,7 +291,7 @@ export default function StudentsPage() {
             <div
               key={opt.id}
               onClick={() => navigate(opt.path)}
-              className={`bg-[var(--surface)] border border-[var(--border)] rounded-[10px] cursor-pointer transition-all duration-150 shadow-[var(--shadow-xs)] flex ${isMobile ? 'flex-row items-center gap-3' : 'flex-col items-start gap-0'} ${isMobile ? 'p-3' : 'p-4'}`}
+              className={`bg-[var(--surface)] border border-[var(--border)] rounded-[0.625rem] cursor-pointer transition-all duration-150 shadow-[var(--shadow-xs)] flex ${isMobile ? 'flex-row items-center gap-3' : 'flex-col items-start gap-0'} ${isMobile ? 'p-3' : 'p-4'}`}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = opt.iconColor
                 e.currentTarget.style.transform = 'translateY(-2px)'
@@ -304,21 +304,21 @@ export default function StudentsPage() {
               }}
             >
               <div
-                className={`rounded-[10px] flex items-center justify-center flex-shrink-0 ${isMobile ? 'w-[44px] h-[44px] rounded-xl mb-0' : 'w-10 h-10 mb-[10px]'}`}
+                className={`rounded-[0.625rem] flex items-center justify-center flex-shrink-0 ${isMobile ? 'w-[2.75rem] h-[2.75rem] rounded-xl mb-0' : 'w-10 h-10 mb-[0.625rem]'}`}
                 style={{ background: opt.iconBg }}
               >
                 <IconComp size={isMobile ? 21 : 19} style={{ color: opt.iconColor }} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className={`text-[var(--text-primary)] font-semibold ${isMobile ? 'text-[13px] mb-[2px]' : 'text-sm mb-1'}`}>
+                <div className={`text-[var(--text-primary)] font-semibold ${isMobile ? 'text-[0.8125rem] mb-[0.125rem]' : 'text-sm mb-1'}`}>
                   {isBn ? opt.titleBn : opt.titleEn}
                 </div>
-                <div className={`text-[11px] text-[var(--text-secondary)] leading-[1.5] ${isMobile ? 'mb-1.5' : 'mb-2'}`}>
+                <div className={`text-[0.6875rem] text-[var(--text-secondary)] leading-[1.5] ${isMobile ? 'mb-1.5' : 'mb-2'}`}>
                   {isBn ? opt.descBn : opt.descEn}
                 </div>
                 <div className="flex items-center justify-between">
                   <span
-                    className="text-[10px] font-medium rounded px-1.5 py-0.5"
+                    className="text-[0.625rem] font-medium rounded px-1.5 py-0.5"
                     style={{ color: opt.statColor, background: `${opt.statColor}15` }}
                   >
                     {isBn ? opt.statBn : opt.statEn}

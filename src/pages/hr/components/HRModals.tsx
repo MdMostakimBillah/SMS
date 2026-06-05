@@ -125,7 +125,7 @@ export default function HRModals({
               </h2>
               <button
                 onClick={() => setModalType(null)}
-                className="p-[6px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer text-[var(--text-muted)] flex"
+                className="p-[0.375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer text-[var(--text-muted)] flex"
               >
                 <X size={16} />
               </button>
@@ -180,7 +180,7 @@ export default function HRModals({
                 </div>
                 <button
                   onClick={handleAddIncrement}
-                  className="p-[9px] rounded-lg bg-[var(--green)] border-none text-white text-[13px] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
+                  className="p-[0.5625rem] rounded-lg bg-[var(--green)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
                 >
                   <Save size={14} />
                   {isBn ? 'সংরক্ষণ' : 'Save'}
@@ -238,7 +238,7 @@ export default function HRModals({
                 </div>
                 <button
                   onClick={handleAddBonus}
-                  className="p-[9px] rounded-lg bg-[var(--amber)] border-none text-white text-[13px] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
+                  className="p-[0.5625rem] rounded-lg bg-[var(--amber)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
                 >
                   <Save size={14} />
                   {isBn ? 'সংরক্ষণ' : 'Save'}
@@ -306,7 +306,7 @@ export default function HRModals({
                 </div>
                 <button
                   onClick={handleAddPromotion}
-                  className="p-[9px] rounded-lg bg-[var(--purple)] border-none text-white text-[13px] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
+                  className="p-[0.5625rem] rounded-lg bg-[var(--purple)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
                 >
                   <Save size={14} />
                   {isBn ? 'সংরক্ষণ' : 'Save'}
@@ -349,7 +349,7 @@ export default function HRModals({
                 </div>
                 <button
                   onClick={handleAddFund}
-                  className="p-[9px] rounded-lg bg-[var(--brand)] border-none text-white text-[13px] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
+                  className="p-[0.5625rem] rounded-lg bg-[var(--brand)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
                 >
                   <Save size={14} />
                   {isBn ? 'সংরক্ষণ' : 'Save'}
@@ -408,7 +408,7 @@ export default function HRModals({
                   setFacModalType(null)
                   setEditFac(null)
                 }}
-                className="p-[6px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer text-[var(--text-muted)] flex"
+                className="p-[0.375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer text-[var(--text-muted)] flex"
               >
                 <X size={16} />
               </button>
@@ -455,7 +455,7 @@ export default function HRModals({
               </div>
               <button
                 onClick={facModalType === 'add-facility' ? handleAddFacility : handleEditFacility}
-                className="p-[9px] rounded-lg bg-[var(--purple)] border-none text-white text-[13px] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
+                className="p-[0.5625rem] rounded-lg bg-[var(--purple)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
               >
                 <Save size={14} />
                 {isBn ? 'সংরক্ষণ' : 'Save'}
@@ -490,7 +490,7 @@ export default function HRModals({
                   setFacModalType(null)
                   setEditAssign(null)
                 }}
-                className="p-[6px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer text-[var(--text-muted)] flex"
+                className="p-[0.375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer text-[var(--text-muted)] flex"
               >
                 <X size={16} />
               </button>
@@ -545,7 +545,7 @@ export default function HRModals({
               </div>
               <button
                 onClick={facModalType === 'assign' ? handleAssignFacility : handleEditAssign}
-                className="p-[9px] rounded-lg bg-[var(--brand)] border-none text-white text-[13px] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
+                className="p-[0.5625rem] rounded-lg bg-[var(--brand)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
               >
                 <Save size={14} />
                 {isBn ? 'সংরক্ষণ' : 'Save'}

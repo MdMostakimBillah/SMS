@@ -76,12 +76,12 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
         ? '7.5px'
         : totalCols > 9
           ? '9px'
-          : '10px'
+          : '0.625rem'
       : totalCols > 8
         ? '7.5px'
         : totalCols > 6
           ? '9px'
-          : '10px'
+          : '0.625rem'
 
   // Headers
   const dataHeaders = cols.map((c) => `<th>${isBn ? c.labelBn : c.label}</th>`).join('')

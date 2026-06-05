@@ -155,25 +155,38 @@
   padding: 0;
 }
 
+html {
+  font-size: 14px;
+}
+@media (min-width: 1440px) {
+  html { font-size: 15px; }
+}
+@media (min-width: 1920px) {
+  html { font-size: 16px; }
+}
+@media (min-width: 2560px) {
+  html { font-size: 17px; }
+}
+
 body {
   font-family: 'Inter', 'Hind Siliguri', sans-serif;
   background: var(--bg-tertiary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
-  font-size: 14px;
+  font-size: 1rem;
   line-height: 1.5;
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 0.375rem;
+  height: 0.375rem;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--border-2);
-  border-radius: 10px;
+  border-radius: 0.625rem;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
@@ -201,7 +214,7 @@ button {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(0.5rem);
   }
   to {
     opacity: 1;
@@ -237,18 +250,18 @@ button {
   background: linear-gradient(90deg, var(--border) 25%, var(--border-2) 50%, var(--border) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
-  border-radius: 6px;
+  border-radius: 0.375rem;
 }
 
 .skeleton-text {
-  height: 12px;
-  margin-bottom: 8px;
+  height: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .skeleton-title {
-  height: 16px;
+  height: 1rem;
   width: 60%;
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 
 .skeleton-circle {
@@ -258,15 +271,15 @@ button {
 .skeleton-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 0.75rem;
+  padding: 1rem;
 }
 
 /* Glass morphism */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(0.75rem) saturate(180%);
+  -webkit-backdrop-filter: blur(0.75rem) saturate(180%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
 }
@@ -277,7 +290,7 @@ button {
 }
 
 .card-hover:hover {
-  transform: translateY(-2px);
+  transform: translateY(-0.125rem);
   box-shadow: var(--shadow-md);
 }
 
@@ -285,10 +298,10 @@ button {
 .btn-minimal {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: 8px;
-  font-size: 13px;
+  gap: 0.375rem;
+  padding: 0.4375rem 0.875rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   transition: all 0.15s ease;
   border: 1px solid var(--border);
@@ -335,13 +348,13 @@ button {
 
 /* Pastel stat card */
 .stat-card {
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 0.75rem;
+  padding: 1rem;
   transition: all 0.2s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-0.125rem);
   box-shadow: var(--shadow-md);
 }
 
@@ -361,7 +374,7 @@ button {
 /* Scroll reveal */
 .scroll-reveal {
   opacity: 0;
-  transform: translateY(12px);
+  transform: translateY(0.75rem);
   transition: all 0.4s ease;
 }
 
@@ -373,14 +386,14 @@ button {
 /* GSAP animation classes */
 .gsap-fade-up {
   opacity: 0;
-  transform: translateY(12px);
+  transform: translateY(0.75rem);
 }
 
 /* Modal pop-in animation */
 @keyframes modalPopIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(8px);
+    transform: scale(0.95) translateY(0.5rem);
   }
   to {
     opacity: 1;

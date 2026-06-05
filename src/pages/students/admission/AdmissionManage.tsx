@@ -56,7 +56,7 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: '1rem',
         overflowY: 'auto',
       }}
     >
@@ -64,9 +64,9 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
         className="modal-content"
         style={{
           background: 'var(--bg-primary)',
-          borderRadius: '16px',
-          padding: '28px',
-          maxWidth: '420px',
+          borderRadius: '1rem',
+          padding: '1.75rem',
+          maxWidth: '26.25rem',
           width: '100%',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-lg)',
@@ -74,8 +74,8 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
       >
         <div
           style={{
-            width: '52px',
-            height: '52px',
+            width: '3.25rem',
+            height: '3.25rem',
             borderRadius: '50%',
             background: 'var(--green-light)',
             display: 'flex',
@@ -86,10 +86,10 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
         >
           <CheckCircle size={26} style={{ color: 'var(--green)' }} />
         </div>
-        <h3 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', marginBottom: '6px' }}>
+        <h3 style={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', marginBottom: '0.375rem' }}>
           {isBn ? 'ভর্তি অনুমোদন করবেন?' : 'Approve Admission?'}
         </h3>
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '16px' }}>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '1rem' }}>
           <strong>{student.nameEn}</strong> · {student.phone}
         </p>
 
@@ -99,21 +99,21 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            gap: '0.625rem',
             padding: '12px 14px',
             background: sendSMS ? 'var(--teal-light)' : 'var(--bg-secondary)',
             border: `1px solid ${sendSMS ? 'var(--teal)' : 'var(--border)'}`,
-            borderRadius: '10px',
+            borderRadius: '0.625rem',
             cursor: 'pointer',
-            marginBottom: '16px',
+            marginBottom: '1rem',
             transition: 'all 0.15s',
           }}
         >
           <div
             style={{
-              width: '36px',
-              height: '20px',
-              borderRadius: '10px',
+              width: '2.25rem',
+              height: '1.25rem',
+              borderRadius: '0.625rem',
               background: sendSMS ? 'var(--teal)' : 'var(--border-2)',
               position: 'relative',
               flexShrink: 0,
@@ -123,10 +123,10 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
             <div
               style={{
                 position: 'absolute',
-                top: '2px',
-                left: sendSMS ? '18px' : '2px',
-                width: '16px',
-                height: '16px',
+                top: '0.125rem',
+                left: sendSMS ? '18px' : '0.125rem',
+                width: '1rem',
+                height: '1rem',
                 background: '#fff',
                 borderRadius: '50%',
                 transition: 'left 0.2s',
@@ -135,10 +135,10 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
             />
           </div>
           <div>
-            <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>
+            <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>
               {isBn ? 'SMS নোটিফিকেশন পাঠান' : 'Send SMS Notification'}
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '1px' }}>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: '0.0625rem' }}>
               {isBn ? `${student.phone} নম্বরে যাবে` : `Will be sent to ${student.phone}`}
             </div>
           </div>
@@ -148,15 +148,15 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
           <div
             style={{
               background: 'var(--bg-secondary)',
-              borderRadius: '8px',
+              borderRadius: '0.5rem',
               padding: '10px 12px',
-              marginBottom: '14px',
-              fontSize: '12px',
+              marginBottom: '0.875rem',
+              fontSize: '0.75rem',
               color: 'var(--text-secondary)',
               border: '1px solid var(--border)',
             }}
           >
-            <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 600 }}>
+            <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginBottom: '0.25rem', textTransform: 'uppercase', fontWeight: 600 }}>
               {isBn ? 'SMS প্রিভিউ' : 'SMS Preview'}
             </div>
             {isBn
@@ -165,17 +165,17 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
             onClick={onClose}
             style={{
               flex: 1,
-              padding: '10px',
-              borderRadius: '9px',
+              padding: '0.625rem',
+              borderRadius: '0.5625rem',
               background: 'var(--bg-secondary)',
               border: '1px solid var(--border)',
               color: 'var(--text-secondary)',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               cursor: 'pointer',
               fontFamily: 'inherit',
             }}
@@ -189,12 +189,12 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
             }}
             style={{
               flex: 2,
-              padding: '10px',
-              borderRadius: '9px',
+              padding: '0.625rem',
+              borderRadius: '0.5625rem',
               background: 'var(--green)',
               border: 'none',
               color: '#fff',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               fontWeight: 600,
               cursor: 'pointer',
               fontFamily: 'inherit',
@@ -229,17 +229,17 @@ const EField = React.memo(function EField({ label, value, onChange, type = 'text
   const s: React.CSSProperties = {
     width: '100%',
     padding: '7px 10px',
-    borderRadius: '8px',
+    borderRadius: '0.5rem',
     border: '1px solid var(--border)',
     background: 'var(--bg-secondary)',
     color: 'var(--text-primary)',
-    fontSize: '12px',
+    fontSize: '0.75rem',
     fontFamily: 'inherit',
     outline: 'none',
   }
   return (
     <div>
-      <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+      <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>
         {label}
       </label>
       {opts ? (
@@ -272,7 +272,7 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
   const g = (n: number): React.CSSProperties => ({
     display: 'grid',
     gridTemplateColumns: isMobile ? '1fr' : `repeat(${n},1fr)`,
-    gap: '10px',
+    gap: '0.625rem',
   })
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
@@ -291,7 +291,7 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: '1rem',
         overflowY: 'auto',
       }}
     >
@@ -299,9 +299,9 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
         className="modal-content"
         style={{
           background: 'var(--bg-primary)',
-          borderRadius: '16px',
+          borderRadius: '1rem',
           width: '100%',
-          maxWidth: '820px',
+          maxWidth: '51.25rem',
           maxHeight: '92vh',
           overflow: 'hidden',
           display: 'flex',
@@ -319,15 +319,15 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
           }}
         >
           <div>
-            <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'তথ্য সম্পাদনা' : 'Edit Student'}</h2>
-            <p style={{ fontSize: '11px', color: 'var(--brand)', fontFamily: 'monospace', marginTop: '2px' }}>{f.id}</p>
+            <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'তথ্য সম্পাদনা' : 'Edit Student'}</h2>
+            <p style={{ fontSize: '0.6875rem', color: 'var(--brand)', fontFamily: 'monospace', marginTop: '0.125rem' }}>{f.id}</p>
           </div>
           <button
             onClick={onClose}
             style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '8px',
+              width: '1.875rem',
+              height: '1.875rem',
+              borderRadius: '0.5rem',
               background: 'var(--bg-secondary)',
               border: '1px solid var(--border)',
               cursor: 'pointer',
@@ -342,22 +342,22 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '0.6875rem',
               fontWeight: 700,
               color: 'var(--brand)',
               textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              marginBottom: '8px',
+              letterSpacing: '0.0313rem',
+              marginBottom: '0.5rem',
             }}
           >
             {isBn ? '• ব্যক্তিগত' : '• Personal'}
           </div>
-          <div style={{ ...g(3), marginBottom: '10px' }}>
+          <div style={{ ...g(3), marginBottom: '0.625rem' }}>
             <EField label={isBn ? 'নাম (ইং)' : 'Name EN'} value={f.nameEn} onChange={(v) => s('nameEn', v)} />
             <EField label={isBn ? 'নাম (বাং)' : 'Name BN'} value={f.nameBn} onChange={(v) => s('nameBn', v)} />
             <EField label={isBn ? 'জন্ম তারিখ' : 'DOB'} value={f.dob} onChange={(v) => s('dob', v)} type="date" />
           </div>
-          <div style={{ ...g(3), marginBottom: '10px' }}>
+          <div style={{ ...g(3), marginBottom: '0.625rem' }}>
             <EField
               label={isBn ? 'লিঙ্গ' : 'Gender'}
               value={f.gender}
@@ -377,24 +377,24 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
               opts={['Islam / ইসলাম', 'Hinduism / হিন্দু', 'Christianity / খ্রিস্টান', 'Buddhism / বৌদ্ধ', 'Other / অন্যান্য']}
             />
           </div>
-          <div style={{ ...g(3), marginBottom: '14px' }}>
+          <div style={{ ...g(3), marginBottom: '0.875rem' }}>
             <EField label={isBn ? 'মোবাইল' : 'Mobile'} value={f.phone} onChange={(v) => s('phone', v)} type="tel" />
             <EField label="Email" value={f.email} onChange={(v) => s('email', v)} type="email" />
             <EField label={isBn ? 'জেলা' : 'District'} value={f.district} onChange={(v) => s('district', v)} />
           </div>
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '0.6875rem',
               fontWeight: 700,
               color: 'var(--teal)',
               textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              marginBottom: '8px',
+              letterSpacing: '0.0313rem',
+              marginBottom: '0.5rem',
             }}
           >
             {isBn ? '• একাডেমিক' : '• Academic'}
           </div>
-          <div style={{ ...g(3), marginBottom: '14px' }}>
+          <div style={{ ...g(3), marginBottom: '0.875rem' }}>
             <EField
               label={isBn ? 'শ্রেণি' : 'Class'}
               value={f.class}
@@ -414,17 +414,17 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
           </div>
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '0.6875rem',
               fontWeight: 700,
               color: 'var(--amber)',
               textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              marginBottom: '8px',
+              letterSpacing: '0.0313rem',
+              marginBottom: '0.5rem',
             }}
           >
             {isBn ? '• পিতামাতা' : '• Parents'}
           </div>
-          <div style={{ ...g(3), marginBottom: '14px' }}>
+          <div style={{ ...g(3), marginBottom: '0.875rem' }}>
             <EField label={isBn ? 'পিতার নাম (ইং)' : 'Father EN'} value={f.fatherNameEn} onChange={(v) => s('fatherNameEn', v)} />
             <EField
               label={isBn ? 'পিতার মোবাইল' : 'Father Mobile'}
@@ -434,7 +434,7 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
             />
             <EField label={isBn ? 'পিতার পেশা' : 'Father Occ.'} value={f.fatherOccupation} onChange={(v) => s('fatherOccupation', v)} />
           </div>
-          <div style={{ ...g(3), marginBottom: '14px' }}>
+          <div style={{ ...g(3), marginBottom: '0.875rem' }}>
             <EField label={isBn ? 'মাতার নাম (ইং)' : 'Mother EN'} value={f.motherNameEn} onChange={(v) => s('motherNameEn', v)} />
             <EField
               label={isBn ? 'মাতার মোবাইল' : 'Mother Mobile'}
@@ -446,17 +446,17 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
           </div>
         </div>
         <div
-          style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}
+          style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}
         >
           <button
             onClick={onClose}
             style={{
               padding: '9px 16px',
-              borderRadius: '9px',
+              borderRadius: '0.5625rem',
               background: 'var(--bg-secondary)',
               border: '1px solid var(--border)',
               color: 'var(--text-secondary)',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               cursor: 'pointer',
               fontFamily: 'inherit',
             }}
@@ -471,13 +471,13 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '0.375rem',
               padding: '9px 18px',
-              borderRadius: '9px',
+              borderRadius: '0.5625rem',
               background: 'var(--brand)',
               border: 'none',
               color: '#fff',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               fontWeight: 600,
               cursor: 'pointer',
               fontFamily: 'inherit',
@@ -517,9 +517,9 @@ const ViewModal = React.memo(function ViewModal({
   const st = isBn ? { pending: 'অপেক্ষমান', approved: 'অনুমোদিত', rejected: 'প্রত্যাখ্যাত' }[student.status] : student.status
 
   const row = (l: string, v: string) => (
-    <div style={{ display: 'flex', gap: '8px', padding: '5px 0', borderBottom: '0.5px solid var(--border)' }}>
-      <span style={{ fontSize: '11px', color: 'var(--text-muted)', width: '130px', flexShrink: 0 }}>{l}</span>
-      <span style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: 500 }}>{v || '—'}</span>
+    <div style={{ display: 'flex', gap: '0.5rem', padding: '5px 0', borderBottom: '0.5px solid var(--border)' }}>
+      <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', width: '8.125rem', flexShrink: 0 }}>{l}</span>
+      <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontWeight: 500 }}>{v || '—'}</span>
     </div>
   )
 
@@ -536,7 +536,7 @@ const ViewModal = React.memo(function ViewModal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: '1rem',
         overflowY: 'auto',
       }}
     >
@@ -544,9 +544,9 @@ const ViewModal = React.memo(function ViewModal({
         className="modal-content"
         style={{
           background: 'var(--bg-primary)',
-          borderRadius: '16px',
+          borderRadius: '1rem',
           width: '100%',
-          maxWidth: '680px',
+          maxWidth: '42.5rem',
           maxHeight: '92vh',
           overflow: 'hidden',
           display: 'flex',
@@ -565,20 +565,20 @@ const ViewModal = React.memo(function ViewModal({
           }}
         >
           <div>
-            <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               {isBn ? 'ছাত্রের প্রোফাইল' : 'Student Profile'}
             </h2>
-            <p style={{ fontSize: '11px', color: 'var(--brand)', fontFamily: 'monospace', marginTop: '2px' }}>{student.id}</p>
+            <p style={{ fontSize: '0.6875rem', color: 'var(--brand)', fontFamily: 'monospace', marginTop: '0.125rem' }}>{student.id}</p>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <span
               style={{
-                fontSize: '11px',
+                fontSize: '0.6875rem',
                 fontWeight: 600,
                 color: sc,
                 background: sb,
                 padding: '3px 10px',
-                borderRadius: '20px',
+                borderRadius: '1.25rem',
                 border: `1px solid ${sc}`,
                 textTransform: 'capitalize',
               }}
@@ -588,9 +588,9 @@ const ViewModal = React.memo(function ViewModal({
             <button
               onClick={onClose}
               style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '8px',
+                width: '1.875rem',
+                height: '1.875rem',
+                borderRadius: '0.5rem',
                 background: 'var(--bg-secondary)',
                 border: '1px solid var(--border)',
                 cursor: 'pointer',
@@ -604,12 +604,12 @@ const ViewModal = React.memo(function ViewModal({
           </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
-          <div style={{ display: 'flex', gap: '14px', marginBottom: '16px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.875rem', marginBottom: '1rem', alignItems: 'center' }}>
             <div
               style={{
-                width: '80px',
-                height: '100px',
-                borderRadius: '10px',
+                width: '5rem',
+                height: '6.25rem',
+                borderRadius: '0.625rem',
                 border: '2px solid var(--border)',
                 overflow: 'hidden',
                 background: 'var(--bg-secondary)',
@@ -626,16 +626,16 @@ const ViewModal = React.memo(function ViewModal({
               )}
             </div>
             <div style={{ flex: 1 }}>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' }}>{student.nameEn}</h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>{student.nameBn}</p>
-              <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: '1.0625rem', fontWeight: 700, color: 'var(--text-primary)' }}>{student.nameEn}</h3>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>{student.nameBn}</p>
+              <div style={{ display: 'flex', gap: '0.375rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: '0.6875rem',
                     background: 'var(--brand-light)',
                     color: 'var(--brand)',
                     padding: '2px 8px',
-                    borderRadius: '5px',
+                    borderRadius: '0.3125rem',
                     fontWeight: 500,
                   }}
                 >
@@ -643,11 +643,11 @@ const ViewModal = React.memo(function ViewModal({
                 </span>
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: '0.6875rem',
                     background: 'var(--bg-secondary)',
                     color: 'var(--text-secondary)',
                     padding: '2px 8px',
-                    borderRadius: '5px',
+                    borderRadius: '0.3125rem',
                     border: '1px solid var(--border)',
                   }}
                 >
@@ -656,11 +656,11 @@ const ViewModal = React.memo(function ViewModal({
                 {student.bloodGroup && (
                   <span
                     style={{
-                      fontSize: '11px',
+                      fontSize: '0.6875rem',
                       background: 'var(--red-light)',
                       color: 'var(--red)',
                       padding: '2px 8px',
-                      borderRadius: '5px',
+                      borderRadius: '0.3125rem',
                     }}
                   >
                     {student.bloodGroup}
@@ -669,15 +669,15 @@ const ViewModal = React.memo(function ViewModal({
               </div>
             </div>
           </div>
-          <div style={{ marginBottom: '10px' }}>
+          <div style={{ marginBottom: '0.625rem' }}>
             <div
               style={{
-                fontSize: '11px',
+                fontSize: '0.6875rem',
                 fontWeight: 700,
                 color: 'var(--brand)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '5px',
+                letterSpacing: '0.0313rem',
+                marginBottom: '0.3125rem',
               }}
             >
               📋 {isBn ? 'ব্যক্তিগত' : 'Personal'}
@@ -687,15 +687,15 @@ const ViewModal = React.memo(function ViewModal({
             {row(isBn ? 'মোবাইল' : 'Mobile', student.phone)}
             {row(isBn ? 'জেলা' : 'District', student.district)}
           </div>
-          <div style={{ marginBottom: '10px' }}>
+          <div style={{ marginBottom: '0.625rem' }}>
             <div
               style={{
-                fontSize: '11px',
+                fontSize: '0.6875rem',
                 fontWeight: 700,
                 color: 'var(--teal)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '5px',
+                letterSpacing: '0.0313rem',
+                marginBottom: '0.3125rem',
               }}
             >
               🎓 {isBn ? 'একাডেমিক' : 'Academic'}
@@ -707,12 +707,12 @@ const ViewModal = React.memo(function ViewModal({
           <div>
             <div
               style={{
-                fontSize: '11px',
+                fontSize: '0.6875rem',
                 fontWeight: 700,
                 color: 'var(--amber)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '5px',
+                letterSpacing: '0.0313rem',
+                marginBottom: '0.3125rem',
               }}
             >
               👨‍👩‍👧 {isBn ? 'পারিবারিক' : 'Family'}
@@ -726,17 +726,17 @@ const ViewModal = React.memo(function ViewModal({
           </div>
         </div>
         <div
-          style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}
+          style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}
         >
           <button
             onClick={onClose}
             style={{
               padding: '9px 14px',
-              borderRadius: '9px',
+              borderRadius: '0.5625rem',
               background: 'var(--bg-secondary)',
               border: '1px solid var(--border)',
               color: 'var(--text-secondary)',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               cursor: 'pointer',
               fontFamily: 'inherit',
             }}
@@ -748,13 +748,13 @@ const ViewModal = React.memo(function ViewModal({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '0.375rem',
               padding: '9px 18px',
-              borderRadius: '9px',
+              borderRadius: '0.5625rem',
               background: 'var(--brand)',
               border: 'none',
               color: '#fff',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               fontWeight: 600,
               cursor: 'pointer',
               fontFamily: 'inherit',
@@ -927,11 +927,11 @@ export default function AdmissionManage() {
 
   const sel: React.CSSProperties = {
     padding: '7px 9px',
-    borderRadius: '8px',
+    borderRadius: '0.5rem',
     border: '1px solid var(--border)',
     background: 'var(--bg-secondary)',
     color: 'var(--text-secondary)',
-    fontSize: '12px',
+    fontSize: '0.75rem',
     fontFamily: 'inherit',
     cursor: 'pointer',
     outline: 'none',
@@ -947,10 +947,10 @@ export default function AdmissionManage() {
     return (
       <span
         style={{
-          fontSize: '10px',
+          fontSize: '0.625rem',
           fontWeight: 600,
           padding: '2px 7px',
-          borderRadius: '10px',
+          borderRadius: '0.625rem',
           background: x.bg,
           color: x.c,
           whiteSpace: 'nowrap',
@@ -991,7 +991,7 @@ export default function AdmissionManage() {
       )}
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(3,1fr)' : 'repeat(6,1fr)', gap: '8px', marginBottom: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(3,1fr)' : 'repeat(6,1fr)', gap: '0.5rem', marginBottom: '0.75rem' }}>
         {[
           { l: isBn ? 'মোট' : 'Total', v: stats.total, c: 'var(--brand)', b: 'var(--brand-light)' },
           { l: isBn ? 'অপেক্ষমান' : 'Pending', v: stats.pending, c: 'var(--amber)', b: 'var(--amber-light)' },
@@ -1005,13 +1005,13 @@ export default function AdmissionManage() {
             style={{
               background: 'var(--bg-primary)',
               border: '1px solid var(--border)',
-              borderRadius: '10px',
-              padding: '10px',
+              borderRadius: '0.625rem',
+              padding: '0.625rem',
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: '20px', fontWeight: 700, color: x.c }}>{x.v}</div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '1px' }}>{x.l}</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: x.c }}>{x.v}</div>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: '0.0625rem' }}>{x.l}</div>
           </div>
         ))}
       </div>
@@ -1021,16 +1021,16 @@ export default function AdmissionManage() {
         style={{
           background: 'var(--bg-primary)',
           border: '1px solid var(--border)',
-          borderRadius: '12px',
+          borderRadius: '0.75rem',
           padding: '12px 14px',
-          marginBottom: '10px',
+          marginBottom: '0.625rem',
         }}
       >
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr 1fr 1fr',
-            gap: '8px',
+            gap: '0.5rem',
             marginBottom: fDate === 'custom' ? '8px' : '0',
           }}
         >
@@ -1038,10 +1038,10 @@ export default function AdmissionManage() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '7px',
+              gap: '0.4375rem',
               background: 'var(--bg-secondary)',
               border: '1px solid var(--border)',
-              borderRadius: '8px',
+              borderRadius: '0.5rem',
               padding: '7px 10px',
             }}
           >
@@ -1058,7 +1058,7 @@ export default function AdmissionManage() {
                 border: 'none',
                 background: 'transparent',
                 outline: 'none',
-                fontSize: '13px',
+                fontSize: '0.8125rem',
                 color: 'var(--text-primary)',
                 fontFamily: 'inherit',
               }}
@@ -1151,10 +1151,10 @@ export default function AdmissionManage() {
           </select>
         </div>
         {fDate === 'custom' && (
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '6px' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{isBn ? 'থেকে:' : 'From:'}</span>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.375rem' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{isBn ? 'থেকে:' : 'From:'}</span>
             <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ ...sel, padding: '6px 8px' }} />
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{isBn ? 'পর্যন্ত:' : 'To:'}</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{isBn ? 'পর্যন্ত:' : 'To:'}</span>
             <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ ...sel, padding: '6px 8px' }} />
           </div>
         )}
@@ -1164,16 +1164,16 @@ export default function AdmissionManage() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '5px',
+              gap: '0.3125rem',
               padding: '4px 10px',
-              borderRadius: '6px',
+              borderRadius: '0.375rem',
               background: 'var(--red-light)',
               border: '1px solid var(--red)',
               color: 'var(--red)',
-              fontSize: '11px',
+              fontSize: '0.6875rem',
               cursor: 'pointer',
               fontFamily: 'inherit',
-              marginTop: fDate === 'custom' ? '0' : '6px',
+              marginTop: fDate === 'custom' ? '0' : '0.375rem',
             }}
           >
             <X size={11} /> {isBn ? 'ফিল্টার সরান' : 'Clear'}
@@ -1187,13 +1187,13 @@ export default function AdmissionManage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '8px',
+          marginBottom: '0.5rem',
           flexWrap: 'wrap',
-          gap: '8px',
+          gap: '0.5rem',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{isBn ? 'প্রতি পাতায়:' : 'Per page:'}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{isBn ? 'প্রতি পাতায়:' : 'Per page:'}</span>
           <select
             value={perPage}
             onChange={(e) => {
@@ -1211,11 +1211,11 @@ export default function AdmissionManage() {
           {selected.length > 0 && (
             <span
               style={{
-                fontSize: '12px',
+                fontSize: '0.75rem',
                 color: 'var(--brand)',
                 background: 'var(--brand-light)',
                 padding: '3px 10px',
-                borderRadius: '6px',
+                borderRadius: '0.375rem',
                 fontWeight: 500,
               }}
             >
@@ -1223,19 +1223,19 @@ export default function AdmissionManage() {
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '6px' }}>
+        <div style={{ display: 'flex', gap: '0.375rem' }}>
           <button
             onClick={exportExcel}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '5px',
+              gap: '0.3125rem',
               padding: '7px 12px',
-              borderRadius: '8px',
+              borderRadius: '0.5rem',
               background: 'var(--green-light)',
               border: '1px solid var(--green)',
               color: 'var(--green)',
-              fontSize: '12px',
+              fontSize: '0.75rem',
               cursor: 'pointer',
               fontFamily: 'inherit',
               fontWeight: 500,
@@ -1249,13 +1249,13 @@ export default function AdmissionManage() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '5px',
+              gap: '0.3125rem',
               padding: '7px 12px',
-              borderRadius: '8px',
+              borderRadius: '0.5rem',
               background: 'var(--red-light)',
               border: '1px solid var(--red)',
               color: 'var(--red)',
-              fontSize: '12px',
+              fontSize: '0.75rem',
               cursor: 'pointer',
               fontFamily: 'inherit',
               fontWeight: 500,
@@ -1268,42 +1268,42 @@ export default function AdmissionManage() {
       </div>
 
       {/* Table */}
-      <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '14px', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '0.875rem', overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
             <thead>
               <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 12px', width: '36px' }}>
+                <th style={{ padding: '10px 12px', width: '2.25rem' }}>
                   <input
                     type="checkbox"
                     checked={allSel}
                     onChange={toggleAll}
-                    style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--brand)' }}
+                    style={{ width: '0.8125rem', height: '0.8125rem', cursor: 'pointer', accentColor: 'var(--brand)' }}
                   />
                 </th>
                 {[
-                  { l: '#', w: '38px' },
-                  { l: isBn ? 'ছবি' : 'Photo', w: '46px' },
-                  { l: isBn ? 'ছাত্র আইডি' : 'Student ID', w: '145px' },
-                  { l: isBn ? 'নাম' : 'Name', w: '155px' },
-                  { l: isBn ? 'শ্রেণি' : 'Class', w: '75px' },
-                  { l: isBn ? 'লিঙ্গ' : 'Gender', w: '70px' },
-                  { l: isBn ? 'মোবাইল' : 'Mobile', w: '110px' },
-                  { l: isBn ? 'ধর্ম' : 'Religion', w: '90px' },
-                  { l: isBn ? 'তারিখ' : 'Date', w: '88px' },
-                  { l: isBn ? 'অবস্থা' : 'Status', w: '90px' },
-                  { l: isBn ? 'অ্যাকশন' : 'Action', w: '96px' },
+                  { l: '#', w: '2.375rem' },
+                  { l: isBn ? 'ছবি' : 'Photo', w: '2.875rem' },
+                  { l: isBn ? 'ছাত্র আইডি' : 'Student ID', w: '9.0625rem' },
+                  { l: isBn ? 'নাম' : 'Name', w: '9.6875rem' },
+                  { l: isBn ? 'শ্রেণি' : 'Class', w: '4.6875rem' },
+                  { l: isBn ? 'লিঙ্গ' : 'Gender', w: '4.375rem' },
+                  { l: isBn ? 'মোবাইল' : 'Mobile', w: '6.875rem' },
+                  { l: isBn ? 'ধর্ম' : 'Religion', w: '5.625rem' },
+                  { l: isBn ? 'তারিখ' : 'Date', w: '5.5rem' },
+                  { l: isBn ? 'অবস্থা' : 'Status', w: '5.625rem' },
+                  { l: isBn ? 'অ্যাকশন' : 'Action', w: '6rem' },
                 ].map((h) => (
                   <th
                     key={h.l}
                     style={{
                       padding: '10px 8px',
                       textAlign: 'left',
-                      fontSize: '10px',
+                      fontSize: '0.625rem',
                       fontWeight: 600,
                       color: 'var(--text-muted)',
                       textTransform: 'uppercase',
-                      letterSpacing: '0.4px',
+                      letterSpacing: '0.025rem',
                       whiteSpace: 'nowrap',
                       minWidth: h.w,
                     }}
@@ -1316,7 +1316,7 @@ export default function AdmissionManage() {
             <tbody>
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={12} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan={12} style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                     <Users size={30} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
                     {isBn ? 'কোনো ছাত্র পাওয়া যায়নি' : 'No students found'}
                   </td>
@@ -1341,18 +1341,18 @@ export default function AdmissionManage() {
                         type="checkbox"
                         checked={selected.includes(s.id)}
                         onChange={() => toggleOne(s.id)}
-                        style={{ width: '13px', height: '13px', cursor: 'pointer', accentColor: 'var(--brand)' }}
+                        style={{ width: '0.8125rem', height: '0.8125rem', cursor: 'pointer', accentColor: 'var(--brand)' }}
                       />
                     </td>
-                    <td style={{ padding: '8px 8px', color: 'var(--text-muted)', fontWeight: 600, fontSize: '11px' }}>
+                    <td style={{ padding: '8px 8px', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.6875rem' }}>
                       {(sp - 1) * perPage + i + 1}
                     </td>
                     <td style={{ padding: '7px 8px' }}>
                       <div
                         style={{
-                          width: '30px',
-                          height: '36px',
-                          borderRadius: '5px',
+                          width: '1.875rem',
+                          height: '2.25rem',
+                          borderRadius: '0.3125rem',
                           overflow: 'hidden',
                           background: 'var(--bg-secondary)',
                           border: '1px solid var(--border)',
@@ -1371,12 +1371,12 @@ export default function AdmissionManage() {
                     <td style={{ padding: '8px 8px' }}>
                       <span
                         style={{
-                          fontSize: '10px',
+                          fontSize: '0.625rem',
                           fontFamily: 'monospace',
                           color: 'var(--brand)',
                           background: 'var(--brand-light)',
                           padding: '2px 6px',
-                          borderRadius: '4px',
+                          borderRadius: '0.25rem',
                           whiteSpace: 'nowrap',
                         }}
                       >
@@ -1386,39 +1386,39 @@ export default function AdmissionManage() {
                     <td style={{ padding: '8px 8px' }}>
                       <div
                         style={{
-                          fontSize: '12px',
+                          fontSize: '0.75rem',
                           fontWeight: 500,
                           color: 'var(--text-primary)',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          maxWidth: '150px',
+                          maxWidth: '9.375rem',
                         }}
                       >
                         {isBn ? s.nameBn || s.nameEn : s.nameEn}
                       </div>
                       <div
                         style={{
-                          fontSize: '10px',
+                          fontSize: '0.625rem',
                           color: 'var(--text-muted)',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          maxWidth: '150px',
+                          maxWidth: '9.375rem',
                         }}
                       >
                         {isBn ? s.nameEn : s.nameBn}
                       </div>
                     </td>
-                    <td style={{ padding: '8px 8px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', fontSize: '12px' }}>
+                    <td style={{ padding: '8px 8px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', fontSize: '0.75rem' }}>
                       {s.class} {s.section}
                     </td>
                     <td style={{ padding: '8px 8px' }}>
                       <span
                         style={{
-                          fontSize: '10px',
+                          fontSize: '0.625rem',
                           padding: '2px 6px',
-                          borderRadius: '5px',
+                          borderRadius: '0.3125rem',
                           background: s.gender.includes('Female') ? 'var(--purple-light)' : 'var(--teal-light)',
                           color: s.gender.includes('Female') ? 'var(--purple)' : 'var(--teal)',
                           fontWeight: 500,
@@ -1433,28 +1433,28 @@ export default function AdmissionManage() {
                         padding: '8px 8px',
                         color: 'var(--text-secondary)',
                         fontFamily: 'monospace',
-                        fontSize: '11px',
+                        fontSize: '0.6875rem',
                         whiteSpace: 'nowrap',
                       }}
                     >
                       {s.phone}
                     </td>
-                    <td style={{ padding: '8px 8px', color: 'var(--text-secondary)', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '8px 8px', color: 'var(--text-secondary)', fontSize: '0.6875rem', whiteSpace: 'nowrap' }}>
                       {s.religion.split(' / ')[0]}
                     </td>
-                    <td style={{ padding: '8px 8px', color: 'var(--text-secondary)', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '8px 8px', color: 'var(--text-secondary)', fontSize: '0.6875rem', whiteSpace: 'nowrap' }}>
                       {s.admissionDate}
                     </td>
                     <td style={{ padding: '8px 8px' }}>{statusBadge(s.status)}</td>
                     <td style={{ padding: '8px 8px' }}>
-                      <div style={{ display: 'flex', gap: '3px' }}>
+                      <div style={{ display: 'flex', gap: '0.1875rem' }}>
                         <button
                           onClick={() => setViewingStudent(s)}
                           title={isBn ? 'দেখুন' : 'View'}
                           style={{
-                            width: '26px',
-                            height: '26px',
-                            borderRadius: '6px',
+                            width: '1.625rem',
+                            height: '1.625rem',
+                            borderRadius: '0.375rem',
                             background: 'var(--brand-light)',
                             border: 'none',
                             cursor: 'pointer',
@@ -1470,9 +1470,9 @@ export default function AdmissionManage() {
                           onClick={() => setEditingStudent(s)}
                           title={isBn ? 'এডিট' : 'Edit'}
                           style={{
-                            width: '26px',
-                            height: '26px',
-                            borderRadius: '6px',
+                            width: '1.625rem',
+                            height: '1.625rem',
+                            borderRadius: '0.375rem',
                             background: 'var(--amber-light)',
                             border: 'none',
                             cursor: 'pointer',
@@ -1489,9 +1489,9 @@ export default function AdmissionManage() {
                             onClick={() => setApprovingStudent(s)}
                             title={isBn ? 'Approve' : 'Approve'}
                             style={{
-                              width: '26px',
-                              height: '26px',
-                              borderRadius: '6px',
+                              width: '1.625rem',
+                              height: '1.625rem',
+                              borderRadius: '0.375rem',
                               background: 'var(--green-light)',
                               border: 'none',
                               cursor: 'pointer',
@@ -1523,15 +1523,15 @@ export default function AdmissionManage() {
             alignItems: 'center',
             background: 'var(--bg-secondary)',
             flexWrap: 'wrap',
-            gap: '8px',
+            gap: '0.5rem',
           }}
         >
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             {isBn
               ? `${(sp - 1) * perPage + 1}–${Math.min(sp * perPage, filtered.length)} / মোট ${filtered.length}`
               : `${(sp - 1) * perPage + 1}–${Math.min(sp * perPage, filtered.length)} of ${filtered.length}`}
           </span>
-          <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.1875rem', flexWrap: 'wrap' }}>
             {[
               { icon: <ChevronsLeft size={12} />, action: () => setPage(1), disabled: sp === 1 },
               { icon: <ChevronLeft size={12} />, action: () => setPage((p) => Math.max(1, p - 1)), disabled: sp === 1 },
@@ -1541,9 +1541,9 @@ export default function AdmissionManage() {
                 onClick={b.action}
                 disabled={b.disabled}
                 style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '6px',
+                  width: '1.75rem',
+                  height: '1.75rem',
+                  borderRadius: '0.375rem',
                   border: '1px solid var(--border)',
                   background: 'var(--bg-primary)',
                   color: b.disabled ? 'var(--text-muted)' : 'var(--text-secondary)',
@@ -1563,14 +1563,14 @@ export default function AdmissionManage() {
                   key={p}
                   onClick={() => setPage(p)}
                   style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '6px',
+                    width: '1.75rem',
+                    height: '1.75rem',
+                    borderRadius: '0.375rem',
                     border: `1px solid ${p === sp ? 'var(--brand)' : 'var(--border)'}`,
                     background: p === sp ? 'var(--brand)' : 'var(--bg-primary)',
                     color: p === sp ? '#fff' : 'var(--text-secondary)',
                     cursor: 'pointer',
-                    fontSize: '12px',
+                    fontSize: '0.75rem',
                     fontWeight: p === sp ? 600 : 400,
                   }}
                 >
@@ -1587,9 +1587,9 @@ export default function AdmissionManage() {
                 onClick={b.action}
                 disabled={b.disabled}
                 style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '6px',
+                  width: '1.75rem',
+                  height: '1.75rem',
+                  borderRadius: '0.375rem',
                   border: '1px solid var(--border)',
                   background: 'var(--bg-primary)',
                   color: b.disabled ? 'var(--text-muted)' : 'var(--text-secondary)',

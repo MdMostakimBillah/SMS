@@ -94,7 +94,7 @@ ${teacher.photo ? `<div class="photo"><img src="${teacher.photo}" alt="${teacher
         <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'শিক্ষক পাওয়া যায়নি' : 'Teacher not found'}</p>
         <button
           onClick={() => navigate('/teachers/all')}
-          className="mt-3 py-2 px-4 rounded-lg bg-[var(--border)] border-none text-white text-[13px] cursor-pointer font-inherit"
+          className="mt-3 py-2 px-4 rounded-lg bg-[var(--border)] border-none text-white text-[0.8125rem] cursor-pointer font-inherit"
         >
           {isBn ? 'ফিরে যান' : 'Go Back'}
         </button>
@@ -138,29 +138,29 @@ ${teacher.photo ? `<div class="photo"><img src="${teacher.photo}" alt="${teacher
       <div className="flex items-center gap-2.5 mb-4 flex-wrap">
         <button
           onClick={() => navigate('/teachers/all')}
-          className="flex items-center gap-1.5 py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-inherit shrink-0"
+          className="flex items-center gap-1.5 py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-inherit shrink-0"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div className="flex-1">
-          <h1 className="text-[22px] font-semibold text-[var(--text-primary)]">{isBn ? 'শিক্ষক প্রোফাইল' : 'Teacher Profile'}</h1>
-          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
+          <h1 className="text-[1.375rem] font-semibold text-[var(--text-primary)]">{isBn ? 'শিক্ষক প্রোফাইল' : 'Teacher Profile'}</h1>
+          <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {teacher.id} · {getDeptName(teacher.departmentId)}
           </p>
         </div>
         <button
           onClick={downloadPDF}
-          className="flex items-center gap-1.5 py-2 px-3.5 rounded-[9px] bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[13px] cursor-pointer font-inherit font-medium"
+          className="flex items-center gap-1.5 py-2 px-3.5 rounded-[0.5625rem] bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.8125rem] cursor-pointer font-inherit font-medium"
         >
           <FileText size={14} />
           PDF
         </button>
       </div>
 
-      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden">
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
         <div className="p-5 bg-[var(--brand-light)] border-b border-[var(--border)] flex gap-5 items-start flex-wrap">
-          <div className="w-[100px] h-[120px] rounded-[10px] border-2 border-[var(--brand)] overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center shrink-0">
+          <div className="w-[6.25rem] h-[7.5rem] rounded-[0.625rem] border-2 border-[var(--brand)] overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center shrink-0">
             {teacher.photo ? (
               <img src={teacher.photo} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -186,7 +186,7 @@ ${teacher.photo ? `<div class="photo"><img src="${teacher.photo}" alt="${teacher
               ]
                 .filter((x) => x.t)
                 .map((x, i) => (
-                  <span key={i} className={`text-xs font-medium py-[3px] px-2.5 rounded-md text-[${x.c}] bg-[${x.b}]`}>
+                  <span key={i} className={`text-xs font-medium py-[0.1875rem] px-2.5 rounded-md text-[${x.c}] bg-[${x.b}]`}>
                     {x.t}
                   </span>
                 ))}
@@ -199,7 +199,7 @@ ${teacher.photo ? `<div class="photo"><img src="${teacher.photo}" alt="${teacher
             {infoItems.map(([l, v]) =>
               v ? (
                 <div key={String(l)} className="flex gap-2.5 py-2 px-3 rounded-lg bg-[var(--bg-secondary)]">
-                  <span className="text-[11px] text-[var(--text-muted)] w-[110px] shrink-0">{l}</span>
+                  <span className="text-[0.6875rem] text-[var(--text-muted)] w-[6.875rem] shrink-0">{l}</span>
                   <span className="text-xs text-[var(--text-primary)] font-medium">{v}</span>
                 </div>
               ) : null
@@ -214,7 +214,7 @@ ${teacher.photo ? `<div class="photo"><img src="${teacher.photo}" alt="${teacher
               {parentItems.map(([l, v]) =>
                 v ? (
                   <div key={String(l)} className="flex gap-2.5 py-2 px-3 rounded-lg bg-[var(--bg-secondary)]">
-                    <span className="text-[11px] text-[var(--text-muted)] w-[110px] shrink-0">{l}</span>
+                    <span className="text-[0.6875rem] text-[var(--text-muted)] w-[6.875rem] shrink-0">{l}</span>
                     <span className="text-xs text-[var(--text-primary)] font-medium">{v}</span>
                   </div>
                 ) : null

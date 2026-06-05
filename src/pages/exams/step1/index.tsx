@@ -23,12 +23,12 @@ import { useExamStore } from '@/store/examStore'
 import type { ExamConfig, ExamType, SubjectMarkConfig, OMRConfig as OMRExamConfig } from '@/store/examStore'
 import { generateOMRSheet, type OMRConfig } from '@/pages/exams/omrTemplate'
 
-const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] mb-[8px]'
-const sectionTitleCls = 'flex items-center gap-2 text-[13px] font-semibold text-[var(--text-primary)]'
+const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-[0.875rem] mb-[0.5rem]'
+const sectionTitleCls = 'flex items-center gap-2 text-[0.8125rem] font-semibold text-[var(--text-primary)]'
 const inputCls =
   'h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border'
 const btnPrimary =
-  'flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
+  'flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
 
 type SubTab = 'exams' | 'subjects' | 'grade-scale' | 'omr'
 
@@ -382,17 +382,17 @@ export default function Step1Planning() {
             <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 className="text-[16px] font-bold text-[var(--text-primary)]">
+            <h1 className="text-[1rem] font-bold text-[var(--text-primary)]">
               {isBn ? 'ধাপ ১: পরিকল্পনা ও প্রস্তুতি' : 'Step 1: Planning & Preparation'}
             </h1>
-            <p className="text-[11px] text-[var(--text-muted)]">
+            <p className="text-[0.6875rem] text-[var(--text-muted)]">
               {isBn ? 'পরীক্ষা সেটআপ, বিষয় ও মার্কস কনফিগারেশন ও গ্রেড স্কেল' : 'Exam setup, subject & mark configuration & grade scale'}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div
-            className="text-[11px] font-medium px-2 py-1 rounded-lg"
+            className="text-[0.6875rem] font-medium px-2 py-1 rounded-lg"
             style={{
               color: completionPct === 100 ? 'var(--green)' : 'var(--amber)',
               background: completionPct === 100 ? 'var(--green-light)' : 'var(--amber-light)',
@@ -426,7 +426,7 @@ export default function Step1Planning() {
           <button
             key={t.key}
             onClick={() => setActiveSubTab(t.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeSubTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeSubTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
           >
             {t.icon}
             {t.label}
@@ -459,7 +459,7 @@ export default function Step1Planning() {
                   {item.done && <CheckCircle size={10} color="#fff" />}
                 </div>
                 <span
-                  className="text-[11px]"
+                  className="text-[0.6875rem]"
                   style={{ color: item.done ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: item.done ? 500 : 400 }}
                 >
                   {item.label}
@@ -473,7 +473,7 @@ export default function Step1Planning() {
         {activeSubTab === 'exams' && (
           <div className="grid gap-3">
             <div className="flex justify-between items-center">
-              <span className="text-[12px] text-[var(--text-secondary)]">
+              <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {isBn ? `মোট ${examConfigs.length}টি পরীক্ষা` : `${examConfigs.length} exams`}
               </span>
             </div>
@@ -486,9 +486,9 @@ export default function Step1Planning() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-[14px] font-semibold text-[var(--text-primary)]">{isBn ? exam.nameBn : exam.name}</span>
+                        <span className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? exam.nameBn : exam.name}</span>
                         <span
-                          className={`text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium ${
+                          className={`text-[0.625rem] py-[0.125rem] px-[0.375rem] rounded-[0.3125rem] font-medium ${
                             exam.type === 'semester-1'
                               ? 'bg-[#dbeafe] text-[#1d4ed8]'
                               : exam.type === 'semester-2'
@@ -501,12 +501,12 @@ export default function Step1Planning() {
                           {isBn ? (EXAM_TYPE_LABELS[exam.type]?.bn || exam.type) : (EXAM_TYPE_LABELS[exam.type]?.en || exam.type)}
                         </span>
                         {exam.isActive && (
-                          <span className="text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium bg-[var(--green-light)] text-[var(--green)]">
+                          <span className="text-[0.625rem] py-[0.125rem] px-[0.375rem] rounded-[0.3125rem] font-medium bg-[var(--green-light)] text-[var(--green)]">
                             {isBn ? 'সক্রিয়' : 'Active'}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 text-[11px] text-[var(--text-muted)] flex-wrap">
+                      <div className="flex items-center gap-3 text-[0.6875rem] text-[var(--text-muted)] flex-wrap">
                         <span>
                           {isBn ? 'সেশন' : 'Session'}: {exam.session}
                         </span>
@@ -517,7 +517,7 @@ export default function Step1Planning() {
                       {/* Subject config summary */}
                       <div className="mt-2 flex items-center gap-2">
                         <div
-                          className={`flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md ${overallPct === 100 ? 'bg-[var(--green-light)] text-[var(--green)]' : overallPct > 0 ? 'bg-[var(--amber-light)] text-[var(--amber)]' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
+                          className={`flex items-center gap-1.5 text-[0.6875rem] font-medium px-2 py-0.5 rounded-md ${overallPct === 100 ? 'bg-[var(--green-light)] text-[var(--green)]' : overallPct > 0 ? 'bg-[var(--amber-light)] text-[var(--amber)]' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
                         >
                           {overallPct === 100 ? <CheckCircle size={11} /> : <Settings size={11} />}
                           {isBn ? 'বিষয় ও মার্কস কনফিগ' : 'Subject & Mark Config'}
@@ -530,7 +530,7 @@ export default function Step1Planning() {
                           {classStats.map((cs) => (
                             <div
                               key={cs.classId}
-                              className={`flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-md border ${cs.pct === 100 ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]' : cs.pct > 0 ? 'border-[var(--amber)] bg-[var(--amber-light)] text-[var(--amber)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
+                              className={`flex items-center gap-1 text-[0.5625rem] px-1.5 py-0.5 rounded-md border ${cs.pct === 100 ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]' : cs.pct > 0 ? 'border-[var(--amber)] bg-[var(--amber-light)] text-[var(--amber)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
                             >
                               {cs.pct === 100 ? <CheckCircle size={9} /> : <Settings size={9} />}
                               {cs.classId}: {cs.configured}/{cs.total} ({cs.pct}%)
@@ -539,7 +539,7 @@ export default function Step1Planning() {
                         </div>
                       )}
                       {classStats.length === 0 && (
-                        <div className="mt-2 text-[10px] text-[var(--text-muted)] italic">
+                        <div className="mt-2 text-[0.625rem] text-[var(--text-muted)] italic">
                           {isBn ? 'কোনো বিষয় বা মার্কস কনফিগার হয়নি' : 'No subject & mark config yet'}
                         </div>
                       )}
@@ -595,13 +595,13 @@ export default function Step1Planning() {
             {examConfigs.length === 0 && (
               <div className={`${sectionCls} text-center py-10`}>
                 <ClipboardList size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                <p className="text-[13px] text-[var(--text-muted)]">{isBn ? 'এখনো কোনো পরীক্ষা তৈরি হয়নি' : 'No exams created yet'}</p>
+                <p className="text-[0.8125rem] text-[var(--text-muted)]">{isBn ? 'এখনো কোনো পরীক্ষা তৈরি হয়নি' : 'No exams created yet'}</p>
                 <button
                   onClick={() => {
                     setShowExamForm(true)
               setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: '2025-26', startDate: '', endDate: '' })
                   }}
-                  className={`${btnPrimary} mt-3 text-[11px]`}
+                  className={`${btnPrimary} mt-3 text-[0.6875rem]`}
                 >
                   <Plus size={13} />
                   {isBn ? 'প্রথম পরীক্ষা তৈরি' : 'Create First Exam'}
@@ -618,12 +618,12 @@ export default function Step1Planning() {
               <div className={sectionCls}>
                 <div className="text-center py-8">
                   <AlertTriangle size={28} className="mx-auto mb-2 text-[var(--amber)]" />
-                  <p className="text-[13px] text-[var(--text-muted)]">
+                  <p className="text-[0.8125rem] text-[var(--text-muted)]">
                     {isBn ? 'প্রথমে একটি পরীক্ষা সক্রিয় করুন' : 'Please activate an exam first'}
                   </p>
                   <button
                     onClick={() => setActiveSubTab('exams')}
-                    className="mt-2 text-[12px] text-[var(--brand)] cursor-pointer hover:underline"
+                    className="mt-2 text-[0.75rem] text-[var(--brand)] cursor-pointer hover:underline"
                   >
                     {isBn ? 'পরীক্ষা তৈরি করুন' : 'Create Exam'}
                   </button>
@@ -647,7 +647,7 @@ export default function Step1Planning() {
                               setCopyTargetSubjectIds([])
                               setShowCopySubjectModal(true)
                             }}
-                            className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] text-[11px] font-medium cursor-pointer"
+                            className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] text-[0.6875rem] font-medium cursor-pointer"
                           >
                             <ClipboardList size={12} />
                             {isBn ? 'বিষয়ে কপি' : 'Copy to Subjects'}
@@ -655,7 +655,7 @@ export default function Step1Planning() {
                         )}
                         <button
                           onClick={() => setShowCopyAllConfirm(true)}
-                          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--green-light)] text-[var(--green)] border border-[var(--green)] text-[11px] font-medium cursor-pointer"
+                          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--green-light)] text-[var(--green)] border border-[var(--green)] text-[0.6875rem] font-medium cursor-pointer"
                         >
                           <Copy size={12} />
                           {isBn ? 'শ্রেণিতে কপি' : 'Copy to Class'}
@@ -681,13 +681,13 @@ export default function Step1Planning() {
                           }}
                           className={`relative p-3 rounded-xl border text-left cursor-pointer transition-all ${isActive ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-md' : 'bg-[var(--bg-secondary)] border-[var(--border)] hover:border-[var(--brand)] hover:shadow-sm text-[var(--text-primary)]'}`}
                         >
-                          <div className={`text-[12px] font-bold ${isActive ? 'text-white' : 'text-[var(--text-primary)]'}`}>{c}</div>
-                          <div className={`text-[9px] mt-0.5 ${isActive ? 'text-white/70' : 'text-[var(--text-muted)]'}`}>
+                          <div className={`text-[0.75rem] font-bold ${isActive ? 'text-white' : 'text-[var(--text-primary)]'}`}>{c}</div>
+                          <div className={`text-[0.5625rem] mt-0.5 ${isActive ? 'text-white/70' : 'text-[var(--text-muted)]'}`}>
                             {secCount > 0 ? `${secCount} ${isBn ? 'সেকশন' : 'sec'}` : isBn ? 'সেকশন নেই' : 'No sec'}
                           </div>
                           {cfgCount > 0 && (
                             <div
-                              className={`absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-[var(--green-light)] text-[var(--green)]'}`}
+                              className={`absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-[0.5rem] font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-[var(--green-light)] text-[var(--green)]'}`}
                             >
                               {cfgCount}
                             </div>
@@ -700,7 +700,7 @@ export default function Step1Planning() {
                   {/* Section Chips */}
                   {distClassId && selectedClassSections.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-[var(--border)]">
-                      <div className="text-[10px] font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wider">
+                      <div className="text-[0.625rem] font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wider">
                         {isBn ? 'সেকশন নির্বাচন করুন' : 'Select Sections'}
                       </div>
                       <div className="flex flex-wrap gap-1.5">
@@ -710,10 +710,10 @@ export default function Step1Planning() {
                             <button
                               key={sec.id}
                               onClick={() => toggleSection(sec.name)}
-                              className={`px-3 py-1.5 rounded-lg text-[11px] font-medium border cursor-pointer transition-all ${isSelected ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'bg-[var(--bg-secondary)] text-[var(--text-primary)] border-[var(--border)] hover:border-[var(--brand)]'}`}
+                              className={`px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium border cursor-pointer transition-all ${isSelected ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'bg-[var(--bg-secondary)] text-[var(--text-primary)] border-[var(--border)] hover:border-[var(--brand)]'}`}
                             >
                               {isBn ? `সেকশন ${sec.name}` : `Section ${sec.name}`}
-                              <span className="ml-1 text-[9px] opacity-60">({sec.seatQuantity})</span>
+                              <span className="ml-1 text-[0.5625rem] opacity-60">({sec.seatQuantity})</span>
                             </button>
                           )
                         })}
@@ -730,7 +730,7 @@ export default function Step1Planning() {
                         <div className={sectionTitleCls}>
                           <BookOpen size={15} className="text-[var(--teal)]" />
                           {isBn ? 'সকল বিষয়' : 'All Subjects'}
-                          <span className="ml-2 text-[10px] font-normal text-[var(--text-muted)]">
+                          <span className="ml-2 text-[0.625rem] font-normal text-[var(--text-muted)]">
                             {distConfigs.length}/{filteredSubjects.length} {isBn ? 'কনফিগার্ড' : 'configured'}
                           </span>
                         </div>
@@ -738,7 +738,7 @@ export default function Step1Planning() {
 
                       {/* Table Header */}
                       <div
-                        className="grid gap-2 pb-2 border-b border-[var(--border)] text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider"
+                        className="grid gap-2 pb-2 border-b border-[var(--border)] text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider"
                         style={{ gridTemplateColumns: '24px 1fr 1fr 90px 44px' }}
                       >
                         <div className="text-center">#</div>
@@ -759,9 +759,9 @@ export default function Step1Planning() {
                               className={`transition-colors ${config && config.subExams.length > 0 ? 'bg-[var(--green-light)]/30' : 'hover:bg-[var(--bg-secondary)]'}`}
                             >
                               <div className="grid items-center gap-2 py-2" style={{ gridTemplateColumns: '24px 1fr 1fr 90px 44px' }}>
-                                <div className="text-center text-[10px] text-[var(--text-muted)]">{idx + 1}</div>
+                                <div className="text-center text-[0.625rem] text-[var(--text-muted)]">{idx + 1}</div>
                                 <div className="min-w-0">
-                                  <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">
+                                  <div className="text-[0.75rem] font-medium text-[var(--text-primary)] truncate">
                                     {isBn ? subject.nameBn : subject.name}
                                   </div>
                                 </div>
@@ -770,7 +770,7 @@ export default function Step1Planning() {
                                     config.subExams.map((se) => (
                                       <span
                                         key={se.id}
-                                        className="inline-flex items-center gap-0.5 text-[8px] px-1.5 py-0.5 rounded-md bg-[var(--brand-light)] text-[var(--brand)] font-medium"
+                                        className="inline-flex items-center gap-0.5 text-[0.5rem] px-1.5 py-0.5 rounded-md bg-[var(--brand-light)] text-[var(--brand)] font-medium"
                                       >
                                         {isBn ? se.nameBn : se.name}: {se.fullMarks}/{se.passMarks}
                                         <button
@@ -782,7 +782,7 @@ export default function Step1Planning() {
                                       </span>
                                     ))
                                   ) : (
-                                    <span className="text-[9px] text-[var(--text-muted)] italic">
+                                    <span className="text-[0.5625rem] text-[var(--text-muted)] italic">
                                       {isBn ? 'সাব-এক্সাম যোগ করুন' : 'Add sub-exams'}
                                     </span>
                                   )}
@@ -790,15 +790,15 @@ export default function Step1Planning() {
                                 <div className="text-center">
                                   {totals && totals.totalFull > 0 ? (
                                     <div className="flex flex-col items-center">
-                                      <span className={`text-[12px] font-bold ${isOver ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
+                                      <span className={`text-[0.75rem] font-bold ${isOver ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
                                         {totals.totalFull}/{totals.totalPass}
                                       </span>
                                       {isOver && (
-                                        <span className="text-[8px] text-[var(--red)] font-bold">⚠ {isBn ? '১০০+!' : '100+!'}</span>
+                                        <span className="text-[0.5rem] text-[var(--red)] font-bold">⚠ {isBn ? '১০০+!' : '100+!'}</span>
                                       )}
                                     </div>
                                   ) : (
-                                    <span className="text-[10px] text-[var(--text-muted)]">—</span>
+                                    <span className="text-[0.625rem] text-[var(--text-muted)]">—</span>
                                   )}
                                 </div>
                                 <div className="flex items-center justify-center gap-1">
@@ -845,14 +845,14 @@ export default function Step1Planning() {
                                         setEditDistConfig(config)
                                         setShowSubExamForm(true)
                                       }}
-                                      className="inline-flex items-center gap-1 text-[9px] px-2 py-1 rounded-md bg-[var(--brand)] text-white border-none cursor-pointer font-medium hover:shadow-sm"
+                                      className="inline-flex items-center gap-1 text-[0.5625rem] px-2 py-1 rounded-md bg-[var(--brand)] text-white border-none cursor-pointer font-medium hover:shadow-sm"
                                     >
                                       <Plus size={9} />
                                       {isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-Exam'}
                                     </button>
                                     <button
                                       onClick={() => handleQuickSetupSubExams(config)}
-                                      className="inline-flex items-center gap-1 text-[9px] px-2 py-1 rounded-md bg-[var(--teal-light)] text-[var(--teal)] border border-[var(--teal)] cursor-pointer font-medium hover:shadow-sm"
+                                      className="inline-flex items-center gap-1 text-[0.5625rem] px-2 py-1 rounded-md bg-[var(--teal-light)] text-[var(--teal)] border border-[var(--teal)] cursor-pointer font-medium hover:shadow-sm"
                                     >
                                       <Zap size={9} />
                                       {isBn ? 'দ্রুত সেটআপ (CQ+MCQ+Oral)' : 'Quick Setup (CQ+MCQ+Oral)'}
@@ -866,7 +866,7 @@ export default function Step1Planning() {
                       </div>
 
                       {filteredSubjects.length === 0 && (
-                        <div className="text-center py-8 text-[var(--text-muted)] text-[12px]">
+                        <div className="text-center py-8 text-[var(--text-muted)] text-[0.75rem]">
                           {isBn
                             ? 'এই শ্রেণিতে কোনো বিষয় নেই। ক্লাস ম্যানেজমেন্টে সেকশনে বিষয় যোগ করুন।'
                             : 'No subjects for this class. Add subjects to sections in Class Management.'}
@@ -885,7 +885,7 @@ export default function Step1Planning() {
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="flex items-center justify-between mb-3">
-                            <span className="text-[14px] font-bold text-[var(--text-primary)]">
+                            <span className="text-[0.875rem] font-bold text-[var(--text-primary)]">
                               {isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-Exam'}
                             </span>
                             <button
@@ -895,7 +895,7 @@ export default function Step1Planning() {
                               <X size={14} />
                             </button>
                           </div>
-                          <div className="text-[11px] text-[var(--text-muted)] mb-3">
+                          <div className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
                             {(() => {
                               const sub = subjects.find((s) => s.id === editDistConfig.subjectId)
                               return sub ? `${isBn ? sub.nameBn : sub.name}` : ''
@@ -912,7 +912,7 @@ export default function Step1Planning() {
                                   key={name}
                                   disabled={alreadyAdded}
                                   onClick={() => setSubExamForm((p) => ({ ...p, name, nameBn }))}
-                                  className={`flex-1 py-2 rounded-lg text-[10px] font-semibold border cursor-pointer ${alreadyAdded ? 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] opacity-50 cursor-not-allowed' : subExamForm.name === name ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'bg-[var(--brand-light)] text-[var(--brand)] border-[var(--brand)] hover:shadow-sm'}`}
+                                  className={`flex-1 py-2 rounded-lg text-[0.625rem] font-semibold border cursor-pointer ${alreadyAdded ? 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] opacity-50 cursor-not-allowed' : subExamForm.name === name ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'bg-[var(--brand-light)] text-[var(--brand)] border-[var(--brand)] hover:shadow-sm'}`}
                                 >
                                   {name}
                                 </button>
@@ -937,7 +937,7 @@ export default function Step1Planning() {
                               </div>
                               <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                  <label className="text-[9px] text-[var(--text-muted)] block mb-0.5">
+                                  <label className="text-[0.5625rem] text-[var(--text-muted)] block mb-0.5">
                                     {isBn ? 'ফুল মার্কস' : 'Full Marks'}
                                   </label>
                                   <input
@@ -950,7 +950,7 @@ export default function Step1Planning() {
                                   />
                                 </div>
                                 <div>
-                                  <label className="text-[9px] text-[var(--text-muted)] block mb-0.5">
+                                  <label className="text-[0.5625rem] text-[var(--text-muted)] block mb-0.5">
                                     {isBn ? 'পাস মার্কস' : 'Pass Marks'}
                                   </label>
                                   <input
@@ -978,7 +978,7 @@ export default function Step1Planning() {
                               const isOver = totalFull > 100
                               return (
                                 <div
-                                  className={`mt-3 p-2 rounded-lg text-[11px] text-center font-semibold ${isOver ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--green-light)] text-[var(--green)]'}`}
+                                  className={`mt-3 p-2 rounded-lg text-[0.6875rem] text-center font-semibold ${isOver ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--green-light)] text-[var(--green)]'}`}
                                 >
                                   {isBn ? 'মোট' : 'Total'}: {totalFull} {isBn ? 'ফুল' : 'Full'} / {totalPass} {isBn ? 'পাস' : 'Pass'}
                                   {isOver && <span className="ml-2">⚠ {isBn ? '১০০ এর বেশি!' : 'Over 100!'}</span>}
@@ -999,7 +999,7 @@ export default function Step1Planning() {
         {activeSubTab === 'grade-scale' && (
           <>
             <div className="flex justify-between items-center mb-3">
-              <span className="text-[12px] text-[var(--text-secondary)]">
+              <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {isBn ? `মোট ${gradeScales.length}টি স্কেল` : `${gradeScales.length} scales`}
               </span>
               <button onClick={() => setShowGradeForm(true)} className={btnPrimary}>
@@ -1014,7 +1014,7 @@ export default function Step1Planning() {
                     <Award size={15} className={scale.isActive ? 'text-[var(--green)]' : 'text-[var(--purple)]'} />
                     {isBn ? scale.nameBn : scale.name}
                     {scale.isActive && (
-                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--green-light)] text-[var(--green)] font-semibold ml-2">
+                      <span className="text-[0.5625rem] px-2 py-0.5 rounded-full bg-[var(--green-light)] text-[var(--green)] font-semibold ml-2">
                         {isBn ? 'সক্রিয়' : 'Active'}
                       </span>
                     )}
@@ -1023,7 +1023,7 @@ export default function Step1Planning() {
                     {!scale.isActive && (
                       <button
                         onClick={() => toggleGradeScaleActive(scale.id)}
-                        className="text-[9px] px-2 py-1 rounded-md bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] cursor-pointer font-medium hover:shadow-sm"
+                        className="text-[0.5625rem] px-2 py-1 rounded-md bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] cursor-pointer font-medium hover:shadow-sm"
                       >
                         {isBn ? 'সক্রিয় করুন' : 'Set Active'}
                       </button>
@@ -1054,11 +1054,11 @@ export default function Step1Planning() {
                 <div className="grid grid-cols-7 gap-1">
                   {scale.grades.map((g) => (
                     <div key={g.grade} className="text-center p-2 rounded-lg" style={{ background: `${g.color}15` }}>
-                      <div className="text-[14px] font-bold" style={{ color: g.color }}>
+                      <div className="text-[0.875rem] font-bold" style={{ color: g.color }}>
                         {g.grade}
                       </div>
-                      <div className="text-[9px] text-[var(--text-muted)]">≥{g.minPct}%</div>
-                      <div className="text-[9px] text-[var(--text-muted)]">GPA {g.gpa}</div>
+                      <div className="text-[0.5625rem] text-[var(--text-muted)]">≥{g.minPct}%</div>
+                      <div className="text-[0.5625rem] text-[var(--text-muted)]">GPA {g.gpa}</div>
                     </div>
                   ))}
                 </div>
@@ -1067,7 +1067,7 @@ export default function Step1Planning() {
             {gradeScales.length === 0 && (
               <div className={`${sectionCls} text-center py-10`}>
                 <Award size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                <p className="text-[13px] text-[var(--text-muted)]">{isBn ? 'কোনো গ্রেড স্কেল নেই' : 'No grade scales configured'}</p>
+                <p className="text-[0.8125rem] text-[var(--text-muted)]">{isBn ? 'কোনো গ্রেড স্কেল নেই' : 'No grade scales configured'}</p>
               </div>
             )}
           </>
@@ -1077,7 +1077,7 @@ export default function Step1Planning() {
         {activeSubTab === 'omr' && (
           <>
             <div className="flex justify-between items-center mb-3">
-              <span className="text-[12px] text-[var(--text-secondary)]">
+              <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {isBn ? `মোট ${omrConfigs.length}টি OMR কনফিগ` : `${omrConfigs.length} OMR configs`}
               </span>
               <button
@@ -1109,11 +1109,11 @@ export default function Step1Planning() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <ScanLine size={14} className="text-[var(--brand)]" />
-                        <span className="text-[13px] font-semibold text-[var(--text-primary)]">
+                        <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
                           {isBn ? subject?.nameBn : subject?.name}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 text-[11px] text-[var(--text-muted)] flex-wrap">
+                      <div className="flex items-center gap-3 text-[0.6875rem] text-[var(--text-muted)] flex-wrap">
                         <span>
                           {isBn ? 'পরীক্ষা' : 'Exam'}: {isBn ? exam?.nameBn : exam?.name}
                         </span>
@@ -1182,7 +1182,7 @@ export default function Step1Planning() {
             {omrConfigs.length === 0 && (
               <div className={`${sectionCls} text-center py-10`}>
                 <ScanLine size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                <p className="text-[13px] text-[var(--text-muted)]">{isBn ? 'কোনো OMR কনফিগ নেই' : 'No OMR configurations'}</p>
+                <p className="text-[0.8125rem] text-[var(--text-muted)]">{isBn ? 'কোনো OMR কনফিগ নেই' : 'No OMR configurations'}</p>
               </div>
             )}
           </>
@@ -1192,9 +1192,9 @@ export default function Step1Planning() {
       {/* ═══ Exam Form Modal ═══ */}
       {showExamForm && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[420px] w-full p-5 border border-[var(--border)]">
+          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[26.25rem] w-full p-5 border border-[var(--border)]">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">
+              <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
                 {editExam ? (isBn ? 'পরীক্ষা এডিট' : 'Edit Exam') : isBn ? 'নতুন পরীক্ষা' : 'New Exam'}
               </h3>
               <button
@@ -1209,7 +1209,7 @@ export default function Step1Planning() {
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'নাম (ইংরেজি)' : 'Name (English)'}
                 </label>
                 <input
@@ -1220,7 +1220,7 @@ export default function Step1Planning() {
                 />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'নাম (বাংলা)' : 'Name (Bangla)'}
                 </label>
                 <input
@@ -1232,7 +1232,7 @@ export default function Step1Planning() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ধরন' : 'Type'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ধরন' : 'Type'}</label>
                   <select
                     value={examForm.type}
                     onChange={(e) => setExamForm((p) => ({ ...p, type: e.target.value as ExamType }))}
@@ -1254,7 +1254,7 @@ export default function Step1Planning() {
                   )}
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেশন' : 'Session'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেশন' : 'Session'}</label>
                   <input
                     value={examForm.session}
                     onChange={(e) => setExamForm((p) => ({ ...p, session: e.target.value }))}
@@ -1264,7 +1264,7 @@ export default function Step1Planning() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শুরু' : 'Start'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শুরু' : 'Start'}</label>
                   <input
                     type="date"
                     value={examForm.startDate}
@@ -1273,7 +1273,7 @@ export default function Step1Planning() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শেষ' : 'End'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শেষ' : 'End'}</label>
                   <input
                     type="date"
                     value={examForm.endDate}
@@ -1289,11 +1289,11 @@ export default function Step1Planning() {
                   setShowExamForm(false)
                   setEditExam(null)
                 }}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button onClick={handleSaveExam} className={`${btnPrimary} text-[12px]`}>
+              <button onClick={handleSaveExam} className={`${btnPrimary} text-[0.75rem]`}>
                 {isBn ? 'সংরক্ষণ' : 'Save'}
               </button>
             </div>
@@ -1303,11 +1303,11 @@ export default function Step1Planning() {
 
       {showCopyAllConfirm && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
-            <h3 className="text-[14px] font-semibold text-[var(--text-primary)] mb-2">
+          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+            <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-2">
               {isBn ? 'সব কপি করুন' : 'Copy All To Another Class'}
             </h3>
-            <p className="text-[12px] text-[var(--text-muted)] mb-2">
+            <p className="text-[0.75rem] text-[var(--text-muted)] mb-2">
               {isBn
                 ? `${distClassId} থেকে অন্য শ্রেণিতে সব মার্ক কনফিগ কপি করুন।`
                 : `Copy all mark configs from ${distClassId} to another class.`}
@@ -1328,14 +1328,14 @@ export default function Step1Planning() {
                   setShowCopyAllConfirm(false)
                   setCopyAllToClassId('')
                 }}
-                className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[12px] text-[var(--text-secondary)] cursor-pointer"
+                className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[0.75rem] text-[var(--text-secondary)] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
               <button
                 onClick={handleCopyAll}
                 disabled={!copyAllToClassId || copyAllToClassId === distClassId}
-                className="px-3 py-1.5 rounded-lg bg-[var(--green)] text-white text-[12px] font-medium cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg bg-[var(--green)] text-white text-[0.75rem] font-medium cursor-pointer disabled:opacity-50"
               >
                 {isBn ? 'কপি করুন' : 'Copy'}
               </button>
@@ -1346,17 +1346,17 @@ export default function Step1Planning() {
 
       {showCopySubjectModal && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[440px] w-full p-5 border border-[var(--border)]">
-            <h3 className="text-[14px] font-semibold text-[var(--text-primary)] mb-2">
+          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[27.5rem] w-full p-5 border border-[var(--border)]">
+            <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-2">
               {isBn ? 'বিষয়ে কপি করুন' : 'Copy Config to Other Subjects'}
             </h3>
-            <p className="text-[11px] text-[var(--text-muted)] mb-3">
+            <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
               {isBn
                 ? 'একটি বিষয়ের মার্ক কনফিগ অন্য সব বিষয়ে কপি করুন।'
                 : "Copy one subject's mark config to other subjects in this class."}
             </p>
             <div className="mb-3">
-              <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+              <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                 {isBn ? 'উৎস বিষয় (যার কনফিগ কপি হবে)' : 'Source Subject (copy from)'}
               </label>
               <select
@@ -1377,19 +1377,19 @@ export default function Step1Planning() {
             </div>
             {copySourceSubjectId && (
               <div className="mb-3">
-                <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'লক্ষ্য বিষয় (যেগুলোতে কপি হবে)' : 'Target Subjects (copy to)'}
                 </label>
-                <div className="max-h-[160px] overflow-y-auto border border-[var(--border)] rounded-lg p-2 space-y-1">
+                <div className="max-h-[10rem] overflow-y-auto border border-[var(--border)] rounded-lg p-2 space-y-1">
                   {subjectsWithoutConfig.length === 0 ? (
-                    <p className="text-[10px] text-[var(--text-muted)] italic py-2 text-center">
+                    <p className="text-[0.625rem] text-[var(--text-muted)] italic py-2 text-center">
                       {isBn ? 'অন্য কোনো বিষয় নেই (সব বিষয়ই ইতিমধ্যে কনফিগার্ড)' : 'No other unconfigured subjects'}
                     </p>
                   ) : (
                     <>
                       <button
                         onClick={() => setCopyTargetSubjectIds(subjectsWithoutConfig.map((s) => s.id))}
-                        className="text-[9px] text-[var(--brand)] cursor-pointer hover:underline mb-1"
+                        className="text-[0.5625rem] text-[var(--brand)] cursor-pointer hover:underline mb-1"
                       >
                         {isBn ? 'সব নির্বাচন' : 'Select All'}
                       </button>
@@ -1406,7 +1406,7 @@ export default function Step1Planning() {
                             }
                             className="rounded"
                           />
-                          <span className="text-[11px] text-[var(--text-primary)]">{isBn ? s.nameBn : s.name}</span>
+                          <span className="text-[0.6875rem] text-[var(--text-primary)]">{isBn ? s.nameBn : s.name}</span>
                         </label>
                       ))}
                     </>
@@ -1421,14 +1421,14 @@ export default function Step1Planning() {
                   setCopySourceSubjectId('')
                   setCopyTargetSubjectIds([])
                 }}
-                className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[12px] text-[var(--text-secondary)] cursor-pointer"
+                className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[0.75rem] text-[var(--text-secondary)] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
               <button
                 onClick={handleCopySubjectConfig}
                 disabled={!copySourceSubjectId || copyTargetSubjectIds.length === 0}
-                className="px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[12px] font-medium cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[0.75rem] font-medium cursor-pointer disabled:opacity-50"
               >
                 {isBn ? `${copyTargetSubjectIds.length}টি বিষয়ে কপি` : `Copy to ${copyTargetSubjectIds.length} subject(s)`}
               </button>
@@ -1440,18 +1440,18 @@ export default function Step1Planning() {
       {/* ═══ Copy Exam Plan Modal ═══ */}
       {showCopyExamPlanModal && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[400px] w-full p-5 border border-[var(--border)]">
-            <h3 className="text-[14px] font-semibold text-[var(--text-primary)] mb-2">
+          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[25rem] w-full p-5 border border-[var(--border)]">
+            <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-2">
               {isBn ? 'পরীক্ষার প্ল্যান কপি করুন' : 'Copy Exam Plan'}
             </h3>
-            <p className="text-[11px] text-[var(--text-muted)] mb-3">
+            <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
               {isBn
                 ? 'একটি পরীক্ষার সব মার্কস ও বিষয় কনফিগ অন্য পরীক্ষায় কপি করুন।'
                 : 'Copy all subject & mark configs from one exam to another.'}
             </p>
             <div className="space-y-3">
               <div>
-                <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'উৎস পরীক্ষা (যার কনফিগ কপি হবে)' : 'Source Exam (copy from)'}
                 </label>
                 <select
@@ -1468,7 +1468,7 @@ export default function Step1Planning() {
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'লক্ষ্য পরীক্ষা (যেখানে কপি হবে)' : 'Target Exam (copy to)'}
                 </label>
                 <select
@@ -1488,7 +1488,7 @@ export default function Step1Planning() {
               </div>
             </div>
             {copyExamPlanFromId && copyExamPlanToId && (
-              <p className="text-[10px] text-[var(--amber)] mt-2">
+              <p className="text-[0.625rem] text-[var(--amber)] mt-2">
                 {isBn ? '⚠ লক্ষ্য পরীক্ষার আগের কনফিগ মুছে নতুন কনফিগ বসানো হবে।' : '⚠ Existing configs in target exam will be replaced.'}
               </p>
             )}
@@ -1499,7 +1499,7 @@ export default function Step1Planning() {
                   setCopyExamPlanFromId('')
                   setCopyExamPlanToId('')
                 }}
-                className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[12px] text-[var(--text-secondary)] cursor-pointer"
+                className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[0.75rem] text-[var(--text-secondary)] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
@@ -1511,7 +1511,7 @@ export default function Step1Planning() {
                   setCopyExamPlanToId('')
                 }}
                 disabled={!copyExamPlanFromId || !copyExamPlanToId || copyExamPlanFromId === copyExamPlanToId}
-                className="px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[12px] font-medium cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[0.75rem] font-medium cursor-pointer disabled:opacity-50"
               >
                 {isBn ? 'কপি করুন' : 'Copy Plan'}
               </button>
@@ -1523,9 +1523,9 @@ export default function Step1Planning() {
       {/* ═══ OMR Form Modal ═══ */}
       {showOMRForm && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[420px] w-full p-5 border border-[var(--border)]">
+          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[26.25rem] w-full p-5 border border-[var(--border)]">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[14px] font-semibold text-[var(--text-primary)]">
+              <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
                 {editOMR ? (isBn ? 'OMR এডিট' : 'Edit OMR') : isBn ? 'নতুন OMR কনফিগ' : 'New OMR Config'}
               </h3>
               <button
@@ -1541,7 +1541,7 @@ export default function Step1Planning() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পরীক্ষা' : 'Exam'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পরীক্ষা' : 'Exam'}</label>
                   <select
                     value={omrForm.examId}
                     onChange={(e) => setOMRForm((p) => ({ ...p, examId: e.target.value }))}
@@ -1556,7 +1556,7 @@ export default function Step1Planning() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিষয়' : 'Subject'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিষয়' : 'Subject'}</label>
                   <select
                     value={omrForm.subjectId}
                     onChange={(e) => setOMRForm((p) => ({ ...p, subjectId: e.target.value }))}
@@ -1573,7 +1573,7 @@ export default function Step1Planning() {
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'মোট প্রশ্ন' : 'Total Q'}
                   </label>
                   <input
@@ -1584,7 +1584,7 @@ export default function Step1Planning() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সঠিক' : 'Correct'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সঠিক' : 'Correct'}</label>
                   <input
                     type="number"
                     step="0.5"
@@ -1594,7 +1594,7 @@ export default function Step1Planning() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'নেগেটিভ' : 'Negative'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'নেগেটিভ' : 'Negative'}</label>
                   <input
                     type="number"
                     step="0.5"
@@ -1606,7 +1606,7 @@ export default function Step1Planning() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'অপশন' : 'Options'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'অপশন' : 'Options'}</label>
                   <select
                     value={omrForm.optionCount}
                     onChange={(e) => setOMRForm((p) => ({ ...p, optionCount: e.target.value }))}
@@ -1617,7 +1617,7 @@ export default function Step1Planning() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ফরম্যাট' : 'Format'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ফরম্যাট' : 'Format'}</label>
                   <select
                     value={omrForm.sheetFormat}
                     onChange={(e) => setOMRForm((p) => ({ ...p, sheetFormat: e.target.value as 'A' | 'B' | 'C' | 'D' }))}
@@ -1638,11 +1638,11 @@ export default function Step1Planning() {
                   setShowOMRForm(false)
                   setEditOMR(null)
                 }}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button onClick={handleSaveOMR} className={`${btnPrimary} text-[12px]`}>
+              <button onClick={handleSaveOMR} className={`${btnPrimary} text-[0.75rem]`}>
                 {isBn ? 'সংরক্ষণ' : 'Save'}
               </button>
             </div>
@@ -1653,9 +1653,9 @@ export default function Step1Planning() {
       {/* ═══ Grade Scale Form Modal ═══ */}
       {showGradeForm && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[500px] w-full p-5 border border-[var(--border)] max-h-[80vh] overflow-y-auto">
+          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[31.25rem] w-full p-5 border border-[var(--border)] max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">
+              <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
                 {editGradeScaleId ? (isBn ? 'গ্রেড স্কেল সম্পাদনা' : 'Edit Grade Scale') : isBn ? 'গ্রেড স্কেল যোগ' : 'Add Grade Scale'}
               </h3>
               <button
@@ -1671,7 +1671,7 @@ export default function Step1Planning() {
             <div className="space-y-3 mb-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'নাম (EN)' : 'Name (EN)'}
                   </label>
                   <input
@@ -1682,7 +1682,7 @@ export default function Step1Planning() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'নাম (BN)' : 'Name (BN)'}
                   </label>
                   <input
@@ -1696,10 +1696,10 @@ export default function Step1Planning() {
             </div>
             <div className="mb-3">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[10px] font-medium text-[var(--text-secondary)]">{isBn ? 'গ্রেড' : 'Grades'}</label>
+                <label className="text-[0.625rem] font-medium text-[var(--text-secondary)]">{isBn ? 'গ্রেড' : 'Grades'}</label>
                 <button
                   onClick={() => setGradeRows((p) => [...p, { grade: '', minPct: '0', gpa: '0.0', color: '#6b7280' }])}
-                  className="text-[9px] text-[var(--brand)] cursor-pointer hover:underline"
+                  className="text-[0.5625rem] text-[var(--brand)] cursor-pointer hover:underline"
                 >
                   + {isBn ? 'গ্রেড যোগ' : 'Add Grade'}
                 </button>
@@ -1710,7 +1710,7 @@ export default function Step1Planning() {
                     <input
                       value={row.grade}
                       onChange={(e) => setGradeRows((p) => p.map((r, j) => (j === i ? { ...r, grade: e.target.value } : r)))}
-                      className="col-span-2 px-2 py-1 rounded text-[10px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none"
+                      className="col-span-2 px-2 py-1 rounded text-[0.625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none"
                       placeholder="A+"
                     />
                     <input
@@ -1719,7 +1719,7 @@ export default function Step1Planning() {
                       max="100"
                       value={row.minPct}
                       onChange={(e) => setGradeRows((p) => p.map((r, j) => (j === i ? { ...r, minPct: e.target.value } : r)))}
-                      className="col-span-3 px-2 py-1 rounded text-[10px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none"
+                      className="col-span-3 px-2 py-1 rounded text-[0.625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none"
                       placeholder="80"
                     />
                     <input
@@ -1729,7 +1729,7 @@ export default function Step1Planning() {
                       step="0.1"
                       value={row.gpa}
                       onChange={(e) => setGradeRows((p) => p.map((r, j) => (j === i ? { ...r, gpa: e.target.value } : r)))}
-                      className="col-span-2 px-2 py-1 rounded text-[10px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none"
+                      className="col-span-2 px-2 py-1 rounded text-[0.625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none"
                       placeholder="5.0"
                     />
                     <input
@@ -1738,10 +1738,10 @@ export default function Step1Planning() {
                       onChange={(e) => setGradeRows((p) => p.map((r, j) => (j === i ? { ...r, color: e.target.value } : r)))}
                       className="col-span-2 w-7 h-7 rounded cursor-pointer border-none p-0"
                     />
-                    <span className="col-span-1 text-[9px] text-[var(--text-muted)] text-right">{row.minPct}%</span>
+                    <span className="col-span-1 text-[0.5625rem] text-[var(--text-muted)] text-right">{row.minPct}%</span>
                     <button
                       onClick={() => setGradeRows((p) => p.filter((_, j) => j !== i))}
-                      className="col-span-2 text-[9px] text-[var(--red)] cursor-pointer hover:underline"
+                      className="col-span-2 text-[0.5625rem] text-[var(--red)] cursor-pointer hover:underline"
                     >
                       {isBn ? 'মুছুন' : 'Remove'}
                     </button>
@@ -1755,7 +1755,7 @@ export default function Step1Planning() {
                   setShowGradeForm(false)
                   setEditGradeScaleId(null)
                 }}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
@@ -1784,7 +1784,7 @@ export default function Step1Planning() {
                     { grade: 'F', minPct: '0', gpa: '0.0', color: '#ef4444' },
                   ])
                 }}
-                className={`${btnPrimary} text-[12px]`}
+                className={`${btnPrimary} text-[0.75rem]`}
               >
                 {editGradeScaleId ? (isBn ? 'আপডেট' : 'Update') : isBn ? 'যোগ করুন' : 'Add Scale'}
               </button>
@@ -1801,9 +1801,9 @@ export default function Step1Planning() {
           const subject = subjects.find((s) => s.id === omrDownloadConfig.subjectId)
           return (
             <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-              <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[400px] w-full p-5 border border-[var(--border)]">
+              <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[25rem] w-full p-5 border border-[var(--border)]">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-[14px] font-semibold text-[var(--text-primary)]">
+                  <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
                     {isBn ? 'OMR শিট ডাউনলোড' : 'Download OMR Sheet'}
                   </h3>
                   <button
@@ -1816,13 +1816,13 @@ export default function Step1Planning() {
 
                 {/* Preview Info */}
                 <div className="mb-4 p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]">
-                  <div className="text-[11px] text-[var(--text-muted)] mb-1">
+                  <div className="text-[0.6875rem] text-[var(--text-muted)] mb-1">
                     <strong>{isBn ? 'পরীক্ষা' : 'Exam'}:</strong> {isBn ? exam?.nameBn : exam?.name}
                   </div>
-                  <div className="text-[11px] text-[var(--text-muted)] mb-1">
+                  <div className="text-[0.6875rem] text-[var(--text-muted)] mb-1">
                     <strong>{isBn ? 'বিষয়' : 'Subject'}:</strong> {isBn ? subject?.nameBn : subject?.name}
                   </div>
-                  <div className="text-[11px] text-[var(--text-muted)]">
+                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
                     <strong>{isBn ? 'মার্কিং' : 'Marking'}:</strong> +{omrDownloadConfig.correctMark} / -{omrDownloadConfig.negativeMark}
                   </div>
                 </div>
@@ -1831,7 +1831,7 @@ export default function Step1Planning() {
                 <div className="space-y-3 mb-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                      <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                         {isBn ? 'মোট প্রশ্ন' : 'Total Questions'}
                       </label>
                       <input
@@ -1844,7 +1844,7 @@ export default function Step1Planning() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'অপশন' : 'Options'}</label>
+                      <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'অপশন' : 'Options'}</label>
                       <select
                         value={omrOpts.optionCount}
                         onChange={(e) => setOmrOpts((p) => ({ ...p, optionCount: Number(e.target.value) }))}
@@ -1857,7 +1857,7 @@ export default function Step1Planning() {
                   </div>
 
                   {/* Include toggles */}
-                  <div className="text-[10px] font-medium text-[var(--text-secondary)] mb-1">{isBn ? 'অন্তর্ভুক্ত করুন' : 'Include'}:</div>
+                  <div className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1">{isBn ? 'অন্তর্ভুক্ত করুন' : 'Include'}:</div>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { key: 'showRollNo' as const, label: isBn ? 'রোল নম্বর' : 'Roll Number' },
@@ -1875,20 +1875,20 @@ export default function Step1Planning() {
                           onChange={(e) => setOmrOpts((p) => ({ ...p, [t.key]: e.target.checked }))}
                           className="w-3.5 h-3.5 rounded accent-[var(--brand)]"
                         />
-                        <span className="text-[10px] text-[var(--text-primary)]">{t.label}</span>
+                        <span className="text-[0.625rem] text-[var(--text-primary)]">{t.label}</span>
                       </label>
                     ))}
                   </div>
 
                   {/* Format */}
                   <div>
-                    <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ফরম্যাট' : 'Format'}</label>
+                    <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ফরম্যাট' : 'Format'}</label>
                     <div className="flex gap-2">
                       {(['A', 'B', 'C', 'D'] as const).map((f) => (
                         <button
                           key={f}
                           onClick={() => setOmrOpts((p) => ({ ...p, sheetFormat: f }))}
-                          className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold border cursor-pointer transition-all ${
+                          className={`flex-1 py-1.5 rounded-lg text-[0.6875rem] font-semibold border cursor-pointer transition-all ${
                             omrOpts.sheetFormat === f
                               ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
                               : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--brand)]'
@@ -1905,7 +1905,7 @@ export default function Step1Planning() {
                 <div className="flex gap-2 justify-end">
                   <button
                     onClick={() => setShowOMRDownload(false)}
-                    className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
                   >
                     {isBn ? 'বাতিল' : 'Cancel'}
                   </button>
@@ -1978,7 +1978,7 @@ export default function Step1Planning() {
                       )
                       setShowOMRDownload(false)
                     }}
-                    className="px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[12px] font-semibold cursor-pointer hover:shadow-md transition-all"
+                    className="px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.75rem] font-semibold cursor-pointer hover:shadow-md transition-all"
                   >
                     <ScanLine size={13} className="inline mr-1 -mt-0.5" />
                     {isBn ? 'ডাউনলোড PDF' : 'Download PDF'}

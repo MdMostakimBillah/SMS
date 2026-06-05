@@ -19,12 +19,12 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
 
-const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] mb-[14px]'
-const sectionTitleCls = 'flex items-center gap-2 text-[13px] font-semibold text-[var(--text-primary)]'
+const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-[0.875rem] mb-[0.875rem]'
+const sectionTitleCls = 'flex items-center gap-2 text-[0.8125rem] font-semibold text-[var(--text-primary)]'
 const inputCls =
   'h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border'
 const btnPrimary =
-  'flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
+  'flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
 
 type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position'
 
@@ -204,10 +204,10 @@ export default function Step4Results() {
             <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 className="text-[16px] font-bold text-[var(--text-primary)]">
+            <h1 className="text-[1rem] font-bold text-[var(--text-primary)]">
               {isBn ? 'ধাপ ৪: ফলাফল প্রক্রিয়াকরণ' : 'Step 4: Result Processing'}
             </h1>
-            <p className="text-[11px] text-[var(--text-muted)]">
+            <p className="text-[0.6875rem] text-[var(--text-muted)]">
               {isBn ? 'এক্সট্রা মার্কস, ট্যাবুলেশন ও বিশ্লেষণ' : 'Extra marks, tabulation & analysis'}
             </p>
           </div>
@@ -216,7 +216,7 @@ export default function Step4Results() {
 
       {/* Filters */}
       <div className="px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-primary)] flex gap-2 items-center flex-wrap">
-        <select value={selectedExamId} onChange={(e) => setSelectedExamId(e.target.value)} className={`${inputCls} max-w-[200px]`}>
+        <select value={selectedExamId} onChange={(e) => setSelectedExamId(e.target.value)} className={`${inputCls} max-w-[12.5rem]`}>
           <option value="">{isBn ? 'পরীক্ষা...' : 'Exam...'}</option>
           {examConfigs.map((e) => (
             <option key={e.id} value={e.id}>
@@ -230,7 +230,7 @@ export default function Step4Results() {
             setSelectedClassId(e.target.value)
             setSelectedSectionId('')
           }}
-          className={`${inputCls} max-w-[140px]`}
+          className={`${inputCls} max-w-[8.75rem]`}
         >
           <option value="">{isBn ? 'শ্রেণি...' : 'Class...'}</option>
           {classOptions.map((c) => (
@@ -242,7 +242,7 @@ export default function Step4Results() {
         <select
           value={selectedSectionId}
           onChange={(e) => setSelectedSectionId(e.target.value)}
-          className={`${inputCls} max-w-[140px]`}
+          className={`${inputCls} max-w-[8.75rem]`}
           disabled={!selectedClassId}
         >
           <option value="">{isBn ? 'সেকশন...' : 'Section...'}</option>
@@ -265,7 +265,7 @@ export default function Step4Results() {
           <button
             key={t.key}
             onClick={() => setActiveSubTab(t.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeSubTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeSubTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
           >
             {t.icon}
             {t.label}
@@ -285,22 +285,22 @@ export default function Step4Results() {
                   {isBn ? 'ট্যাবুলেশন শিট' : 'Tabulation Sheet'} ({tabulationData.length} {isBn ? 'জন' : 'students'})
                 </div>
                 <div className="overflow-x-auto mt-3">
-                  <table className="w-full text-xs min-w-[600px]">
+                  <table className="w-full text-xs min-w-[37.5rem]">
                     <thead>
                       <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                        <th className="py-2 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] w-8">#</th>
-                        <th className="py-2 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
+                        <th className="py-2 px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] w-8">#</th>
+                        <th className="py-2 px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
                         {tabulationData[0]?.subjectMarks.map((sm) => (
-                          <th key={sm.subjectId} className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)]">
-                            <div className="truncate max-w-[80px]">{sm.subjectName}</div>
+                          <th key={sm.subjectId} className="py-2 px-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
+                            <div className="truncate max-w-[5rem]">{sm.subjectName}</div>
                           </th>
                         ))}
-                        <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="py-2 px-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'মোট' : 'Total'}
                         </th>
-                        <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)]">%</th>
-                        <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)]">GPA</th>
-                        <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="py-2 px-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">%</th>
+                        <th className="py-2 px-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">GPA</th>
+                        <th className="py-2 px-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'অবস্থা' : 'Status'}
                         </th>
                       </tr>
@@ -309,29 +309,29 @@ export default function Step4Results() {
                       {tabulationData.map((row, idx) => (
                         <tr key={row.student.id} className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)]">
                           <td className="py-2 px-2 text-[var(--text-muted)]">{idx + 1}</td>
-                          <td className="py-2 px-2 text-[11px] font-medium text-[var(--text-primary)]">
+                          <td className="py-2 px-2 text-[0.6875rem] font-medium text-[var(--text-primary)]">
                             {isBn ? row.student.nameBn || row.student.nameEn : row.student.nameEn}
                           </td>
                           {row.subjectMarks.map((sm) => (
                             <td key={sm.subjectId} className="py-2 px-2 text-center">
-                              <span className={`text-[11px] font-medium ${sm.passed ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
+                              <span className={`text-[0.6875rem] font-medium ${sm.passed ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
                                 {sm.obtained}
                               </span>
-                              <span className="text-[9px] text-[var(--text-muted)]">/{sm.fullMarks}</span>
+                              <span className="text-[0.5625rem] text-[var(--text-muted)]">/{sm.fullMarks}</span>
                             </td>
                           ))}
-                          <td className="py-2 px-2 text-center text-[12px] font-bold text-[var(--text-primary)]">{row.totalObtained}</td>
-                          <td className="py-2 px-2 text-center text-[11px] font-medium text-[var(--text-secondary)]">{row.percentage}%</td>
+                          <td className="py-2 px-2 text-center text-[0.75rem] font-bold text-[var(--text-primary)]">{row.totalObtained}</td>
+                          <td className="py-2 px-2 text-center text-[0.6875rem] font-medium text-[var(--text-secondary)]">{row.percentage}%</td>
                           <td className="py-2 px-2 text-center">
                             <span
-                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${row.gpa >= 4 ? 'bg-[#dcfce7] text-[#15803d]' : row.gpa >= 2 ? 'bg-[#dbeafe] text-[#1d4ed8]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}
+                              className={`text-[0.625rem] font-bold px-1.5 py-0.5 rounded ${row.gpa >= 4 ? 'bg-[#dcfce7] text-[#15803d]' : row.gpa >= 2 ? 'bg-[#dbeafe] text-[#1d4ed8]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}
                             >
                               {row.gpa.toFixed(1)}
                             </span>
                           </td>
                           <td className="py-2 px-2 text-center">
                             <span
-                              className={`text-[10px] font-medium px-2 py-0.5 rounded ${row.passedAll ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}
+                              className={`text-[0.625rem] font-medium px-2 py-0.5 rounded ${row.passedAll ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}
                             >
                               {row.passedAll ? (isBn ? 'পাস' : 'Pass') : isBn ? 'ফেইল' : 'Fail'}
                             </span>
@@ -345,7 +345,7 @@ export default function Step4Results() {
             ) : (
               <div className={`${sectionCls} text-center py-10`}>
                 <FileSpreadsheet size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                <p className="text-[13px] text-[var(--text-muted)]">
+                <p className="text-[0.8125rem] text-[var(--text-muted)]">
                   {isBn ? 'পরীক্ষা, শ্রেণি ও সেকশন নির্বাচন করুন' : 'Select exam, class and section to view tabulation'}
                 </p>
               </div>
@@ -357,7 +357,7 @@ export default function Step4Results() {
         {activeSubTab === 'extra-marks' && (
           <>
             <div className="flex justify-between items-center mb-3">
-              <span className="text-[12px] text-[var(--text-secondary)]">
+              <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {extraMarks.filter((e) => (selectedExamId ? e.examId === selectedExamId : true)).length} {isBn ? 'টি এন্ট্রি' : 'entries'}
               </span>
               <button onClick={() => setShowExtraForm(true)} className={btnPrimary}>
@@ -371,10 +371,10 @@ export default function Step4Results() {
                 return (
                   <div key={type.key} className={sectionCls} style={{ borderColor: `${type.color}30` }}>
                     <div className="flex items-center gap-2">
-                      <span className="text-[16px]">{type.icon}</span>
+                      <span className="text-[1rem]">{type.icon}</span>
                       <div>
-                        <div className="text-[12px] font-semibold text-[var(--text-primary)]">{type.label}</div>
-                        <div className="text-[10px] text-[var(--text-muted)]">
+                        <div className="text-[0.75rem] font-semibold text-[var(--text-primary)]">{type.label}</div>
+                        <div className="text-[0.625rem] text-[var(--text-muted)]">
                           {count} {isBn ? 'টি এন্ট্রি' : 'entries'}
                         </div>
                       </div>
@@ -395,15 +395,15 @@ export default function Step4Results() {
                         key={entry.id}
                         className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]"
                       >
-                        <span className="text-[14px]">{typeInfo?.icon}</span>
+                        <span className="text-[0.875rem]">{typeInfo?.icon}</span>
                         <div className="flex-1 min-w-0">
-                          <div className="text-[12px] font-medium text-[var(--text-primary)]">{student?.nameEn || entry.studentId}</div>
-                          <div className="text-[10px] text-[var(--text-muted)]">
+                          <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">{student?.nameEn || entry.studentId}</div>
+                          <div className="text-[0.625rem] text-[var(--text-muted)]">
                             {entry.note} · {entry.classId} {entry.sectionId}
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="text-[13px] font-bold text-[var(--text-primary)]">
+                          <div className="text-[0.8125rem] font-bold text-[var(--text-primary)]">
                             {entry.marks}/{entry.maxMarks}
                           </div>
                         </div>
@@ -447,7 +447,7 @@ export default function Step4Results() {
                   icon: <TrendingUp size={16} />,
                 },
               ].map((s) => (
-                <div key={s.label} className={sectionCls} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div key={s.label} className={sectionCls} style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center"
                     style={{ background: `${s.color}15`, color: s.color }}
@@ -455,8 +455,8 @@ export default function Step4Results() {
                     {s.icon}
                   </div>
                   <div>
-                    <div className="text-[16px] font-bold text-[var(--text-primary)]">{s.value}</div>
-                    <div className="text-[10px] text-[var(--text-muted)]">{s.label}</div>
+                    <div className="text-[1rem] font-bold text-[var(--text-primary)]">{s.value}</div>
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">{s.label}</div>
                   </div>
                 </div>
               ))}
@@ -471,8 +471,8 @@ export default function Step4Results() {
                 {analysisData.subjectStats.map((stat) => (
                   <div key={stat.subjectId}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[12px] font-medium text-[var(--text-primary)]">{stat.subjectName}</span>
-                      <div className="flex items-center gap-3 text-[10px]">
+                      <span className="text-[0.75rem] font-medium text-[var(--text-primary)]">{stat.subjectName}</span>
+                      <div className="flex items-center gap-3 text-[0.625rem]">
                         <span className="text-[var(--text-muted)]">
                           {isBn ? 'গড়' : 'Avg'}:{' '}
                           <span className="font-semibold text-[var(--text-primary)]">
@@ -493,9 +493,9 @@ export default function Step4Results() {
                         </span>
                       </div>
                     </div>
-                    <div className="h-[6px] bg-[var(--border)] rounded-[3px]">
+                    <div className="h-[0.375rem] bg-[var(--border)] rounded-[0.1875rem]">
                       <div
-                        className="h-full rounded-[3px]"
+                        className="h-full rounded-[0.1875rem]"
                         style={{
                           width: `${stat.passRate}%`,
                           background: stat.passRate >= 60 ? 'var(--green)' : stat.passRate >= 40 ? 'var(--amber)' : 'var(--red)',
@@ -512,7 +512,7 @@ export default function Step4Results() {
         {activeSubTab === 'analysis' && !analysisData && (
           <div className={`${sectionCls} text-center py-10`}>
             <BarChart2 size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-            <p className="text-[13px] text-[var(--text-muted)]">{isBn ? 'পরীক্ষা নির্বাচন করুন' : 'Select an exam to view analysis'}</p>
+            <p className="text-[0.8125rem] text-[var(--text-muted)]">{isBn ? 'পরীক্ষা নির্বাচন করুন' : 'Select an exam to view analysis'}</p>
           </div>
         )}
 
@@ -525,16 +525,16 @@ export default function Step4Results() {
                   <AlertTriangle size={15} className="text-[var(--amber)]" />
                   {isBn ? 'পজিশন ডুপ্লিকেশন' : 'Position Duplications'} ({positionCheck.length})
                 </div>
-                <p className="text-[11px] text-[var(--text-muted)] mb-3">
+                <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
                   {isBn ? 'একই মার্কস পাওয়া শিক্ষার্থীদের পজিশন চেক করুন' : 'Students with same marks sharing positions'}
                 </p>
                 <div className="space-y-2">
                   {positionCheck.map((dup) => (
                     <div key={dup.position} className="p-3 rounded-lg bg-[var(--amber-light)] border border-[rgba(245,158,11,0.2)]">
-                      <div className="text-[12px] font-semibold text-[var(--text-primary)] mb-1">
+                      <div className="text-[0.75rem] font-semibold text-[var(--text-primary)] mb-1">
                         {isBn ? `পজিশন ${dup.position}` : `Position ${dup.position}`} — {dup.count} {isBn ? 'জন শিক্ষার্থী' : 'students'}
                       </div>
-                      <div className="text-[11px] text-[var(--text-secondary)]">{dup.students.join(', ')}</div>
+                      <div className="text-[0.6875rem] text-[var(--text-secondary)]">{dup.students.join(', ')}</div>
                     </div>
                   ))}
                 </div>
@@ -542,12 +542,12 @@ export default function Step4Results() {
             ) : tabulationData.length > 0 ? (
               <div className={`${sectionCls} text-center py-10`}>
                 <CheckCircle size={32} className="mx-auto mb-2 opacity-30 text-[var(--green)]" />
-                <p className="text-[13px] text-[var(--green)]">{isBn ? 'কোনো পজিশন ডুপ্লিকেশন নেই!' : 'No position duplications found!'}</p>
+                <p className="text-[0.8125rem] text-[var(--green)]">{isBn ? 'কোনো পজিশন ডুপ্লিকেশন নেই!' : 'No position duplications found!'}</p>
               </div>
             ) : (
               <div className={`${sectionCls} text-center py-10`}>
                 <Target size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                <p className="text-[13px] text-[var(--text-muted)]">
+                <p className="text-[0.8125rem] text-[var(--text-muted)]">
                   {isBn ? 'পরীক্ষা, শ্রেণি ও সেকশন নির্বাচন করুন' : 'Select exam, class and section'}
                 </p>
               </div>
@@ -559,13 +559,13 @@ export default function Step4Results() {
       {/* ═══ Extra Mark Form Modal ═══ */}
       {showExtraForm && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
-            <h3 className="text-[14px] font-semibold text-[var(--text-primary)] mb-3">
+          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+            <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
               {isBn ? 'এক্সট্রা মার্কস যোগ' : 'Add Extra Marks'}
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শিক্ষার্থী' : 'Student'}</label>
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শিক্ষার্থী' : 'Student'}</label>
                 <select
                   value={extraForm.studentId}
                   onChange={(e) => setExtraForm((p) => ({ ...p, studentId: e.target.value }))}
@@ -580,7 +580,7 @@ export default function Step4Results() {
                 </select>
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ধরন' : 'Type'}</label>
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ধরন' : 'Type'}</label>
                 <select
                   value={extraForm.type}
                   onChange={(e) => setExtraForm((p) => ({ ...p, type: e.target.value as 'attendance' | 'discipline' | 'homework' }))}
@@ -595,7 +595,7 @@ export default function Step4Results() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'প্রাপ্ত' : 'Marks'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'প্রাপ্ত' : 'Marks'}</label>
                   <input
                     type="number"
                     value={extraForm.marks}
@@ -604,7 +604,7 @@ export default function Step4Results() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সর্বোচ্চ' : 'Max'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সর্বোচ্চ' : 'Max'}</label>
                   <input
                     type="number"
                     value={extraForm.maxMarks}
@@ -614,7 +614,7 @@ export default function Step4Results() {
                 </div>
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'নোট' : 'Note'}</label>
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'নোট' : 'Note'}</label>
                 <input
                   value={extraForm.note}
                   onChange={(e) => setExtraForm((p) => ({ ...p, note: e.target.value }))}
@@ -625,11 +625,11 @@ export default function Step4Results() {
             <div className="flex gap-2 justify-end mt-4">
               <button
                 onClick={() => setShowExtraForm(false)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button onClick={handleSaveExtra} className={`${btnPrimary} text-[12px]`}>
+              <button onClick={handleSaveExtra} className={`${btnPrimary} text-[0.75rem]`}>
                 {isBn ? 'সংরক্ষণ' : 'Save'}
               </button>
             </div>

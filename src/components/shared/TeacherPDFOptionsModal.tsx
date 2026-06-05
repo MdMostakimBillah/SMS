@@ -27,11 +27,11 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
   const inp: React.CSSProperties = {
     flex: 1,
     padding: '7px 10px',
-    borderRadius: '8px',
+    borderRadius: '0.5rem',
     border: '1px solid var(--border)',
     background: 'var(--bg-secondary)',
     color: 'var(--text-primary)',
-    fontSize: '13px',
+    fontSize: '0.8125rem',
     fontFamily: 'inherit',
     outline: 'none',
   }
@@ -49,7 +49,7 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: '1rem',
         overflowY: 'auto',
       }}
     >
@@ -57,9 +57,9 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
         className="modal-content"
         style={{
           background: 'var(--bg-primary)',
-          borderRadius: '16px',
+          borderRadius: '1rem',
           width: '100%',
-          maxWidth: '640px',
+          maxWidth: '40rem',
           maxHeight: '92vh',
           overflow: 'hidden',
           display: 'flex',
@@ -80,8 +80,8 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
           }}
         >
           <div>
-            <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'PDF বিকল্প' : 'PDF Options'}</h2>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'PDF বিকল্প' : 'PDF Options'}</h2>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>
               {cols.length} {isBn ? 'টি কলাম' : 'columns'}
               {emptyColumns.length > 0 ? ` + ${emptyColumns.length} ${isBn ? 'ফাঁকা কলাম' : 'empty cols'}` : ''}
               {emptyRows > 0 ? ` + ${emptyRows} ${isBn ? 'ফাঁকা সারি' : 'empty rows'}` : ''}
@@ -92,9 +92,9 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
           <button
             onClick={onClose}
             style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '8px',
+              width: '1.875rem',
+              height: '1.875rem',
+              borderRadius: '0.5rem',
               background: 'var(--bg-tertiary)',
               border: '1px solid var(--border)',
               cursor: 'pointer',
@@ -110,15 +110,15 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
         {/* Body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
           {/* Title */}
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '1.25rem' }}>
             <div
               style={{
-                fontSize: '12px',
+                fontSize: '0.75rem',
                 fontWeight: 600,
                 color: 'var(--text-muted)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '8px',
+                letterSpacing: '0.0313rem',
+                marginBottom: '0.5rem',
               }}
             >
               ① {isBn ? 'তালিকার শিরোনাম' : 'List Title'}
@@ -130,11 +130,11 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
               style={{
                 width: '100%',
                 padding: '9px 12px',
-                borderRadius: '8px',
+                borderRadius: '0.5rem',
                 border: '1px solid var(--border)',
                 background: 'var(--bg-secondary)',
                 color: 'var(--text-primary)',
-                fontSize: '13px',
+                fontSize: '0.8125rem',
                 fontFamily: 'inherit',
                 outline: 'none',
               }}
@@ -144,39 +144,39 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
           </div>
 
           {/* Orientation */}
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '1.25rem' }}>
             <div
               style={{
-                fontSize: '12px',
+                fontSize: '0.75rem',
                 fontWeight: 600,
                 color: 'var(--text-muted)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '8px',
+                letterSpacing: '0.0313rem',
+                marginBottom: '0.5rem',
               }}
             >
               ② {isBn ? 'কাগজের দিক' : 'Page Orientation'}
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               {(['portrait', 'landscape'] as const).map((o) => (
                 <button
                   key={o}
                   onClick={() => setOrientation(o)}
                   style={{
                     flex: 1,
-                    padding: '10px',
-                    borderRadius: '10px',
+                    padding: '0.625rem',
+                    borderRadius: '0.625rem',
                     border: `2px solid ${orientation === o ? 'var(--brand)' : 'var(--border)'}`,
                     background: orientation === o ? 'var(--brand-light)' : 'var(--bg-secondary)',
                     color: orientation === o ? 'var(--brand)' : 'var(--text-secondary)',
-                    fontSize: '13px',
+                    fontSize: '0.8125rem',
                     fontWeight: orientation === o ? 600 : 400,
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '6px',
+                    gap: '0.375rem',
                   }}
                 >
                   {o === 'portrait' ? <File size={15} /> : <LayoutTemplate size={15} />}
@@ -187,26 +187,26 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
           </div>
 
           {/* Columns */}
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <div
                 style={{
-                  fontSize: '12px',
+                  fontSize: '0.75rem',
                   fontWeight: 600,
                   color: 'var(--text-muted)',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
+                  letterSpacing: '0.0313rem',
                 }}
               >
                 ③ {isBn ? 'ডাটা কলাম বেছে নিন' : 'Select Data Columns'} ({cols.length}/{ALL_TEACHER_PDF_COLUMNS.length})
               </div>
-              <div style={{ display: 'flex', gap: '5px' }}>
+              <div style={{ display: 'flex', gap: '0.3125rem' }}>
                 <button
                   onClick={selectAll}
                   style={{
-                    fontSize: '11px',
+                    fontSize: '0.6875rem',
                     padding: '3px 9px',
-                    borderRadius: '6px',
+                    borderRadius: '0.375rem',
                     background: 'var(--brand-light)',
                     border: '1px solid var(--brand)',
                     color: 'var(--brand)',
@@ -219,9 +219,9 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
                 <button
                   onClick={clearAll}
                   style={{
-                    fontSize: '11px',
+                    fontSize: '0.6875rem',
                     padding: '3px 9px',
-                    borderRadius: '6px',
+                    borderRadius: '0.375rem',
                     background: 'var(--bg-secondary)',
                     border: '1px solid var(--border)',
                     color: 'var(--text-secondary)',
@@ -233,16 +233,16 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
                 </button>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '5px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.3125rem' }}>
               {ALL_TEACHER_PDF_COLUMNS.map((c) => (
                 <label
                   key={c.key}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '7px',
+                    gap: '0.4375rem',
                     padding: '6px 9px',
-                    borderRadius: '8px',
+                    borderRadius: '0.5rem',
                     border: `1px solid ${cols.includes(c.key) ? 'var(--brand)' : 'var(--border)'}`,
                     background: cols.includes(c.key) ? 'var(--brand-light)' : 'var(--bg-secondary)',
                     cursor: 'pointer',
@@ -253,11 +253,11 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
                     type="checkbox"
                     checked={cols.includes(c.key)}
                     onChange={() => toggleCol(c.key)}
-                    style={{ width: '13px', height: '13px', accentColor: 'var(--brand)', cursor: 'pointer', flexShrink: 0 }}
+                    style={{ width: '0.8125rem', height: '0.8125rem', accentColor: 'var(--brand)', cursor: 'pointer', flexShrink: 0 }}
                   />
                   <span
                     style={{
-                      fontSize: '11px',
+                      fontSize: '0.6875rem',
                       color: cols.includes(c.key) ? 'var(--brand)' : 'var(--text-secondary)',
                       fontWeight: cols.includes(c.key) ? 500 : 400,
                       overflow: 'hidden',
@@ -275,27 +275,27 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
           {/* Empty Columns */}
           <div
             style={{
-              marginBottom: '20px',
-              padding: '14px',
+              marginBottom: '1.25rem',
+              padding: '0.875rem',
               background: 'var(--bg-secondary)',
-              borderRadius: '12px',
+              borderRadius: '0.75rem',
               border: '1px solid var(--border)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.625rem' }}>
               <div>
                 <div
                   style={{
-                    fontSize: '12px',
+                    fontSize: '0.75rem',
                     fontWeight: 600,
                     color: 'var(--text-muted)',
                     textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
+                    letterSpacing: '0.0313rem',
                   }}
                 >
                   ④ {isBn ? 'অতিরিক্ত ফাঁকা কলাম' : 'Extra Empty Columns'}
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: '0.125rem' }}>
                   {isBn ? 'হাতে লেখার জন্য (যেমন: স্বাক্ষর, তারিখ)' : 'For handwriting (e.g. Signature, Date)'}
                 </div>
               </div>
@@ -304,13 +304,13 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '5px',
+                  gap: '0.3125rem',
                   padding: '6px 12px',
-                  borderRadius: '8px',
+                  borderRadius: '0.5rem',
                   background: 'var(--brand)',
                   border: 'none',
                   color: '#fff',
-                  fontSize: '12px',
+                  fontSize: '0.75rem',
                   cursor: 'pointer',
                   fontFamily: 'inherit',
                   fontWeight: 500,
@@ -326,24 +326,24 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
               <div
                 style={{
                   textAlign: 'center',
-                  padding: '12px',
+                  padding: '0.75rem',
                   border: '1px dashed var(--border)',
-                  borderRadius: '8px',
+                  borderRadius: '0.5rem',
                   color: 'var(--text-muted)',
-                  fontSize: '12px',
+                  fontSize: '0.75rem',
                 }}
               >
                 {isBn ? 'এখনো কোনো ফাঁকা কলাম নেই' : 'No empty columns added yet'}
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                 {emptyColumns.map((col, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <div
                       style={{
-                        width: '22px',
-                        height: '22px',
-                        borderRadius: '6px',
+                        width: '1.375rem',
+                        height: '1.375rem',
+                        borderRadius: '0.375rem',
                         background: 'var(--brand-light)',
                         display: 'flex',
                         alignItems: 'center',
@@ -351,7 +351,7 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
                         flexShrink: 0,
                       }}
                     >
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand)' }}>{i + 1}</span>
+                      <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--brand)' }}>{i + 1}</span>
                     </div>
                     <input
                       value={col}
@@ -364,9 +364,9 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
                     <button
                       onClick={() => removeEmptyCol(i)}
                       style={{
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: '7px',
+                        width: '1.75rem',
+                        height: '1.75rem',
+                        borderRadius: '0.4375rem',
                         background: 'var(--red-light)',
                         border: '1px solid var(--red)',
                         cursor: 'pointer',
@@ -386,34 +386,34 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
           </div>
 
           {/* Empty Rows */}
-          <div style={{ padding: '14px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <div style={{ padding: '0.875rem', background: 'var(--bg-secondary)', borderRadius: '0.75rem', border: '1px solid var(--border)' }}>
             <div
               style={{
-                fontSize: '12px',
+                fontSize: '0.75rem',
                 fontWeight: 600,
                 color: 'var(--text-muted)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '4px',
+                letterSpacing: '0.0313rem',
+                marginBottom: '0.25rem',
               }}
             >
               ⑤ {isBn ? 'অতিরিক্ত ফাঁকা সারি' : 'Extra Empty Rows'}
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
               {isBn ? 'ডাটার পরে ফাঁকা সারি যোগ হবে' : 'Blank rows added after data'}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
               {[0, 2, 5, 10, 15, 20].map((n) => (
                 <button
                   key={n}
                   onClick={() => setEmptyRows(n)}
                   style={{
                     padding: '6px 12px',
-                    borderRadius: '8px',
+                    borderRadius: '0.5rem',
                     border: `1px solid ${emptyRows === n ? 'var(--teal)' : 'var(--border)'}`,
                     background: emptyRows === n ? 'var(--teal-light)' : 'var(--bg-primary)',
                     color: emptyRows === n ? 'var(--teal)' : 'var(--text-secondary)',
-                    fontSize: '12px',
+                    fontSize: '0.75rem',
                     fontWeight: emptyRows === n ? 600 : 400,
                     cursor: 'pointer',
                     fontFamily: 'inherit',
@@ -422,8 +422,8 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
                   {n === 0 ? (isBn ? 'নেই' : 'None') : n}
                 </button>
               ))}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{isBn ? 'কাস্টম:' : 'Custom:'}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3125rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{isBn ? 'কাস্টম:' : 'Custom:'}</span>
                 <input
                   type="number"
                   min={0}
@@ -431,13 +431,13 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
                   value={emptyRows}
                   onChange={(e) => setEmptyRows(Math.max(0, Math.min(500, Number(e.target.value))))}
                   style={{
-                    width: '60px',
+                    width: '3.75rem',
                     padding: '5px 8px',
-                    borderRadius: '7px',
+                    borderRadius: '0.4375rem',
                     border: '1px solid var(--border)',
                     background: 'var(--bg-primary)',
                     color: 'var(--text-primary)',
-                    fontSize: '13px',
+                    fontSize: '0.8125rem',
                     fontFamily: 'inherit',
                     outline: 'none',
                     textAlign: 'center',
@@ -454,7 +454,7 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
             padding: '14px 20px',
             borderTop: '1px solid var(--border)',
             display: 'flex',
-            gap: '8px',
+            gap: '0.5rem',
             justifyContent: 'flex-end',
             background: 'var(--bg-secondary)',
           }}
@@ -463,11 +463,11 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
             onClick={onClose}
             style={{
               padding: '9px 16px',
-              borderRadius: '9px',
+              borderRadius: '0.5625rem',
               background: 'var(--bg-primary)',
               border: '1px solid var(--border)',
               color: 'var(--text-secondary)',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               cursor: 'pointer',
               fontFamily: 'inherit',
             }}
@@ -480,13 +480,13 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '0.375rem',
               padding: '9px 20px',
-              borderRadius: '9px',
+              borderRadius: '0.5625rem',
               background: cols.length === 0 ? 'var(--border-2)' : 'var(--red)',
               border: 'none',
               color: '#fff',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               fontWeight: 600,
               cursor: cols.length === 0 ? 'not-allowed' : 'pointer',
               fontFamily: 'inherit',

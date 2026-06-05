@@ -86,12 +86,12 @@ export function generateTeacherListPDF(
         ? '7.5px'
         : totalCols > 9
           ? '9px'
-          : '10px'
+          : '0.625rem'
       : totalCols > 8
         ? '7.5px'
         : totalCols > 6
           ? '9px'
-          : '10px'
+          : '0.625rem'
 
   const dataHeaders = cols.map((c) => `<th>${isBn ? c.labelBn : c.label}</th>`).join('')
   const extraHeaders = emptyColumns.map((h) => `<th style="min-width:85px">${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`).join('')

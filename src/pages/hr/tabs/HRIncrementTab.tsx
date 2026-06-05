@@ -60,7 +60,7 @@ export default function HRIncrementTab({
 
   return (
     <div className={resolvedSectionCls}>
-      <div className="flex justify-between items-center mb-[14px]">
+      <div className="flex justify-between items-center mb-[0.875rem]">
         <div className={sectionTitleCls}>
           <TrendingUp size={15} className="text-[var(--green)]" />
           {isBn ? 'বেতন বৃদ্ধি' : 'Increments'}
@@ -68,14 +68,14 @@ export default function HRIncrementTab({
         <div className="flex gap-1.5">
           <button
             onClick={() => setShowPDFModal('increment')}
-            className="flex items-center gap-[5px] py-[7px] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]"
+            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]"
           >
             <FileText size={13} />
             PDF
           </button>
           <button
             onClick={() => setModalType('increment')}
-            className="flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--green)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--green)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
           >
             <Plus size={14} />
             {isBn ? 'যোগ' : 'Add'}
@@ -92,15 +92,15 @@ export default function HRIncrementTab({
         variant="compact"
       />
       <div className="overflow-x-auto mt-3">
-        <table className="w-full text-xs min-w-[640px]">
+        <table className="w-full text-xs min-w-[40rem]">
           <thead>
             <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-              <th className="py-[10px] px-2 w-9">
+              <th className="py-[0.625rem] px-2 w-9">
                 <input
                   type="checkbox"
                   checked={selected.length === filteredIncrements.length && filteredIncrements.length > 0}
                   onChange={toggleAll}
-                  className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                  className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                 />
               </th>
               {[
@@ -115,7 +115,7 @@ export default function HRIncrementTab({
               ].map((h) => (
                 <th
                   key={h || 'action'}
-                  className={`py-[10px] px-2 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap ${h === '' ? 'text-center w-[80px]' : h === (isBn ? 'পরিমাণ' : 'Amount') || h === (isBn ? 'মোট' : 'Total') ? 'text-right' : 'text-left'}`}
+                  className={`py-[0.625rem] px-2 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.025rem] whitespace-nowrap ${h === '' ? 'text-center w-[5rem]' : h === (isBn ? 'পরিমাণ' : 'Amount') || h === (isBn ? 'মোট' : 'Total') ? 'text-right' : 'text-left'}`}
                 >
                   {h}
                 </th>
@@ -143,14 +143,14 @@ export default function HRIncrementTab({
                       type="checkbox"
                       checked={selected.includes(inc.id)}
                       onChange={() => toggle(inc.id)}
-                      className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                     />
                   </td>
-                  <td className="py-2 px-2 text-[11px] text-[var(--text-muted)]">{inc.date}</td>
+                  <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-muted)]">{inc.date}</td>
                   <td className="py-2 px-2 text-xs font-medium text-[var(--text-primary)]">{getTeacherName(inc.teacherId)}</td>
                   <td className="py-2 px-2">
                     <span
-                      className={`text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium ${inc.type === 'annual' ? 'bg-[var(--green-light)]' : inc.type === 'performance' ? 'bg-[var(--brand-light)]' : 'bg-[var(--amber-light)]'} ${inc.type === 'annual' ? 'text-[var(--green)]' : inc.type === 'performance' ? 'text-[var(--brand)]' : 'text-[var(--amber)]'}`}
+                      className={`text-[0.625rem] py-[0.125rem] px-[0.375rem] rounded-[0.3125rem] font-medium ${inc.type === 'annual' ? 'bg-[var(--green-light)]' : inc.type === 'performance' ? 'bg-[var(--brand-light)]' : 'bg-[var(--amber-light)]'} ${inc.type === 'annual' ? 'text-[var(--green)]' : inc.type === 'performance' ? 'text-[var(--brand)]' : 'text-[var(--amber)]'}`}
                     >
                       {inc.type}
                     </span>
@@ -160,7 +160,7 @@ export default function HRIncrementTab({
                     ৳{inc.amount.toLocaleString()}
                   </td>
                   <td className="py-2 px-2 text-xs font-bold text-[var(--green)] text-right">৳{totalWithInc.toLocaleString()}</td>
-                  <td className="py-2 px-2 text-[11px] text-[var(--text-secondary)]">{inc.reason}</td>
+                  <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-secondary)]">{inc.reason}</td>
                   <td className="py-2 px-2 text-center">
                     <div className="flex gap-1 justify-center">
                       <button
@@ -173,13 +173,13 @@ export default function HRIncrementTab({
                           })
                           setModalType('increment')
                         }}
-                        className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[10px] font-[inherit]"
+                        className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[0.625rem] font-[inherit]"
                       >
                         <Edit2 size={11} />
                       </button>
                       <button
                         onClick={() => deleteIncrement(inc.id)}
-                        className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[10px] font-[inherit]"
+                        className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[0.625rem] font-[inherit]"
                       >
                         <Trash2 size={11} />
                       </button>
@@ -192,7 +192,7 @@ export default function HRIncrementTab({
           <tfoot>
             <tr className="bg-[var(--bg-secondary)] border-t border-t-2 border-[var(--border)]">
               <td className="py-2 px-2"></td>
-              <td colSpan={4} className="py-2 px-2 text-[11px] font-bold text-[var(--text-primary)]">
+              <td colSpan={4} className="py-2 px-2 text-[0.6875rem] font-bold text-[var(--text-primary)]">
                 {isBn ? 'মোট' : 'Total'}
               </td>
               <td className="py-2 px-2 text-xs font-bold text-[var(--green)] text-right">
@@ -223,7 +223,7 @@ export default function HRIncrementTab({
         isBn={isBn}
       />
       {selected.length > 0 && (
-        <div className="mt-2 text-[11px] text-[var(--brand)] bg-[var(--brand-light)] py-1 px-[10px] rounded-md inline-block">
+        <div className="mt-2 text-[0.6875rem] text-[var(--brand)] bg-[var(--brand-light)] py-1 px-[0.625rem] rounded-md inline-block">
           {selected.length} {isBn ? 'নির্বাচিত' : 'selected'}
         </div>
       )}

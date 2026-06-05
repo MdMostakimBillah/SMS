@@ -23,11 +23,11 @@ import type { SyllabusEntry, SyllabusChapter, SyllabusTopic } from '@/store/syll
 import { generateSyllabusPDF } from './pdfTemplate'
 
 const btnPri =
-  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all'
+  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all'
 const inputCls =
-  'px-2.5 py-1.5 rounded-lg text-[11px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]'
+  'px-2.5 py-1.5 rounded-lg text-[0.6875rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]'
 const selectCls = `${inputCls} cursor-pointer`
-const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] mb-[14px]'
+const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-[0.875rem] mb-[0.875rem]'
 
 type View = 'home' | 'sections' | 'subjects' | 'detail'
 
@@ -384,11 +384,11 @@ export default function SyllabusPage() {
             </button>
           )}
           <div>
-            <h1 className="text-[16px] font-bold text-[var(--text-primary)] flex items-center gap-2">
+            <h1 className="text-[1rem] font-bold text-[var(--text-primary)] flex items-center gap-2">
               <BookOpen size={18} className="text-[var(--brand)]" />
               {isBn ? 'পাঠ্যক্রম ব্যবস্থাপনা' : 'Syllabus Management'}
             </h1>
-            <p className="text-[11px] text-[var(--text-muted)]">
+            <p className="text-[0.6875rem] text-[var(--text-muted)]">
               {view === 'home' && (isBn ? 'শ্রেণি নির্বাচন করুন' : 'Select a class')}
               {view === 'sections' && `${getClassName(selectedClass)} — ${isBn ? 'সেকশন নির্বাচন করুন' : 'Select Section'}`}
               {view === 'subjects' && `${getClassName(selectedClass)} - ${selectedSection} — ${isBn ? 'বিষয় নির্বাচন করুন' : 'Select Subject'}`}
@@ -417,15 +417,15 @@ export default function SyllabusPage() {
                 { label: isBn ? 'সম্পন্ন' : 'Completed', value: syllabi.reduce((s, sy) => s + sy.completedTopics, 0), color: 'var(--purple)' },
               ].map((st, i) => (
                 <div key={i} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3">
-                  <div className="text-[18px] font-bold" style={{ color: st.color }}>
+                  <div className="text-[1.125rem] font-bold" style={{ color: st.color }}>
                     {st.value}
                   </div>
-                  <div className="text-[10px] text-[var(--text-muted)]">{st.label}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)]">{st.label}</div>
                 </div>
               ))}
             </div>
 
-            <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-3">
+            <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-3">
               {isBn ? 'শ্রেণি নির্বাচন করুন' : 'Select Class'}
             </div>
 
@@ -441,10 +441,10 @@ export default function SyllabusPage() {
                     <div className="w-14 h-14 rounded-2xl bg-[var(--brand-light)] flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                       <GraduationCap size={24} className="text-[var(--brand)]" />
                     </div>
-                    <div className="text-[14px] font-bold text-[var(--text-primary)] mb-1">
+                    <div className="text-[0.875rem] font-bold text-[var(--text-primary)] mb-1">
                       {getClassName(classNum)}
                     </div>
-                    <div className="text-[10px] text-[var(--text-muted)]">
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">
                       {count} {isBn ? 'টি সিলেবাস' : 'syllabi'}
                     </div>
                   </div>
@@ -457,7 +457,7 @@ export default function SyllabusPage() {
         {/* ═══ SECTIONS VIEW ═══ */}
         {view === 'sections' && (
           <>
-            <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-3">
+            <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-3">
               {isBn ? 'সেকশন নির্বাচন করুন' : 'Select Section'}
             </div>
 
@@ -471,12 +471,12 @@ export default function SyllabusPage() {
                     className="bg-[var(--bg-primary)] border-2 border-dashed border-[var(--border)] rounded-2xl p-5 cursor-pointer hover:border-[var(--teal)] hover:shadow-md transition-all text-center group"
                   >
                     <div className="w-14 h-14 rounded-2xl bg-[var(--teal-light)] flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                      <span className="text-[18px] font-bold text-[var(--teal)]">{section}</span>
+                      <span className="text-[1.125rem] font-bold text-[var(--teal)]">{section}</span>
                     </div>
-                    <div className="text-[14px] font-bold text-[var(--text-primary)] mb-1">
+                    <div className="text-[0.875rem] font-bold text-[var(--text-primary)] mb-1">
                       {isBn ? 'সেকশন' : 'Section'} {section}
                     </div>
-                    <div className="text-[10px] text-[var(--text-muted)]">
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">
                       {count} {isBn ? 'টি সিলেবাস' : 'syllabi'}
                     </div>
                   </div>
@@ -489,7 +489,7 @@ export default function SyllabusPage() {
         {/* ═══ SUBJECTS VIEW ═══ */}
         {view === 'subjects' && (
           <>
-            <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-3">
+            <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-3">
               {isBn ? 'বিষয় নির্বাচন করুন' : 'Select Subject'}
             </div>
 
@@ -511,12 +511,12 @@ export default function SyllabusPage() {
                     <div className="w-14 h-14 rounded-2xl bg-[var(--purple-light)] flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                       <BookOpen size={22} className="text-[var(--purple)]" />
                     </div>
-                    <div className="text-[13px] font-bold text-[var(--text-primary)] mb-1">
+                    <div className="text-[0.8125rem] font-bold text-[var(--text-primary)] mb-1">
                       {isBn ? subject.nameBn : subject.name}
                     </div>
                     {existing ? (
                       <div className="mt-2">
-                        <div className="text-[11px] font-semibold mb-1" style={{ color: pct === 100 ? 'var(--green)' : 'var(--brand)' }}>
+                        <div className="text-[0.6875rem] font-semibold mb-1" style={{ color: pct === 100 ? 'var(--green)' : 'var(--brand)' }}>
                           {pct}%
                         </div>
                         <div className="w-full h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
@@ -525,12 +525,12 @@ export default function SyllabusPage() {
                             style={{ width: `${pct}%`, background: pct === 100 ? 'var(--green)' : 'var(--brand)' }}
                           />
                         </div>
-                        <div className="text-[9px] text-[var(--text-muted)] mt-1">
+                        <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1">
                           {existing.totalChapters} {isBn ? 'অধ্যায়' : 'ch'} · {existing.totalTopics} {isBn ? 'টপিক' : 'tp'}
                         </div>
                       </div>
                     ) : (
-                      <div className="text-[10px] text-[var(--text-muted)] mt-2 italic">
+                      <div className="text-[0.625rem] text-[var(--text-muted)] mt-2 italic">
                         {isBn ? 'নতুন সিলেবাস' : 'New syllabus'}
                       </div>
                     )}
@@ -552,15 +552,15 @@ export default function SyllabusPage() {
                 { label: isBn ? 'সম্পন্ন' : 'Done', value: selectedSyllabus.completedTopics, color: 'var(--green)' },
               ].map((st, i) => (
                 <div key={i} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3 text-center">
-                  <div className="text-[16px] font-bold" style={{ color: st.color }}>{st.value}</div>
-                  <div className="text-[10px] text-[var(--text-muted)]">{st.label}</div>
+                  <div className="text-[1rem] font-bold" style={{ color: st.color }}>{st.value}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)]">{st.label}</div>
                 </div>
               ))}
             </div>
 
             {/* Chapter Header */}
             <div className="flex items-center justify-between">
-              <div className="text-[11px] text-[var(--text-muted)]">
+              <div className="text-[0.6875rem] text-[var(--text-muted)]">
                 {isBn ? `মোট ${selectedSyllabus.chapters.length}টি অধ্যায়` : `${selectedSyllabus.chapters.length} chapters`}
               </div>
               <button onClick={openAddChapter} className={btnPri}>
@@ -573,7 +573,7 @@ export default function SyllabusPage() {
             {selectedSyllabus.chapters.length === 0 ? (
               <div className="text-center py-12">
                 <Layers size={36} className="mx-auto text-[var(--text-muted)] mb-3 opacity-40" />
-                <p className="text-[12px] text-[var(--text-muted)]">{isBn ? 'কোনো অধ্যায় নেই' : 'No chapters yet'}</p>
+                <p className="text-[0.75rem] text-[var(--text-muted)]">{isBn ? 'কোনো অধ্যায় নেই' : 'No chapters yet'}</p>
                 <button onClick={openAddChapter} className={`${btnPri} mt-3 mx-auto`}>
                   <Plus size={14} />
                   {isBn ? 'প্রথম অধ্যায় যোগ' : 'Add First Chapter'}
@@ -593,15 +593,15 @@ export default function SyllabusPage() {
                         <button className="text-[var(--text-muted)]">
                           {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                         </button>
-                        <span className="text-[9px] font-bold text-white bg-[var(--brand)] rounded-md px-1.5 py-0.5">{ch.order}</span>
+                        <span className="text-[0.5625rem] font-bold text-white bg-[var(--brand)] rounded-md px-1.5 py-0.5">{ch.order}</span>
                         <div className="flex-1 min-w-0">
-                          <div className="text-[12px] font-semibold text-[var(--text-primary)]">{isBn ? ch.titleBn : ch.title}</div>
-                          <div className="text-[9px] text-[var(--text-muted)] truncate">{isBn ? ch.descriptionBn : ch.description}</div>
+                          <div className="text-[0.75rem] font-semibold text-[var(--text-primary)]">{isBn ? ch.titleBn : ch.title}</div>
+                          <div className="text-[0.5625rem] text-[var(--text-muted)] truncate">{isBn ? ch.descriptionBn : ch.description}</div>
                         </div>
-                        <span className="text-[9px] text-[var(--text-muted)]">
+                        <span className="text-[0.5625rem] text-[var(--text-muted)]">
                           {chDone}/{ch.topics.length} {isBn ? 'টপিক' : 'topics'}
                         </span>
-                        <span className="text-[9px] font-semibold text-[var(--brand)]">
+                        <span className="text-[0.5625rem] font-semibold text-[var(--brand)]">
                           {chTotal} {isBn ? 'মা.' : 'mk'}
                         </span>
                         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -624,7 +624,7 @@ export default function SyllabusPage() {
                       {isExpanded && (
                         <div className="mt-3 ml-6">
                           {ch.topics.length === 0 ? (
-                            <div className="text-center py-6 text-[10px] text-[var(--text-muted)] italic">
+                            <div className="text-center py-6 text-[0.625rem] text-[var(--text-muted)] italic">
                               {isBn ? 'এই অধ্যায়ে কোনো টপিক নেই' : 'No topics in this chapter'}
                             </div>
                           ) : (
@@ -639,26 +639,26 @@ export default function SyllabusPage() {
                                     {statusIcon(t.status)}
                                   </button>
                                   <div className="flex-1 min-w-0">
-                                    <div className="text-[11px] font-medium text-[var(--text-primary)]">{isBn ? t.titleBn : t.title}</div>
-                                    <div className="text-[9px] text-[var(--text-muted)]">{isBn ? t.descriptionBn : t.description}</div>
+                                    <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">{isBn ? t.titleBn : t.title}</div>
+                                    <div className="text-[0.5625rem] text-[var(--text-muted)]">{isBn ? t.descriptionBn : t.description}</div>
                                     <div className="flex items-center gap-2 mt-0.5">
                                       {t.weekNo && (
-                                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">
+                                        <span className="text-[0.5rem] px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">
                                           {isBn ? 'সপ্তাহ' : 'Wk'} {t.weekNo}
                                         </span>
                                       )}
                                       {t.startDate && (
-                                        <span className="text-[8px] text-[var(--text-muted)]">
+                                        <span className="text-[0.5rem] text-[var(--text-muted)]">
                                           {t.startDate}
                                           {t.endDate ? ` – ${t.endDate}` : ''}
                                         </span>
                                       )}
                                     </div>
                                   </div>
-                                  <span className="text-[10px] font-semibold text-[var(--brand)] whitespace-nowrap">
+                                  <span className="text-[0.625rem] font-semibold text-[var(--brand)] whitespace-nowrap">
                                     {t.marks} {isBn ? 'মা.' : 'mk'}
                                   </span>
-                                  <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-medium ${statusColor(t.status)}`}>
+                                  <span className={`text-[0.5rem] px-1.5 py-0.5 rounded-full font-medium ${statusColor(t.status)}`}>
                                     {t.status === 'completed'
                                       ? isBn ? 'সম্পন্ন' : 'Done'
                                       : t.status === 'in-progress'
@@ -685,7 +685,7 @@ export default function SyllabusPage() {
                           )}
                           <button
                             onClick={() => openAddTopic(ch.id)}
-                            className="mt-2 flex items-center gap-1 text-[9px] px-2 py-1 rounded-md bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] cursor-pointer font-medium hover:shadow-sm"
+                            className="mt-2 flex items-center gap-1 text-[0.5625rem] px-2 py-1 rounded-md bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] cursor-pointer font-medium hover:shadow-sm"
                           >
                             <Plus size={9} />
                             {isBn ? 'টপিক যোগ' : 'Add Topic'}
@@ -708,7 +708,7 @@ export default function SyllabusPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-[14px] font-bold text-[var(--text-primary)]">
+              <span className="text-[0.875rem] font-bold text-[var(--text-primary)]">
                 {editChapter ? (isBn ? 'অধ্যায় এডিট' : 'Edit Chapter') : isBn ? 'নতুন অধ্যায়' : 'New Chapter'}
               </span>
               <button
@@ -721,7 +721,7 @@ export default function SyllabusPage() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'নাম (EN)' : 'Name (EN)'}
                   </label>
                   <input
@@ -732,7 +732,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'নাম (BN)' : 'Name (BN)'}
                   </label>
                   <input
@@ -745,7 +745,7 @@ export default function SyllabusPage() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'বিবরণ (EN)' : 'Description (EN)'}
                   </label>
                   <input
@@ -756,7 +756,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'বিবরণ (BN)' : 'Description (BN)'}
                   </label>
                   <input
@@ -768,7 +768,7 @@ export default function SyllabusPage() {
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ক্রম' : 'Order'}</label>
+                <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ক্রম' : 'Order'}</label>
                 <input
                   type="number"
                   min="1"
@@ -781,7 +781,7 @@ export default function SyllabusPage() {
             <div className="flex gap-2 justify-end mt-4">
               <button
                 onClick={() => setShowChapterModal(false)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
@@ -805,7 +805,7 @@ export default function SyllabusPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-[14px] font-bold text-[var(--text-primary)]">
+              <span className="text-[0.875rem] font-bold text-[var(--text-primary)]">
                 {editTopic ? (isBn ? 'টপিক এডিট' : 'Edit Topic') : isBn ? 'নতুন টপিক' : 'New Topic'}
               </span>
               <button
@@ -818,7 +818,7 @@ export default function SyllabusPage() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'নাম (EN)' : 'Name (EN)'}
                   </label>
                   <input
@@ -829,7 +829,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'নাম (BN)' : 'Name (BN)'}
                   </label>
                   <input
@@ -842,7 +842,7 @@ export default function SyllabusPage() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'বিবরণ (EN)' : 'Description (EN)'}
                   </label>
                   <input
@@ -853,7 +853,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'বিবরণ (BN)' : 'Description (BN)'}
                   </label>
                   <input
@@ -866,7 +866,7 @@ export default function SyllabusPage() {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'মার্কস' : 'Marks'}</label>
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'মার্কস' : 'Marks'}</label>
                   <input
                     type="number"
                     min="0"
@@ -877,7 +877,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সপ্তাহ' : 'Week No'}</label>
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সপ্তাহ' : 'Week No'}</label>
                   <input
                     type="number"
                     min="1"
@@ -888,7 +888,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'অবস্থা' : 'Status'}</label>
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'অবস্থা' : 'Status'}</label>
                   <select
                     value={topicForm.status}
                     onChange={(e) => setTopicForm((p) => ({ ...p, status: e.target.value as SyllabusTopic['status'] }))}
@@ -902,7 +902,7 @@ export default function SyllabusPage() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শুরু' : 'Start Date'}</label>
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শুরু' : 'Start Date'}</label>
                   <input
                     type="date"
                     value={topicForm.startDate}
@@ -911,7 +911,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শেষ' : 'End Date'}</label>
+                  <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শেষ' : 'End Date'}</label>
                   <input
                     type="date"
                     value={topicForm.endDate}
@@ -924,7 +924,7 @@ export default function SyllabusPage() {
             <div className="flex gap-2 justify-end mt-4">
               <button
                 onClick={() => setShowTopicModal(false)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>

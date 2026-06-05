@@ -51,15 +51,15 @@ function IDCard({
 
   return (
     <div
-      className="w-[340px] h-[210px] overflow-hidden flex flex-col font-['Inter',sans-serif] shadow-[0_2px_8px_rgba(0,0,0,0.08)] shrink-0 bg-white"
+      className="w-[21.25rem] h-[13.125rem] overflow-hidden flex flex-col font-['Inter',sans-serif] shadow-[0_2px_8px_rgba(0,0,0,0.08)] shrink-0 bg-white"
       style={{ borderRadius: `${t.radius}px`, border: `2px solid ${t.primary}` }}
     >
       {/* Header */}
       <div className="py-2 px-3.5 flex items-center gap-2.5" style={{ background: t.primary }}>
         <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-sm font-bold text-white">ET</div>
         <div>
-          <div className="text-[11px] font-bold text-white tracking-wider">{institution}</div>
-          <div className="text-[8px] text-white/70 mt-px">Student Identity Card</div>
+          <div className="text-[0.6875rem] font-bold text-white tracking-wider">{institution}</div>
+          <div className="text-[0.5rem] text-white/70 mt-px">Student Identity Card</div>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ function IDCard({
         {/* Photo */}
         {show('photo') && (
           <div
-            className="w-[65px] h-20 rounded-lg border-2 overflow-hidden bg-white flex items-center justify-center shrink-0"
+            className="w-[4.0625rem] h-20 rounded-lg border-2 overflow-hidden bg-white flex items-center justify-center shrink-0"
             style={{ borderColor: t.primary }}
           >
             {student.photo ? (
@@ -82,63 +82,63 @@ function IDCard({
         {/* Info */}
         <div className="flex-1 min-w-0 flex flex-col gap-0.5">
           {show('nameEn') && (
-            <div className="text-[13px] font-bold text-[#1a1a1a] overflow-hidden text-ellipsis whitespace-nowrap">{student.nameEn}</div>
+            <div className="text-[0.8125rem] font-bold text-[#1a1a1a] overflow-hidden text-ellipsis whitespace-nowrap">{student.nameEn}</div>
           )}
-          {show('nameBn') && student.nameBn && <div className="text-[10px] text-[#666] mb-0.5">{student.nameBn}</div>}
-          <div className="flex flex-wrap gap-[3px] mt-0.5">
+          {show('nameBn') && student.nameBn && <div className="text-[0.625rem] text-[#666] mb-0.5">{student.nameBn}</div>}
+          <div className="flex flex-wrap gap-[0.1875rem] mt-0.5">
             {show('class') && (
-              <span className="text-[8px] font-semibold py-0.5 px-1.5 rounded text-white" style={{ background: t.primary }}>
+              <span className="text-[0.5rem] font-semibold py-0.5 px-1.5 rounded text-white" style={{ background: t.primary }}>
                 {isBn ? `শ্র ${student.class}-${student.section}` : `Cls ${student.class}-${student.section}`}
               </span>
             )}
             {show('roll') && student.roll && (
               <span
-                className="text-[8px] font-medium py-0.5 px-1.5 rounded bg-white"
+                className="text-[0.5rem] font-medium py-0.5 px-1.5 rounded bg-white"
                 style={{ color: t.primary, border: `1px solid ${t.primary}` }}
               >
                 {isBn ? `রোল ${student.roll}` : `Roll ${student.roll}`}
               </span>
             )}
             {show('bloodGroup') && student.bloodGroup && (
-              <span className="text-[8px] font-medium py-0.5 px-1.5 rounded bg-red-50 text-red-500 border border-red-200">
+              <span className="text-[0.5rem] font-medium py-0.5 px-1.5 rounded bg-red-50 text-red-500 border border-red-200">
                 {student.bloodGroup}
               </span>
             )}
           </div>
           <div className="mt-auto flex flex-col gap-px">
-            {show('id') && <div className="text-[8px] text-[#888] font-mono">ID: {student.id}</div>}
+            {show('id') && <div className="text-[0.5rem] text-[#888] font-mono">ID: {student.id}</div>}
             {show('fatherNameEn') && student.fatherNameEn && (
-              <div className="text-[8px] text-[#666]">
+              <div className="text-[0.5rem] text-[#666]">
                 {isBn ? 'পিতা' : 'Father'}: {student.fatherNameEn}
               </div>
             )}
             {show('fatherPhone') && student.fatherPhone && (
-              <div className="text-[8px] text-[#666]">
+              <div className="text-[0.5rem] text-[#666]">
                 {isBn ? 'পিতার মোবাইল' : 'Father Mobile'}: {student.fatherPhone}
               </div>
             )}
             {show('motherNameEn') && student.motherNameEn && (
-              <div className="text-[8px] text-[#666]">
+              <div className="text-[0.5rem] text-[#666]">
                 {isBn ? 'মাতা' : 'Mother'}: {student.motherNameEn}
               </div>
             )}
             {show('phone') && student.phone && (
-              <div className="text-[8px] text-[#666]">
+              <div className="text-[0.5rem] text-[#666]">
                 {isBn ? 'মোবাইল' : 'Mobile'}: {student.phone}
               </div>
             )}
             {show('dob') && student.dob && (
-              <div className="text-[8px] text-[#666]">
+              <div className="text-[0.5rem] text-[#666]">
                 {isBn ? 'জন্ম' : 'DOB'}: {student.dob}
               </div>
             )}
             {show('religion') && student.religion && (
-              <div className="text-[8px] text-[#666]">
+              <div className="text-[0.5rem] text-[#666]">
                 {isBn ? 'ধর্ম' : 'Religion'}: {student.religion.split(' / ')[0]}
               </div>
             )}
             {show('address') && student.presentAddress && (
-              <div className="text-[8px] text-[#666] overflow-hidden text-ellipsis whitespace-nowrap">
+              <div className="text-[0.5rem] text-[#666] overflow-hidden text-ellipsis whitespace-nowrap">
                 {isBn ? 'ঠিকানা' : 'Address'}: {student.presentAddress}
               </div>
             )}
@@ -148,15 +148,15 @@ function IDCard({
 
       {/* Footer */}
       <div className="py-1 px-3 flex justify-between items-center" style={{ background: t.accent }}>
-        <span className="text-[7px] text-white/70">Academic Year {student.academicYear?.replace('-', '–')}</span>
+        <span className="text-[0.4375rem] text-white/70">Academic Year {student.academicYear?.replace('-', '–')}</span>
         <div className="flex gap-5">
           <div className="text-center">
             <div className="w-12 h-px bg-white/50 mb-px" />
-            <span className="text-[6px] text-white/70">Principal</span>
+            <span className="text-[0.375rem] text-white/70">Principal</span>
           </div>
           <div className="text-center">
             <div className="w-12 h-px bg-white/50 mb-px" />
-            <span className="text-[6px] text-white/70">Seal</span>
+            <span className="text-[0.375rem] text-white/70">Seal</span>
           </div>
         </div>
       </div>
@@ -269,31 +269,31 @@ export default function IDCardsPage() {
   }, [displayList, template, fields, institutionName])
 
   const inp =
-    "w-full py-[7px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-['Inter',sans-serif] outline-none"
+    "w-full py-[0.4375rem] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-['Inter',sans-serif] outline-none"
 
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center gap-2.5 mb-[18px] flex-wrap">
+      <div className="flex items-center gap-2.5 mb-[1.125rem] flex-wrap">
         <button
           onClick={() => navigate('/students')}
-          className="flex items-center gap-1.5 py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-['Inter',sans-serif] shrink-0"
+          className="flex items-center gap-1.5 py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-['Inter',sans-serif] shrink-0"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div className="flex-1">
-          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[22px]'}`}>
+          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
             {isBn ? 'আইডি কার্ড' : 'ID Cards'}
           </h1>
-          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
+          <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {isBn ? `${displayList.length} জন ছাত্রের আইডি কার্ড তৈরি করুন` : `Generate ID cards for ${displayList.length} students`}
           </p>
         </div>
         <button
           onClick={printCards}
           disabled={displayList.length === 0}
-          className={`flex items-center gap-1.5 py-[9px] px-[18px] rounded-[9px] border-none text-white text-[13px] font-semibold font-['Inter',sans-serif] ${displayList.length === 0 ? 'bg-[var(--border-2)] cursor-not-allowed' : 'bg-[var(--brand)] cursor-pointer shadow-[0_4px_12px_rgba(99,102,241,0.3)]'}`}
+          className={`flex items-center gap-1.5 py-[0.5625rem] px-[1.125rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold font-['Inter',sans-serif] ${displayList.length === 0 ? 'bg-[var(--border-2)] cursor-not-allowed' : 'bg-[var(--brand)] cursor-pointer shadow-[0_4px_12px_rgba(99,102,241,0.3)]'}`}
         >
           <Printer size={14} />
           {isBn ? 'প্রিন্ট করুন' : 'Print'}
@@ -305,7 +305,7 @@ export default function IDCardsPage() {
         <div className="flex flex-col gap-3">
           {/* Institution name */}
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5">
-            <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+            <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
               ① {isBn ? 'প্রতিষ্ঠানের নাম' : 'Institution Name'}
             </div>
               <input value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} className={inp} />
@@ -313,7 +313,7 @@ export default function IDCardsPage() {
 
           {/* Template selector */}
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5">
-            <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+            <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
               ② {isBn ? 'ডিজাইন টেমপ্লেট' : 'Design Template'}
             </div>
             <div className="grid grid-cols-2 gap-1.5">
@@ -327,10 +327,10 @@ export default function IDCardsPage() {
                     background: template.id === t.id ? t.secondary : 'var(--bg-secondary)',
                   }}
                 >
-                  <div className="flex items-center gap-1.5 mb-[3px]">
+                  <div className="flex items-center gap-1.5 mb-[0.1875rem]">
                     <div className="w-3 h-3 rounded-full" style={{ background: t.primary }} />
                     <span
-                      className="text-[11px] font-semibold"
+                      className="text-[0.6875rem] font-semibold"
                       style={{ color: template.id === t.id ? t.primary : 'var(--text-secondary)' }}
                     >
                       {isBn ? t.nameBn : t.name}
@@ -343,14 +343,14 @@ export default function IDCardsPage() {
 
           {/* Field toggles */}
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5">
-            <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+            <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
               ③ {isBn ? 'তথ্য অপশন' : 'Field Options'} ({fields.length}/{FIELDS.length})
             </div>
             <div className="flex flex-col gap-1">
               {FIELDS.map((f) => (
                 <label
                   key={f.key}
-                  className="flex items-center gap-2 py-[5px] px-2 rounded-md cursor-pointer transition-all duration-100"
+                  className="flex items-center gap-2 py-[0.3125rem] px-2 rounded-md cursor-pointer transition-all duration-100"
                   style={{
                     border: `1px solid ${fields.includes(f.key) ? 'var(--brand)' : 'var(--border)'}`,
                     background: fields.includes(f.key) ? 'var(--brand-light)' : 'transparent',
@@ -363,7 +363,7 @@ export default function IDCardsPage() {
                     className="w-3 h-3 accent-[var(--brand)] cursor-pointer"
                   />
                   <span
-                    className={`text-[11px] ${fields.includes(f.key) ? 'font-medium text-[var(--brand)]' : 'font-normal text-[var(--text-secondary)]'}`}
+                    className={`text-[0.6875rem] ${fields.includes(f.key) ? 'font-medium text-[var(--brand)]' : 'font-normal text-[var(--text-secondary)]'}`}
                   >
                     {isBn ? f.labelBn : f.label}
                   </span>
@@ -374,7 +374,7 @@ export default function IDCardsPage() {
 
           {/* Filter */}
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5">
-            <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+            <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
               ④ {isBn ? 'ফিল্টার' : 'Filter'}
             </div>
             <div className="flex flex-col gap-1.5">
@@ -394,13 +394,13 @@ export default function IDCardsPage() {
                   </option>
                 ))}
               </select>
-              <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[7px] py-1.5 px-2">
+              <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[0.4375rem] py-1.5 px-2">
                 <Search size={12} className="text-[var(--text-muted)]" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={isBn ? 'নাম বা আইডি...' : 'Name or ID...'}
-                  className="flex-1 border-none bg-transparent outline-none text-[11px] text-[var(--text-primary)] font-['Inter',sans-serif]"
+                  className="flex-1 border-none bg-transparent outline-none text-[0.6875rem] text-[var(--text-primary)] font-['Inter',sans-serif]"
                 />
               </div>
               <select
@@ -428,7 +428,7 @@ export default function IDCardsPage() {
               </select>
               <button
                 onClick={selectAll}
-                className="py-1.5 rounded-[7px] text-[11px] cursor-pointer font-['Inter',sans-serif] font-medium"
+                className="py-1.5 rounded-[0.4375rem] text-[0.6875rem] cursor-pointer font-['Inter',sans-serif] font-medium"
                 style={{
                   border: `1px solid ${selected.length > 0 ? 'var(--brand)' : 'var(--border)'}`,
                   background: selected.length > 0 ? 'var(--brand-light)' : 'var(--bg-secondary)',
@@ -446,9 +446,9 @@ export default function IDCardsPage() {
         </div>
 
         {/* Right: Preview */}
-        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-4">
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-4">
           <div className="flex items-center justify-between mb-3.5">
-            <span className="text-[13px] font-semibold text-[var(--text-primary)]">
+            <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
               {isBn ? 'প্রিভিউ' : 'Preview'} ({displayList.length} {isBn ? 'জন' : 'cards'})
             </span>
           </div>

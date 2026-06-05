@@ -37,7 +37,7 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: '1rem',
         overflowY: 'auto',
       }}
     >
@@ -45,9 +45,9 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
         className="modal-content"
         style={{
           background: 'var(--bg-primary)',
-          borderRadius: '16px',
+          borderRadius: '1rem',
           width: '100%',
-          maxWidth: '480px',
+          maxWidth: '30rem',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -67,8 +67,8 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
           }}
         >
           <div>
-            <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'PDF ডাউনলোড' : 'Download PDF'}</h2>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'PDF ডাউনলোড' : 'Download PDF'}</h2>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>
               {count} {isBn ? (type === 'student' ? 'জন শিক্ষার্থী' : 'জন কর্মচারী') : type === 'student' ? 'students' : 'employees'}{' '}
               {isBn ? 'নির্বাচিত' : 'selected'}
             </p>
@@ -76,9 +76,9 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
           <button
             onClick={onClose}
             style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '8px',
+              width: '1.875rem',
+              height: '1.875rem',
+              borderRadius: '0.5rem',
               background: 'var(--bg-tertiary)',
               border: '1px solid var(--border)',
               cursor: 'pointer',
@@ -94,15 +94,15 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
         {/* Body */}
         <div style={{ padding: '18px 20px' }}>
           {/* Title */}
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: '12px',
+                fontSize: '0.75rem',
                 fontWeight: 600,
                 color: 'var(--text-muted)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '8px',
+                letterSpacing: '0.0313rem',
+                marginBottom: '0.5rem',
               }}
             >
               ① {isBn ? 'রিপোর্টের শিরোনাম' : 'Report Title'}
@@ -114,11 +114,11 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
               style={{
                 width: '100%',
                 padding: '9px 12px',
-                borderRadius: '8px',
+                borderRadius: '0.5rem',
                 border: '1px solid var(--border)',
                 background: 'var(--bg-secondary)',
                 color: 'var(--text-primary)',
-                fontSize: '13px',
+                fontSize: '0.8125rem',
                 fontFamily: 'inherit',
                 outline: 'none',
               }}
@@ -128,39 +128,39 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
           </div>
 
           {/* Orientation */}
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: '12px',
+                fontSize: '0.75rem',
                 fontWeight: 600,
                 color: 'var(--text-muted)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '8px',
+                letterSpacing: '0.0313rem',
+                marginBottom: '0.5rem',
               }}
             >
               ② {isBn ? 'কাগজের দিক' : 'Page Orientation'}
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               {(['portrait', 'landscape'] as const).map((o) => (
                 <button
                   key={o}
                   onClick={() => setOrientation(o)}
                   style={{
                     flex: 1,
-                    padding: '10px',
-                    borderRadius: '10px',
+                    padding: '0.625rem',
+                    borderRadius: '0.625rem',
                     border: `2px solid ${orientation === o ? 'var(--brand)' : 'var(--border)'}`,
                     background: orientation === o ? 'var(--brand-light)' : 'var(--bg-secondary)',
                     color: orientation === o ? 'var(--brand)' : 'var(--text-secondary)',
-                    fontSize: '13px',
+                    fontSize: '0.8125rem',
                     fontWeight: orientation === o ? 600 : 400,
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '6px',
+                    gap: '0.375rem',
                   }}
                 >
                   {o === 'portrait' ? <File size={15} /> : <LayoutTemplate size={15} />}
@@ -173,14 +173,14 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
           {/* Info */}
           <div
             style={{
-              padding: '12px',
+              padding: '0.75rem',
               background: 'var(--brand-light)',
-              borderRadius: '8px',
+              borderRadius: '0.5rem',
               border: '1px solid var(--brand)',
-              marginBottom: '16px',
+              marginBottom: '1rem',
             }}
           >
-            <div style={{ fontSize: '11px', color: 'var(--brand)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--brand)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <Info size={14} />
               <span>
                 {isBn
@@ -197,7 +197,7 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
             padding: '14px 20px',
             borderTop: '1px solid var(--border)',
             display: 'flex',
-            gap: '8px',
+            gap: '0.5rem',
             justifyContent: 'flex-end',
             background: 'var(--bg-secondary)',
           }}
@@ -206,11 +206,11 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
             onClick={onClose}
             style={{
               padding: '9px 16px',
-              borderRadius: '9px',
+              borderRadius: '0.5625rem',
               background: 'var(--bg-primary)',
               border: '1px solid var(--border)',
               color: 'var(--text-secondary)',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               cursor: 'pointer',
               fontFamily: 'inherit',
             }}
@@ -222,13 +222,13 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '0.375rem',
               padding: '9px 20px',
-              borderRadius: '9px',
+              borderRadius: '0.5625rem',
               background: 'var(--red)',
               border: 'none',
               color: '#fff',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               fontWeight: 600,
               cursor: 'pointer',
               fontFamily: 'inherit',

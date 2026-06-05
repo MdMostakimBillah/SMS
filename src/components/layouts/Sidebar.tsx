@@ -205,7 +205,7 @@ export default function Sidebar() {
   return (
     <aside
       style={{
-        width: '220px',
+        width: '13.75rem',
         height: '100%',
         background: 'var(--glass)',
         backdropFilter: 'blur(16px) saturate(180%)',
@@ -228,15 +228,15 @@ export default function Sidebar() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
-            marginBottom: '14px',
+            gap: '0.625rem',
+            marginBottom: '0.875rem',
           }}
         >
           <div
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
+              width: '2rem',
+              height: '2rem',
+              borderRadius: '0.5rem',
               background: 'var(--brand)',
               display: 'flex',
               alignItems: 'center',
@@ -249,7 +249,7 @@ export default function Sidebar() {
           <div>
             <div
               style={{
-                fontSize: '14px',
+                fontSize: '0.875rem',
                 fontWeight: 600,
                 color: 'var(--text-primary)',
                 lineHeight: 1,
@@ -259,9 +259,9 @@ export default function Sidebar() {
             </div>
             <div
               style={{
-                fontSize: '9px',
+                fontSize: '0.5625rem',
                 color: 'var(--text-muted)',
-                marginTop: '2px',
+                marginTop: '0.125rem',
               }}
             >
               School Management
@@ -275,11 +275,11 @@ export default function Sidebar() {
             onClick={() => setShowSessionDropdown(!showSessionDropdown)}
             style={{
               background: 'var(--bg-secondary)',
-              borderRadius: '8px',
+              borderRadius: '0.5rem',
               padding: '8px 10px',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: '0.5rem',
               border: '1px solid var(--border)',
               cursor: 'pointer',
               transition: 'all 0.15s',
@@ -295,14 +295,14 @@ export default function Sidebar() {
           >
             <div
               style={{
-                width: '26px',
-                height: '26px',
-                borderRadius: '6px',
+                width: '1.625rem',
+                height: '1.625rem',
+                borderRadius: '0.375rem',
                 background: 'var(--teal)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '9px',
+                fontSize: '0.5625rem',
                 fontWeight: 600,
                 color: '#fff',
                 flexShrink: 0,
@@ -313,7 +313,7 @@ export default function Sidebar() {
             <div style={{ minWidth: 0, flex: 1 }}>
               <div
                 style={{
-                  fontSize: '11px',
+                  fontSize: '0.6875rem',
                   fontWeight: 500,
                   color: 'var(--text-primary)',
                   overflow: 'hidden',
@@ -323,7 +323,7 @@ export default function Sidebar() {
               >
                 Sunrise Academy
               </div>
-              <div style={{ fontSize: '9px', color: 'var(--brand)', fontWeight: 600 }}>
+              <div style={{ fontSize: '0.5625rem', color: 'var(--brand)', fontWeight: 600 }}>
                 {institution.currentSession || 'No Session'}
               </div>
             </div>
@@ -345,17 +345,17 @@ export default function Sidebar() {
                 top: '100%',
                 left: 0,
                 right: 0,
-                marginTop: '4px',
+                marginTop: '0.25rem',
                 background: 'var(--surface)',
                 border: '1px solid var(--border)',
-                borderRadius: '10px',
+                borderRadius: '0.625rem',
                 boxShadow: 'var(--shadow-lg)',
                 zIndex: 100,
                 overflow: 'hidden',
               }}
             >
               <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                <div style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.0313rem', marginBottom: '0.375rem' }}>
                   {t('academic_year', language)}
                 </div>
                 {institution.sessions.map((s) => (
@@ -365,11 +365,11 @@ export default function Sidebar() {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px',
+                      gap: '0.5rem',
                       padding: '6px 8px',
-                      borderRadius: '6px',
+                      borderRadius: '0.375rem',
                       cursor: 'pointer',
-                      fontSize: '11px',
+                      fontSize: '0.6875rem',
                       fontWeight: s === institution.currentSession ? 600 : 400,
                       color: s === institution.currentSession ? 'var(--brand)' : 'var(--text-primary)',
                       background: s === institution.currentSession ? 'var(--brand-light)' : 'transparent',
@@ -388,10 +388,10 @@ export default function Sidebar() {
                 ))}
               </div>
               <div style={{ padding: '8px 10px' }}>
-                <div style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                <div style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
                   {isBn ? 'নতুন সেশন' : 'New Session'}
                 </div>
-                <div style={{ display: 'flex', gap: '4px' }}>
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
                   <input
                     value={newSession}
                     onChange={(e) => setNewSession(e.target.value)}
@@ -400,10 +400,10 @@ export default function Sidebar() {
                     style={{
                       flex: 1,
                       padding: '5px 8px',
-                      borderRadius: '6px',
+                      borderRadius: '0.375rem',
                       border: '1px solid var(--border)',
                       background: 'var(--bg-secondary)',
-                      fontSize: '11px',
+                      fontSize: '0.6875rem',
                       color: 'var(--text-primary)',
                       outline: 'none',
                     }}
@@ -413,11 +413,11 @@ export default function Sidebar() {
                     disabled={!newSession.trim() || institution.sessions.includes(newSession.trim())}
                     style={{
                       padding: '5px 10px',
-                      borderRadius: '6px',
+                      borderRadius: '0.375rem',
                       border: 'none',
                       background: 'var(--brand)',
                       color: '#fff',
-                      fontSize: '10px',
+                      fontSize: '0.625rem',
                       fontWeight: 600,
                       cursor: 'pointer',
                       opacity: !newSession.trim() || institution.sessions.includes(newSession.trim()) ? 0.5 : 1,
@@ -435,16 +435,16 @@ export default function Sidebar() {
       {/* Nav */}
       <nav style={{ flex: 1, overflowY: 'auto', padding: '10px 8px' }}>
         {navGroups.map((group) => (
-          <div key={group.key} style={{ marginBottom: '16px' }}>
+          <div key={group.key} style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: '9px',
+                fontSize: '0.5625rem',
                 fontWeight: 600,
                 color: 'var(--text-muted)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.8px',
+                letterSpacing: '0.05rem',
                 padding: '0 8px',
-                marginBottom: '4px',
+                marginBottom: '0.25rem',
               }}
             >
               {t(group.key as TranslationKey, language)}
@@ -460,11 +460,11 @@ export default function Sidebar() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
+                    gap: '0.5rem',
                     padding: '8px 10px',
-                    borderRadius: '8px',
-                    marginBottom: '2px',
-                    fontSize: '12px',
+                    borderRadius: '0.5rem',
+                    marginBottom: '0.125rem',
+                    fontSize: '0.75rem',
                     fontWeight: isActive ? 500 : 400,
                     textDecoration: 'none',
                     transition: 'all 0.15s ease',
@@ -504,10 +504,10 @@ export default function Sidebar() {
                   {item.badge && (
                     <span
                       style={{
-                        fontSize: '9px',
+                        fontSize: '0.5625rem',
                         fontWeight: 600,
                         padding: '1px 6px',
-                        borderRadius: '8px',
+                        borderRadius: '0.5rem',
                         background: item.badgeColor === 'red' ? 'var(--red-light)' : 'var(--brand-light)',
                         color: item.badgeColor === 'red' ? 'var(--red)' : 'var(--brand)',
                         flexShrink: 0,
@@ -524,12 +524,12 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom */}
-      <div style={{ padding: '10px', borderTop: '1px solid var(--border)' }}>
+      <div style={{ padding: '0.625rem', borderTop: '1px solid var(--border)' }}>
         <div
           style={{
             background: 'var(--brand-light)',
-            borderRadius: '10px',
-            padding: '12px',
+            borderRadius: '0.625rem',
+            padding: '0.75rem',
             border: '1px solid var(--border)',
           }}
         >
@@ -538,12 +538,12 @@ export default function Sidebar() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '8px',
+              marginBottom: '0.5rem',
             }}
           >
             <span
               style={{
-                fontSize: '11px',
+                fontSize: '0.6875rem',
                 fontWeight: 600,
                 color: 'var(--text-primary)',
               }}
@@ -552,12 +552,12 @@ export default function Sidebar() {
             </span>
             <span
               style={{
-                fontSize: '9px',
+                fontSize: '0.5625rem',
                 fontWeight: 600,
                 color: 'var(--green)',
                 background: 'var(--green-light)',
                 padding: '2px 6px',
-                borderRadius: '6px',
+                borderRadius: '0.375rem',
               }}
             >
               Active
@@ -565,9 +565,9 @@ export default function Sidebar() {
           </div>
           <div
             style={{
-              height: '3px',
+              height: '0.1875rem',
               background: 'var(--border)',
-              borderRadius: '2px',
+              borderRadius: '0.125rem',
             }}
           >
             <div
@@ -575,15 +575,15 @@ export default function Sidebar() {
                 height: '100%',
                 width: '67%',
                 background: 'var(--brand)',
-                borderRadius: '2px',
+                borderRadius: '0.125rem',
               }}
             />
           </div>
           <div
             style={{
-              fontSize: '10px',
+              fontSize: '0.625rem',
               color: 'var(--text-muted)',
-              marginTop: '5px',
+              marginTop: '0.3125rem',
             }}
           >
             67% storage used

@@ -88,7 +88,7 @@ export default function HRFacilitiesTab({
     <>
       {/* Facility Definitions */}
       <div className={facCls}>
-        <div className="flex justify-between items-center mb-[14px] flex-wrap gap-2">
+        <div className="flex justify-between items-center mb-[0.875rem] flex-wrap gap-2">
           <div className={sectionTitleCls}>
             <Briefcase size={15} className="text-[var(--purple)]" />
             {isBn ? 'সুবিধার ধরন' : 'Facility Types'}
@@ -99,7 +99,7 @@ export default function HRFacilitiesTab({
               setEditFac(null)
               setFacModalType('add-facility')
             }}
-            className="flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--purple-light)] border border-[var(--purple)] text-[var(--purple)] text-xs font-medium cursor-pointer font-[inherit]"
+            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--purple-light)] border border-[var(--purple)] text-[var(--purple)] text-xs font-medium cursor-pointer font-[inherit]"
           >
             <Plus size={14} />
             {isBn ? 'নতুন সুবিধা' : 'Add Facility'}
@@ -107,21 +107,21 @@ export default function HRFacilitiesTab({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-xs min-w-[500px]">
+          <table className="w-full text-xs min-w-[31.25rem]">
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 {[
-                  { l: '#', w: '50px', align: 'center' as const },
+                  { l: '#', w: '3.125rem', align: 'center' as const },
                   { l: isBn ? 'নাম (ইংরেজি)' : 'Name (EN)', align: 'left' as const },
                   { l: isBn ? 'নাম (বাংলা)' : 'Name (BN)', align: 'left' as const },
-                  { l: isBn ? 'ধরন' : 'Type', w: '90px', align: 'center' as const },
-                  { l: isBn ? 'ডিফল্ট পরিমাণ' : 'Default Amount', w: '120px', align: 'right' as const },
-                  { l: isBn ? 'অবস্থা' : 'Status', w: '80px', align: 'center' as const },
-                  { l: isBn ? 'অ্যাকশন' : 'Action', w: '90px', align: 'center' as const },
+                  { l: isBn ? 'ধরন' : 'Type', w: '5.625rem', align: 'center' as const },
+                  { l: isBn ? 'ডিফল্ট পরিমাণ' : 'Default Amount', w: '7.5rem', align: 'right' as const },
+                  { l: isBn ? 'অবস্থা' : 'Status', w: '5rem', align: 'center' as const },
+                  { l: isBn ? 'অ্যাকশন' : 'Action', w: '5.625rem', align: 'center' as const },
                 ].map((h) => (
                   <th
                     key={h.l}
-                    className="py-[10px] px-2 h.align text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap"
+                    className="py-[0.625rem] px-2 h.align text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.025rem] whitespace-nowrap"
                   >
                     {h.l}
                   </th>
@@ -131,7 +131,7 @@ export default function HRFacilitiesTab({
             <tbody>
               {facilities.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-[30px] text-center text-[var(--text-muted)]">
+                  <td colSpan={7} className="p-[1.875rem] text-center text-[var(--text-muted)]">
                     <Briefcase size={24} className="block m-[0 auto 6px] opacity-30" />
                     {isBn ? 'কোনো সুবিধা পাওয়া যায়নি' : 'No facilities found'}
                   </td>
@@ -144,8 +144,8 @@ export default function HRFacilitiesTab({
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td className="py-[10px] px-2 text-[var(--text-muted)] text-[11px] text-center">{i + 1}</td>
-                    <td className="py-[10px] px-2">
+                    <td className="py-[0.625rem] px-2 text-[var(--text-muted)] text-[0.6875rem] text-center">{i + 1}</td>
+                    <td className="py-[0.625rem] px-2">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-md bg-[var(--purple-light)] flex items-center justify-center shrink-0">
                           <Briefcase size={13} className="text-[var(--purple)]" />
@@ -153,25 +153,25 @@ export default function HRFacilitiesTab({
                         <span className="text-xs font-medium text-[var(--text-primary)]">{f.name}</span>
                       </div>
                     </td>
-                    <td className="py-[10px] px-2 text-xs text-[var(--text-secondary)]">{f.nameBn || '—'}</td>
-                    <td className="py-[10px] px-2 text-center">
+                    <td className="py-[0.625rem] px-2 text-xs text-[var(--text-secondary)]">{f.nameBn || '—'}</td>
+                    <td className="py-[0.625rem] px-2 text-center">
                       <span
-                        className={`text-[10px] py-[2px] px-2 rounded-full font-medium ${f.type === 'monthly' ? 'bg-[var(--brand-light)]' : 'bg-[var(--amber-light)]'} ${f.type === 'monthly' ? 'text-[var(--brand)]' : 'text-[var(--amber)]'}`}
+                        className={`text-[0.625rem] py-[0.125rem] px-2 rounded-full font-medium ${f.type === 'monthly' ? 'bg-[var(--brand-light)]' : 'bg-[var(--amber-light)]'} ${f.type === 'monthly' ? 'text-[var(--brand)]' : 'text-[var(--amber)]'}`}
                       >
                         {f.type === 'monthly' ? (isBn ? 'মাসিক' : 'Monthly') : isBn ? 'এককালীন' : 'One-time'}
                       </span>
                     </td>
-                    <td className="py-[10px] px-2 text-xs font-semibold text-[var(--text-primary)] text-right">
+                    <td className="py-[0.625rem] px-2 text-xs font-semibold text-[var(--text-primary)] text-right">
                       ৳{f.defaultAmount.toLocaleString()}
                     </td>
-                    <td className="py-[10px] px-2 text-center">
+                    <td className="py-[0.625rem] px-2 text-center">
                       <span
-                        className={`text-[10px] py-[3px] px-2 rounded-full font-medium ${f.isActive ? 'bg-[var(--green-light)]' : 'bg-[var(--red-light)]'} ${f.isActive ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}
+                        className={`text-[0.625rem] py-[0.1875rem] px-2 rounded-full font-medium ${f.isActive ? 'bg-[var(--green-light)]' : 'bg-[var(--red-light)]'} ${f.isActive ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}
                       >
                         {f.isActive ? (isBn ? 'সক্রিয়' : 'Active') : isBn ? 'নিষ্ক্রিয়' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="py-[10px] px-2 text-center">
+                    <td className="py-[0.625rem] px-2 text-center">
                       <div className="flex gap-1 justify-center">
                         <button
                           onClick={() => {
@@ -180,14 +180,14 @@ export default function HRFacilitiesTab({
                             setFacModalType('edit-facility')
                           }}
                           title={isBn ? 'এডিট' : 'Edit'}
-                          className="w-[26px] h-[26px] rounded-md bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
+                          className="w-[1.625rem] h-[1.625rem] rounded-md bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
                         >
                           <Edit2 size={11} />
                         </button>
                         <button
                           onClick={() => setFacDeleteConfirm(f.id)}
                           title={isBn ? 'মুছুন' : 'Delete'}
-                          className="w-[26px] h-[26px] rounded-md bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
+                          className="w-[1.625rem] h-[1.625rem] rounded-md bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
                         >
                           <Trash2 size={11} />
                         </button>
@@ -203,7 +203,7 @@ export default function HRFacilitiesTab({
 
       {/* Staff Facility Panel — select staff and manage all their facilities */}
       <div className={facCls}>
-        <div className="flex justify-between items-center mb-[14px] flex-wrap gap-2">
+        <div className="flex justify-between items-center mb-[0.875rem] flex-wrap gap-2">
           <div className={sectionTitleCls}>
             <Users size={15} className="text-[var(--brand)]" />
             {isBn ? 'কর্মচারী সুবিধা প্যানেল' : 'Staff Facility Panel'}
@@ -211,15 +211,15 @@ export default function HRFacilitiesTab({
         </div>
 
         {/* Staff selector + filters */}
-        <div className={`grid gap-[10px] mb-[14px] ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
+        <div className={`grid gap-[0.625rem] mb-[0.875rem] ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
           <div>
-            <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-[5px] block">
+            <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem] block">
               {isBn ? 'কর্মচারী নির্বাচন' : 'Select Staff'}
             </label>
             <select
               value={selectedFacStaff}
               onChange={(e) => setSelectedFacStaff(e.target.value)}
-              className="w-full h-9 py-0 px-[10px] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border appearance-auto"
+              className="w-full h-9 py-0 px-[0.625rem] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border appearance-auto"
             >
               <option value="">{isBn ? 'নির্বাচন করুন...' : 'Select staff...'}</option>
               {filteredFacStaff.map((t) => (
@@ -230,13 +230,13 @@ export default function HRFacilitiesTab({
             </select>
           </div>
           <div>
-            <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-[5px] block">
+            <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem] block">
               {isBn ? 'বিভাগ' : 'Department'}
             </label>
             <select
               value={facStaffFilter}
               onChange={(e) => setFacStaffFilter(e.target.value)}
-              className="w-full h-9 py-0 px-[10px] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border appearance-auto"
+              className="w-full h-9 py-0 px-[0.625rem] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border appearance-auto"
             >
               <option value="">{isBn ? 'সব বিভাগ' : 'All Departments'}</option>
               {departments.map((d) => (
@@ -247,13 +247,13 @@ export default function HRFacilitiesTab({
             </select>
           </div>
           <div>
-            <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-[5px] block">
+            <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem] block">
               {isBn ? 'অনুসন্ধান' : 'Search'}
             </label>
             <input
               value={facStaffSearch}
               onChange={(e) => setFacStaffSearch(e.target.value)}
-              className="w-full h-9 py-0 px-[10px] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border"
+              className="w-full h-9 py-0 px-[0.625rem] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border"
               placeholder={isBn ? 'নাম, আইডি...' : 'Name, ID...'}
             />
           </div>
@@ -261,19 +261,19 @@ export default function HRFacilitiesTab({
 
         {/* Facility checklist for selected staff */}
         {selectedFacStaff && (
-          <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[10px] p-[14px]">
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[0.625rem] p-[0.875rem]">
             <div className="flex justify-between items-center mb-3">
               <div>
-                <div className="text-[13px] font-semibold text-[var(--text-primary)]">
+                <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
                   {teachers.find((t) => t.id === selectedFacStaff)?.nameEn || ''}
                 </div>
-                <div className="text-[11px] text-[var(--text-muted)]">
+                <div className="text-[0.6875rem] text-[var(--text-muted)]">
                   {isBn ? 'সুবিধা চেক করুন এবং পরিমাণ সেট করুন' : 'Check facilities and set amounts'}
                 </div>
               </div>
               <button
                 onClick={handleSaveStaffFacilities}
-                className="flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+                className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
               >
                 <Save size={13} />
                 {isBn ? 'সংরক্ষণ' : 'Save'}
@@ -284,26 +284,26 @@ export default function HRFacilitiesTab({
               {selectedStaffFacilities.map((sf) => (
                 <div
                   key={sf.facility.id}
-                  className="flex items-center gap-[10px] p-[10px] rounded-lg bg-[var(--bg-primary)] transition-all"
+                  className="flex items-center gap-[0.625rem] p-[0.625rem] rounded-lg bg-[var(--bg-primary)] transition-all"
                 >
                   <input
                     type="checkbox"
                     checked={sf.assigned}
                     onChange={() => toggleStaffFacility(sf.facility.id)}
-                    className="w-[15px] h-[15px] cursor-pointer accent-[var(--brand)] shrink-0"
+                    className="w-[0.9375rem] h-[0.9375rem] cursor-pointer accent-[var(--brand)] shrink-0"
                   />
                   <div className="flex-1 min-w-[0]">
                     <div className="text-xs font-medium text-[var(--text-primary)]">{isBn ? sf.facility.nameBn : sf.facility.name}</div>
-                    <div className="text-[10px] text-[var(--text-muted)]">{sf.facility.name}</div>
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">{sf.facility.name}</div>
                   </div>
                   {sf.assigned && (
-                    <div className="flex items-center gap-[3px] shrink-0">
-                      <span className="text-[11px] text-[var(--text-muted)]">৳</span>
+                    <div className="flex items-center gap-[0.1875rem] shrink-0">
+                      <span className="text-[0.6875rem] text-[var(--text-muted)]">৳</span>
                       <input
                         type="number"
                         value={sf.amount}
                         onChange={(e) => updateStaffFacilityAmount(sf.facility.id, Number(e.target.value) || 0)}
-                        className={`${inputCls} w-[70px] py-1 px-[6px] text-[11px] text-right`}
+                        className={`${inputCls} w-[4.375rem] py-1 px-[0.375rem] text-[0.6875rem] text-right`}
                         placeholder="0"
                       />
                     </div>
@@ -314,11 +314,11 @@ export default function HRFacilitiesTab({
 
             {/* Summary */}
             <div className="mt-3 py-2 px-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] flex justify-between items-center">
-              <span className="text-[11px] text-[var(--text-muted)]">
+              <span className="text-[0.6875rem] text-[var(--text-muted)]">
                 {isBn ? 'মোট সুবিধা' : 'Total Facilities'}: {selectedStaffFacilities.filter((sf) => sf.assigned).length} /{' '}
                 {facilities.length}
               </span>
-              <span className="text-[13px] font-bold text-[var(--green)]">
+              <span className="text-[0.8125rem] font-bold text-[var(--green)]">
                 ৳
                 {selectedStaffFacilities
                   .filter((sf) => sf.assigned)
@@ -330,7 +330,7 @@ export default function HRFacilitiesTab({
         )}
 
         {!selectedFacStaff && (
-          <div className="p-[30px] text-center text-[var(--text-muted)] text-xs">
+          <div className="p-[1.875rem] text-center text-[var(--text-muted)] text-xs">
             <Users size={24} className="block m-[0 auto 8px] opacity-30" />
             {isBn ? 'একজন কর্মচারী নির্বাচন করুন তার সুবিধা দেখতে' : 'Select a staff member to manage their facilities'}
           </div>
@@ -339,11 +339,11 @@ export default function HRFacilitiesTab({
 
       {/* All Assignments Summary */}
       <div className={facCls}>
-        <div className="flex justify-between items-center mb-[14px] flex-wrap gap-2">
+        <div className="flex justify-between items-center mb-[0.875rem] flex-wrap gap-2">
           <div className={sectionTitleCls}>
             <HandCoins size={15} className="text-[var(--teal)]" />
             {isBn ? 'সকল বরাদ্দ' : 'All Assignments'}
-            <span className="text-[11px] font-medium text-[var(--text-muted)] ml-2">({filteredAssignments.length})</span>
+            <span className="text-[0.6875rem] font-medium text-[var(--text-muted)] ml-2">({filteredAssignments.length})</span>
           </div>
           <div className="flex gap-1.5 items-center shrink-0">
             <input
@@ -353,9 +353,9 @@ export default function HRFacilitiesTab({
                 setAssignDateFrom(e.target.value)
                 setPage(1)
               }}
-              className={`${inputCls} w-[130px] shrink-0 py-[5px] px-2 text-[11px]`}
+              className={`${inputCls} w-[8.125rem] shrink-0 py-[0.3125rem] px-2 text-[0.6875rem]`}
             />
-            <span className="text-[11px] text-[var(--text-muted)] shrink-0">—</span>
+            <span className="text-[0.6875rem] text-[var(--text-muted)] shrink-0">—</span>
             <input
               type="date"
               value={assignDateTo}
@@ -363,12 +363,12 @@ export default function HRFacilitiesTab({
                 setAssignDateTo(e.target.value)
                 setPage(1)
               }}
-              className={`${inputCls} w-[130px] shrink-0 py-[5px] px-2 text-[11px]`}
+              className={`${inputCls} w-[8.125rem] shrink-0 py-[0.3125rem] px-2 text-[0.6875rem]`}
             />
             {selectedAssign.length > 0 && (
               <button
                 onClick={() => setShowPDFModal('assignment')}
-                className="flex items-center gap-[5px] py-[6px] px-[10px] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[11px] font-medium cursor-pointer font-[inherit] shrink-0"
+                className="flex items-center gap-[0.3125rem] py-[0.375rem] px-[0.625rem] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.6875rem] font-medium cursor-pointer font-[inherit] shrink-0"
               >
                 <FileText size={12} />
                 PDF ({selectedAssign.length})
@@ -381,7 +381,7 @@ export default function HRFacilitiesTab({
           <div className="p-5 text-center text-[var(--text-muted)] text-xs">{isBn ? 'কোনো বরাদ্দ নেই' : 'No assignments yet'}</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs min-w-[550px]">
+            <table className="w-full text-xs min-w-[34.375rem]">
               <thead>
                 <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                   <th className="p-2 w-9">
@@ -393,19 +393,19 @@ export default function HRFacilitiesTab({
                           p.length === filteredAssignments.length ? [] : filteredAssignments.map((tf: any) => tf.id)
                         )
                       }
-                      className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                     />
                   </th>
                   {[
-                    { l: '#', w: '40px', align: 'center' as const },
+                    { l: '#', w: '2.5rem', align: 'center' as const },
                     { l: isBn ? 'কর্মচারী' : 'Employee', align: 'left' as const },
                     { l: isBn ? 'সুবিধা' : 'Facility', align: 'left' as const },
-                    { l: isBn ? 'পরিমাণ' : 'Amount', w: '100px', align: 'right' as const },
-                    { l: '', w: '60px', align: 'center' as const },
+                    { l: isBn ? 'পরিমাণ' : 'Amount', w: '6.25rem', align: 'right' as const },
+                    { l: '', w: '3.75rem', align: 'center' as const },
                   ].map((h) => (
                     <th
                       key={h.l}
-                      className={`p-2 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap ${h.align === 'center' ? 'text-center' : h.align === 'right' ? 'text-right' : 'text-left'}`}
+                      className={`p-2 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.025rem] whitespace-nowrap ${h.align === 'center' ? 'text-center' : h.align === 'right' ? 'text-right' : 'text-left'}`}
                       style={h.w ? { width: h.w } : undefined}
                     >
                       {h.l}
@@ -421,7 +421,7 @@ export default function HRFacilitiesTab({
                   return (
                     <tr
                       key={tf.id}
-                      className={`border-b border-b-[0.5px] border-[var(--border)] ${isSelected ? 'bg-[var(--brand-light)]' : 'bg-transparent'}`}
+                      className={`border-b border-b-[0.0313rem] border-[var(--border)] ${isSelected ? 'bg-[var(--brand-light)]' : 'bg-transparent'}`}
                       onMouseEnter={(e) => {
                         if (!isSelected) e.currentTarget.style.background = 'var(--bg-secondary)'
                       }}
@@ -434,18 +434,18 @@ export default function HRFacilitiesTab({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleAssign(tf.id)}
-                          className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                          className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                         />
                       </td>
-                      <td className="p-2 text-[var(--text-muted)] text-[10px] text-center">{i + 1}</td>
-                      <td className="p-2 text-[11px] font-medium text-[var(--text-primary)]">{t?.nameEn || tf.teacherId}</td>
-                      <td className="p-2 text-[11px] text-[var(--text-secondary)]">{isBn ? fac?.nameBn || fac?.name : fac?.name}</td>
-                      <td className="p-2 text-[11px] font-semibold text-[var(--green)] text-right">৳{tf.amount.toLocaleString()}</td>
+                      <td className="p-2 text-[var(--text-muted)] text-[0.625rem] text-center">{i + 1}</td>
+                      <td className="p-2 text-[0.6875rem] font-medium text-[var(--text-primary)]">{t?.nameEn || tf.teacherId}</td>
+                      <td className="p-2 text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? fac?.nameBn || fac?.name : fac?.name}</td>
+                      <td className="p-2 text-[0.6875rem] font-semibold text-[var(--green)] text-right">৳{tf.amount.toLocaleString()}</td>
                       <td className="p-2 text-center">
                         <button
                           onClick={() => setAssignDeleteConfirm(tf.id)}
                           title={isBn ? 'মুছুন' : 'Delete'}
-                          className="w-[22px] h-[22px] rounded-[5px] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
+                          className="w-[1.375rem] h-[1.375rem] rounded-[0.3125rem] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
                         >
                           <Trash2 size={10} />
                         </button>
@@ -456,7 +456,7 @@ export default function HRFacilitiesTab({
               </tbody>
               <tfoot>
                 <tr className="bg-[var(--bg-secondary)] border-t border-t-2 border-[var(--border)]">
-                  <td colSpan={4} className="p-2 text-[11px] font-bold text-[var(--text-primary)]">
+                  <td colSpan={4} className="p-2 text-[0.6875rem] font-bold text-[var(--text-primary)]">
                     {isBn ? 'মোট' : 'Total'}
                   </td>
                   <td className="p-2 text-xs font-bold text-[var(--green)] text-right">
@@ -478,7 +478,7 @@ export default function HRFacilitiesTab({
           isBn={isBn}
         />
         {selectedAssign.length > 0 && (
-          <div className="mt-2 text-[11px] text-[var(--brand)] bg-[var(--brand-light)] py-1 px-[10px] rounded-md inline-block">
+          <div className="mt-2 text-[0.6875rem] text-[var(--brand)] bg-[var(--brand-light)] py-1 px-[0.625rem] rounded-md inline-block">
             {selectedAssign.length} {isBn ? 'নির্বাচিত' : 'selected'}
           </div>
         )}

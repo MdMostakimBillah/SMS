@@ -102,7 +102,7 @@ export default function HRSalarySetupTab({
 }: HRSalarySetupTabProps) {
   return (
     <div className={sectionCls(isMobile)}>
-      <div className="flex justify-between items-center mb-[14px] flex-wrap gap-2">
+      <div className="flex justify-between items-center mb-[0.875rem] flex-wrap gap-2">
         <div className={sectionTitleCls}>
           <Calculator size={15} className="text-[var(--teal)]" />
           {isBn ? 'মাসিক বেতন সেটআপ' : 'Monthly Salary Setup'}
@@ -112,7 +112,7 @@ export default function HRSalarySetupTab({
             type="month"
             value={salarySetupMonth}
             onChange={(e) => setSalarySetupMonth(e.target.value)}
-            className={`${inputCls} w-auto max-w-[160px] py-[6px] px-[10px] text-xs`}
+            className={`${inputCls} w-auto max-w-[10rem] py-[0.375rem] px-[0.625rem] text-xs`}
           />
           <button
             onClick={() => {
@@ -134,14 +134,14 @@ export default function HRSalarySetupTab({
               setSalarySaved(true)
               setTimeout(() => setSalarySaved(false), 2500)
             }}
-            className="flex items-center gap-[5px] py-[7px] px-4 rounded-lg bg-[var(--teal)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-4 rounded-lg bg-[var(--teal)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
           >
             <Save size={14} />
             {isBn ? 'সংরক্ষণ' : 'Save'}
           </button>
           <button
             onClick={() => setShowPDFModal('salary')}
-            className="flex items-center gap-[5px] py-[7px] px-4 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-4 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
           >
             <Download size={14} />
             PDF
@@ -151,24 +151,24 @@ export default function HRSalarySetupTab({
 
       {salarySaved && (
         <div className="mb-3 py-2 px-3 rounded-lg bg-[var(--green-light)] text-[var(--green)] text-xs font-medium">
-          <CheckCircle2 size={14} className="inline mr-[6px]" />
+          <CheckCircle2 size={14} className="inline mr-[0.375rem]" />
           {isBn ? 'বেতন সেটআপ সংরক্ষিত হয়েছে!' : 'Salary setup saved!'}
         </div>
       )}
 
       {/* Bulk Salary Setup Section */}
       <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg py-2 px-3 mb-3 flex items-center gap-4 flex-wrap">
-        <div className="text-[10px] font-semibold text-[var(--text-primary)] flex items-center gap-1 whitespace-nowrap">
+        <div className="text-[0.625rem] font-semibold text-[var(--text-primary)] flex items-center gap-1 whitespace-nowrap">
           <Calculator size={11} className="text-[var(--teal)]" />
           {isBn ? 'বাল্ক সেটআপ' : 'Bulk Setup'}
         </div>
         <div className="flex items-center gap-1.5">
-          <label className="flex items-center gap-1 cursor-pointer text-[10px] text-[var(--text-secondary)] whitespace-nowrap">
+          <label className="flex items-center gap-1 cursor-pointer text-[0.625rem] text-[var(--text-secondary)] whitespace-nowrap">
             <input
               type="checkbox"
               checked={bulkDeductionEnabled}
               onChange={(e) => setBulkDeductionEnabled(e.target.checked)}
-              className="w-[11px] h-[11px] cursor-pointer accent-[var(--red)]"
+              className="w-[0.6875rem] h-[0.6875rem] cursor-pointer accent-[var(--red)]"
             />
             <TrendingDown size={10} className="text-[var(--red)]" />
             {isBn ? 'কাটা' : 'Deduction'}
@@ -179,32 +179,32 @@ export default function HRSalarySetupTab({
                 type="date"
                 value={bulkDeductionFrom}
                 onChange={(e) => setBulkDeductionFrom(e.target.value)}
-                className="py-[3px] px-[5px] rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[10px] font-[inherit] outline-none w-[110px]"
+                className="py-[0.1875rem] px-[0.3125rem] rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.625rem] font-[inherit] outline-none w-[6.875rem]"
               />
-              <span className="text-[9px] text-[var(--text-muted)]">-</span>
+              <span className="text-[0.5625rem] text-[var(--text-muted)]">-</span>
               <input
                 type="date"
                 value={bulkDeductionTo}
                 onChange={(e) => setBulkDeductionTo(e.target.value)}
-                className="py-[3px] px-[5px] rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[10px] font-[inherit] outline-none w-[110px]"
+                className="py-[0.1875rem] px-[0.3125rem] rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.625rem] font-[inherit] outline-none w-[6.875rem]"
               />
             </>
           )}
           <button
             onClick={handleBulkApplyDeduction}
-            className={`py-[3px] px-2 rounded border-none text-[9px] font-medium cursor-pointer font-[inherit] whitespace-nowrap ${bulkDeductionEnabled ? 'bg-[var(--red)]' : 'bg-[var(--border)]'} ${bulkDeductionEnabled ? 'text-white' : 'text-[var(--text-muted)]'}`}
+            className={`py-[0.1875rem] px-2 rounded border-none text-[0.5625rem] font-medium cursor-pointer font-[inherit] whitespace-nowrap ${bulkDeductionEnabled ? 'bg-[var(--red)]' : 'bg-[var(--border)]'} ${bulkDeductionEnabled ? 'text-white' : 'text-[var(--text-muted)]'}`}
           >
             {isBn ? 'প্রয়োগ' : 'Apply'}
           </button>
         </div>
-        <div className="w-[1px] h-4 bg-[var(--border)]" />
+        <div className="w-[0.0625rem] h-4 bg-[var(--border)]" />
         <div className="flex items-center gap-1.5">
-          <label className="flex items-center gap-1 cursor-pointer text-[10px] text-[var(--text-secondary)] whitespace-nowrap">
+          <label className="flex items-center gap-1 cursor-pointer text-[0.625rem] text-[var(--text-secondary)] whitespace-nowrap">
             <input
               type="checkbox"
               checked={bulkFundEnabled}
               onChange={(e) => setBulkFundEnabled(e.target.checked)}
-              className="w-[11px] h-[11px] cursor-pointer accent-[var(--brand)]"
+              className="w-[0.6875rem] h-[0.6875rem] cursor-pointer accent-[var(--brand)]"
             />
             <HandCoins size={10} className="text-[var(--brand)]" />
             {isBn ? 'তহবিল' : 'Fund'}
@@ -214,16 +214,16 @@ export default function HRSalarySetupTab({
               type="number"
               value={bulkFundPercent}
               onChange={(e) => setBulkFundPercent(e.target.value)}
-              className="py-[3px] px-[5px] rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[10px] font-[inherit] outline-none w-[45px] text-right"
+              className="py-[0.1875rem] px-[0.3125rem] rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.625rem] font-[inherit] outline-none w-[2.8125rem] text-right"
               placeholder="%"
               min={0}
               max={100}
             />
           )}
-          {bulkFundEnabled && <span className="text-[9px] text-[var(--text-muted)]">%</span>}
+          {bulkFundEnabled && <span className="text-[0.5625rem] text-[var(--text-muted)]">%</span>}
           <button
             onClick={handleBulkApplyFund}
-            className={`py-[3px] px-2 rounded border-none text-[9px] font-medium cursor-pointer font-[inherit] whitespace-nowrap ${bulkFundEnabled ? 'bg-[var(--brand)]' : 'bg-[var(--border)]'} ${bulkFundEnabled ? 'text-white' : 'text-[var(--text-muted)]'}`}
+            className={`py-[0.1875rem] px-2 rounded border-none text-[0.5625rem] font-medium cursor-pointer font-[inherit] whitespace-nowrap ${bulkFundEnabled ? 'bg-[var(--brand)]' : 'bg-[var(--border)]'} ${bulkFundEnabled ? 'text-white' : 'text-[var(--text-muted)]'}`}
           >
             {isBn ? 'প্রয়োগ' : 'Apply'}
           </button>
@@ -231,45 +231,45 @@ export default function HRSalarySetupTab({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-[11px] min-w-[900px]">
+        <table className="w-full text-[0.6875rem] min-w-[56.25rem]">
           <thead>
             <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-              <th className="py-2 px-[10px] text-center w-9">
+              <th className="py-2 px-[0.625rem] text-center w-9">
                 <input
                   type="checkbox"
                   checked={selectedSalary.length === activeTeachers.length && activeTeachers.length > 0}
                   onChange={toggleAllSalary}
-                  className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                  className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                 />
               </th>
-              <th className="py-2 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.3px] whitespace-nowrap">
+              <th className="py-2 px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.0187rem] whitespace-nowrap">
                 {isBn ? 'কর্মচারী' : 'Employee'}
               </th>
-              <th className="py-2 px-2 text-right text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.3px] whitespace-nowrap">
+              <th className="py-2 px-2 text-right text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.0187rem] whitespace-nowrap">
                 {isBn ? 'মূল বেতন' : 'Basic'}
               </th>
-              <th className="py-2 px-[6px] text-right text-[9px] font-semibold text-[var(--green)] uppercase tracking-[0.3px] whitespace-nowrap">
+              <th className="py-2 px-[0.375rem] text-right text-[0.5625rem] font-semibold text-[var(--green)] uppercase tracking-[0.0187rem] whitespace-nowrap">
                 {isBn ? 'কর্মদক্ষতা' : 'Perf.'}
               </th>
-              <th className="py-2 px-[6px] text-right text-[9px] font-semibold text-[var(--teal)] uppercase tracking-[0.3px] whitespace-nowrap">
+              <th className="py-2 px-[0.375rem] text-right text-[0.5625rem] font-semibold text-[var(--teal)] uppercase tracking-[0.0187rem] whitespace-nowrap">
                 {isBn ? 'উপস্থিতি' : 'Atten.'}
               </th>
-              <th className="py-2 px-[6px] text-right text-[9px] font-semibold text-[var(--purple)] uppercase tracking-[0.3px] whitespace-nowrap">
+              <th className="py-2 px-[0.375rem] text-right text-[0.5625rem] font-semibold text-[var(--purple)] uppercase tracking-[0.0187rem] whitespace-nowrap">
                 {isBn ? 'বিশেষ' : 'Special'}
               </th>
-              <th className="py-2 px-[6px] text-right text-[9px] font-semibold text-[var(--amber)] uppercase tracking-[0.3px] whitespace-nowrap">
+              <th className="py-2 px-[0.375rem] text-right text-[0.5625rem] font-semibold text-[var(--amber)] uppercase tracking-[0.0187rem] whitespace-nowrap">
                 {isBn ? 'উৎসব' : 'Festival'}
               </th>
-              <th className="py-2 px-2 text-right text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-[0.3px] whitespace-nowrap">
+              <th className="py-2 px-2 text-right text-[0.625rem] font-bold text-[var(--text-primary)] uppercase tracking-[0.0187rem] whitespace-nowrap">
                 {isBn ? 'মোট বোনাস' : 'Total B.'}
               </th>
-              <th className="py-2 px-[6px] text-center text-[9px] font-semibold text-[var(--red)] uppercase tracking-[0.3px] whitespace-nowrap">
+              <th className="py-2 px-[0.375rem] text-center text-[0.5625rem] font-semibold text-[var(--red)] uppercase tracking-[0.0187rem] whitespace-nowrap">
                 {isBn ? 'কাটা' : 'Ded.'}
               </th>
-              <th className="py-2 px-[6px] text-right text-[9px] font-semibold text-[var(--brand)] uppercase tracking-[0.3px] whitespace-nowrap">
+              <th className="py-2 px-[0.375rem] text-right text-[0.5625rem] font-semibold text-[var(--brand)] uppercase tracking-[0.0187rem] whitespace-nowrap">
                 {isBn ? 'তহবিল' : 'Fund'}
               </th>
-              <th className="py-2 px-2 text-right text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-[0.3px] whitespace-nowrap">
+              <th className="py-2 px-2 text-right text-[0.625rem] font-bold text-[var(--text-primary)] uppercase tracking-[0.0187rem] whitespace-nowrap">
                 {isBn ? 'নেট বেতন' : 'Net Pay'}
               </th>
             </tr>
@@ -299,47 +299,47 @@ export default function HRSalarySetupTab({
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <td className="py-[7px] px-[10px] text-center">
+                  <td className="py-[0.4375rem] px-[0.625rem] text-center">
                     <input
                       type="checkbox"
                       checked={selectedSalary.includes(t.id)}
                       onChange={() => toggleSalary(t.id)}
-                      className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                     />
                   </td>
-                  <td className="py-[7px] px-2">
-                    <div className="text-[11px] font-medium text-[var(--text-primary)]">{t.nameEn}</div>
-                    <div className="text-[9px] text-[var(--text-muted)]">{t.designation}</div>
+                  <td className="py-[0.4375rem] px-2">
+                    <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">{t.nameEn}</div>
+                    <div className="text-[0.5625rem] text-[var(--text-muted)]">{t.designation}</div>
                   </td>
-                  <td className="py-[7px] px-2 text-right text-[11px] font-semibold text-[var(--text-primary)]">
+                  <td className="py-[0.4375rem] px-2 text-right text-[0.6875rem] font-semibold text-[var(--text-primary)]">
                     ৳{t.salary.toLocaleString()}
                   </td>
                   <td
-                    className={`py-[7px] px-[6px] text-right text-[10px] font-medium ${perfBonus > 0 ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}
+                    className={`py-[0.4375rem] px-[0.375rem] text-right text-[0.625rem] font-medium ${perfBonus > 0 ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}
                   >
                     {perfBonus > 0 ? `৳${perfBonus.toLocaleString()}` : '-'}
                   </td>
                   <td
-                    className={`py-[7px] px-[6px] text-right text-[10px] font-medium ${attenBonus > 0 ? 'text-[var(--teal)]' : 'text-[var(--text-muted)]'}`}
+                    className={`py-[0.4375rem] px-[0.375rem] text-right text-[0.625rem] font-medium ${attenBonus > 0 ? 'text-[var(--teal)]' : 'text-[var(--text-muted)]'}`}
                   >
                     {attenBonus > 0 ? `৳${attenBonus.toLocaleString()}` : '-'}
                   </td>
                   <td
-                    className={`py-[7px] px-[6px] text-right text-[10px] font-medium ${specialBonus > 0 ? 'text-[var(--purple)]' : 'text-[var(--text-muted)]'}`}
+                    className={`py-[0.4375rem] px-[0.375rem] text-right text-[0.625rem] font-medium ${specialBonus > 0 ? 'text-[var(--purple)]' : 'text-[var(--text-muted)]'}`}
                   >
                     {specialBonus > 0 ? `৳${specialBonus.toLocaleString()}` : '-'}
                   </td>
                   <td
-                    className={`py-[7px] px-[6px] text-right text-[10px] font-medium ${festivalBonus > 0 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}
+                    className={`py-[0.4375rem] px-[0.375rem] text-right text-[0.625rem] font-medium ${festivalBonus > 0 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}
                   >
                     {festivalBonus > 0 ? `৳${festivalBonus.toLocaleString()}` : '-'}
                   </td>
                   <td
-                    className={`py-[7px] px-2 text-right text-[11px] font-bold ${totalBonus > 0 ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}
+                    className={`py-[0.4375rem] px-2 text-right text-[0.6875rem] font-bold ${totalBonus > 0 ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}
                   >
                     {totalBonus > 0 ? `৳${totalBonus.toLocaleString()}` : '-'}
                   </td>
-                  <td className="py-[7px] px-[6px] text-center">
+                  <td className="py-[0.4375rem] px-[0.375rem] text-center">
                     <input
                       type="checkbox"
                       checked={applyDeduction}
@@ -355,27 +355,27 @@ export default function HRSalarySetupTab({
                           },
                         }))
                       }
-                      className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                     />
                   </td>
                   <td
-                    className={`py-[7px] px-[6px] text-right text-[10px] font-medium ${fundAmount > 0 ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`}
+                    className={`py-[0.4375rem] px-[0.375rem] text-right text-[0.625rem] font-medium ${fundAmount > 0 ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`}
                   >
                     {fundPercent > 0 ? `${fundPercent}%` : '-'}
                   </td>
-                  <td className="py-[7px] px-2 text-right text-[11px] font-bold text-[var(--green)]">৳{netPay.toLocaleString()}</td>
+                  <td className="py-[0.4375rem] px-2 text-right text-[0.6875rem] font-bold text-[var(--green)]">৳{netPay.toLocaleString()}</td>
                 </tr>
               )
             })}
           </tbody>
           <tfoot>
             <tr className="bg-[var(--bg-secondary)] border-t border-t-2 border-[var(--border)]">
-              <td className="py-2 px-[10px]"></td>
-              <td className="py-2 px-2 text-[11px] font-bold text-[var(--text-primary)]">{isBn ? 'মোট' : 'Total'}</td>
-              <td className="py-2 px-2 text-right text-[11px] font-bold">
+              <td className="py-2 px-[0.625rem]"></td>
+              <td className="py-2 px-2 text-[0.6875rem] font-bold text-[var(--text-primary)]">{isBn ? 'মোট' : 'Total'}</td>
+              <td className="py-2 px-2 text-right text-[0.6875rem] font-bold">
                 ৳{activeTeachers.reduce((s, t) => s + t.salary, 0).toLocaleString()}
               </td>
-              <td className="py-2 px-[6px] text-right text-[10px] font-bold text-[var(--green)]">
+              <td className="py-2 px-[0.375rem] text-right text-[0.625rem] font-bold text-[var(--green)]">
                 ৳
                 {activeTeachers
                   .reduce(
@@ -388,7 +388,7 @@ export default function HRSalarySetupTab({
                   )
                   .toLocaleString()}
               </td>
-              <td className="py-2 px-[6px] text-right text-[10px] font-bold text-[var(--teal)]">
+              <td className="py-2 px-[0.375rem] text-right text-[0.625rem] font-bold text-[var(--teal)]">
                 ৳
                 {activeTeachers
                   .reduce(
@@ -401,7 +401,7 @@ export default function HRSalarySetupTab({
                   )
                   .toLocaleString()}
               </td>
-              <td className="py-2 px-[6px] text-right text-[10px] font-bold text-[var(--purple)]">
+              <td className="py-2 px-[0.375rem] text-right text-[0.625rem] font-bold text-[var(--purple)]">
                 ৳
                 {activeTeachers
                   .reduce(
@@ -414,7 +414,7 @@ export default function HRSalarySetupTab({
                   )
                   .toLocaleString()}
               </td>
-              <td className="py-2 px-[6px] text-right text-[10px] font-bold text-[var(--amber)]">
+              <td className="py-2 px-[0.375rem] text-right text-[0.625rem] font-bold text-[var(--amber)]">
                 ৳
                 {activeTeachers
                   .reduce(
@@ -427,7 +427,7 @@ export default function HRSalarySetupTab({
                   )
                   .toLocaleString()}
               </td>
-              <td className="py-2 px-2 text-right text-[11px] font-bold text-[var(--green)]">
+              <td className="py-2 px-2 text-right text-[0.6875rem] font-bold text-[var(--green)]">
                 ৳
                 {activeTeachers
                   .reduce(
@@ -438,7 +438,7 @@ export default function HRSalarySetupTab({
                   )
                   .toLocaleString()}
               </td>
-              <td className="py-2 px-[6px] text-right text-[10px] font-bold text-[var(--red)]">
+              <td className="py-2 px-[0.375rem] text-right text-[0.625rem] font-bold text-[var(--red)]">
                 ৳
                 {activeTeachers
                   .reduce((s, t) => {
@@ -449,7 +449,7 @@ export default function HRSalarySetupTab({
                   }, 0)
                   .toLocaleString()}
               </td>
-              <td className="py-2 px-[6px] text-right text-[10px] font-bold text-[var(--brand)]">
+              <td className="py-2 px-[0.375rem] text-right text-[0.625rem] font-bold text-[var(--brand)]">
                 ৳
                 {activeTeachers
                   .reduce((s, t) => {
@@ -492,7 +492,7 @@ export default function HRSalarySetupTab({
         isBn={isBn}
       />
       {selectedSalary.length > 0 && (
-        <div className="mt-2 text-[11px] text-[var(--brand)] bg-[var(--brand-light)] py-1 px-[10px] rounded-md inline-block">
+        <div className="mt-2 text-[0.6875rem] text-[var(--brand)] bg-[var(--brand-light)] py-1 px-[0.625rem] rounded-md inline-block">
           {selectedSalary.length} {isBn ? 'নির্বাচিত' : 'selected'}
         </div>
       )}

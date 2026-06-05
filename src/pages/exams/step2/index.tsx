@@ -41,14 +41,14 @@ import {
   startOfDay,
 } from 'date-fns'
 
-const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] mb-[14px]'
-const sectionTitleCls = 'flex items-center gap-2 text-[13px] font-semibold text-[var(--text-primary)]'
+const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-[0.875rem] mb-[0.875rem]'
+const sectionTitleCls = 'flex items-center gap-2 text-[0.8125rem] font-semibold text-[var(--text-primary)]'
 const inputCls =
   'h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border'
 const selectCls =
   'h-8 px-2 pr-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border appearance-none cursor-pointer bg-[url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2712%27%20height%3D%2712%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%2394a3b8%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")] bg-no-repeat bg-[position:right_8px_center] hover:border-[var(--brand)] focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20 transition-all'
 const btnPrimary =
-  'flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
+  'flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
 
 type SubTab = 'routine' | 'rooms' | 'seats' | 'invigilators' | 'attendance'
 
@@ -558,10 +558,10 @@ export default function Step2Schedule() {
             <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 className="text-[16px] font-bold text-[var(--text-primary)]">
+            <h1 className="text-[1rem] font-bold text-[var(--text-primary)]">
               {isBn ? 'ধাপ ২: সময়সূচী ও আসন পরিকল্পনা' : 'Step 2: Schedule & Seat Planning'}
             </h1>
-            <p className="text-[11px] text-[var(--text-muted)]">
+            <p className="text-[0.6875rem] text-[var(--text-muted)]">
               {isBn ? 'রুটিন, কক্ষ, আসন ও ইনভিজিলেটর ব্যবস্থাপনা' : 'Routine, rooms, seating & invigilator management'}
             </p>
           </div>
@@ -570,7 +570,7 @@ export default function Step2Schedule() {
 
       {/* Exam Selector */}
       <div className="px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-primary)]">
-        <select value={selectedExamId} onChange={(e) => setSelectedExamId(e.target.value)} className={`${selectCls} max-w-[300px]`}>
+        <select value={selectedExamId} onChange={(e) => setSelectedExamId(e.target.value)} className={`${selectCls} max-w-[18.75rem]`}>
           <option value="">{isBn ? 'সকল পরীক্ষা' : 'All Exams'}</option>
           {examConfigs.map((e) => (
             <option key={e.id} value={e.id}>
@@ -579,7 +579,7 @@ export default function Step2Schedule() {
           ))}
         </select>
         {selectedExam && (
-          <span className="ml-3 text-[11px] text-[var(--text-muted)]">
+          <span className="ml-3 text-[0.6875rem] text-[var(--text-muted)]">
             {selectedExam.startDate} — {selectedExam.endDate}
           </span>
         )}
@@ -607,11 +607,11 @@ export default function Step2Schedule() {
           <button
             key={t.key}
             onClick={() => setActiveSubTab(t.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeSubTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeSubTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
           >
             {t.icon}
             {t.label}
-            {t.count !== undefined && <span className="text-[10px] opacity-70">({t.count})</span>}
+            {t.count !== undefined && <span className="text-[0.625rem] opacity-70">({t.count})</span>}
           </button>
         ))}
       </div>
@@ -628,8 +628,8 @@ export default function Step2Schedule() {
                   <Calendar size={16} className="text-[var(--brand)]" />
                 </div>
                 <div>
-                  <div className="text-[16px] font-bold text-[var(--text-primary)]">{examDayCount}</div>
-                  <div className="text-[10px] text-[var(--text-muted)]">{isBn ? 'পরীক্ষার দিন' : 'Exam Days'}</div>
+                  <div className="text-[1rem] font-bold text-[var(--text-primary)]">{examDayCount}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'পরীক্ষার দিন' : 'Exam Days'}</div>
                 </div>
               </div>
               <div className={`${sectionCls} !mb-0 flex items-center gap-3`}>
@@ -637,8 +637,8 @@ export default function Step2Schedule() {
                   <BookOpen size={16} className="text-[var(--brand)]" />
                 </div>
                 <div>
-                  <div className="text-[16px] font-bold text-[var(--text-primary)]">{filteredRoutines.length}</div>
-                  <div className="text-[10px] text-[var(--text-muted)]">{isBn ? 'মোট রুটিন' : 'Total Routines'}</div>
+                  <div className="text-[1rem] font-bold text-[var(--text-primary)]">{filteredRoutines.length}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'মোট রুটিন' : 'Total Routines'}</div>
                 </div>
               </div>
               <div className={`${sectionCls} !mb-0 flex items-center gap-3`}>
@@ -646,8 +646,8 @@ export default function Step2Schedule() {
                   <CheckCircle size={16} style={{ color: 'var(--green)' }} />
                 </div>
                 <div>
-                  <div className="text-[16px] font-bold text-[var(--text-primary)]">{completedDays}</div>
-                  <div className="text-[10px] text-[var(--text-muted)]">{isBn ? 'সম্পন্ন' : 'Completed'}</div>
+                  <div className="text-[1rem] font-bold text-[var(--text-primary)]">{completedDays}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'সম্পন্ন' : 'Completed'}</div>
                 </div>
               </div>
               <div className={`${sectionCls} !mb-0 flex items-center gap-3`}>
@@ -655,8 +655,8 @@ export default function Step2Schedule() {
                   <Clock size={16} style={{ color: 'var(--amber)' }} />
                 </div>
                 <div>
-                  <div className="text-[16px] font-bold text-[var(--text-primary)]">{upcomingDays}</div>
-                  <div className="text-[10px] text-[var(--text-muted)]">{isBn ? 'আসন্ন' : 'Upcoming'}</div>
+                  <div className="text-[1rem] font-bold text-[var(--text-primary)]">{upcomingDays}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'আসন্ন' : 'Upcoming'}</div>
                 </div>
               </div>
             </div>
@@ -670,7 +670,7 @@ export default function Step2Schedule() {
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <h2 className="text-[15px] font-bold text-[var(--text-primary)] min-w-[160px] text-center">
+                <h2 className="text-[0.9375rem] font-bold text-[var(--text-primary)] min-w-[10rem] text-center">
                   {format(currentMonth, 'MMMM yyyy')}
                 </h2>
                 <button
@@ -684,7 +684,7 @@ export default function Step2Schedule() {
                     setCurrentMonth(new Date())
                     setSelectedDate(new Date())
                   }}
-                  className="ml-2 px-3 py-1.5 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] text-[11px] font-medium cursor-pointer border border-[var(--brand)] hover:shadow-sm"
+                  className="ml-2 px-3 py-1.5 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--brand)] hover:shadow-sm"
                 >
                   {isBn ? 'আজ' : 'Today'}
                 </button>
@@ -694,7 +694,7 @@ export default function Step2Schedule() {
                   <select
                     value={routineOrientation}
                     onChange={(e) => setRoutineOrientation(e.target.value as 'landscape' | 'portrait')}
-                    className="h-7 px-2 pr-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2710%27%20height%3D%2710%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%2394a3b8%27%20stroke-width%3D%272%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_6px_center] hover:border-[var(--brand)] transition-all"
+                    className="h-7 px-2 pr-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2710%27%20height%3D%2710%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%2394a3b8%27%20stroke-width%3D%272%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_6px_center] hover:border-[var(--brand)] transition-all"
                   >
                     <option value="landscape">{isBn ? 'ল্যান্ডস্কেপ' : 'Landscape'}</option>
                     <option value="portrait">{isBn ? 'পোর্ট্রেট' : 'Portrait'}</option>
@@ -788,7 +788,7 @@ export default function Step2Schedule() {
                     a.click()
                     URL.revokeObjectURL(url)
                   }}
-                  className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--brand)] text-white text-[11px] font-medium cursor-pointer border-none hover:shadow-sm"
+                  className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none hover:shadow-sm"
                 >
                   <Download size={13} />
                   {isBn ? 'রুটিন ডাউনলোড' : 'Download Routine'}
@@ -802,7 +802,7 @@ export default function Step2Schedule() {
               {/* Weekday headers */}
               <div className="grid grid-cols-7 gap-1 mb-1">
                 {(isBn ? WEEKDAYS_BN : WEEKDAYS_EN).map((day) => (
-                  <div key={day} className="text-center text-[11px] font-semibold text-[var(--text-muted)] py-2">
+                  <div key={day} className="text-center text-[0.6875rem] font-semibold text-[var(--text-muted)] py-2">
                     {day}
                   </div>
                 ))}
@@ -832,7 +832,7 @@ export default function Step2Schedule() {
                         setShowDayDetail(true)
                       }}
                       className={`
-                        relative min-h-[72px] p-1.5 rounded-xl border-2 cursor-pointer transition-all
+                        relative min-h-[4.5rem] p-1.5 rounded-xl border-2 cursor-pointer transition-all
                         ${today ? 'border-[var(--brand)] bg-[var(--brand-light)] shadow-md ring-1 ring-[var(--brand)]/30' : ''}
                         ${!today && !hasRoutine ? 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)] hover:shadow-sm' : ''}
                         ${!today && hasRoutine ? `${borderStyle} bg-[var(--bg-primary)] hover:shadow-md` : ''}
@@ -841,7 +841,7 @@ export default function Step2Schedule() {
                     >
                       {/* Today badge */}
                       {today && (
-                        <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1.5 py-[1px] rounded-full bg-[var(--brand)] text-white text-[7px] font-bold uppercase tracking-wider">
+                        <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1.5 py-[0.0625rem] rounded-full bg-[var(--brand)] text-white text-[0.4375rem] font-bold uppercase tracking-wider">
                           {isBn ? 'আজ' : 'Today'}
                         </div>
                       )}
@@ -849,14 +849,14 @@ export default function Step2Schedule() {
                       <div className="flex items-center justify-between mb-0.5">
                         <span
                           className={`
-                            text-[11px] font-semibold
-                            ${today ? 'w-5 h-5 rounded-full bg-[var(--brand)] text-white flex items-center justify-center text-[10px]' : 'text-[var(--text-primary)]'}
+                            text-[0.6875rem] font-semibold
+                            ${today ? 'w-5 h-5 rounded-full bg-[var(--brand)] text-white flex items-center justify-center text-[0.625rem]' : 'text-[var(--text-primary)]'}
                           `}
                         >
                           {format(day, 'd')}
                         </span>
                         {hasRoutine && (
-                          <span className="text-[9px] font-bold text-[var(--text-muted)]">{dayRoutines.length}</span>
+                          <span className="text-[0.5625rem] font-bold text-[var(--text-muted)]">{dayRoutines.length}</span>
                         )}
                       </div>
 
@@ -869,7 +869,7 @@ export default function Step2Schedule() {
                             return (
                               <div
                                 key={r.id}
-                                className="flex items-center gap-1 px-1 py-0.5 rounded-md text-[8px] font-medium truncate"
+                                className="flex items-center gap-1 px-1 py-0.5 rounded-md text-[0.5rem] font-medium truncate"
                                 style={{ background: st.bg, color: st.color }}
                               >
                                 <span
@@ -882,7 +882,7 @@ export default function Step2Schedule() {
                             )
                           })}
                           {dayRoutines.length > 3 && (
-                            <div className="text-[8px] text-[var(--text-muted)] text-center">
+                            <div className="text-[0.5rem] text-[var(--text-muted)] text-center">
                               +{dayRoutines.length - 3} {isBn ? 'আরও' : 'more'}
                             </div>
                           )}
@@ -917,7 +917,7 @@ export default function Step2Schedule() {
                           })
                           setShowRoutineForm(true)
                         }}
-                        className="flex items-center gap-1 py-1 px-2.5 rounded-lg bg-[var(--brand)] text-white text-[11px] font-medium cursor-pointer border-none"
+                        className="flex items-center gap-1 py-1 px-2.5 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none"
                       >
                         <Plus size={12} />
                         {isBn ? 'যোগ করুন' : 'Add'}
@@ -944,24 +944,24 @@ export default function Step2Schedule() {
                               className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] hover:shadow-sm transition-all"
                             >
                               <div className="flex flex-col items-center shrink-0 w-12">
-                                <div className="text-[10px] text-[var(--text-muted)]">{routine.startTime}</div>
+                                <div className="text-[0.625rem] text-[var(--text-muted)]">{routine.startTime}</div>
                                 <div className="w-px h-3 bg-[var(--border)]" />
-                                <div className="text-[10px] text-[var(--text-muted)]">{routine.endTime}</div>
+                                <div className="text-[0.625rem] text-[var(--text-muted)]">{routine.endTime}</div>
                               </div>
                               <div className="w-px h-10 rounded-full shrink-0" style={{ background: st.dot }} />
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5">
-                                  <span className="text-[12px] font-semibold text-[var(--text-primary)]">
+                                  <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
                                     {isBn ? subject?.nameBn : subject?.name}
                                   </span>
                                   <span
-                                    className="text-[9px] py-[1px] px-[5px] rounded-[4px] font-medium"
+                                    className="text-[0.5625rem] py-[0.0625rem] px-[0.3125rem] rounded-[0.25rem] font-medium"
                                     style={{ background: st.bg, color: st.color }}
                                   >
                                     {isBn ? st.labelBn : st.label}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
+                                <div className="flex items-center gap-2 text-[0.625rem] text-[var(--text-muted)]">
                                   <span className="flex items-center gap-1">
                                     <MapPin size={9} />
                                     {routine.roomNo}
@@ -984,7 +984,7 @@ export default function Step2Schedule() {
                         })}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-[var(--text-muted)] text-[12px]">
+                    <div className="text-center py-8 text-[var(--text-muted)] text-[0.75rem]">
                       <Calendar size={24} className="mx-auto mb-2 opacity-30" />
                       {isBn ? 'এই দিনে কোনো রুটিন নেই' : 'No routines on this day'}
                     </div>
@@ -999,7 +999,7 @@ export default function Step2Schedule() {
         {activeSubTab === 'rooms' && (
           <>
             <div className="flex justify-between items-center mb-3">
-              <span className="text-[12px] text-[var(--text-secondary)]">
+              <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {rooms.length} {isBn ? 'টি কক্ষ' : 'rooms'}
               </span>
               <button
@@ -1019,11 +1019,11 @@ export default function Step2Schedule() {
                 const assignedSeats = roomCapacityMap.get(room.roomNo) || 0
                 const utilization = room.capacity > 0 ? Math.round((assignedSeats / room.capacity) * 100) : 0
                 return (
-                  <div key={room.id} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] transition-all hover:shadow-sm">
+                  <div key={room.id} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-[0.875rem] transition-all hover:shadow-sm">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <div className="text-[13px] font-semibold text-[var(--text-primary)]">{room.roomNo}</div>
-                        <div className="text-[11px] text-[var(--text-muted)]">
+                        <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{room.roomNo}</div>
+                        <div className="text-[0.6875rem] text-[var(--text-muted)]">
                           {room.roomName} · {room.building} · {room.floor}
                         </div>
                       </div>
@@ -1054,7 +1054,7 @@ export default function Step2Schedule() {
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)]">
+                    <div className="flex items-center justify-between text-[0.625rem] text-[var(--text-muted)]">
                       <span>
                         {assignedSeats}/{room.capacity} {isBn ? 'আসন' : 'seats'}
                       </span>
@@ -1065,9 +1065,9 @@ export default function Step2Schedule() {
                         {utilization}% {isBn ? 'ব্যবহৃত' : 'used'}
                       </span>
                     </div>
-                    <div className="mt-2 h-[5px] bg-[var(--border)] rounded-[3px]">
+                    <div className="mt-2 h-[0.3125rem] bg-[var(--border)] rounded-[0.1875rem]">
                       <div
-                        className="h-full rounded-[3px] transition-all"
+                        className="h-full rounded-[0.1875rem] transition-all"
                         style={{
                           width: utilization > 0 ? `${Math.max(utilization, 5)}%` : '0%',
                           background: utilization > 90 ? 'var(--red)' : utilization > 70 ? 'var(--amber)' : 'var(--green)',
@@ -1091,7 +1091,7 @@ export default function Step2Schedule() {
               </div>
               <div className="grid grid-cols-3 gap-3 mt-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
                   <select
                     value={seatClassId}
                     onChange={(e) => {
@@ -1109,7 +1109,7 @@ export default function Step2Schedule() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
                   <select
                     value={seatSectionId}
                     onChange={(e) => setSeatSectionId(e.target.value)}
@@ -1128,7 +1128,7 @@ export default function Step2Schedule() {
                   <button
                     onClick={handleAutoSeat}
                     disabled={!seatClassId || !seatSectionId || !selectedExamId}
-                    className={`${btnPrimary} text-[11px] ${!seatClassId || !seatSectionId || !selectedExamId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`${btnPrimary} text-[0.6875rem] ${!seatClassId || !seatSectionId || !selectedExamId ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <LayoutGrid size={13} />
                     {isBn ? 'অটো বরাদ্দ' : 'Auto Assign'}
@@ -1136,7 +1136,7 @@ export default function Step2Schedule() {
                   {filteredSeatPlans.length > 0 && (
                     <button
                       onClick={downloadSeatPlanPDF}
-                      className="px-3 py-2 rounded-lg bg-[var(--teal-light)] border border-[var(--teal)]/20 text-[var(--teal)] text-[11px] font-medium cursor-pointer hover:shadow-sm flex items-center gap-1.5"
+                      className="px-3 py-2 rounded-lg bg-[var(--teal-light)] border border-[var(--teal)]/20 text-[var(--teal)] text-[0.6875rem] font-medium cursor-pointer hover:shadow-sm flex items-center gap-1.5"
                     >
                       <Download size={13} />
                       {isBn ? 'আসন পরিকল্পনা ডাউনলোড' : 'Download Seat Plan'}
@@ -1174,7 +1174,7 @@ export default function Step2Schedule() {
                     >
                       {/* Seat badge */}
                       {isAssigned && (
-                        <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[var(--brand)] text-white flex items-center justify-center text-[10px] font-bold shadow-md">
+                        <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[var(--brand)] text-white flex items-center justify-center text-[0.625rem] font-bold shadow-md">
                           {seatPlan.seatNo}
                         </div>
                       )}
@@ -1184,7 +1184,7 @@ export default function Step2Schedule() {
                         {student.photo ? (
                           <img src={student.photo} alt={student.nameEn} className="w-14 h-14 rounded-full object-cover border-2 border-[var(--border)]" />
                         ) : (
-                          <div className="w-14 h-14 rounded-full bg-[var(--brand-light)] flex items-center justify-center text-[var(--brand)] text-[16px] font-bold border-2 border-[var(--brand)]/20">
+                          <div className="w-14 h-14 rounded-full bg-[var(--brand-light)] flex items-center justify-center text-[var(--brand)] text-[1rem] font-bold border-2 border-[var(--brand)]/20">
                             {initials}
                           </div>
                         )}
@@ -1192,14 +1192,14 @@ export default function Step2Schedule() {
 
                       {/* Info */}
                       <div className="text-center">
-                        <div className="text-[12px] font-semibold text-[var(--text-primary)] truncate">{student.nameEn}</div>
-                        <div className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                        <div className="text-[0.75rem] font-semibold text-[var(--text-primary)] truncate">{student.nameEn}</div>
+                        <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
                           {student.class} - {student.section}
                         </div>
-                        <div className="text-[10px] text-[var(--text-muted)]">
+                        <div className="text-[0.625rem] text-[var(--text-muted)]">
                           {isBn ? 'রোল' : 'Roll'}: {student.roll}
                         </div>
-                        <div className="text-[9px] text-[var(--text-muted)] mt-1 truncate">
+                        <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1 truncate">
                           {selectedExam ? (isBn ? selectedExam.nameBn : selectedExam.name) : ''}
                         </div>
                       </div>
@@ -1207,16 +1207,16 @@ export default function Step2Schedule() {
                       {/* Seat / Room info */}
                       {isAssigned ? (
                         <div className="mt-3 flex items-center justify-center gap-1.5">
-                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--brand)] text-white font-medium">
+                          <span className="text-[0.5625rem] px-2 py-0.5 rounded-full bg-[var(--brand)] text-white font-medium">
                             {isBn ? 'আসন' : 'Seat'}: {seatPlan.seatNo}
                           </span>
-                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--teal-light)] text-[var(--teal)] font-medium">
+                          <span className="text-[0.5625rem] px-2 py-0.5 rounded-full bg-[var(--teal-light)] text-[var(--teal)] font-medium">
                             {room?.roomNo || '?'}
                           </span>
                         </div>
                       ) : (
                         <div className="mt-3 text-center">
-                          <span className="text-[9px] text-[var(--text-muted)] italic">
+                          <span className="text-[0.5625rem] text-[var(--text-muted)] italic">
                             {isBn ? 'আসন বরাদ্দ হয়নি' : 'Click to assign'}
                           </span>
                         </div>
@@ -1241,7 +1241,7 @@ export default function Step2Schedule() {
             ) : (
               <div className={`${sectionCls} text-center py-10`}>
                 <LayoutGrid size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                <p className="text-[13px] text-[var(--text-muted)]">
+                <p className="text-[0.8125rem] text-[var(--text-muted)]">
                   {isBn ? 'শ্রেণি ও সেকশন নির্বাচন করুন' : 'Select class & section to view students'}
                 </p>
               </div>
@@ -1250,9 +1250,9 @@ export default function Step2Schedule() {
             {/* Assign Room Modal */}
             {assignRoomStudentId && (
               <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-                <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[320px] w-full p-5 border border-[var(--border)]">
+                <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[20rem] w-full p-5 border border-[var(--border)]">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[14px] font-semibold text-[var(--text-primary)]">{isBn ? 'কক্ষ বরাদ্দ' : 'Assign Room'}</h3>
+                    <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'কক্ষ বরাদ্দ' : 'Assign Room'}</h3>
                     <button
                       onClick={() => setAssignRoomStudentId('')}
                       className="w-7 h-7 rounded-md flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
@@ -1261,11 +1261,11 @@ export default function Step2Schedule() {
                     </button>
                   </div>
                   <div className="space-y-3">
-                    <div className="text-[12px] text-[var(--text-secondary)]">
+                    <div className="text-[0.75rem] text-[var(--text-secondary)]">
                       {sectionStudents.find((s) => s.id === assignRoomStudentId)?.nameEn}
                     </div>
                     <div>
-                      <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'কক্ষ' : 'Room'}</label>
+                      <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'কক্ষ' : 'Room'}</label>
                       <select
                         value={assignRoomId}
                         onChange={(e) => setAssignRoomId(e.target.value)}
@@ -1283,14 +1283,14 @@ export default function Step2Schedule() {
                   <div className="flex gap-2 justify-end mt-4">
                     <button
                       onClick={() => setAssignRoomStudentId('')}
-                      className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                      className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
                     >
                       {isBn ? 'বাতিল' : 'Cancel'}
                     </button>
                     <button
                       onClick={() => handleAssignSingleSeat(assignRoomStudentId)}
                       disabled={!assignRoomId}
-                      className={`${btnPrimary} text-[12px] ${!assignRoomId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`${btnPrimary} text-[0.75rem] ${!assignRoomId ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {isBn ? 'বরাদ্দ করুন' : 'Assign'}
                     </button>
@@ -1305,7 +1305,7 @@ export default function Step2Schedule() {
         {activeSubTab === 'invigilators' && (
           <>
             <div className="flex justify-between items-center mb-3">
-              <span className="text-[12px] text-[var(--text-secondary)]">
+              <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {filteredInvigilators.length} {isBn ? 'জন ইনভিজিলেটর' : 'invigilators'}
               </span>
               <button
@@ -1330,8 +1330,8 @@ export default function Step2Schedule() {
                         <UserCheck size={14} className="text-[var(--brand)]" />
                       </div>
                       <div>
-                        <div className="text-[13px] font-semibold text-[var(--text-primary)]">{teacher?.nameEn || inv.teacherId}</div>
-                        <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
+                        <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{teacher?.nameEn || inv.teacherId}</div>
+                        <div className="flex items-center gap-2 text-[0.625rem] text-[var(--text-muted)]">
                           <span className="flex items-center gap-1">
                             <MapPin size={10} />
                             {room?.roomNo || inv.roomId}
@@ -1361,7 +1361,7 @@ export default function Step2Schedule() {
               {filteredInvigilators.length === 0 && (
                 <div className={`${sectionCls} text-center py-10`}>
                   <UserCheck size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                  <p className="text-[13px] text-[var(--text-muted)]">
+                  <p className="text-[0.8125rem] text-[var(--text-muted)]">
                     {isBn ? 'কোনো ইনভিজিলেটর নিয়োগ হয়নি' : 'No invigilators assigned'}
                   </p>
                 </div>
@@ -1377,7 +1377,7 @@ export default function Step2Schedule() {
               <Users size={15} className="text-[var(--brand)]" />
               {isBn ? 'পরীক্ষাভিত্তিক উপস্থিতি' : 'Exam-wise Student Attendance'}
             </div>
-            <div className="text-center py-10 text-[var(--text-muted)] text-[12px]">
+            <div className="text-center py-10 text-[var(--text-muted)] text-[0.75rem]">
               <Users size={24} className="mx-auto mb-2 opacity-30" />
               {isBn ? 'পরীক্ষার দিনে উপস্থিতি নেওয়া হবে' : 'Attendance will be taken on exam day'}
             </div>
@@ -1388,9 +1388,9 @@ export default function Step2Schedule() {
       {/* ═══ Routine Form Modal ═══ */}
       {showRoutineForm && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[420px] w-full p-5 border border-[var(--border)]">
+          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[26.25rem] w-full p-5 border border-[var(--border)]">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[14px] font-semibold text-[var(--text-primary)]">{isBn ? 'নতুন রুটিন' : 'New Routine'}</h3>
+              <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'নতুন রুটিন' : 'New Routine'}</h3>
               <button
                 onClick={() => setShowRoutineForm(false)}
                 className="w-7 h-7 rounded-md flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
@@ -1401,7 +1401,7 @@ export default function Step2Schedule() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
                   <select
                     value={routineForm.classId}
                     onChange={(e) => {
@@ -1421,7 +1421,7 @@ export default function Step2Schedule() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
                   <select
                     value={routineForm.sectionId}
                     onChange={(e) => {
@@ -1443,7 +1443,7 @@ export default function Step2Schedule() {
                 </div>
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিষয়' : 'Subject'}</label>
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিষয়' : 'Subject'}</label>
                 <select
                   value={routineForm.subjectId}
                   onChange={(e) => setRoutineForm((p) => ({ ...p, subjectId: e.target.value }))}
@@ -1458,13 +1458,13 @@ export default function Step2Schedule() {
                   ))}
                 </select>
                 {routineForm.classId && routineFormSubjects.length === 0 && (
-                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                  <p className="text-[0.625rem] text-[var(--text-muted)] mt-1">
                     {isBn ? 'এই শ্রেণিতে কোনো বিষয় নেই' : 'No subjects for this class'}
                   </p>
                 )}
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'তারিখ' : 'Date'}</label>
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'তারিখ' : 'Date'}</label>
                 <input
                   type="date"
                   value={routineForm.date}
@@ -1476,7 +1476,7 @@ export default function Step2Schedule() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শুরু' : 'Start'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শুরু' : 'Start'}</label>
                   <input
                     type="time"
                     value={routineForm.startTime}
@@ -1485,7 +1485,7 @@ export default function Step2Schedule() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শেষ' : 'End'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শেষ' : 'End'}</label>
                   <input
                     type="time"
                     value={routineForm.endTime}
@@ -1495,7 +1495,7 @@ export default function Step2Schedule() {
                 </div>
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'কক্ষ' : 'Room'}</label>
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'কক্ষ' : 'Room'}</label>
                 <select
                   value={routineForm.roomNo}
                   onChange={(e) => setRoutineForm((p) => ({ ...p, roomNo: e.target.value }))}
@@ -1513,7 +1513,7 @@ export default function Step2Schedule() {
                   })}
                 </select>
                 {routineForm.classId && routineStudentCount > 0 && (
-                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                  <p className="text-[0.625rem] text-[var(--text-muted)] mt-1">
                     {isBn ? `শিক্ষার্থী: ${routineStudentCount} জন` : `Students: ${routineStudentCount}`}
                     {suggestedRoom && routineForm.roomNo !== suggestedRoom.roomNo && (
                       <span className="text-[var(--brand)] ml-1 cursor-pointer hover:underline" onClick={() => setRoutineForm((p) => ({ ...p, roomNo: suggestedRoom.roomNo }))}>
@@ -1527,11 +1527,11 @@ export default function Step2Schedule() {
             <div className="flex gap-2 justify-end mt-4">
               <button
                 onClick={() => setShowRoutineForm(false)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button onClick={handleSaveRoutine} className={`${btnPrimary} text-[12px]`}>
+              <button onClick={handleSaveRoutine} className={`${btnPrimary} text-[0.75rem]`}>
                 {isBn ? 'সংরক্ষণ' : 'Save'}
               </button>
             </div>
@@ -1542,9 +1542,9 @@ export default function Step2Schedule() {
       {/* ═══ Room Form Modal ═══ */}
       {showRoomForm && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
+          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[14px] font-semibold text-[var(--text-primary)]">
+              <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
                 {editRoom ? (isBn ? 'কক্ষ এডিট' : 'Edit Room') : isBn ? 'নতুন কক্ষ' : 'New Room'}
               </h3>
               <button
@@ -1560,7 +1560,7 @@ export default function Step2Schedule() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'কক্ষ নম্বর' : 'Room No'}
                   </label>
                   <input
@@ -1571,7 +1571,7 @@ export default function Step2Schedule() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'কক্ষের নাম' : 'Room Name'}
                   </label>
                   <input
@@ -1583,7 +1583,7 @@ export default function Step2Schedule() {
                 </div>
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'ধারণক্ষমতা' : 'Capacity'}
                 </label>
                 <input
@@ -1595,7 +1595,7 @@ export default function Step2Schedule() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিল্ডিং' : 'Building'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিল্ডিং' : 'Building'}</label>
                   <input
                     value={roomForm.building}
                     onChange={(e) => setRoomForm((p) => ({ ...p, building: e.target.value }))}
@@ -1603,7 +1603,7 @@ export default function Step2Schedule() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ফ্লোর' : 'Floor'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ফ্লোর' : 'Floor'}</label>
                   <input
                     value={roomForm.floor}
                     onChange={(e) => setRoomForm((p) => ({ ...p, floor: e.target.value }))}
@@ -1618,11 +1618,11 @@ export default function Step2Schedule() {
                   setShowRoomForm(false)
                   setEditRoom(null)
                 }}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button onClick={handleSaveRoom} className={`${btnPrimary} text-[12px]`}>
+              <button onClick={handleSaveRoom} className={`${btnPrimary} text-[0.75rem]`}>
                 {isBn ? 'সংরক্ষণ' : 'Save'}
               </button>
             </div>
@@ -1633,9 +1633,9 @@ export default function Step2Schedule() {
       {/* ═══ Invigilator Form Modal ═══ */}
       {showInvigForm && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
+          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[14px] font-semibold text-[var(--text-primary)]">{isBn ? 'ইনভিজিলেটর নিয়োগ' : 'Assign Invigilator'}</h3>
+              <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'ইনভিজিলেটর নিয়োগ' : 'Assign Invigilator'}</h3>
               <button
                 onClick={() => setShowInvigForm(false)}
                 className="w-7 h-7 rounded-md flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
@@ -1645,7 +1645,7 @@ export default function Step2Schedule() {
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শিক্ষক' : 'Teacher'}</label>
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শিক্ষক' : 'Teacher'}</label>
                 <select
                   value={invigForm.teacherId}
                   onChange={(e) => setInvigForm((p) => ({ ...p, teacherId: e.target.value }))}
@@ -1660,7 +1660,7 @@ export default function Step2Schedule() {
                 </select>
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'কক্ষ' : 'Room'}</label>
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'কক্ষ' : 'Room'}</label>
                 <select
                   value={invigForm.roomId}
                   onChange={(e) => setInvigForm((p) => ({ ...p, roomId: e.target.value }))}
@@ -1676,7 +1676,7 @@ export default function Step2Schedule() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'তারিখ' : 'Date'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'তারিখ' : 'Date'}</label>
                   <input
                     type="date"
                     value={invigForm.date}
@@ -1685,7 +1685,7 @@ export default function Step2Schedule() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শিফট' : 'Shift'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শিফট' : 'Shift'}</label>
                   <select
                     value={invigForm.shift}
                     onChange={(e) => setInvigForm((p) => ({ ...p, shift: e.target.value as 'morning' | 'afternoon' }))}
@@ -1700,11 +1700,11 @@ export default function Step2Schedule() {
             <div className="flex gap-2 justify-end mt-4">
               <button
                 onClick={() => setShowInvigForm(false)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button onClick={handleSaveInvig} className={`${btnPrimary} text-[12px]`}>
+              <button onClick={handleSaveInvig} className={`${btnPrimary} text-[0.75rem]`}>
                 {isBn ? 'সংরক্ষণ' : 'Save'}
               </button>
             </div>

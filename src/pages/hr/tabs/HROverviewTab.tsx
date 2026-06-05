@@ -130,14 +130,14 @@ export default function HROverviewTab({
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className={`${inputCls} w-auto max-w-[160px] py-[6px] px-[10px] text-xs`}
+            className={`${inputCls} w-auto max-w-[10rem] py-[0.375rem] px-[0.625rem] text-xs`}
           />
           <span className="text-xs text-[var(--text-muted)]">—</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className={`${inputCls} w-auto max-w-[160px] py-[6px] px-[10px] text-xs`}
+            className={`${inputCls} w-auto max-w-[10rem] py-[0.375rem] px-[0.625rem] text-xs`}
           />
           <button
             onClick={() => {
@@ -146,7 +146,7 @@ export default function HROverviewTab({
               setDateFrom(d.toISOString().split('T')[0])
               setDateTo(new Date().toISOString().split('T')[0])
             }}
-            className="py-[5px] px-[10px] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[11px] cursor-pointer font-[inherit]"
+            className="py-[0.3125rem] px-[0.625rem] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] cursor-pointer font-[inherit]"
           >
             {isBn ? '৭ দিন' : '7D'}
           </button>
@@ -157,7 +157,7 @@ export default function HROverviewTab({
               setDateFrom(d.toISOString().split('T')[0])
               setDateTo(new Date().toISOString().split('T')[0])
             }}
-            className="py-[5px] px-[10px] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[11px] cursor-pointer font-[inherit]"
+            className="py-[0.3125rem] px-[0.625rem] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] cursor-pointer font-[inherit]"
           >
             {isBn ? '৩০ দিন' : '30D'}
           </button>
@@ -168,7 +168,7 @@ export default function HROverviewTab({
               setDateFrom(d.toISOString().split('T')[0])
               setDateTo(new Date().toISOString().split('T')[0])
             }}
-            className="py-[5px] px-[10px] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[11px] cursor-pointer font-[inherit]"
+            className="py-[0.3125rem] px-[0.625rem] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] cursor-pointer font-[inherit]"
           >
             {isBn ? '১ মাস' : '1M'}
           </button>
@@ -179,7 +179,7 @@ export default function HROverviewTab({
               setDateFrom(d.toISOString().split('T')[0])
               setDateTo(new Date().toISOString().split('T')[0])
             }}
-            className="py-[5px] px-[10px] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[11px] cursor-pointer font-[inherit]"
+            className="py-[0.3125rem] px-[0.625rem] rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] cursor-pointer font-[inherit]"
           >
             {isBn ? '৩ মাস' : '3M'}
           </button>
@@ -187,18 +187,18 @@ export default function HROverviewTab({
       </div>
 
       {/* Quick Stats */}
-      <div className={`grid gap-2 mb-[14px] ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
+      <div className={`grid gap-2 mb-[0.875rem] ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
         {quickStats.map((s) => (
           <div key={s.labelEn} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3">
-            <div className="flex items-center gap-[10px]">
+            <div className="flex items-center gap-[0.625rem]">
               <div className={`w-8 h-8 rounded-lg ${s.bgCls} flex items-center justify-center shrink-0`}>
                 <s.icon size={15} className={s.colorCls} />
               </div>
               <div>
-                <div className={`font-bold text-[var(--text-primary)] ${isMobile ? 'text-[15px]' : 'text-[17px]'}`}>
+                <div className={`font-bold text-[var(--text-primary)] ${isMobile ? 'text-[0.9375rem]' : 'text-[1.0625rem]'}`}>
                   {isBn ? s.valueBn : s.valueEn}
                 </div>
-                <div className="text-[10px] text-[var(--text-muted)]">{isBn ? s.labelBn : s.labelEn}</div>
+                <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? s.labelBn : s.labelEn}</div>
               </div>
             </div>
           </div>
@@ -211,7 +211,7 @@ export default function HROverviewTab({
           <Medal size={15} className="text-[var(--amber)]" />
           {isBn ? 'শীর্ষ কর্মী' : 'Top Performers'}
         </div>
-        <div className={`grid gap-[10px] ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-4'}`}>
+        <div className={`grid gap-[0.625rem] ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-4'}`}>
           {[
             {
               title: isBn ? 'শিক্ষার্থী ফলাফল' : 'Student Performance',
@@ -230,17 +230,17 @@ export default function HROverviewTab({
               suffix: '%',
             },
           ].map((card) => (
-            <div key={card.title} className="bg-[var(--bg-secondary)] rounded-[10px] p-3">
-              <div className="text-[11px] font-semibold text-[var(--text-muted)] mb-[10px]">{card.title}</div>
+            <div key={card.title} className="bg-[var(--bg-secondary)] rounded-[0.625rem] p-3">
+              <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] mb-[0.625rem]">{card.title}</div>
               {card.data.slice(0, 3).map((t, i) => (
-                <div key={t.id} className="flex items-center gap-2 py-[5px] px-0 border-b border-[var(--border)]">
+                <div key={t.id} className="flex items-center gap-2 py-[0.3125rem] px-0 border-b border-[var(--border)]">
                   <span
-                    className={`text-[11px] font-bold w-[18px] text-center ${i === 0 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}
+                    className={`text-[0.6875rem] font-bold w-[1.125rem] text-center ${i === 0 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}
                   >
                     #{i + 1}
                   </span>
                   <div
-                    className="w-[26px] h-[26px] rounded-[7px] flex items-center justify-center shrink-0 text-[8px] font-semibold text-white"
+                    className="w-[1.625rem] h-[1.625rem] rounded-[0.4375rem] flex items-center justify-center shrink-0 text-[0.5rem] font-semibold text-white"
                     style={{ background: getAvatarGradient(t.id) }}
                   >
                     {getInitials(t.nameEn)}
@@ -249,9 +249,9 @@ export default function HROverviewTab({
                     <div className="text-xs font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
                       {t.nameEn}
                     </div>
-                    <div className="text-[10px] text-[var(--text-muted)]">{getTeacherDept(t.id)}</div>
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">{getTeacherDept(t.id)}</div>
                   </div>
-                  <div className="text-[13px] font-bold" style={{ color: card.color }}>
+                  <div className="text-[0.8125rem] font-bold" style={{ color: card.color }}>
                     {(t as any)[card.key]}
                     {card.suffix}
                   </div>
@@ -285,7 +285,7 @@ export default function HROverviewTab({
             { label: isBn ? 'তহবিল' : 'Fund Balance', val: `৳${fundBalance.toLocaleString()}`, color: 'var(--brand)' },
           ].map((item) => (
             <div key={item.label} className="p-3 rounded-lg bg-[var(--bg-secondary)]">
-              <div className="text-[11px] text-[var(--text-muted)] mb-1">{item.label}</div>
+              <div className="text-[0.6875rem] text-[var(--text-muted)] mb-1">{item.label}</div>
               <div className="text-lg font-bold" style={{ color: item.color }}>
                 {item.val}
               </div>
@@ -293,7 +293,7 @@ export default function HROverviewTab({
           ))}
         </div>
         {salaryDeductions > 0 && (
-          <div className="mt-2 py-2 px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[11px] text-[var(--red)] flex items-center gap-1.5">
+          <div className="mt-2 py-2 px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[0.6875rem] text-[var(--red)] flex items-center gap-1.5">
             <DollarSign size={13} />
             {isBn
               ? `বেতন কাটার নিয়ম প্রযোজ্য: ${activeTeachers.filter((t) => t.applySalaryRule).length} জন কর্মচারীর ক্ষেত্রে ১ দিনের বেতন কাটা হয়েছে`
@@ -307,11 +307,11 @@ export default function HROverviewTab({
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
             {isBn ? 'সকল কর্মচারী' : 'All Staff'}
-            <span className="inline-flex items-center gap-[3px] ml-1">
+            <span className="inline-flex items-center gap-[0.1875rem] ml-1">
               {[0, 1, 2].map((i) => (
                 <span
                   key={i}
-                  className="w-[4px] h-1 rounded-full bg-[var(--brand)] opacity-30 transition-all"
+                  className="w-[0.25rem] h-1 rounded-full bg-[var(--brand)] opacity-30 transition-all"
                   onMouseEnter={(e) => {
                     e.currentTarget.style.opacity = '1'
                     e.currentTarget.style.transform = 'scale(1.8)'
@@ -328,7 +328,7 @@ export default function HROverviewTab({
           </div>
           <div className="flex gap-1.5 items-center">
             <div className="relative">
-              <Search size={13} className="absolute left-[10px] top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+              <Search size={13} className="absolute left-[0.625rem] top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
               <input
                 value={employeeSearch}
                 onChange={(e) => {
@@ -336,7 +336,7 @@ export default function HROverviewTab({
                   setPage(1)
                 }}
                 placeholder={isBn ? 'খুঁজুন...' : 'Search...'}
-                className={`${inputCls} pl-[30px] text-xs h-[34px] w-[130px]`}
+                className={`${inputCls} pl-[1.875rem] text-xs h-[2.125rem] w-[8.125rem]`}
               />
             </div>
             <select
@@ -345,23 +345,23 @@ export default function HROverviewTab({
                 setEmployeeStatusFilter(e.target.value)
                 setPage(1)
               }}
-              className={`${inputCls} w-[90px] text-xs h-[34px]`}
+              className={`${inputCls} w-[5.625rem] text-xs h-[2.125rem]`}
             >
               <option value="all">{isBn ? 'সব' : 'All'}</option>
               <option value="active">{isBn ? 'সক্রিয়' : 'Active'}</option>
               <option value="inactive">{isBn ? 'নিষ্ক্রিয়' : 'Inactive'}</option>
               <option value="on-leave">{isBn ? 'ছুটিতে' : 'Leave'}</option>
             </select>
-            <div className="flex rounded-lg border border-[var(--border)] overflow-hidden shrink-0 h-[34px]">
+            <div className="flex rounded-lg border border-[var(--border)] overflow-hidden shrink-0 h-[2.125rem]">
               <button
                 onClick={() => setEmployeeView('grid')}
-                className={`py-0 px-[10px] border-none cursor-pointer font-[inherit] transition-all flex items-center ${employeeView === 'grid' ? 'bg-[var(--brand-light)]' : 'bg-transparent'} ${employeeView === 'grid' ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`}
+                className={`py-0 px-[0.625rem] border-none cursor-pointer font-[inherit] transition-all flex items-center ${employeeView === 'grid' ? 'bg-[var(--brand-light)]' : 'bg-transparent'} ${employeeView === 'grid' ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`}
               >
                 <LayoutGrid size={14} />
               </button>
               <button
                 onClick={() => setEmployeeView('list')}
-                className={`py-0 px-[10px] border-none cursor-pointer font-[inherit] transition-all flex items-center ${employeeView === 'list' ? 'bg-[var(--brand-light)]' : 'bg-transparent'} ${employeeView === 'list' ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`}
+                className={`py-0 px-[0.625rem] border-none cursor-pointer font-[inherit] transition-all flex items-center ${employeeView === 'list' ? 'bg-[var(--brand-light)]' : 'bg-transparent'} ${employeeView === 'list' ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`}
               >
                 <List size={14} />
               </button>
@@ -375,61 +375,61 @@ export default function HROverviewTab({
               <div
                 key={t.id}
                 onClick={() => setSelectedEmployee(selectedEmployee === t.id ? null : t.id)}
-                className={`p-3 rounded-[10px] cursor-pointer transition-all ${selectedEmployee === t.id ? 'bg-[var(--brand-light)]' : 'bg-[var(--bg-secondary)]'}`}
+                className={`p-3 rounded-[0.625rem] cursor-pointer transition-all ${selectedEmployee === t.id ? 'bg-[var(--brand-light)]' : 'bg-[var(--bg-secondary)]'}`}
               >
-                <div className="flex items-center gap-[10px] mb-[10px]">
+                <div className="flex items-center gap-[0.625rem] mb-[0.625rem]">
                   <div
-                    className="w-[34px] h-[34px] rounded-lg flex items-center justify-center text-[10px] font-semibold text-white shrink-0"
+                    className="w-[2.125rem] h-[2.125rem] rounded-lg flex items-center justify-center text-[0.625rem] font-semibold text-white shrink-0"
                     style={{ background: getAvatarGradient(t.id) }}
                   >
                     {getInitials(t.nameEn)}
                   </div>
                   <div className="flex-1 min-w-[0]">
-                    <div className="text-[13px] font-semibold text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
+                    <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
                       {t.nameEn}
                     </div>
-                    <div className="text-[11px] text-[var(--text-muted)]">{t.designation}</div>
+                    <div className="text-[0.6875rem] text-[var(--text-muted)]">{t.designation}</div>
                   </div>
                   {getStatusBadge(t.status)}
                 </div>
                 <div className="grid grid-cols-3 gap-1">
-                  <div className="text-center py-[5px] px-[2px] rounded-md bg-[var(--bg-primary)]">
-                    <div className="text-[9px] text-[var(--text-muted)]">{isBn ? 'উপস্থিতি' : 'Att.'}</div>
+                  <div className="text-center py-[0.3125rem] px-[0.125rem] rounded-md bg-[var(--bg-primary)]">
+                    <div className="text-[0.5625rem] text-[var(--text-muted)]">{isBn ? 'উপস্থিতি' : 'Att.'}</div>
                     <div className={`text-xs font-semibold ${t.attRate! >= 80 ? 'text-[var(--green)]' : 'text-[var(--amber)]'}`}>
                       {t.attRate}%
                     </div>
                   </div>
-                  <div className="text-center py-[5px] px-[2px] rounded-md bg-[var(--bg-primary)]">
-                    <div className="text-[9px] text-[var(--text-muted)]">{isBn ? 'হোমওয়ার্ক' : 'HW'}</div>
+                  <div className="text-center py-[0.3125rem] px-[0.125rem] rounded-md bg-[var(--bg-primary)]">
+                    <div className="text-[0.5625rem] text-[var(--text-muted)]">{isBn ? 'হোমওয়ার্ক' : 'HW'}</div>
                     <div className={`text-xs font-semibold ${t.hwRate! >= 80 ? 'text-[var(--green)]' : 'text-[var(--amber)]'}`}>
                       {t.hwRate}%
                     </div>
                   </div>
-                  <div className="text-center py-[5px] px-[2px] rounded-md bg-[var(--bg-primary)]">
-                    <div className="text-[9px] text-[var(--text-muted)]">{isBn ? 'স্কোর' : 'Score'}</div>
+                  <div className="text-center py-[0.3125rem] px-[0.125rem] rounded-md bg-[var(--bg-primary)]">
+                    <div className="text-[0.5625rem] text-[var(--text-muted)]">{isBn ? 'স্কোর' : 'Score'}</div>
                     <div className="text-xs font-bold text-[var(--brand)]">{t.compScore}</div>
                   </div>
                 </div>
                 {selectedEmployee === t.id && (
                   <div className="mt-2 pt-2 border-t border-[var(--border)] flex gap-1.5 flex-wrap">
-                    <span className="text-[11px] text-[var(--text-secondary)]">{t.phone}</span>
-                    <span className="text-[11px] text-[var(--text-muted)]">·</span>
-                    <span className="text-[11px] text-[var(--text-secondary)]">{getTeacherDept(t.id)}</span>
-                    <span className="text-[11px] text-[var(--text-muted)]">·</span>
-                    <span className="text-[11px] text-[var(--text-secondary)]">৳{t.salary.toLocaleString()}</span>
+                    <span className="text-[0.6875rem] text-[var(--text-secondary)]">{t.phone}</span>
+                    <span className="text-[0.6875rem] text-[var(--text-muted)]">·</span>
+                    <span className="text-[0.6875rem] text-[var(--text-secondary)]">{getTeacherDept(t.id)}</span>
+                    <span className="text-[0.6875rem] text-[var(--text-muted)]">·</span>
+                    <span className="text-[0.6875rem] text-[var(--text-secondary)]">৳{t.salary.toLocaleString()}</span>
                   </div>
                 )}
               </div>
             ))}
             {employeeList.length === 0 && (
-              <div className="col-span-full p-[30px] text-center text-[var(--text-muted)] text-[13px]">
+              <div className="col-span-full p-[1.875rem] text-center text-[var(--text-muted)] text-[0.8125rem]">
                 {isBn ? 'কোনো কর্মচারী পাওয়া যায়নি' : 'No staff found'}
               </div>
             )}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs min-w-[600px]">
+            <table className="w-full text-xs min-w-[37.5rem]">
               <thead>
                 <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                   {[
@@ -443,7 +443,7 @@ export default function HROverviewTab({
                   ].map((h) => (
                     <th
                       key={h}
-                      className="py-[10px] px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap"
+                      className="py-[0.625rem] px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.025rem] whitespace-nowrap"
                     >
                       {h}
                     </th>
@@ -459,30 +459,30 @@ export default function HROverviewTab({
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <td className="py-2 px-2">
-                      <div className="flex items-center gap-[10px]">
+                      <div className="flex items-center gap-[0.625rem]">
                         <div
-                          className="w-[30px] h-[30px] rounded-[7px] flex items-center justify-center text-[9px] font-semibold text-white shrink-0"
+                          className="w-[1.875rem] h-[1.875rem] rounded-[0.4375rem] flex items-center justify-center text-[0.5625rem] font-semibold text-white shrink-0"
                           style={{ background: getAvatarGradient(t.id) }}
                         >
                           {getInitials(t.nameEn)}
                         </div>
                         <div>
                           <div className="text-xs font-medium text-[var(--text-primary)]">{t.nameEn}</div>
-                          <div className="text-[10px] text-[var(--text-muted)]">{t.phone}</div>
+                          <div className="text-[0.625rem] text-[var(--text-muted)]">{t.phone}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-2 px-2 text-[11px] text-[var(--text-secondary)]">{getTeacherDept(t.id)}</td>
-                    <td className="py-2 px-2 text-[11px] text-[var(--text-secondary)]">{t.designation}</td>
+                    <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-secondary)]">{getTeacherDept(t.id)}</td>
+                    <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-secondary)]">{t.designation}</td>
                     <td className="py-2 px-2">
                       <div className="flex items-center gap-1.5">
-                        <div className="w-10 h-[5px] rounded-[3px] bg-[var(--border)] overflow-hidden">
+                        <div className="w-10 h-[0.3125rem] rounded-[0.1875rem] bg-[var(--border)] overflow-hidden">
                           <div
-                            className={`h-full rounded-[3px] ${t.attRate! >= 80 ? 'bg-[var(--green)]' : t.attRate! >= 60 ? 'bg-[var(--amber)]' : 'bg-[var(--red)]'}`}
+                            className={`h-full rounded-[0.1875rem] ${t.attRate! >= 80 ? 'bg-[var(--green)]' : t.attRate! >= 60 ? 'bg-[var(--amber)]' : 'bg-[var(--red)]'}`}
                           />
                         </div>
                         <span
-                          className={`text-[11px] font-semibold ${t.attRate! >= 80 ? 'text-[var(--green)]' : t.attRate! >= 60 ? 'text-[var(--amber)]' : 'text-[var(--red)]'}`}
+                          className={`text-[0.6875rem] font-semibold ${t.attRate! >= 80 ? 'text-[var(--green)]' : t.attRate! >= 60 ? 'text-[var(--amber)]' : 'text-[var(--red)]'}`}
                         >
                           {t.attRate}%
                         </span>
@@ -490,7 +490,7 @@ export default function HROverviewTab({
                     </td>
                     <td className="py-2 px-2">
                       <span
-                        className={`text-[11px] font-semibold ${t.hwRate! >= 80 ? 'text-[var(--green)]' : t.hwRate! >= 50 ? 'text-[var(--amber)]' : 'text-[var(--red)]'}`}
+                        className={`text-[0.6875rem] font-semibold ${t.hwRate! >= 80 ? 'text-[var(--green)]' : t.hwRate! >= 50 ? 'text-[var(--amber)]' : 'text-[var(--red)]'}`}
                       >
                         {t.hwRate}%
                       </span>
@@ -503,7 +503,7 @@ export default function HROverviewTab({
                 ))}
                 {employeeList.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="p-[30px] text-center text-[var(--text-muted)] text-xs">
+                    <td colSpan={7} className="p-[1.875rem] text-center text-[var(--text-muted)] text-xs">
                       {isBn ? 'কোনো কর্মচারী পাওয়া যায়নি' : 'No staff found'}
                     </td>
                   </tr>
@@ -512,22 +512,22 @@ export default function HROverviewTab({
             </table>
           </div>
         )}
-        <div className="text-[11px] text-[var(--text-muted)] mt-2 text-right">
+        <div className="text-[0.6875rem] text-[var(--text-muted)] mt-2 text-right">
           {isBn ? `মোট ${employeeList.length} জন কর্মচারী` : `${employeeList.length} total`}
         </div>
         {employeeList.length > perPage && (
-          <div className="py-[10px] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
+          <div className="py-[0.625rem] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
             <span className="text-xs text-[var(--text-muted)]">
               {(page - 1) * perPage + 1}–{Math.min(page * perPage, employeeList.length)} / {employeeList.length}
             </span>
-            <div className="flex gap-[3px] items-center">
+            <div className="flex gap-[0.1875rem] items-center">
               <select
                 value={perPage}
                 onChange={(e) => {
                   setPerPage(Number(e.target.value))
                   setPage(1)
                 }}
-                className="py-1 px-[6px] rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-[11px] font-[inherit] outline-none mr-[6px]"
+                className="py-1 px-[0.375rem] rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-[0.6875rem] font-[inherit] outline-none mr-[0.375rem]"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>

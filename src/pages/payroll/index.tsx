@@ -401,20 +401,20 @@ export default function PayrollPage() {
     setTimeout(() => win.print(), 600)
   }
 
-  const card = `bg-[var(--bg-primary)] border border-[var(--border)] rounded-[12px] ${isMobile ? 'p-3' : 'p-[14px]'}`
+  const card = `bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.75rem] ${isMobile ? 'p-3' : 'p-[0.875rem]'}`
 
   return (
     <div>
       <div className="flex items-center gap-2.5 mb-4 flex-wrap">
         <button
           onClick={() => navigate('/teachers')}
-          className="flex items-center gap-[5px] py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] shrink-0"
+          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div className="flex-1">
-          <h1 className={`${isMobile ? 'text-lg' : 'text-[22px]'} font-semibold text-[var(--text-primary)]`}>
+          <h1 className={`${isMobile ? 'text-lg' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)]`}>
             {isBn ? 'বেতন ব্যবস্থাপনা' : 'Payroll Management'}
           </h1>
           {monthSelected && (
@@ -428,7 +428,7 @@ export default function PayrollPage() {
         {monthSelected && (
           <button
             onClick={handlePrintAll}
-            className="flex items-center gap-[5px] py-[7px] px-3.5 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3.5 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
           >
             <Printer size={13} />
             {isBn ? 'সব প্রিন্ট' : 'Print All'}
@@ -438,7 +438,7 @@ export default function PayrollPage() {
 
       {!monthSelected && (
         <div className={`${card} mb-3.5`}>
-          <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-2.5 flex items-center gap-1.5">
+          <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-2.5 flex items-center gap-1.5">
             <Calendar size={13} />
             {isBn ? 'মাস বেছে নিন' : 'Select Month'}
           </div>
@@ -450,13 +450,13 @@ export default function PayrollPage() {
                 <button
                   key={m.key}
                   onClick={() => setMonth(val)}
-                  className={`py-3.5 px-2.5 rounded-[10px] border-2 ${isCurrent ? 'border-[var(--brand)]' : 'border-[var(--border)]'} ${isCurrent ? 'bg-[var(--brand-light)]' : 'bg-[var(--bg-secondary)]'} cursor-pointer font-[inherit] text-center transition-all duration-150 relative hover:border-[var(--brand)] hover:bg-[var(--brand-light)]`}
+                  className={`py-3.5 px-2.5 rounded-[0.625rem] border-2 ${isCurrent ? 'border-[var(--brand)]' : 'border-[var(--border)]'} ${isCurrent ? 'bg-[var(--brand-light)]' : 'bg-[var(--bg-secondary)]'} cursor-pointer font-[inherit] text-center transition-all duration-150 relative hover:border-[var(--brand)] hover:bg-[var(--brand-light)]`}
                 >
                   {isCurrent && <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />}
-                  <div className={`text-[13px] font-semibold ${isCurrent ? 'text-[var(--brand)]' : 'text-[var(--text-primary)]'}`}>
+                  <div className={`text-[0.8125rem] font-semibold ${isCurrent ? 'text-[var(--brand)]' : 'text-[var(--text-primary)]'}`}>
                     {isBn ? m.bn : m.en}
                   </div>
-                  <div className="text-[10px] text-[var(--text-muted)] mt-0.5">{currentYear}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">{currentYear}</div>
                 </button>
               )
             })}
@@ -466,16 +466,16 @@ export default function PayrollPage() {
 
       {monthSelected && (
         <div className="flex items-center gap-2 mb-3.5 flex-wrap">
-          <div className={`${card} flex-1 py-[10px] px-3.5 flex items-center gap-2`}>
+          <div className={`${card} flex-1 py-[0.625rem] px-3.5 flex items-center gap-2`}>
             <Calendar size={16} className="text-[var(--brand)] shrink-0" />
-            <span className="text-[13px] font-semibold text-[var(--text-primary)]">
+            <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
               {isBn
                 ? `${MONTHS.find((m) => m.key === month.split('-')[1])?.bn} ${month.split('-')[0]}`
                 : `${MONTHS.find((m) => m.key === month.split('-')[1])?.en} ${month.split('-')[0]}`}
             </span>
             <button
               onClick={() => setMonth('')}
-              className="ml-auto py-1 px-2.5 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[11px] cursor-pointer font-[inherit]"
+              className="ml-auto py-1 px-2.5 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.6875rem] cursor-pointer font-[inherit]"
             >
               {isBn ? 'মাস পরিবর্তন' : 'Change Month'}
             </button>
@@ -521,8 +521,8 @@ export default function PayrollPage() {
                   <s.icon size={15} className={s.colorClass} />
                 </div>
                 <div>
-                  <div className={`${isMobile ? 'text-[15px]' : 'text-[17px]'} font-bold text-[var(--text-primary)]`}>{s.value}</div>
-                  <div className="text-[10px] text-[var(--text-muted)]">{s.label}</div>
+                  <div className={`${isMobile ? 'text-[0.9375rem]' : 'text-[1.0625rem]'} font-bold text-[var(--text-primary)]`}>{s.value}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)]">{s.label}</div>
                 </div>
               </div>
             </div>
@@ -532,7 +532,7 @@ export default function PayrollPage() {
 
       {monthSelected && Object.keys(stats.deptMap).length > 0 && (
         <div className={`${card} mb-3.5`}>
-          <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-2.5 flex items-center gap-1.5">
+          <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-2.5 flex items-center gap-1.5">
             <Building2 size={13} />
             {isBn ? 'বিভাগ অনুযায়ী বেতন' : 'Department-wise Salary'}
           </div>
@@ -544,12 +544,12 @@ export default function PayrollPage() {
               .sort((a, b) => b[1] - a[1])
               .map(([dept, total]) => (
                 <div key={dept} className="p-2.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-                  <div className="text-[11px] text-[var(--text-muted)] mb-1">{dept}</div>
+                  <div className="text-[0.6875rem] text-[var(--text-muted)] mb-1">{dept}</div>
                   <div className="text-sm font-bold text-[var(--text-primary)]">৳{total.toLocaleString()}</div>
-                  <div className="h-1 rounded-[2px] bg-[var(--border)] mt-1.5 overflow-hidden">
-                    <div className="h-full rounded-[2px] bg-[var(--brand)]" style={{ width: `${(total / stats.total) * 100}%` }} />
+                  <div className="h-1 rounded-[0.125rem] bg-[var(--border)] mt-1.5 overflow-hidden">
+                    <div className="h-full rounded-[0.125rem] bg-[var(--brand)]" style={{ width: `${(total / stats.total) * 100}%` }} />
                   </div>
-                  <div className="text-[10px] text-[var(--text-muted)] mt-1">{Math.round((total / stats.total) * 100)}%</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)] mt-1">{Math.round((total / stats.total) * 100)}%</div>
                 </div>
               ))}
           </div>
@@ -559,7 +559,7 @@ export default function PayrollPage() {
       {monthSelected && (
         <>
           <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-[1fr_200px_160px]'} gap-2 mb-2.5`}>
-            <div className="flex items-center gap-[7px] bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg py-[7px] px-2.5">
+            <div className="flex items-center gap-[0.4375rem] bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg py-[0.4375rem] px-2.5">
               <Search size={14} className="text-[var(--text-muted)] shrink-0" />
               <input
                 value={search}
@@ -571,7 +571,7 @@ export default function PayrollPage() {
             <select
               value={fDept}
               onChange={(e) => setFDept(e.target.value)}
-              className="py-[7px] px-[9px] rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-xs font-[inherit]"
+              className="py-[0.4375rem] px-[0.5625rem] rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-xs font-[inherit]"
             >
               <option value="">{isBn ? 'সব বিভাগ' : 'All Departments'}</option>
               {departments.map((d) => (
@@ -587,7 +587,7 @@ export default function PayrollPage() {
                 setSortKey(k as SortKey)
                 setSortAsc(a === 'true')
               }}
-              className="py-[7px] px-[9px] rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-xs font-[inherit]"
+              className="py-[0.4375rem] px-[0.5625rem] rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-xs font-[inherit]"
             >
               <option value="name-true">{isBn ? 'নাম (ক্রম)' : 'Name A→Z'}</option>
               <option value="name-false">{isBn ? 'নাম (উল্টো)' : 'Name Z→A'}</option>
@@ -600,13 +600,13 @@ export default function PayrollPage() {
 
           <div className={`${card} p-0 overflow-hidden`}>
             {selected.length > 0 && (
-              <div className="py-[10px] px-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--brand-light)] flex-wrap gap-2">
+              <div className="py-[0.625rem] px-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--brand-light)] flex-wrap gap-2">
                 <span className="text-xs font-medium text-[var(--brand)]">
                   {selected.length} {isBn ? 'জন নির্বাচিত' : 'selected'}
                 </span>
                 <button
                   onClick={handlePrintSelected}
-                  className="flex items-center gap-[5px] py-1.5 px-3.5 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+                  className="flex items-center gap-[0.3125rem] py-1.5 px-3.5 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
                 >
                   <Download size={13} />
                   {isBn ? 'নির্বাচিত ডাউনলোড' : 'Download Selected'}
@@ -614,31 +614,31 @@ export default function PayrollPage() {
               </div>
             )}
             <div className={`overflow-x-auto ${isMobile ? 'max-h-[60vh] overflow-y-auto' : ''}`}>
-              <table className={`w-full border-collapse text-xs ${isMobile ? 'min-w-[600px]' : ''}`}>
+              <table className={`w-full border-collapse text-xs ${isMobile ? 'min-w-[37.5rem]' : ''}`}>
                 <thead>
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                    <th className="py-[10px] px-3 w-10">
+                    <th className="py-[0.625rem] px-3 w-10">
                       <input
                         type="checkbox"
                         checked={allSel}
                         onChange={toggleAll}
-                        className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                       />
                     </th>
-                    <th className="py-[10px] px-3 w-10 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase">#</th>
-                    <th className="py-[10px] px-3 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase">
+                    <th className="py-[0.625rem] px-3 w-10 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase">#</th>
+                    <th className="py-[0.625rem] px-3 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase">
                       {isBn ? 'নাম' : 'Name'}
                     </th>
-                    <th className="py-[10px] px-3 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase">
+                    <th className="py-[0.625rem] px-3 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase">
                       {isBn ? 'বিভাগ' : 'Dept'}
                     </th>
-                    <th className="py-[10px] px-3 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase">
+                    <th className="py-[0.625rem] px-3 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase">
                       {isBn ? 'পদবি' : 'Designation'}
                     </th>
-                    <th className="py-[10px] px-3 text-right text-[10px] font-semibold text-[var(--text-muted)] uppercase">
+                    <th className="py-[0.625rem] px-3 text-right text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase">
                       {isBn ? 'বেতন' : 'Salary'}
                     </th>
-                    <th className="py-[10px] px-3 text-center text-[10px] font-semibold text-[var(--text-muted)] uppercase">
+                    <th className="py-[0.625rem] px-3 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase">
                       {isBn ? 'অ্যাকশন' : 'Action'}
                     </th>
                   </tr>
@@ -646,7 +646,7 @@ export default function PayrollPage() {
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-[30px] text-center text-[var(--text-muted)]">
+                      <td colSpan={7} className="p-[1.875rem] text-center text-[var(--text-muted)]">
                         {isBn ? 'কোনো কর্মচারী পাওয়া যায়নি' : 'No employees found'}
                       </td>
                     </tr>
@@ -672,36 +672,36 @@ export default function PayrollPage() {
                           <tr
                             className={`border-b border-[var(--border)] ${selected.includes(t.id) ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--bg-secondary)]'}`}
                           >
-                            <td className="py-[10px] px-3">
+                            <td className="py-[0.625rem] px-3">
                               <input
                                 type="checkbox"
                                 checked={selected.includes(t.id)}
                                 onChange={() => toggleOne(t.id)}
-                                className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                                className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                               />
                             </td>
-                            <td className="py-[10px] px-3 text-[var(--text-muted)] text-[11px]">{i + 1}</td>
-                            <td className="py-[10px] px-3">
+                            <td className="py-[0.625rem] px-3 text-[var(--text-muted)] text-[0.6875rem]">{i + 1}</td>
+                            <td className="py-[0.625rem] px-3">
                               <div className="text-xs font-medium text-[var(--text-primary)]">{t.nameEn}</div>
-                              <div className="text-[10px] text-[var(--brand)] font-mono">{t.id}</div>
+                              <div className="text-[0.625rem] text-[var(--brand)] font-mono">{t.id}</div>
                             </td>
-                            <td className="py-[10px] px-3 text-[11px] text-[var(--text-secondary)]">{getDeptName(t.departmentId)}</td>
-                            <td className="py-[10px] px-3 text-[11px] text-[var(--text-secondary)]">{t.designation || '—'}</td>
-                            <td className="py-[10px] px-3 text-xs font-semibold text-[var(--text-primary)] text-right">
+                            <td className="py-[0.625rem] px-3 text-[0.6875rem] text-[var(--text-secondary)]">{getDeptName(t.departmentId)}</td>
+                            <td className="py-[0.625rem] px-3 text-[0.6875rem] text-[var(--text-secondary)]">{t.designation || '—'}</td>
+                            <td className="py-[0.625rem] px-3 text-xs font-semibold text-[var(--text-primary)] text-right">
                               ৳{t.salary.toLocaleString()}
                             </td>
-                            <td className="py-[10px] px-3 text-center">
+                            <td className="py-[0.625rem] px-3 text-center">
                               <div className="flex gap-1 justify-center">
                                 <button
                                   onClick={() => setExpandedId(isExpanded ? null : t.id)}
-                                  className="py-1 px-2 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer text-[10px] text-[var(--text-secondary)] font-[inherit] flex items-center gap-[3px]"
+                                  className="py-1 px-2 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer text-[0.625rem] text-[var(--text-secondary)] font-[inherit] flex items-center gap-[0.1875rem]"
                                 >
                                   {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
                                   {isBn ? 'বিস্তারিত' : 'Details'}
                                 </button>
                                 <button
                                   onClick={() => handlePrintPayslip(t)}
-                                  className="py-1 px-2 rounded-md bg-[var(--brand-light)] border border-[var(--brand)] cursor-pointer text-[10px] text-[var(--brand)] font-[inherit] flex items-center gap-[3px]"
+                                  className="py-1 px-2 rounded-md bg-[var(--brand-light)] border border-[var(--brand)] cursor-pointer text-[0.625rem] text-[var(--brand)] font-[inherit] flex items-center gap-[0.1875rem]"
                                 >
                                   <Printer size={11} />
                                   PDF
@@ -713,70 +713,70 @@ export default function PayrollPage() {
                             <tr>
                               <td colSpan={7} className="pt-0 px-4 pb-3">
                                 <div className="bg-[var(--bg-secondary)] rounded-lg py-3.5 px-5 flex flex-wrap justify-center gap-y-4 gap-x-8">
-                                  <div className="text-center min-w-[120px]">
-                                    <div className="text-[10px] text-[var(--text-muted)] mb-1">{isBn ? 'মূল বেতন' : 'Basic Salary'}</div>
+                                  <div className="text-center min-w-[7.5rem]">
+                                    <div className="text-[0.625rem] text-[var(--text-muted)] mb-1">{isBn ? 'মূল বেতন' : 'Basic Salary'}</div>
                                     <div className="text-sm font-semibold text-[var(--text-primary)]">৳{basic.toLocaleString()}</div>
                                   </div>
-                                  <div className="text-center min-w-[120px]">
-                                    <div className="text-[10px] text-[var(--text-muted)] mb-1">
+                                  <div className="text-center min-w-[7.5rem]">
+                                    <div className="text-[0.625rem] text-[var(--text-muted)] mb-1">
                                       {isBn ? 'বাসা ভাড়া (১৫%)' : 'House Rent (15%)'}
                                     </div>
                                     <div className="text-sm font-semibold text-[var(--text-primary)]">৳{house.toLocaleString()}</div>
                                   </div>
-                                  <div className="text-center min-w-[120px]">
-                                    <div className="text-[10px] text-[var(--text-muted)] mb-1">
+                                  <div className="text-center min-w-[7.5rem]">
+                                    <div className="text-[0.625rem] text-[var(--text-muted)] mb-1">
                                       {isBn ? 'চিকিৎসা (১০%)' : 'Medical (10%)'}
                                     </div>
                                     <div className="text-sm font-semibold text-[var(--text-primary)]">৳{medical.toLocaleString()}</div>
                                   </div>
-                                  <div className="text-center min-w-[120px]">
-                                    <div className="text-[10px] text-[var(--text-muted)] mb-1">
+                                  <div className="text-center min-w-[7.5rem]">
+                                    <div className="text-[0.625rem] text-[var(--text-muted)] mb-1">
                                       {isBn ? 'যাতায়াত (৫%)' : 'Conveyance (5%)'}
                                     </div>
                                     <div className="text-sm font-semibold text-[var(--text-primary)]">৳{conveyance.toLocaleString()}</div>
                                   </div>
                                   {bonusVal > 0 && (
-                                    <div className="text-center min-w-[120px]">
-                                      <div className="text-[10px] text-[var(--green)] mb-1">{isBn ? 'বোনাস' : 'Bonus'}</div>
+                                    <div className="text-center min-w-[7.5rem]">
+                                      <div className="text-[0.625rem] text-[var(--green)] mb-1">{isBn ? 'বোনাস' : 'Bonus'}</div>
                                       <div className="text-sm font-semibold text-[var(--green)]">+৳{bonusVal.toLocaleString()}</div>
                                     </div>
                                   )}
                                   {overtimeVal > 0 && (
-                                    <div className="text-center min-w-[120px]">
-                                      <div className="text-[10px] text-[var(--green)] mb-1">{isBn ? 'ওভারটাইম' : 'Overtime'}</div>
+                                    <div className="text-center min-w-[7.5rem]">
+                                      <div className="text-[0.625rem] text-[var(--green)] mb-1">{isBn ? 'ওভারটাইম' : 'Overtime'}</div>
                                       <div className="text-sm font-semibold text-[var(--green)]">+৳{overtimeVal.toLocaleString()}</div>
                                     </div>
                                   )}
                                   {festivalVal > 0 && (
-                                    <div className="text-center min-w-[120px]">
-                                      <div className="text-[10px] text-[var(--green)] mb-1">{isBn ? 'উৎসব বোনাস' : 'Festival Bonus'}</div>
+                                    <div className="text-center min-w-[7.5rem]">
+                                      <div className="text-[0.625rem] text-[var(--green)] mb-1">{isBn ? 'উৎসব বোনাস' : 'Festival Bonus'}</div>
                                       <div className="text-sm font-semibold text-[var(--green)]">+৳{festivalVal.toLocaleString()}</div>
                                     </div>
                                   )}
                                   {getTeacherFacilityDetails(t.id).map((fac, fi) => (
-                                    <div key={fi} className="text-center min-w-[120px]">
-                                      <div className="text-[10px] text-[var(--green)] mb-1">{isBn ? fac.nameBn : fac.name}</div>
+                                    <div key={fi} className="text-center min-w-[7.5rem]">
+                                      <div className="text-[0.625rem] text-[var(--green)] mb-1">{isBn ? fac.nameBn : fac.name}</div>
                                       <div className="text-sm font-semibold text-[var(--green)]">+৳{fac.amount.toLocaleString()}</div>
                                     </div>
                                   ))}
                                   {deductionAmount > 0 && (
-                                    <div className="text-center min-w-[120px]">
-                                      <div className="text-[10px] text-[var(--red)] mb-1">
+                                    <div className="text-center min-w-[7.5rem]">
+                                      <div className="text-[0.625rem] text-[var(--red)] mb-1">
                                         {isBn ? 'বেতন কাটা (১ দিন)' : 'Deduction (1 day)'}
                                       </div>
                                       <div className="text-sm font-semibold text-[var(--red)]">-৳{deductionAmount.toLocaleString()}</div>
                                     </div>
                                   )}
                                   {fundAmount > 0 && (
-                                    <div className="text-center min-w-[120px]">
-                                      <div className="text-[10px] text-[var(--red)] mb-1">
+                                    <div className="text-center min-w-[7.5rem]">
+                                      <div className="text-[0.625rem] text-[var(--red)] mb-1">
                                         {isBn ? 'তহবিল অংশদান' : 'Fund Contribution'}
                                       </div>
                                       <div className="text-sm font-semibold text-[var(--red)]">-৳{fundAmount.toLocaleString()}</div>
                                     </div>
                                   )}
-                                  <div className="text-center min-w-[120px]">
-                                    <div className="text-[10px] text-[var(--green)] mb-1">{isBn ? 'নেট বেতন' : 'Net Salary'}</div>
+                                  <div className="text-center min-w-[7.5rem]">
+                                    <div className="text-[0.625rem] text-[var(--green)] mb-1">{isBn ? 'নেট বেতন' : 'Net Salary'}</div>
                                     <div className="text-base font-bold text-[var(--green)]">৳{net.toLocaleString()}</div>
                                   </div>
                                 </div>

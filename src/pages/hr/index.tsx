@@ -199,7 +199,7 @@ export default function HRPage() {
     }
     const s = map[status] || map.active
     return (
-      <span className={`text-[11px] py-[3px] px-[10px] rounded-full font-medium whitespace-nowrap ${s.cls}`}>
+      <span className={`text-[0.6875rem] py-[0.1875rem] px-[0.625rem] rounded-full font-medium whitespace-nowrap ${s.cls}`}>
         {isBn ? s.labelBn : s.label}
       </span>
     )
@@ -839,19 +839,19 @@ export default function HRPage() {
   return (
     <div className="px-4">
       {/* Header */}
-      <div className="flex items-center gap-[10px] mb-4 flex-wrap">
+      <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-[5px] py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit]"
+          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit]"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div>
-          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[22px]'}`}>
+          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
             {isBn ? 'HR ও কর্মচারী ব্যবস্থাপনা' : 'HR & Staff Management'}
           </h1>
-          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
+          <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {isBn
               ? `${activeTeachers.length} জন সক্রিয় কর্মচারী · ${departments.length} টি বিভাগ`
               : `${activeTeachers.length} active staff · ${departments.length} departments`}
@@ -861,7 +861,7 @@ export default function HRPage() {
 
       {/* Tabs */}
       <div
-        className="flex gap-1.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[5px] mb-[14px] overflow-x-auto flex-nowrap"
+        className="flex gap-1.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[0.3125rem] mb-[0.875rem] overflow-x-auto flex-nowrap"
       >
         {tabs.map((tab) => (
           <button
@@ -870,7 +870,7 @@ export default function HRPage() {
               setActiveTab(tab.id)
               setPage(1)
             }}
-            className={`flex items-center justify-center gap-[7px] py-[9px] px-[14px] rounded-[9px] border-none cursor-pointer text-[13px] font-medium font-[inherit] transition-all whitespace-nowrap ${isMobile ? 'shrink-0' : 'flex-1'} ${activeTab === tab.id ? 'bg-[var(--brand)]' : 'bg-transparent'} ${activeTab === tab.id ? 'text-white' : 'text-[var(--text-secondary)]'} ${activeTab === tab.id ? 'shadow-[0_4px_12px_rgba(99,102,241,0.3)]' : 'shadow-none'}`}
+            className={`flex items-center justify-center gap-[0.4375rem] py-[0.5625rem] px-[0.875rem] rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-all whitespace-nowrap ${isMobile ? 'shrink-0' : 'flex-1'} ${activeTab === tab.id ? 'bg-[var(--brand)]' : 'bg-transparent'} ${activeTab === tab.id ? 'text-white' : 'text-[var(--text-secondary)]'} ${activeTab === tab.id ? 'shadow-[0_4px_12px_rgba(99,102,241,0.3)]' : 'shadow-none'}`}
           >
             <tab.icon size={15} />
             {isBn ? tab.labelBn : tab.label}
@@ -1122,7 +1122,7 @@ export default function HRPage() {
           setFacDeleteConfirm={setFacDeleteConfirm}
           setAssignDeleteConfirm={setAssignDeleteConfirm}
           setShowPDFModal={setShowPDFModal as any}
-          inputCls="w-full py-[9px] px-[11px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none"
+          inputCls="w-full py-[0.5625rem] px-[0.6875rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none"
         />
       )}
 

@@ -1654,7 +1654,7 @@ export default function AttendancePage() {
   ]
 
   const sel =
-    'px-[9px] py-[7px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[12px] cursor-pointer outline-none'
+    'px-[0.5625rem] py-[0.4375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer outline-none'
 
   const statusBadge = (s: AttendanceStatus) => {
     const m = {
@@ -1665,7 +1665,7 @@ export default function AttendancePage() {
     const x = m[s]
     return (
       <span
-        className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] text-[9px] font-bold"
+        className="inline-flex items-center justify-center w-5 h-5 rounded-[0.25rem] text-[0.5625rem] font-bold"
         style={{ background: x.bg, color: x.c }}
       >
         {x.l}
@@ -1676,7 +1676,7 @@ export default function AttendancePage() {
   const weeklyHolidayBadge = () => {
     return (
       <span
-        className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] text-[9px] font-bold"
+        className="inline-flex items-center justify-center w-5 h-5 rounded-[0.25rem] text-[0.5625rem] font-bold"
         style={{ background: 'var(--purple-light)', color: 'var(--purple)' }}
       >
         W
@@ -1727,11 +1727,11 @@ export default function AttendancePage() {
       {/* Mark All Confirm */}
       {showMarkAll && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
-          <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
-            <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-3">
+          <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+            <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-3">
               {isBn ? 'সবাইকে উপস্থিত করুন?' : 'Mark All Present?'}
             </h3>
-            <p className="text-[13px] text-[var(--text-secondary)] mb-4">
+            <p className="text-[0.8125rem] text-[var(--text-secondary)] mb-4">
               {isBn
                 ? `${activeTeachers.length} জন শিক্ষককে উপস্থিত হিসেবে চিহ্নিত করা হবে।`
                 : `${activeTeachers.length} teachers will be marked present.`}
@@ -1739,13 +1739,13 @@ export default function AttendancePage() {
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setShowMarkAll(false)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
               <button
                 onClick={handleMarkAll}
-                className="px-3.5 py-2 rounded-lg bg-[var(--green)] border-0 text-white text-[13px] font-semibold cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--green)] border-0 text-white text-[0.8125rem] font-semibold cursor-pointer"
               >
                 {isBn ? 'নিশ্চিত করুন' : 'Confirm'}
               </button>
@@ -1757,33 +1757,33 @@ export default function AttendancePage() {
       {/* Single Person Detail Modal */}
       {viewPerson && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] overflow-y-auto bg-black/50">
-          <div className="modal-content bg-[var(--bg-primary)] rounded-2xl max-w-[650px] w-full max-h-[85vh] overflow-hidden flex flex-col border border-[var(--border)]">
-            <div className="px-[18px] py-3.5 border-b border-[var(--border)] flex items-center gap-3 bg-[var(--brand-light)]">
+          <div className="modal-content bg-[var(--bg-primary)] rounded-2xl max-w-[40.625rem] w-full max-h-[85vh] overflow-hidden flex flex-col border border-[var(--border)]">
+            <div className="px-[1.125rem] py-3.5 border-b border-[var(--border)] flex items-center gap-3 bg-[var(--brand-light)]">
               {(() => {
                 const t = teachers.find((te) => te.id === viewPerson.id)
                 const photoUrl = t?.photo
                 return photoUrl ? (
                   <img src={photoUrl} className="w-10 h-10 rounded-full object-cover border-2 border-[var(--brand)]" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-[var(--brand-light)] border-2 border-[var(--brand)] flex items-center justify-center text-[var(--brand)] font-bold text-[14px]">
+                  <div className="w-10 h-10 rounded-full bg-[var(--brand-light)] border-2 border-[var(--brand)] flex items-center justify-center text-[var(--brand)] font-bold text-[0.875rem]">
                     {viewPerson.name.charAt(0)}
                   </div>
                 )
               })()}
               <div className="flex-1">
-                <div className="text-[15px] font-semibold text-[var(--text-primary)]">{viewPerson.name}</div>
-                <div className="text-[11px] text-[var(--brand)] font-mono">
+                <div className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{viewPerson.name}</div>
+                <div className="text-[0.6875rem] text-[var(--brand)] font-mono">
                   {viewPerson.id} · {dateFrom} → {dateTo}
                 </div>
               </div>
               <button
                 onClick={() => setViewPerson(null)}
-                className="w-7 h-7 rounded-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center"
+                className="w-7 h-7 rounded-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center"
               >
                 <X size={14} className="text-[var(--text-secondary)]" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-[18px] py-3.5">
+            <div className="flex-1 overflow-y-auto px-[1.125rem] py-3.5">
               {(() => {
                 const data = getPersonMonthData(viewPerson.id)
                 const present = data.filter((d) => d.status === 'present').length
@@ -1849,32 +1849,32 @@ export default function AttendancePage() {
                           bg: 'var(--brand-light)',
                         },
                       ].map((s) => (
-                        <div key={s.l} className="p-2 rounded-[8px] text-center" style={{ background: s.bg }}>
+                        <div key={s.l} className="p-2 rounded-[0.5rem] text-center" style={{ background: s.bg }}>
                           <div className="text-lg font-bold" style={{ color: s.c }}>
                             {isBn ? s.vBn : s.vEn}
                           </div>
-                          <div className="text-[9px]" style={{ color: s.c }}>
+                          <div className="text-[0.5625rem]" style={{ color: s.c }}>
                             {s.l}
                           </div>
                         </div>
                       ))}
                     </div>
-                    <table className="w-full border-collapse text-[11px]">
+                    <table className="w-full border-collapse text-[0.6875rem]">
                       <thead>
                         <tr className="bg-[var(--bg-secondary)]">
-                          <th className="p-[5px] text-center text-[9px] font-semibold text-[var(--text-muted)] border-b border-[var(--border)] w-[24px]">
+                          <th className="p-[0.3125rem] text-center text-[0.5625rem] font-semibold text-[var(--text-muted)] border-b border-[var(--border)] w-[1.5rem]">
                             #
                           </th>
-                          <th className="p-[5px] text-left text-[9px] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
+                          <th className="p-[0.3125rem] text-left text-[0.5625rem] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
                             {isBn ? 'তারিখ' : 'Date'}
                           </th>
-                          <th className="p-[5px] text-center text-[9px] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
+                          <th className="p-[0.3125rem] text-center text-[0.5625rem] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
                             {isBn ? 'ইন' : 'In'}
                           </th>
-                          <th className="p-[5px] text-center text-[9px] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
+                          <th className="p-[0.3125rem] text-center text-[0.5625rem] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
                             {isBn ? 'আউট' : 'Out'}
                           </th>
-                          <th className="p-[5px] text-center text-[9px] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
+                          <th className="p-[0.3125rem] text-center text-[0.5625rem] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
                             {isBn ? 'অবস্থা' : 'Status'}
                           </th>
                         </tr>
@@ -1886,14 +1886,14 @@ export default function AttendancePage() {
                           const isLate = firstIn && firstIn.time > inTime
                           return (
                             <tr key={d.date} className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)]">
-                              <td className="p-[5px] text-center text-[9px] text-[var(--text-muted)]">{i + 1}</td>
-                              <td className="p-[5px]">
-                                <div className="text-[10px] font-medium text-[var(--text-primary)]">{d.date}</div>
-                                <div className="text-[8px] text-[var(--text-muted)]">{dayName(d.date)}</div>
+                              <td className="p-[0.3125rem] text-center text-[0.5625rem] text-[var(--text-muted)]">{i + 1}</td>
+                              <td className="p-[0.3125rem]">
+                                <div className="text-[0.625rem] font-medium text-[var(--text-primary)]">{d.date}</div>
+                                <div className="text-[0.5rem] text-[var(--text-muted)]">{dayName(d.date)}</div>
                               </td>
-                              <td className="p-[5px] text-center">
+                              <td className="p-[0.3125rem] text-center">
                                 <span
-                                  className={`text-[9px] font-mono font-semibold px-[5px] py-[1px] rounded ${
+                                  className={`text-[0.5625rem] font-mono font-semibold px-[0.3125rem] py-[0.0625rem] rounded ${
                                     firstIn
                                       ? isLate
                                         ? 'bg-[var(--amber-light)] text-[var(--amber)]'
@@ -1904,12 +1904,12 @@ export default function AttendancePage() {
                                   {firstIn?.time || '—'}
                                 </span>
                               </td>
-                              <td className="p-[5px] text-center">
-                                <span className="text-[9px] font-mono text-[var(--text-secondary)]">{lastOut?.time || '—'}</span>
+                              <td className="p-[0.3125rem] text-center">
+                                <span className="text-[0.5625rem] font-mono text-[var(--text-secondary)]">{lastOut?.time || '—'}</span>
                               </td>
-                              <td className="p-[5px] text-center">
+                              <td className="p-[0.3125rem] text-center">
                                 <span
-                                  className={`text-[9px] font-semibold px-[6px] py-[1px] rounded-[8px] ${
+                                  className={`text-[0.5625rem] font-semibold px-[0.375rem] py-[0.0625rem] rounded-[0.5rem] ${
                                     d.status === 'present'
                                       ? 'bg-[var(--green-light)] text-[var(--green)]'
                                       : d.status === 'absent'
@@ -1929,7 +1929,7 @@ export default function AttendancePage() {
                                         ? 'ছুটিতে'
                                         : 'Leave'}
                                 </span>
-                                {isLate && <span className="text-[7px] text-[var(--amber)] font-bold ml-1">LATE</span>}
+                                {isLate && <span className="text-[0.4375rem] text-[var(--amber)] font-bold ml-1">LATE</span>}
                               </td>
                             </tr>
                           )
@@ -1940,16 +1940,16 @@ export default function AttendancePage() {
                 )
               })()}
             </div>
-            <div className="px-[18px] py-3 border-t border-[var(--border)] flex gap-2 justify-end">
+            <div className="px-[1.125rem] py-3 border-t border-[var(--border)] flex gap-2 justify-end">
               <button
                 onClick={() => setViewPerson(null)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বন্ধ' : 'Close'}
               </button>
               <button
                 onClick={() => downloadSinglePDF(viewPerson.id, viewPerson.name)}
-                className="flex items-center gap-[5px] px-3.5 py-2 rounded-lg bg-[var(--red)] border-0 text-white text-[12px] font-semibold cursor-pointer"
+                className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-lg bg-[var(--red)] border-0 text-white text-[0.75rem] font-semibold cursor-pointer"
               >
                 <FileText size={13} />
                 PDF
@@ -1962,22 +1962,22 @@ export default function AttendancePage() {
       {/* Student Detail Modal */}
       {viewStudent && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] overflow-y-auto bg-black/50">
-          <div className="modal-content bg-[var(--bg-primary)] rounded-2xl max-w-[600px] w-full max-h-[85vh] overflow-hidden flex flex-col border border-[var(--border)]">
-            <div className="px-[18px] py-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--brand-light)]">
+          <div className="modal-content bg-[var(--bg-primary)] rounded-2xl max-w-[37.5rem] w-full max-h-[85vh] overflow-hidden flex flex-col border border-[var(--border)]">
+            <div className="px-[1.125rem] py-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--brand-light)]">
               <div>
-                <div className="text-[15px] font-semibold text-[var(--text-primary)]">{viewStudent.name}</div>
-                <div className="text-[11px] text-[var(--brand)] font-mono">
+                <div className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{viewStudent.name}</div>
+                <div className="text-[0.6875rem] text-[var(--brand)] font-mono">
                   {viewStudent.id} · {viewStudent.class} · {isBn ? 'সেকশন' : 'Section'}: {viewStudent.section}
                 </div>
               </div>
               <button
                 onClick={() => setViewStudent(null)}
-                className="w-7 h-7 rounded-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center"
+                className="w-7 h-7 rounded-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center"
               >
                 <X size={14} className="text-[var(--text-secondary)]" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-[18px] py-3.5">
+            <div className="flex-1 overflow-y-auto px-[1.125rem] py-3.5">
               {(() => {
                 const data = getStudentMonthData(viewStudent.id)
                 const present = data.filter((d) => d.status === 'present').length
@@ -2024,26 +2024,26 @@ export default function AttendancePage() {
                           bg: 'var(--purple-light)',
                         },
                       ].map((s) => (
-                        <div key={s.l} className="p-2.5 rounded-[10px] text-center" style={{ background: s.bg }}>
+                        <div key={s.l} className="p-2.5 rounded-[0.625rem] text-center" style={{ background: s.bg }}>
                           <div className="text-xl font-bold" style={{ color: s.c }}>
                             {isBn ? s.vBn : s.vEn}
                           </div>
-                          <div className="text-[10px]" style={{ color: s.c }}>
+                          <div className="text-[0.625rem]" style={{ color: s.c }}>
                             {s.l}
                           </div>
                         </div>
                       ))}
                     </div>
-                    <table className="w-full border-collapse text-[11px]">
+                    <table className="w-full border-collapse text-[0.6875rem]">
                       <thead>
                         <tr className="bg-[var(--bg-secondary)]">
-                          <th className="p-[6px] text-left text-[10px] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
+                          <th className="p-[0.375rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
                             #
                           </th>
-                          <th className="p-[6px] text-left text-[10px] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
+                          <th className="p-[0.375rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
                             {isBn ? 'তারিখ' : 'Date'}
                           </th>
-                          <th className="p-[6px] text-left text-[10px] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
+                          <th className="p-[0.375rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] border-b border-[var(--border)]">
                             {isBn ? 'অবস্থা' : 'Status'}
                           </th>
                         </tr>
@@ -2051,19 +2051,19 @@ export default function AttendancePage() {
                       <tbody>
                         {data.map((d, i) => (
                           <tr key={d.date} className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)]">
-                            <td className="px-2 py-[5px] text-[var(--text-muted)]">{i + 1}</td>
-                            <td className="px-2 py-[5px]">
-                              <div className="text-[11px] font-medium text-[var(--text-primary)]">{d.date}</div>
-                              <div className="text-[9px] text-[var(--text-muted)]">{dayName(d.date)}</div>
+                            <td className="px-2 py-[0.3125rem] text-[var(--text-muted)]">{i + 1}</td>
+                            <td className="px-2 py-[0.3125rem]">
+                              <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">{d.date}</div>
+                              <div className="text-[0.5625rem] text-[var(--text-muted)]">{dayName(d.date)}</div>
                             </td>
-                            <td className="px-2 py-[5px]">
+                            <td className="px-2 py-[0.3125rem]">
                               {d.isWeeklyHoliday ? (
-                                <span className="text-[10px] font-semibold px-[7px] py-[2px] rounded-[10px] bg-[var(--purple-light)] text-[var(--purple)]">
+                                <span className="text-[0.625rem] font-semibold px-[0.4375rem] py-[0.125rem] rounded-[0.625rem] bg-[var(--purple-light)] text-[var(--purple)]">
                                   {isBn ? 'সাপ্তাহিক ছুটি' : 'Weekly Holiday'}
                                 </span>
                               ) : (
                                 <span
-                                  className={`text-[10px] font-semibold px-[7px] py-[2px] rounded-[10px] ${
+                                  className={`text-[0.625rem] font-semibold px-[0.4375rem] py-[0.125rem] rounded-[0.625rem] ${
                                     d.status === 'present'
                                       ? 'bg-[var(--green-light)] text-[var(--green)]'
                                       : d.status === 'absent'
@@ -2093,16 +2093,16 @@ export default function AttendancePage() {
                 )
               })()}
             </div>
-            <div className="px-[18px] py-3 border-t border-[var(--border)] flex gap-2 justify-end">
+            <div className="px-[1.125rem] py-3 border-t border-[var(--border)] flex gap-2 justify-end">
               <button
                 onClick={() => setViewStudent(null)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বন্ধ' : 'Close'}
               </button>
               <button
                 onClick={() => downloadStudentSinglePDF(viewStudent.id, viewStudent.name, viewStudent.class, viewStudent.section)}
-                className="flex items-center gap-[5px] px-3.5 py-2 rounded-lg bg-[var(--red)] border-0 text-white text-[12px] font-semibold cursor-pointer"
+                className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-lg bg-[var(--red)] border-0 text-white text-[0.75rem] font-semibold cursor-pointer"
               >
                 <FileText size={13} />
                 PDF
@@ -2116,32 +2116,32 @@ export default function AttendancePage() {
       <div className={`flex gap-2.5 mb-4 flex-wrap ${isMobile ? 'flex-col items-start' : 'items-center'}`}>
         <button
           onClick={() => navigate('/teachers')}
-          className="flex items-center gap-[5px] px-3 py-[7px] rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] shrink-0"
+          className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] shrink-0"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div className="flex-1">
-          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-[18px]' : 'text-[22px]'}`}>
+          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-[1.125rem]' : 'text-[1.375rem]'}`}>
             {isBn ? 'উপস্থিতি ব্যবস্থাপনা' : 'Attendance Management'}
           </h1>
-          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
+          <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {isBn ? 'শিক্ষক, কর্মচারী এবং ছাত্রদের উপস্থিতি ট্র্যাক করুন' : 'Track teacher, employee and student attendance'}
           </p>
         </div>
         {/* Legend Box */}
         <div
-          className={`bg-[var(--bg-primary)] border border-[var(--border)] rounded-[10px] px-3 py-2 flex flex-wrap gap-[10px] shrink-0 ${isMobile ? 'w-full gap-1.5' : ''}`}
+          className={`bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.625rem] px-3 py-2 flex flex-wrap gap-[0.625rem] shrink-0 ${isMobile ? 'w-full gap-1.5' : ''}`}
         >
           {legendItems.map((item) => (
             <div key={item.l} className="flex items-center gap-1">
               <span
-                className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-[4px] text-[8px] font-bold"
+                className="inline-flex items-center justify-center w-[1.125rem] h-[1.125rem] rounded-[0.25rem] text-[0.5rem] font-bold"
                 style={{ background: item.bg, color: item.color }}
               >
                 <item.Icon size={10} />
               </span>
-              <span className="text-[10px] text-[var(--text-secondary)] font-medium">
+              <span className="text-[0.625rem] text-[var(--text-secondary)] font-medium">
                 {item.l}={item.label}
               </span>
             </div>
@@ -2155,7 +2155,7 @@ export default function AttendancePage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[12px] cursor-pointer transition-all ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-[0.625rem] text-[0.75rem] cursor-pointer transition-all ${
               activeTab === tab.key
                 ? 'font-semibold'
                 : 'font-normal border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)]'
@@ -2178,13 +2178,13 @@ export default function AttendancePage() {
 
       {/* Status Filter + Date Range (for teacher tabs) */}
       {(activeTab === 'today' || activeTab === 'range') && (
-        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[10px] mb-3.5 flex items-center gap-2 flex-wrap">
-          <span className="text-[11px] font-medium text-[var(--text-muted)]">{isBn ? 'অবস্থা:' : 'Status:'}</span>
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] mb-3.5 flex items-center gap-2 flex-wrap">
+          <span className="text-[0.6875rem] font-medium text-[var(--text-muted)]">{isBn ? 'অবস্থা:' : 'Status:'}</span>
           {statusFilters.map((sf) => (
             <button
               key={sf.key}
               onClick={() => setStatusFilter(sf.key)}
-              className={`px-3 py-1 rounded-lg text-[11px] cursor-pointer border ${
+              className={`px-3 py-1 rounded-lg text-[0.6875rem] cursor-pointer border ${
                 statusFilter === sf.key
                   ? 'font-semibold'
                   : 'font-normal border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
@@ -2208,28 +2208,28 @@ export default function AttendancePage() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="px-2 py-[5px] rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none"
+            className="px-2 py-[0.3125rem] rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] outline-none"
           />
-          <span className="text-[11px] text-[var(--text-muted)]">—</span>
+          <span className="text-[0.6875rem] text-[var(--text-muted)]">—</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="px-2 py-[5px] rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none"
+            className="px-2 py-[0.3125rem] rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] outline-none"
           />
         </div>
       )}
 
       {/* Filter + Date Range for Student tab */}
       {activeTab === 'student' && (
-        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[10px] mb-3.5 flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-[9px] py-[5px] flex-1 min-w-[160px]">
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] mb-3.5 flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-[0.5625rem] py-[0.3125rem] flex-1 min-w-[10rem]">
             <Search size={13} className="text-[var(--text-muted)] shrink-0" />
             <input
               value={studentSearch}
               onChange={(e) => setStudentSearch(e.target.value)}
               placeholder={isBn ? 'নাম বা আইডি...' : 'Name or ID...'}
-              className="flex-1 border-none bg-transparent outline-none text-[12px] text-[var(--text-primary)]"
+              className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
             />
             {studentSearch && (
               <button
@@ -2276,7 +2276,7 @@ export default function AttendancePage() {
                 setFSection('')
                 setStudentSearch('')
               }}
-              className="px-2 py-[3px] rounded-[6px] bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[10px] cursor-pointer"
+              className="px-2 py-[0.1875rem] rounded-[0.375rem] bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.625rem] cursor-pointer"
             >
               ✕
             </button>
@@ -2287,14 +2287,14 @@ export default function AttendancePage() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="px-2 py-[5px] rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none"
+            className="px-2 py-[0.3125rem] rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] outline-none"
           />
-          <span className="text-[11px] text-[var(--text-muted)]">—</span>
+          <span className="text-[0.6875rem] text-[var(--text-muted)]">—</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="px-2 py-[5px] rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none"
+            className="px-2 py-[0.3125rem] rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] outline-none"
           />
         </div>
       )}
@@ -2302,14 +2302,14 @@ export default function AttendancePage() {
       {/* Filter + Date Range for Employee tab */}
       {activeTab === 'employee' && (
         <>
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[10px] mb-3.5 flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-[9px] py-[5px] flex-1 min-w-[160px]">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] mb-3.5 flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-[0.5625rem] py-[0.3125rem] flex-1 min-w-[10rem]">
               <Search size={13} className="text-[var(--text-muted)] shrink-0" />
               <input
                 value={employeeSearch}
                 onChange={(e) => setEmployeeSearch(e.target.value)}
                 placeholder={isBn ? 'নাম বা আইডি...' : 'Name or ID...'}
-                className="flex-1 border-none bg-transparent outline-none text-[12px] text-[var(--text-primary)]"
+                className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
               />
               {employeeSearch && (
                 <button
@@ -2334,7 +2334,7 @@ export default function AttendancePage() {
                   setFDeptEmp('')
                   setEmployeeSearch('')
                 }}
-                className="px-2 py-[3px] rounded-[6px] bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[10px] cursor-pointer"
+                className="px-2 py-[0.1875rem] rounded-[0.375rem] bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.625rem] cursor-pointer"
               >
                 ✕
               </button>
@@ -2345,14 +2345,14 @@ export default function AttendancePage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="px-2 py-[5px] rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none"
+              className="px-2 py-[0.3125rem] rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] outline-none"
             />
-            <span className="text-[11px] text-[var(--text-muted)]">—</span>
+            <span className="text-[0.6875rem] text-[var(--text-muted)]">—</span>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="px-2 py-[5px] rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none"
+              className="px-2 py-[0.3125rem] rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] outline-none"
             />
           </div>
 
@@ -2402,12 +2402,12 @@ export default function AttendancePage() {
               },
             ].map((s) => (
               <div key={s.lEn} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5 flex items-center gap-3">
-                <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0" style={{ background: s.bg }}>
+                <div className="w-[2.375rem] h-[2.375rem] rounded-[0.625rem] flex items-center justify-center shrink-0" style={{ background: s.bg }}>
                   <s.Icon size={18} style={{ color: s.c }} />
                 </div>
                 <div>
                   <div className="text-xl font-bold text-[var(--text-primary)]">{s.v}</div>
-                  <div className="text-[11px] text-[var(--text-secondary)]">{isBn ? s.lBn : s.lEn}</div>
+                  <div className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? s.lBn : s.lEn}</div>
                 </div>
               </div>
             ))}
@@ -2416,11 +2416,11 @@ export default function AttendancePage() {
           {/* Export buttons */}
           <div className="flex items-center justify-between mb-3.5">
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-[var(--text-secondary)]">
+              <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {isBn ? `মোট ${filteredEmployees.length} জন কর্মচারী` : `${filteredEmployees.length} employees`}
               </span>
               {selectedEmployees.length > 0 && (
-                <span className="text-[11px] text-[var(--brand)] bg-[var(--brand-light)] px-2.5 py-[3px] rounded-[6px] font-medium">
+                <span className="text-[0.6875rem] text-[var(--brand)] bg-[var(--brand-light)] px-2.5 py-[0.1875rem] rounded-[0.375rem] font-medium">
                   {selectedEmployees.length} {isBn ? 'নির্বাচিত' : 'selected'}
                 </span>
               )}
@@ -2428,7 +2428,7 @@ export default function AttendancePage() {
             <div className="flex gap-1.5">
               <button
                 onClick={exportEmployeeExcel}
-                className="flex items-center gap-[5px] px-3 py-[7px] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[12px] cursor-pointer font-medium"
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] cursor-pointer font-medium"
               >
                 <FileSpreadsheet size={13} />
                 Excel
@@ -2436,7 +2436,7 @@ export default function AttendancePage() {
               <button
                 onClick={() => setShowEmployeePDF(true)}
                 disabled={selectedEmployees.length === 0}
-                className={`flex items-center gap-[5px] px-3 py-[7px] rounded-lg text-[12px] font-medium ${
+                className={`flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg text-[0.75rem] font-medium ${
                   selectedEmployees.length === 0
                     ? 'bg-[var(--border-2)] border border-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'
                     : 'bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] cursor-pointer'
@@ -2449,12 +2449,12 @@ export default function AttendancePage() {
           </div>
 
           {/* Employee Table */}
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
             <div className="overflow-auto max-h-[65vh]">
-              <table className="w-full border-collapse text-[11px]">
+              <table className="w-full border-collapse text-[0.6875rem]">
                 <thead>
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[36px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]">
                       <input
                         type="checkbox"
                         checked={filteredEmployees.length > 0 && filteredEmployees.every((t) => selectedEmployees.includes(t.id))}
@@ -2462,26 +2462,26 @@ export default function AttendancePage() {
                           if (filteredEmployees.every((t) => selectedEmployees.includes(t.id))) setSelectedEmployees([])
                           else setSelectedEmployees(filteredEmployees.map((t) => t.id))
                         }}
-                        className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                       />
                     </th>
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[36px]"></th>
-                    <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[140px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]"></th>
+                    <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[8.75rem]">
                       {isBn ? 'নাম' : 'Name'}
                     </th>
-                    <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[80px]">
+                    <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[5rem]">
                       {isBn ? 'বিভাগ' : 'Dept'}
                     </th>
-                    <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[80px]">
+                    <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[5rem]">
                       {isBn ? 'পদবি' : 'Designation'}
                     </th>
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[70px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[4.375rem]">
                       {isBn ? 'ইন টাইম' : 'In-Time'}
                     </th>
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[70px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[4.375rem]">
                       {isBn ? 'আউট টাইম' : 'Out-Time'}
                     </th>
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[60px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[3.75rem]">
                       {isBn ? 'অবস্থা' : 'Status'}
                     </th>
                   </tr>
@@ -2507,11 +2507,11 @@ export default function AttendancePage() {
                             onChange={() =>
                               setSelectedEmployees((prev) => (prev.includes(t.id) ? prev.filter((id) => id !== t.id) : [...prev, t.id]))
                             }
-                            className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                            className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                           />
                         </td>
-                        <td className="p-[6px] text-center">
-                          <div className="w-[30px] h-[36px] rounded-[5px] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
+                        <td className="p-[0.375rem] text-center">
+                          <div className="w-[1.875rem] h-[2.25rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
                             {t.photo ? (
                               <img src={t.photo} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -2519,7 +2519,7 @@ export default function AttendancePage() {
                             )}
                           </div>
                         </td>
-                        <td className="p-[6px]">
+                        <td className="p-[0.375rem]">
                           <div
                             className="flex items-center gap-1.5 cursor-pointer"
                             onClick={() =>
@@ -2530,36 +2530,36 @@ export default function AttendancePage() {
                               })
                             }
                           >
-                            <div className="text-[11px] font-medium text-[var(--text-primary)]">
+                            <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">
                               {isBn ? t.nameBn || t.nameEn : t.nameEn}
                             </div>
                             <ExternalLink size={10} className="text-[var(--text-muted)]" />
                           </div>
-                          <div className="text-[9px] text-[var(--text-muted)] font-mono">{t.id}</div>
+                          <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono">{t.id}</div>
                         </td>
-                        <td className="p-[6px] text-[10px] text-[var(--text-secondary)]">{getDeptName(t.departmentId)}</td>
-                        <td className="p-[6px] text-[10px] text-[var(--text-secondary)]">{t.designation || '—'}</td>
-                        <td className="p-[6px] text-center">
+                        <td className="p-[0.375rem] text-[0.625rem] text-[var(--text-secondary)]">{getDeptName(t.departmentId)}</td>
+                        <td className="p-[0.375rem] text-[0.625rem] text-[var(--text-secondary)]">{t.designation || '—'}</td>
+                        <td className="p-[0.375rem] text-center">
                           {st === 'present' && inPunch ? (
                             <span
-                              className={`text-[10px] font-mono font-semibold px-2 py-[2px] rounded ${isLate ? 'bg-[var(--amber-light)] text-[var(--amber)]' : 'bg-[var(--green-light)] text-[var(--green)]'}`}
+                              className={`text-[0.625rem] font-mono font-semibold px-2 py-[0.125rem] rounded ${isLate ? 'bg-[var(--amber-light)] text-[var(--amber)]' : 'bg-[var(--green-light)] text-[var(--green)]'}`}
                             >
                               {inPunch.time}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-[var(--text-muted)]">—</span>
+                            <span className="text-[0.625rem] text-[var(--text-muted)]">—</span>
                           )}
                         </td>
-                        <td className="p-[6px] text-center">
+                        <td className="p-[0.375rem] text-center">
                           {st === 'present' && outPunch ? (
-                            <span className="text-[10px] font-mono font-medium text-[var(--text-secondary)]">{outPunch.time}</span>
+                            <span className="text-[0.625rem] font-mono font-medium text-[var(--text-secondary)]">{outPunch.time}</span>
                           ) : (
-                            <span className="text-[10px] text-[var(--text-muted)]">—</span>
+                            <span className="text-[0.625rem] text-[var(--text-muted)]">—</span>
                           )}
                         </td>
-                        <td className="p-[6px] text-center">
+                        <td className="p-[0.375rem] text-center">
                           {statusBadge(st)}
-                          {isLate && st === 'present' && <span className="text-[8px] text-[var(--amber)] font-semibold ml-1">LATE</span>}
+                          {isLate && st === 'present' && <span className="text-[0.5rem] text-[var(--amber)] font-semibold ml-1">LATE</span>}
                         </td>
                       </tr>
                     )
@@ -2575,7 +2575,7 @@ export default function AttendancePage() {
                 </tbody>
               </table>
             </div>
-            <div className="px-3.5 py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex justify-between items-center text-[11px] text-[var(--text-muted)]">
+            <div className="px-3.5 py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex justify-between items-center text-[0.6875rem] text-[var(--text-muted)]">
               <span>📊 P=Present, A=Absent, L=Late, W=Weekend · {isBn ? 'নামে ক্লিক করুন বিস্তারিত দেখতে' : 'Click name for details'}</span>
               <span>
                 {rangeDays.length} {isBn ? 'দিন' : 'days'} · {filteredEmployees.length} {isBn ? 'কর্মচারী' : 'employees'}
@@ -2592,7 +2592,7 @@ export default function AttendancePage() {
                     setEmpPerPage(Number(e.target.value))
                     setEmpPage(1)
                   }}
-                  className="px-1.5 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[11px] text-[var(--text-secondary)]"
+                  className="px-1.5 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[0.6875rem] text-[var(--text-secondary)]"
                 >
                   {[10, 20, 50].map((n) => (
                     <option key={n} value={n}>
@@ -2601,7 +2601,7 @@ export default function AttendancePage() {
                   ))}
                 </select>
               </div>
-              <div className="flex gap-[3px]">
+              <div className="flex gap-[0.1875rem]">
                 {(
                   [
                     [<ChevronsLeft size={12} />, () => setEmpPage(1), empPage === 1] as const,
@@ -2611,7 +2611,7 @@ export default function AttendancePage() {
                       const pg = start + i
                       return pg <= empTotalPages
                         ? ([
-                            <span key={pg} className="text-[11px]">
+                            <span key={pg} className="text-[0.6875rem]">
                               {pg}
                             </span>,
                             () => setEmpPage(pg),
@@ -2690,12 +2690,12 @@ export default function AttendancePage() {
               },
             ].map((s) => (
               <div key={s.lEn} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5 flex items-center gap-3">
-                <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0" style={{ background: s.bg }}>
+                <div className="w-[2.375rem] h-[2.375rem] rounded-[0.625rem] flex items-center justify-center shrink-0" style={{ background: s.bg }}>
                   <s.Icon size={18} style={{ color: s.c }} />
                 </div>
                 <div>
                   <div className="text-xl font-bold text-[var(--text-primary)]">{s.v}</div>
-                  <div className="text-[11px] text-[var(--text-secondary)]">{isBn ? s.lBn : s.lEn}</div>
+                  <div className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? s.lBn : s.lEn}</div>
                 </div>
               </div>
             ))}
@@ -2709,12 +2709,12 @@ export default function AttendancePage() {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="px-2.5 py-[6px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs outline-none"
+                className="px-2.5 py-[0.375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs outline-none"
               />
               <div className="flex-1" />
               <button
                 onClick={() => setShowMarkAll(true)}
-                className="flex items-center gap-[5px] px-3.5 py-[7px] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-xs cursor-pointer font-medium"
+                className="flex items-center gap-[0.3125rem] px-3.5 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-xs cursor-pointer font-medium"
               >
                 <CheckCircle size={13} />
                 {isBn ? 'সবাইকে উপস্থিত করুন' : 'Mark All Present'}
@@ -2722,7 +2722,7 @@ export default function AttendancePage() {
             </div>
             {/* Status filter buttons */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] font-medium text-[var(--text-muted)]">{isBn ? 'ফিল্টার:' : 'Filter:'}</span>
+              <span className="text-[0.6875rem] font-medium text-[var(--text-muted)]">{isBn ? 'ফিল্টার:' : 'Filter:'}</span>
               {statusFilters.map((sf) => (
                 <button
                   key={sf.key}
@@ -2730,7 +2730,7 @@ export default function AttendancePage() {
                     setStatusFilter(sf.key)
                     setEmpPage(1)
                   }}
-                  className={`px-3 py-[5px] rounded-lg text-[11px] cursor-pointer border transition-all ${
+                  className={`px-3 py-[0.3125rem] rounded-lg text-[0.6875rem] cursor-pointer border transition-all ${
                     statusFilter === sf.key
                       ? 'font-semibold'
                       : 'font-normal border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
@@ -2748,19 +2748,19 @@ export default function AttendancePage() {
                   {isBn ? sf.labelBn : sf.labelEn}
                 </button>
               ))}
-              <span className="text-[11px] text-[var(--text-muted)] ml-1">
+              <span className="text-[0.6875rem] text-[var(--text-muted)] ml-1">
                 ({todayFiltered.length} {isBn ? 'জন' : 'staff'})
               </span>
             </div>
           </div>
 
           {/* Attendance Table */}
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
             <div className="overflow-auto max-h-[65vh]">
-              <table className="w-full border-collapse text-[11px]">
+              <table className="w-full border-collapse text-[0.6875rem]">
                 <thead>
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[36px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]">
                       <input
                         type="checkbox"
                         checked={todayFiltered.length > 0 && todayFiltered.every((t) => selectedEmployees.includes(t.id))}
@@ -2768,35 +2768,35 @@ export default function AttendancePage() {
                           if (todayFiltered.every((t) => selectedEmployees.includes(t.id))) setSelectedEmployees([])
                           else setSelectedEmployees(todayFiltered.map((t) => t.id))
                         }}
-                        className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                       />
                     </th>
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[36px]"></th>
-                    <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[140px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]"></th>
+                    <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[8.75rem]">
                       {isBn ? 'নাম' : 'Name'}
                     </th>
-                    <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[80px]">
+                    <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[5rem]">
                       {isBn ? 'বিভাগ' : 'Dept'}
                     </th>
-                    <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[80px]">
+                    <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[5rem]">
                       {isBn ? 'পদবি' : 'Desig'}
                     </th>
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[70px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[4.375rem]">
                       <div className="flex items-center justify-center gap-1">
                         <LogOut size={10} />
                         {isBn ? 'ইন টাইম' : 'In-Time'}
                       </div>
                     </th>
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[70px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[4.375rem]">
                       <div className="flex items-center justify-center gap-1">
                         <LogOut size={10} />
                         {isBn ? 'আউট টাইম' : 'Out-Time'}
                       </div>
                     </th>
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[60px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[3.75rem]">
                       {isBn ? 'অবস্থা' : 'Status'}
                     </th>
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[50px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[3.125rem]">
                       {isBn ? 'অ্যাকশন' : 'Action'}
                     </th>
                   </tr>
@@ -2818,11 +2818,11 @@ export default function AttendancePage() {
                             onChange={() =>
                               setSelectedEmployees((prev) => (prev.includes(t.id) ? prev.filter((id) => id !== t.id) : [...prev, t.id]))
                             }
-                            className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                            className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                           />
                         </td>
-                        <td className="p-[6px] text-center">
-                          <div className="w-[30px] h-[36px] rounded-[5px] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
+                        <td className="p-[0.375rem] text-center">
+                          <div className="w-[1.875rem] h-[2.25rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
                             {t.photo ? (
                               <img src={t.photo} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -2841,13 +2841,13 @@ export default function AttendancePage() {
                               })
                             }
                           >
-                            <div className="text-[11px] font-medium text-[var(--text-primary)]">{t.name}</div>
+                            <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">{t.name}</div>
                             <ExternalLink size={10} className="text-[var(--text-muted)]" />
                           </div>
                           <div className="flex items-center gap-1">
-                            <div className="text-[9px] text-[var(--text-muted)] font-mono">{t.id}</div>
+                            <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono">{t.id}</div>
                             <span
-                              className={`text-[7px] px-[4px] py-[1px] rounded font-semibold ${
+                              className={`text-[0.4375rem] px-[0.25rem] py-[0.0625rem] rounded font-semibold ${
                                 t.type === 'staff'
                                   ? 'bg-[var(--brand-light)] text-[var(--brand)]'
                                   : 'bg-[var(--green-light)] text-[var(--green)]'
@@ -2857,31 +2857,31 @@ export default function AttendancePage() {
                             </span>
                           </div>
                         </td>
-                        <td className="p-2 text-[10px] text-[var(--text-secondary)]">{t.dept}</td>
-                        <td className="p-2 text-[10px] text-[var(--text-secondary)]">{t.designation || '—'}</td>
+                        <td className="p-2 text-[0.625rem] text-[var(--text-secondary)]">{t.dept}</td>
+                        <td className="p-2 text-[0.625rem] text-[var(--text-secondary)]">{t.designation || '—'}</td>
                         <td className="p-2 text-center">
                           {isPresent && t.inTime !== '—' ? (
                             <span
-                              className={`text-[10px] font-mono font-semibold px-2 py-[2px] rounded ${
+                              className={`text-[0.625rem] font-mono font-semibold px-2 py-[0.125rem] rounded ${
                                 t.isLate ? 'bg-[var(--amber-light)] text-[var(--amber)]' : 'bg-[var(--green-light)] text-[var(--green)]'
                               }`}
                             >
                               {t.inTime}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-[var(--text-muted)]">—</span>
+                            <span className="text-[0.625rem] text-[var(--text-muted)]">—</span>
                           )}
                         </td>
                         <td className="p-2 text-center">
                           {isPresent && t.outTime !== '—' ? (
-                            <span className="text-[10px] font-mono font-medium text-[var(--text-secondary)]">{t.outTime}</span>
+                            <span className="text-[0.625rem] font-mono font-medium text-[var(--text-secondary)]">{t.outTime}</span>
                           ) : (
-                            <span className="text-[10px] text-[var(--text-muted)]">—</span>
+                            <span className="text-[0.625rem] text-[var(--text-muted)]">—</span>
                           )}
                         </td>
                         <td className="p-2 text-center">
                           {statusBadge(t.attStatus)}
-                          {t.isLate && isPresent && <span className="text-[8px] text-[var(--amber)] font-semibold ml-1">LATE</span>}
+                          {t.isLate && isPresent && <span className="text-[0.5rem] text-[var(--amber)] font-semibold ml-1">LATE</span>}
                         </td>
                         <td className="p-2 text-center">
                           <button
@@ -2892,7 +2892,7 @@ export default function AttendancePage() {
                                 type: 'teacher',
                               })
                             }
-                            className="w-[26px] h-[26px] rounded-[6px] bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)] mx-auto"
+                            className="w-[1.625rem] h-[1.625rem] rounded-[0.375rem] bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)] mx-auto"
                           >
                             <Eye size={12} />
                           </button>
@@ -2912,7 +2912,7 @@ export default function AttendancePage() {
               </table>
             </div>
             {/* Footer info */}
-            <div className="px-3.5 py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex justify-between items-center text-[11px] text-[var(--text-muted)]">
+            <div className="px-3.5 py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex justify-between items-center text-[0.6875rem] text-[var(--text-muted)]">
               <span>📊 P=Present, A=Absent, L=Late · {isBn ? 'নামে ক্লিক করুন বিস্তারিত দেখতে' : 'Click name for details'}</span>
               <span>
                 {todayFiltered.length} {isBn ? 'জন' : 'total'} ({filteredEmployees.length} {isBn ? 'স্টাফ' : 'staff'} +{' '}
@@ -2936,7 +2936,7 @@ export default function AttendancePage() {
                     setEmpPerPage(Number(e.target.value))
                     setEmpPage(1)
                   }}
-                  className="px-1.5 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[11px] text-[var(--text-secondary)]"
+                  className="px-1.5 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[0.6875rem] text-[var(--text-secondary)]"
                 >
                   {[10, 20, 50].map((n) => (
                     <option key={n} value={n}>
@@ -2945,7 +2945,7 @@ export default function AttendancePage() {
                   ))}
                 </select>
               </div>
-              <div className="flex gap-[3px]">
+              <div className="flex gap-[0.1875rem]">
                 {(
                   [
                     [<ChevronsLeft size={12} />, () => setEmpPage(1), empPage === 1] as const,
@@ -3047,27 +3047,27 @@ export default function AttendancePage() {
               },
             ].map((s) => (
               <div key={s.lEn} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5 flex items-center gap-3">
-                <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0" style={{ background: s.bg }}>
+                <div className="w-[2.375rem] h-[2.375rem] rounded-[0.625rem] flex items-center justify-center shrink-0" style={{ background: s.bg }}>
                   <s.Icon size={18} style={{ color: s.c }} />
                 </div>
                 <div>
                   <div className="text-xl font-bold text-[var(--text-primary)]">{s.v}</div>
-                  <div className="text-[11px] text-[var(--text-secondary)]">{isBn ? s.lBn : s.lEn}</div>
+                  <div className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? s.lBn : s.lEn}</div>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Export buttons */}
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[10px] mb-3.5 flex items-center justify-between flex-wrap gap-2">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] mb-3.5 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-[var(--text-secondary)]">
+              <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {isBn
                   ? `${filteredEmployees.length} জন কর্মচারী · ${rangeDays.length} দিন`
                   : `${filteredEmployees.length} employees · ${rangeDays.length} days`}
               </span>
               {selectedEmployees.length > 0 && (
-                <span className="text-[11px] text-[var(--brand)] bg-[var(--brand-light)] px-2.5 py-[3px] rounded-[6px] font-medium">
+                <span className="text-[0.6875rem] text-[var(--brand)] bg-[var(--brand-light)] px-2.5 py-[0.1875rem] rounded-[0.375rem] font-medium">
                   {selectedEmployees.length} {isBn ? 'নির্বাচিত' : 'selected'}
                 </span>
               )}
@@ -3075,7 +3075,7 @@ export default function AttendancePage() {
             <div className="flex gap-1.5">
               <button
                 onClick={exportEmployeeExcel}
-                className="flex items-center gap-[5px] px-3 py-[7px] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[12px] cursor-pointer font-medium"
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] cursor-pointer font-medium"
               >
                 <FileSpreadsheet size={13} />
                 Excel
@@ -3083,7 +3083,7 @@ export default function AttendancePage() {
               <button
                 onClick={() => setShowEmployeePDF(true)}
                 disabled={selectedEmployees.length === 0}
-                className={`flex items-center gap-[5px] px-3 py-[7px] rounded-lg text-[12px] font-medium ${
+                className={`flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg text-[0.75rem] font-medium ${
                   selectedEmployees.length === 0
                     ? 'bg-[var(--border-2)] border border-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'
                     : 'bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] cursor-pointer'
@@ -3096,12 +3096,12 @@ export default function AttendancePage() {
           </div>
 
           {/* Range Table */}
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
             <div className="overflow-auto max-h-[65vh]">
-              <table className="w-full border-collapse text-[11px]">
+              <table className="w-full border-collapse text-[0.6875rem]">
                 <thead>
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[36px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]">
                       <input
                         type="checkbox"
                         checked={filteredEmployees.length > 0 && filteredEmployees.every((t) => selectedEmployees.includes(t.id))}
@@ -3109,23 +3109,23 @@ export default function AttendancePage() {
                           if (filteredEmployees.every((t) => selectedEmployees.includes(t.id))) setSelectedEmployees([])
                           else setSelectedEmployees(filteredEmployees.map((t) => t.id))
                         }}
-                        className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                       />
                     </th>
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[36px]"></th>
-                    <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[140px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]"></th>
+                    <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[8.75rem]">
                       {isBn ? 'নাম' : 'Name'}
                     </th>
-                    <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[80px]">
+                    <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[5rem]">
                       {isBn ? 'বিভাগ' : 'Dept'}
                     </th>
-                    <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[80px]">
+                    <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[5rem]">
                       {isBn ? 'পদবি' : 'Designation'}
                     </th>
                     {rangeDays.map((ds) => (
-                      <th key={ds} className="p-[6px] text-center text-[9px] font-semibold text-[var(--text-muted)] min-w-[36px]">
+                      <th key={ds} className="p-[0.375rem] text-center text-[0.5625rem] font-semibold text-[var(--text-muted)] min-w-[2.25rem]">
                         <div>{shortDate(ds)}</div>
-                        <div className="text-[8px] font-normal">{dayName(ds)}</div>
+                        <div className="text-[0.5rem] font-normal">{dayName(ds)}</div>
                       </th>
                     ))}
                   </tr>
@@ -3145,11 +3145,11 @@ export default function AttendancePage() {
                           onChange={() =>
                             setSelectedEmployees((prev) => (prev.includes(t.id) ? prev.filter((id) => id !== t.id) : [...prev, t.id]))
                           }
-                          className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                          className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                         />
                       </td>
-                      <td className="p-[6px] text-center">
-                        <div className="w-[30px] h-[36px] rounded-[5px] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
+                      <td className="p-[0.375rem] text-center">
+                        <div className="w-[1.875rem] h-[2.25rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
                           {t.photo ? (
                             <img src={t.photo} alt="" className="w-full h-full object-cover" />
                           ) : (
@@ -3157,7 +3157,7 @@ export default function AttendancePage() {
                           )}
                         </div>
                       </td>
-                      <td className="p-[6px]">
+                      <td className="p-[0.375rem]">
                         <div
                           className="flex items-center gap-1.5 cursor-pointer"
                           onClick={() =>
@@ -3168,23 +3168,23 @@ export default function AttendancePage() {
                             })
                           }
                         >
-                          <div className="text-[11px] font-medium text-[var(--text-primary)]">{isBn ? t.nameBn || t.nameEn : t.nameEn}</div>
+                          <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">{isBn ? t.nameBn || t.nameEn : t.nameEn}</div>
                           <ExternalLink size={10} className="text-[var(--text-muted)]" />
                         </div>
-                        <div className="text-[9px] text-[var(--text-muted)] font-mono">{t.id}</div>
+                        <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono">{t.id}</div>
                       </td>
-                      <td className="p-[6px] text-[10px] text-[var(--text-secondary)]">{getDeptName(t.departmentId)}</td>
-                      <td className="p-[6px] text-[10px] text-[var(--text-secondary)]">{t.designation || '—'}</td>
+                      <td className="p-[0.375rem] text-[0.625rem] text-[var(--text-secondary)]">{getDeptName(t.departmentId)}</td>
+                      <td className="p-[0.375rem] text-[0.625rem] text-[var(--text-secondary)]">{t.designation || '—'}</td>
                       {rangeDays.map((ds) => {
                         if (isFriday(ds))
                           return (
-                            <td key={ds} className="p-[4px] text-center">
+                            <td key={ds} className="p-[0.25rem] text-center">
                               {weeklyHolidayBadge()}
                             </td>
                           )
                         const s = getStatus(attendance[ds]?.[t.id])
                         return (
-                          <td key={ds} className="p-[4px] text-center">
+                          <td key={ds} className="p-[0.25rem] text-center">
                             {statusBadge(s)}
                           </td>
                         )
@@ -3202,7 +3202,7 @@ export default function AttendancePage() {
                 </tbody>
               </table>
             </div>
-            <div className="px-3.5 py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex justify-between items-center text-[11px] text-[var(--text-muted)]">
+            <div className="px-3.5 py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex justify-between items-center text-[0.6875rem] text-[var(--text-muted)]">
               <span>📊 P=Present, A=Absent, L=Late, W=Weekend · {isBn ? 'নামে ক্লিক করুন বিস্তারিত দেখতে' : 'Click name for details'}</span>
               <span>
                 {rangeDays.length} {isBn ? 'দিন' : 'days'} · {filteredEmployees.length} {isBn ? 'কর্মচারী' : 'employees'}
@@ -3219,7 +3219,7 @@ export default function AttendancePage() {
                     setEmpPerPage(Number(e.target.value))
                     setEmpPage(1)
                   }}
-                  className="px-1.5 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[11px] text-[var(--text-secondary)]"
+                  className="px-1.5 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[0.6875rem] text-[var(--text-secondary)]"
                 >
                   {[10, 20, 50].map((n) => (
                     <option key={n} value={n}>
@@ -3228,7 +3228,7 @@ export default function AttendancePage() {
                   ))}
                 </select>
               </div>
-              <div className="flex gap-[3px]">
+              <div className="flex gap-[0.1875rem]">
                 {(
                   [
                     [<ChevronsLeft size={12} />, () => setEmpPage(1), empPage === 1] as const,
@@ -3285,8 +3285,8 @@ export default function AttendancePage() {
       {activeTab === 'device' && (
         <>
           {/* Device sub-tabs — status filter style */}
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[10px] mb-3.5 flex items-center gap-2 flex-wrap">
-            <span className="text-[11px] font-medium text-[var(--text-muted)]">{isBn ? 'সেকশন:' : 'Section:'}</span>
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] mb-3.5 flex items-center gap-2 flex-wrap">
+            <span className="text-[0.6875rem] font-medium text-[var(--text-muted)]">{isBn ? 'সেকশন:' : 'Section:'}</span>
             {[
               {
                 key: 'devices' as const,
@@ -3327,7 +3327,7 @@ export default function AttendancePage() {
               <button
                 key={tab.key}
                 onClick={() => setDeviceTab(tab.key)}
-                className={`px-3 py-1 rounded-lg text-[11px] cursor-pointer border ${
+                className={`px-3 py-1 rounded-lg text-[0.6875rem] cursor-pointer border ${
                   deviceTab === tab.key
                     ? 'font-semibold'
                     : 'font-normal border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
@@ -3352,7 +3352,7 @@ export default function AttendancePage() {
             {deviceTab === 'devices' && (
               <button
                 onClick={() => setShowAddDevice(true)}
-                className="flex items-center gap-[5px] px-3 py-[6px] rounded-lg bg-[#7C3AED] text-white text-[11px] cursor-pointer font-medium"
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.375rem] rounded-lg bg-[#7C3AED] text-white text-[0.6875rem] cursor-pointer font-medium"
               >
                 <Plus size={12} />
                 {isBn ? 'ডিভাইস যোগ' : 'Add Device'}
@@ -3361,7 +3361,7 @@ export default function AttendancePage() {
             {deviceTab === 'rfid' && (
               <button
                 onClick={() => setShowAddRFID(true)}
-                className="flex items-center gap-[5px] px-3 py-[6px] rounded-lg bg-[var(--brand)] text-white text-[11px] cursor-pointer font-medium"
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.375rem] rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] cursor-pointer font-medium"
               >
                 <Plus size={12} />
                 {isBn ? 'কার্ড যোগ' : 'Add Card'}
@@ -3370,7 +3370,7 @@ export default function AttendancePage() {
             {deviceTab === 'fingerprint' && (
               <button
                 onClick={() => setShowAddFP(true)}
-                className="flex items-center gap-[5px] px-3 py-[6px] rounded-lg bg-[var(--amber)] text-white text-[11px] cursor-pointer font-medium"
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.375rem] rounded-lg bg-[var(--amber)] text-white text-[0.6875rem] cursor-pointer font-medium"
               >
                 <Fingerprint size={12} />
                 {isBn ? 'এনরোল' : 'Enroll FP'}
@@ -3379,7 +3379,7 @@ export default function AttendancePage() {
             {deviceTab === 'face' && (
               <button
                 onClick={() => setShowAddFace(true)}
-                className="flex items-center gap-[5px] px-3 py-[6px] rounded-lg bg-[var(--green)] text-white text-[11px] cursor-pointer font-medium"
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.375rem] rounded-lg bg-[var(--green)] text-white text-[0.6875rem] cursor-pointer font-medium"
               >
                 <ScanFace size={12} />
                 {isBn ? 'স্ক্যান' : 'Scan Face'}
@@ -3388,7 +3388,7 @@ export default function AttendancePage() {
             {deviceTab === 'mobile' && (
               <button
                 onClick={() => setKioskMode(true)}
-                className="flex items-center gap-[5px] px-3 py-[6px] rounded-lg bg-[var(--teal)] text-white text-[11px] cursor-pointer font-medium"
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.375rem] rounded-lg bg-[var(--teal)] text-white text-[0.6875rem] cursor-pointer font-medium"
               >
                 <Wifi size={12} />
                 {isBn ? 'কিওস্ক মোড' : 'Kiosk Mode'}
@@ -3443,10 +3443,10 @@ export default function AttendancePage() {
                       {s.icon}
                     </div>
                     <div>
-                      <div className="text-[18px] font-bold" style={{ color: s.color }}>
+                      <div className="text-[1.125rem] font-bold" style={{ color: s.color }}>
                         {s.value}
                       </div>
-                      <div className="text-[10px] text-[var(--text-muted)] font-medium">{s.label}</div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)] font-medium">{s.label}</div>
                     </div>
                   </div>
                 ))}
@@ -3484,14 +3484,14 @@ export default function AttendancePage() {
                               )}
                             </div>
                             <div>
-                              <div className="text-[13px] font-bold text-[var(--text-primary)]">{d.name}</div>
-                              <div className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                              <div className="text-[0.8125rem] font-bold text-[var(--text-primary)]">{d.name}</div>
+                              <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
                                 {d.model} · <span className="font-mono">{d.ip}</span>
                               </div>
                             </div>
                           </div>
                           <div
-                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide ${
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.5625rem] font-bold uppercase tracking-wide ${
                               d.status === 'online'
                                 ? 'bg-[var(--green-light)] text-[var(--green)]'
                                 : d.status === 'offline'
@@ -3505,7 +3505,7 @@ export default function AttendancePage() {
                             {d.status}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 text-[10px] text-[var(--text-muted)]">
+                        <div className="flex items-center gap-3 text-[0.625rem] text-[var(--text-muted)]">
                           <span className="flex items-center gap-1">
                             <Tag size={10} /> {typeLabel}
                           </span>
@@ -3547,7 +3547,7 @@ export default function AttendancePage() {
                             }, 2000)
                           }}
                           disabled={syncingDevice === d.id}
-                          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[10px] font-semibold cursor-pointer transition-all duration-200 ${
+                          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[0.625rem] font-semibold cursor-pointer transition-all duration-200 ${
                             syncingDevice === d.id
                               ? 'bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] animate-pulse'
                               : 'bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] hover:bg-[var(--green)] hover:text-white hover:shadow-md'
@@ -3567,7 +3567,7 @@ export default function AttendancePage() {
                         </button>
                         <button
                           onClick={() => setShowDeviceSettings(d.id)}
-                          className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[10px] font-medium cursor-pointer hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all duration-200"
+                          className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.625rem] font-medium cursor-pointer hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all duration-200"
                         >
                           <Settings size={11} />
                           {isBn ? 'সেটিং' : 'Settings'}
@@ -3585,7 +3585,7 @@ export default function AttendancePage() {
                               )
                             )
                           }
-                          className={`flex items-center justify-center px-2.5 py-2 rounded-lg border text-[10px] cursor-pointer transition-all duration-200 ${
+                          className={`flex items-center justify-center px-2.5 py-2 rounded-lg border text-[0.625rem] cursor-pointer transition-all duration-200 ${
                             d.status === 'online'
                               ? 'bg-[var(--red-light)] border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white hover:shadow-md'
                               : 'bg-[var(--green-light)] border-[var(--green)] text-[var(--green)] hover:bg-[var(--green)] hover:text-white hover:shadow-md'
@@ -3602,51 +3602,51 @@ export default function AttendancePage() {
               {/* Device Settings Modal */}
               {showDeviceSettings && (
                 <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
-                  <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[440px] w-full p-5 border border-[var(--border)]">
+                  <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[27.5rem] w-full p-5 border border-[var(--border)]">
                     {(() => {
                       const d = devices.find((dev) => dev.id === showDeviceSettings)
                       if (!d) return null
                       return (
                         <>
                           <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">
+                            <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
                               {isBn ? 'ডিভাইস সেটিং' : 'Device Settings'}
                             </h3>
                             <button
                               onClick={() => setShowDeviceSettings(null)}
-                              className="w-7 h-7 rounded-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center"
+                              className="w-7 h-7 rounded-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center"
                             >
                               <X size={14} className="text-[var(--text-secondary)]" />
                             </button>
                           </div>
                           <div className="space-y-3 mb-4">
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[11px] text-[var(--text-secondary)]">{isBn ? 'ডিভাইস নাম' : 'Device Name'}</span>
-                              <span className="text-[11px] font-semibold text-[var(--text-primary)]">{d.name}</span>
+                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'ডিভাইস নাম' : 'Device Name'}</span>
+                              <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">{d.name}</span>
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[11px] text-[var(--text-secondary)]">{isBn ? 'মডেল' : 'Model'}</span>
-                              <span className="text-[11px] font-semibold text-[var(--text-primary)]">{d.model}</span>
+                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'মডেল' : 'Model'}</span>
+                              <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">{d.model}</span>
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[11px] text-[var(--text-secondary)]">IP {isBn ? 'ঠিকানা' : 'Address'}</span>
-                              <span className="text-[11px] font-mono font-semibold text-[var(--text-primary)]">{d.ip}</span>
+                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">IP {isBn ? 'ঠিকানা' : 'Address'}</span>
+                              <span className="text-[0.6875rem] font-mono font-semibold text-[var(--text-primary)]">{d.ip}</span>
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[11px] text-[var(--text-secondary)]">{isBn ? 'টাইপ' : 'Type'}</span>
-                              <span className="text-[11px] font-semibold text-[var(--text-primary)] capitalize">{d.type}</span>
+                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'টাইপ' : 'Type'}</span>
+                              <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)] capitalize">{d.type}</span>
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[11px] text-[var(--text-secondary)]">{isBn ? 'স্টাফ সংখ্যা' : 'Staff Count'}</span>
-                              <span className="text-[11px] font-semibold text-[var(--text-primary)]">{d.staffCount}</span>
+                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'স্টাফ সংখ্যা' : 'Staff Count'}</span>
+                              <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">{d.staffCount}</span>
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <h4 className="text-[11px] font-semibold text-[var(--text-secondary)]">
+                            <h4 className="text-[0.6875rem] font-semibold text-[var(--text-secondary)]">
                               {isBn ? 'সিঙ্ক সেটিং' : 'Sync Settings'}
                             </h4>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[11px] text-[var(--text-secondary)]">{isBn ? 'অটো সিঙ্ক' : 'Auto Sync'}</span>
+                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'অটো সিঙ্ক' : 'Auto Sync'}</span>
                               <button
                                 onClick={() =>
                                   setDeviceSettings((s) => ({
@@ -3662,7 +3662,7 @@ export default function AttendancePage() {
                               </button>
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[11px] text-[var(--text-secondary)]">{isBn ? 'সিঙ্ক ইন্টারভাল' : 'Sync Interval'}</span>
+                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'সিঙ্ক ইন্টারভাল' : 'Sync Interval'}</span>
                               <select
                                 value={deviceSettings.syncInterval}
                                 onChange={(e) =>
@@ -3671,7 +3671,7 @@ export default function AttendancePage() {
                                     syncInterval: +e.target.value,
                                   }))
                                 }
-                                className="px-2 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[10px] text-[var(--text-secondary)]"
+                                className="px-2 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[0.625rem] text-[var(--text-secondary)]"
                               >
                                 <option value={5}>5 {isBn ? 'মিনিট' : 'min'}</option>
                                 <option value={15}>15 {isBn ? 'মিনিট' : 'min'}</option>
@@ -3680,7 +3680,7 @@ export default function AttendancePage() {
                               </select>
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[11px] text-[var(--text-secondary)]">{isBn ? 'সাউন্ড' : 'Sound'}</span>
+                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'সাউন্ড' : 'Sound'}</span>
                               <button
                                 onClick={() =>
                                   setDeviceSettings((s) => ({
@@ -3696,14 +3696,14 @@ export default function AttendancePage() {
                               </button>
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[11px] text-[var(--text-secondary)]">{isBn ? 'ভার্সন' : 'Version'}</span>
-                              <span className="text-[10px] font-mono text-[var(--text-muted)]">v4.2.1</span>
+                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'ভার্সন' : 'Version'}</span>
+                              <span className="text-[0.625rem] font-mono text-[var(--text-muted)]">v4.2.1</span>
                             </div>
                           </div>
                           <div className="flex gap-2 justify-end mt-5">
                             <button
                               onClick={() => setShowDeviceSettings(null)}
-                              className="px-4 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] font-medium cursor-pointer hover:bg-[var(--border)] transition-all"
+                              className="px-4 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] font-medium cursor-pointer hover:bg-[var(--border)] transition-all"
                             >
                               {isBn ? 'বন্ধ' : 'Close'}
                             </button>
@@ -3712,7 +3712,7 @@ export default function AttendancePage() {
                                 setDevices((prev) => prev.map((dev) => (dev.id === showDeviceSettings ? { ...dev, name: d.name } : dev)))
                                 setShowDeviceSettings(null)
                               }}
-                              className="px-4 py-2 rounded-lg bg-[var(--green)] text-white text-[12px] font-semibold cursor-pointer hover:opacity-90 hover:shadow-md transition-all"
+                              className="px-4 py-2 rounded-lg bg-[var(--green)] text-white text-[0.75rem] font-semibold cursor-pointer hover:opacity-90 hover:shadow-md transition-all"
                             >
                               {isBn ? 'সংরক্ষণ' : 'Save'}
                             </button>
@@ -3762,26 +3762,26 @@ export default function AttendancePage() {
                       {s.icon}
                     </div>
                     <div>
-                      <div className="text-[16px] font-bold" style={{ color: s.color }}>
+                      <div className="text-[1rem] font-bold" style={{ color: s.color }}>
                         {s.value}
                       </div>
-                      <div className="text-[10px] text-[var(--text-muted)]">{s.label}</div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)]">{s.label}</div>
                     </div>
                   </div>
                 ))}
               </div>
               {/* Search */}
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-[6px] flex-1 max-w-[300px]">
+                <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-[0.375rem] flex-1 max-w-[18.75rem]">
                   <Search size={13} className="text-[var(--text-muted)]" />
                   <input
                     value={rfidSearch}
                     onChange={(e) => setRfidSearch(e.target.value)}
                     placeholder={isBn ? 'নাম বা কার্ড নম্বর দিয়ে খুঁজুন...' : 'Search by name or card number...'}
-                    className="flex-1 border-none bg-transparent outline-none text-[12px] text-[var(--text-primary)]"
+                    className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
                   />
                 </div>
-                <span className="text-[11px] text-[var(--text-muted)]">
+                <span className="text-[0.6875rem] text-[var(--text-muted)]">
                   {
                     rfidEntries.filter(
                       (e) => !rfidSearch || e.staffName.toLowerCase().includes(rfidSearch.toLowerCase()) || e.rfidCard.includes(rfidSearch)
@@ -3793,22 +3793,22 @@ export default function AttendancePage() {
               {/* Table */}
               <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
                 <div className="overflow-auto max-h-[55vh]">
-                  <table className="w-full border-collapse text-[11px]">
+                  <table className="w-full border-collapse text-[0.6875rem]">
                     <thead>
                       <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[35px]">#</th>
-                        <th className="p-2.5 text-left text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.1875rem]">#</th>
+                        <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'স্টাফ আইডি' : 'Staff ID'}
                         </th>
-                        <th className="p-2.5 text-left text-[10px] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
-                        <th className="p-2.5 text-left text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
+                        <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'কার্ড নম্বর' : 'Card Number'}
                         </th>
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">{isBn ? 'টাইপ' : 'Type'}</th>
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'টাইপ' : 'Type'}</th>
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'অবস্থা' : 'Status'}
                         </th>
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'অ্যাকশন' : 'Action'}
                         </th>
                       </tr>
@@ -3838,7 +3838,7 @@ export default function AttendancePage() {
                                     prev.map((x) => (x.rfidCard === e.rfidCard ? { ...x, type: ev.target.value } : x))
                                   )
                                 }
-                                className="px-2 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[10px] text-[var(--text-secondary)] cursor-pointer focus:outline-none focus:border-[var(--brand)]"
+                                className="px-2 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[0.625rem] text-[var(--text-secondary)] cursor-pointer focus:outline-none focus:border-[var(--brand)]"
                               >
                                 <option>Admin</option>
                                 <option>Faculty</option>
@@ -3852,7 +3852,7 @@ export default function AttendancePage() {
                                     prev.map((x) => (x.rfidCard === e.rfidCard ? { ...x, assigned: !x.assigned } : x))
                                   )
                                 }
-                                className={`text-[9px] px-2.5 py-1 rounded-full font-semibold cursor-pointer border transition-all duration-200 ${
+                                className={`text-[0.5625rem] px-2.5 py-1 rounded-full font-semibold cursor-pointer border transition-all duration-200 ${
                                   e.assigned
                                     ? 'bg-[var(--green-light)] border-[var(--green)] text-[var(--green)] hover:bg-[var(--green)] hover:text-white'
                                     : 'bg-[var(--red-light)] border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white'
@@ -3876,13 +3876,13 @@ export default function AttendancePage() {
                                       )
                                     )
                                   }
-                                  className="px-2.5 py-1 rounded-md bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-[9px] font-semibold cursor-pointer hover:bg-[var(--brand)] hover:text-white transition-all"
+                                  className="px-2.5 py-1 rounded-md bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-[0.5625rem] font-semibold cursor-pointer hover:bg-[var(--brand)] hover:text-white transition-all"
                                 >
                                   {isBn ? 'রি-অ্যাসাইন' : 'Re-assign'}
                                 </button>
                                 <button
                                   onClick={() => setRfidEntries((prev) => prev.filter((x) => x.rfidCard !== e.rfidCard))}
-                                  className="px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[9px] font-semibold cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all"
+                                  className="px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.5625rem] font-semibold cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all"
                                 >
                                   {isBn ? 'মুছুন' : 'Delete'}
                                 </button>
@@ -3895,7 +3895,7 @@ export default function AttendancePage() {
                           !rfidSearch || e.staffName.toLowerCase().includes(rfidSearch.toLowerCase()) || e.rfidCard.includes(rfidSearch)
                       ).length === 0 && (
                         <tr>
-                          <td colSpan={7} className="p-8 text-center text-[var(--text-muted)] text-[12px]">
+                          <td colSpan={7} className="p-8 text-center text-[var(--text-muted)] text-[0.75rem]">
                             {isBn ? 'কোনো কার্ড পাওয়া যায়নি' : 'No cards found'}
                           </td>
                         </tr>
@@ -3943,26 +3943,26 @@ export default function AttendancePage() {
                       {s.icon}
                     </div>
                     <div>
-                      <div className="text-[16px] font-bold" style={{ color: s.color }}>
+                      <div className="text-[1rem] font-bold" style={{ color: s.color }}>
                         {s.value}
                       </div>
-                      <div className="text-[10px] text-[var(--text-muted)]">{s.label}</div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)]">{s.label}</div>
                     </div>
                   </div>
                 ))}
               </div>
               {/* Search */}
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-[6px] flex-1 max-w-[300px]">
+                <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-[0.375rem] flex-1 max-w-[18.75rem]">
                   <Search size={13} className="text-[var(--text-muted)]" />
                   <input
                     value={fpSearch}
                     onChange={(e) => setFpSearch(e.target.value)}
                     placeholder={isBn ? 'নাম বা আইডি দিয়ে খুঁজুন...' : 'Search by name or ID...'}
-                    className="flex-1 border-none bg-transparent outline-none text-[12px] text-[var(--text-primary)]"
+                    className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
                   />
                 </div>
-                <span className="text-[11px] text-[var(--text-muted)]">
+                <span className="text-[0.6875rem] text-[var(--text-muted)]">
                   {fpEntries.filter((e) => !fpSearch || e.staffName.toLowerCase().includes(fpSearch.toLowerCase())).length}{' '}
                   {isBn ? 'টি ফলাফল' : 'results'}
                 </span>
@@ -3970,24 +3970,24 @@ export default function AttendancePage() {
               {/* Table */}
               <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
                 <div className="overflow-auto max-h-[55vh]">
-                  <table className="w-full border-collapse text-[11px]">
+                  <table className="w-full border-collapse text-[0.6875rem]">
                     <thead>
                       <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[35px]">#</th>
-                        <th className="p-2.5 text-left text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.1875rem]">#</th>
+                        <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'স্টাফ আইডি' : 'Staff ID'}
                         </th>
-                        <th className="p-2.5 text-left text-[10px] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'FP আইডি' : 'FP ID'}
                         </th>
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'টেমপ্লেট' : 'Templates'}
                         </th>
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'অবস্থা' : 'Status'}
                         </th>
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'অ্যাকশন' : 'Action'}
                         </th>
                       </tr>
@@ -4016,7 +4016,7 @@ export default function AttendancePage() {
                             </td>
                             <td className="p-2.5 text-center">
                               <span
-                                className={`text-[9px] px-2.5 py-1 rounded-full font-semibold ${
+                                className={`text-[0.5625rem] px-2.5 py-1 rounded-full font-semibold ${
                                   e.status === 'enrolled'
                                     ? 'bg-[var(--green-light)] text-[var(--green)]'
                                     : e.status === 'pending'
@@ -4069,7 +4069,7 @@ export default function AttendancePage() {
                                     )
                                   }}
                                   disabled={e.status === 'pending'}
-                                  className={`px-2.5 py-1 rounded-md text-[9px] font-semibold cursor-pointer border transition-all duration-200 ${
+                                  className={`px-2.5 py-1 rounded-md text-[0.5625rem] font-semibold cursor-pointer border transition-all duration-200 ${
                                     e.status === 'pending'
                                       ? 'bg-[var(--amber-light)] border-[var(--amber)] text-[var(--amber)] animate-pulse cursor-wait'
                                       : 'bg-[var(--amber-light)] border-[var(--amber)] text-[var(--amber)] hover:bg-[var(--amber)] hover:text-white hover:shadow-md'
@@ -4079,7 +4079,7 @@ export default function AttendancePage() {
                                 </button>
                                 <button
                                   onClick={() => setFpEntries((prev) => prev.filter((x) => x.staffId !== e.staffId))}
-                                  className="px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[9px] font-semibold cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all"
+                                  className="px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.5625rem] font-semibold cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all"
                                 >
                                   {isBn ? 'মুছুন' : 'Delete'}
                                 </button>
@@ -4089,7 +4089,7 @@ export default function AttendancePage() {
                         ))}
                       {fpEntries.filter((e) => !fpSearch || e.staffName.toLowerCase().includes(fpSearch.toLowerCase())).length === 0 && (
                         <tr>
-                          <td colSpan={7} className="p-8 text-center text-[var(--text-muted)] text-[12px]">
+                          <td colSpan={7} className="p-8 text-center text-[var(--text-muted)] text-[0.75rem]">
                             {isBn ? 'কোনো এনরোলমেন্ট পাওয়া যায়নি' : 'No enrollments found'}
                           </td>
                         </tr>
@@ -4137,26 +4137,26 @@ export default function AttendancePage() {
                       {s.icon}
                     </div>
                     <div>
-                      <div className="text-[16px] font-bold" style={{ color: s.color }}>
+                      <div className="text-[1rem] font-bold" style={{ color: s.color }}>
                         {s.value}
                       </div>
-                      <div className="text-[10px] text-[var(--text-muted)]">{s.label}</div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)]">{s.label}</div>
                     </div>
                   </div>
                 ))}
               </div>
               {/* Search */}
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-[6px] flex-1 max-w-[300px]">
+                <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-[0.375rem] flex-1 max-w-[18.75rem]">
                   <Search size={13} className="text-[var(--text-muted)]" />
                   <input
                     value={faceSearch}
                     onChange={(e) => setFaceSearch(e.target.value)}
                     placeholder={isBn ? 'নাম বা আইডি দিয়ে খুঁজুন...' : 'Search by name or ID...'}
-                    className="flex-1 border-none bg-transparent outline-none text-[12px] text-[var(--text-primary)]"
+                    className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
                   />
                 </div>
-                <span className="text-[11px] text-[var(--text-muted)]">
+                <span className="text-[0.6875rem] text-[var(--text-muted)]">
                   {faceEntries.filter((e) => !faceSearch || e.staffName.toLowerCase().includes(faceSearch.toLowerCase())).length}{' '}
                   {isBn ? 'টি ফলাফল' : 'results'}
                 </span>
@@ -4164,24 +4164,24 @@ export default function AttendancePage() {
               {/* Table */}
               <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
                 <div className="overflow-auto max-h-[55vh]">
-                  <table className="w-full border-collapse text-[11px]">
+                  <table className="w-full border-collapse text-[0.6875rem]">
                     <thead>
                       <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[35px]">#</th>
-                        <th className="p-2.5 text-left text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.1875rem]">#</th>
+                        <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'স্টাফ আইডি' : 'Staff ID'}
                         </th>
-                        <th className="p-2.5 text-left text-[10px] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'ফেস আইডি' : 'Face ID'}
                         </th>
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'কোয়ালিটি' : 'Quality'}
                         </th>
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'অবস্থা' : 'Status'}
                         </th>
-                        <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'অ্যাকশন' : 'Action'}
                         </th>
                       </tr>
@@ -4210,7 +4210,7 @@ export default function AttendancePage() {
                                   ></div>
                                 </div>
                                 <span
-                                  className="text-[9px] font-bold tabular-nums"
+                                  className="text-[0.5625rem] font-bold tabular-nums"
                                   style={{
                                     color: e.quality >= 80 ? 'var(--green)' : e.quality >= 60 ? 'var(--amber)' : 'var(--red)',
                                   }}
@@ -4221,7 +4221,7 @@ export default function AttendancePage() {
                             </td>
                             <td className="p-2.5 text-center">
                               <span
-                                className={`text-[9px] px-2.5 py-1 rounded-full font-semibold ${
+                                className={`text-[0.5625rem] px-2.5 py-1 rounded-full font-semibold ${
                                   e.status === 'enrolled'
                                     ? 'bg-[var(--green-light)] text-[var(--green)]'
                                     : e.status === 'pending'
@@ -4274,7 +4274,7 @@ export default function AttendancePage() {
                                     )
                                   }}
                                   disabled={e.status === 'pending'}
-                                  className={`px-2.5 py-1 rounded-md text-[9px] font-semibold cursor-pointer border transition-all duration-200 ${
+                                  className={`px-2.5 py-1 rounded-md text-[0.5625rem] font-semibold cursor-pointer border transition-all duration-200 ${
                                     e.status === 'pending'
                                       ? 'bg-[var(--green-light)] border-[var(--green)] text-[var(--green)] animate-pulse cursor-wait'
                                       : 'bg-[var(--green-light)] border-[var(--green)] text-[var(--green)] hover:bg-[var(--green)] hover:text-white hover:shadow-md'
@@ -4284,7 +4284,7 @@ export default function AttendancePage() {
                                 </button>
                                 <button
                                   onClick={() => setFaceEntries((prev) => prev.filter((x) => x.staffId !== e.staffId))}
-                                  className="px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[9px] font-semibold cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all"
+                                  className="px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.5625rem] font-semibold cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all"
                                 >
                                   {isBn ? 'মুছুন' : 'Delete'}
                                 </button>
@@ -4295,7 +4295,7 @@ export default function AttendancePage() {
                       {faceEntries.filter((e) => !faceSearch || e.staffName.toLowerCase().includes(faceSearch.toLowerCase())).length ===
                         0 && (
                         <tr>
-                          <td colSpan={7} className="p-8 text-center text-[var(--text-muted)] text-[12px]">
+                          <td colSpan={7} className="p-8 text-center text-[var(--text-muted)] text-[0.75rem]">
                             {isBn ? 'কোনো ফেস ডেটা পাওয়া যায়নি' : 'No face data found'}
                           </td>
                         </tr>
@@ -4315,12 +4315,12 @@ export default function AttendancePage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Wifi size={14} className="text-[var(--teal)]" />
-                    <span className="text-[12px] font-medium text-[var(--text-primary)]">
+                    <span className="text-[0.75rem] font-medium text-[var(--text-primary)]">
                       {isBn ? 'নেটওয়ার্ক সেটিংস' : 'Network Settings'}
                     </span>
                     {institutionGateway && (
                       <span
-                        className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${wifiConnected === true ? 'bg-[var(--green-light)] text-[var(--green)]' : wifiConnected === false ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'}`}
+                        className={`text-[0.5625rem] px-2 py-0.5 rounded-full font-semibold ${wifiConnected === true ? 'bg-[var(--green-light)] text-[var(--green)]' : wifiConnected === false ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'}`}
                       >
                         {wifiConnected === true
                           ? isBn
@@ -4338,7 +4338,7 @@ export default function AttendancePage() {
                   </div>
                   <button
                     onClick={() => setShowWifiSettings(!showWifiSettings)}
-                    className="text-[11px] text-[var(--teal)] cursor-pointer bg-transparent border-none font-[inherit] font-medium"
+                    className="text-[0.6875rem] text-[var(--teal)] cursor-pointer bg-transparent border-none font-[inherit] font-medium"
                   >
                     {showWifiSettings ? (isBn ? 'বন্ধ করুন' : 'Close') : isBn ? 'সেটিংস' : 'Settings'}
                   </button>
@@ -4346,31 +4346,31 @@ export default function AttendancePage() {
                 {showWifiSettings && (
                   <div className="mt-3 pt-3 border-t border-[var(--border)] space-y-2">
                     <div>
-                      <label className="text-[10px] font-medium text-[var(--text-muted)] mb-1 block">
+                      <label className="text-[0.625rem] font-medium text-[var(--text-muted)] mb-1 block">
                         {isBn ? 'WiFi নেটওয়ার্কের নাম' : 'WiFi Network Name (SSID)'}
                       </label>
                       <input
                         value={institutionWifi}
                         onChange={(e) => setInstitutionWifi(e.target.value)}
                         placeholder="e.g. Institution-Guest"
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[11px] text-[var(--text-primary)] outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-medium text-[var(--text-muted)] mb-1 block">
+                      <label className="text-[0.625rem] font-medium text-[var(--text-muted)] mb-1 block">
                         {isBn ? 'গেটওয়ে IP (ঐচ্ছিক)' : 'Gateway IP (Optional)'}
                       </label>
                       <input
                         value={institutionGateway}
                         onChange={(e) => setInstitutionGateway(e.target.value)}
                         placeholder="e.g. 192.168.1.1"
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[11px] text-[var(--text-primary)] font-mono outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] font-mono outline-none"
                       />
                     </div>
                     <div className="flex gap-2">
                       <button
                         onClick={saveWifiSettings}
-                        className="px-3 py-1.5 rounded-lg bg-[var(--teal)] text-white text-[11px] font-medium cursor-pointer border-none"
+                        className="px-3 py-1.5 rounded-lg bg-[var(--teal)] text-white text-[0.6875rem] font-medium cursor-pointer border-none"
                       >
                         {isBn ? 'সংরক্ষণ' : 'Save'}
                       </button>
@@ -4381,12 +4381,12 @@ export default function AttendancePage() {
                           setWifiConnected(r.onNetwork)
                           setWifiChecking(false)
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[11px] cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.6875rem] cursor-pointer"
                       >
                         {wifiChecking ? (isBn ? 'পরীক্ষা হচ্ছে...' : 'Checking...') : isBn ? 'পরীক্ষা করুন' : 'Test Connection'}
                       </button>
                     </div>
-                    <div className="text-[9px] text-[var(--text-muted)]">
+                    <div className="text-[0.5625rem] text-[var(--text-muted)]">
                       {isBn
                         ? 'গেটওয়ে IP সেট করলে স্টাফদের প্রতিষ্ঠানের WiFi নেটওয়ার্কে থাকতে হবে।'
                         : 'With gateway IP set, staff must be on institution WiFi network to check in.'}
@@ -4408,13 +4408,13 @@ export default function AttendancePage() {
                       <Smartphone size={16} />
                     </div>
                     <div>
-                      <div className="text-[13px] font-semibold text-[var(--text-primary)]">
+                      <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
                         {isBn ? 'ব্যক্তিগত ফোন' : 'Personal Phone'}
                       </div>
-                      <div className="text-[10px] text-[var(--text-muted)]">{isBn ? 'নিজের ফোনে চেক ইন' : 'Check in on own phone'}</div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'নিজের ফোনে চেক ইন' : 'Check in on own phone'}</div>
                     </div>
                   </div>
-                  <div className="text-[10px] text-[var(--text-secondary)]">
+                  <div className="text-[0.625rem] text-[var(--text-secondary)]">
                     {isBn
                       ? 'স্টাফ নিজের ফোনে ফিঙ্গারপ্রিন্ট দিয়ে চেক ইন করে। WiFi যাচাই সহ।'
                       : 'Staff authenticates on own device. WiFi verification included.'}
@@ -4432,11 +4432,11 @@ export default function AttendancePage() {
                       <Layers size={16} />
                     </div>
                     <div>
-                      <div className="text-[13px] font-semibold text-[var(--text-primary)]">{isBn ? 'কিওস্ক মোড' : 'Kiosk Mode'}</div>
-                      <div className="text-[10px] text-[var(--text-muted)]">{isBn ? 'শেয়ার্ড ডিভাইস' : 'Shared device at gate'}</div>
+                      <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{isBn ? 'কিওস্ক মোড' : 'Kiosk Mode'}</div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'শেয়ার্ড ডিভাইস' : 'Shared device at gate'}</div>
                     </div>
                   </div>
-                  <div className="text-[10px] text-[var(--text-secondary)]">
+                  <div className="text-[0.625rem] text-[var(--text-secondary)]">
                     {isBn
                       ? 'একটি ফোন গেটে রাখুন। সবাই সেখানে আঙুল দিয়ে চেক ইন করবে।'
                       : 'Place one phone at gate. All staff authenticate there.'}
@@ -4452,10 +4452,10 @@ export default function AttendancePage() {
                     <div className="flex items-start gap-2">
                       <Wifi size={16} className="text-[var(--teal)] mt-0.5 shrink-0" />
                       <div>
-                        <div className="text-[12px] font-semibold text-[var(--teal)]">
+                        <div className="text-[0.75rem] font-semibold text-[var(--teal)]">
                           {isBn ? 'ব্যক্তিগত ডিভাইস মোড' : 'Personal Device Mode'}
                         </div>
-                        <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
+                        <div className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5">
                           {isBn
                             ? 'স্টাফরা তাদের নিজের ফোনে ফিঙ্গারপ্রিন্ট/ফেস আইডি দিয়ে চেক-ইন/আউট করবে। WiFi সংযোগ যাচাই করা হয়।'
                             : 'Staff check in/out using their own phone biometric. WiFi connection is verified.'}
@@ -4497,10 +4497,10 @@ export default function AttendancePage() {
                           {s.icon}
                         </div>
                         <div>
-                          <div className="text-[16px] font-bold" style={{ color: s.color }}>
+                          <div className="text-[1rem] font-bold" style={{ color: s.color }}>
                             {s.value}
                           </div>
-                          <div className="text-[10px] text-[var(--text-muted)]">{s.label}</div>
+                          <div className="text-[0.625rem] text-[var(--text-muted)]">{s.label}</div>
                         </div>
                       </div>
                     ))}
@@ -4509,7 +4509,7 @@ export default function AttendancePage() {
                   {/* Message */}
                   {mobileAuthMsg && (
                     <div
-                      className={`mb-3 py-2 px-3 rounded-lg text-[12px] font-medium flex items-center gap-2 ${mobileAuthMsg.type === 'success' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}
+                      className={`mb-3 py-2 px-3 rounded-lg text-[0.75rem] font-medium flex items-center gap-2 ${mobileAuthMsg.type === 'success' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}
                     >
                       {mobileAuthMsg.type === 'success' ? <CheckCircle size={14} /> : <XCircle size={14} />}
                       {mobileAuthMsg.text}
@@ -4531,10 +4531,10 @@ export default function AttendancePage() {
                           <Wifi size={15} className="text-[var(--teal)]" />
                         </div>
                         <div>
-                          <div className="text-[13px] font-semibold text-[var(--text-primary)]">
+                          <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
                             {isBn ? 'ডিভাইস নিবন্ধন' : 'Register Device'}
                           </div>
-                          <div className="text-[10px] text-[var(--text-muted)]">
+                          <div className="text-[0.625rem] text-[var(--text-muted)]">
                             {isBn ? 'ফিঙ্গারপ্রিন্ট/ফেস দিয়ে নিবন্ধন' : 'Register with biometric'}
                           </div>
                         </div>
@@ -4542,7 +4542,7 @@ export default function AttendancePage() {
                       <select
                         value={mobileRegStaff}
                         onChange={(e) => setMobileRegStaff(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] text-[var(--text-primary)] outline-none mb-2"
+                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] outline-none mb-2"
                       >
                         <option value="">{isBn ? 'স্টাফ নির্বাচন করুন...' : 'Select staff...'}</option>
                         {activeTeachers
@@ -4556,7 +4556,7 @@ export default function AttendancePage() {
                       <button
                         onClick={handleRegisterDevice}
                         disabled={!mobileRegStaff || mobileRegPending}
-                        className={`w-full py-2 rounded-lg text-[12px] font-semibold cursor-pointer border-none transition-all ${mobileRegPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileRegStaff ? 'bg-[var(--teal)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}
+                        className={`w-full py-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileRegPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileRegStaff ? 'bg-[var(--teal)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}
                       >
                         {mobileRegPending ? (isBn ? 'নিবন্ধন হচ্ছে...' : 'Registering...') : isBn ? 'নিবন্ধন করুন' : 'Register Now'}
                       </button>
@@ -4569,10 +4569,10 @@ export default function AttendancePage() {
                           <CheckCircle size={15} className="text-[var(--green)]" />
                         </div>
                         <div>
-                          <div className="text-[13px] font-semibold text-[var(--text-primary)]">
+                          <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
                             {isBn ? 'চেক-ইন / আউট' : 'Check In / Out'}
                           </div>
-                          <div className="text-[10px] text-[var(--text-muted)]">
+                          <div className="text-[0.625rem] text-[var(--text-muted)]">
                             {isBn ? 'বায়োমেট্রিক + WiFi' : 'Biometric + WiFi verified'}
                           </div>
                         </div>
@@ -4580,7 +4580,7 @@ export default function AttendancePage() {
                       <select
                         value={mobileAuthStaff}
                         onChange={(e) => setMobileAuthStaff(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] text-[var(--text-primary)] outline-none mb-2"
+                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] outline-none mb-2"
                       >
                         <option value="">{isBn ? 'নিবন্ধিত স্টাফ...' : 'Registered staff...'}</option>
                         {mobileDevices.map((d) => (
@@ -4592,7 +4592,7 @@ export default function AttendancePage() {
                       <button
                         onClick={handleMobileAuth}
                         disabled={!mobileAuthStaff || mobileAuthPending || wifiChecking}
-                        className={`w-full py-2 rounded-lg text-[12px] font-semibold cursor-pointer border-none transition-all ${mobileAuthPending || wifiChecking ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileAuthStaff ? 'bg-[var(--green)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}
+                        className={`w-full py-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileAuthPending || wifiChecking ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileAuthStaff ? 'bg-[var(--green)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}
                       >
                         {wifiChecking
                           ? isBn
@@ -4612,34 +4612,34 @@ export default function AttendancePage() {
                   {/* Devices List */}
                   <div className="border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-                      <div className="text-[13px] font-semibold text-[var(--text-primary)]">
+                      <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
                         {isBn ? 'নিবন্ধিত ডিভাইস' : 'Registered Devices'} ({mobileDevices.length})
                       </div>
-                      <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-[5px]">
+                      <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-[0.3125rem]">
                         <Search size={12} className="text-[var(--text-muted)]" />
                         <input
                           value={mobileSearch}
                           onChange={(e) => setMobileSearch(e.target.value)}
                           placeholder={isBn ? 'খুঁজুন...' : 'Search...'}
-                          className="flex-1 border-none bg-transparent outline-none text-[11px] text-[var(--text-primary)] w-[100px]"
+                          className="flex-1 border-none bg-transparent outline-none text-[0.6875rem] text-[var(--text-primary)] w-[6.25rem]"
                         />
                       </div>
                     </div>
                     <div className="overflow-auto max-h-[35vh]">
-                      <table className="w-full border-collapse text-[11px]">
+                      <table className="w-full border-collapse text-[0.6875rem]">
                         <thead>
                           <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                            <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[35px]">#</th>
-                            <th className="p-2.5 text-left text-[10px] font-semibold text-[var(--text-muted)]">
+                            <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.1875rem]">#</th>
+                            <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">
                               {isBn ? 'স্টাফ' : 'Staff'}
                             </th>
-                            <th className="p-2.5 text-left text-[10px] font-semibold text-[var(--text-muted)]">
+                            <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">
                               {isBn ? 'ডিভাইস' : 'Device'}
                             </th>
-                            <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                            <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                               {isBn ? 'শেষ ব্যবহার' : 'Last Used'}
                             </th>
-                            <th className="p-2.5 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                            <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                               {isBn ? 'অ্যাকশন' : 'Action'}
                             </th>
                           </tr>
@@ -4660,14 +4660,14 @@ export default function AttendancePage() {
                                 <td className="p-2.5 text-center text-[var(--text-muted)]">{i + 1}</td>
                                 <td className="p-2.5">
                                   <div className="font-medium text-[var(--text-primary)]">{d.staffName}</div>
-                                  <div className="text-[10px] text-[var(--text-muted)]">{d.staffId}</div>
+                                  <div className="text-[0.625rem] text-[var(--text-muted)]">{d.staffId}</div>
                                 </td>
                                 <td className="p-2.5">
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--teal-light)] text-[var(--teal)] font-medium">
+                                  <span className="text-[0.625rem] px-2 py-0.5 rounded-full bg-[var(--teal-light)] text-[var(--teal)] font-medium">
                                     {d.deviceName}
                                   </span>
                                 </td>
-                                <td className="p-2.5 text-center text-[10px] text-[var(--text-muted)]">
+                                <td className="p-2.5 text-center text-[0.625rem] text-[var(--text-muted)]">
                                   {d.lastAuth ? (
                                     new Date(d.lastAuth).toLocaleString()
                                   ) : (
@@ -4677,7 +4677,7 @@ export default function AttendancePage() {
                                 <td className="p-2.5 text-center">
                                   <button
                                     onClick={() => removeMobileDevice(d.id)}
-                                    className="px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[9px] font-semibold cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all"
+                                    className="px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.5625rem] font-semibold cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all"
                                   >
                                     {isBn ? 'মুছুন' : 'Remove'}
                                   </button>
@@ -4686,7 +4686,7 @@ export default function AttendancePage() {
                             ))}
                           {mobileDevices.length === 0 && (
                             <tr>
-                              <td colSpan={5} className="p-8 text-center text-[var(--text-muted)] text-[12px]">
+                              <td colSpan={5} className="p-8 text-center text-[var(--text-muted)] text-[0.75rem]">
                                 {isBn ? 'কোনো ডিভাইস নিবন্ধিত নেই' : 'No devices registered'}
                               </td>
                             </tr>
@@ -4703,44 +4703,44 @@ export default function AttendancePage() {
           {/* Add Device Modal */}
           {showAddDevice && (
             <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
-              <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[420px] w-full p-5 border border-[var(--border)]">
-                <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">
+              <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[26.25rem] w-full p-5 border border-[var(--border)]">
+                <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
                   {isBn ? 'নতুন ডিভাইস যোগ করুন' : 'Add New Device'}
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                    <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                       {isBn ? 'ডিভাইসের নাম' : 'Device Name'}
                     </label>
                     <input
                       value={newDevice.name}
                       onChange={(e) => setNewDevice((p) => ({ ...p, name: e.target.value }))}
                       placeholder="e.g. Main Gate RFID"
-                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] text-[var(--text-primary)] outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'মডেল' : 'Model'}</label>
+                    <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'মডেল' : 'Model'}</label>
                     <input
                       value={newDevice.model}
                       onChange={(e) => setNewDevice((p) => ({ ...p, model: e.target.value }))}
                       placeholder="e.g. ZKTeco SLK200"
-                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] text-[var(--text-primary)] outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                    <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                       IP {isBn ? 'ঠিকানা' : 'Address'}
                     </label>
                     <input
                       value={newDevice.ip}
                       onChange={(e) => setNewDevice((p) => ({ ...p, ip: e.target.value }))}
                       placeholder="192.168.1.100"
-                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] text-[var(--text-primary)] font-mono outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] font-mono outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                    <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                       {isBn ? 'ডিভাইস টাইপ' : 'Device Type'}
                     </label>
                     <div className="grid grid-cols-4 gap-1.5">
@@ -4753,7 +4753,7 @@ export default function AttendancePage() {
                         <button
                           key={o.k}
                           onClick={() => setNewDevice((p) => ({ ...p, type: o.k }))}
-                          className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-[10px] cursor-pointer transition-all ${newDevice.type === o.k ? 'border-[#7C3AED] bg-[#7C3AED15] text-[#7C3AED] font-semibold' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}`}
+                          className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-[0.625rem] cursor-pointer transition-all ${newDevice.type === o.k ? 'border-[#7C3AED] bg-[#7C3AED15] text-[#7C3AED] font-semibold' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}`}
                         >
                           <o.I size={16} />
                           {o.l}
@@ -4765,7 +4765,7 @@ export default function AttendancePage() {
                 <div className="flex gap-2 justify-end mt-4">
                   <button
                     onClick={() => setShowAddDevice(false)}
-                    className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
                   >
                     {isBn ? 'বাতিল' : 'Cancel'}
                   </button>
@@ -4794,7 +4794,7 @@ export default function AttendancePage() {
                         })
                       }
                     }}
-                    className="px-3.5 py-2 rounded-lg bg-[#7C3AED] border-0 text-white text-[12px] font-semibold cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg bg-[#7C3AED] border-0 text-white text-[0.75rem] font-semibold cursor-pointer"
                   >
                     {isBn ? 'যোগ করুন' : 'Add Device'}
                   </button>
@@ -4806,19 +4806,19 @@ export default function AttendancePage() {
           {/* Add RFID Modal */}
           {showAddRFID && (
             <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
-              <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
-                <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">
+              <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+                <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
                   {isBn ? 'RFID কার্ড যোগ করুন' : 'Add RFID Card'}
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                    <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                       {isBn ? 'স্টাফ নির্বাচন করুন' : 'Select Staff'}
                     </label>
                     <select
                       value={newRFID.staffId}
                       onChange={(e) => setNewRFID((p) => ({ ...p, staffId: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] text-[var(--text-secondary)] outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-secondary)] outline-none"
                     >
                       <option value="">{isBn ? 'নির্বাচন করুন...' : 'Select...'}</option>
                       {activeTeachers.map((t) => (
@@ -4829,16 +4829,16 @@ export default function AttendancePage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                    <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                       {isBn ? 'কার্ড নম্বর (বা ট্যাপ করুন)' : 'Card Number (or tap)'}
                     </label>
                     <input
                       value={newRFID.rfidCard}
                       onChange={(e) => setNewRFID((p) => ({ ...p, rfidCard: e.target.value }))}
                       placeholder="CARD-XXXX"
-                      className="w-full px-3 py-2 rounded-lg border-2 border-dashed border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] text-[var(--text-primary)] font-mono text-center outline-none focus:border-[var(--brand)]"
+                      className="w-full px-3 py-2 rounded-lg border-2 border-dashed border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] font-mono text-center outline-none focus:border-[var(--brand)]"
                     />
-                    <p className="text-[9px] text-[var(--text-muted)] mt-1 text-center">
+                    <p className="text-[0.5625rem] text-[var(--text-muted)] mt-1 text-center">
                       {isBn ? 'ডিভাইসে কার্ড ট্যাপ করুন অথবা ম্যানুয়ালি লিখুন' : 'Tap card on device or enter manually'}
                     </p>
                   </div>
@@ -4846,7 +4846,7 @@ export default function AttendancePage() {
                 <div className="flex gap-2 justify-end mt-4">
                   <button
                     onClick={() => setShowAddRFID(false)}
-                    className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
                   >
                     {isBn ? 'বাতিল' : 'Cancel'}
                   </button>
@@ -4869,7 +4869,7 @@ export default function AttendancePage() {
                         setNewRFID({ staffId: '', rfidCard: '' })
                       }
                     }}
-                    className="px-3.5 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[12px] font-semibold cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.75rem] font-semibold cursor-pointer"
                   >
                     {isBn ? 'যোগ করুন' : 'Add'}
                   </button>
@@ -4881,19 +4881,19 @@ export default function AttendancePage() {
           {/* Add Fingerprint Modal */}
           {showAddFP && (
             <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
-              <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
-                <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">
+              <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+                <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
                   {isBn ? 'ফিঙ্গারপ্রিন্ট এনরোলমেন্ট' : 'Fingerprint Enrollment'}
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                    <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                       {isBn ? 'স্টাফ নির্বাচন করুন' : 'Select Staff'}
                     </label>
                     <select
                       value={newFP.staffId}
                       onChange={(e) => setNewFP((p) => ({ ...p, staffId: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] text-[var(--text-secondary)] outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-secondary)] outline-none"
                     >
                       <option value="">{isBn ? 'নির্বাচন করুন...' : 'Select...'}</option>
                       {activeTeachers.map((t) => (
@@ -4905,14 +4905,14 @@ export default function AttendancePage() {
                   </div>
                   <div className="bg-[var(--bg-secondary)] rounded-lg p-4 text-center">
                     <Fingerprint size={40} className="mx-auto mb-2 text-[var(--amber)]" />
-                    <p className="text-[11px] text-[var(--text-secondary)]">{isBn ? 'ডিভাইসে আঙুল রাখুন' : 'Place finger on device'}</p>
-                    <p className="text-[9px] text-[var(--text-muted)] mt-1">{isBn ? '২ বার আঙুল রাখুন' : 'Tap finger twice'}</p>
+                    <p className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'ডিভাইসে আঙুল রাখুন' : 'Place finger on device'}</p>
+                    <p className="text-[0.5625rem] text-[var(--text-muted)] mt-1">{isBn ? '২ বার আঙুল রাখুন' : 'Tap finger twice'}</p>
                   </div>
                 </div>
                 <div className="flex gap-2 justify-end mt-4">
                   <button
                     onClick={() => setShowAddFP(false)}
-                    className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
                   >
                     {isBn ? 'বাতিল' : 'Cancel'}
                   </button>
@@ -4935,7 +4935,7 @@ export default function AttendancePage() {
                         setNewFP({ staffId: '' })
                       }
                     }}
-                    className="px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[12px] font-semibold cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[0.75rem] font-semibold cursor-pointer"
                   >
                     {isBn ? 'এনরোল শুরু করুন' : 'Start Enrollment'}
                   </button>
@@ -4947,19 +4947,19 @@ export default function AttendancePage() {
           {/* Add Face Scan Modal */}
           {showAddFace && (
             <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
-              <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
-                <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">
+              <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+                <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
                   {isBn ? 'ফেস স্ক্যান এনরোলমেন্ট' : 'Face Scan Enrollment'}
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                    <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                       {isBn ? 'স্টাফ নির্বাচন করুন' : 'Select Staff'}
                     </label>
                     <select
                       value={newFace.staffId}
                       onChange={(e) => setNewFace((p) => ({ ...p, staffId: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] text-[var(--text-secondary)] outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-secondary)] outline-none"
                     >
                       <option value="">{isBn ? 'নির্বাচন করুন...' : 'Select...'}</option>
                       {activeTeachers.map((t) => (
@@ -4971,14 +4971,14 @@ export default function AttendancePage() {
                   </div>
                   <div className="bg-[var(--bg-secondary)] rounded-lg p-4 text-center">
                     <ScanFace size={40} className="mx-auto mb-2 text-[var(--green)]" />
-                    <p className="text-[11px] text-[var(--text-secondary)]">{isBn ? 'ক্যামেরায় মুখ দেখান' : 'Show face to camera'}</p>
-                    <p className="text-[9px] text-[var(--text-muted)] mt-1">{isBn ? '৩৬০° ঘুরে মুখ দেখান' : 'Rotate face 360°'}</p>
+                    <p className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'ক্যামেরায় মুখ দেখান' : 'Show face to camera'}</p>
+                    <p className="text-[0.5625rem] text-[var(--text-muted)] mt-1">{isBn ? '৩৬০° ঘুরে মুখ দেখান' : 'Rotate face 360°'}</p>
                   </div>
                 </div>
                 <div className="flex gap-2 justify-end mt-4">
                   <button
                     onClick={() => setShowAddFace(false)}
-                    className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
                   >
                     {isBn ? 'বাতিল' : 'Cancel'}
                   </button>
@@ -5001,7 +5001,7 @@ export default function AttendancePage() {
                         setNewFace({ staffId: '' })
                       }
                     }}
-                    className="px-3.5 py-2 rounded-lg bg-[var(--green)] border-0 text-white text-[12px] font-semibold cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg bg-[var(--green)] border-0 text-white text-[0.75rem] font-semibold cursor-pointer"
                   >
                     {isBn ? 'স্ক্যান শুরু করুন' : 'Start Scan'}
                   </button>
@@ -5016,15 +5016,15 @@ export default function AttendancePage() {
               className="fixed inset-0 flex items-center justify-center z-[800] bg-[var(--bg-primary)] sm:bg-black/80 sm:p-4 overflow-y-auto"
               style={{ height: '100dvh' }}
             >
-              <div className="bg-[var(--bg-primary)] rounded-none sm:rounded-2xl w-full sm:max-w-[420px] min-h-[100dvh] sm:min-h-0 sm:h-auto sm:my-auto p-5 sm:p-6 border-0 sm:border border-[var(--border)] shadow-2xl">
+              <div className="bg-[var(--bg-primary)] rounded-none sm:rounded-2xl w-full sm:max-w-[26.25rem] min-h-[100dvh] sm:min-h-0 sm:h-auto sm:my-auto p-5 sm:p-6 border-0 sm:border border-[var(--border)] shadow-2xl">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[var(--teal-light)] flex items-center justify-center">
                       <Wifi size={20} className="text-[var(--teal)]" />
                     </div>
                     <div>
-                      <h3 className="text-[16px] font-bold text-[var(--text-primary)]">{isBn ? 'কিওস্ক মোড' : 'Kiosk Mode'}</h3>
-                      <p className="text-[11px] text-[var(--text-muted)]">
+                      <h3 className="text-[1rem] font-bold text-[var(--text-primary)]">{isBn ? 'কিওস্ক মোড' : 'Kiosk Mode'}</h3>
+                      <p className="text-[0.6875rem] text-[var(--text-muted)]">
                         {isBn ? 'শেয়ার্ড ডিভাইস হিসেবে ব্যবহার করুন' : 'Use as shared device'}
                       </p>
                     </div>
@@ -5043,7 +5043,7 @@ export default function AttendancePage() {
 
                 {/* HTTPS warning */}
                 {window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && (
-                  <div className="mb-4 py-3 px-4 rounded-xl bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[12px] font-medium text-center">
+                  <div className="mb-4 py-3 px-4 rounded-xl bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.75rem] font-medium text-center">
                     <span className="font-bold">🔒 {isBn ? 'HTTPS প্রয়োজন!' : 'HTTPS Required!'}</span>
                     <br />
                     {isBn
@@ -5054,7 +5054,7 @@ export default function AttendancePage() {
 
                 {kioskMsg && (
                   <div
-                    className={`mb-4 py-3 px-4 rounded-xl text-center text-[14px] font-bold ${kioskMsg.type === 'success' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}
+                    className={`mb-4 py-3 px-4 rounded-xl text-center text-[0.875rem] font-bold ${kioskMsg.type === 'success' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}
                   >
                     {kioskMsg.text}
                   </div>
@@ -5066,15 +5066,15 @@ export default function AttendancePage() {
                     <div className="w-16 h-16 rounded-full bg-[var(--green)] flex items-center justify-center mx-auto mb-3">
                       <CheckCircle size={32} className="text-white" />
                     </div>
-                    <div className="text-[20px] font-bold text-[var(--green)]">{kioskIdentified.staffName}</div>
-                    <div className="text-[12px] text-[var(--text-secondary)] font-mono mt-1">{kioskIdentified.staffId}</div>
+                    <div className="text-[1.25rem] font-bold text-[var(--green)]">{kioskIdentified.staffName}</div>
+                    <div className="text-[0.75rem] text-[var(--text-secondary)] font-mono mt-1">{kioskIdentified.staffId}</div>
                     <div className="mt-3 flex items-center justify-center gap-3">
                       <span
-                        className={`px-3 py-1.5 rounded-lg text-[13px] font-bold ${kioskIdentified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}
+                        className={`px-3 py-1.5 rounded-lg text-[0.8125rem] font-bold ${kioskIdentified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}
                       >
                         {kioskIdentified.punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'}
                       </span>
-                      <span className="text-[22px] font-bold text-[var(--text-primary)] font-mono">{kioskIdentified.time}</span>
+                      <span className="text-[1.375rem] font-bold text-[var(--text-primary)] font-mono">{kioskIdentified.time}</span>
                     </div>
                   </div>
                 )}
@@ -5088,7 +5088,7 @@ export default function AttendancePage() {
                     >
                       <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
                       <canvas ref={kioskCanvasRef} className="hidden" />
-                      <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[10px] font-medium flex items-center gap-1.5 z-10">
+                      <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[0.625rem] font-medium flex items-center gap-1.5 z-10">
                         <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
                         {isBn ? 'লাইভ' : 'LIVE'}
                       </div>
@@ -5112,7 +5112,7 @@ export default function AttendancePage() {
                           />
                           {/* Status label */}
                           <div
-                            className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold ${
+                            className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[0.625rem] font-bold ${
                               kioskFaceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/60 text-white/70'
                             } transition-colors duration-200`}
                           >
@@ -5132,12 +5132,12 @@ export default function AttendancePage() {
                         <img
                           src={kioskCapturedPhoto}
                           alt=""
-                          className="w-full max-w-[300px] mx-auto rounded-xl border-2 border-[var(--green)]"
+                          className="w-full max-w-[18.75rem] mx-auto rounded-xl border-2 border-[var(--green)]"
                         />
-                        <p className="text-[12px] text-center text-[var(--green)] font-medium">
+                        <p className="text-[0.75rem] text-center text-[var(--green)] font-medium">
                           {isBn ? 'ছবি তোলা হয়েছে — নাম নির্বাচন করুন' : 'Photo captured — Select your name below'}
                         </p>
-                        <div className="grid grid-cols-1 gap-2 max-h-[250px] overflow-y-auto">
+                        <div className="grid grid-cols-1 gap-2 max-h-[15.625rem] overflow-y-auto">
                           {kioskRegisteredFaces.map((f) => (
                             <div
                               key={f.staffId}
@@ -5149,8 +5149,8 @@ export default function AttendancePage() {
                                 className="w-10 h-10 rounded-full object-cover border border-[var(--border)] shrink-0"
                               />
                               <div className="flex-1 min-w-0">
-                                <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{f.staffName}</div>
-                                <div className="text-[10px] text-[var(--text-muted)]">{f.staffId}</div>
+                                <div className="text-[0.75rem] font-medium text-[var(--text-primary)] truncate">{f.staffName}</div>
+                                <div className="text-[0.625rem] text-[var(--text-muted)]">{f.staffId}</div>
                               </div>
                               <div className="flex items-center gap-1 shrink-0">
                                 <button
@@ -5178,7 +5178,7 @@ export default function AttendancePage() {
                                 </button>
                                 <button
                                   onClick={() => handleKioskPunch(f.staffId, f.staffName)}
-                                  className="px-2 py-1 rounded-lg bg-[var(--green)] border-0 text-white text-[10px] font-semibold cursor-pointer"
+                                  className="px-2 py-1 rounded-lg bg-[var(--green)] border-0 text-white text-[0.625rem] font-semibold cursor-pointer"
                                   title={isBn ? 'উপস্থিতি' : 'Punch'}
                                 >
                                   {isBn ? 'পাঞ্চ' : 'Punch'}
@@ -5188,7 +5188,7 @@ export default function AttendancePage() {
                           ))}
                         </div>
                         {kioskRegisteredFaces.length === 0 && (
-                          <p className="text-[11px] text-center text-[var(--text-muted)]">
+                          <p className="text-[0.6875rem] text-center text-[var(--text-muted)]">
                             {isBn ? 'কোনো নিবন্ধিত স্টাফ নেই। প্রথমে নিবন্ধন করুন।' : 'No registered staff. Register first.'}
                           </p>
                         )}
@@ -5196,13 +5196,13 @@ export default function AttendancePage() {
                           onClick={() => {
                             setKioskCapturedPhoto(null)
                           }}
-                          className="w-full py-2 rounded-lg text-[12px] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border border-[var(--border)]"
+                          className="w-full py-2 rounded-lg text-[0.75rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border border-[var(--border)]"
                         >
                           {isBn ? 'আবার তুলুন' : 'Retake Photo'}
                         </button>
                       </div>
                     ) : (
-                      <div className="w-full py-3 rounded-xl text-[14px] font-bold bg-[var(--teal-light)] text-[var(--teal)] text-center">
+                      <div className="w-full py-3 rounded-xl text-[0.875rem] font-bold bg-[var(--teal-light)] text-[var(--teal)] text-center">
                         {kioskFaceDetected
                           ? isBn
                             ? 'মুখ সনাক্ত হয়েছে — ধরুন...'
@@ -5218,7 +5218,7 @@ export default function AttendancePage() {
                         stopKioskDetectLoop()
                         setKioskCapturedPhoto(null)
                       }}
-                      className="w-full mt-2 py-2 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none underline"
+                      className="w-full mt-2 py-2 text-[0.75rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none underline"
                     >
                       {isBn ? 'বন্ধ করুন' : 'Cancel'}
                     </button>
@@ -5231,8 +5231,8 @@ export default function AttendancePage() {
                     <div className="w-24 h-24 rounded-full bg-[var(--teal-light)] border-2 border-[var(--teal)] flex items-center justify-center mx-auto mb-4">
                       <ScanFace size={44} className="text-[var(--teal)]" />
                     </div>
-                    <p className="text-[16px] font-bold text-[var(--text-primary)]">{isBn ? 'ক্যামেরায় মুখ দেখান' : 'Show your face'}</p>
-                    <p className="text-[12px] text-[var(--text-muted)] mt-1">
+                    <p className="text-[1rem] font-bold text-[var(--text-primary)]">{isBn ? 'ক্যামেরায় মুখ দেখান' : 'Show your face'}</p>
+                    <p className="text-[0.75rem] text-[var(--text-muted)] mt-1">
                       {isBn ? 'একবার ক্লিক করুন — গ্রিডে মুখ রাখলে অটো ছবি তোলবে' : 'One click — face in grid, photo auto-captured'}
                     </p>
                   </div>
@@ -5243,7 +5243,7 @@ export default function AttendancePage() {
                   <button
                     onClick={handleKioskScan}
                     disabled={kioskPending}
-                    className={`w-full py-4 rounded-xl text-[15px] font-bold cursor-pointer border-none transition-all ${kioskPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : 'bg-[var(--teal)] text-white hover:shadow-lg hover:scale-[1.02]'}`}
+                    className={`w-full py-4 rounded-xl text-[0.9375rem] font-bold cursor-pointer border-none transition-all ${kioskPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : 'bg-[var(--teal)] text-white hover:shadow-lg hover:scale-[1.02]'}`}
                   >
                     <span className="flex items-center justify-center gap-2">
                       <ScanFace size={18} />
@@ -5258,7 +5258,7 @@ export default function AttendancePage() {
                       setKioskIdentified(null)
                       setKioskMsg(null)
                     }}
-                    className="w-full py-4 rounded-xl text-[15px] font-bold cursor-pointer border-none bg-[var(--teal)] text-white hover:shadow-lg hover:scale-[1.02] transition-all"
+                    className="w-full py-4 rounded-xl text-[0.9375rem] font-bold cursor-pointer border-none bg-[var(--teal)] text-white hover:shadow-lg hover:scale-[1.02] transition-all"
                   >
                     <span className="flex items-center justify-center gap-2">
                       <ScanFace size={18} />
@@ -5277,7 +5277,7 @@ export default function AttendancePage() {
                         setKioskMsg(null)
                         setKioskCapturedPhoto(null)
                       }}
-                      className="w-full py-3 rounded-xl text-[13px] font-semibold cursor-pointer border-2 border-dashed border-[var(--teal)] bg-transparent text-[var(--teal)] hover:bg-[var(--teal-light)] transition-all flex items-center justify-center gap-2"
+                      className="w-full py-3 rounded-xl text-[0.8125rem] font-semibold cursor-pointer border-2 border-dashed border-[var(--teal)] bg-transparent text-[var(--teal)] hover:bg-[var(--teal-light)] transition-all flex items-center justify-center gap-2"
                     >
                       <Plus size={16} />
                       {isBn ? 'নতুন স্টাফ নিবন্ধন করুন' : 'Register New Staff'}
@@ -5285,7 +5285,7 @@ export default function AttendancePage() {
                   ) : (
                     <div className="p-4 rounded-xl border-2 border-[var(--teal)] bg-[var(--teal-light)]">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-[13px] font-bold text-[var(--teal)]">{isBn ? 'নিবন্ধন' : 'Registration'}</span>
+                        <span className="text-[0.8125rem] font-bold text-[var(--teal)]">{isBn ? 'নিবন্ধন' : 'Registration'}</span>
                         <button
                           onClick={() => {
                             setKioskRegMode(false)
@@ -5293,7 +5293,7 @@ export default function AttendancePage() {
                             setKioskCapturedPhoto(null)
                             stopKioskCamera()
                           }}
-                          className="text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none underline"
+                          className="text-[0.6875rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none underline"
                         >
                           {isBn ? 'বাতিল' : 'Cancel'}
                         </button>
@@ -5305,7 +5305,7 @@ export default function AttendancePage() {
                           setKioskMsg(null)
                           setKioskCapturedPhoto(null)
                         }}
-                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[13px] text-[var(--text-primary)] outline-none mb-3"
+                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none mb-3"
                       >
                         <option value="">{isBn ? 'স্টাফ নির্বাচন করুন...' : 'Select staff...'}</option>
                         {activeTeachers.map((t) => {
@@ -5336,7 +5336,7 @@ export default function AttendancePage() {
                                   className="absolute inset-0 w-full h-full object-cover"
                                 />
                                 <canvas ref={kioskCanvasRef} className="hidden" />
-                                <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[9px] flex items-center gap-1 z-10">
+                                <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[0.5625rem] flex items-center gap-1 z-10">
                                   <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />
                                   LIVE
                                 </div>
@@ -5358,7 +5358,7 @@ export default function AttendancePage() {
                                       }`}
                                     />
                                     <div
-                                      className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold ${
+                                      className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[0.625rem] font-bold ${
                                         kioskFaceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/60 text-white/70'
                                       } transition-colors duration-200`}
                                     >
@@ -5378,7 +5378,7 @@ export default function AttendancePage() {
                                   <img
                                     src={kioskCapturedPhoto}
                                     alt=""
-                                    className="w-full max-w-[280px] mx-auto rounded-xl border-2 border-[var(--green)]"
+                                    className="w-full max-w-[17.5rem] mx-auto rounded-xl border-2 border-[var(--green)]"
                                   />
                                   <div className="flex gap-2">
                                     <button
@@ -5386,20 +5386,20 @@ export default function AttendancePage() {
                                         setKioskCapturedPhoto(null)
                                         startKioskDetectLoop()
                                       }}
-                                      className="flex-1 py-2 rounded-lg text-[12px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer"
+                                      className="flex-1 py-2 rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer"
                                     >
                                       {isBn ? 'আবার' : 'Retake'}
                                     </button>
                                     <button
                                       onClick={kioskEditFace ? () => handleKioskUpdateFace(kioskEditFace) : handleKioskRegister}
-                                      className="flex-1 py-2 rounded-lg text-[12px] bg-[var(--green)] text-white border-none font-semibold cursor-pointer"
+                                      className="flex-1 py-2 rounded-lg text-[0.75rem] bg-[var(--green)] text-white border-none font-semibold cursor-pointer"
                                     >
                                       {kioskEditFace ? (isBn ? 'আপডেট' : 'Update') : isBn ? 'নিবন্ধন করুন' : 'Register'}
                                     </button>
                                   </div>
                                 </div>
                               ) : (
-                                <div className="w-full py-2.5 rounded-xl text-[13px] font-bold bg-[var(--teal-light)] text-[var(--teal)] text-center">
+                                <div className="w-full py-2.5 rounded-xl text-[0.8125rem] font-bold bg-[var(--teal-light)] text-[var(--teal)] text-center">
                                   {kioskFaceDetected
                                     ? isBn
                                       ? 'মুখ সনাক্ত হয়েছে — ধরুন...'
@@ -5413,7 +5413,7 @@ export default function AttendancePage() {
                           ) : (
                             <button
                               onClick={startKioskCamera}
-                              className="w-full py-3 rounded-xl text-[13px] font-bold bg-[var(--teal)] text-white border-none cursor-pointer flex items-center justify-center gap-2"
+                              className="w-full py-3 rounded-xl text-[0.8125rem] font-bold bg-[var(--teal)] text-white border-none cursor-pointer flex items-center justify-center gap-2"
                             >
                               <ScanFace size={16} />
                               {isBn ? 'ক্যামেরা খুলুন' : 'Open Camera'}
@@ -5428,12 +5428,12 @@ export default function AttendancePage() {
                 {/* WiFi check */}
                 <div className="mt-4 flex items-center justify-center gap-2">
                   {wifiConnected === true ? (
-                    <span className="text-[10px] text-[var(--green)] flex items-center gap-1">
+                    <span className="text-[0.625rem] text-[var(--green)] flex items-center gap-1">
                       <Wifi size={12} />
                       {isBn ? 'নেটওয়ার্ক সংযুক্ত' : 'Network connected'}
                     </span>
                   ) : wifiConnected === false ? (
-                    <span className="text-[10px] text-[var(--red)] flex items-center gap-1">
+                    <span className="text-[0.625rem] text-[var(--red)] flex items-center gap-1">
                       <WifiOff size={12} />
                       {isBn ? 'নেটওয়ার্ক সংযোগ নেই' : 'No network'}
                     </span>
@@ -5444,19 +5444,19 @@ export default function AttendancePage() {
                 {kioskRegisteredFaces.length > 0 && (
                   <div className="mt-4 border-t border-[var(--border)] pt-4">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[13px] font-bold text-[var(--text-primary)]">
+                      <span className="text-[0.8125rem] font-bold text-[var(--text-primary)]">
                         {isBn ? `নিবন্ধিত স্টাফ (${kioskRegisteredFaces.length})` : `Registered Staff (${kioskRegisteredFaces.length})`}
                       </span>
                     </div>
                     <div className="border border-[var(--border)] rounded-xl overflow-hidden">
-                      <table className="w-full text-[11px]">
+                      <table className="w-full text-[0.6875rem]">
                         <thead>
                           <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                            <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[40px]">#</th>
-                            <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[44px]"></th>
-                            <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
-                            <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)]">{isBn ? 'আইডি' : 'ID'}</th>
-                            <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[100px]">
+                            <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.5rem]">#</th>
+                            <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.75rem]"></th>
+                            <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
+                            <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'আইডি' : 'ID'}</th>
+                            <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[6.25rem]">
                               {isBn ? 'অ্যাকশন' : 'Actions'}
                             </th>
                           </tr>
@@ -5481,7 +5481,7 @@ export default function AttendancePage() {
                                 <div className="flex items-center justify-center gap-1">
                                   <button
                                     onClick={() => handleKioskPunch(f.staffId, f.staffName)}
-                                    className="px-2 py-1 rounded-md bg-[var(--green)] text-white text-[10px] font-semibold cursor-pointer border-none"
+                                    className="px-2 py-1 rounded-md bg-[var(--green)] text-white text-[0.625rem] font-semibold cursor-pointer border-none"
                                     title={isBn ? 'পাঞ্চ' : 'Punch'}
                                   >
                                     {isBn ? 'পাঞ্চ' : 'Punch'}
@@ -5520,7 +5520,7 @@ export default function AttendancePage() {
                 )}
 
                 {/* Stats footer */}
-                <div className="mt-3 text-center text-[10px] text-[var(--text-muted)]">
+                <div className="mt-3 text-center text-[0.625rem] text-[var(--text-muted)]">
                   {isBn
                     ? `মোট স্টাফ: ${activeTeachers.length} · নিবন্ধিত: ${kioskRegisteredFaces.length}`
                     : `Total staff: ${activeTeachers.length} · Registered: ${kioskRegisteredFaces.length}`}
@@ -5534,13 +5534,13 @@ export default function AttendancePage() {
       {/* ==================== TAB: STUDENT ==================== */}
       {activeTab === 'student' && (
         <>
-          <div className="flex items-center justify-between mb-[10px] flex-wrap gap-[10px]">
+          <div className="flex items-center justify-between mb-[0.625rem] flex-wrap gap-[0.625rem]">
             <div className="flex items-center gap-2.5">
-              <span className="text-[12px] text-[var(--text-secondary)]">
+              <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {isBn ? `মোট ${filteredStudents.length} জন শিক্ষার্থী` : `${filteredStudents.length} students`}
               </span>
               {selectedStudents.length > 0 && (
-                <span className="text-[11px] text-[var(--brand)] bg-[var(--brand-light)] px-2.5 py-[3px] rounded-[6px] font-medium">
+                <span className="text-[0.6875rem] text-[var(--brand)] bg-[var(--brand-light)] px-2.5 py-[0.1875rem] rounded-[0.375rem] font-medium">
                   {selectedStudents.length} {isBn ? 'নির্বাচিত' : 'selected'}
                 </span>
               )}
@@ -5548,7 +5548,7 @@ export default function AttendancePage() {
             <div className="flex gap-1.5">
               <button
                 onClick={exportStudentExcel}
-                className="flex items-center gap-[5px] px-3 py-[7px] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[12px] cursor-pointer font-medium"
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] cursor-pointer font-medium"
               >
                 <FileSpreadsheet size={13} />
                 Excel
@@ -5556,7 +5556,7 @@ export default function AttendancePage() {
               <button
                 onClick={() => setShowStudentPDF(true)}
                 disabled={selectedStudents.length === 0}
-                className={`flex items-center gap-[5px] px-3 py-[7px] rounded-lg text-[12px] font-medium ${
+                className={`flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg text-[0.75rem] font-medium ${
                   selectedStudents.length === 0
                     ? 'bg-[var(--border-2)] border border-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'
                     : 'bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] cursor-pointer'
@@ -5567,12 +5567,12 @@ export default function AttendancePage() {
               </button>
             </div>
           </div>
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
             <div className="overflow-auto max-h-[65vh]">
-              <table className="w-full border-collapse text-[11px]">
+              <table className="w-full border-collapse text-[0.6875rem]">
                 <thead>
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[36px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]">
                       <input
                         type="checkbox"
                         checked={filteredStudents.length > 0 && filteredStudents.every((s) => selectedStudents.includes(s.id))}
@@ -5580,23 +5580,23 @@ export default function AttendancePage() {
                           if (filteredStudents.every((s) => selectedStudents.includes(s.id))) setSelectedStudents([])
                           else setSelectedStudents(filteredStudents.map((s) => s.id))
                         }}
-                        className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                       />
                     </th>
-                    <th className="p-2 text-center text-[10px] font-semibold text-[var(--text-muted)] w-[36px]"></th>
-                    <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[140px]">
+                    <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]"></th>
+                    <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[8.75rem]">
                       {isBn ? 'নাম' : 'Name'}
                     </th>
-                    <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[60px]">
+                    <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[3.75rem]">
                       {isBn ? 'শ্রেণি' : 'Class'}
                     </th>
-                    <th className="p-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[50px]">
+                    <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[3.125rem]">
                       {isBn ? 'সেকশন' : 'Section'}
                     </th>
                     {rangeDays.map((ds) => (
-                      <th key={ds} className="p-[6px] text-center text-[9px] font-semibold text-[var(--text-muted)] min-w-[36px]">
+                      <th key={ds} className="p-[0.375rem] text-center text-[0.5625rem] font-semibold text-[var(--text-muted)] min-w-[2.25rem]">
                         <div>{shortDate(ds)}</div>
-                        <div className="text-[8px] font-normal">{dayName(ds)}</div>
+                        <div className="text-[0.5rem] font-normal">{dayName(ds)}</div>
                       </th>
                     ))}
                   </tr>
@@ -5616,11 +5616,11 @@ export default function AttendancePage() {
                           onChange={() =>
                             setSelectedStudents((prev) => (prev.includes(s.id) ? prev.filter((id) => id !== s.id) : [...prev, s.id]))
                           }
-                          className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                          className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                         />
                       </td>
-                      <td className="p-[6px] text-center">
-                        <div className="w-[30px] h-[36px] rounded-[5px] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
+                      <td className="p-[0.375rem] text-center">
+                        <div className="w-[1.875rem] h-[2.25rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
                           {s.photo ? (
                             <img src={s.photo} alt="" className="w-full h-full object-cover" />
                           ) : (
@@ -5628,7 +5628,7 @@ export default function AttendancePage() {
                           )}
                         </div>
                       </td>
-                      <td className="p-[6px]">
+                      <td className="p-[0.375rem]">
                         <div
                           className="flex items-center gap-1.5 cursor-pointer"
                           onClick={() =>
@@ -5640,23 +5640,23 @@ export default function AttendancePage() {
                             })
                           }
                         >
-                          <div className="text-[11px] font-medium text-[var(--text-primary)]">{isBn ? s.nameBn || s.nameEn : s.nameEn}</div>
+                          <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">{isBn ? s.nameBn || s.nameEn : s.nameEn}</div>
                           <ExternalLink size={10} className="text-[var(--text-muted)]" />
                         </div>
-                        <div className="text-[9px] text-[var(--text-muted)] font-mono">{s.id}</div>
+                        <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono">{s.id}</div>
                       </td>
-                      <td className="p-[6px] text-[10px] text-[var(--text-secondary)]">{s.class}</td>
-                      <td className="p-[6px] text-[10px] text-[var(--text-secondary)]">{s.section || '—'}</td>
+                      <td className="p-[0.375rem] text-[0.625rem] text-[var(--text-secondary)]">{s.class}</td>
+                      <td className="p-[0.375rem] text-[0.625rem] text-[var(--text-secondary)]">{s.section || '—'}</td>
                       {rangeDays.map((ds) => {
                         if (isFriday(ds))
                           return (
-                            <td key={ds} className="p-[4px] text-center">
+                            <td key={ds} className="p-[0.25rem] text-center">
                               {weeklyHolidayBadge()}
                             </td>
                           )
                         const st = getStatus(attendance[ds]?.[s.id])
                         return (
-                          <td key={ds} className="p-[4px] text-center">
+                          <td key={ds} className="p-[0.25rem] text-center">
                             {statusBadge(st)}
                           </td>
                         )
@@ -5674,7 +5674,7 @@ export default function AttendancePage() {
                 </tbody>
               </table>
             </div>
-            <div className="px-3.5 py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex justify-between items-center text-[11px] text-[var(--text-muted)]">
+            <div className="px-3.5 py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex justify-between items-center text-[0.6875rem] text-[var(--text-muted)]">
               <span>
                 📊 P=Present, A=Absent, L=Late, W=Weekend, E=Early Out ·{' '}
                 {isBn ? 'নামে ক্লিক করুন বিস্তারিত দেখতে' : 'Click name for details'}
@@ -5694,7 +5694,7 @@ export default function AttendancePage() {
                     setStuPerPage(Number(e.target.value))
                     setStuPage(1)
                   }}
-                  className="px-1.5 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[11px] text-[var(--text-secondary)]"
+                  className="px-1.5 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[0.6875rem] text-[var(--text-secondary)]"
                 >
                   {[10, 20, 50].map((n) => (
                     <option key={n} value={n}>
@@ -5703,7 +5703,7 @@ export default function AttendancePage() {
                   ))}
                 </select>
               </div>
-              <div className="flex gap-[3px]">
+              <div className="flex gap-[0.1875rem]">
                 {(
                   [
                     [<ChevronsLeft size={12} />, () => setStuPage(1), stuPage === 1] as const,

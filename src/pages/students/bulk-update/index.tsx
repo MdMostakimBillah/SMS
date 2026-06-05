@@ -63,7 +63,7 @@ const EditCell = React.memo(function EditCell({ value, onChange, type = 'text', 
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-2 py-1.5 rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
+        className="w-full px-2 py-1.5 rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
       >
         <option value="">—</option>
         {opts.map((o) => (
@@ -78,7 +78,7 @@ const EditCell = React.memo(function EditCell({ value, onChange, type = 'text', 
       type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full px-2 py-1.5 rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none"
+      className="w-full px-2 py-1.5 rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none"
       onFocus={(e) => (e.target.style.borderColor = 'var(--brand)')}
       onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
     />
@@ -244,28 +244,28 @@ export default function BulkUpdatePage() {
 
   return (
     <div>
-      <div className="flex items-center gap-[10px] mb-[18px] flex-wrap">
+      <div className="flex items-center gap-[0.625rem] mb-[1.125rem] flex-wrap">
         <button
           onClick={() => navigate('/students')}
-          className="flex items-center gap-[5px] px-3 py-[7px] rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] flex-shrink-0"
+          className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] flex-shrink-0"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div>
-          <h1 className="text-[22px] font-semibold text-[var(--text-primary)]">{isBn ? 'বাল্ক আপডেট' : 'Bulk Update'}</h1>
-          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
+          <h1 className="text-[1.375rem] font-semibold text-[var(--text-primary)]">{isBn ? 'বাল্ক আপডেট' : 'Bulk Update'}</h1>
+          <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {isBn ? 'একসাথে অনেক ছাত্রের তথ্য পরিবর্তন করুন' : 'Update multiple students at once'}
           </p>
         </div>
       </div>
 
       {/* ① Operation selector */}
-      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] px-4 py-[14px] mb-3">
-        <div className="text-[12px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-[10px]">
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] px-4 py-[0.875rem] mb-3">
+        <div className="text-[0.75rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-[0.625rem]">
           ① {isBn ? 'কোন তথ্য পরিবর্তন করতে চান?' : 'What do you want to update?'}
         </div>
-        <div className={`grid gap-[6px] ${isMobile ? 'grid-cols-4' : 'grid-cols-7'}`}>
+        <div className={`grid gap-[0.375rem] ${isMobile ? 'grid-cols-4' : 'grid-cols-7'}`}>
           {OPS.map((o) => (
             <button
               key={o.id}
@@ -275,11 +275,11 @@ export default function BulkUpdatePage() {
                 setPhotoMap({})
                 setBatchVal('')
               }}
-              className={`flex flex-col items-center gap-[5px] py-[10px] px-[6px] rounded-[10px] border-2 font-[inherit] transition-all ${op === o.id ? `border-[${o.color}] bg-[${o.bg}]` : 'border-[var(--border)] bg-[var(--bg-secondary)]'}`}
+              className={`flex flex-col items-center gap-[0.3125rem] py-[0.625rem] px-[0.375rem] rounded-[0.625rem] border-2 font-[inherit] transition-all ${op === o.id ? `border-[${o.color}] bg-[${o.bg}]` : 'border-[var(--border)] bg-[var(--bg-secondary)]'}`}
             >
               <o.Icon size={18} style={{ color: op === o.id ? o.color : undefined }} />
               <span
-                className={`text-[10px] text-center leading-[1.2] ${op === o.id ? `font-semibold text-[${o.color}]` : 'font-normal text-[var(--text-secondary)]'}`}
+                className={`text-[0.625rem] text-center leading-[1.2] ${op === o.id ? `font-semibold text-[${o.color}]` : 'font-normal text-[var(--text-secondary)]'}`}
               >
                 {isBn ? o.bn : o.en}
               </span>
@@ -289,20 +289,20 @@ export default function BulkUpdatePage() {
       </div>
 
       {/* ② Filter + Batch apply row */}
-      <div className={`grid gap-[10px] mb-[10px] ${isMobile ? 'grid-cols-1' : 'grid-cols-[240px_1fr]'}`}>
+      <div className={`grid gap-[0.625rem] mb-[0.625rem] ${isMobile ? 'grid-cols-1' : 'grid-cols-[240px_1fr]'}`}>
         {/* Filter */}
-        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-[14px] py-3">
-          <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-[0.875rem] py-3">
+          <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
             ② {isBn ? 'ছাত্র ফিল্টার' : 'Filter Students'}
           </div>
-          <div className="flex flex-col gap-[6px]">
-            <div className="flex items-center gap-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[8px] px-[9px] py-1.5">
+          <div className="flex flex-col gap-[0.375rem]">
+            <div className="flex items-center gap-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[0.5rem] px-[0.5625rem] py-1.5">
               <Search size={13} className="text-[var(--text-muted)] flex-shrink-0" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={isBn ? 'নাম বা আইডি...' : 'Name or ID...'}
-                className="flex-1 border-none bg-transparent outline-none text-[12px] text-[var(--text-primary)] font-[inherit]"
+                className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)] font-[inherit]"
               />
             </div>
             <select
@@ -313,7 +313,7 @@ export default function BulkUpdatePage() {
                 setFSection('')
                 setSelected([])
               }}
-              className="px-[9px] py-[7px] rounded-[8px] border border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)] text-[12px] font-[inherit] cursor-pointer outline-none font-medium"
+              className="px-[0.5625rem] py-[0.4375rem] rounded-[0.5rem] border border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)] text-[0.75rem] font-[inherit] cursor-pointer outline-none font-medium"
             >
               {sessions.map((s) => (
                 <option key={s} value={s}>
@@ -327,7 +327,7 @@ export default function BulkUpdatePage() {
                 setFClass(e.target.value)
                 setFSection('')
               }}
-              className="px-[9px] py-[7px] rounded-[8px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[12px] font-[inherit] cursor-pointer outline-none"
+              className="px-[0.5625rem] py-[0.4375rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.75rem] font-[inherit] cursor-pointer outline-none"
             >
               <option value="">{isBn ? 'সব শ্রেণি' : 'All Classes'}</option>
               {classOptions.map((c) => (
@@ -339,7 +339,7 @@ export default function BulkUpdatePage() {
             <select
               value={fSection}
               onChange={(e) => setFSection(e.target.value)}
-              className="px-[9px] py-[7px] rounded-[8px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[12px] font-[inherit] cursor-pointer outline-none"
+              className="px-[0.5625rem] py-[0.4375rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.75rem] font-[inherit] cursor-pointer outline-none"
             >
               <option value="">{isBn ? 'সব সেকশন' : 'All Sections'}</option>
               {(fClass ? sectionsMap[fClass] || [] : allSections).map((s) => (
@@ -348,17 +348,17 @@ export default function BulkUpdatePage() {
                 </option>
               ))}
             </select>
-            <div className="flex gap-[5px]">
+            <div className="flex gap-[0.3125rem]">
               <button
                 onClick={toggleAll}
-                className={`flex-1 px-2 py-1.5 rounded-[7px] border bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[11px] cursor-pointer font-[inherit] font-medium ${allSel ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]' : 'border-[var(--border)]'}`}
+                className={`flex-1 px-2 py-1.5 rounded-[0.4375rem] border bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] cursor-pointer font-[inherit] font-medium ${allSel ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]' : 'border-[var(--border)]'}`}
               >
                 {allSel ? (isBn ? 'সব বাদ' : 'Deselect All') : isBn ? 'সব বাছুন' : 'Select All'} ({filtered.length})
               </button>
               {selected.length > 0 && (
                 <button
                   onClick={() => setSelected([])}
-                  className="px-[10px] py-1.5 rounded-[7px] border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] text-[11px] cursor-pointer font-[inherit]"
+                  className="px-[0.625rem] py-1.5 rounded-[0.4375rem] border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] text-[0.6875rem] cursor-pointer font-[inherit]"
                 >
                   {selected.length} ✕
                 </button>
@@ -368,44 +368,44 @@ export default function BulkUpdatePage() {
         </div>
 
         {/* Batch operation */}
-        <div className="bg-[var(--bg-primary)] border rounded-xl px-[14px] py-3" style={{ borderColor: opInfo.color }}>
-          <div className="text-[11px] font-semibold uppercase tracking-wider mb-[10px]" style={{ color: opInfo.color }}>
+        <div className="bg-[var(--bg-primary)] border rounded-xl px-[0.875rem] py-3" style={{ borderColor: opInfo.color }}>
+          <div className="text-[0.6875rem] font-semibold uppercase tracking-wider mb-[0.625rem]" style={{ color: opInfo.color }}>
             ③ {isBn ? `এক সাথে ${opInfo.bn}` : ` Batch ${opInfo.en}`}
             {selected.length > 0 && (
-              <span className="ml-[6px] font-bold">
+              <span className="ml-[0.375rem] font-bold">
                 — {selected.length} {isBn ? 'জন' : 'selected'}
               </span>
             )}
           </div>
 
           {op === 'photo' ? (
-            <div className="py-[10px] px-[10px] rounded-[8px] text-[13px]" style={{ background: opInfo.bg, color: opInfo.color }}>
-              <Info size={14} className="inline mr-[5px] align-middle" />
+            <div className="py-[0.625rem] px-[0.625rem] rounded-[0.5rem] text-[0.8125rem]" style={{ background: opInfo.bg, color: opInfo.color }}>
+              <Info size={14} className="inline mr-[0.3125rem] align-middle" />
               {isBn
                 ? 'নিচের টেবিলে প্রতিটি ছাত্রের পাশের বাটনে ক্লিক করে ছবি আপলোড করুন'
                 : 'Click the upload button next to each student in the table below'}
             </div>
           ) : op === 'roll' ? (
-            <div className="flex gap-[10px] items-center flex-wrap">
-              <div className="flex items-center gap-[7px]">
-                <span className="text-[12px] text-[var(--text-muted)] whitespace-nowrap">{isBn ? 'শুরু থেকে:' : 'Start from:'}</span>
+            <div className="flex gap-[0.625rem] items-center flex-wrap">
+              <div className="flex items-center gap-[0.4375rem]">
+                <span className="text-[0.75rem] text-[var(--text-muted)] whitespace-nowrap">{isBn ? 'শুরু থেকে:' : 'Start from:'}</span>
                 <input
                   type="number"
                   min={1}
                   value={autoStart}
                   onChange={(e) => setAutoStart(Math.max(1, Number(e.target.value)))}
-                  className="w-[60px] px-2 py-[6px] rounded-[7px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none text-center"
+                  className="w-[3.75rem] px-2 py-[0.375rem] rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none text-center"
                 />
               </div>
               <button
                 onClick={applyAutoRoll}
-                className="flex items-center gap-[5px] px-[14px] py-2 rounded-[8px] text-white text-[12px] font-medium cursor-pointer font-[inherit]"
+                className="flex items-center gap-[0.3125rem] px-[0.875rem] py-2 rounded-[0.5rem] text-white text-[0.75rem] font-medium cursor-pointer font-[inherit]"
                 style={{ background: opInfo.color }}
               >
                 <Wand2 size={13} />
                 {isBn ? 'ক্রমানুসারে রোল দিন' : 'Auto-assign Sequential Rolls'}
               </button>
-              <span className="text-[11px] text-[var(--text-muted)]">
+              <span className="text-[0.6875rem] text-[var(--text-muted)]">
                 {isBn ? 'অথবা নিচে সরাসরি রোল লিখুন' : 'Or type rolls directly below'}
               </span>
             </div>
@@ -415,7 +415,7 @@ export default function BulkUpdatePage() {
                 <select
                   value={batchVal}
                   onChange={(e) => setBatchVal(e.target.value)}
-                  className="px-[9px] py-[7px] rounded-[8px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[12px] font-[inherit] cursor-pointer outline-none flex-1"
+                  className="px-[0.5625rem] py-[0.4375rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] font-[inherit] cursor-pointer outline-none flex-1"
                   style={{ color: batchVal ? 'var(--text-primary)' : 'var(--text-secondary)' }}
                 >
                   <option value="">{isBn ? 'নতুন মান বেছে নিন' : 'Select new value'}</option>
@@ -430,13 +430,13 @@ export default function BulkUpdatePage() {
                   value={batchVal}
                   onChange={(e) => setBatchVal(e.target.value)}
                   placeholder={isBn ? 'নতুন মান লিখুন' : 'Enter new value'}
-                  className="flex-1 px-[9px] py-[7px] rounded-[8px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[12px] font-[inherit] outline-none"
+                  className="flex-1 px-[0.5625rem] py-[0.4375rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-[inherit] outline-none"
                 />
               )}
               <button
                 onClick={applyBatch}
                 disabled={!batchVal || selected.length === 0}
-                className="flex items-center gap-[5px] px-[14px] py-2 rounded-[8px] border-none text-white text-[12px] font-medium font-[inherit] whitespace-nowrap disabled:cursor-not-allowed"
+                className="flex items-center gap-[0.3125rem] px-[0.875rem] py-2 rounded-[0.5rem] border-none text-white text-[0.75rem] font-medium font-[inherit] whitespace-nowrap disabled:cursor-not-allowed"
                 style={{
                   background: !batchVal || selected.length === 0 ? 'var(--border-2)' : opInfo.color,
                   cursor: !batchVal || selected.length === 0 ? 'not-allowed' : 'pointer',
@@ -451,11 +451,11 @@ export default function BulkUpdatePage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden mb-3">
-        <div className="px-[14px] py-[10px] border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-secondary)]">
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden mb-3">
+        <div className="px-[0.875rem] py-[0.625rem] border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-secondary)]">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full" style={{ background: opInfo.color }} />
-            <span className="text-[13px] font-medium text-[var(--text-primary)]">
+            <span className="text-[0.8125rem] font-medium text-[var(--text-primary)]">
               {filtered.length} {isBn ? 'জন ছাত্র' : 'students'}
               {selected.length > 0 && (
                 <span className="ml-2" style={{ color: opInfo.color }}>
@@ -466,7 +466,7 @@ export default function BulkUpdatePage() {
           </div>
           {readyCount > 0 && (
             <span
-              className="text-[12px] px-[10px] py-[3px] rounded-[6px] font-medium"
+              className="text-[0.75rem] px-[0.625rem] py-[0.1875rem] rounded-[0.375rem] font-medium"
               style={{ color: opInfo.color, background: opInfo.bg }}
             >
               {readyCount} {isBn ? 'টি পরিবর্তন প্রস্তুত' : 'changes ready'}
@@ -475,30 +475,30 @@ export default function BulkUpdatePage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-[12px]">
+          <table className="w-full border-collapse text-[0.75rem]">
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                <th className="px-3 py-[10px] w-[36px]">
+                <th className="px-3 py-[0.625rem] w-[2.25rem]">
                   <input
                     type="checkbox"
                     checked={allSel}
                     onChange={toggleAll}
-                    className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                    className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                     style={{ accentColor: opInfo.color }}
                   />
                 </th>
-                <th className="px-2 py-[10px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase w-[36px]">#</th>
-                <th className="px-2 py-[10px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase min-w-[50px]">
+                <th className="px-2 py-[0.625rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase w-[2.25rem]">#</th>
+                <th className="px-2 py-[0.625rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase min-w-[3.125rem]">
                   {isBn ? 'ছবি' : 'Photo'}
                 </th>
-                <th className="px-2 py-[10px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase min-w-[165px]">
+                <th className="px-2 py-[0.625rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase min-w-[10.3125rem]">
                   {isBn ? 'নাম / আইডি' : 'Name / ID'}
                 </th>
-                <th className="px-2 py-[10px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase min-w-[80px]">
+                <th className="px-2 py-[0.625rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase min-w-[5rem]">
                   {isBn ? 'বর্তমান মান' : 'Current'}
                 </th>
                 <th
-                  className="px-2 py-[10px] text-left text-[10px] font-semibold uppercase min-w-[200px]"
+                  className="px-2 py-[0.625rem] text-left text-[0.625rem] font-semibold uppercase min-w-[12.5rem]"
                   style={{ color: opInfo.color, background: `${opInfo.bg}55` }}
                 >
                   ✏️ {isBn ? opInfo.bn : opInfo.en}
@@ -508,7 +508,7 @@ export default function BulkUpdatePage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-[30px] py-[30px] text-center text-[var(--text-muted)]">
+                  <td colSpan={6} className="px-[1.875rem] py-[1.875rem] text-center text-[var(--text-muted)]">
                     {isBn ? 'কোনো ছাত্র পাওয়া যায়নি' : 'No students found'}
                   </td>
                 </tr>
@@ -517,7 +517,7 @@ export default function BulkUpdatePage() {
                   <tr
                     key={s.id}
                     className="border-b border-[var(--border)]"
-                    style={{ borderBottomWidth: '0.5px', background: selected.includes(s.id) ? `${opInfo.bg}44` : 'transparent' }}
+                    style={{ borderBottomWidth: '0.0313rem', background: selected.includes(s.id) ? `${opInfo.bg}44` : 'transparent' }}
                     onMouseEnter={(e) => {
                       if (!selected.includes(s.id)) e.currentTarget.style.background = 'var(--bg-secondary)'
                     }}
@@ -530,18 +530,18 @@ export default function BulkUpdatePage() {
                         type="checkbox"
                         checked={selected.includes(s.id)}
                         onChange={() => toggleOne(s.id)}
-                        className="w-[13px] h-[13px] cursor-pointer"
+                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer"
                         style={{ accentColor: opInfo.color }}
                       />
                     </td>
-                    <td className="px-2 py-2 text-[var(--text-muted)] font-semibold text-[11px]">{i + 1}</td>
-                    <td className="px-2 py-[7px]">
+                    <td className="px-2 py-2 text-[var(--text-muted)] font-semibold text-[0.6875rem]">{i + 1}</td>
+                    <td className="px-2 py-[0.4375rem]">
                       <div
-                        className="relative w-[32px] h-[38px] rounded-[6px] overflow-visible bg-[var(--bg-secondary)] border flex items-center justify-center"
+                        className="relative w-[2rem] h-[2.375rem] rounded-[0.375rem] overflow-visible bg-[var(--bg-secondary)] border flex items-center justify-center"
                         style={{ borderColor: photoMap[s.id] ? opInfo.color : 'var(--border)' }}
                       >
                         {photoMap[s.id] || s.photo ? (
-                          <img src={photoMap[s.id] || s.photo} alt="" className="w-full h-full object-cover rounded-[5px]" />
+                          <img src={photoMap[s.id] || s.photo} alt="" className="w-full h-full object-cover rounded-[0.3125rem]" />
                         ) : (
                           <User size={14} className="text-[var(--text-muted)]" />
                         )}
@@ -555,7 +555,7 @@ export default function BulkUpdatePage() {
                               })
                             }
                             title={isBn ? 'ছবি সরান' : 'Remove photo'}
-                            className="absolute -top-[5px] -right-[5px] w-[18px] h-[18px] rounded-full bg-[var(--red)] border-2 border-[var(--bg-primary)] cursor-pointer flex items-center justify-center z-10 shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
+                            className="absolute -top-[0.3125rem] -right-[0.3125rem] w-[1.125rem] h-[1.125rem] rounded-full bg-[var(--red)] border-2 border-[var(--bg-primary)] cursor-pointer flex items-center justify-center z-10 shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
                           >
                             <X size={10} className="text-white" />
                           </button>
@@ -563,12 +563,12 @@ export default function BulkUpdatePage() {
                       </div>
                     </td>
                     <td className="px-2 py-2">
-                      <div className="text-[12px] font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap max-w-[160px]">
+                      <div className="text-[0.75rem] font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap max-w-[10rem]">
                         {isBn ? s.nameBn || s.nameEn : s.nameEn}
                       </div>
-                      <div className="text-[10px] text-[var(--brand)] font-mono">{s.id}</div>
+                      <div className="text-[0.625rem] text-[var(--brand)] font-mono">{s.id}</div>
                     </td>
-                    <td className="px-2 py-2 text-[var(--text-secondary)] text-[11px]">
+                    <td className="px-2 py-2 text-[var(--text-secondary)] text-[0.6875rem]">
                       {op === 'photo'
                         ? s.photo
                           ? isBn
@@ -579,10 +579,10 @@ export default function BulkUpdatePage() {
                             : 'None'
                         : String((s as any)[op] || '—')}
                     </td>
-                    <td className="px-2 py-[6px]" style={{ background: selected.includes(s.id) ? `${opInfo.bg}33` : 'transparent' }}>
+                    <td className="px-2 py-[0.375rem]" style={{ background: selected.includes(s.id) ? `${opInfo.bg}33` : 'transparent' }}>
                       {op === 'photo' ? (
                         <label
-                          className="flex items-center gap-[5px] px-[10px] py-[6px] rounded-[7px] border text-[11px] cursor-pointer font-medium w-fit"
+                          className="flex items-center gap-[0.3125rem] px-[0.625rem] py-[0.375rem] rounded-[0.4375rem] border text-[0.6875rem] cursor-pointer font-medium w-fit"
                           style={{
                             background: photoMap[s.id] ? 'var(--green-light)' : opInfo.bg,
                             borderColor: photoMap[s.id] ? 'var(--green)' : opInfo.color,
@@ -621,8 +621,8 @@ export default function BulkUpdatePage() {
       </div>
 
       {/* Apply button */}
-      <div className="flex items-center justify-between flex-wrap gap-[10px]">
-        <div className="text-[12px] text-[var(--text-muted)]">
+      <div className="flex items-center justify-between flex-wrap gap-[0.625rem]">
+        <div className="text-[0.75rem] text-[var(--text-muted)]">
           {readyCount > 0
             ? `${readyCount} ${isBn ? 'টি পরিবর্তন সেভের জন্য প্রস্তুত' : 'changes ready to save'}`
             : isBn
@@ -632,14 +632,14 @@ export default function BulkUpdatePage() {
         <div className="flex gap-2">
           <button
             onClick={clearAll}
-            className="px-[18px] py-[10px] rounded-[9px] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer font-[inherit]"
+            className="px-[1.125rem] py-[0.625rem] rounded-[0.5625rem] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]"
           >
             {isBn ? 'পরিষ্কার করুন' : 'Clear All'}
           </button>
           <button
             onClick={applyChanges}
             disabled={readyCount === 0}
-            className="flex items-center gap-[7px] px-[22px] py-[10px] rounded-[9px] border-none text-white text-[13px] font-semibold font-[inherit] disabled:cursor-not-allowed"
+            className="flex items-center gap-[0.4375rem] px-[1.375rem] py-[0.625rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold font-[inherit] disabled:cursor-not-allowed"
             style={{
               background: readyCount === 0 ? 'var(--border-2)' : opInfo.color,
               cursor: readyCount === 0 ? 'not-allowed' : 'pointer',

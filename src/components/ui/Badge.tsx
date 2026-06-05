@@ -20,8 +20,8 @@ export default function Badge({ children, variant = 'default' }: BadgeProps) {
         display: 'inline-flex',
         alignItems: 'center',
         padding: '2px 8px',
-        borderRadius: '10px',
-        fontSize: '11px',
+        borderRadius: '0.625rem',
+        fontSize: '0.6875rem',
         fontWeight: 500,
         ...styles[variant],
       }}

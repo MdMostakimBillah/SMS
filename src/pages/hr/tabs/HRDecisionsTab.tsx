@@ -34,27 +34,27 @@ export default function HRDecisionsTab({
   return (
     <>
       <div className={sectionCls(isMobile)}>
-        <div className="flex items-center gap-[10px] justify-between flex-wrap">
+        <div className="flex items-center gap-[0.625rem] justify-between flex-wrap">
           <div>
             <div className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
               <Zap size={16} className="text-[var(--brand)]" />
               {isBn ? 'বুদ্ধিমান সুপারিশ' : 'AI Recommendations'}
             </div>
-            <div className="text-xs text-[var(--text-muted)] mt-[2px]">
+            <div className="text-xs text-[var(--text-muted)] mt-[0.125rem]">
               {isBn ? 'উপস্থিতি, হোমওয়ার্ক, রিপোর্ট ও ফলাফলের ভিত্তিতে' : 'Based on attendance, homework, reports & performance'}
             </div>
           </div>
           <button
             onClick={handleGenerateRecommendations}
-            className="flex items-center gap-[5px] py-2 px-4 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+            className="flex items-center gap-[0.3125rem] py-2 px-4 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
           >
             <Zap size={14} />
             {isBn ? 'সুপারিশ তৈরি করুন' : 'Generate'}
           </button>
         </div>
         {showGenerateRecs && (
-          <div className="mt-[10px] py-2 px-3 rounded-lg bg-[var(--green-light)] text-[var(--green)] text-xs font-medium">
-            <CheckCircle2 size={14} className="inline mr-[6px]" />
+          <div className="mt-[0.625rem] py-2 px-3 rounded-lg bg-[var(--green-light)] text-[var(--green)] text-xs font-medium">
+            <CheckCircle2 size={14} className="inline mr-[0.375rem]" />
             {isBn ? 'সুপারিশ তৈরি করা হয়েছে!' : 'Recommendations generated!'}
           </div>
         )}
@@ -67,20 +67,20 @@ export default function HRDecisionsTab({
         </div>
         <div className="flex flex-col gap-1.5">
           {teacherCompositeScores.slice(0, 10).map((t, i) => (
-            <div key={t.id} className="py-[10px] px-3 rounded-lg bg-[var(--bg-secondary)] transition-all">
-              <div className="flex items-center gap-[10px]">
-                <span className={`text-[13px] font-bold w-[24px] ${i < 3 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}>
+            <div key={t.id} className="py-[0.625rem] px-3 rounded-lg bg-[var(--bg-secondary)] transition-all">
+              <div className="flex items-center gap-[0.625rem]">
+                <span className={`text-[0.8125rem] font-bold w-[1.5rem] ${i < 3 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}>
                   #{i + 1}
                 </span>
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-semibold text-white shrink-0"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[0.5625rem] font-semibold text-white shrink-0"
                   style={{ background: getAvatarGradient(t.id) }}
                 >
                   {getInitials(t.nameEn)}
                 </div>
                 <div className="flex-1 min-w-[0]">
-                  <div className="text-[13px] font-medium text-[var(--text-primary)]">{t.nameEn}</div>
-                  <div className="text-[11px] text-[var(--text-muted)]">
+                  <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{t.nameEn}</div>
+                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
                     {getTeacherDept(t.id)} · {t.designation}
                   </div>
                 </div>
@@ -99,8 +99,8 @@ export default function HRDecisionsTab({
                   { label: isBn ? 'ফলাফল' : 'Scores', val: `${t.avgScore}`, color: 'var(--brand)' },
                 ].map((d) => (
                   <div key={d.label} className="text-center p-1 rounded-md bg-[var(--bg-primary)]">
-                    <div className="text-[10px] text-[var(--text-muted)]">{d.label}</div>
-                    <div className="text-[13px] font-semibold" style={{ color: d.color }}>
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">{d.label}</div>
+                    <div className="text-[0.8125rem] font-semibold" style={{ color: d.color }}>
                       {d.val}
                     </div>
                   </div>
@@ -117,7 +117,7 @@ export default function HRDecisionsTab({
           {isBn ? 'বিবেচনাধীন' : 'Pending'}
         </div>
         {recommendations.filter((r) => r.status === 'pending').length === 0 ? (
-          <div className="p-5 text-center text-[var(--text-muted)] text-[13px]">
+          <div className="p-5 text-center text-[var(--text-muted)] text-[0.8125rem]">
             {isBn ? 'কোনো সুপারিশ নেই। "সুপারিশ তৈরি করুন" বাটনে ক্লিক করুন।' : 'No pending recommendations. Click "Generate".'}
           </div>
         ) : (
@@ -140,42 +140,42 @@ export default function HRDecisionsTab({
                   increment: isBn ? 'বৃদ্ধি' : 'Increment',
                 }
                 return (
-                  <div key={rec.id} className="p-3 rounded-[10px] bg-[var(--bg-secondary)]">
-                    <div className="flex items-center gap-[10px] flex-wrap">
+                  <div key={rec.id} className="p-3 rounded-[0.625rem] bg-[var(--bg-secondary)]">
+                    <div className="flex items-center gap-[0.625rem] flex-wrap">
                       <div
-                        className="w-[34px] h-[34px] rounded-lg flex items-center justify-center shrink-0"
+                        className="w-[2.125rem] h-[2.125rem] rounded-lg flex items-center justify-center shrink-0"
                         style={{ background: bg[rec.type] }}
                       >
                         <IconComp size={15} style={{ color: colors[rec.type] }} />
                       </div>
                       <div className="flex-1 min-w-[0]">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[13px] font-semibold text-[var(--text-primary)]">
+                          <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
                             {teacher?.nameEn || rec.teacherId}
                           </span>
                           <span
-                            className="text-[11px] py-[2px] px-2 rounded-full font-medium"
+                            className="text-[0.6875rem] py-[0.125rem] px-2 rounded-full font-medium"
                             style={{ background: bg[rec.type], color: colors[rec.type] }}
                           >
                             {labels[rec.type]}
                           </span>
-                          <span className="text-[11px] text-[var(--text-muted)]">
+                          <span className="text-[0.6875rem] text-[var(--text-muted)]">
                             {isBn ? 'স্কোর' : 'Score'}: <strong className="text-[var(--brand)]">{rec.score}</strong>
                           </span>
                         </div>
-                        <div className="text-xs text-[var(--text-secondary)] mt-[2px]">{rec.reason}</div>
+                        <div className="text-xs text-[var(--text-secondary)] mt-[0.125rem]">{rec.reason}</div>
                       </div>
                       <div className="flex gap-1.5">
                         <button
                           onClick={() => handleApproveRecommendation(rec)}
-                          className="py-[6px] px-3 rounded-lg bg-[var(--green)] border-none text-white text-xs font-medium cursor-pointer font-[inherit] flex items-center gap-1"
+                          className="py-[0.375rem] px-3 rounded-lg bg-[var(--green)] border-none text-white text-xs font-medium cursor-pointer font-[inherit] flex items-center gap-1"
                         >
                           <CheckCircle2 size={13} />
                           {isBn ? 'অনুমোদন' : 'Approve'}
                         </button>
                         <button
                           onClick={() => updateRecommendation(rec.id, 'rejected')}
-                          className="py-[6px] px-3 rounded-lg bg-transparent border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit] flex items-center gap-1"
+                          className="py-[0.375rem] px-3 rounded-lg bg-transparent border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit] flex items-center gap-1"
                         >
                           <XCircle size={13} />
                           {isBn ? 'বাতিল' : 'Reject'}
@@ -212,9 +212,9 @@ export default function HRDecisionsTab({
                   increment: isBn ? 'বৃদ্ধি' : 'Increment',
                 }
                 return (
-                  <div key={rec.id} className="py-2 px-3 rounded-lg bg-[var(--bg-secondary)] flex items-center gap-[10px]">
+                  <div key={rec.id} className="py-2 px-3 rounded-lg bg-[var(--bg-secondary)] flex items-center gap-[0.625rem]">
                     <div
-                      className="w-7 h-7 rounded-[7px] flex items-center justify-center shrink-0"
+                      className="w-7 h-7 rounded-[0.4375rem] flex items-center justify-center shrink-0"
                       style={{ background: bg[rec.type] }}
                     >
                       {rec.type === 'promotion' ? (
@@ -226,16 +226,16 @@ export default function HRDecisionsTab({
                       )}
                     </div>
                     <div className="flex-1">
-                      <span className="text-[13px] font-medium text-[var(--text-primary)]">{teacher?.nameEn || rec.teacherId}</span>
+                      <span className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{teacher?.nameEn || rec.teacherId}</span>
                       <span
-                        className="text-[11px] py-px px-2 rounded-xl font-medium ml-2"
+                        className="text-[0.6875rem] py-px px-2 rounded-xl font-medium ml-2"
                         style={{ background: bg[rec.type], color: colors[rec.type] }}
                       >
                         {labels[rec.type]}
                       </span>
                     </div>
                     <span
-                      className={`text-[11px] py-[3px] px-2 rounded-full font-medium ${rec.status === 'approved' ? 'bg-[var(--green-light)]' : 'bg-[var(--red-light)]'} ${rec.status === 'approved' ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}
+                      className={`text-[0.6875rem] py-[0.1875rem] px-2 rounded-full font-medium ${rec.status === 'approved' ? 'bg-[var(--green-light)]' : 'bg-[var(--red-light)]'} ${rec.status === 'approved' ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}
                     >
                       {rec.status === 'approved' ? (isBn ? 'অনুমোদিত' : 'Approved') : isBn ? 'বাতিল' : 'Rejected'}
                     </span>

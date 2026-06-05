@@ -59,19 +59,19 @@ export default function DepartmentsPage() {
   }
 
   const input =
-    'w-full py-[9px] px-[11px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none'
+    'w-full py-[0.5625rem] px-[0.6875rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none'
 
   return (
     <div>
       {(showAdd || editD) && (
         <div className="fixed inset-0 h-[100dvh] bg-black/50 z-[600] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[400px] w-full p-5 border border-[var(--border)]">
-            <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-[14px]">
+          <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[25rem] w-full p-5 border border-[var(--border)]">
+            <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-[0.875rem]">
               {editD ? (isBn ? 'বিভাগ এডিট করুন' : 'Edit Department') : isBn ? 'নতুন বিভাগ' : 'New Department'}
             </h3>
-            <div className="flex flex-col gap-[10px]">
+            <div className="flex flex-col gap-[0.625rem]">
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'নাম (ইংরেজি) *' : 'Name (English) *'}
                 </label>
                 <input
@@ -82,7 +82,7 @@ export default function DepartmentsPage() {
                 />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'নাম (বাংলা)' : 'Name (Bangla)'}
                 </label>
                 <input
@@ -93,7 +93,7 @@ export default function DepartmentsPage() {
                 />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'বিভাগ প্রধান' : 'Head of Department'}
                 </label>
                 <select value={newHead} onChange={(e) => setNewHead(e.target.value)} className={input}>
@@ -115,13 +115,13 @@ export default function DepartmentsPage() {
                   setNewNameBn('')
                   setNewHead('')
                 }}
-                className="py-2 px-[14px] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]"
+                className="py-2 px-[0.875rem] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
               <button
                 onClick={editD ? handleEdit : handleAdd}
-                className="py-2 px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
+                className="py-2 px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
               >
                 {editD ? (isBn ? 'সংরক্ষণ' : 'Save') : isBn ? 'যোগ করুন' : 'Add'}
               </button>
@@ -132,20 +132,20 @@ export default function DepartmentsPage() {
 
       {delConfirm && (
         <div className="fixed inset-0 h-[100dvh] bg-black/50 z-[700] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
-            <div className="flex items-center gap-[10px] mb-3">
+          <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+            <div className="flex items-center gap-[0.625rem] mb-3">
               <div className="w-9 h-9 rounded-lg bg-[var(--red-light)] flex items-center justify-center">
                 <AlertTriangle size={18} className="text-[var(--red)]" />
               </div>
-              <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">{isBn ? 'মুছে ফেলুন?' : 'Delete?'}</h3>
+              <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{isBn ? 'মুছে ফেলুন?' : 'Delete?'}</h3>
             </div>
-            <p className="text-[13px] text-[var(--text-secondary)] mb-4">
+            <p className="text-[0.8125rem] text-[var(--text-secondary)] mb-4">
               {isBn ? 'এই বিভাগটি স্থায়ীভাবে মুছে ফেলা হবে।' : 'This department will be permanently deleted.'}
             </p>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setDelConfirm(null)}
-                className="py-2 px-[14px] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer font-[inherit]"
+                className="py-2 px-[0.875rem] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
@@ -154,7 +154,7 @@ export default function DepartmentsPage() {
                   deleteDepartment(delConfirm)
                   setDelConfirm(null)
                 }}
-                className="py-2 px-[14px] rounded-lg bg-[var(--red)] border-none text-white text-[13px] font-semibold cursor-pointer font-[inherit]"
+                className="py-2 px-[0.875rem] rounded-lg bg-[var(--red)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit]"
               >
                 {isBn ? 'মুছে ফেলুন' : 'Delete'}
               </button>
@@ -163,17 +163,17 @@ export default function DepartmentsPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-[10px] mb-4 flex-wrap">
+      <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
           onClick={() => navigate('/teachers')}
-          className="flex items-center gap-[5px] py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] shrink-0"
+          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div className="flex-1">
-          <h1 className="text-[22px] font-semibold text-[var(--text-primary)]">{isBn ? 'বিভাগ ব্যবস্থাপনা' : 'Departments'}</h1>
-          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
+          <h1 className="text-[1.375rem] font-semibold text-[var(--text-primary)]">{isBn ? 'বিভাগ ব্যবস্থাপনা' : 'Departments'}</h1>
+          <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {isBn ? `মোট ${departments.length} টি বিভাগ` : `${departments.length} departments`}
           </p>
         </div>
@@ -184,30 +184,30 @@ export default function DepartmentsPage() {
             setNewNameBn('')
             setNewHead('')
           }}
-          className="flex items-center gap-[5px] py-2 px-[14px] rounded-[9px] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[13px] cursor-pointer font-[inherit] font-medium"
+          className="flex items-center gap-[0.3125rem] py-2 px-[0.875rem] rounded-[0.5625rem] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
         >
           <Plus size={14} />
           {isBn ? 'নতুন যোগ করুন' : 'Add Department'}
         </button>
       </div>
 
-      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden">
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
         <div className={`overflow-x-auto ${isMobile ? 'max-h-[60vh] overflow-y-auto' : ''}`}>
-          <table className={`w-full border-collapse text-xs ${isMobile ? 'min-w-[600px]' : ''}`}>
+          <table className={`w-full border-collapse text-xs ${isMobile ? 'min-w-[37.5rem]' : ''}`}>
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 {[
-                  { l: '#', w: '50px', align: 'center' as const },
+                  { l: '#', w: '3.125rem', align: 'center' as const },
                   { l: isBn ? 'নাম (ইংরেজি)' : 'Name (EN)', align: 'left' as const },
                   { l: isBn ? 'নাম (বাংলা)' : 'Name (BN)', align: 'left' as const },
                   { l: isBn ? 'বিভাগ প্রধান' : 'Head of Dept', align: 'left' as const },
-                  { l: isBn ? 'শিক্ষক' : 'Teachers', w: '80px', align: 'center' as const },
-                  { l: isBn ? 'বিষয়' : 'Subjects', w: '80px', align: 'center' as const },
-                  { l: isBn ? 'অ্যাকশন' : 'Action', w: '90px', align: 'center' as const },
+                  { l: isBn ? 'শিক্ষক' : 'Teachers', w: '5rem', align: 'center' as const },
+                  { l: isBn ? 'বিষয়' : 'Subjects', w: '5rem', align: 'center' as const },
+                  { l: isBn ? 'অ্যাকশন' : 'Action', w: '5.625rem', align: 'center' as const },
                 ].map((h) => (
                   <th
                     key={h.l}
-                    className={`py-[10px] px-3 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap ${h.align === 'center' ? 'text-center' : 'text-left'}`}
+                    className={`py-[0.625rem] px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.025rem] whitespace-nowrap ${h.align === 'center' ? 'text-center' : 'text-left'}`}
                   >
                     {h.l}
                   </th>
@@ -226,23 +226,23 @@ export default function DepartmentsPage() {
                 departments.map((d, i) => (
                   <tr
                     key={d.id}
-                    className="border-b-[0.5px] border-[var(--border)]"
+                    className="border-b-[0.0313rem] border-[var(--border)]"
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <td className="py-[10px] px-3 text-[var(--text-muted)] font-semibold text-[11px] text-center">{i + 1}</td>
-                    <td className="py-[10px] px-3">
+                    <td className="py-[0.625rem] px-3 text-[var(--text-muted)] font-semibold text-[0.6875rem] text-center">{i + 1}</td>
+                    <td className="py-[0.625rem] px-3">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-[var(--amber-light)] flex items-center justify-center shrink-0">
                           <Building2 size={16} className="text-[var(--amber)]" />
                         </div>
-                        <span className="text-[13px] font-medium text-[var(--text-primary)]">{d.name}</span>
+                        <span className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{d.name}</span>
                       </div>
                     </td>
-                    <td className="py-[10px] px-3 text-xs text-[var(--text-secondary)]">{d.nameBn || '—'}</td>
-                    <td className="py-[10px] px-3 text-xs text-[var(--text-secondary)]">
+                    <td className="py-[0.625rem] px-3 text-xs text-[var(--text-secondary)]">{d.nameBn || '—'}</td>
+                    <td className="py-[0.625rem] px-3 text-xs text-[var(--text-secondary)]">
                       {d.head ? (
-                        <div className="flex items-center gap-[5px]">
+                        <div className="flex items-center gap-[0.3125rem]">
                           <Crown size={12} className="text-[var(--amber)]" />
                           {d.head}
                         </div>
@@ -250,29 +250,29 @@ export default function DepartmentsPage() {
                         '—'
                       )}
                     </td>
-                    <td className="py-[10px] px-3 text-center">
-                      <span className="text-xs font-semibold text-[var(--brand)] bg-[var(--brand-light)] py-[3px] px-2 rounded-md">
+                    <td className="py-[0.625rem] px-3 text-center">
+                      <span className="text-xs font-semibold text-[var(--brand)] bg-[var(--brand-light)] py-[0.1875rem] px-2 rounded-md">
                         {getDeptTeacherCount(d.id)}
                       </span>
                     </td>
-                    <td className="py-[10px] px-3 text-center">
-                      <span className="text-xs font-semibold text-[var(--green)] bg-[var(--green-light)] py-[3px] px-2 rounded-md">
+                    <td className="py-[0.625rem] px-3 text-center">
+                      <span className="text-xs font-semibold text-[var(--green)] bg-[var(--green-light)] py-[0.1875rem] px-2 rounded-md">
                         {getDeptSubjectCount(d.id)}
                       </span>
                     </td>
-                    <td className="py-[10px] px-3 text-center">
+                    <td className="py-[0.625rem] px-3 text-center">
                       <div className="flex gap-1 justify-center">
                         <button
                           onClick={() => startEdit(d)}
                           title={isBn ? 'এডিট' : 'Edit'}
-                          className="w-7 h-7 rounded-[7px] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
+                          className="w-7 h-7 rounded-[0.4375rem] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
                         >
                           <Edit2 size={12} />
                         </button>
                         <button
                           onClick={() => setDelConfirm(d.id)}
                           title={isBn ? 'মুছুন' : 'Delete'}
-                          className="w-7 h-7 rounded-[7px] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
+                          className="w-7 h-7 rounded-[0.4375rem] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
                         >
                           <Trash2 size={12} />
                         </button>

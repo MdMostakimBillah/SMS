@@ -34,16 +34,16 @@ export function PaginationControls({
   if (total <= perPage) return null
 
   return (
-    <div className="py-[10px] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
+    <div className="py-[0.625rem] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
       <span className="text-xs text-[var(--text-muted)]">{range}</span>
-      <div className="flex gap-[3px] items-center">
+      <div className="flex gap-[0.1875rem] items-center">
         <select
           value={perPage}
           onChange={(e) => {
             setPerPage(Number(e.target.value))
             setPage(1)
           }}
-          className="py-1 px-[6px] rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-[11px] font-[inherit] outline-none mr-[6px]"
+          className="py-1 px-[0.375rem] rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-[0.6875rem] font-[inherit] outline-none mr-[0.375rem]"
         >
           <option value={10}>10</option>
           <option value={20}>20</option>

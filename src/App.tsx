@@ -31,7 +31,7 @@ import OMRSheetPage from '@/pages/exams/omr'
 import SyllabusPage from '@/pages/syllabus'
 
 function P({ name }: { name: string }) {
-  return <div style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: 500, padding: '20px' }}>{name}</div>
+  return <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 500, padding: '1.25rem' }}>{name}</div>
 }
 
 export default function App() {

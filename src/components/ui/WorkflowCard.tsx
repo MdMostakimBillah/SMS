@@ -64,24 +64,24 @@ const WorkflowCard = memo(function WorkflowCard({
       style={{
         background: 'var(--surface)',
         border: '1px solid var(--border)',
-        borderRadius: '10px',
+        borderRadius: '0.625rem',
         cursor: 'pointer',
         transition: 'all 0.15s ease',
         boxShadow: 'var(--shadow-xs)',
         display: 'flex',
         flexDirection: isMobile ? 'row' : 'column',
         alignItems: isMobile ? 'center' : 'flex-start',
-        gap: isMobile ? '12px' : '12px',
-        padding: isMobile ? '12px' : '16px',
+        gap: isMobile ? '12px' : '0.75rem',
+        padding: isMobile ? '12px' : '1rem',
       }}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
     >
       <div
         style={{
-          width: isMobile ? '40px' : '36px',
-          height: isMobile ? '40px' : '36px',
-          borderRadius: '10px',
+          width: isMobile ? '40px' : '2.25rem',
+          height: isMobile ? '40px' : '2.25rem',
+          borderRadius: '0.625rem',
           background: iconBg,
           display: 'flex',
           alignItems: 'center',
@@ -92,17 +92,17 @@ const WorkflowCard = memo(function WorkflowCard({
         <Icon size={isMobile ? 18 : 16} style={{ color: iconColor }} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '2px' }}>{title}</div>
-        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4, marginBottom: isMobile ? '0' : '8px' }}>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.125rem' }}>{title}</div>
+        <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', lineHeight: 1.4, marginBottom: isMobile ? '0' : '0.5rem' }}>
           {description}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {stat && (
             <span
               style={{
-                fontSize: '10px',
+                fontSize: '0.625rem',
                 fontWeight: 500,
-                borderRadius: '4px',
+                borderRadius: '0.25rem',
                 padding: '2px 6px',
                 color: statColor || 'var(--text-muted)',
                 background: statColor ? `${statColor}15` : 'var(--bg-secondary)',
@@ -112,7 +112,7 @@ const WorkflowCard = memo(function WorkflowCard({
             </span>
           )}
           {badge && (
-            <span style={{ fontSize: '9px', fontWeight: 600, padding: '2px 6px', borderRadius: '6px', ...badgeStyles[badgeVariant] }}>
+            <span style={{ fontSize: '0.5625rem', fontWeight: 600, padding: '2px 6px', borderRadius: '0.375rem', ...badgeStyles[badgeVariant] }}>
               {badge}
             </span>
           )}

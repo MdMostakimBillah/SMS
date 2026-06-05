@@ -8,7 +8,7 @@ import { useScrollLock } from '@/hooks/useScrollLock'
 import type { Subject } from '@/pages/teachers/types'
 
 const sel =
-  'py-[7px] px-[9px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs font-[inherit] cursor-pointer outline-none'
+  'py-[0.4375rem] px-[0.5625rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs font-[inherit] cursor-pointer outline-none'
 
 export default function SubjectsPage() {
   const navigate = useNavigate()
@@ -77,20 +77,20 @@ export default function SubjectsPage() {
   }
 
   const input =
-    'w-full py-[9px] px-[11px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none'
+    'w-full py-[0.5625rem] px-[0.6875rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none'
 
   return (
     <div>
       {/* Add/Edit Modal */}
       {(showAdd || editS) && (
         <div className="fixed top-0 left-0 right-0 h-[100dvh] bg-black/50 z-[600] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[400px] w-full p-5 border border-[var(--border)]">
-            <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-[14px]">
+          <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[25rem] w-full p-5 border border-[var(--border)]">
+            <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-[0.875rem]">
               {editS ? (isBn ? 'বিষয় এডিট করুন' : 'Edit Subject') : isBn ? 'নতুন বিষয়' : 'New Subject'}
             </h3>
-            <div className="flex flex-col gap-[10px]">
+            <div className="flex flex-col gap-[0.625rem]">
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'নাম (ইংরেজি) *' : 'Name (English) *'}
                 </label>
                 <input
@@ -101,7 +101,7 @@ export default function SubjectsPage() {
                 />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'নাম (বাংলা)' : 'Name (Bangla)'}
                 </label>
                 <input
@@ -112,27 +112,27 @@ export default function SubjectsPage() {
                 />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'বিভাগ * (একাধিক নির্বাচন করতে পারেন)' : 'Departments * (select multiple)'}
                 </label>
-                <div className="flex flex-wrap gap-2 p-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg min-h-[40px]">
+                <div className="flex flex-wrap gap-2 p-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg min-h-[2.5rem]">
                   {departments.map((d) => (
                     <label
                       key={d.id}
-                      className={`flex items-center gap-[5px] cursor-pointer py-1 px-2 rounded-md text-xs transition-all ${newDeptIds.includes(d.id) ? 'bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]'}`}
+                      className={`flex items-center gap-[0.3125rem] cursor-pointer py-1 px-2 rounded-md text-xs transition-all ${newDeptIds.includes(d.id) ? 'bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]'}`}
                     >
                       <input
                         type="checkbox"
                         checked={newDeptIds.includes(d.id)}
                         onChange={() => toggleDept(d.id)}
-                        className="w-[14px] h-[14px] accent-[var(--brand)] cursor-pointer"
+                        className="w-[0.875rem] h-[0.875rem] accent-[var(--brand)] cursor-pointer"
                       />
                       {isBn ? d.nameBn : d.name}
                     </label>
                   ))}
                 </div>
                 {newDeptIds.length === 0 && (
-                  <div className="text-[10px] text-[var(--red)] mt-1">
+                  <div className="text-[0.625rem] text-[var(--red)] mt-1">
                     {isBn ? 'কমপক্ষে একটি বিভাগ নির্বাচন করুন' : 'Select at least one department'}
                   </div>
                 )}
@@ -147,13 +147,13 @@ export default function SubjectsPage() {
                   setNewNameBn('')
                   setNewDeptIds([])
                 }}
-                className="py-2 px-[14px] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]"
+                className="py-2 px-[0.875rem] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
               <button
                 onClick={editS ? handleEdit : handleAdd}
-                className="py-2 px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
+                className="py-2 px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
               >
                 {editS ? (isBn ? 'সংরক্ষণ' : 'Save') : isBn ? 'যোগ করুন' : 'Add'}
               </button>
@@ -165,20 +165,20 @@ export default function SubjectsPage() {
       {/* Delete Confirmation */}
       {delConfirm && (
         <div className="fixed top-0 left-0 right-0 h-[100dvh] bg-black/50 z-[700] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="modal-content bg-[var(--bg-primary)] rounded-[14px] max-w-[380px] w-full p-5 border border-[var(--border)]">
-            <div className="flex items-center gap-[10px] mb-3">
+          <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+            <div className="flex items-center gap-[0.625rem] mb-3">
               <div className="w-9 h-9 rounded-lg bg-[var(--red-light)] flex items-center justify-center">
                 <AlertTriangle size={18} className="text-[var(--red)]" />
               </div>
-              <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">{isBn ? 'মুছে ফেলুন?' : 'Delete?'}</h3>
+              <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{isBn ? 'মুছে ফেলুন?' : 'Delete?'}</h3>
             </div>
-            <p className="text-[13px] text-[var(--text-secondary)] mb-4">
+            <p className="text-[0.8125rem] text-[var(--text-secondary)] mb-4">
               {isBn ? 'এই বিষয়টি স্থায়ীভাবে মুছে ফেলা হবে।' : 'This subject will be permanently deleted.'}
             </p>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setDelConfirm(null)}
-                className="py-2 px-[14px] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer font-[inherit]"
+                className="py-2 px-[0.875rem] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
@@ -187,7 +187,7 @@ export default function SubjectsPage() {
                   deleteSubject(delConfirm)
                   setDelConfirm(null)
                 }}
-                className="py-2 px-[14px] rounded-lg bg-[var(--red)] border-none text-white text-[13px] font-semibold cursor-pointer font-[inherit]"
+                className="py-2 px-[0.875rem] rounded-lg bg-[var(--red)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit]"
               >
                 {isBn ? 'মুছে ফেলুন' : 'Delete'}
               </button>
@@ -197,17 +197,17 @@ export default function SubjectsPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center gap-[10px] mb-4 flex-wrap">
+      <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
           onClick={() => navigate('/teachers')}
-          className="flex items-center gap-[5px] py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] shrink-0"
+          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div className="flex-1">
-          <h1 className="text-[22px] font-semibold text-[var(--text-primary)]">{isBn ? 'বিষয় ব্যবস্থাপনা' : 'Subjects'}</h1>
-          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
+          <h1 className="text-[1.375rem] font-semibold text-[var(--text-primary)]">{isBn ? 'বিষয় ব্যবস্থাপনা' : 'Subjects'}</h1>
+          <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {isBn ? `মোট ${filtered.length} টি বিষয়` : `${filtered.length} subjects`}
           </p>
         </div>
@@ -218,7 +218,7 @@ export default function SubjectsPage() {
             setNewNameBn('')
             setNewDeptIds([])
           }}
-          className="flex items-center gap-[5px] py-2 px-[14px] rounded-[9px] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[13px] cursor-pointer font-[inherit] font-medium"
+          className="flex items-center gap-[0.3125rem] py-2 px-[0.875rem] rounded-[0.5625rem] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
         >
           <Plus size={14} />
           {isBn ? 'নতুন যোগ করুন' : 'Add Subject'}
@@ -226,7 +226,7 @@ export default function SubjectsPage() {
       </div>
 
       {/* Filter */}
-      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl py-3 px-[14px] mb-[10px]">
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl py-3 px-[0.875rem] mb-[0.625rem]">
         <div className="flex items-center gap-2">
           <Filter size={14} className="text-[var(--text-muted)]" />
           <select value={fDept} onChange={(e) => setFDept(e.target.value)} className={sel}>
@@ -240,7 +240,7 @@ export default function SubjectsPage() {
           {fDept && (
             <button
               onClick={() => setFDept('')}
-              className="flex items-center gap-1 py-1 px-[10px] rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[11px] cursor-pointer font-[inherit]"
+              className="flex items-center gap-1 py-1 px-[0.625rem] rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.6875rem] cursor-pointer font-[inherit]"
             >
               <X size={11} />
               {isBn ? 'ফিল্টার সরান' : 'Clear'}
@@ -250,22 +250,22 @@ export default function SubjectsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden">
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
         <div className={`overflow-x-auto ${isMobile ? 'max-h-[60vh] overflow-y-auto' : ''}`}>
-          <table className="w-full border-collapse text-xs min-w-[500px]">
+          <table className="w-full border-collapse text-xs min-w-[31.25rem]">
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 {[
-                  { l: '#', w: '50px', align: 'center' as const },
+                  { l: '#', w: '3.125rem', align: 'center' as const },
                   { l: isBn ? 'নাম (ইংরেজি)' : 'Name (EN)', align: 'left' as const },
                   { l: isBn ? 'নাম (বাংলা)' : 'Name (BN)', align: 'left' as const },
                   { l: isBn ? 'বিভাগ' : 'Department', align: 'left' as const },
-                  { l: isBn ? 'শিক্ষক' : 'Teachers', w: '80px', align: 'center' as const },
-                  { l: isBn ? 'অ্যাকশন' : 'Action', w: '90px', align: 'center' as const },
+                  { l: isBn ? 'শিক্ষক' : 'Teachers', w: '5rem', align: 'center' as const },
+                  { l: isBn ? 'অ্যাকশন' : 'Action', w: '5.625rem', align: 'center' as const },
                 ].map((h) => (
                   <th
                     key={h.l}
-                    className={`py-3 px-3 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap text-${h.align}`}
+                    className={`py-3 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap text-${h.align}`}
                   >
                     {h.l}
                   </th>
@@ -283,13 +283,13 @@ export default function SubjectsPage() {
               ) : (
                 filtered.map((s, i) => (
                   <tr key={s.id} className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)]">
-                    <td className="py-3 px-3 text-[var(--text-muted)] font-semibold text-[11px] text-center">{i + 1}</td>
+                    <td className="py-3 px-3 text-[var(--text-muted)] font-semibold text-[0.6875rem] text-center">{i + 1}</td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-[var(--green-light)] flex items-center justify-center shrink-0">
                           <BookOpen size={16} className="text-[var(--green)]" />
                         </div>
-                        <span className="text-[13px] font-medium text-[var(--text-primary)]">{s.name}</span>
+                        <span className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{s.name}</span>
                       </div>
                     </td>
                     <td className="py-3 px-3 text-xs text-[var(--text-secondary)]">{s.nameBn || '—'}</td>
@@ -298,7 +298,7 @@ export default function SubjectsPage() {
                         {(s.departmentIds || [s.departmentId]).map((deptId) => (
                           <span
                             key={deptId}
-                            className="text-[10px] font-medium py-[2px] px-[6px] rounded bg-[var(--amber-light)] text-[var(--amber)]"
+                            className="text-[0.625rem] font-medium py-[0.125rem] px-[0.375rem] rounded bg-[var(--amber-light)] text-[var(--amber)]"
                           >
                             {getDeptName(deptId)}
                           </span>
@@ -306,7 +306,7 @@ export default function SubjectsPage() {
                       </div>
                     </td>
                     <td className="py-3 px-3 text-center">
-                      <span className="text-xs font-semibold text-[var(--brand)] bg-[var(--brand-light)] py-[3px] px-2 rounded-md">
+                      <span className="text-xs font-semibold text-[var(--brand)] bg-[var(--brand-light)] py-[0.1875rem] px-2 rounded-md">
                         {getSubjectTeacherCount(s.id)}
                       </span>
                     </td>
@@ -315,14 +315,14 @@ export default function SubjectsPage() {
                         <button
                           onClick={() => startEdit(s)}
                           title={isBn ? 'এডিট' : 'Edit'}
-                          className="w-7 h-7 rounded-[7px] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
+                          className="w-7 h-7 rounded-[0.4375rem] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
                         >
                           <Edit2 size={12} />
                         </button>
                         <button
                           onClick={() => setDelConfirm(s.id)}
                           title={isBn ? 'মুছুন' : 'Delete'}
-                          className="w-7 h-7 rounded-[7px] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
+                          className="w-7 h-7 rounded-[0.4375rem] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
                         >
                           <Trash2 size={12} />
                         </button>

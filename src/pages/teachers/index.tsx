@@ -127,32 +127,32 @@ function toBnNum(n: number): string {
 function TeachersSkeleton() {
   return (
     <div>
-      <div className="skeleton skeleton-title" style={{ width: '200px', marginBottom: '16px' }} />
-      <div className="skeleton skeleton-text" style={{ width: '150px', marginBottom: '20px' }} />
+      <div className="skeleton skeleton-title" style={{ width: '12.5rem', marginBottom: '1rem' }} />
+      <div className="skeleton skeleton-text" style={{ width: '9.375rem', marginBottom: '1.25rem' }} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.625rem', marginBottom: '1.25rem' }}>
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="skeleton-card">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div className="skeleton skeleton-circle" style={{ width: '32px', height: '32px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+              <div className="skeleton skeleton-circle" style={{ width: '2rem', height: '2rem' }} />
               <div>
-                <div className="skeleton" style={{ width: '50px', height: '18px', marginBottom: '4px' }} />
-                <div className="skeleton skeleton-text" style={{ width: '40px', height: '10px' }} />
+                <div className="skeleton" style={{ width: '3.125rem', height: '1.125rem', marginBottom: '0.25rem' }} />
+                <div className="skeleton skeleton-text" style={{ width: '2.5rem', height: '0.625rem' }} />
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="skeleton" style={{ width: '100px', height: '12px', marginBottom: '12px' }} />
+      <div className="skeleton" style={{ width: '6.25rem', height: '0.75rem', marginBottom: '0.75rem' }} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className="skeleton-card">
-            <div className="skeleton skeleton-circle" style={{ width: '40px', height: '40px', marginBottom: '10px' }} />
-            <div className="skeleton" style={{ width: '80px', height: '14px', marginBottom: '6px' }} />
+            <div className="skeleton skeleton-circle" style={{ width: '2.5rem', height: '2.5rem', marginBottom: '0.625rem' }} />
+            <div className="skeleton" style={{ width: '5rem', height: '0.875rem', marginBottom: '0.375rem' }} />
             <div className="skeleton skeleton-text" style={{ width: '100%' }} />
-            <div className="skeleton skeleton-text" style={{ width: '60px', height: '10px' }} />
+            <div className="skeleton skeleton-text" style={{ width: '3.75rem', height: '0.625rem' }} />
           </div>
         ))}
       </div>
@@ -275,10 +275,10 @@ export default function TeachersPage() {
 
   return (
     <div ref={containerRef}>
-      <div className="gsap-fade-up" style={{ marginBottom: isMobile ? '16px' : '20px' }}>
+      <div className="gsap-fade-up" style={{ marginBottom: isMobile ? '16px' : '1.25rem' }}>
         <h1
           style={{
-            fontSize: isMobile ? '18px' : '20px',
+            fontSize: isMobile ? '18px' : '1.25rem',
             fontWeight: 600,
             color: 'var(--text-primary)',
             letterSpacing: '-0.3px',
@@ -286,7 +286,7 @@ export default function TeachersPage() {
         >
           {isBn ? 'শিক্ষক ব্যবস্থাপনা' : 'Teacher Management'}
         </h1>
-        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
           {isBn ? 'নিচের অপশন বেছে নিন' : 'Select an option below'}
         </p>
       </div>
@@ -297,8 +297,8 @@ export default function TeachersPage() {
         style={{
           display: 'grid',
           gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-          gap: isMobile ? '8px' : '10px',
-          marginBottom: isMobile ? '16px' : '20px',
+          gap: isMobile ? '8px' : '0.625rem',
+          marginBottom: isMobile ? '16px' : '1.25rem',
         }}
       >
         {statsData.map((s) => {
@@ -309,11 +309,11 @@ export default function TeachersPage() {
               style={{
                 background: 'var(--surface)',
                 border: '1px solid var(--border)',
-                borderRadius: '10px',
-                padding: isMobile ? '12px' : '14px',
+                borderRadius: '0.625rem',
+                padding: isMobile ? '12px' : '0.875rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: isMobile ? '8px' : '10px',
+                gap: isMobile ? '8px' : '0.625rem',
                 transition: 'all 0.15s ease',
                 boxShadow: 'var(--shadow-xs)',
               }}
@@ -328,9 +328,9 @@ export default function TeachersPage() {
             >
               <div
                 style={{
-                  width: isMobile ? '28px' : '32px',
-                  height: isMobile ? '28px' : '32px',
-                  borderRadius: '8px',
+                  width: isMobile ? '28px' : '2rem',
+                  height: isMobile ? '28px' : '2rem',
+                  borderRadius: '0.5rem',
                   background: s.bg,
                   display: 'flex',
                   alignItems: 'center',
@@ -341,10 +341,10 @@ export default function TeachersPage() {
                 <IconComp size={isMobile ? 13 : 15} style={{ color: s.color }} />
               </div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
+                <div style={{ fontSize: isMobile ? '16px' : '1.125rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
                   {isBn ? s.valueBn : s.valueEn}
                 </div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>{isBn ? s.labelBn : s.labelEn}</div>
+                <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: '0.125rem' }}>{isBn ? s.labelBn : s.labelEn}</div>
               </div>
             </div>
           )
@@ -355,12 +355,12 @@ export default function TeachersPage() {
       <div
         className="gsap-fade-up"
         style={{
-          fontSize: '12px',
+          fontSize: '0.75rem',
           fontWeight: 600,
           color: 'var(--text-muted)',
           textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          marginBottom: '10px',
+          letterSpacing: '0.0313rem',
+          marginBottom: '0.625rem',
         }}
       >
         {isBn ? 'কী করতে চান?' : 'Quick Actions'}
@@ -372,7 +372,7 @@ export default function TeachersPage() {
         style={{
           display: 'grid',
           gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-          gap: isMobile ? '8px' : '12px',
+          gap: isMobile ? '8px' : '0.75rem',
         }}
       >
         {options.map((opt) => {
@@ -384,8 +384,8 @@ export default function TeachersPage() {
               style={{
                 background: 'var(--surface)',
                 border: '1px solid var(--border)',
-                borderRadius: '10px',
-                padding: isMobile ? '12px' : '16px',
+                borderRadius: '0.625rem',
+                padding: isMobile ? '12px' : '1rem',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 boxShadow: 'var(--shadow-xs)',
@@ -407,15 +407,15 @@ export default function TeachersPage() {
             >
               <div
                 style={{
-                  width: isMobile ? '44px' : '40px',
-                  height: isMobile ? '44px' : '40px',
-                  borderRadius: isMobile ? '12px' : '10px',
+                  width: isMobile ? '44px' : '2.5rem',
+                  height: isMobile ? '44px' : '2.5rem',
+                  borderRadius: isMobile ? '12px' : '0.625rem',
                   background: opt.iconBg,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  marginBottom: isMobile ? '0' : '10px',
+                  marginBottom: isMobile ? '0' : '0.625rem',
                 }}
               >
                 <IconComp size={isMobile ? 21 : 19} style={{ color: opt.iconColor }} />
@@ -423,26 +423,26 @@ export default function TeachersPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontSize: isMobile ? '13px' : '14px',
+                    fontSize: isMobile ? '13px' : '0.875rem',
                     fontWeight: 600,
                     color: 'var(--text-primary)',
-                    marginBottom: isMobile ? '2px' : '4px',
+                    marginBottom: isMobile ? '2px' : '0.25rem',
                   }}
                 >
                   {isBn ? opt.titleBn : opt.titleEn}
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: isMobile ? '6px' : '8px' }}>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: isMobile ? '6px' : '0.5rem' }}>
                   {isBn ? opt.descBn : opt.descEn}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span
                     style={{
-                      fontSize: '10px',
+                      fontSize: '0.625rem',
                       color: opt.statColor,
                       fontWeight: 500,
                       background: `${opt.statColor}15`,
                       padding: '2px 6px',
-                      borderRadius: '4px',
+                      borderRadius: '0.25rem',
                     }}
                   >
                     {isBn ? opt.statBn : opt.statEn}

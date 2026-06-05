@@ -42,14 +42,14 @@ export default function AppLayout() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '16px',
+            gap: '1rem',
           }}
         >
           <div
             style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
+              width: '3rem',
+              height: '3rem',
+              borderRadius: '0.75rem',
               background: 'var(--brand)',
               display: 'flex',
               alignItems: 'center',
@@ -73,7 +73,7 @@ export default function AppLayout() {
           </div>
           <div
             style={{
-              fontSize: '14px',
+              fontSize: '0.875rem',
               fontWeight: 600,
               color: 'var(--text-primary)',
             }}
@@ -82,10 +82,10 @@ export default function AppLayout() {
           </div>
           <div
             style={{
-              width: '100px',
-              height: '3px',
+              width: '6.25rem',
+              height: '0.1875rem',
               background: 'var(--border)',
-              borderRadius: '2px',
+              borderRadius: '0.125rem',
               overflow: 'hidden',
             }}
           >
@@ -94,7 +94,7 @@ export default function AppLayout() {
                 width: '40%',
                 height: '100%',
                 background: 'var(--brand)',
-                borderRadius: '2px',
+                borderRadius: '0.125rem',
                 animation: 'shimmer 1.5s infinite',
               }}
             />
@@ -157,7 +157,7 @@ export default function AppLayout() {
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: isMobile ? '14px' : isTablet ? '18px' : '24px',
+            padding: isMobile ? '14px' : isTablet ? '18px' : '1.5rem',
             background: 'var(--bg-tertiary)',
           }}
         >

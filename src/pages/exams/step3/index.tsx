@@ -9,12 +9,12 @@ import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
 import type { SubjectMarkConfig } from '@/store/examStore'
 
-const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] mb-[14px]'
-const sectionTitleCls = 'flex items-center gap-2 text-[13px] font-semibold text-[var(--text-primary)]'
+const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-[0.875rem] mb-[0.875rem]'
+const sectionTitleCls = 'flex items-center gap-2 text-[0.8125rem] font-semibold text-[var(--text-primary)]'
 const inputCls =
   'h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border'
 const btnPrimary =
-  'flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
+  'flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
 
 const GRADE_COLORS: Record<string, string> = {
   'A+': 'bg-[#10b981] text-white',
@@ -175,10 +175,10 @@ export default function Step3Evaluation() {
             <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 className="text-[16px] font-bold text-[var(--text-primary)]">
+            <h1 className="text-[1rem] font-bold text-[var(--text-primary)]">
               {isBn ? 'ধাপ ৩: মূল্যায়ন ও মার্কস' : 'Step 3: Evaluation & Marks'}
             </h1>
-            <p className="text-[11px] text-[var(--text-muted)]">
+            <p className="text-[0.6875rem] text-[var(--text-muted)]">
               {isBn ? 'মার্কস এন্ট্রি, রিভিউ ও প্রকাশ' : 'Marks entry, review & publish'}
             </p>
           </div>
@@ -193,7 +193,7 @@ export default function Step3Evaluation() {
             setSelectedExamId(e.target.value)
             setEntryExamId(e.target.value)
           }}
-          className={`${inputCls} max-w-[300px]`}
+          className={`${inputCls} max-w-[18.75rem]`}
         >
           <option value="">{isBn ? 'সকল পরীক্ষা' : 'All Exams'}</option>
           {examConfigs.map((e) => (
@@ -212,7 +212,7 @@ export default function Step3Evaluation() {
           { label: isBn ? 'অপেক্ষমান' : 'Pending', value: entryStatusSummary.pending, color: 'var(--text-muted)' },
           { label: isBn ? 'লক' : 'Locked', value: entryStatusSummary.locked, color: 'var(--red)' },
         ].map((s) => (
-          <div key={s.label} className="flex items-center gap-1.5 text-[11px] whitespace-nowrap">
+          <div key={s.label} className="flex items-center gap-1.5 text-[0.6875rem] whitespace-nowrap">
             <div className="w-2 h-2 rounded-full" style={{ background: s.color }} />
             <span className="text-[var(--text-muted)]">{s.label}:</span>
             <span className="font-semibold text-[var(--text-primary)]">{s.value}</span>
@@ -230,7 +230,7 @@ export default function Step3Evaluation() {
           <button
             key={t.key}
             onClick={() => setActiveSubTab(t.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeSubTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeSubTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
           >
             {t.icon}
             {t.label}
@@ -250,7 +250,7 @@ export default function Step3Evaluation() {
               </div>
               <div className="grid grid-cols-2 gap-3 mt-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পরীক্ষা' : 'Exam'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পরীক্ষা' : 'Exam'}</label>
                   <select
                     value={distExamId}
                     onChange={(e) => {
@@ -272,7 +272,7 @@ export default function Step3Evaluation() {
                 <>
                   <div className="grid grid-cols-3 gap-3 mt-3">
                     <div>
-                      <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                      <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                         {isBn ? 'বিষয়' : 'Subject'}
                       </label>
                       <select
@@ -307,7 +307,7 @@ export default function Step3Evaluation() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                      <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                         {isBn ? 'ফুল মার্কস' : 'Full Marks'}
                       </label>
                       <input
@@ -318,7 +318,7 @@ export default function Step3Evaluation() {
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                      <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                         {isBn ? 'পাস মার্কস' : 'Pass Marks'}
                       </label>
                       <input
@@ -348,7 +348,7 @@ export default function Step3Evaluation() {
                         setEditDistConfig(null)
                       }}
                       disabled={!distSubjectId}
-                      className={`${btnPrimary} text-[11px] ${!distSubjectId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`${btnPrimary} text-[0.6875rem] ${!distSubjectId ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <Save size={12} />
                       {editDistConfig ? (isBn ? 'আপডেট' : 'Update') : isBn ? 'সেভ' : 'Save'}
@@ -371,10 +371,10 @@ export default function Step3Evaluation() {
                       <div key={config.id} className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
                         <div className="flex items-center justify-between">
                           <div>
-                            <span className="text-[13px] font-semibold text-[var(--text-primary)]">
+                            <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
                               {isBn ? subject?.nameBn : subject?.name}
                             </span>
-                            <span className="text-[11px] text-[var(--text-muted)] ml-2">
+                            <span className="text-[0.6875rem] text-[var(--text-muted)] ml-2">
                               {config.fullMarks} / Pass: {config.passMarks}
                             </span>
                           </div>
@@ -383,7 +383,7 @@ export default function Step3Evaluation() {
                               {config.subExams.map((se) => (
                                 <span
                                   key={se.id}
-                                  className="text-[9px] bg-[var(--bg-primary)] rounded px-1.5 py-0.5 text-[var(--text-secondary)]"
+                                  className="text-[0.5625rem] bg-[var(--bg-primary)] rounded px-1.5 py-0.5 text-[var(--text-secondary)]"
                                 >
                                   {isBn ? se.nameBn : se.name} ({se.fullMarks})
                                 </span>
@@ -410,7 +410,7 @@ export default function Step3Evaluation() {
               </div>
               <div className="grid gap-3 mt-3" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)' }}>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পরীক্ষা' : 'Exam'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পরীক্ষা' : 'Exam'}</label>
                   <select
                     value={entryExamId}
                     onChange={(e) => {
@@ -430,7 +430,7 @@ export default function Step3Evaluation() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
                   <select
                     value={entryClassId}
                     onChange={(e) => {
@@ -450,7 +450,7 @@ export default function Step3Evaluation() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
                   <select
                     value={entrySectionId}
                     onChange={(e) => {
@@ -469,7 +469,7 @@ export default function Step3Evaluation() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিষয়' : 'Subject'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিষয়' : 'Subject'}</label>
                   <select
                     value={entrySubjectId}
                     onChange={(e) => setEntrySubjectId(e.target.value)}
@@ -490,13 +490,13 @@ export default function Step3Evaluation() {
                 </div>
               </div>
               {saving && (
-                <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[var(--green)]">
+                <div className="mt-2 flex items-center gap-1.5 text-[0.6875rem] text-[var(--green)]">
                   <Loader size={12} className="animate-spin" />
                   {isBn ? 'সেভ হচ্ছে...' : 'Saving...'}
                 </div>
               )}
               {!saving && lastSaved && (
-                <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
+                <div className="mt-2 flex items-center gap-1.5 text-[0.6875rem] text-[var(--text-muted)]">
                   <CheckCircle size={12} />
                   {isBn ? `শেষ সেভ: ${lastSaved}` : `Last saved: ${lastSaved}`}
                 </div>
@@ -506,34 +506,34 @@ export default function Step3Evaluation() {
             {entryExamId && entryClassId && entrySectionId && entrySubjectId && entrySubjectConfig && (
               <div className={sectionCls}>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[13px] font-semibold text-[var(--text-primary)]">
+                  <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
                     {classStudents.length} {isBn ? 'জন শিক্ষার্থী' : 'students'}
-                    <span className="text-[11px] text-[var(--text-muted)] ml-2">
+                    <span className="text-[0.6875rem] text-[var(--text-muted)] ml-2">
                       Full: {entrySubjectConfig.fullMarks} · Pass: {entrySubjectConfig.passMarks}
                     </span>
                   </span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-xs min-w-[500px]">
+                  <table className="w-full text-xs min-w-[31.25rem]">
                     <thead>
                       <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                        <th className="py-2 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] w-8">#</th>
-                        <th className="py-2 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[140px]">
+                        <th className="py-2 px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] w-8">#</th>
+                        <th className="py-2 px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[8.75rem]">
                           {isBn ? 'নাম' : 'Name'}
                         </th>
-                        <th className="py-2 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] min-w-[60px]">
+                        <th className="py-2 px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[3.75rem]">
                           {isBn ? 'রোল' : 'Roll'}
                         </th>
                         {entrySubjectConfig.subExams.map((se) => (
-                          <th key={se.id} className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[80px]">
+                          <th key={se.id} className="py-2 px-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[5rem]">
                             <div>{isBn ? se.nameBn : se.name}</div>
-                            <div className="font-normal text-[9px]">({se.fullMarks})</div>
+                            <div className="font-normal text-[0.5625rem]">({se.fullMarks})</div>
                           </th>
                         ))}
-                        <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[60px]">
+                        <th className="py-2 px-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[3.75rem]">
                           {isBn ? 'মোট' : 'Total'}
                         </th>
-                        <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)] min-w-[50px]">
+                        <th className="py-2 px-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[3.125rem]">
                           {isBn ? 'গ্রেড' : 'Grade'}
                         </th>
                       </tr>
@@ -554,10 +554,10 @@ export default function Step3Evaluation() {
                           <tr key={student.id} className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)] transition-colors">
                             <td className="py-2 px-2 text-[var(--text-muted)]">{idx + 1}</td>
                             <td className="py-2 px-2">
-                              <div className="text-[11px] font-medium text-[var(--text-primary)]">
+                              <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">
                                 {isBn ? student.nameBn || student.nameEn : student.nameEn}
                               </div>
-                              <div className="text-[9px] text-[var(--text-muted)]">{student.id}</div>
+                              <div className="text-[0.5625rem] text-[var(--text-muted)]">{student.id}</div>
                             </td>
                             <td className="py-2 px-2 text-[var(--text-secondary)]">{student.roll || '—'}</td>
                             {entrySubjectConfig.subExams.map((se) => {
@@ -570,7 +570,7 @@ export default function Step3Evaluation() {
                                     max={maxForSub}
                                     value={marks[se.id] || ''}
                                     onChange={(e) => handleMarkChange(student.id, se.id, e.target.value)}
-                                    className="w-[60px] h-7 px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[11px] text-center outline-none focus:border-[var(--brand)]"
+                                    className="w-[3.75rem] h-7 px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.6875rem] text-center outline-none focus:border-[var(--brand)]"
                                     placeholder={`0-${maxForSub}`}
                                   />
                                 </td>
@@ -578,14 +578,14 @@ export default function Step3Evaluation() {
                             })}
                             <td className="py-2 px-2 text-center">
                               <span
-                                className={`text-[12px] font-bold ${total >= entrySubjectConfig.passMarks ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}
+                                className={`text-[0.75rem] font-bold ${total >= entrySubjectConfig.passMarks ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}
                               >
                                 {total}
                               </span>
                             </td>
                             <td className="py-2 px-2 text-center">
                               <span
-                                className={`text-[10px] py-[2px] px-[5px] rounded font-medium ${GRADE_COLORS[grade] || 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
+                                className={`text-[0.625rem] py-[0.125rem] px-[0.3125rem] rounded font-medium ${GRADE_COLORS[grade] || 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
                               >
                                 {grade}
                               </span>
@@ -597,7 +597,7 @@ export default function Step3Evaluation() {
                   </table>
                 </div>
                 {classStudents.length === 0 && (
-                  <div className="text-center py-8 text-[var(--text-muted)] text-[12px]">
+                  <div className="text-center py-8 text-[var(--text-muted)] text-[0.75rem]">
                     <Users size={24} className="mx-auto mb-2 opacity-30" />
                     {isBn ? 'এই সেকশনে কোনো শিক্ষার্থী নেই' : 'No students in this section'}
                   </div>
@@ -608,7 +608,7 @@ export default function Step3Evaluation() {
             {entryExamId && entryClassId && entrySectionId && entrySubjectId && !entrySubjectConfig && (
               <div className={`${sectionCls} text-center py-10`}>
                 <AlertTriangle size={24} className="mx-auto mb-2 opacity-30 text-[var(--text-muted)]" />
-                <p className="text-[13px] text-[var(--text-muted)]">
+                <p className="text-[0.8125rem] text-[var(--text-muted)]">
                   {isBn ? 'মার্ক ডিস্ট্রিবিউশন কনফিগার করুন' : 'Configure mark distribution for this exam & subject'}
                 </p>
               </div>
@@ -617,7 +617,7 @@ export default function Step3Evaluation() {
             {!entryExamId && (
               <div className={`${sectionCls} text-center py-10`}>
                 <BookOpen size={24} className="mx-auto mb-2 opacity-30 text-[var(--text-muted)]" />
-                <p className="text-[13px] text-[var(--text-muted)]">
+                <p className="text-[0.8125rem] text-[var(--text-muted)]">
                   {isBn ? 'পরীক্ষা, শ্রেণি, সেকশন ও বিষয় নির্বাচন করুন' : 'Select exam, class, section and subject to enter marks'}
                 </p>
               </div>
@@ -633,7 +633,7 @@ export default function Step3Evaluation() {
                 <Lock size={15} className="text-[var(--brand)]" />
                 {isBn ? 'মার্কস লক/আনলক' : 'Marks Lock/Unlock'}
               </div>
-              <p className="text-[11px] text-[var(--text-muted)] mb-3">
+              <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
                 {isBn ? 'সম্পন্ন এন্ট্রি লক করুন বা পরিবর্তনের জন্য আনলক করুন' : 'Lock completed entries or unlock for changes'}
               </p>
               <div className="space-y-2">
@@ -649,10 +649,10 @@ export default function Step3Evaluation() {
                         className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]"
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="text-[12px] font-semibold text-[var(--text-primary)]">
+                          <div className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
                             {isBn ? subject?.nameBn : subject?.name} — {entry.classId} {entry.sectionId}
                           </div>
-                          <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)] mt-0.5">
+                          <div className="flex items-center gap-2 text-[0.625rem] text-[var(--text-muted)] mt-0.5">
                             <span>
                               {entry.enteredCount}/{entry.totalStudents} entered
                             </span>
@@ -673,7 +673,7 @@ export default function Step3Evaluation() {
                               ? unlockMarks(entry.examId, entry.classId, entry.sectionId, entry.subjectId)
                               : lockMarks(entry.examId, entry.classId, entry.sectionId, entry.subjectId)
                           }
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium cursor-pointer border-none ${isLocked ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--green-light)] text-[var(--green)]'}`}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium cursor-pointer border-none ${isLocked ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--green-light)] text-[var(--green)]'}`}
                         >
                           {isLocked ? (
                             <>
@@ -691,7 +691,7 @@ export default function Step3Evaluation() {
                     )
                   })}
                 {marksEntryStatuses.length === 0 && (
-                  <div className="text-center py-8 text-[var(--text-muted)] text-[12px]">
+                  <div className="text-center py-8 text-[var(--text-muted)] text-[0.75rem]">
                     {isBn ? 'এখনো মার্কস এন্ট্রি শুরু হয়নি' : 'No marks entry records yet'}
                   </div>
                 )}

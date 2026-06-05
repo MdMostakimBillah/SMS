@@ -64,7 +64,7 @@ export default function HRFundTab({
     <>
       {/* Institution Fund */}
       <div className={sectionCls(isMobile)}>
-        <div className="flex justify-between items-center mb-[14px]">
+        <div className="flex justify-between items-center mb-[0.875rem]">
           <div className={sectionTitleCls}>
             <HandCoins size={15} className="text-[var(--brand)]" />
             {isBn ? 'প্রতিষ্ঠান তহবিল' : 'Institution Fund'}
@@ -72,14 +72,14 @@ export default function HRFundTab({
           <div className="flex gap-1.5">
             <button
               onClick={() => setShowPDFModal('fund')}
-              className="flex items-center gap-[5px] py-[7px] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]"
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]"
             >
               <FileText size={13} />
               PDF
             </button>
             <button
               onClick={() => setModalType('fund')}
-              className="flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
             >
               <Plus size={14} />
               {isBn ? 'লেনদেন' : 'Transaction'}
@@ -88,10 +88,10 @@ export default function HRFundTab({
         </div>
 
         {/* Date filter */}
-        <div className="flex items-center gap-2 mb-[14px] flex-wrap">
+        <div className="flex items-center gap-2 mb-[0.875rem] flex-wrap">
           <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
             <Calendar size={13} />
-            <span className="text-[11px] font-medium">{isBn ? 'তারিখ' : 'Date'}:</span>
+            <span className="text-[0.6875rem] font-medium">{isBn ? 'তারিখ' : 'Date'}:</span>
           </div>
           <input
             type="date"
@@ -100,9 +100,9 @@ export default function HRFundTab({
               setFundDateFrom(e.target.value)
               setPage(1)
             }}
-            className="h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none"
+            className="h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] outline-none"
           />
-          <span className="text-[var(--text-muted)] text-[11px]">–</span>
+          <span className="text-[var(--text-muted)] text-[0.6875rem]">–</span>
           <input
             type="date"
             value={fundDateTo}
@@ -110,7 +110,7 @@ export default function HRFundTab({
               setFundDateTo(e.target.value)
               setPage(1)
             }}
-            className="h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none"
+            className="h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] outline-none"
           />
           <div className="flex">
             <button
@@ -121,7 +121,7 @@ export default function HRFundTab({
                 setFundDateTo(new Date().toISOString().split('T')[0])
                 setPage(1)
               }}
-              className="h-8 px-3 rounded-l-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[11px] text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--bg-primary)]"
+              className="h-8 px-3 rounded-l-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--bg-primary)]"
             >
               6M
             </button>
@@ -133,7 +133,7 @@ export default function HRFundTab({
                 setFundDateTo(new Date().toISOString().split('T')[0])
                 setPage(1)
               }}
-              className={`h-8 px-3 border border-[var(--border)] bg-[var(--bg-secondary)] text-[11px] text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--bg-primary)] ${fundDateFrom || fundDateTo ? 'border-r-0' : 'rounded-r-lg'}`}
+              className={`h-8 px-3 border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--bg-primary)] ${fundDateFrom || fundDateTo ? 'border-r-0' : 'rounded-r-lg'}`}
             >
               1Y
             </button>
@@ -144,7 +144,7 @@ export default function HRFundTab({
                   setFundDateTo('')
                   setPage(1)
                 }}
-                className="h-8 px-3 rounded-r-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[11px] text-[var(--red)] cursor-pointer hover:bg-[var(--bg-primary)]"
+                className="h-8 px-3 rounded-r-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--red)] cursor-pointer hover:bg-[var(--bg-primary)]"
               >
                 ✕
               </button>
@@ -153,9 +153,9 @@ export default function HRFundTab({
         </div>
 
         {/* Fund Balance Summary */}
-        <div className={`p-[14px] rounded-[10px] mb-[14px] ${fundBalance >= 0 ? 'bg-[var(--green-light)]' : 'bg-[var(--red-light)]'}`}>
+        <div className={`p-[0.875rem] rounded-[0.625rem] mb-[0.875rem] ${fundBalance >= 0 ? 'bg-[var(--green-light)]' : 'bg-[var(--red-light)]'}`}>
           <div className="flex items-center justify-between mb-2">
-            <span className={`text-[13px] font-semibold ${fundBalance >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
+            <span className={`text-[0.8125rem] font-semibold ${fundBalance >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
               {isBn ? 'মোট ব্যালেন্স' : 'Total Balance'}
             </span>
             <span className={`text-xl font-bold ${fundBalance >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
@@ -164,7 +164,7 @@ export default function HRFundTab({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-[var(--bg-primary)] rounded-lg p-2">
-              <div className="text-[10px] text-[var(--green)] font-medium">{isBn ? 'আয়' : 'Income'}</div>
+              <div className="text-[0.625rem] text-[var(--green)] font-medium">{isBn ? 'আয়' : 'Income'}</div>
               <div className="text-sm font-bold text-[var(--green)]">
                 ৳
                 {funds
@@ -174,7 +174,7 @@ export default function HRFundTab({
               </div>
             </div>
             <div className="bg-[var(--bg-primary)] rounded-lg p-2">
-              <div className="text-[10px] text-[var(--red)] font-medium">{isBn ? 'খরচ' : 'Expense'}</div>
+              <div className="text-[0.625rem] text-[var(--red)] font-medium">{isBn ? 'খরচ' : 'Expense'}</div>
               <div className="text-sm font-bold text-[var(--red)]">
                 ৳
                 {funds
@@ -187,22 +187,22 @@ export default function HRFundTab({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-xs min-w-[500px]">
+          <table className="w-full text-xs min-w-[31.25rem]">
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                <th className="py-[10px] px-2 w-9">
+                <th className="py-[0.625rem] px-2 w-9">
                   <input
                     type="checkbox"
                     checked={selectedFund.length === filteredFunds.length && filteredFunds.length > 0}
                     onChange={toggleAllFund}
-                    className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                    className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                   />
                 </th>
                 {[isBn ? 'তারিখ' : 'Date', isBn ? 'ধরন' : 'Type', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'বিবরণ' : 'Description'].map(
                   (h) => (
                     <th
                       key={h}
-                      className="py-[10px] px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap"
+                      className="py-[0.625rem] px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.025rem] whitespace-nowrap"
                     >
                       {h}
                     </th>
@@ -227,13 +227,13 @@ export default function HRFundTab({
                       type="checkbox"
                       checked={selectedFund.includes(f.id)}
                       onChange={() => toggleFund(f.id)}
-                      className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                     />
                   </td>
-                  <td className="py-2 px-2 text-[11px] text-[var(--text-muted)]">{f.date}</td>
+                  <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-muted)]">{f.date}</td>
                   <td className="py-2 px-2">
                     <span
-                      className={`text-[10px] py-[2px] px-[6px] rounded-[5px] font-medium ${f.type === 'withdrawal' ? 'bg-[var(--red-light)]' : 'bg-[var(--green-light)]'} ${f.type === 'withdrawal' ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}
+                      className={`text-[0.625rem] py-[0.125rem] px-[0.375rem] rounded-[0.3125rem] font-medium ${f.type === 'withdrawal' ? 'bg-[var(--red-light)]' : 'bg-[var(--green-light)]'} ${f.type === 'withdrawal' ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}
                     >
                       {f.type.replace('_', ' ')}
                     </span>
@@ -243,25 +243,25 @@ export default function HRFundTab({
                   >
                     {f.type === 'withdrawal' ? '-' : '+'}৳{f.amount.toLocaleString()}
                   </td>
-                  <td className="py-2 px-2 text-[11px] text-[var(--text-secondary)]">{f.description}</td>
+                  <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-secondary)]">{f.description}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         {filteredFunds.length > perPage && (
-          <div className="py-[10px] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
+          <div className="py-[0.625rem] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
             <span className="text-xs text-[var(--text-muted)]">
               {(page - 1) * perPage + 1}–{Math.min(page * perPage, filteredFunds.length)} / {filteredFunds.length}
             </span>
-            <div className="flex gap-[3px] items-center">
+            <div className="flex gap-[0.1875rem] items-center">
               <select
                 value={perPage}
                 onChange={(e) => {
                   setPerPage(Number(e.target.value))
                   setPage(1)
                 }}
-                className="py-1 px-[6px] rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-[11px] font-[inherit] outline-none mr-[6px]"
+                className="py-1 px-[0.375rem] rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-[0.6875rem] font-[inherit] outline-none mr-[0.375rem]"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -321,7 +321,7 @@ export default function HRFundTab({
           </div>
         )}
         {selectedFund.length > 0 && (
-          <div className="mt-2 text-[11px] text-[var(--brand)] bg-[var(--brand-light)] py-1 px-[10px] rounded-md inline-block">
+          <div className="mt-2 text-[0.6875rem] text-[var(--brand)] bg-[var(--brand-light)] py-1 px-[0.625rem] rounded-md inline-block">
             {selectedFund.length} {isBn ? 'নির্বাচিত' : 'selected'}
           </div>
         )}
@@ -333,13 +333,13 @@ export default function HRFundTab({
           <Users size={15} className="text-[var(--teal)]" />
           {isBn ? 'কর্মচারী তহবিল' : 'Employee Fund'}
         </div>
-        <div className="text-[12px] text-[var(--text-secondary)] mb-3 leading-relaxed">
+        <div className="text-[0.75rem] text-[var(--text-secondary)] mb-3 leading-relaxed">
           {isBn
             ? 'প্রতিটি কর্মচারীর বেতন থেকে মাসিক তহবিল কাটা হয়। চাকরি ছাড়লে তাদের তহবিল + নাফা ফেরত দেওয়া হয়।'
             : "A monthly fund is deducted from each employee's salary. When an employee resigns, their fund + profit is returned."}
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-xs min-w-[500px]">
+          <table className="w-full text-xs min-w-[31.25rem]">
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 {[
@@ -351,7 +351,7 @@ export default function HRFundTab({
                 ].map((h) => (
                   <th
                     key={h}
-                    className="py-[10px] px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.4px] whitespace-nowrap"
+                    className="py-[0.625rem] px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.025rem] whitespace-nowrap"
                   >
                     {h}
                   </th>
@@ -377,7 +377,7 @@ export default function HRFundTab({
                   >
                     <td className="py-2 px-2">
                       <div className="text-xs font-medium text-[var(--text-primary)]">{t.nameEn}</div>
-                      <div className="text-[10px] text-[var(--text-muted)]">{t.designation}</div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)]">{t.designation}</div>
                     </td>
                     <td className="py-2 px-2 text-xs text-[var(--text-secondary)]">৳{t.salary.toLocaleString()}</td>
                     <td className="py-2 px-2 text-xs font-medium text-[var(--brand)]">{avgPercent > 0 ? `${avgPercent}%` : '—'}</td>

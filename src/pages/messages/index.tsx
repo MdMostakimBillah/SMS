@@ -33,7 +33,7 @@ export default function Page() {
                 <div className="text-xs text-[var(--text-secondary)]">Teachers, parents & groups</div>
               </div>
             </div>
-            <button className="bg-transparent border border-[var(--border-soft)] px-2 py-1.5 rounded-[10px]">
+            <button className="bg-transparent border border-[var(--border-soft)] px-2 py-1.5 rounded-[0.625rem]">
               <Settings size={14} />
             </button>
           </div>
@@ -45,7 +45,7 @@ export default function Page() {
                 className={`flex items-center gap-3 cursor-pointer ${active === c.id ? 'bg-gradient-to-r from-[var(--primary)] to-[var(--primary-dark)] text-[#072034]' : ''}`}
                 onClick={() => setActive(c.id)}
               >
-                <div className="w-[44px] h-[44px] rounded-[10px] bg-[var(--card)] flex items-center justify-center">
+                <div className="w-[2.75rem] h-[2.75rem] rounded-[0.625rem] bg-[var(--card)] flex items-center justify-center">
                   <User size={18} />
                 </div>
                 <div className="flex-1">
@@ -60,7 +60,7 @@ export default function Page() {
 
         <div className="chat-window">
           <div className="flex items-center gap-3 pb-3 border-b border-[var(--border-soft)] mb-3">
-            <div className="w-[44px] h-[44px] rounded-[10px] bg-[var(--card)] flex items-center justify-center">
+            <div className="w-[2.75rem] h-[2.75rem] rounded-[0.625rem] bg-[var(--card)] flex items-center justify-center">
               <User size={18} />
             </div>
             <div className="flex-1">

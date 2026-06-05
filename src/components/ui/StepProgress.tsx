@@ -23,10 +23,10 @@ const statusColors = {
 
 const connectorBase: React.CSSProperties = {
   flex: 1,
-  height: '2px',
-  minWidth: '20px',
-  maxWidth: '60px',
-  borderRadius: '1px',
+  height: '0.125rem',
+  minWidth: '1.25rem',
+  maxWidth: '3.75rem',
+  borderRadius: '0.0625rem',
   margin: '0 4px',
 }
 
@@ -37,7 +37,7 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
 
   if (isMobile) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
         {steps.map((step, i) => {
           const colors = statusColors[step.status]
           return (
@@ -47,9 +47,9 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '0.625rem',
                 padding: '10px 12px',
-                borderRadius: '10px',
+                borderRadius: '0.625rem',
                 background: step.status === 'current' ? 'var(--brand-light)' : 'var(--surface)',
                 border: `1px solid ${step.status === 'current' ? 'rgba(99,102,241,0.2)' : 'var(--border)'}`,
                 cursor: onStepClick ? 'pointer' : 'default',
@@ -58,16 +58,16 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
             >
               <div
                 style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '8px',
+                  width: '1.75rem',
+                  height: '1.75rem',
+                  borderRadius: '0.5rem',
                   background: colors.bg,
                   color: colors.text,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  fontSize: '11px',
+                  fontSize: '0.6875rem',
                   fontWeight: 600,
                 }}
               >
@@ -76,20 +76,20 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontSize: '12px',
+                    fontSize: '0.75rem',
                     fontWeight: step.status === 'current' ? 600 : 500,
                     color: step.status === 'upcoming' ? 'var(--text-muted)' : 'var(--text-primary)',
                   }}
                 >
                   {step.label}
                 </div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
                   {step.status === 'completed' ? 'Completed' : step.status === 'current' ? 'In Progress' : 'Pending'}
                 </div>
               </div>
               {step.status === 'current' && (
                 <div
-                  style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--brand)', animation: 'pulse 2s infinite' }}
+                  style={{ width: '0.375rem', height: '0.375rem', borderRadius: '50%', background: 'var(--brand)', animation: 'pulse 2s infinite' }}
                 />
               )}
             </div>
@@ -112,9 +112,9 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '0.5rem',
                 padding: '8px 14px',
-                borderRadius: '10px',
+                borderRadius: '0.625rem',
                 background: step.status === 'current' ? 'var(--brand-light)' : 'transparent',
                 border: `1px solid ${step.status === 'current' ? 'rgba(99,102,241,0.2)' : 'transparent'}`,
                 cursor: onStepClick ? 'pointer' : 'default',
@@ -130,8 +130,8 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
             >
               <div
                 style={{
-                  width: '26px',
-                  height: '26px',
+                  width: '1.625rem',
+                  height: '1.625rem',
                   borderRadius: '50%',
                   background: colors.bg,
                   color: colors.text,
@@ -139,7 +139,7 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  fontSize: '10px',
+                  fontSize: '0.625rem',
                   fontWeight: 600,
                   boxShadow:
                     step.status !== 'upcoming'
@@ -152,7 +152,7 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
               <div>
                 <div
                   style={{
-                    fontSize: '11px',
+                    fontSize: '0.6875rem',
                     fontWeight: step.status === 'current' ? 600 : 500,
                     color: step.status === 'upcoming' ? 'var(--text-muted)' : 'var(--text-primary)',
                     lineHeight: 1.2,
@@ -160,7 +160,7 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
                 >
                   {step.label}
                 </div>
-                <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
+                <div style={{ fontSize: '0.5625rem', color: 'var(--text-muted)' }}>
                   {step.status === 'completed' ? 'Done' : step.status === 'current' ? 'Active' : 'Pending'}
                 </div>
               </div>

@@ -21,12 +21,12 @@ interface FieldProps {
 }
 function FormField({ labelEn, labelBn, value, onChange, type = 'text', required = false, options, isBn }: FieldProps) {
   const base =
-    'w-full px-3 py-[9px] rounded-[9px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] outline-none focus:border-[var(--brand)] transition-colors'
+    'w-full px-3 py-[0.5625rem] rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors'
   return (
     <div>
-      <label className="text-xs font-medium text-[var(--text-secondary)] mb-[5px] block">
+      <label className="text-xs font-medium text-[var(--text-secondary)] mb-[0.3125rem] block">
         {isBn ? labelBn : labelEn}
-        {required && <span className="text-[var(--red)] ml-[3px]">*</span>}
+        {required && <span className="text-[var(--red)] ml-[0.1875rem]">*</span>}
       </label>
       {options ? (
         <select value={value} onChange={(e) => onChange(e.target.value)} required={required} className={`${base} cursor-pointer`}>
@@ -202,10 +202,10 @@ export default function EditTeacherPage() {
 
   // ── helpers ──
   const g = (n: number) => `grid ${isMobile ? 'grid-cols-1' : `grid-cols-${n}`} gap-3`
-  const card = `bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] ${isMobile ? 'p-3.5' : 'p-5'} mb-[14px]`
+  const card = `bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] ${isMobile ? 'p-3.5' : 'p-5'} mb-[0.875rem]`
   const sHead = (icon: React.ReactNode, bn: string, en: string, col = 'var(--brand)', bg = 'var(--brand-light)') => (
     <div className="flex items-center gap-2 mb-4 pb-2.5 border-b border-[var(--border)]">
-      <div className="w-[30px] h-[30px] rounded-lg flex items-center justify-center" style={{ background: bg }}>
+      <div className="w-[1.875rem] h-[1.875rem] rounded-lg flex items-center justify-center" style={{ background: bg }}>
         {React.cloneElement(icon as React.ReactElement<{ size?: number; className?: string }>, { size: 15, className: `text-[${col}]` })}
       </div>
       <span className="text-sm font-semibold text-[var(--text-primary)]">{isBn ? bn : en}</span>
@@ -218,7 +218,7 @@ export default function EditTeacherPage() {
         <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'শিক্ষক পাওয়া যায়নি' : 'Teacher not found'}</p>
         <button
           onClick={() => navigate('/teachers/all')}
-          className="mt-3 px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[13px] cursor-pointer"
+          className="mt-3 px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] cursor-pointer"
         >
           {isBn ? 'ফিরে যান' : 'Go Back'}
         </button>
@@ -228,21 +228,21 @@ export default function EditTeacherPage() {
 
   if (saved) {
     return (
-      <div className="max-w-[600px] mx-auto px-1">
+      <div className="max-w-[37.5rem] mx-auto px-1">
         <div className={`${card} text-center pt-10`}>
-          <div className="w-[60px] h-[60px] rounded-full bg-[var(--green-light)] flex items-center justify-center mx-auto mb-3">
+          <div className="w-[3.75rem] h-[3.75rem] rounded-full bg-[var(--green-light)] flex items-center justify-center mx-auto mb-3">
             <CheckCircle size={30} className="text-[var(--green)]" />
           </div>
           <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2.5">
             {isBn ? 'সংরক্ষণ করা হয়েছে!' : 'Saved Successfully!'}
           </h2>
-          <p className="text-[13px] text-[var(--teal)] mb-5">
+          <p className="text-[0.8125rem] text-[var(--teal)] mb-5">
             ✅ {isBn ? `${nameEn} এর তথ্য আপডেট করা হয়েছে` : `${nameEn}'s info has been updated`}
           </p>
           <div className="flex gap-2 justify-center flex-wrap">
             <button
               onClick={() => navigate('/teachers/all')}
-              className="flex items-center gap-1.5 px-[18px] py-2.5 rounded-[9px] bg-[var(--brand)] border-0 text-white text-[13px] font-medium cursor-pointer"
+              className="flex items-center gap-1.5 px-[1.125rem] py-2.5 rounded-[0.5625rem] bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer"
             >
               {isBn ? 'সকল শিক্ষক' : 'All Teachers'}
             </button>
@@ -255,33 +255,33 @@ export default function EditTeacherPage() {
   return (
     <form onSubmit={handleSubmit} autoComplete="off">
       {/* Header */}
-      <div className="flex items-center gap-[10px] mb-4 flex-wrap">
+      <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
           type="button"
           onClick={() => navigate('/teachers/all')}
-          className="flex items-center gap-[5px] px-3 py-[7px] rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)]"
+          className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)]"
         >
           ← {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div>
-          <h1 className={`${isMobile ? 'text-lg' : 'text-[22px]'} font-semibold text-[var(--text-primary)]`}>
+          <h1 className={`${isMobile ? 'text-lg' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)]`}>
             {isBn ? 'শিক্ষক সম্পাদনা' : 'Edit Teacher'}
           </h1>
-          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
+          <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {teacher.id} · {teacher.nameEn}
           </p>
         </div>
       </div>
 
       {/* ID bar */}
-      <div className={`${card} flex items-center justify-between flex-wrap gap-[10px]`}>
+      <div className={`${card} flex items-center justify-between flex-wrap gap-[0.625rem]`}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-[40px] rounded-[10px] bg-[var(--brand-light)] flex items-center justify-center">
+          <div className="w-10 h-[2.5rem] rounded-[0.625rem] bg-[var(--brand-light)] flex items-center justify-center">
             <IdCard size={20} className="text-[var(--brand)]" />
           </div>
           <div>
-            <div className="text-[11px] text-[var(--text-muted)]">{isBn ? 'শিক্ষক আইডি' : 'Teacher ID'}</div>
-            <div className="text-xl font-bold text-[var(--brand)] tracking-[2px]">{teacher.id}</div>
+            <div className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'শিক্ষক আইডি' : 'Teacher ID'}</div>
+            <div className="text-xl font-bold text-[var(--brand)] tracking-[0.125rem]">{teacher.id}</div>
           </div>
         </div>
       </div>
@@ -289,22 +289,22 @@ export default function EditTeacherPage() {
       {/* Personal */}
       <div className={card}>
         {sHead(<Users />, 'ব্যক্তিগত তথ্য', 'Personal Information')}
-        <div className="flex gap-4 mb-[14px] flex-wrap">
+        <div className="flex gap-4 mb-[0.875rem] flex-wrap">
           {/* Photo */}
           <div>
-            <div className="text-xs font-medium text-[var(--text-secondary)] mb-[5px]">
+            <div className="text-xs font-medium text-[var(--text-secondary)] mb-[0.3125rem]">
               {isBn ? 'ছবি (সর্বোচ্চ ২ MB)' : 'Photo (max 2MB)'}
             </div>
             <div
               onClick={() => fileRef.current?.click()}
-              className={`w-[90px] h-[110px] rounded-[10px] border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden bg-[var(--bg-secondary)] relative ${photo ? 'border-[var(--brand)]' : 'border-[var(--border-2)]'}`}
+              className={`w-[5.625rem] h-[6.875rem] rounded-[0.625rem] border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden bg-[var(--bg-secondary)] relative ${photo ? 'border-[var(--brand)]' : 'border-[var(--border-2)]'}`}
             >
               {photo ? (
                 <img src={photo} alt="" className="w-full h-full object-cover" />
               ) : (
                 <div className="text-center text-[var(--text-muted)] pointer-events-none">
                   <Camera size={22} className="block mx-auto mb-1" />
-                  <div className="text-[10px]">{isBn ? 'ছবি' : 'Photo'}</div>
+                  <div className="text-[0.625rem]">{isBn ? 'ছবি' : 'Photo'}</div>
                 </div>
               )}
               {photo && (
@@ -314,18 +314,18 @@ export default function EditTeacherPage() {
                     e.stopPropagation()
                     setPhoto('')
                   }}
-                  className="absolute top-[3px] right-[3px] w-[18px] h-[18px] rounded-full bg-[var(--red)] border-0 cursor-pointer flex items-center justify-center text-white"
+                  className="absolute top-[0.1875rem] right-[0.1875rem] w-[1.125rem] h-[1.125rem] rounded-full bg-[var(--red)] border-0 cursor-pointer flex items-center justify-center text-white"
                 >
                   <X size={10} />
                 </button>
               )}
             </div>
             <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} className="hidden" />
-            {photoErr && <div className="text-[10px] text-[var(--red)] mt-[3px] max-w-[90px]">{photoErr}</div>}
+            {photoErr && <div className="text-[0.625rem] text-[var(--red)] mt-[0.1875rem] max-w-[5.625rem]">{photoErr}</div>}
           </div>
           {/* Name + DOB + Gender */}
-          <div className="flex-1 min-w-[200px]">
-            <div className={`${g(2)} mb-[10px]`}>
+          <div className="flex-1 min-w-[12.5rem]">
+            <div className={`${g(2)} mb-[0.625rem]`}>
               <FormField labelEn="Name (English)" labelBn="নাম (ইংরেজি)" value={nameEn} onChange={setNameEn} required isBn={isBn} />
               <FormField labelEn="Name (Bangla)" labelBn="নাম (বাংলা)" value={nameBn} onChange={setNameBn} isBn={isBn} />
             </div>
@@ -343,7 +343,7 @@ export default function EditTeacherPage() {
             </div>
           </div>
         </div>
-        <div className={`${g(3)} mb-[10px]`}>
+        <div className={`${g(3)} mb-[0.625rem]`}>
           <FormField
             labelEn="Blood Group"
             labelBn="রক্তের গ্রুপ"
@@ -362,7 +362,7 @@ export default function EditTeacherPage() {
           />
           <FormField labelEn="NID" labelBn="জাতীয় পরিচয়পত্র" value={nid} onChange={setNid} isBn={isBn} />
         </div>
-        <div className={`${g(3)} mb-[10px]`}>
+        <div className={`${g(3)} mb-[0.625rem]`}>
           <FormField labelEn="Mobile" labelBn="মোবাইল" value={phone} onChange={setPhone} type="tel" required isBn={isBn} />
           <FormField labelEn="Email" labelBn="ইমেইল" value={email} onChange={setEmail} type="email" isBn={isBn} />
           <FormField
@@ -385,13 +385,13 @@ export default function EditTeacherPage() {
         <div className={g(2)}>
           <div>
             <FormField labelEn="In Time" labelBn="প্রবেশ সময়" value={inTime} onChange={setInTime} type="time" isBn={isBn} />
-            <div className="text-[10px] text-[var(--text-muted)] mt-[3px]">
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.1875rem]">
               {isBn ? 'বায়োমেট্রিক থেকে পুল করা হবে' : 'Pulled from biometric machine'}
             </div>
           </div>
           <div>
             <FormField labelEn="Out Time" labelBn="প্রস্থান সময়" value={outTime} onChange={setOutTime} type="time" isBn={isBn} />
-            <div className="text-[10px] text-[var(--text-muted)] mt-[3px]">
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.1875rem]">
               {isBn ? 'বায়োমেট্রিক থেকে পুল করা হবে' : 'Pulled from biometric machine'}
             </div>
           </div>
@@ -401,7 +401,7 @@ export default function EditTeacherPage() {
       {/* Professional */}
       <div className={card}>
         {sHead(<Briefcase />, 'পেশাদার তথ্য', 'Professional Information', 'var(--amber)', 'var(--amber-light)')}
-        <div className={`${g(3)} mb-[10px]`}>
+        <div className={`${g(3)} mb-[0.625rem]`}>
           <FormField
             labelEn="Department"
             labelBn="বিভাগ"
@@ -425,7 +425,7 @@ export default function EditTeacherPage() {
           />
           <FormField labelEn="Qualification" labelBn="যোগ্যতা" value={qualification} onChange={setQualification} isBn={isBn} />
         </div>
-        <div className={`${g(3)} mb-[10px]`}>
+        <div className={`${g(3)} mb-[0.625rem]`}>
           <FormField labelEn="Experience" labelBn="অভিজ্ঞতা" value={experience} onChange={setExperience} isBn={isBn} />
           <FormField
             labelEn="Joining Date"
@@ -465,20 +465,20 @@ export default function EditTeacherPage() {
 
         {/* Subjects */}
         {departmentId && (
-          <div className="mt-[14px]">
+          <div className="mt-[0.875rem]">
             <label className="text-xs font-medium text-[var(--text-secondary)] mb-2 block">
               {isBn ? 'বিষয় নির্বাচন করুন' : 'Select Subjects'}
             </label>
             {recommendedSubjects.length > 0 && (
               <div className="mb-2">
-                <div className="text-[11px] text-[var(--green)] font-medium mb-1">{isBn ? 'সুপারিশকৃত' : 'Recommended'}</div>
+                <div className="text-[0.6875rem] text-[var(--green)] font-medium mb-1">{isBn ? 'সুপারিশকৃত' : 'Recommended'}</div>
                 <div className="flex flex-wrap gap-1.5">
                   {recommendedSubjects.map((s) => (
                     <button
                       key={s.id}
                       type="button"
                       onClick={() => toggleSubject(s.id)}
-                      className={`px-3 py-[5px] rounded-lg text-xs cursor-pointer border ${
+                      className={`px-3 py-[0.3125rem] rounded-lg text-xs cursor-pointer border ${
                         subjectIds.includes(s.id)
                           ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)] font-semibold'
                           : 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]'
@@ -492,14 +492,14 @@ export default function EditTeacherPage() {
             )}
             {otherSubjects.length > 0 && (
               <div>
-                <div className="text-[11px] text-[var(--text-muted)] font-medium mb-1">{isBn ? 'অন্যান্য বিভাগ' : 'Other Departments'}</div>
+                <div className="text-[0.6875rem] text-[var(--text-muted)] font-medium mb-1">{isBn ? 'অন্যান্য বিভাগ' : 'Other Departments'}</div>
                 <div className="flex flex-wrap gap-1.5">
                   {otherSubjects.map((s) => (
                     <button
                       key={s.id}
                       type="button"
                       onClick={() => toggleSubject(s.id)}
-                      className={`px-3 py-[5px] rounded-lg text-xs cursor-pointer border ${
+                      className={`px-3 py-[0.3125rem] rounded-lg text-xs cursor-pointer border ${
                         subjectIds.includes(s.id)
                           ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)] font-semibold'
                           : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
@@ -518,7 +518,7 @@ export default function EditTeacherPage() {
       {/* Father */}
       <div className={card}>
         {sHead(<Users />, 'পিতার তথ্য', "Father's Info", 'var(--teal)', 'var(--teal-light)')}
-        <div className={`${g(3)} mb-[10px]`}>
+        <div className={`${g(3)} mb-[0.625rem]`}>
           <FormField labelEn="Name (EN)" labelBn="নাম (ইংরেজি)" value={fatherNameEn} onChange={setFatherNameEn} required isBn={isBn} />
           <FormField labelEn="Name (BN)" labelBn="নাম (বাংলা)" value={fatherNameBn} onChange={setFatherNameBn} isBn={isBn} />
           <FormField labelEn="Phone" labelBn="মোবাইল" value={fatherPhone} onChange={setFatherPhone} type="tel" isBn={isBn} />
@@ -531,7 +531,7 @@ export default function EditTeacherPage() {
       {/* Mother */}
       <div className={card}>
         {sHead(<Users />, 'মাতার তথ্য', "Mother's Info", 'var(--purple)', 'var(--purple-light)')}
-        <div className={`${g(3)} mb-[10px]`}>
+        <div className={`${g(3)} mb-[0.625rem]`}>
           <FormField labelEn="Name (EN)" labelBn="নাম (ইংরেজি)" value={motherNameEn} onChange={setMotherNameEn} required isBn={isBn} />
           <FormField labelEn="Name (BN)" labelBn="নাম (বাংলা)" value={motherNameBn} onChange={setMotherNameBn} isBn={isBn} />
           <FormField labelEn="Phone" labelBn="মোবাইল" value={motherPhone} onChange={setMotherPhone} type="tel" isBn={isBn} />
@@ -541,7 +541,7 @@ export default function EditTeacherPage() {
       {/* Guardian */}
       <div className={card}>
         {sHead(<Users />, 'অভিভাবক (ঐচ্ছিক)', 'Guardian (Optional)', 'var(--green)', 'var(--green-light)')}
-        <div className={`${g(3)} mb-[10px]`}>
+        <div className={`${g(3)} mb-[0.625rem]`}>
           <FormField labelEn="Name" labelBn="নাম" value={guardianName} onChange={setGuardianName} isBn={isBn} />
           <FormField
             labelEn="Relation"
@@ -559,17 +559,17 @@ export default function EditTeacherPage() {
       </div>
 
       {/* Submit */}
-      <div className="flex gap-[10px] justify-end flex-wrap">
+      <div className="flex gap-[0.625rem] justify-end flex-wrap">
         <button
           type="button"
           onClick={() => navigate('/teachers/all')}
-          className="px-5 py-2.5 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer"
+          className="px-5 py-2.5 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer"
         >
           {isBn ? 'বাতিল' : 'Cancel'}
         </button>
         <button
           type="submit"
-          className="flex items-center gap-[7px] px-6 py-2.5 rounded-[9px] bg-[var(--brand)] border-0 text-white text-[13px] font-semibold cursor-pointer shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
+          className="flex items-center gap-[0.4375rem] px-6 py-2.5 rounded-[0.5625rem] bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-semibold cursor-pointer shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
         >
           <Save size={14} />
           {isBn ? 'সংরক্ষণ করুন' : 'Save Changes'}

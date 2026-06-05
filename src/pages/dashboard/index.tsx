@@ -27,33 +27,33 @@ const STATUS_COLORS = { approved: '#22c55e', pending: '#f59e0b', rejected: '#ef4
 
 function DashboardSkeleton() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div className="skeleton skeleton-title" style={{ width: '200px' }} />
-          <div className="skeleton skeleton-text" style={{ width: '150px' }} />
+          <div className="skeleton skeleton-title" style={{ width: '12.5rem' }} />
+          <div className="skeleton skeleton-text" style={{ width: '9.375rem' }} />
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <div className="skeleton" style={{ width: '80px', height: '32px', borderRadius: '8px' }} />
-          <div className="skeleton" style={{ width: '100px', height: '32px', borderRadius: '8px' }} />
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="skeleton" style={{ width: '5rem', height: '2rem', borderRadius: '0.5rem' }} />
+          <div className="skeleton" style={{ width: '6.25rem', height: '2rem', borderRadius: '0.5rem' }} />
         </div>
       </div>
-      <div className="skeleton" style={{ width: '250px', height: '36px', borderRadius: '20px' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+      <div className="skeleton" style={{ width: '15.625rem', height: '2.25rem', borderRadius: '1.25rem' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="skeleton-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <div className="skeleton skeleton-circle" style={{ width: '36px', height: '36px' }} />
-              <div className="skeleton" style={{ width: '20px', height: '20px', borderRadius: '4px' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <div className="skeleton skeleton-circle" style={{ width: '2.25rem', height: '2.25rem' }} />
+              <div className="skeleton" style={{ width: '1.25rem', height: '1.25rem', borderRadius: '0.25rem' }} />
             </div>
-            <div className="skeleton" style={{ width: '80px', height: '24px', marginBottom: '6px' }} />
-            <div className="skeleton skeleton-text" style={{ width: '100px' }} />
+            <div className="skeleton" style={{ width: '5rem', height: '1.5rem', marginBottom: '0.375rem' }} />
+            <div className="skeleton skeleton-text" style={{ width: '6.25rem' }} />
           </div>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.875rem' }}>
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="skeleton-card" style={{ minHeight: '180px' }} />
+          <div key={i} className="skeleton-card" style={{ minHeight: '11.25rem' }} />
         ))}
       </div>
     </div>
@@ -152,25 +152,25 @@ export default function DashboardPage() {
   const col4 = isMobile ? '1fr 1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(4,1fr)'
   const col3 = isMobile ? '1fr' : isTablet ? '1fr 1fr' : 'repeat(3,1fr)'
   const col2 = isMobile ? '1fr' : '1fr 1fr'
-  const gap = isMobile ? '10px' : '14px'
+  const gap = isMobile ? '10px' : '0.875rem'
 
   const card: React.CSSProperties = {
     background: 'var(--surface)',
     border: '1px solid var(--border)',
-    borderRadius: '12px',
-    padding: isMobile ? '14px' : '16px',
+    borderRadius: '0.75rem',
+    padding: isMobile ? '14px' : '1rem',
     boxShadow: 'var(--shadow-xs)',
   }
 
   const sectionHead = (color: string) => (
-    <div style={{ width: '3px', height: '14px', background: color, borderRadius: '2px', flexShrink: 0 }} />
+    <div style={{ width: '0.1875rem', height: '0.875rem', background: color, borderRadius: '0.125rem', flexShrink: 0 }} />
   )
 
   const chartTooltipStyle = {
     background: 'var(--surface)',
     border: '1px solid var(--border)',
-    borderRadius: '8px',
-    fontSize: '12px',
+    borderRadius: '0.5rem',
+    fontSize: '0.75rem',
     padding: '8px 12px',
   }
 
@@ -181,18 +181,18 @@ export default function DashboardPage() {
       {/* Header */}
       <div
         className="gsap-fade-up"
-        style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}
+        style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.625rem' }}
       >
         <div>
-          <h1 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+          <h1 style={{ fontSize: isMobile ? '18px' : '1.25rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
             {isBn ? 'সুপ্রভাত, Admin 👋' : 'Good morning, Admin 👋'}
           </h1>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '3px' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.1875rem' }}>
             {isBn ? 'শুক্রবার, ৮ মে ২০২৬ · টার্ম ২' : 'Friday, 8 May 2026 · Term 2'}
           </p>
         </div>
         {!isMobile && (
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button className="btn-minimal">
               <Download size={14} /> Export
             </button>
@@ -210,12 +210,12 @@ export default function DashboardPage() {
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: '0.5rem',
           background: 'var(--brand-light)',
           border: '1px solid rgba(99,102,241,0.12)',
-          borderRadius: '8px',
+          borderRadius: '0.5rem',
           padding: '8px 14px',
-          fontSize: '12px',
+          fontSize: '0.75rem',
           color: 'var(--brand)',
           alignSelf: 'flex-start',
           fontWeight: 500,
@@ -223,8 +223,8 @@ export default function DashboardPage() {
       >
         <span
           style={{
-            width: '6px',
-            height: '6px',
+            width: '0.375rem',
+            height: '0.375rem',
             borderRadius: '50%',
             background: 'var(--brand)',
             animation: 'pulse 2s infinite',
@@ -232,7 +232,7 @@ export default function DashboardPage() {
           }}
         />
         {isBn ? `${pendingStudents}টি ভর্তি আবেদন অপেক্ষমান · পরীক্ষা ২০ মে` : `${pendingStudents} admission pending · Exams May 20`}
-        <span style={{ fontSize: '10px', color: 'var(--brand-2)', marginLeft: '4px' }}>
+        <span style={{ fontSize: '0.625rem', color: 'var(--brand-2)', marginLeft: '0.25rem' }}>
           {isBn ? `${approvedStudents} অনুমোদিত` : `${approvedStudents} approved`}
         </span>
       </div>
@@ -293,12 +293,12 @@ export default function DashboardPage() {
               e.currentTarget.style.boxShadow = 'none'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
               <div
                 style={{
-                  width: '34px',
-                  height: '34px',
-                  borderRadius: '8px',
+                  width: '2.125rem',
+                  height: '2.125rem',
+                  borderRadius: '0.5rem',
                   background: `${s.color}15`,
                   display: 'flex',
                   alignItems: 'center',
@@ -312,13 +312,13 @@ export default function DashboardPage() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '3px',
-                  fontSize: '10px',
+                  gap: '0.1875rem',
+                  fontSize: '0.625rem',
                   fontWeight: 600,
                   color: s.up ? 'var(--green)' : 'var(--red)',
                   background: s.up ? 'var(--green-light)' : 'var(--red-light)',
                   padding: '2px 6px',
-                  borderRadius: '4px',
+                  borderRadius: '0.25rem',
                 }}
               >
                 {s.up ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
@@ -327,7 +327,7 @@ export default function DashboardPage() {
             </div>
             <div
               style={{
-                fontSize: isMobile ? '20px' : '24px',
+                fontSize: isMobile ? '20px' : '1.5rem',
                 fontWeight: 700,
                 color: 'var(--text-primary)',
                 letterSpacing: '-0.3px',
@@ -336,7 +336,7 @@ export default function DashboardPage() {
             >
               {s.value}
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>{isBn ? s.labelBn : s.labelEn}</div>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{isBn ? s.labelBn : s.labelEn}</div>
           </div>
         ))}
       </div>
@@ -345,10 +345,10 @@ export default function DashboardPage() {
       <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col3, gap }}>
         {/* Enrollment Trend */}
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {sectionHead('var(--brand)')}
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {isBn ? 'সাপ্তাহিক ভর্তি' : 'Weekly Enrollment'}
               </span>
             </div>
@@ -383,10 +383,10 @@ export default function DashboardPage() {
 
         {/* Class Distribution */}
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {sectionHead('var(--amber)')}
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {isBn ? 'শ্রেণি অনুযায়ী' : 'By Class'}
               </span>
             </div>
@@ -410,10 +410,10 @@ export default function DashboardPage() {
 
         {/* Status Distribution */}
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {sectionHead('var(--green)')}
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'অবস্থা' : 'Status'}</span>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'অবস্থা' : 'Status'}</span>
             </div>
           </div>
           <div
@@ -421,7 +421,7 @@ export default function DashboardPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '12px',
+              gap: '0.75rem',
               flexDirection: isMobile ? 'column' : 'row',
             }}
           >
@@ -437,10 +437,10 @@ export default function DashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
               {statusData.map((s) => (
-                <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.6875rem' }}>
+                  <div style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
                   <span style={{ color: 'var(--text-secondary)', flex: 1 }}>{s.name}</span>
                   <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{s.value}</span>
                 </div>
@@ -454,13 +454,13 @@ export default function DashboardPage() {
       <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col3, gap }}>
         {/* Gender Distribution */}
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
             {sectionHead('var(--purple)')}
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               {isBn ? 'লিঙ্গ অনুপাত' : 'Gender Ratio'}
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <CircularChart
               value={totalStudents > 0 ? Math.round((maleStudents / totalStudents) * 100) : 0}
               size={72}
@@ -468,31 +468,31 @@ export default function DashboardPage() {
               color="var(--brand)"
             />
             <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{isBn ? 'ছাত্র' : 'Male'}</span>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)' }}>{maleStudents}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
+                <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{isBn ? 'ছাত্র' : 'Male'}</span>
+                <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-primary)' }}>{maleStudents}</span>
               </div>
-              <div style={{ height: '4px', background: 'var(--border)', borderRadius: '2px', marginBottom: '8px' }}>
+              <div style={{ height: '0.25rem', background: 'var(--border)', borderRadius: '0.125rem', marginBottom: '0.5rem' }}>
                 <div
                   style={{
                     height: '100%',
                     width: `${totalStudents > 0 ? (maleStudents / totalStudents) * 100 : 0}%`,
                     background: 'var(--brand)',
-                    borderRadius: '2px',
+                    borderRadius: '0.125rem',
                   }}
                 />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{isBn ? 'ছাত্রী' : 'Female'}</span>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)' }}>{femaleStudents}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
+                <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{isBn ? 'ছাত্রী' : 'Female'}</span>
+                <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-primary)' }}>{femaleStudents}</span>
               </div>
-              <div style={{ height: '4px', background: 'var(--border)', borderRadius: '2px' }}>
+              <div style={{ height: '0.25rem', background: 'var(--border)', borderRadius: '0.125rem' }}>
                 <div
                   style={{
                     height: '100%',
                     width: `${totalStudents > 0 ? (femaleStudents / totalStudents) * 100 : 0}%`,
                     background: 'var(--teal)',
-                    borderRadius: '2px',
+                    borderRadius: '0.125rem',
                   }}
                 />
               </div>
@@ -502,13 +502,13 @@ export default function DashboardPage() {
 
         {/* Teacher Status */}
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
             {sectionHead('var(--amber)')}
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               {isBn ? 'শিক্ষকের অবস্থা' : 'Teacher Status'}
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
             {[
               {
                 label: isBn ? 'সক্রিয়' : 'Active',
@@ -530,14 +530,14 @@ export default function DashboardPage() {
               },
             ].map((item) => (
               <div key={item.label}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{item.label}</span>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{item.label}</span>
+                  <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                     {item.value} ({item.pct}%)
                   </span>
                 </div>
-                <div style={{ height: '4px', background: 'var(--border)', borderRadius: '2px' }}>
-                  <div style={{ height: '100%', width: `${item.pct}%`, background: item.color, borderRadius: '2px' }} />
+                <div style={{ height: '0.25rem', background: 'var(--border)', borderRadius: '0.125rem' }}>
+                  <div style={{ height: '100%', width: `${item.pct}%`, background: item.color, borderRadius: '0.125rem' }} />
                 </div>
               </div>
             ))}
@@ -546,13 +546,13 @@ export default function DashboardPage() {
 
         {/* Quick Stats */}
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
             {sectionHead('var(--teal)')}
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               {isBn ? 'দ্রুত পরিসংখ্যান' : 'Quick Stats'}
             </span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
             {[
               { label: isBn ? 'মোট ছাত্র' : 'Total Students', value: totalStudents, icon: <Users size={14} />, color: 'var(--brand)' },
               { label: isBn ? 'শিক্ষক' : 'Teachers', value: totalTeachers, icon: <GraduationCap size={14} />, color: 'var(--amber)' },
@@ -566,18 +566,18 @@ export default function DashboardPage() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '0.5rem',
                   padding: '8px 10px',
                   background: 'var(--bg-secondary)',
-                  borderRadius: '8px',
+                  borderRadius: '0.5rem',
                   border: '1px solid var(--border)',
                 }}
               >
                 <div
                   style={{
-                    width: '26px',
-                    height: '26px',
-                    borderRadius: '6px',
+                    width: '1.625rem',
+                    height: '1.625rem',
+                    borderRadius: '0.375rem',
                     background: `${item.color}15`,
                     display: 'flex',
                     alignItems: 'center',
@@ -589,10 +589,10 @@ export default function DashboardPage() {
                   {item.icon}
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{item.value}</div>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{item.value}</div>
                   <div
                     style={{
-                      fontSize: '9px',
+                      fontSize: '0.5625rem',
                       color: 'var(--text-muted)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -611,30 +611,30 @@ export default function DashboardPage() {
       {/* Recent Activity + Events */}
       <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col2, gap }}>
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {sectionHead('var(--brand)')}
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {isBn ? 'সাম্প্রতিক ভর্তি' : 'Recent Admissions'}
               </span>
             </div>
-            <span style={{ fontSize: '11px', color: 'var(--brand)', cursor: 'pointer', fontWeight: 500 }}>{isBn ? 'সব →' : 'All →'}</span>
+            <span style={{ fontSize: '0.6875rem', color: 'var(--brand)', cursor: 'pointer', fontWeight: 500 }}>{isBn ? 'সব →' : 'All →'}</span>
           </div>
           {recentStudents.map((s, i) => (
             <div
               key={s.id}
               style={{
                 display: 'flex',
-                gap: '10px',
+                gap: '0.625rem',
                 padding: '8px 0',
                 borderBottom: i < recentStudents.length - 1 ? '1px solid var(--border)' : 'none',
               }}
             >
               <div
                 style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '7px',
+                  width: '1.75rem',
+                  height: '1.75rem',
+                  borderRadius: '0.4375rem',
                   background: `${s.status === 'approved' ? 'var(--green)' : s.status === 'pending' ? 'var(--amber)' : 'var(--red)'}15`,
                   display: 'flex',
                   alignItems: 'center',
@@ -653,7 +653,7 @@ export default function DashboardPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontSize: '12px',
+                    fontSize: '0.75rem',
                     color: 'var(--text-secondary)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -662,7 +662,7 @@ export default function DashboardPage() {
                 >
                   {s.nameEn} — {isBn ? `শ্রেণি ${s.class} ${s.section}` : `Class ${s.class} ${s.section}`}
                 </div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: '0.125rem' }}>
                   {s.status === 'approved'
                     ? isBn
                       ? 'ভর্তি নিশ্চিত'
@@ -683,18 +683,18 @@ export default function DashboardPage() {
         </div>
 
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {sectionHead('var(--teal)')}
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {isBn ? 'আসন্ন ইভেন্ট' : 'Upcoming Events'}
               </span>
             </div>
-            <span style={{ fontSize: '11px', color: 'var(--brand)', cursor: 'pointer', fontWeight: 500 }}>
+            <span style={{ fontSize: '0.6875rem', color: 'var(--brand)', cursor: 'pointer', fontWeight: 500 }}>
               {isBn ? 'ক্যালেন্ডার →' : 'Calendar →'}
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {[
               {
                 bn: 'বার্ষিক পরীক্ষা শুরু',
@@ -727,10 +727,10 @@ export default function DashboardPage() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px',
+                  gap: '0.625rem',
                   padding: '10px 12px',
                   background: 'var(--bg-secondary)',
-                  borderRadius: '8px',
+                  borderRadius: '0.5rem',
                   border: '1px solid var(--border)',
                   cursor: 'pointer',
                   transition: 'all 0.15s',
@@ -740,9 +740,9 @@ export default function DashboardPage() {
               >
                 <div
                   style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '7px',
+                    width: '1.75rem',
+                    height: '1.75rem',
+                    borderRadius: '0.4375rem',
                     background: `${ev.color}15`,
                     display: 'flex',
                     alignItems: 'center',
@@ -757,7 +757,7 @@ export default function DashboardPage() {
                   style={{
                     flex: 1,
                     minWidth: 0,
-                    fontSize: '12px',
+                    fontSize: '0.75rem',
                     fontWeight: 500,
                     color: 'var(--text-primary)',
                     overflow: 'hidden',
@@ -769,12 +769,12 @@ export default function DashboardPage() {
                 </div>
                 <span
                   style={{
-                    fontSize: '10px',
+                    fontSize: '0.625rem',
                     fontWeight: 600,
                     color: ev.color,
                     background: `${ev.color}15`,
                     padding: '3px 8px',
-                    borderRadius: '6px',
+                    borderRadius: '0.375rem',
                     flexShrink: 0,
                   }}
                 >
@@ -789,36 +789,36 @@ export default function DashboardPage() {
       {/* Top Students + Quick Overview */}
       <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col2, gap }}>
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {sectionHead('var(--amber)')}
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {isBn ? 'শীর্ষ ছাত্র' : 'Top Students'}
               </span>
             </div>
             <span
               style={{
-                fontSize: '10px',
+                fontSize: '0.625rem',
                 fontWeight: 500,
                 color: 'var(--amber)',
                 background: 'var(--amber-light)',
                 padding: '3px 8px',
-                borderRadius: '6px',
+                borderRadius: '0.375rem',
               }}
             >
               {isBn ? 'এই টার্ম' : 'This Term'}
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
             {topStudentsList.map((s, i) => (
               <div
                 key={s.name}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '0.5rem',
                   padding: '8px 10px',
-                  borderRadius: '8px',
+                  borderRadius: '0.5rem',
                   background: 'var(--bg-secondary)',
                   border: '1px solid var(--border)',
                   transition: 'all 0.15s',
@@ -828,8 +828,8 @@ export default function DashboardPage() {
               >
                 <span
                   style={{
-                    width: '18px',
-                    fontSize: '11px',
+                    width: '1.125rem',
+                    fontSize: '0.6875rem',
                     fontWeight: 700,
                     color: i === 0 ? 'var(--amber)' : 'var(--text-muted)',
                     textAlign: 'center',
@@ -839,14 +839,14 @@ export default function DashboardPage() {
                 </span>
                 <div
                   style={{
-                    width: '28px',
-                    height: '28px',
+                    width: '1.75rem',
+                    height: '1.75rem',
                     borderRadius: '50%',
                     background: s.color,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '9px',
+                    fontSize: '0.5625rem',
                     fontWeight: 700,
                     color: '#fff',
                     flexShrink: 0,
@@ -855,17 +855,17 @@ export default function DashboardPage() {
                   {s.initials}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)' }}>{s.name}</div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{s.cls}</div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>{s.name}</div>
+                  <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{s.cls}</div>
                 </div>
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: '0.6875rem',
                     fontWeight: 600,
                     color: 'var(--green)',
                     background: 'var(--green-light)',
                     padding: '3px 8px',
-                    borderRadius: '6px',
+                    borderRadius: '0.375rem',
                   }}
                 >
                   {s.score}
@@ -876,13 +876,13 @@ export default function DashboardPage() {
         </div>
 
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.875rem' }}>
             {sectionHead('var(--green)')}
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               {isBn ? 'একাডেমিক ওভারভিউ' : 'Academic Overview'}
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
             {[
               {
                 bn: 'উপস্থিতির হার',
@@ -914,17 +914,17 @@ export default function DashboardPage() {
               },
             ].map((item) => (
               <div key={item.en}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{isBn ? item.bn : item.en}</span>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)' }}>{item.val}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3125rem' }}>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{isBn ? item.bn : item.en}</span>
+                  <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-primary)' }}>{item.val}</span>
                 </div>
-                <div style={{ height: '5px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ height: '0.3125rem', background: 'var(--border)', borderRadius: '0.1875rem', overflow: 'hidden' }}>
                   <div
                     style={{
                       height: '100%',
                       width: `${item.bar}%`,
                       background: item.color,
-                      borderRadius: '3px',
+                      borderRadius: '0.1875rem',
                       transition: 'width 0.6s ease',
                     }}
                   />

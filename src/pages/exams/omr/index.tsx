@@ -426,19 +426,19 @@ export default function OMRSheetPage() {
   }
 
   const inputCls =
-    'px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/30 transition-all w-full'
+    'px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/30 transition-all w-full'
   const selectCls = `${inputCls} cursor-pointer appearance-none`
-  const labelCls = 'text-[10px] font-medium text-[var(--text-secondary)] mb-1 block'
-  const cardCls = 'bg-[var(--surface)] border border-[var(--border)] rounded-[14px] overflow-hidden shadow-[var(--shadow-xs)]'
+  const labelCls = 'text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block'
+  const cardCls = 'bg-[var(--surface)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden shadow-[var(--shadow-xs)]'
   const sectionHeaderCls = 'px-4 py-2.5 border-b border-[var(--border)] flex items-center gap-2'
 
   const toggle = (checked: boolean, onChange: (v: boolean) => void) => (
     <button
       onClick={() => onChange(!checked)}
-      className={`relative w-9 h-[20px] rounded-full transition-all duration-200 ${checked ? 'bg-[var(--brand)]' : 'bg-[var(--border)]'}`}
+      className={`relative w-9 h-[1.25rem] rounded-full transition-all duration-200 ${checked ? 'bg-[var(--brand)]' : 'bg-[var(--border)]'}`}
     >
       <div
-        className={`absolute top-[2px] w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${checked ? 'translate-x-[18px]' : 'translate-x-[2px]'}`}
+        className={`absolute top-[0.125rem] w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${checked ? 'translate-x-[1.125rem]' : 'translate-x-[0.125rem]'}`}
       />
     </button>
   )
@@ -447,7 +447,7 @@ export default function OMRSheetPage() {
     <div className="flex items-center justify-between py-1.5 px-2.5 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors group">
       <div className="flex items-center gap-2">
         <span className="text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors">{icon}</span>
-        <span className="text-[11px] text-[var(--text-primary)] font-medium">{label}</span>
+        <span className="text-[0.6875rem] text-[var(--text-primary)] font-medium">{label}</span>
       </div>
       {toggle(checked, onChange)}
     </div>
@@ -469,7 +469,7 @@ export default function OMRSheetPage() {
                       : 'hover:bg-[var(--bg-secondary)]'
                 }`}
               >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold border-2 transition-all ${
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[0.625rem] font-bold border-2 transition-all ${
                   currentStep === step.num
                     ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
                     : currentStep > step.num
@@ -478,7 +478,7 @@ export default function OMRSheetPage() {
                 }`}>
                   {currentStep > step.num ? <CheckCircle2 size={14} /> : step.num}
                 </div>
-                <span className={`text-[9px] font-semibold whitespace-nowrap ${
+                <span className={`text-[0.5625rem] font-semibold whitespace-nowrap ${
                   currentStep === step.num
                     ? 'text-[var(--brand)]'
                     : currentStep > step.num
@@ -508,7 +508,7 @@ export default function OMRSheetPage() {
         <div className="w-7 h-7 rounded-lg bg-[var(--brand)] flex items-center justify-center">
           <GraduationCap size={14} className="text-white" />
         </div>
-        <span className="text-[12px] font-semibold text-[var(--text-primary)]">
+        <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
           {isBn ? 'ধাপ ১: পরীক্ষা নির্বাচন' : 'Step 1: Examination Selection'}
         </span>
       </div>
@@ -618,7 +618,7 @@ export default function OMRSheetPage() {
 
         <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[11px] text-[var(--text-secondary)]">
+            <div className="flex items-center gap-2 text-[0.6875rem] text-[var(--text-secondary)]">
               <FileText size={14} className="text-[var(--brand)]" />
               <span>{isBn ? 'উত্পাদন:' : 'Output:'}</span>
               <span className="font-semibold text-[var(--text-primary)]">
@@ -633,17 +633,17 @@ export default function OMRSheetPage() {
               <span className="text-[var(--text-muted)]">{isBn ? 'শিট' : 'sheets'}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <label className="text-[9px] text-[var(--text-muted)]">{isBn ? 'কপি' : 'Copies'}</label>
+              <label className="text-[0.5625rem] text-[var(--text-muted)]">{isBn ? 'কপি' : 'Copies'}</label>
               <input type="number" min="1" max="500" value={totalCopy}
                 onChange={(e) => setTotalCopy(Number(e.target.value) || 1)}
-                className="w-16 px-2 py-1 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[11px] text-center" />
+                className="w-16 px-2 py-1 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.6875rem] text-center" />
             </div>
           </div>
         </div>
 
         <div className="flex gap-2 pt-1">
           <button onClick={() => setCurrentStep(2)}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-[12px] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-1.5">
+            className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-1.5">
             {isBn ? 'পরবর্তী ধাপ' : 'Next Step'} <ChevronRight size={15} />
           </button>
         </div>
@@ -657,7 +657,7 @@ export default function OMRSheetPage() {
         <div className="w-7 h-7 rounded-lg bg-[var(--teal)] flex items-center justify-center">
           <Layers size={14} className="text-white" />
         </div>
-        <span className="text-[12px] font-semibold text-[var(--text-primary)]">
+        <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
           {isBn ? 'ধাপ ২: OMR ফিল্ড নির্বাচন' : 'Step 2: OMR Field Selection'}
         </span>
       </div>
@@ -665,7 +665,7 @@ export default function OMRSheetPage() {
         <div>
           <div className="flex items-center gap-2 mb-2.5">
             <Settings2 size={12} className="text-[var(--text-muted)]" />
-            <span className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+            <span className="text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
               {isBn ? 'প্রশ্ন সেটিংস' : 'Question Settings'}
             </span>
           </div>
@@ -697,14 +697,14 @@ export default function OMRSheetPage() {
         <div>
           <div className="flex items-center gap-2 mb-2.5">
             <FileText size={12} className="text-[var(--text-muted)]" />
-            <span className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+            <span className="text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
               {isBn ? 'শিট ফরম্যাট' : 'Sheet Format'}
             </span>
           </div>
           <div className="flex gap-1.5">
             {(['A', 'B', 'C', 'D'] as const).map((f) => (
               <button key={f} onClick={() => setSheetFormat(f)}
-                className={`flex-1 py-2 rounded-xl text-[11px] font-bold border cursor-pointer transition-all ${
+                className={`flex-1 py-2 rounded-xl text-[0.6875rem] font-bold border cursor-pointer transition-all ${
                   sheetFormat === f
                     ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-sm'
                     : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--brand)]/40'
@@ -719,7 +719,7 @@ export default function OMRSheetPage() {
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <User size={12} className="text-[var(--text-muted)]" />
-              <span className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+              <span className="text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 {isBn ? 'শিক্ষার্থীর তথ্য' : 'Student Info'}
               </span>
             </div>
@@ -730,7 +730,7 @@ export default function OMRSheetPage() {
               setShowGroup(v); setShowExamName(v); setShowSubjectName(v)
               setShowSubjectCode(v); setShowSetCode(v); setShowDate(v)
               setShowStudentSignature(v); setShowStudentPhoto(v)
-            }} className="text-[9px] text-[var(--brand)] font-medium cursor-pointer hover:underline">
+            }} className="text-[0.5625rem] text-[var(--brand)] font-medium cursor-pointer hover:underline">
               {isBn ? 'সব টগল' : 'Toggle All'}
             </button>
           </div>
@@ -756,7 +756,7 @@ export default function OMRSheetPage() {
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <ScanLine size={12} className="text-[var(--text-muted)]" />
-              <span className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+              <span className="text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 {isBn ? 'শনাক্তকরণ' : 'Identification'}
               </span>
             </div>
@@ -764,7 +764,7 @@ export default function OMRSheetPage() {
               const v = !showQRCode
               setShowQRCode(v); setShowBarcode(v); setShowSerialNumber(v)
               setShowSecurityCode(v); setShowVerificationCode(v)
-            }} className="text-[9px] text-[var(--brand)] font-medium cursor-pointer hover:underline">
+            }} className="text-[0.5625rem] text-[var(--brand)] font-medium cursor-pointer hover:underline">
               {isBn ? 'সব টগল' : 'Toggle All'}
             </button>
           </div>
@@ -781,7 +781,7 @@ export default function OMRSheetPage() {
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <FileCheck size={12} className="text-[var(--text-muted)]" />
-              <span className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+              <span className="text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 {isBn ? 'পরীক্ষা' : 'Examination'}
               </span>
             </div>
@@ -790,7 +790,7 @@ export default function OMRSheetPage() {
               setShowTeacherCode(v); setShowInvigilatorCode(v); setShowRoomNumber(v)
               setShowSeatNumber(v); setShowAdditionalPaper(v); setShowPresentAbsent(v)
               setShowExaminerRemarks(v)
-            }} className="text-[9px] text-[var(--brand)] font-medium cursor-pointer hover:underline">
+            }} className="text-[0.5625rem] text-[var(--brand)] font-medium cursor-pointer hover:underline">
               {isBn ? 'সব টগল' : 'Toggle All'}
             </button>
           </div>
@@ -807,11 +807,11 @@ export default function OMRSheetPage() {
 
         <div className="flex gap-2 pt-1">
           <button onClick={() => setCurrentStep(1)}
-            className="flex-1 px-3 py-2 rounded-xl border border-[var(--border)] text-[11px] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all flex items-center justify-center gap-1.5">
+            className="flex-1 px-3 py-2 rounded-xl border border-[var(--border)] text-[0.6875rem] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all flex items-center justify-center gap-1.5">
             <ChevronLeft size={14} /> {isBn ? 'আগের' : 'Previous'}
           </button>
           <button onClick={() => setCurrentStep(3)}
-            className="flex-1 px-3 py-2 rounded-xl bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-1.5">
+            className="flex-1 px-3 py-2 rounded-xl bg-[var(--brand)] text-white text-[0.6875rem] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-1.5">
             {isBn ? 'পরবর্তী' : 'Next'} <ChevronRight size={14} />
           </button>
         </div>
@@ -825,7 +825,7 @@ export default function OMRSheetPage() {
         <div className="w-7 h-7 rounded-lg bg-[var(--amber)] flex items-center justify-center">
           <Stamp size={14} className="text-white" />
         </div>
-        <span className="text-[12px] font-semibold text-[var(--text-primary)]">
+        <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
           {isBn ? 'ধাপ ৩: পরীক্ষক কনফিগারেশন' : 'Step 3: Examiner Configuration'}
         </span>
       </div>
@@ -833,7 +833,7 @@ export default function OMRSheetPage() {
         <div>
           <div className="flex items-center gap-2 mb-2.5">
             <PenTool size={12} className="text-[var(--text-muted)]" />
-            <span className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+            <span className="text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
               {isBn ? 'উত্তর প্রবেশ ধরন' : 'Marks Entry Style'}
             </span>
           </div>
@@ -845,7 +845,7 @@ export default function OMRSheetPage() {
               { key: 'custom' as const, label: isBn ? 'কাস্টম' : 'Custom' },
             ].map((style) => (
               <button key={style.key} onClick={() => setMarksEntryStyle(style.key)}
-                className={`py-2 rounded-xl text-[11px] font-semibold border cursor-pointer transition-all ${
+                className={`py-2 rounded-xl text-[0.6875rem] font-semibold border cursor-pointer transition-all ${
                   marksEntryStyle === style.key
                     ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-sm'
                     : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--brand)]/40'
@@ -867,7 +867,7 @@ export default function OMRSheetPage() {
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <Stamp size={12} className="text-[var(--text-muted)]" />
-              <span className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+              <span className="text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 {isBn ? 'পরীক্ষক নিয়ন্ত্রণ' : 'Examiner Controls'}
               </span>
             </div>
@@ -877,7 +877,7 @@ export default function OMRSheetPage() {
               setShowHeadExaminerSignature(v); setShowVerificationSignature(v)
               setShowCheckedBy(v); setShowVerifiedBy(v); setShowTotalMarks(v)
               setShowPracticalMarks(v); setShowVivaMarks(v)
-            }} className="text-[9px] text-[var(--brand)] font-medium cursor-pointer hover:underline">
+            }} className="text-[0.5625rem] text-[var(--brand)] font-medium cursor-pointer hover:underline">
               {isBn ? 'সব টগল' : 'Toggle All'}
             </button>
           </div>
@@ -897,11 +897,11 @@ export default function OMRSheetPage() {
 
         <div className="flex gap-2 pt-1">
           <button onClick={() => setCurrentStep(2)}
-            className="flex-1 px-3 py-2 rounded-xl border border-[var(--border)] text-[11px] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all flex items-center justify-center gap-1.5">
+            className="flex-1 px-3 py-2 rounded-xl border border-[var(--border)] text-[0.6875rem] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all flex items-center justify-center gap-1.5">
             <ChevronLeft size={14} /> {isBn ? 'আগের' : 'Previous'}
           </button>
           <button onClick={() => setCurrentStep(4)}
-            className="flex-1 px-3 py-2 rounded-xl bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-1.5">
+            className="flex-1 px-3 py-2 rounded-xl bg-[var(--brand)] text-white text-[0.6875rem] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-1.5">
             {isBn ? 'পরবর্তী' : 'Next'} <ChevronRight size={14} />
           </button>
         </div>
@@ -916,7 +916,7 @@ export default function OMRSheetPage() {
           <div className="w-7 h-7 rounded-lg bg-[var(--green)] flex items-center justify-center">
             <Download size={14} className="text-white" />
           </div>
-          <span className="text-[12px] font-semibold text-[var(--text-primary)]">
+          <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
             {isBn ? 'ধাপ ৪: জেনারেট ও ডাউনলোড' : 'Step 4: Generate & Download'}
           </span>
         </div>
@@ -925,23 +925,23 @@ export default function OMRSheetPage() {
             <button onClick={handlePrint}
               className="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer hover:border-[var(--brand)]/40 hover:bg-[var(--brand-light)]/30 transition-all text-center group">
               <Printer size={20} className="text-[var(--text-muted)] group-hover:text-[var(--brand)] mx-auto mb-1.5" />
-              <div className="text-[12px] font-semibold text-[var(--text-primary)]">{isBn ? 'প্রিন্ট' : 'Print'}</div>
-              <div className="text-[9px] text-[var(--text-muted)]">{isBn ? 'সরাসরি প্রিন্ট করুন' : 'Print directly'}</div>
+              <div className="text-[0.75rem] font-semibold text-[var(--text-primary)]">{isBn ? 'প্রিন্ট' : 'Print'}</div>
+              <div className="text-[0.5625rem] text-[var(--text-muted)]">{isBn ? 'সরাসরি প্রিন্ট করুন' : 'Print directly'}</div>
             </button>
             <button onClick={handleDownloadClick}
               className="p-3.5 rounded-xl border-2 border-[var(--brand)] bg-[var(--brand-light)] cursor-pointer hover:shadow-md transition-all text-center group">
               <Download size={20} className="text-[var(--brand)] mx-auto mb-1.5" />
-              <div className="text-[12px] font-semibold text-[var(--text-primary)]">{isBn ? 'ডাউনলোড PDF' : 'Download PDF'}</div>
-              <div className="text-[9px] text-[var(--text-muted)]">{isBn ? 'পিডিএফ ফাইল ডাউনলোড' : 'Download as PDF'}</div>
+              <div className="text-[0.75rem] font-semibold text-[var(--text-primary)]">{isBn ? 'ডাউনলোড PDF' : 'Download PDF'}</div>
+              <div className="text-[0.5625rem] text-[var(--text-muted)]">{isBn ? 'পিডিএফ ফাইল ডাউনলোড' : 'Download as PDF'}</div>
             </button>
           </div>
 
           <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] space-y-2">
-            <div className="flex items-center gap-2 text-[11px] font-medium text-[var(--text-primary)]">
+            <div className="flex items-center gap-2 text-[0.6875rem] font-medium text-[var(--text-primary)]">
               <FileSpreadsheet size={14} className="text-[var(--brand)]" />
               {isBn ? 'জেনারেশন সারসংক্ষেপ' : 'Generation Summary'}
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[10px]">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[0.625rem]">
               {[
                 { label: isBn ? 'সেশন' : 'Session', value: sessionName },
                 { label: isBn ? 'শ্রেণি' : 'Class', value: className },
@@ -963,7 +963,7 @@ export default function OMRSheetPage() {
           <div>
             <div className="flex items-center gap-2 mb-2.5">
               <Hash size={12} className="text-[var(--text-muted)]" />
-              <span className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+              <span className="text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 {isBn ? 'পরিমাণ নির্বাচন' : 'Quantity Selection'}
               </span>
             </div>
@@ -974,7 +974,7 @@ export default function OMRSheetPage() {
                 { key: 'custom' as GenerationMode, label: isBn ? 'কাস্টম' : 'Custom' },
               ]).map((mode) => (
                 <button key={mode.key} onClick={() => setGenerationMode(mode.key)}
-                  className={`py-2 rounded-xl text-[10px] font-semibold border cursor-pointer transition-all ${
+                  className={`py-2 rounded-xl text-[0.625rem] font-semibold border cursor-pointer transition-all ${
                     generationMode === mode.key
                       ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
                       : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)]'
@@ -1008,15 +1008,15 @@ export default function OMRSheetPage() {
 
           <div className="p-3 rounded-xl bg-[var(--brand-light)]/50 border border-[var(--brand)]/20">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[11px] text-[var(--text-secondary)]">
+              <div className="flex items-center gap-2 text-[0.6875rem] text-[var(--text-secondary)]">
                 <FileText size={14} className="text-[var(--brand)]" />
                 <span className="font-medium">{isBn ? 'মোট শিট' : 'Total Sheets'}:</span>
               </div>
-              <span className="text-[18px] font-bold text-[var(--brand)]">
+              <span className="text-[1.125rem] font-bold text-[var(--brand)]">
                 {(activeSubjects.length > 0 ? activeSubjects.length : 1) * computeCopyCount}
               </span>
             </div>
-            <div className="text-[9px] text-[var(--text-muted)] mt-1">
+            <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1">
               {activeSubjects.length > 0 ? activeSubjects.length : 1} {isBn ? 'পৃষ্ঠা' : 'pages'} × {computeCopyCount} {isBn ? 'কপি' : 'copies'}
               {isBn ? ' = ইউনিক QR সহ ' : ' = sheets with unique QR'}
             </div>
@@ -1024,11 +1024,11 @@ export default function OMRSheetPage() {
 
           <div className="flex gap-2 pt-1">
             <button onClick={() => setCurrentStep(3)}
-              className="flex-1 px-3 py-2 rounded-xl border border-[var(--border)] text-[11px] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all flex items-center justify-center gap-1.5">
+              className="flex-1 px-3 py-2 rounded-xl border border-[var(--border)] text-[0.6875rem] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all flex items-center justify-center gap-1.5">
               <ChevronLeft size={14} /> {isBn ? 'আগের' : 'Previous'}
             </button>
             <button onClick={handleDownloadClick}
-              className="flex-[2] px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-[12px] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-2">
+              className="flex-[2] px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-2">
               <Download size={15} />
               {isBn ? `এখনই জেনারেট করুন (${computeCopyCount})` : `Generate Now (${computeCopyCount})`}
             </button>
@@ -1039,7 +1039,7 @@ export default function OMRSheetPage() {
       <div className={cardCls}>
         <div className={`${sectionHeaderCls}`}>
           <Save size={13} className="text-[var(--purple)]" />
-          <span className="text-[12px] font-semibold text-[var(--text-primary)]">
+          <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
             {isBn ? 'টেমপ্লেট ম্যানেজমেন্ট' : 'Template Management'}
           </span>
         </div>
@@ -1053,7 +1053,7 @@ export default function OMRSheetPage() {
                 setShowSaveDialog(true)
               }
             }}
-              className="flex-1 px-3 py-2 rounded-xl bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer hover:shadow-md transition-all flex items-center justify-center gap-1.5">
+              className="flex-1 px-3 py-2 rounded-xl bg-[var(--brand)] text-white text-[0.6875rem] font-semibold cursor-pointer hover:shadow-md transition-all flex items-center justify-center gap-1.5">
               <Save size={13} />
               {activeTemplateId
                 ? (isBn ? 'টেমপ্লেট আপডেট' : 'Update Template')
@@ -1061,7 +1061,7 @@ export default function OMRSheetPage() {
             </button>
             {activeTemplateId && (
               <button onClick={() => { setActiveTemplateId(null); setTemplateName(''); setShowSaveDialog(false) }}
-                className="px-3 py-2 rounded-xl border border-[var(--border)] text-[11px] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)]">
+                className="px-3 py-2 rounded-xl border border-[var(--border)] text-[0.6875rem] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)]">
                 {isBn ? 'নতুন' : 'New'}
               </button>
             )}
@@ -1076,11 +1076,11 @@ export default function OMRSheetPage() {
               </div>
               <div className="flex gap-2">
                 <button onClick={handleSaveTemplate}
-                  className="flex-1 px-3 py-2 rounded-xl bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer hover:shadow-md">
+                  className="flex-1 px-3 py-2 rounded-xl bg-[var(--brand)] text-white text-[0.6875rem] font-semibold cursor-pointer hover:shadow-md">
                   <Save size={12} className="inline mr-1" />{isBn ? 'সংরক্ষণ' : 'Save'}
                 </button>
                 <button onClick={() => setShowSaveDialog(false)}
-                  className="px-3 py-2 rounded-xl border border-[var(--border)] text-[11px] cursor-pointer hover:bg-[var(--bg-secondary)]">
+                  className="px-3 py-2 rounded-xl border border-[var(--border)] text-[0.6875rem] cursor-pointer hover:bg-[var(--bg-secondary)]">
                   {isBn ? 'বাতিল' : 'Cancel'}
                 </button>
               </div>
@@ -1091,7 +1091,7 @@ export default function OMRSheetPage() {
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 mb-2">
                 <FolderOpen size={11} className="text-[var(--text-muted)]" />
-                <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                <span className="text-[0.5625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                   {isBn ? 'সংরক্ষিত টেমপ্লেট' : 'Saved Templates'}
                 </span>
               </div>
@@ -1107,11 +1107,11 @@ export default function OMRSheetPage() {
                     <FileText size={14} className="text-[var(--purple)]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[11px] font-medium text-[var(--text-primary)] truncate flex items-center gap-1.5">
+                    <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] truncate flex items-center gap-1.5">
                       {tpl.name}
-                      {tpl.isDefault && <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-[var(--brand)] text-white">DEFAULT</span>}
+                      {tpl.isDefault && <span className="px-1.5 py-0.5 rounded text-[0.5rem] font-bold bg-[var(--brand)] text-white">DEFAULT</span>}
                     </div>
-                    <div className="flex items-center gap-3 text-[9px] text-[var(--text-muted)]">
+                    <div className="flex items-center gap-3 text-[0.5625rem] text-[var(--text-muted)]">
                       <span>v{tpl.version}</span>
                       <span>{tpl.updatedAt ? new Date(tpl.updatedAt).toLocaleDateString() : ''}</span>
                       {tpl.modifiedBy && <span>{isBn ? 'সংশোধনকারী' : 'by'}: {tpl.modifiedBy}</span>}
@@ -1140,7 +1140,7 @@ export default function OMRSheetPage() {
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 mb-2">
                 <Archive size={11} className="text-[var(--text-muted)]" />
-                <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                <span className="text-[0.5625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                   {isBn ? 'আর্কাইভকৃত' : 'Archived'}
                 </span>
               </div>
@@ -1151,8 +1151,8 @@ export default function OMRSheetPage() {
                     <Archive size={14} className="text-[var(--text-muted)]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[11px] font-medium text-[var(--text-primary)] truncate">{tpl.name}</div>
-                    <div className="text-[9px] text-[var(--text-muted)]">v{tpl.version}</div>
+                    <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] truncate">{tpl.name}</div>
+                    <div className="text-[0.5625rem] text-[var(--text-muted)]">v{tpl.version}</div>
                   </div>
                   <div className="flex items-center gap-1">
                     <button onClick={() => restoreOMRTemplate(tpl.id)}
@@ -1170,7 +1170,7 @@ export default function OMRSheetPage() {
           )}
 
           {activeTemplates.length === 0 && archivedTemplates.length === 0 && (
-            <div className="text-center py-6 text-[12px] text-[var(--text-muted)]">
+            <div className="text-center py-6 text-[0.75rem] text-[var(--text-muted)]">
               <Save size={24} className="mx-auto mb-2 opacity-30" />
               {isBn ? 'এখনো কোনো টেমপ্লেট সংরক্ষিত হয়নি' : 'No templates saved yet'}
             </div>
@@ -1184,7 +1184,7 @@ export default function OMRSheetPage() {
     <div className="min-h-screen bg-[var(--bg-primary)]">
       {notification && (
         <div className="fixed top-4 right-4 z-[100] animate-in slide-in-from-right">
-          <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-lg text-[12px] font-medium backdrop-blur-sm ${
+          <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-lg text-[0.75rem] font-medium backdrop-blur-sm ${
             notification.type === 'success'
               ? 'bg-[var(--green-light)] text-[var(--green)] border border-[var(--green)]/20'
               : 'bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)]/20'
@@ -1196,40 +1196,40 @@ export default function OMRSheetPage() {
       )}
 
       <div className="sticky top-0 z-40 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border)]">
-        <div className="max-w-[1800px] mx-auto px-4 py-2.5 flex items-center justify-between">
+        <div className="max-w-[112.5rem] mx-auto px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => nav('/exams')}
               className="w-8 h-8 rounded-xl flex items-center justify-center border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--brand)]/30 transition-all">
               <ArrowLeft size={16} />
             </button>
             <div>
-              <h1 className="text-[16px] font-bold text-[var(--text-primary)] flex items-center gap-2">
+              <h1 className="text-[1rem] font-bold text-[var(--text-primary)] flex items-center gap-2">
                 <ScanLine size={20} className="text-[var(--brand)]" />
                 {isBn ? 'OMR শিট ডিজাইনার' : 'OMR Sheet Designer'}
               </h1>
-              <p className="text-[10px] text-[var(--text-muted)]">
+              <p className="text-[0.625rem] text-[var(--text-muted)]">
                 {isBn ? 'প্রফেশনাল OMR শিট তৈরি, কাস্টমাইজ ও PDF জেনারেট করুন' : 'Design, customize & generate professional OMR sheets'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={handleReset}
-              className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[11px] font-medium cursor-pointer hover:text-[var(--text-primary)] hover:border-[var(--brand)]/30 transition-all flex items-center gap-1.5">
+              className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem] font-medium cursor-pointer hover:text-[var(--text-primary)] hover:border-[var(--brand)]/30 transition-all flex items-center gap-1.5">
               <RefreshCw size={13} /> {isBn ? 'রিসেট' : 'Reset'}
             </button>
             <button onClick={handlePrint}
-              className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[11px] font-medium cursor-pointer hover:text-[var(--text-primary)] hover:border-[var(--brand)]/30 transition-all flex items-center gap-1.5">
+              className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem] font-medium cursor-pointer hover:text-[var(--text-primary)] hover:border-[var(--brand)]/30 transition-all flex items-center gap-1.5">
               <Printer size={13} /> {isBn ? 'প্রিন্ট' : 'Print'}
             </button>
             <button onClick={handleDownloadClick}
-              className="px-4 py-1.5 rounded-xl bg-[var(--brand)] text-white text-[11px] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center gap-1.5">
+              className="px-4 py-1.5 rounded-xl bg-[var(--brand)] text-white text-[0.6875rem] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center gap-1.5">
               <Download size={13} /> {isBn ? 'PDF ডাউনলোড' : 'Download PDF'}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-[1800px] mx-auto px-4 py-3">
+      <div className="max-w-[112.5rem] mx-auto px-4 py-3">
         <div className={`grid gap-4 ${isFullscreen ? '' : 'lg:grid-cols-[400px_1fr]'}`}>
           {!isFullscreen && (
             <div className="flex flex-col gap-3 max-h-[calc(100vh-85px)] overflow-y-auto pr-1.5 space-y-3">
@@ -1245,12 +1245,12 @@ export default function OMRSheetPage() {
             <div className="px-4 py-2.5 bg-[var(--bg-secondary)] border-b border-[var(--border)] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Eye size={14} className="text-[var(--text-muted)]" />
-                <span className="text-[12px] font-medium text-[var(--text-muted)]">{isBn ? 'লাইভ প্রিভিউ' : 'Live Preview'}</span>
+                <span className="text-[0.75rem] font-medium text-[var(--text-muted)]">{isBn ? 'লাইভ প্রিভিউ' : 'Live Preview'}</span>
                 {isGenerating && <Loader2 size={13} className="text-[var(--brand)] animate-spin" />}
-                <span className="text-[9px] text-[var(--text-muted)] bg-[var(--bg-primary)] px-1.5 py-0.5 rounded border border-[var(--border)] font-medium">
+                <span className="text-[0.5625rem] text-[var(--text-muted)] bg-[var(--bg-primary)] px-1.5 py-0.5 rounded border border-[var(--border)] font-medium">
                   {paperSize}
                 </span>
-                <span className="text-[9px] text-[var(--text-muted)] bg-[var(--bg-primary)] px-1.5 py-0.5 rounded border border-[var(--border)] font-medium">
+                <span className="text-[0.5625rem] text-[var(--text-muted)] bg-[var(--bg-primary)] px-1.5 py-0.5 rounded border border-[var(--border)] font-medium">
                   {isBn ? 'বাংলা' : 'EN'}
                 </span>
               </div>
@@ -1259,13 +1259,13 @@ export default function OMRSheetPage() {
                   className="p-1.5 rounded-lg hover:bg-[var(--bg-primary)] transition-colors" title={isBn ? 'জুম আউট' : 'Zoom Out'}>
                   <ZoomOut size={13} className="text-[var(--text-muted)]" />
                 </button>
-                <span className="text-[10px] text-[var(--text-muted)] font-medium min-w-[36px] text-center">{zoom}%</span>
+                <span className="text-[0.625rem] text-[var(--text-muted)] font-medium min-w-[2.25rem] text-center">{zoom}%</span>
                 <button onClick={() => setZoom((z) => Math.min(200, z + 10))}
                   className="p-1.5 rounded-lg hover:bg-[var(--bg-primary)] transition-colors" title={isBn ? 'জুম ইন' : 'Zoom In'}>
                   <ZoomIn size={13} className="text-[var(--text-muted)]" />
                 </button>
                 <button onClick={() => setZoom(100)}
-                  className="px-2 py-0.5 rounded-lg text-[9px] text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition-colors font-medium">
+                  className="px-2 py-0.5 rounded-lg text-[0.5625rem] text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition-colors font-medium">
                   Fit
                 </button>
                 <div className="w-px h-5 bg-[var(--border)] mx-1" />
@@ -1277,7 +1277,7 @@ export default function OMRSheetPage() {
             </div>
 
             <div className="flex justify-center bg-[var(--bg-tertiary)] p-4 overflow-auto"
-              style={{ minHeight: isFullscreen ? 'calc(100vh - 50px)' : '800px' }}>
+              style={{ minHeight: isFullscreen ? 'calc(100vh - 50px)' : '50rem' }}>
               {previewHtml ? (
                 <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}
                   className="transition-transform duration-200 ease-out">
@@ -1287,7 +1287,7 @@ export default function OMRSheetPage() {
                     title="OMR Preview" />
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center text-[var(--text-muted)] text-[13px] gap-2">
+                <div className="flex flex-col items-center justify-center text-[var(--text-muted)] text-[0.8125rem] gap-2">
                   <Loader2 size={28} className="animate-spin" />
                   {isBn ? 'প্রিভিউ জেনারেট হচ্ছে...' : 'Generating preview...'}
                 </div>
@@ -1300,26 +1300,26 @@ export default function OMRSheetPage() {
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowDeleteConfirm(null)}>
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-6 w-[360px] shadow-2xl"
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-6 w-[22.5rem] shadow-2xl"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-[var(--red-light)] flex items-center justify-center">
                 <AlertTriangle size={18} className="text-[var(--red)]" />
               </div>
               <div>
-                <span className="text-[14px] font-bold text-[var(--text-primary)]">{isBn ? 'টেমপ্লেট মুছুন?' : 'Delete Template?'}</span>
-                <p className="text-[11px] text-[var(--text-muted)]">
+                <span className="text-[0.875rem] font-bold text-[var(--text-primary)]">{isBn ? 'টেমপ্লেট মুছুন?' : 'Delete Template?'}</span>
+                <p className="text-[0.6875rem] text-[var(--text-muted)]">
                   {isBn ? 'এই কার্যক্রম পূর্বাবস্থায় ফেরানো যাবে না।' : 'This action cannot be undone.'}
                 </p>
               </div>
             </div>
             <div className="flex gap-2 mt-4">
               <button onClick={() => { deleteOMRTemplate(showDeleteConfirm); setShowDeleteConfirm(null); showNotify('success', isBn ? 'মুছে ফেলা হয়েছে' : 'Deleted') }}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--red)] text-white text-[12px] font-semibold cursor-pointer hover:brightness-110 transition-all">
+                className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--red)] text-white text-[0.75rem] font-semibold cursor-pointer hover:brightness-110 transition-all">
                 {isBn ? 'মুছুন' : 'Delete'}
               </button>
               <button onClick={() => setShowDeleteConfirm(null)}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[12px] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all">
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[0.75rem] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all">
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
             </div>
@@ -1330,17 +1330,17 @@ export default function OMRSheetPage() {
       {showPdfConfirm && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowPdfConfirm(false)}>
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-6 w-[440px] shadow-2xl"
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-6 w-[27.5rem] shadow-2xl"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] flex items-center justify-center">
                 <Download size={18} className="text-[var(--brand)]" />
               </div>
               <div>
-                <span className="text-[15px] font-bold text-[var(--text-primary)]">
+                <span className="text-[0.9375rem] font-bold text-[var(--text-primary)]">
                   {isBn ? 'PDF জেনারেট করুন' : 'Generate PDF'}
                 </span>
-                <p className="text-[11px] text-[var(--text-muted)]">
+                <p className="text-[0.6875rem] text-[var(--text-muted)]">
                   {isBn ? 'জেনারেশন শুরু করার আগে নিশ্চিত করুন' : 'Confirm before generation begins'}
                 </p>
               </div>
@@ -1349,11 +1349,11 @@ export default function OMRSheetPage() {
             <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] mb-4 space-y-2">
               <div className="flex items-center gap-2 mb-2">
                 <FileSpreadsheet size={14} className="text-[var(--brand)]" />
-                <span className="text-[11px] font-semibold text-[var(--text-primary)]">
+                <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">
                   {isBn ? 'জেনারেশন সারসংক্ষেপ' : 'Generation Summary'}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-[10px]">
+              <div className="grid grid-cols-2 gap-2 text-[0.625rem]">
                 {[
                   { label: isBn ? 'সেশন' : 'Session', value: sessionName },
                   { label: isBn ? 'শ্রেণি' : 'Class', value: className },
@@ -1376,7 +1376,7 @@ export default function OMRSheetPage() {
               <label className={labelCls}>{isBn ? 'কপি সংখ্যা' : 'Number of Copies'}</label>
               <input type="number" min="1" max="500" value={pdfCopyCount}
                 onChange={(e) => setPdfCopyCount(Number(e.target.value) || 1)} className={inputCls} />
-              <div className="flex items-center gap-4 mt-2 text-[9px] text-[var(--text-muted)]">
+              <div className="flex items-center gap-4 mt-2 text-[0.5625rem] text-[var(--text-muted)]">
                 <span className="flex items-center gap-1"><QrCode size={10} /> {isBn ? 'ইউনিক QR কোড' : 'Unique QR Code'}</span>
                 <span className="flex items-center gap-1"><Hash size={10} /> {isBn ? 'ইউনিক SN' : 'Unique SN'}</span>
                 <span className="flex items-center gap-1"><Shield size={10} /> {isBn ? 'সিকিউরিটি টোকেন' : 'Security Token'}</span>
@@ -1385,26 +1385,26 @@ export default function OMRSheetPage() {
 
             <div className="p-3 rounded-xl bg-[var(--brand-light)]/50 border border-[var(--brand)]/20 mb-4">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] font-medium text-[var(--text-secondary)]">
+                <span className="text-[0.75rem] font-medium text-[var(--text-secondary)]">
                   {isBn ? 'মোট শিট' : 'Total Sheets'}:
                 </span>
-                <span className="text-[22px] font-bold text-[var(--brand)]">
+                <span className="text-[1.375rem] font-bold text-[var(--brand)]">
                   {(activeSubjects.length > 0 ? activeSubjects.length : 1) * pdfCopyCount}
                 </span>
               </div>
-              <div className="text-[9px] text-[var(--text-muted)] mt-1">
+              <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1">
                 {activeSubjects.length > 0 ? activeSubjects.length : 1} {isBn ? 'পৃষ্ঠা' : 'pages'} × {pdfCopyCount} {isBn ? 'কপি' : 'copies'}
               </div>
             </div>
 
             <div className="flex gap-2">
               <button onClick={handleConfirmDownload}
-                className="flex-[2] px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-[12px] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                className="flex-[2] px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-2">
                 <Download size={15} />
                 {isBn ? `জেনারেট করুন (${pdfCopyCount} কপি)` : `Generate (${pdfCopyCount} copies)`}
               </button>
               <button onClick={() => setShowPdfConfirm(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[12px] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all">
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--border)] text-[0.75rem] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)] transition-all">
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
             </div>

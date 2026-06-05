@@ -18,7 +18,7 @@ const RollCell = React.memo(function RollCell({ value, onChange, isBn }: RollCel
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={isBn ? 'রোল' : 'Roll'}
-      className="w-[50px] p-[4px_6px] rounded-[6px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] font-mono outline-none text-center"
+      className="w-[3.125rem] p-[4px_6px] rounded-[0.375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] font-mono outline-none text-center"
       onFocus={(e) => (e.target.style.borderColor = 'var(--brand)')}
       onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
     />
@@ -151,25 +151,25 @@ export default function ClassPromotionPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-[10px] mb-[18px] flex-wrap">
+      <div className="flex items-center gap-[0.625rem] mb-[1.125rem] flex-wrap">
         <button
           onClick={() => navigate('/students')}
-          className="flex items-center gap-[5px] py-[7px] px-[12px] rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] shrink-0"
+          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.75rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div className="flex-1">
-          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-[18px]' : 'text-[22px]'}`}>
+          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-[1.125rem]' : 'text-[1.375rem]'}`}>
             {isBn ? 'ক্লাস প্রমোশন' : 'Class Promotion'}
           </h1>
-          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
+          <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {isBn ? `${fSession} থেকে পরবর্তী সেশনে ছাত্রদের প্রমোট করুন` : `Promote students from ${fSession} to next session`}
           </p>
         </div>
         <button
           onClick={promote}
-          className={`flex items-center gap-[6px] py-[9px] px-[18px] rounded-[9px] border-none text-white text-[13px] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_12px_rgba(99,102,241,0.3)] ${promoted ? 'bg-[var(--green)]' : 'bg-[var(--brand)]'}`}
+          className={`flex items-center gap-[0.375rem] py-[0.5625rem] px-[1.125rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_12px_rgba(99,102,241,0.3)] ${promoted ? 'bg-[var(--green)]' : 'bg-[var(--brand)]'}`}
         >
           {promoted ? <Check size={14} /> : <ArrowUpCircle size={14} />}
           {promoted
@@ -182,15 +182,15 @@ export default function ClassPromotionPage() {
         </button>
       </div>
 
-      <div className={`grid gap-[16px] items-start ${isMobile ? 'grid-cols-1' : 'grid-cols-[300px_1fr]'}`}>
-        <div className="flex flex-col gap-[12px]">
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[12px] p-[14px]">
-            <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.5px] mb-[10px]">
+      <div className={`grid gap-[1rem] items-start ${isMobile ? 'grid-cols-1' : 'grid-cols-[300px_1fr]'}`}>
+        <div className="flex flex-col gap-[0.75rem]">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.75rem] p-[0.875rem]">
+            <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-[0.625rem]">
               ① {isBn ? 'বর্তমান শ্রেণি' : 'From Class'}
             </div>
-            <div className="flex flex-col gap-[8px] mb-[10px]">
+            <div className="flex flex-col gap-[0.5rem] mb-[0.625rem]">
               <div>
-                <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">{isBn ? 'সেশন' : 'Session'}</label>
+                <label className="text-[0.6875rem] text-[var(--text-secondary)] mb-[0.25rem] block">{isBn ? 'সেশন' : 'Session'}</label>
                 <select
                   value={fSession}
                   onChange={(e) => {
@@ -200,7 +200,7 @@ export default function ClassPromotionPage() {
                     setFromClass('')
                     setFromSection('')
                   }}
-                  className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)] text-xs font-[inherit] outline-none cursor-pointer font-medium"
+                  className="w-full py-[0.4375rem] px-[0.625rem] rounded-lg border border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)] text-xs font-[inherit] outline-none cursor-pointer font-medium"
                 >
                   {sessions.map((s) => (
                     <option key={s} value={s}>
@@ -210,9 +210,9 @@ export default function ClassPromotionPage() {
                 </select>
               </div>
             </div>
-            <div className="flex flex-col gap-[8px]">
+            <div className="flex flex-col gap-[0.5rem]">
               <div>
-                <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">{isBn ? 'শ্রেণি' : 'Class'}</label>
+                <label className="text-[0.6875rem] text-[var(--text-secondary)] mb-[0.25rem] block">{isBn ? 'শ্রেণি' : 'Class'}</label>
                 <select
                   value={fromClass}
                   onChange={(e) => {
@@ -220,7 +220,7 @@ export default function ClassPromotionPage() {
                     setSelected([])
                     setRollMap({})
                   }}
-                  className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
+                  className="w-full py-[0.4375rem] px-[0.625rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
                 >
                   <option value="">{isBn ? 'সব শ্রেণি' : 'All Classes'}</option>
                   {classOptions.map((c) => (
@@ -231,7 +231,7 @@ export default function ClassPromotionPage() {
                 </select>
               </div>
               <div>
-                <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">{isBn ? 'সেকশন' : 'Section'}</label>
+                <label className="text-[0.6875rem] text-[var(--text-secondary)] mb-[0.25rem] block">{isBn ? 'সেকশন' : 'Section'}</label>
                 <select
                   value={fromSection}
                   onChange={(e) => {
@@ -239,7 +239,7 @@ export default function ClassPromotionPage() {
                     setSelected([])
                     setRollMap({})
                   }}
-                  className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
+                  className="w-full py-[0.4375rem] px-[0.625rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
                 >
                   <option value="">{isBn ? 'সব সেকশন' : 'All Sections'}</option>
                   {(sectionsMap[fromClass] || classOptions.flatMap((c) => sectionsMap[c] || []))
@@ -254,19 +254,19 @@ export default function ClassPromotionPage() {
             </div>
           </div>
 
-          <div className="bg-[var(--bg-primary)] border border-[var(--brand)] rounded-[12px] p-[14px]">
-            <div className="text-[11px] font-semibold text-[var(--brand)] uppercase tracking-[0.5px] mb-[10px]">
+          <div className="bg-[var(--bg-primary)] border border-[var(--brand)] rounded-[0.75rem] p-[0.875rem]">
+            <div className="text-[0.6875rem] font-semibold text-[var(--brand)] uppercase tracking-[0.0313rem] mb-[0.625rem]">
               ② {isBn ? 'লক্ষ্য শ্রেণি' : 'To Class'}
             </div>
-            <div className="flex flex-col gap-[8px]">
+            <div className="flex flex-col gap-[0.5rem]">
               <div>
-                <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">
+                <label className="text-[0.6875rem] text-[var(--text-secondary)] mb-[0.25rem] block">
                   {isBn ? 'শ্রেণি' : 'Class'} <span className="text-[var(--red)]">*</span>
                 </label>
                 <select
                   value={toClass}
                   onChange={(e) => setToClass(e.target.value)}
-                  className={`w-full py-[7px] px-[10px] rounded-lg border bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer ${toClass ? 'border-[var(--brand)]' : 'border-[var(--border)]'}`}
+                  className={`w-full py-[0.4375rem] px-[0.625rem] rounded-lg border bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer ${toClass ? 'border-[var(--brand)]' : 'border-[var(--border)]'}`}
                 >
                   <option value="">{isBn ? 'বেছে নিন' : 'Select'}</option>
                   {toClassOptions.map((c) => (
@@ -277,11 +277,11 @@ export default function ClassPromotionPage() {
                 </select>
               </div>
               <div>
-                <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">{isBn ? 'সেকশন' : 'Section'}</label>
+                <label className="text-[0.6875rem] text-[var(--text-secondary)] mb-[0.25rem] block">{isBn ? 'সেকশন' : 'Section'}</label>
                 <select
                   value={toSection}
                   onChange={(e) => setToSection(e.target.value)}
-                  className="w-full py-[7px] px-[10px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
+                  className="w-full py-[0.4375rem] px-[0.625rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer"
                 >
                   <option value="">{isBn ? 'একই সেকশন' : 'Same Section'}</option>
                   {(toSectionsMap[toClass] || toClassOptions.flatMap((c) => toSectionsMap[c] || []))
@@ -294,11 +294,11 @@ export default function ClassPromotionPage() {
                 </select>
               </div>
               <div>
-                <label className="text-[11px] text-[var(--text-secondary)] mb-[4px] block">{isBn ? 'নতুন সেশন' : 'New Session'}</label>
+                <label className="text-[0.6875rem] text-[var(--text-secondary)] mb-[0.25rem] block">{isBn ? 'নতুন সেশন' : 'New Session'}</label>
                 <select
                   value={newSession}
                   onChange={(e) => setNewSession(e.target.value)}
-                  className={`w-full py-[7px] px-[10px] rounded-lg border bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer ${newSession ? 'border-[var(--brand)]' : 'border-[var(--border)]'}`}
+                  className={`w-full py-[0.4375rem] px-[0.625rem] rounded-lg border bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none cursor-pointer ${newSession ? 'border-[var(--brand)]' : 'border-[var(--border)]'}`}
                 >
                   <option value="">{isBn ? 'বেছে নিন' : 'Select'}</option>
                   {sessions.map((s) => (
@@ -311,12 +311,12 @@ export default function ClassPromotionPage() {
             </div>
           </div>
 
-          <div className="bg-[var(--brand-light)] border border-[var(--brand)] rounded-[12px] p-[14px]">
-            <div className="flex items-center gap-[8px] mb-[6px]">
+          <div className="bg-[var(--brand-light)] border border-[var(--brand)] rounded-[0.75rem] p-[0.875rem]">
+            <div className="flex items-center gap-[0.5rem] mb-[0.375rem]">
               <Info size={14} className="text-[var(--brand)]" />
-              <span className="text-[11px] font-semibold text-[var(--brand)]">{isBn ? 'প্রমোশন পদ্ধতি' : 'Promotion Method'}</span>
+              <span className="text-[0.6875rem] font-semibold text-[var(--brand)]">{isBn ? 'প্রমোশন পদ্ধতি' : 'Promotion Method'}</span>
             </div>
-            <p className="text-[11px] text-[var(--brand)] leading-[1.5]">
+            <p className="text-[0.6875rem] text-[var(--brand)] leading-[1.5]">
               {isBn
                 ? 'ছাত্রদের ডেটা কপি করা হবে। পূর্ববর্তী সেশনের সকল তথ্য (শ্রেণি, রুটিন, পরীক্ষা, উপস্থিতি) অক্ষুণ্ণ থাকবে। নতুন সেশনে ছাত্র নতুন আইডিসহ যুক্ত হবে।'
                 : 'Student data will be copied. Previous session data (class, routine, exams, attendance) remains intact. Student is added to new session with a new ID.'}
@@ -324,14 +324,14 @@ export default function ClassPromotionPage() {
           </div>
         </div>
 
-        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] overflow-hidden">
-          <div className="py-[10px] px-[14px] border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-secondary)]">
-            <div className="flex items-center gap-[8px]">
-              <div className={`w-[8px] h-[8px] rounded-full ${fromClass ? 'bg-[var(--brand)]' : 'bg-[var(--text-muted)]'}`} />
-              <span className="text-[13px] font-medium text-[var(--text-primary)]">
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
+          <div className="py-[0.625rem] px-[0.875rem] border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-secondary)]">
+            <div className="flex items-center gap-[0.5rem]">
+              <div className={`w-[0.5rem] h-[0.5rem] rounded-full ${fromClass ? 'bg-[var(--brand)]' : 'bg-[var(--text-muted)]'}`} />
+              <span className="text-[0.8125rem] font-medium text-[var(--text-primary)]">
                 {filtered.length} {isBn ? 'জন ছাত্র' : 'students'}
                 {selected.length > 0 && (
-                  <span className="text-[var(--brand)] ml-[8px]">
+                  <span className="text-[var(--brand)] ml-[0.5rem]">
                     · {selected.length} {isBn ? 'নির্বাচিত' : 'selected'}
                   </span>
                 )}
@@ -339,7 +339,7 @@ export default function ClassPromotionPage() {
             </div>
             <button
               onClick={toggleAll}
-              className={`py-[5px] px-[10px] rounded-[6px] border cursor-pointer text-[11px] font-[inherit] font-medium ${allSel ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]' : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)]'}`}
+              className={`py-[0.3125rem] px-[0.625rem] rounded-[0.375rem] border cursor-pointer text-[0.6875rem] font-[inherit] font-medium ${allSel ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]' : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)]'}`}
             >
               {allSel ? (isBn ? 'সব বাদ' : 'Deselect') : isBn ? 'সব বাছুন' : 'Select All'}
             </button>
@@ -349,28 +349,28 @@ export default function ClassPromotionPage() {
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                  <th className="p-[8px_10px] w-[36px]">
+                  <th className="p-[8px_10px] w-[2.25rem]">
                     <input
                       type="checkbox"
                       checked={allSel}
                       onChange={toggleAll}
-                      className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                     />
                   </th>
-                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase w-[30px]">#</th>
-                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase w-[38px]">
+                  <th className="p-[8px_6px] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase w-[1.875rem]">#</th>
+                  <th className="p-[8px_6px] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase w-[2.375rem]">
                     {isBn ? 'ছবি' : 'Photo'}
                   </th>
-                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase">
+                  <th className="p-[8px_6px] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase">
                     {isBn ? 'নাম / আইডি' : 'Name / ID'}
                   </th>
-                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase">
+                  <th className="p-[8px_6px] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase">
                     {isBn ? 'বর্তমান' : 'Current'}
                   </th>
-                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--brand)] uppercase">
+                  <th className="p-[8px_6px] text-left text-[0.625rem] font-semibold text-[var(--brand)] uppercase">
                     {isBn ? 'লক্ষ্য' : 'Target'}
                   </th>
-                  <th className="p-[8px_6px] text-left text-[10px] font-semibold text-[var(--amber)] uppercase min-w-[70px]">
+                  <th className="p-[8px_6px] text-left text-[0.625rem] font-semibold text-[var(--amber)] uppercase min-w-[4.375rem]">
                     {isBn ? 'নতুন রোল' : 'New Roll'}
                   </th>
                 </tr>
@@ -378,7 +378,7 @@ export default function ClassPromotionPage() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-[40px] text-center text-[var(--text-muted)]">
+                    <td colSpan={7} className="p-[2.5rem] text-center text-[var(--text-muted)]">
                       <Users size={28} className="block mx-auto mb-2 opacity-30" />
                       {isBn ? 'উপরে শ্রেণি নির্বাচন করুন' : 'Select a class above to view students'}
                     </td>
@@ -387,7 +387,7 @@ export default function ClassPromotionPage() {
                   filtered.map((s, i) => (
                     <tr
                       key={s.id}
-                      className={`border-b-[0.5px] border-[var(--border)] ${selected.includes(s.id) ? 'bg-[rgba(99,102,241,0.04)]' : 'bg-transparent'}`}
+                      className={`border-b-[0.0313rem] border-[var(--border)] ${selected.includes(s.id) ? 'bg-[rgba(99,102,241,0.04)]' : 'bg-transparent'}`}
                       onMouseEnter={(e) => {
                         if (!selected.includes(s.id)) e.currentTarget.style.background = 'var(--bg-secondary)'
                       }}
@@ -400,12 +400,12 @@ export default function ClassPromotionPage() {
                           type="checkbox"
                           checked={selected.includes(s.id)}
                           onChange={() => toggleOne(s.id)}
-                          className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                          className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                         />
                       </td>
-                      <td className="p-[8px_6px] text-[var(--text-muted)] font-semibold text-[11px]">{i + 1}</td>
-                      <td className="p-[6px]">
-                        <div className="w-[28px] h-[34px] rounded-[5px] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
+                      <td className="p-[8px_6px] text-[var(--text-muted)] font-semibold text-[0.6875rem]">{i + 1}</td>
+                      <td className="p-[0.375rem]">
+                        <div className="w-[1.75rem] h-[2.125rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
                           {s.photo ? (
                             <img src={s.photo} alt="" className="w-full h-full object-cover" />
                           ) : (
@@ -414,21 +414,21 @@ export default function ClassPromotionPage() {
                         </div>
                       </td>
                       <td className="p-[8px_6px]">
-                        <div className="text-xs font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap max-w-[140px]">
+                        <div className="text-xs font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap max-w-[8.75rem]">
                           {s.nameEn}
                         </div>
-                        <div className="text-[10px] text-[var(--text-muted)] font-mono">{s.id}</div>
+                        <div className="text-[0.625rem] text-[var(--text-muted)] font-mono">{s.id}</div>
                       </td>
                       <td className="p-[8px_6px]">
-                        <div className="flex gap-[3px] flex-wrap">
-                          <span className="text-[10px] font-semibold py-[2px] px-[6px] rounded-[5px] bg-[var(--brand-light)] text-[var(--brand)]">
+                        <div className="flex gap-[0.1875rem] flex-wrap">
+                          <span className="text-[0.625rem] font-semibold py-[0.125rem] px-[0.375rem] rounded-[0.3125rem] bg-[var(--brand-light)] text-[var(--brand)]">
                             {s.class}
                           </span>
-                          <span className="text-[10px] py-[2px] px-[5px] rounded-[5px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]">
+                          <span className="text-[0.625rem] py-[0.125rem] px-[0.3125rem] rounded-[0.3125rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]">
                             {s.section}
                           </span>
                           {s.roll && (
-                            <span className="text-[10px] py-[2px] px-[5px] rounded-[5px] bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
+                            <span className="text-[0.625rem] py-[0.125rem] px-[0.3125rem] rounded-[0.3125rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
                               R{s.roll}
                             </span>
                           )}
@@ -436,16 +436,16 @@ export default function ClassPromotionPage() {
                       </td>
                       <td className="p-[8px_6px]">
                         {toClass ? (
-                          <div className="flex gap-[3px] flex-wrap">
-                            <span className="text-[10px] font-semibold py-[2px] px-[6px] rounded-[5px] bg-[var(--green-light)] text-[var(--green)]">
+                          <div className="flex gap-[0.1875rem] flex-wrap">
+                            <span className="text-[0.625rem] font-semibold py-[0.125rem] px-[0.375rem] rounded-[0.3125rem] bg-[var(--green-light)] text-[var(--green)]">
                               {toClass}
                             </span>
-                            <span className="text-[10px] py-[2px] px-[5px] rounded-[5px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]">
+                            <span className="text-[0.625rem] py-[0.125rem] px-[0.3125rem] rounded-[0.3125rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]">
                               {toSection || s.section}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-[var(--text-muted)]">—</span>
+                          <span className="text-[0.625rem] text-[var(--text-muted)]">—</span>
                         )}
                       </td>
                       <td className="p-[8px_6px]">

@@ -29,13 +29,13 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 const chartTooltipStyle = {
   background: 'var(--surface)',
   border: '1px solid var(--border)',
-  borderRadius: '8px',
-  fontSize: '12px',
+  borderRadius: '0.5rem',
+  fontSize: '0.75rem',
   padding: '8px 12px',
 }
 
 const SectionHead = memo(function SectionHead({ color }: { color: string }) {
-  return <div style={{ width: '3px', height: '14px', background: color, borderRadius: '2px', flexShrink: 0 }} />
+  return <div style={{ width: '0.1875rem', height: '0.875rem', background: color, borderRadius: '0.125rem', flexShrink: 0 }} />
 })
 
 const gradeColors: Record<string, string> = {
@@ -50,15 +50,15 @@ const gradeColors: Record<string, string> = {
 
 function ExamSkeleton() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
       <div>
-        <div className="skeleton skeleton-title" style={{ width: '220px' }} />
-        <div className="skeleton skeleton-text" style={{ width: '160px' }} />
+        <div className="skeleton skeleton-title" style={{ width: '13.75rem' }} />
+        <div className="skeleton skeleton-text" style={{ width: '10rem' }} />
       </div>
-      <div className="skeleton" style={{ width: '100%', height: '60px', borderRadius: '12px' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+      <div className="skeleton" style={{ width: '100%', height: '3.75rem', borderRadius: '0.75rem' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.625rem' }}>
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="skeleton-card" style={{ height: '80px' }} />
+          <div key={i} className="skeleton-card" style={{ height: '5rem' }} />
         ))}
       </div>
     </div>
@@ -207,14 +207,14 @@ export default function ExamDashboard() {
 
   const col4 = isMobile ? '1fr 1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)'
   const col2 = isMobile ? '1fr' : '1fr 1fr'
-  const gap = isMobile ? '10px' : '14px'
+  const gap = isMobile ? '10px' : '0.875rem'
 
   const card: React.CSSProperties = useMemo(
     () => ({
       background: 'var(--surface)',
       border: '1px solid var(--border)',
-      borderRadius: '12px',
-      padding: isMobile ? '14px' : '16px',
+      borderRadius: '0.75rem',
+      padding: isMobile ? '14px' : '1rem',
       boxShadow: 'var(--shadow-xs)',
     }),
     [isMobile]
@@ -371,24 +371,24 @@ export default function ExamDashboard() {
       {/* Header */}
       <div
         className="gsap-fade-up"
-        style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}
+        style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.625rem' }}
       >
         <div>
           <h1
             style={{
-              fontSize: isMobile ? '18px' : '20px',
+              fontSize: isMobile ? '18px' : '1.25rem',
               fontWeight: 600,
               color: 'var(--text-primary)',
               letterSpacing: '-0.3px',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: '0.5rem',
             }}
           >
             <ClipboardList size={20} style={{ color: 'var(--brand)' }} />
             {isBn ? 'পরীক্ষা ও ফলাফল ব্যবস্থাপনা' : 'Examination & Results'}
           </h1>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '3px' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.1875rem' }}>
             {isBn ? 'পরীক্ষার পুরো প্রক্রিয়া পরিচালনা করুন' : 'Manage the complete examination lifecycle'}
           </p>
         </div>
@@ -404,12 +404,12 @@ export default function ExamDashboard() {
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '0.5rem',
             background: 'var(--brand-light)',
             border: '1px solid rgba(99,102,241,0.12)',
-            borderRadius: '8px',
+            borderRadius: '0.5rem',
             padding: '8px 14px',
-            fontSize: '12px',
+            fontSize: '0.75rem',
             color: 'var(--brand)',
             alignSelf: 'flex-start',
             fontWeight: 500,
@@ -417,8 +417,8 @@ export default function ExamDashboard() {
         >
           <span
             style={{
-              width: '6px',
-              height: '6px',
+              width: '0.375rem',
+              height: '0.375rem',
               borderRadius: '50%',
               background: 'var(--brand)',
               animation: 'pulse 2s infinite',
@@ -426,7 +426,7 @@ export default function ExamDashboard() {
             }}
           />
           {isBn ? `সক্রিয় পরীক্ষা: ${activeExam.nameBn}` : `Active Exam: ${activeExam.name}`}
-          <span style={{ fontSize: '10px', color: 'var(--brand-2)', marginLeft: '4px' }}>
+          <span style={{ fontSize: '0.625rem', color: 'var(--brand-2)', marginLeft: '0.25rem' }}>
             {activeExam.startDate} – {activeExam.endDate}
           </span>
         </div>
@@ -434,19 +434,19 @@ export default function ExamDashboard() {
 
       {/* Workflow Progress */}
       <div className="gsap-fade-up" style={card}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: isMobile ? '12px' : '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: isMobile ? '12px' : '0.875rem' }}>
           <SectionHead color="var(--brand)" />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
             {isBn ? 'পরীক্ষার ধাপসমূহ' : 'Examination Workflow'}
           </span>
           <span
             style={{
-              fontSize: '10px',
+              fontSize: '0.625rem',
               fontWeight: 500,
               color: 'var(--green)',
               background: 'var(--green-light)',
               padding: '2px 8px',
-              borderRadius: '6px',
+              borderRadius: '0.375rem',
               marginLeft: 'auto',
             }}
           >
@@ -461,7 +461,7 @@ export default function ExamDashboard() {
         {quickStats.map((s) => (
           <div
             key={s.labelEn}
-            style={{ ...card, display: 'flex', alignItems: 'center', gap: '12px', cursor: 'default', transition: 'all 0.15s' }}
+            style={{ ...card, display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'default', transition: 'all 0.15s' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)'
               e.currentTarget.style.boxShadow = 'var(--shadow-md)'
@@ -473,16 +473,16 @@ export default function ExamDashboard() {
           >
             <div
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
+                width: '2.25rem',
+                height: '2.25rem',
+                borderRadius: '0.625rem',
                 background: s.cardBg,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: s.color,
                 flexShrink: 0,
-                fontSize: '16px',
+                fontSize: '1rem',
               }}
             >
               {s.labelEn === 'Scheduled' ? (
@@ -496,10 +496,10 @@ export default function ExamDashboard() {
               )}
             </div>
             <div>
-              <div style={{ fontSize: isMobile ? '20px' : '22px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
+              <div style={{ fontSize: isMobile ? '20px' : '1.375rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
                 {s.value}
               </div>
-              <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>{isBn ? s.labelBn : s.labelEn}</div>
+              <div style={{ fontSize: '0.625rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>{isBn ? s.labelBn : s.labelEn}</div>
             </div>
           </div>
         ))}
@@ -508,14 +508,14 @@ export default function ExamDashboard() {
       {/* Grade Distribution + Active Exam Progress */}
       <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col2, gap }}>
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
             <SectionHead color="var(--brand)" />
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               {isBn ? 'গ্রেড বিতরণ' : 'Grade Distribution'}
             </span>
           </div>
           {gradeDistribution.length > 0 ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <div style={{ width: isMobile ? 100 : 120, height: isMobile ? 100 : 120 }}>
                 <ResponsiveContainer>
                   <PieChart>
@@ -528,10 +528,10 @@ export default function ExamDashboard() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
                 {gradeDistribution.map((g) => (
-                  <div key={g.name} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: g.color, flexShrink: 0 }} />
+                  <div key={g.name} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.6875rem' }}>
+                    <div style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', background: g.color, flexShrink: 0 }} />
                     <span style={{ color: 'var(--text-secondary)', flex: 1 }}>{g.name}</span>
                     <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{g.value}</span>
                   </div>
@@ -539,7 +539,7 @@ export default function ExamDashboard() {
               </div>
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: '12px' }}>
+            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
               <BarChart2 size={24} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
               {isBn ? 'এখনো কোনো মার্কস এন্ট্রি হয়নি' : 'No marks entered yet'}
             </div>
@@ -547,27 +547,27 @@ export default function ExamDashboard() {
         </div>
 
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.875rem' }}>
             <SectionHead color="var(--green)" />
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               {isBn ? 'সক্রিয় পরীক্ষার অগ্রগতি' : 'Active Exam Progress'}
             </span>
           </div>
           {activeExam ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {progressItems.map((item) => (
                 <div key={item.en}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{isBn ? item.bn : item.en}</span>
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)' }}>{item.val}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{isBn ? item.bn : item.en}</span>
+                    <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-primary)' }}>{item.val}</span>
                   </div>
-                  <div style={{ height: '5px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ height: '0.3125rem', background: 'var(--border)', borderRadius: '0.1875rem', overflow: 'hidden' }}>
                     <div
                       style={{
                         height: '100%',
                         width: `${item.bar}%`,
                         background: item.color,
-                        borderRadius: '3px',
+                        borderRadius: '0.1875rem',
                         transition: 'width 0.6s ease',
                       }}
                     />
@@ -576,7 +576,7 @@ export default function ExamDashboard() {
               ))}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: '12px' }}>
+            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
               <AlertTriangle size={24} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
               {isBn ? 'কোনো সক্রিয় পরীক্ষা নেই' : 'No active exam'}
             </div>
@@ -588,12 +588,12 @@ export default function ExamDashboard() {
       <div className="gsap-fade-up">
         <div
           style={{
-            fontSize: '12px',
+            fontSize: '0.75rem',
             fontWeight: 600,
             color: 'var(--text-muted)',
             textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            marginBottom: '10px',
+            letterSpacing: '0.0313rem',
+            marginBottom: '0.625rem',
           }}
         >
           {isBn ? 'দ্রুত কাজ' : 'Quick Actions'}
@@ -603,7 +603,7 @@ export default function ExamDashboard() {
           style={{
             display: 'grid',
             gridTemplateColumns: isMobile ? '1fr 1fr' : isTablet ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)',
-            gap: '10px',
+            gap: '0.625rem',
           }}
         >
           <WorkflowCard
@@ -684,13 +684,13 @@ export default function ExamDashboard() {
       {/* Marks Entry Status + Setup Checklist */}
       <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col2, gap }}>
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.875rem' }}>
             <SectionHead color="var(--amber)" />
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               {isBn ? 'মার্কস এন্ট্রি অবস্থা' : 'Marks Entry Status'}
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
             {entryStatusSubjects.map((entry) => {
               const statusColors: Record<string, { bg: string; color: string; label: string; labelBn: string }> = {
                 completed: { bg: 'var(--green-light)', color: 'var(--green)', label: 'Completed', labelBn: 'সম্পন্ন' },
@@ -705,9 +705,9 @@ export default function ExamDashboard() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px',
+                    gap: '0.625rem',
                     padding: '8px 10px',
-                    borderRadius: '8px',
+                    borderRadius: '0.5rem',
                     background: 'var(--bg-secondary)',
                     border: '1px solid var(--border)',
                     transition: 'all 0.15s',
@@ -717,30 +717,30 @@ export default function ExamDashboard() {
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>
                       {isBn ? entry.subjectName?.nameBn : entry.subjectName?.name} — {entry.classId} {entry.sectionId}
                     </div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                    <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
                       {entry.enteredCount}/{entry.totalStudents} {isBn ? 'জন এন্ট্রি' : 'entered'}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '40px', height: '4px', background: 'var(--border)', borderRadius: '2px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    <div style={{ width: '2.5rem', height: '0.25rem', background: 'var(--border)', borderRadius: '0.125rem' }}>
                       <div
                         style={{
                           height: '100%',
                           width: `${entry.totalStudents > 0 ? Math.round((entry.enteredCount / entry.totalStudents) * 100) : 0}%`,
                           background: st.color,
-                          borderRadius: '2px',
+                          borderRadius: '0.125rem',
                         }}
                       />
                     </div>
                     <span
                       style={{
-                        fontSize: '9px',
+                        fontSize: '0.5625rem',
                         fontWeight: 600,
                         padding: '2px 6px',
-                        borderRadius: '6px',
+                        borderRadius: '0.375rem',
                         background: st.bg,
                         color: st.color,
                         whiteSpace: 'nowrap',
@@ -753,7 +753,7 @@ export default function ExamDashboard() {
               )
             })}
             {marksEntryStatuses.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: '12px' }}>
+              <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                 <Clock size={24} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
                 {isBn ? 'এখনো মার্কস এন্ট্রি শুরু হয়নি' : 'No marks entry started yet'}
               </div>
@@ -762,19 +762,19 @@ export default function ExamDashboard() {
         </div>
 
         <div className="card--premium" style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.875rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <SectionHead color="var(--teal)" />
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {isBn ? 'সেটআপ চেকলিস্ট' : 'Setup Checklist'}
               </span>
             </div>
             <div
               style={{
-                fontSize: '11px',
+                fontSize: '0.6875rem',
                 fontWeight: 600,
                 padding: '3px 8px',
-                borderRadius: '6px',
+                borderRadius: '0.375rem',
                 background: checklistPct === 100 ? 'var(--green-light)' : checklistPct >= 50 ? 'var(--amber-light)' : 'var(--red-light)',
                 color: checklistPct === 100 ? 'var(--green)' : checklistPct >= 50 ? 'var(--amber)' : 'var(--red)',
               }}
@@ -782,18 +782,18 @@ export default function ExamDashboard() {
               {checklistPct}%
             </div>
           </div>
-          <div style={{ width: '100%', height: '4px', background: 'var(--border)', borderRadius: '2px', marginBottom: '12px' }}>
+          <div style={{ width: '100%', height: '0.25rem', background: 'var(--border)', borderRadius: '0.125rem', marginBottom: '0.75rem' }}>
             <div
               style={{
                 height: '100%',
                 width: `${checklistPct}%`,
                 background: checklistPct === 100 ? 'var(--green)' : checklistPct >= 50 ? 'var(--amber)' : 'var(--red)',
-                borderRadius: '2px',
+                borderRadius: '0.125rem',
                 transition: 'width 0.4s ease',
               }}
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
             {checklist.map((item, i) => (
               <div
                 key={i}
@@ -801,9 +801,9 @@ export default function ExamDashboard() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px',
+                  gap: '0.625rem',
                   padding: '8px 10px',
-                  borderRadius: '8px',
+                  borderRadius: '0.5rem',
                   background: item.done ? 'var(--green-light)' : 'var(--bg-secondary)',
                   border: `1px solid ${item.done ? 'rgba(34,197,94,0.2)' : 'var(--border)'}`,
                   cursor: 'pointer',
@@ -814,8 +814,8 @@ export default function ExamDashboard() {
               >
                 <div
                   style={{
-                    width: '20px',
-                    height: '20px',
+                    width: '1.25rem',
+                    height: '1.25rem',
                     borderRadius: '50%',
                     background: item.done ? 'var(--green)' : 'var(--border)',
                     display: 'flex',
@@ -828,7 +828,7 @@ export default function ExamDashboard() {
                 </div>
                 <span
                   style={{
-                    fontSize: '12px',
+                    fontSize: '0.75rem',
                     flex: 1,
                     color: item.done ? 'var(--text-primary)' : 'var(--text-secondary)',
                     fontWeight: item.done ? 500 : 400,
@@ -845,31 +845,31 @@ export default function ExamDashboard() {
 
       {/* Promotion Summary */}
       <div className="gsap-fade-up" style={card}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.875rem' }}>
           <SectionHead color="var(--purple)" />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
             {isBn ? 'প্রমোশন সারসংক্ষেপ' : 'Promotion Summary'}
           </span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '0.625rem' }}>
           {promoSummary.map((item) => (
             <div
               key={item.label}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '0.625rem',
                 padding: '10px 12px',
                 background: 'var(--bg-secondary)',
-                borderRadius: '8px',
+                borderRadius: '0.5rem',
                 border: '1px solid var(--border)',
               }}
             >
               <div
                 style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
+                  width: '2rem',
+                  height: '2rem',
+                  borderRadius: '0.5rem',
                   background: `${item.color}15`,
                   display: 'flex',
                   alignItems: 'center',
@@ -881,8 +881,8 @@ export default function ExamDashboard() {
                 <GraduationCap size={15} />
               </div>
               <div>
-                <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{item.value}</div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{item.label}</div>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{item.value}</div>
+                <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{item.label}</div>
               </div>
             </div>
           ))}

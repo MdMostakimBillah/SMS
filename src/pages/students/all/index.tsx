@@ -183,7 +183,7 @@ export default function AllStudentsPage() {
   const hasFilter = search || fClass || fSection || fGender || fActive || fReligion || fBlood
 
   const sel =
-    'px-2 py-[7px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs outline-none cursor-pointer'
+    'px-2 py-[0.4375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs outline-none cursor-pointer'
 
   const statusBadge = (st: string) => {
     const m: Record<string, { b: string; c: string; l: string; lb: string }> = {
@@ -194,7 +194,7 @@ export default function AllStudentsPage() {
     const x = m[st] || m.pending
     return (
       <span
-        className="text-[10px] font-semibold px-[7px] py-[2px] rounded-[10px] whitespace-nowrap"
+        className="text-[0.625rem] font-semibold px-[0.4375rem] py-[0.125rem] rounded-[0.625rem] whitespace-nowrap"
         style={{ background: x.b, color: x.c }}
       >
         {isBn ? x.lb : x.l}
@@ -216,30 +216,30 @@ export default function AllStudentsPage() {
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto"
           style={{ background: 'rgba(0,0,0,0.5)' }}
         >
-          <div className="bg-[var(--bg-primary)] rounded-2xl max-w-[560px] w-full max-h-[90vh] overflow-hidden flex flex-col border border-[var(--border)] shadow-[var(--shadow-lg)] modal-content">
+          <div className="bg-[var(--bg-primary)] rounded-2xl max-w-[35rem] w-full max-h-[90vh] overflow-hidden flex flex-col border border-[var(--border)] shadow-[var(--shadow-lg)] modal-content">
             <div
-              className="flex items-center justify-between px-[18px] py-[14px] border-b border-[var(--border)]"
+              className="flex items-center justify-between px-[1.125rem] py-[0.875rem] border-b border-[var(--border)]"
               style={{ background: 'var(--brand-light)' }}
             >
               <div>
-                <div className="text-[15px] font-semibold text-[var(--text-primary)]">
+                <div className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
                   {isBn ? viewSt.nameBn || viewSt.nameEn : viewSt.nameEn}
                 </div>
-                <div className="text-[11px] text-[var(--brand)] font-mono">{viewSt.id}</div>
+                <div className="text-[0.6875rem] text-[var(--brand)] font-mono">{viewSt.id}</div>
               </div>
               <div className="flex items-center gap-2">
                 {statusBadge(viewSt.status)}
                 <button
                   onClick={() => setViewSt(null)}
-                  className="w-7 h-7 rounded-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center"
+                  className="w-7 h-7 rounded-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center"
                 >
                   <X size={14} className="text-[var(--text-secondary)]" />
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-[18px]">
-              <div className="flex gap-[14px] mb-[14px]">
-                <div className="w-[80px] h-[95px] rounded-lg border border-[var(--border)] overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center shrink-0">
+            <div className="flex-1 overflow-y-auto p-[1.125rem]">
+              <div className="flex gap-[0.875rem] mb-[0.875rem]">
+                <div className="w-[5rem] h-[5.9375rem] rounded-lg border border-[var(--border)] overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center shrink-0">
                   {viewSt.photo ? (
                     <img src={viewSt.photo} alt="" className="w-full h-full object-cover" />
                   ) : (
@@ -248,8 +248,8 @@ export default function AllStudentsPage() {
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-[var(--text-primary)]">{viewSt.nameEn}</h3>
-                  <p className="text-[13px] text-[var(--text-secondary)]">{viewSt.nameBn}</p>
-                  <div className="flex gap-[5px] mt-1.5 flex-wrap">
+                  <p className="text-[0.8125rem] text-[var(--text-secondary)]">{viewSt.nameBn}</p>
+                  <div className="flex gap-[0.3125rem] mt-1.5 flex-wrap">
                     {[
                       { t: `${classNameMap[viewSt.class] ? (isBn ? classNameMap[viewSt.class].bn : classNameMap[viewSt.class].en) : viewSt.class}-${viewSt.section}`, c: 'var(--brand)', b: 'var(--brand-light)' },
                       { t: viewSt.gender.split(' / ')[0], c: 'var(--teal)', b: 'var(--teal-light)' },
@@ -259,7 +259,7 @@ export default function AllStudentsPage() {
                       .map((x, i) => (
                         <span
                           key={i}
-                          className="text-[11px] font-medium px-2 py-[2px] rounded-[5px]"
+                          className="text-[0.6875rem] font-medium px-2 py-[0.125rem] rounded-[0.3125rem]"
                           style={{ color: x.c, background: x.b }}
                         >
                           {x.t}
@@ -285,16 +285,16 @@ export default function AllStudentsPage() {
                 v ? (
                   <div
                     key={String(l)}
-                    className="flex gap-2 py-[5px] border-b border-[var(--border)]"
-                    style={{ borderBottomWidth: '0.5px' }}
+                    className="flex gap-2 py-[0.3125rem] border-b border-[var(--border)]"
+                    style={{ borderBottomWidth: '0.0313rem' }}
                   >
-                    <span className="text-[11px] text-[var(--text-muted)] w-[120px] shrink-0">{l}</span>
+                    <span className="text-[0.6875rem] text-[var(--text-muted)] w-[7.5rem] shrink-0">{l}</span>
                     <span className="text-xs font-medium text-[var(--text-primary)]">{v}</span>
                   </div>
                 ) : null
               )}
             </div>
-            <div className="flex gap-2 justify-end flex-wrap px-[18px] py-3 border-t border-[var(--border)]">
+            <div className="flex gap-2 justify-end flex-wrap px-[1.125rem] py-3 border-t border-[var(--border)]">
               <button
                 onClick={() => {
                   const win = window.open('', '_blank')
@@ -305,14 +305,14 @@ export default function AllStudentsPage() {
                     win.print()
                   }, 600)
                 }}
-                className="flex items-center gap-[5px] px-3.5 py-2 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[13px] font-medium cursor-pointer"
+                className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.8125rem] font-medium cursor-pointer"
               >
                 <FileText size={13} />
                 PDF
               </button>
               <button
                 onClick={() => setViewSt(null)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer"
               >
                 {isBn ? 'বন্ধ' : 'Close'}
               </button>
@@ -321,7 +321,7 @@ export default function AllStudentsPage() {
                   navigate('/students/update', { state: { studentId: viewSt.id } })
                   setViewSt(null)
                 }}
-                className="flex items-center gap-[5px] px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[13px] font-medium cursor-pointer"
+                className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer"
               >
                 <Edit2 size={13} />
                 {isBn ? 'এডিট' : 'Edit'}
@@ -334,16 +334,16 @@ export default function AllStudentsPage() {
       {/* Top Section - fixed */}
       <div className="shrink-0">
         {/* Page header */}
-        <div className="flex items-center gap-[10px] mb-4 flex-wrap">
+        <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
           <button
             onClick={() => navigate('/students')}
-            className="flex items-center gap-[5px] px-3 py-[7px] rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] shrink-0"
+            className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] shrink-0"
           >
             <ArrowLeft size={14} />
             {isBn ? 'ফিরে যান' : 'Back'}
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className={`${isMobile ? 'text-lg' : 'text-[22px]'} font-semibold text-[var(--text-primary)]`}>
+            <h1 className={`${isMobile ? 'text-lg' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)]`}>
               {isBn ? 'সকল ছাত্র' : 'All Students'}
             </h1>
             <div className="flex flex-wrap gap-1 mt-1">
@@ -367,14 +367,14 @@ export default function AllStudentsPage() {
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => navigate('/students/update')}
-              className="flex items-center gap-[5px] px-3.5 py-2 rounded-[9px] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[13px] cursor-pointer font-medium"
+              className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-[0.5625rem] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.8125rem] cursor-pointer font-medium"
             >
               <Edit2 size={14} />
               {isBn ? 'আপডেট' : 'Update'}
             </button>
             <button
               onClick={() => navigate('/students/bulk-update')}
-              className="flex items-center gap-[5px] px-3.5 py-2 rounded-[9px] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[13px] cursor-pointer font-medium"
+              className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-[0.5625rem] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.8125rem] cursor-pointer font-medium"
             >
               <Layers size={14} />
               {isBn ? 'বাল্ক আপডেট' : 'Bulk Update'}
@@ -385,12 +385,12 @@ export default function AllStudentsPage() {
         {/* Sticky Filters + Toolbar */}
         <div className="sticky top-0 z-50 bg-[var(--bg-primary)] pt-0.5 pb-1">
           {/* Filters */}
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[14px] mb-2.5">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[0.875rem] mb-2.5">
             <div
               className="grid gap-2"
               style={{ gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(160px, 1fr))' }}
             >
-              <div className="flex items-center gap-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-[10px] py-[7px]">
+              <div className="flex items-center gap-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-[0.625rem] py-[0.4375rem]">
                 <Search size={14} className="text-[var(--text-muted)] shrink-0" />
                 <input
                   value={search}
@@ -399,7 +399,7 @@ export default function AllStudentsPage() {
                     setPage(1)
                   }}
                   placeholder={isBn ? 'নাম, আইডি, রোল, মোবাইল...' : 'Name, ID, roll, mobile...'}
-                  className="flex-1 border-none bg-transparent outline-none text-[13px] text-[var(--text-primary)]"
+                  className="flex-1 border-none bg-transparent outline-none text-[0.8125rem] text-[var(--text-primary)]"
                 />
                 {search && (
                   <button onClick={() => setSearch('')} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)] flex">
@@ -501,7 +501,7 @@ export default function AllStudentsPage() {
             {hasFilter && (
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-[5px] px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[11px] cursor-pointer mt-2"
+                className="flex items-center gap-[0.3125rem] px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.6875rem] cursor-pointer mt-2"
               >
                 <X size={11} />
                 {isBn ? 'ফিল্টার সরান' : 'Clear Filters'}
@@ -519,7 +519,7 @@ export default function AllStudentsPage() {
                   setPerPage(Number(e.target.value))
                   setPage(1)
                 }}
-                className={`${sel} px-2 py-[5px]`}
+                className={`${sel} px-2 py-[0.3125rem]`}
               >
                 {PER_PAGE_OPTS.map((n) => (
                   <option key={n} value={n}>
@@ -528,7 +528,7 @@ export default function AllStudentsPage() {
                 ))}
               </select>
               {selected.length > 0 && (
-                <span className="text-xs text-[var(--brand)] bg-[var(--brand-light)] px-[10px] py-[3px] rounded-md font-medium">
+                <span className="text-xs text-[var(--brand)] bg-[var(--brand-light)] px-[0.625rem] py-[0.1875rem] rounded-md font-medium">
                   {selected.length} {isBn ? 'নির্বাচিত' : 'selected'}
                 </span>
               )}
@@ -536,14 +536,14 @@ export default function AllStudentsPage() {
             <div className="flex gap-1.5 flex-wrap">
               <button
                 onClick={exportExcel}
-                className="flex items-center gap-[5px] px-3 py-[7px] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-xs cursor-pointer font-medium"
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-xs cursor-pointer font-medium"
               >
                 <FileSpreadsheet size={13} />
                 Excel
               </button>
               <button
                 onClick={() => setShowPDF(true)}
-                className="flex items-center gap-[5px] px-3 py-[7px] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs cursor-pointer font-medium"
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs cursor-pointer font-medium"
               >
                 <FileText size={13} />
                 PDF {selected.length > 0 ? `(${selected.length})` : `(${filtered.length})`}
@@ -554,36 +554,36 @@ export default function AllStudentsPage() {
       </div>
 
       {/* Table - scrollable */}
-      <div className="flex-1 overflow-hidden flex flex-col bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] mt-1">
+      <div className="flex-1 overflow-hidden flex flex-col bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] mt-1">
         <div className={`flex-1 overflow-y-auto ${isMobile ? 'max-h-[50vh]' : ''}`}>
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                <th className="p-2.5 w-[36px]" style={sc('0')}>
+                <th className="p-2.5 w-[2.25rem]" style={sc('0')}>
                   <input
                     type="checkbox"
                     checked={allSel}
                     onChange={toggleAll}
-                    className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                    className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                   />
                 </th>
                 {[
-                  { l: '#', w: '36px', sticky: true, left: '36px' },
-                  { l: isBn ? 'ছবি' : 'Photo', w: '44px', sticky: true, left: '72px' },
-                  { l: isBn ? 'ছাত্র আইডি' : 'Student ID', w: '140px', sticky: true, left: '116px' },
-                  { l: isBn ? 'নাম' : 'Name', w: '160px', sticky: true, left: '256px' },
-                  { l: isBn ? 'শ্রেণি/রোল' : 'Class/Roll', w: '90px', sticky: true, left: '416px' },
-                  { l: isBn ? 'লিঙ্গ' : 'Gender', w: '65px', sticky: false },
-                  { l: isBn ? 'রক্ত' : 'Blood', w: '55px', sticky: false },
-                  { l: isBn ? 'মোবাইল' : 'Mobile', w: '108px', sticky: false },
-                  { l: isBn ? 'পিতার মোবাইল' : 'Father Mobile', w: '108px', sticky: false },
-                  { l: isBn ? 'জেলা' : 'District', w: '75px', sticky: false },
-                  { l: isBn ? 'অবস্থা' : 'Status', w: '85px', sticky: false },
-                  { l: isBn ? 'অ্যাকশন' : 'Action', w: '70px', sticky: false },
+                  { l: '#', w: '2.25rem', sticky: true, left: '2.25rem' },
+                  { l: isBn ? 'ছবি' : 'Photo', w: '2.75rem', sticky: true, left: '4.5rem' },
+                  { l: isBn ? 'ছাত্র আইডি' : 'Student ID', w: '8.75rem', sticky: true, left: '7.25rem' },
+                  { l: isBn ? 'নাম' : 'Name', w: '10rem', sticky: true, left: '16rem' },
+                  { l: isBn ? 'শ্রেণি/রোল' : 'Class/Roll', w: '5.625rem', sticky: true, left: '26rem' },
+                  { l: isBn ? 'লিঙ্গ' : 'Gender', w: '4.0625rem', sticky: false },
+                  { l: isBn ? 'রক্ত' : 'Blood', w: '3.4375rem', sticky: false },
+                  { l: isBn ? 'মোবাইল' : 'Mobile', w: '6.75rem', sticky: false },
+                  { l: isBn ? 'পিতার মোবাইল' : 'Father Mobile', w: '6.75rem', sticky: false },
+                  { l: isBn ? 'জেলা' : 'District', w: '4.6875rem', sticky: false },
+                  { l: isBn ? 'অবস্থা' : 'Status', w: '5.3125rem', sticky: false },
+                  { l: isBn ? 'অ্যাকশন' : 'Action', w: '4.375rem', sticky: false },
                 ].map((h) => (
                   <th
                     key={h.l}
-                    className="py-2.5 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap"
+                    className="py-2.5 px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap"
                     style={{ minWidth: h.w, ...(h.sticky ? sc(h.left || '0') : {}) }}
                   >
                     {h.l}
@@ -611,14 +611,14 @@ export default function AllStudentsPage() {
                         type="checkbox"
                         checked={selected.includes(s.id)}
                         onChange={() => toggleOne(s.id)}
-                        className="w-[13px] h-[13px] cursor-pointer accent-[var(--brand)]"
+                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                       />
                     </td>
-                    <td className="p-2 text-[var(--text-muted)] font-semibold text-[11px]" style={sc('36px')}>
+                    <td className="p-2 text-[var(--text-muted)] font-semibold text-[0.6875rem]" style={sc('36px')}>
                       {(sp - 1) * perPage + i + 1}
                     </td>
                     <td className="p-2" style={sc('72px')}>
-                      <div className="w-[30px] h-[36px] rounded-[5px] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
+                      <div className="w-[1.875rem] h-[2.25rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
                         {s.photo ? (
                           <img src={s.photo} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -627,24 +627,24 @@ export default function AllStudentsPage() {
                       </div>
                     </td>
                     <td className="p-2" style={sc('116px')}>
-                      <span className="text-[10px] font-mono text-[var(--brand)] bg-[var(--brand-light)] px-[5px] py-[2px] rounded">
+                      <span className="text-[0.625rem] font-mono text-[var(--brand)] bg-[var(--brand-light)] px-[0.3125rem] py-[0.125rem] rounded">
                         {s.id}
                       </span>
                     </td>
                     <td className="p-2" style={sc('256px')}>
-                      <div className="text-xs font-medium text-[var(--text-primary)] truncate max-w-[155px]">
+                      <div className="text-xs font-medium text-[var(--text-primary)] truncate max-w-[9.6875rem]">
                         {isBn ? s.nameBn || s.nameEn : s.nameEn}
                       </div>
-                      <div className="text-[10px] text-[var(--text-muted)] truncate">{isBn ? s.nameEn : s.nameBn}</div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)] truncate">{isBn ? s.nameEn : s.nameBn}</div>
                     </td>
-                    <td className="p-2 text-[var(--text-secondary)] text-[11px] whitespace-nowrap" style={sc('416px')}>
+                    <td className="p-2 text-[var(--text-secondary)] text-[0.6875rem] whitespace-nowrap" style={sc('416px')}>
                       {classNameMap[s.class] ? (isBn ? classNameMap[s.class].bn : classNameMap[s.class].en) : s.class}
                       {s.section ? `-${s.section}` : ''}
                       {s.roll ? ` / ${s.roll}` : ''}
                     </td>
                     <td className="p-2">
                       <span
-                        className="text-[10px] px-[6px] py-[2px] rounded-[5px] font-medium"
+                        className="text-[0.625rem] px-[0.375rem] py-[0.125rem] rounded-[0.3125rem] font-medium"
                         style={{
                           background: s.gender.includes('Female') ? 'var(--purple-light)' : 'var(--teal-light)',
                           color: s.gender.includes('Female') ? 'var(--purple)' : 'var(--teal)',
@@ -653,24 +653,24 @@ export default function AllStudentsPage() {
                         {s.gender.includes('Female') ? (isBn ? 'মেয়ে' : 'Female') : isBn ? 'ছেলে' : 'Male'}
                       </span>
                     </td>
-                    <td className="p-2 text-[11px] text-[var(--red)] font-medium">{s.bloodGroup || '—'}</td>
-                    <td className="p-2 text-[var(--text-secondary)] font-mono text-[11px]">{s.phone}</td>
-                    <td className="p-2 text-[var(--text-secondary)] font-mono text-[11px]">{s.fatherPhone}</td>
-                    <td className="p-2 text-[var(--text-secondary)] text-[11px]">{s.district || '—'}</td>
+                    <td className="p-2 text-[0.6875rem] text-[var(--red)] font-medium">{s.bloodGroup || '—'}</td>
+                    <td className="p-2 text-[var(--text-secondary)] font-mono text-[0.6875rem]">{s.phone}</td>
+                    <td className="p-2 text-[var(--text-secondary)] font-mono text-[0.6875rem]">{s.fatherPhone}</td>
+                    <td className="p-2 text-[var(--text-secondary)] text-[0.6875rem]">{s.district || '—'}</td>
                     <td className="p-2">{statusBadge(s.status)}</td>
                     <td className="p-2">
-                      <div className="flex gap-[3px]">
+                      <div className="flex gap-[0.1875rem]">
                         <button
                           onClick={() => setViewSt(s)}
                           title="View"
-                          className="w-[26px] h-[26px] rounded-[6px] bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]"
+                          className="w-[1.625rem] h-[1.625rem] rounded-[0.375rem] bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]"
                         >
                           <Eye size={12} />
                         </button>
                         <button
                           onClick={() => navigate('/students/update', { state: { studentId: s.id } })}
                           title="Edit"
-                          className="w-[26px] h-[26px] rounded-[6px] bg-[var(--amber-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--amber)]"
+                          className="w-[1.625rem] h-[1.625rem] rounded-[0.375rem] bg-[var(--amber-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--amber)]"
                         >
                           <Edit2 size={12} />
                         </button>
@@ -683,11 +683,11 @@ export default function AllStudentsPage() {
           </table>
         </div>
         {/* Pagination */}
-        <div className="flex justify-between items-center px-[14px] py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex-wrap gap-2">
+        <div className="flex justify-between items-center px-[0.875rem] py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex-wrap gap-2">
           <span className="text-xs text-[var(--text-muted)]">
             {(sp - 1) * perPage + 1}–{Math.min(sp * perPage, filtered.length)} / {filtered.length}
           </span>
-          <div className="flex gap-[3px]">
+          <div className="flex gap-[0.1875rem]">
             {(
               [
                 [<ChevronsLeft size={12} />, () => setPage(1), sp === 1] as const,

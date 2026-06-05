@@ -17,10 +17,10 @@ interface FP {
 }
 const F = React.memo(function F({ l, v, onChange, type = 'text', opts, req }: FP) {
   const s =
-    'w-full py-2 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] font-[inherit] outline-none'
+    'w-full py-2 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none'
   return (
     <div>
-      <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+      <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
         {l}
         {req && <span className="text-[var(--red)] ml-0.5">*</span>}
       </label>
@@ -151,29 +151,29 @@ export default function UpdateStudentPage() {
     className: 'grid gap-2.5',
     style: { gridTemplateColumns: isMobile ? '1fr' : `repeat(${n},1fr)` } as React.CSSProperties,
   })
-  const card = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] md:p-[18px] mb-3'
+  const card = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-[0.875rem] md:p-[1.125rem] mb-3'
   const secHead = (icon: React.ReactNode, title: string, _color = 'var(--brand)', bg = 'var(--brand-light)') => (
     <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-[var(--border)]">
-      <div className="w-7 h-7 rounded-[7px] bg-[var(--brand-light)] flex items-center justify-center" style={{ background: bg }}>
+      <div className="w-7 h-7 rounded-[0.4375rem] bg-[var(--brand-light)] flex items-center justify-center" style={{ background: bg }}>
         {icon}
       </div>
-      <span className="text-[13px] font-semibold text-[var(--text-primary)]">{title}</span>
+      <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{title}</span>
     </div>
   )
 
   return (
     <div>
-      <div className="flex items-center gap-2.5 mb-[18px] flex-wrap">
+      <div className="flex items-center gap-2.5 mb-[1.125rem] flex-wrap">
         <button
           onClick={() => window.history.back()}
-          className="flex items-center gap-[5px] py-[7px] px-3 rounded-[9px] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[13px] text-[var(--text-secondary)] font-[inherit] shrink-0"
+          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div>
-          <h1 className="text-[22px] font-semibold text-[var(--text-primary)]">{isBn ? 'ছাত্রের তথ্য আপডেট' : 'Update Student Info'}</h1>
-          <p className="text-[13px] text-[var(--text-secondary)] mt-[3px]">
+          <h1 className="text-[1.375rem] font-semibold text-[var(--text-primary)]">{isBn ? 'ছাত্রের তথ্য আপডেট' : 'Update Student Info'}</h1>
+          <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {isBn ? 'ছাত্র খুঁজে তার সকল তথ্য সম্পাদনা করুন' : 'Search a student and edit all their information'}
           </p>
         </div>
@@ -182,17 +182,17 @@ export default function UpdateStudentPage() {
       <div className="grid gap-4 items-start" style={{ gridTemplateColumns: isMobile ? '1fr' : '280px 1fr' }}>
         <div className="sticky top-0">
           <div className={card}>
-            <div className="text-[13px] font-semibold text-[var(--text-primary)] mb-2.5">
+            <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] mb-2.5">
               {isBn ? '🔍 ছাত্র খুঁজুন' : '🔍 Find Student'}
             </div>
             <div className="relative mb-2.5">
-              <div className="flex items-center gap-[7px] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[9px] py-2 px-2.5">
+              <div className="flex items-center gap-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[0.5625rem] py-2 px-2.5">
                 <Search size={14} className="text-[var(--text-muted)] shrink-0" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={isBn ? 'নাম, আইডি, রোল...' : 'Name, ID, roll...'}
-                  className="flex-1 border-none bg-transparent outline-none text-[13px] text-[var(--text-primary)] font-[inherit]"
+                  className="flex-1 border-none bg-transparent outline-none text-[0.8125rem] text-[var(--text-primary)] font-[inherit]"
                 />
                 {search && (
                   <button onClick={() => setSearch('')} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)] flex">
@@ -202,16 +202,16 @@ export default function UpdateStudentPage() {
               </div>
 
               {results.length > 0 && (
-                <div className="absolute top-full left-0 right-0 bg-[var(--bg-primary)] border border-[var(--border)] rounded-[10px] overflow-hidden z-20 mt-1 shadow-[var(--shadow-md)]">
+                <div className="absolute top-full left-0 right-0 bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.625rem] overflow-hidden z-20 mt-1 shadow-[var(--shadow-md)]">
                   {results.map((s) => (
                     <div
                       key={s.id}
                       onClick={() => selectStudent(s)}
-                      className="flex gap-2.5 py-[9px] px-3 cursor-pointer border-b-[0.5px] border-[var(--border)]"
+                      className="flex gap-2.5 py-[0.5625rem] px-3 cursor-pointer border-b-[0.0313rem] border-[var(--border)]"
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <div className="w-[30px] h-[35px] rounded-[5px] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center shrink-0">
+                      <div className="w-[1.875rem] h-[2.1875rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center shrink-0">
                         {s.photo ? (
                           <img src={s.photo} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -219,10 +219,10 @@ export default function UpdateStudentPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
+                        <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
                           {s.nameEn}
                         </div>
-                        <div className="text-[10px] text-[var(--text-muted)]">
+                        <div className="text-[0.625rem] text-[var(--text-muted)]">
                           {s.id} · {s.class}
                           {s.section ? `-${s.section}` : ''}
                         </div>
@@ -234,9 +234,9 @@ export default function UpdateStudentPage() {
             </div>
 
             {chosen && form ? (
-              <div className="p-2.5 bg-[var(--brand-light)] rounded-[10px] border border-[var(--brand)]">
+              <div className="p-2.5 bg-[var(--brand-light)] rounded-[0.625rem] border border-[var(--brand)]">
                 <div className="flex gap-2 items-center">
-                  <div className="w-9 h-[44px] rounded-md overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center shrink-0">
+                  <div className="w-9 h-[2.75rem] rounded-md overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center shrink-0">
                     {form.photo ? (
                       <img src={form.photo} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -245,23 +245,23 @@ export default function UpdateStudentPage() {
                   </div>
                   <div>
                     <div className="text-xs font-semibold text-[var(--brand)]">{form.nameEn}</div>
-                    <div className="text-[10px] text-[var(--brand)] font-mono opacity-80">{form.id}</div>
-                    <div className="text-[10px] text-[var(--brand)] opacity-70">
+                    <div className="text-[0.625rem] text-[var(--brand)] font-mono opacity-80">{form.id}</div>
+                    <div className="text-[0.625rem] text-[var(--brand)] opacity-70">
                       {form.class}
                       {form.section ? `-${form.section}` : ''} · {form.phone}
                     </div>
                   </div>
                 </div>
                 {saved && (
-                  <div className="flex items-center gap-[5px] mt-2 text-xs text-[var(--green)] font-medium">
+                  <div className="flex items-center gap-[0.3125rem] mt-2 text-xs text-[var(--green)] font-medium">
                     <CheckCircle size={13} />
                     {isBn ? 'সফলভাবে সেভ হয়েছে!' : 'Saved successfully!'}
                   </div>
                 )}
               </div>
             ) : (
-              <div className="py-5 px-3 bg-[var(--bg-secondary)] rounded-[10px] text-center">
-                <UserSearch size={24} className="text-[var(--text-muted)] block mx-auto mb-[6px] opacity-40" />
+              <div className="py-5 px-3 bg-[var(--bg-secondary)] rounded-[0.625rem] text-center">
+                <UserSearch size={24} className="text-[var(--text-muted)] block mx-auto mb-[0.375rem] opacity-40" />
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed">
                   {isBn ? 'নাম বা আইডি লিখে ছাত্র খুঁজুন' : 'Search by name or ID'}
                 </p>
@@ -272,21 +272,21 @@ export default function UpdateStudentPage() {
 
         {form ? (
           <div>
-            <div className="flex items-center justify-between mb-[14px] flex-wrap gap-2">
-              <h2 className="text-[17px] font-semibold text-[var(--text-primary)]">{isBn ? 'তথ্য সম্পাদনা' : 'Edit Information'}</h2>
+            <div className="flex items-center justify-between mb-[0.875rem] flex-wrap gap-2">
+              <h2 className="text-[1.0625rem] font-semibold text-[var(--text-primary)]">{isBn ? 'তথ্য সম্পাদনা' : 'Edit Information'}</h2>
               <div className="flex gap-2">
                 <button
                   onClick={() => {
                     setForm({ ...chosen! })
                     setSaved(false)
                   }}
-                  className="py-2 px-3.5 rounded-[9px] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer font-[inherit]"
+                  className="py-2 px-3.5 rounded-[0.5625rem] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]"
                 >
                   {isBn ? 'রিসেট' : 'Reset'}
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-1.5 py-2 px-[18px] rounded-[9px] bg-[var(--brand)] border-none text-white text-[13px] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_12px_rgba(99,102,241,0.3)]"
+                  className="flex items-center gap-1.5 py-2 px-[1.125rem] rounded-[0.5625rem] bg-[var(--brand)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_12px_rgba(99,102,241,0.3)]"
                 >
                   <Save size={14} />
                   {isBn ? 'সেভ করুন' : 'Save Changes'}
@@ -296,9 +296,9 @@ export default function UpdateStudentPage() {
 
             <div className={card}>
               {secHead(<User size={14} className="text-[var(--brand)]" />, isBn ? 'ব্যক্তিগত তথ্য' : 'Personal Information')}
-              <div className="flex gap-[14px] mb-3 flex-wrap">
+              <div className="flex gap-[0.875rem] mb-3 flex-wrap">
                 <div>
-                  <div className="text-[11px] font-medium text-[var(--text-secondary)] mb-[5px]">
+                  <div className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem]">
                     {isBn ? 'ছবি (সর্বোচ্চ ২ MB)' : 'Photo (max 2MB)'}
                   </div>
                   <div
@@ -310,8 +310,8 @@ export default function UpdateStudentPage() {
                       <img src={form.photo} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <div className="text-center text-[var(--text-muted)]">
-                        <Camera size={20} className="block mx-auto mb-[3px]" />
-                        <div className="text-[10px]">Upload</div>
+                        <Camera size={20} className="block mx-auto mb-[0.1875rem]" />
+                        <div className="text-[0.625rem]">Upload</div>
                       </div>
                     )}
                     {form.photo && (
@@ -321,16 +321,16 @@ export default function UpdateStudentPage() {
                           e.stopPropagation()
                           set('photo', '')
                         }}
-                        className="absolute top-0.5 right-0.5 w-[18px] h-[18px] rounded-full bg-[var(--red)] border-none cursor-pointer flex items-center justify-center text-white"
+                        className="absolute top-0.5 right-0.5 w-[1.125rem] h-[1.125rem] rounded-full bg-[var(--red)] border-none cursor-pointer flex items-center justify-center text-white"
                       >
                         <X size={10} />
                       </button>
                     )}
                   </div>
                   <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} className="hidden" />
-                  {photoErr && <div className="text-[10px] text-[var(--red)] mt-[3px] max-w-[80px]">{photoErr}</div>}
+                  {photoErr && <div className="text-[0.625rem] text-[var(--red)] mt-[0.1875rem] max-w-[5rem]">{photoErr}</div>}
                 </div>
-                <div className="flex-1 min-w-[200px]">
+                <div className="flex-1 min-w-[12.5rem]">
                   <div {...g(2)} className="grid gap-2.5 mb-2.5" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(2,1fr)' }}>
                     <F l={isBn ? 'নাম (ইং)' : 'Name (EN)'} v={form.nameEn} onChange={(v) => set('nameEn', v)} req />
                     <F l={isBn ? 'নাম (বাং)' : 'Name (BN)'} v={form.nameBn} onChange={(v) => set('nameBn', v)} />
@@ -473,13 +473,13 @@ export default function UpdateStudentPage() {
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setForm({ ...chosen! })}
-                className="py-[10px] px-[18px] rounded-[9px] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[13px] cursor-pointer font-[inherit]"
+                className="py-[0.625rem] px-[1.125rem] rounded-[0.5625rem] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]"
               >
                 {isBn ? 'রিসেট' : 'Reset'}
               </button>
               <button
                 onClick={handleSave}
-                className="flex items-center gap-1.5 py-[10px] px-[22px] rounded-[9px] bg-[var(--brand)] border-none text-white text-[13px] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
+                className="flex items-center gap-1.5 py-[0.625rem] px-[1.375rem] rounded-[0.5625rem] bg-[var(--brand)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
               >
                 <Save size={15} />
                 {isBn ? 'পরিবর্তন সেভ করুন' : 'Save Changes'}
@@ -487,12 +487,12 @@ export default function UpdateStudentPage() {
             </div>
           </div>
         ) : (
-          <div className={`${card} flex flex-col items-center justify-center py-[60px] text-center`}>
-            <UserSearch size={48} className="text-[var(--text-muted)] opacity-30 mb-[14px]" />
-            <h3 className="text-[16px] font-medium text-[var(--text-primary)] mb-[6px]">
+          <div className={`${card} flex flex-col items-center justify-center py-[3.75rem] text-center`}>
+            <UserSearch size={48} className="text-[var(--text-muted)] opacity-30 mb-[0.875rem]" />
+            <h3 className="text-[1rem] font-medium text-[var(--text-primary)] mb-[0.375rem]">
               {isBn ? 'ছাত্র সিলেক্ট করুন' : 'Select a Student'}
             </h3>
-            <p className="text-[13px] text-[var(--text-muted)]">
+            <p className="text-[0.8125rem] text-[var(--text-muted)]">
               {isBn ? 'বামের সার্চ বক্সে নাম বা আইডি লিখুন' : 'Search by name or ID on the left panel'}
             </p>
           </div>

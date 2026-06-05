@@ -16,19 +16,19 @@ export default function StatCard({ label, value, change, changeType = 'up', icon
       style={{
         background: 'var(--bg-primary)',
         border: '0.5px solid var(--border)',
-        borderRadius: '12px',
-        padding: '16px',
+        borderRadius: '0.75rem',
+        padding: '1rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: '10px',
+        gap: '0.625rem',
       }}
     >
       {/* Icon */}
       <div
         style={{
-          width: '36px',
-          height: '36px',
-          borderRadius: '10px',
+          width: '2.25rem',
+          height: '2.25rem',
+          borderRadius: '0.625rem',
           background: iconBg,
           display: 'flex',
           alignItems: 'center',
@@ -42,7 +42,7 @@ export default function StatCard({ label, value, change, changeType = 'up', icon
       <div>
         <div
           style={{
-            fontSize: '24px',
+            fontSize: '1.5rem',
             fontWeight: 600,
             color: 'var(--text-primary)',
             letterSpacing: '-0.5px',
@@ -53,9 +53,9 @@ export default function StatCard({ label, value, change, changeType = 'up', icon
         </div>
         <div
           style={{
-            fontSize: '13px',
+            fontSize: '0.8125rem',
             color: 'var(--text-secondary)',
-            marginTop: '4px',
+            marginTop: '0.25rem',
           }}
         >
           {label}
@@ -66,11 +66,11 @@ export default function StatCard({ label, value, change, changeType = 'up', icon
       {change && (
         <div
           style={{
-            fontSize: '12px',
+            fontSize: '0.75rem',
             color: changeType === 'up' ? 'var(--green)' : 'var(--red)',
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
+            gap: '0.25rem',
           }}
         >
           {changeType === 'up' ? <TrendingUp size={13} /> : <TrendingDown size={13} />}

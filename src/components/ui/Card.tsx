@@ -14,8 +14,8 @@ export default function Card({ children, style, className, ...rest }: CardProps)
       style={{
         background: 'var(--bg-primary)',
         border: '0.5px solid var(--border)',
-        borderRadius: '12px',
-        padding: '16px',
+        borderRadius: '0.75rem',
+        padding: '1rem',
         ...style,
       }}
     >

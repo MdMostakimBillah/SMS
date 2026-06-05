@@ -6,12 +6,12 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
 
-const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[14px] p-[14px] mb-[14px]'
-const sectionTitleCls = 'flex items-center gap-2 text-[13px] font-semibold text-[var(--text-primary)]'
+const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-[0.875rem] mb-[0.875rem]'
+const sectionTitleCls = 'flex items-center gap-2 text-[0.8125rem] font-semibold text-[var(--text-primary)]'
 const inputCls =
   'h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border'
 const btnPrimary =
-  'flex items-center gap-[5px] py-[7px] px-[14px] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
+  'flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
 
 type SubTab = 'marksheets' | 'cumulative' | 'promotion'
 
@@ -187,10 +187,10 @@ export default function Step5Marksheet() {
             <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 className="text-[16px] font-bold text-[var(--text-primary)]">
+            <h1 className="text-[1rem] font-bold text-[var(--text-primary)]">
               {isBn ? 'ধাপ ৫: মার্কশিট ও প্রমোশন' : 'Step 5: Marksheet & Promotion'}
             </h1>
-            <p className="text-[11px] text-[var(--text-muted)]">
+            <p className="text-[0.6875rem] text-[var(--text-muted)]">
               {isBn ? 'মার্কশিট তৈরি, কিউমুলেটিভ ও শিক্ষার্থী প্রমোশন' : 'Marksheet, cumulative & student promotion'}
             </p>
           </div>
@@ -207,7 +207,7 @@ export default function Step5Marksheet() {
           <button
             key={t.key}
             onClick={() => setActiveSubTab(t.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeSubTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeSubTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
           >
             {t.icon}
             {t.label}
@@ -221,7 +221,7 @@ export default function Step5Marksheet() {
         {activeSubTab === 'marksheets' && (
           <>
             <div className="flex justify-between items-center mb-3">
-              <span className="text-[12px] text-[var(--text-secondary)]">
+              <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {marksheetConfigs.length} {isBn ? 'টি মার্কশিট' : 'marksheets'}
               </span>
               <button onClick={() => setShowMarksheetForm(true)} className={btnPrimary}>
@@ -238,14 +238,14 @@ export default function Step5Marksheet() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <FileText size={14} className="text-[var(--brand)]" />
-                          <span className="text-[13px] font-semibold text-[var(--text-primary)]">{isBn ? ms.nameBn : ms.name}</span>
+                          <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{isBn ? ms.nameBn : ms.name}</span>
                           {ms.isPublished && (
-                            <span className="text-[9px] py-[2px] px-[5px] rounded font-medium bg-[var(--green-light)] text-[var(--green)]">
+                            <span className="text-[0.5625rem] py-[0.125rem] px-[0.3125rem] rounded font-medium bg-[var(--green-light)] text-[var(--green)]">
                               {isBn ? 'প্রকাশিত' : 'Published'}
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 text-[10px] text-[var(--text-muted)] flex-wrap">
+                        <div className="flex items-center gap-3 text-[0.625rem] text-[var(--text-muted)] flex-wrap">
                           <span>
                             {isBn ? 'পরীক্ষা' : 'Exam'}: {isBn ? exam?.nameBn : exam?.name}
                           </span>
@@ -280,7 +280,7 @@ export default function Step5Marksheet() {
               {marksheetConfigs.length === 0 && (
                 <div className={`${sectionCls} text-center py-10`}>
                   <FileText size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                  <p className="text-[13px] text-[var(--text-muted)]">{isBn ? 'কোনো মার্কশিট নেই' : 'No marksheets created'}</p>
+                  <p className="text-[0.8125rem] text-[var(--text-muted)]">{isBn ? 'কোনো মার্কশিট নেই' : 'No marksheets created'}</p>
                 </div>
               )}
             </div>
@@ -291,7 +291,7 @@ export default function Step5Marksheet() {
         {activeSubTab === 'cumulative' && (
           <>
             <div className="flex justify-between items-center mb-3">
-              <span className="text-[12px] text-[var(--text-secondary)]">
+              <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {cumulativeSheets.length} {isBn ? 'টি কিউমুলেটিভ' : 'cumulative sheets'}
               </span>
               <button
@@ -320,14 +320,14 @@ export default function Step5Marksheet() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <Award size={14} className="text-[var(--purple)]" />
-                        <span className="text-[13px] font-semibold text-[var(--text-primary)]">{isBn ? cs.nameBn : cs.name}</span>
+                        <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{isBn ? cs.nameBn : cs.name}</span>
                         {cs.isPublished && (
-                          <span className="text-[9px] py-[2px] px-[5px] rounded font-medium bg-[var(--green-light)] text-[var(--green)]">
+                          <span className="text-[0.5625rem] py-[0.125rem] px-[0.3125rem] rounded font-medium bg-[var(--green-light)] text-[var(--green)]">
                             {isBn ? 'প্রকাশিত' : 'Published'}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 text-[10px] text-[var(--text-muted)]">
+                      <div className="flex items-center gap-3 text-[0.625rem] text-[var(--text-muted)]">
                         <span>
                           {cs.examIds.length} {isBn ? 'টি পরীক্ষা' : 'exams'}
                         </span>
@@ -356,7 +356,7 @@ export default function Step5Marksheet() {
               {cumulativeSheets.length === 0 && (
                 <div className={`${sectionCls} text-center py-10`}>
                   <Award size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                  <p className="text-[13px] text-[var(--text-muted)]">
+                  <p className="text-[0.8125rem] text-[var(--text-muted)]">
                     {isBn ? 'কোনো কিউমুলেটিভ মার্কশিট নেই' : 'No cumulative marksheets'}
                   </p>
                 </div>
@@ -376,7 +376,7 @@ export default function Step5Marksheet() {
               </div>
               <div className="grid grid-cols-3 gap-3 mt-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পরীক্ষা' : 'Exam'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পরীক্ষা' : 'Exam'}</label>
                   <select value={selectedExamId} onChange={(e) => setSelectedExamId(e.target.value)} className={`${inputCls} w-full`}>
                     <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
                     {examConfigs.map((e) => (
@@ -387,7 +387,7 @@ export default function Step5Marksheet() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'বর্তমান শ্রেণি' : 'From Class'}
                   </label>
                   <select
@@ -407,7 +407,7 @@ export default function Step5Marksheet() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
                   <select
                     value={promoSectionId}
                     onChange={(e) => setPromoSectionId(e.target.value)}
@@ -437,7 +437,7 @@ export default function Step5Marksheet() {
                   <div
                     key={s.label}
                     className={sectionCls}
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '10px 12px' }}
                   >
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -446,8 +446,8 @@ export default function Step5Marksheet() {
                       <GraduationCap size={14} />
                     </div>
                     <div>
-                      <div className="text-[16px] font-bold text-[var(--text-primary)]">{s.value}</div>
-                      <div className="text-[9px] text-[var(--text-muted)]">{s.label}</div>
+                      <div className="text-[1rem] font-bold text-[var(--text-primary)]">{s.value}</div>
+                      <div className="text-[0.5625rem] text-[var(--text-muted)]">{s.label}</div>
                     </div>
                   </div>
                 ))}
@@ -472,19 +472,19 @@ export default function Step5Marksheet() {
                   {isBn ? 'শিক্ষার্থীদের তালিকা' : 'Student List'} ({promotionData.length})
                 </div>
                 <div className="overflow-x-auto mt-3">
-                  <table className="w-full text-xs min-w-[500px]">
+                  <table className="w-full text-xs min-w-[31.25rem]">
                     <thead>
                       <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                        <th className="py-2 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)] w-8">#</th>
-                        <th className="py-2 px-2 text-left text-[10px] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
-                        <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="py-2 px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] w-8">#</th>
+                        <th className="py-2 px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
+                        <th className="py-2 px-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'মোট' : 'Total'}
                         </th>
-                        <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)]">%</th>
-                        <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="py-2 px-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">%</th>
+                        <th className="py-2 px-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'গ্রেড' : 'Grade'}
                         </th>
-                        <th className="py-2 px-2 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                        <th className="py-2 px-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">
                           {isBn ? 'অবস্থা' : 'Status'}
                         </th>
                       </tr>
@@ -494,18 +494,18 @@ export default function Step5Marksheet() {
                         <tr key={row.student.id} className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)]">
                           <td className="py-2 px-2 text-[var(--text-muted)]">{idx + 1}</td>
                           <td className="py-2 px-2">
-                            <div className="text-[11px] font-medium text-[var(--text-primary)]">
+                            <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">
                               {isBn ? row.student.nameBn || row.student.nameEn : row.student.nameEn}
                             </div>
-                            <div className="text-[9px] text-[var(--text-muted)]">{row.student.id}</div>
+                            <div className="text-[0.5625rem] text-[var(--text-muted)]">{row.student.id}</div>
                           </td>
-                          <td className="py-2 px-2 text-center text-[12px] font-bold text-[var(--text-primary)]">
+                          <td className="py-2 px-2 text-center text-[0.75rem] font-bold text-[var(--text-primary)]">
                             {row.totalObtained}/{row.totalFull}
                           </td>
-                          <td className="py-2 px-2 text-center text-[11px] font-medium text-[var(--text-secondary)]">{row.percentage}%</td>
+                          <td className="py-2 px-2 text-center text-[0.6875rem] font-medium text-[var(--text-secondary)]">{row.percentage}%</td>
                           <td className="py-2 px-2 text-center">
                             <span
-                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                              className={`text-[0.625rem] font-bold px-1.5 py-0.5 rounded ${
                                 row.grade === 'A+'
                                   ? 'bg-[#dcfce7] text-[#15803d]'
                                   : row.grade === 'A' || row.grade === 'A-'
@@ -520,7 +520,7 @@ export default function Step5Marksheet() {
                           </td>
                           <td className="py-2 px-2 text-center">
                             <span
-                              className={`text-[10px] font-medium px-2 py-0.5 rounded ${
+                              className={`text-[0.625rem] font-medium px-2 py-0.5 rounded ${
                                 row.status === 'promoted'
                                   ? 'bg-[var(--teal-light)] text-[var(--teal)]'
                                   : row.status === 'eligible'
@@ -552,7 +552,7 @@ export default function Step5Marksheet() {
             {promotionData.length === 0 && promoClassId && promoSectionId && (
               <div className={`${sectionCls} text-center py-10`}>
                 <GraduationCap size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                <p className="text-[13px] text-[var(--text-muted)]">
+                <p className="text-[0.8125rem] text-[var(--text-muted)]">
                   {isBn ? 'এই সেকশনে কোনো শিক্ষার্থী নেই' : 'No students in this section'}
                 </p>
               </div>
@@ -561,7 +561,7 @@ export default function Step5Marksheet() {
             {!promoClassId && (
               <div className={`${sectionCls} text-center py-10`}>
                 <GraduationCap size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                <p className="text-[13px] text-[var(--text-muted)]">
+                <p className="text-[0.8125rem] text-[var(--text-muted)]">
                   {isBn ? 'পরীক্ষা, শ্রেণি ও সেকশন নির্বাচন করুন' : 'Select exam, class and section'}
                 </p>
               </div>
@@ -573,9 +573,9 @@ export default function Step5Marksheet() {
       {/* ═══ Marksheet Form Modal ═══ */}
       {showMarksheetForm && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[420px] w-full p-5 border border-[var(--border)]">
+          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[26.25rem] w-full p-5 border border-[var(--border)]">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[14px] font-semibold text-[var(--text-primary)]">{isBn ? 'নতুন মার্কশিট' : 'New Marksheet'}</h3>
+              <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'নতুন মার্কশিট' : 'New Marksheet'}</h3>
               <button
                 onClick={() => setShowMarksheetForm(false)}
                 className="w-7 h-7 rounded-md flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
@@ -586,7 +586,7 @@ export default function Step5Marksheet() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'নাম (ইংরেজি)' : 'Name'}
                   </label>
                   <input
@@ -596,7 +596,7 @@ export default function Step5Marksheet() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'নাম (বাংলা)' : 'Name (Bangla)'}
                   </label>
                   <input
@@ -607,7 +607,7 @@ export default function Step5Marksheet() {
                 </div>
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পরীক্ষা' : 'Exam'}</label>
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'পরীক্ষা' : 'Exam'}</label>
                 <select
                   value={marksheetForm.examId}
                   onChange={(e) => setMarksheetForm((p) => ({ ...p, examId: e.target.value }))}
@@ -623,7 +623,7 @@ export default function Step5Marksheet() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেশন' : 'Session'}</label>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেশন' : 'Session'}</label>
                   <input
                     value={marksheetForm.sessionId}
                     onChange={(e) => setMarksheetForm((p) => ({ ...p, sessionId: e.target.value }))}
@@ -631,7 +631,7 @@ export default function Step5Marksheet() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                     {isBn ? 'কার্যদিবস' : 'Working Days'}
                   </label>
                   <input
@@ -643,7 +643,7 @@ export default function Step5Marksheet() {
                 </div>
               </div>
               <div>
-                <label className="text-[11px] font-medium text-[var(--text-secondary)] mb-1 block">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
                   {isBn ? 'স্কুলের নাম' : 'School Name'}
                 </label>
                 <input
@@ -656,11 +656,11 @@ export default function Step5Marksheet() {
             <div className="flex gap-2 justify-end mt-4">
               <button
                 onClick={() => setShowMarksheetForm(false)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button onClick={handleSaveMarksheet} className={`${btnPrimary} text-[12px]`}>
+              <button onClick={handleSaveMarksheet} className={`${btnPrimary} text-[0.75rem]`}>
                 {isBn ? 'সংরক্ষণ' : 'Save'}
               </button>
             </div>
@@ -671,20 +671,20 @@ export default function Step5Marksheet() {
       {/* ═══ Promotion Confirmation Modal ═══ */}
       {showPromoConfirm && (
         <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[14px] max-w-[400px] w-full p-5 border border-[var(--border)]">
+          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[25rem] w-full p-5 border border-[var(--border)]">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-[var(--green-light)] flex items-center justify-center">
                 <GraduationCap size={20} className="text-[var(--green)]" />
               </div>
               <div>
-                <h3 className="text-[14px] font-semibold text-[var(--text-primary)]">
+                <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
                   {isBn ? 'প্রমোশন নিশ্চিত করুন' : 'Confirm Promotion'}
                 </h3>
-                <p className="text-[11px] text-[var(--text-muted)]">{isBn ? 'এই কাজটি অপরিবর্তনীয়' : 'This action cannot be undone'}</p>
+                <p className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'এই কাজটি অপরিবর্তনীয়' : 'This action cannot be undone'}</p>
               </div>
             </div>
             <div className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] mb-4">
-              <div className="text-[12px] text-[var(--text-primary)]">
+              <div className="text-[0.75rem] text-[var(--text-primary)]">
                 <span className="font-semibold">{promoStats.eligible}</span> {isBn ? 'জন শিক্ষার্থীকে' : 'students'}{' '}
                 <span className="font-semibold text-[var(--green)]">{isBn ? 'প্রমোট' : 'promote'}</span> {isBn ? 'করা হবে' : 'to'}{' '}
                 <span className="font-semibold">Class-{promoClassId ? parseInt(promoClassId.replace('Class-', '')) + 1 : '?'}</span>
@@ -693,13 +693,13 @@ export default function Step5Marksheet() {
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setShowPromoConfirm(false)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[12px] cursor-pointer"
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
               <button
                 onClick={handleBulkPromote}
-                className="flex items-center gap-1.5 py-[7px] px-[14px] rounded-lg bg-[var(--green)] border-none text-white text-[12px] font-medium cursor-pointer"
+                className="flex items-center gap-1.5 py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--green)] border-none text-white text-[0.75rem] font-medium cursor-pointer"
               >
                 <CheckCircle size={13} />
                 {isBn ? 'প্রমোট করুন' : 'Promote'}
