@@ -85,6 +85,16 @@ export default function ExamDashboard() {
   const rooms = useExamStore((s) => s.rooms)
   const gradeScales = useExamStore((s) => s.gradeScales)
 
+  // Session-scoped exam IDs for filtering sub-data
+  const sessionExamIds = useMemo(() => new Set(examConfigs.map((e) => e.id)), [examConfigs])
+
+  // Filter sub-data by session exam IDs
+  const sessionSubjectMarkConfigs = useMemo(() => subjectMarkConfigs.filter((s) => sessionExamIds.has(s.examId)), [subjectMarkConfigs, sessionExamIds])
+  const sessionStudentMarks = useMemo(() => studentMarks.filter((m) => sessionExamIds.has(m.examId)), [studentMarks, sessionExamIds])
+  const sessionRoutines = useMemo(() => routines.filter((r) => sessionExamIds.has(r.examId)), [routines, sessionExamIds])
+  const sessionMarksEntryStatuses = useMemo(() => marksEntryStatuses.filter((m) => sessionExamIds.has(m.examId)), [marksEntryStatuses, sessionExamIds])
+  const sessionPromotions = useMemo(() => promotions.filter((p) => sessionExamIds.has(p.examId)), [promotions, sessionExamIds])
+
   const isBn = useBn()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -106,13 +116,13 @@ export default function ExamDashboard() {
   const activeExamId = activeExam?.id
 
   const activeExamSubjects = useMemo(
-    () => (activeExamId ? subjectMarkConfigs.filter((s) => s.examId === activeExamId) : []),
-    [subjectMarkConfigs, activeExamId]
+    () => (activeExamId ? sessionSubjectMarkConfigs.filter((s) => s.examId === activeExamId) : []),
+    [sessionSubjectMarkConfigs, activeExamId]
   )
 
   const activeExamRoutines = useMemo(
-    () => (activeExamId ? routines.filter((r) => r.examId === activeExamId) : []),
-    [routines, activeExamId]
+    () => (activeExamId ? sessionRoutines.filter((r) => r.examId === activeExamId) : []),
+    [sessionRoutines, activeExamId]
   )
 
   const activeExamSeats = useMemo(
@@ -125,22 +135,22 @@ export default function ExamDashboard() {
   const totalSubjects = activeExamSubjects.length
 
   const completedSubjects = useMemo(
-    () => activeExamSubjects.filter((s) => studentMarks.some((m) => m.examId === s.examId && m.subjectId === s.subjectId)).length,
-    [activeExamSubjects, studentMarks]
+    () => activeExamSubjects.filter((s) => sessionStudentMarks.some((m) => m.examId === s.examId && m.subjectId === s.subjectId)).length,
+    [activeExamSubjects, sessionStudentMarks]
   )
 
   const publishedResults = useMemo(() => examConfigs.filter((e) => e.isActive).length, [examConfigs])
-  const pendingPromotions = useMemo(() => promotions.filter((p) => p.status === 'eligible').length, [promotions])
-  const promotedCount = useMemo(() => promotions.filter((p) => p.status === 'promoted').length, [promotions])
-  const notEligibleCount = useMemo(() => promotions.filter((p) => p.status === 'not-eligible').length, [promotions])
+  const pendingPromotions = useMemo(() => sessionPromotions.filter((p) => p.status === 'eligible').length, [sessionPromotions])
+  const promotedCount = useMemo(() => sessionPromotions.filter((p) => p.status === 'promoted').length, [sessionPromotions])
+  const notEligibleCount = useMemo(() => sessionPromotions.filter((p) => p.status === 'not-eligible').length, [sessionPromotions])
 
   // ── Step Status ──
   const steps = useMemo(() => {
-    const s1 = examConfigs.length > 0 && subjectMarkConfigs.length > 0
+    const s1 = examConfigs.length > 0 && sessionSubjectMarkConfigs.length > 0
     const s2 = activeExamRoutines.length > 0 && completedRoutines === totalRoutines && totalRoutines > 0
     const s3 = totalSubjects > 0 && completedSubjects === totalSubjects
-    const s4 = studentMarks.length > 0
-    const s5 = promotions.some((p) => p.status === 'promoted')
+    const s4 = sessionStudentMarks.length > 0
+    const s5 = sessionPromotions.some((p) => p.status === 'promoted')
     return [
       {
         key: 'planning',
@@ -180,14 +190,14 @@ export default function ExamDashboard() {
     ]
   }, [
     examConfigs,
-    subjectMarkConfigs,
+    sessionSubjectMarkConfigs,
     activeExamRoutines,
     completedRoutines,
     totalRoutines,
     totalSubjects,
     completedSubjects,
-    studentMarks,
-    promotions,
+    sessionStudentMarks,
+    sessionPromotions,
   ])
 
   const handleStepClick = useCallback(
@@ -221,9 +231,9 @@ export default function ExamDashboard() {
 
   const gradeDistribution = useMemo(() => {
     const gradeCount: Record<string, number> = {}
-    for (const m of studentMarks) gradeCount[m.grade] = (gradeCount[m.grade] || 0) + 1
+    for (const m of sessionStudentMarks) gradeCount[m.grade] = (gradeCount[m.grade] || 0) + 1
     return Object.entries(gradeCount).map(([name, value]) => ({ name, value, color: gradeColors[name] || '#94a3b8' }))
-  }, [studentMarks])
+  }, [sessionStudentMarks])
 
   const completedCount = useMemo(() => steps.filter((s) => s.status === 'completed').length, [steps])
 
@@ -237,11 +247,11 @@ export default function ExamDashboard() {
   // ── Pre-computed subject names for marksEntryStatuses ──
   const entryStatusSubjects = useMemo(
     () =>
-      marksEntryStatuses.slice(0, 5).map((entry) => ({
+      sessionMarksEntryStatuses.slice(0, 5).map((entry) => ({
         ...entry,
         subjectName: subjectMap.get(entry.subjectId),
       })),
-    [marksEntryStatuses, subjectMap]
+    [sessionMarksEntryStatuses, subjectMap]
   )
 
   const approvedStudentCount = useMemo(() => students.filter((s) => s.status === 'approved').length, [students])
@@ -260,7 +270,7 @@ export default function ExamDashboard() {
       {
         labelBn: 'মার্কস বাকি',
         labelEn: 'Pending Entry',
-        value: Math.max(0, totalSubjects * 5 - studentMarks.length),
+        value: Math.max(0, totalSubjects * 5 - sessionStudentMarks.length),
         color: 'var(--amber)',
         cardBg: 'var(--amber-light)',
       },
@@ -273,7 +283,7 @@ export default function ExamDashboard() {
         cardBg: 'var(--purple-light)',
       },
     ],
-    [totalRoutines, totalSubjects, studentMarks.length, publishedResults, pendingPromotions]
+    [totalRoutines, totalSubjects, sessionStudentMarks.length, publishedResults, pendingPromotions]
   )
 
   const progressItems = useMemo(() => {
@@ -307,7 +317,7 @@ export default function ExamDashboard() {
 
   const checklist = useMemo(() => {
     const totalSubjects = subjects.length || 1
-    const allConfigs = subjectMarkConfigs
+    const allConfigs = sessionSubjectMarkConfigs
     const uniqueClassIds = new Set(allConfigs.map((c) => c.classId))
     const classesWithConfigs = uniqueClassIds.size || 1
     const totalConfigured = allConfigs.length
@@ -316,13 +326,13 @@ export default function ExamDashboard() {
     return [
       { done: examConfigs.length > 0, label: isBn ? 'পরীক্ষা তৈরি' : 'Exam Created', link: '/exams/planning' },
       {
-        done: subjectMarkConfigs.length > 0,
+        done: sessionSubjectMarkConfigs.length > 0,
         label: isBn ? `বিষয় কনফিগ (${subjectPct}%)` : `Subject Configured (${subjectPct}%)`,
         pct: subjectPct,
         link: '/exams/planning',
       },
       {
-        done: subjectMarkConfigs.some((s) => s.subExams.length > 0),
+        done: sessionSubjectMarkConfigs.some((s) => s.subExams.length > 0),
         label: isBn ? 'সাব-এক্সাম সেটআপ' : 'Sub-exams Set Up',
         link: '/exams/planning',
       },
@@ -331,18 +341,18 @@ export default function ExamDashboard() {
       { done: rooms.length > 0, label: isBn ? 'কক্ষ সেটআপ' : 'Room Setup', link: '/exams/scheduling' },
       { done: activeExamRoutines.length > 0, label: isBn ? 'রুটিন তৈরি' : 'Routine Created', link: '/exams/scheduling' },
       { done: invigilators.length > 0, label: isBn ? 'ইনভিজিলেটর নিয়োগ' : 'Invigilator Assigned', link: '/exams/scheduling' },
-      { done: studentMarks.length > 0, label: isBn ? 'মার্কস এন্ট্রি' : 'Marks Entered', link: '/exams/evaluation' },
-      { done: promotions.length > 0, label: isBn ? 'প্রমোশন সম্পন্ন' : 'Promotion Done', link: '/exams/marksheet' },
+      { done: sessionStudentMarks.length > 0, label: isBn ? 'মার্কস এন্ট্রি' : 'Marks Entered', link: '/exams/evaluation' },
+      { done: sessionPromotions.length > 0, label: isBn ? 'প্রমোশন সম্পন্ন' : 'Promotion Done', link: '/exams/marksheet' },
     ]
   }, [
     examConfigs,
-    subjectMarkConfigs,
+    sessionSubjectMarkConfigs,
     omrConfigs,
     rooms,
     activeExamRoutines,
     invigilators,
-    studentMarks,
-    promotions,
+    sessionStudentMarks,
+    sessionPromotions,
     gradeScales,
     subjects,
     isBn,
@@ -356,11 +366,11 @@ export default function ExamDashboard() {
   const promoSummary = useMemo(
     () => [
       { label: isBn ? 'মোট শিক্ষার্থী' : 'Total Students', value: approvedStudentCount, color: 'var(--brand)' },
-      { label: isBn ? 'যোগ্য' : 'Eligible', value: promotions.filter((p) => p.status === 'eligible').length, color: 'var(--green)' },
+      { label: isBn ? 'যোগ্য' : 'Eligible', value: sessionPromotions.filter((p) => p.status === 'eligible').length, color: 'var(--green)' },
       { label: isBn ? 'প্রমোটেড' : 'Promoted', value: promotedCount, color: 'var(--teal)' },
       { label: isBn ? 'অযোগ্য' : 'Not Eligible', value: notEligibleCount, color: 'var(--red)' },
     ],
-    [approvedStudentCount, promotions, promotedCount, notEligibleCount, isBn]
+    [approvedStudentCount, sessionPromotions, promotedCount, notEligibleCount, isBn]
   )
 
   if (isLoading) return <ExamSkeleton />
@@ -649,7 +659,7 @@ export default function ExamDashboard() {
             titleBn="মার্কস এন্ট্রি"
             description={isBn ? 'শিক্ষার্থীদের মার্কস প্রবেশ' : 'Enter student marks'}
             descriptionBn="মার্কস প্রবেশ"
-            stat={`${studentMarks.length} ${isBn ? 'টি এন্ট্রি' : 'entries'}`}
+            stat={`${sessionStudentMarks.length} ${isBn ? 'টি এন্ট্রি' : 'entries'}`}
             statColor="var(--green)"
             onClick={navEvaluation}
           />
@@ -751,7 +761,7 @@ export default function ExamDashboard() {
                 </div>
               )
             })}
-            {marksEntryStatuses.length === 0 && (
+            {sessionMarksEntryStatuses.length === 0 && (
               <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                 <Clock size={24} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
                 {isBn ? 'এখনো মার্কস এন্ট্রি শুরু হয়নি' : 'No marks entry started yet'}

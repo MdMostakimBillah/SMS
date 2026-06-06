@@ -1298,9 +1298,9 @@ export default function OMRSheetPage() {
       </div>
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+        <div className="modal-overlay"
           onClick={() => setShowDeleteConfirm(null)}>
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-6 w-[22.5rem] shadow-2xl"
+          <div className="modal-box modal-content"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-[var(--red-light)] flex items-center justify-center">
@@ -1328,9 +1328,9 @@ export default function OMRSheetPage() {
       )}
 
       {showPdfConfirm && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+        <div className="modal-overlay"
           onClick={() => setShowPdfConfirm(false)}>
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-6 w-[27.5rem] shadow-2xl"
+          <div className="modal-box modal-content"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] flex items-center justify-center">

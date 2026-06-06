@@ -148,8 +148,8 @@ export default function AppLayout() {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
           minWidth: 0,
+          position: 'relative',
         }}
       >
         <Topbar />

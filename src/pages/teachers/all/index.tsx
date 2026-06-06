@@ -262,11 +262,8 @@ ${photoHtml}
       )}
 
       {viewT && (
-        <div
-          className="fixed inset-0 z-[600] flex items-center justify-center p-4 overflow-y-auto"
-          style={{ background: 'rgba(0,0,0,0.5)' }}
-        >
-          <div className="bg-[var(--bg-primary)] rounded-2xl max-w-[35rem] w-full max-h-[90vh] overflow-hidden flex flex-col border border-[var(--border)] shadow-[var(--shadow-lg)] modal-content">
+        <div className="modal-overlay">
+          <div className="modal-content modal-box max-h-[90vh] overflow-hidden flex flex-col shadow-[var(--shadow-lg)]" style={{ maxWidth: '35rem' }}>
             <div
               className="flex items-center justify-between px-[1.125rem] py-[0.875rem] border-b border-[var(--border)]"
               style={{ background: 'var(--brand-light)' }}
@@ -391,11 +388,8 @@ ${photoHtml}
       )}
 
       {delConfirm && (
-        <div
-          className="fixed inset-0 z-[700] flex items-center justify-center p-4 overflow-y-auto"
-          style={{ background: 'rgba(0,0,0,0.5)' }}
-        >
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)] modal-content">
+        <div className="modal-overlay">
+          <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
             <div className="flex items-center gap-[0.625rem] mb-3">
               <div className="w-9 h-9 rounded-lg bg-[var(--red-light)] flex items-center justify-center">
                 <AlertTriangle size={18} className="text-[var(--red)]" />

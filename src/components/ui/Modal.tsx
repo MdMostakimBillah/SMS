@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 interface ModalProps {
@@ -21,16 +22,20 @@ export function Modal({ open, onClose, title, children, maxWidth = '26.25rem', s
   useEffect(() => {
     if (open) {
       document.addEventListener('keydown', handleKeyDown)
-      return () => document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown)
+        document.body.style.overflow = ''
+      }
     }
   }, [open, handleKeyDown])
 
   if (!open) return null
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50" onClick={onClose}>
+  return createPortal(
+    <div className="modal-overlay" onClick={onClose}>
       <div
-        className="bg-[var(--bg-primary)] rounded-[0.875rem] w-full p-5 border border-[var(--border)] max-h-[85dvh] overflow-y-auto"
+        className="modal-box modal-content"
         style={{ maxWidth }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -46,6 +51,7 @@ export function Modal({ open, onClose, title, children, maxWidth = '26.25rem', s
         )}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

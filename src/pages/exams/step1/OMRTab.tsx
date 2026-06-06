@@ -180,8 +180,8 @@ export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs }: OMRT
 
       {/* OMR Form Modal */}
       {showOMRForm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[26.25rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-box modal-content" style={{ maxWidth: '26.25rem' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
                 {editOMR ? (isBn ? 'OMR এডিট' : 'Edit OMR') : isBn ? 'নতুন OMR কনফিগ' : 'New OMR Config'}
@@ -315,8 +315,8 @@ export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs }: OMRT
           const exam = examConfigs.find((e) => e.id === omrDownloadConfig.examId)
           const subject = subjects.find((s) => s.id === omrDownloadConfig.subjectId)
           return (
-            <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-              <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[25rem] w-full p-5 border border-[var(--border)]">
+            <div className="modal-overlay">
+              <div className="modal-box modal-content" style={{ maxWidth: '25rem' }}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
                     {isBn ? 'OMR শিট ডাউনলোড' : 'Download OMR Sheet'}

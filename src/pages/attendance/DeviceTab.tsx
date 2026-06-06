@@ -1218,8 +1218,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
 
               {/* Device Settings Modal */}
               {showDeviceSettings && (
-                <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
-                  <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[27.5rem] w-full p-5 border border-[var(--border)]">
+                <div className="modal-overlay">
+                  <div className="modal-content modal-box" style={{ maxWidth: '27.5rem' }}>
                     {(() => {
                       const d = devices.find((dev) => dev.id === showDeviceSettings)
                       if (!d) return null
@@ -2319,8 +2319,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
 
           {/* Add Device Modal */}
           {showAddDevice && (
-            <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
-              <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[26.25rem] w-full p-5 border border-[var(--border)]">
+            <div className="modal-overlay">
+              <div className="modal-content modal-box" style={{ maxWidth: '26.25rem' }}>
                 <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
                   {isBn ? 'নতুন ডিভাইস যোগ করুন' : 'Add New Device'}
                 </h3>
@@ -2422,8 +2422,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
 
           {/* Add RFID Modal */}
           {showAddRFID && (
-            <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
-              <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+            <div className="modal-overlay">
+              <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
                 <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
                   {isBn ? 'RFID কার্ড যোগ করুন' : 'Add RFID Card'}
                 </h3>
@@ -2497,8 +2497,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
 
           {/* Add Fingerprint Modal */}
           {showAddFP && (
-            <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
-              <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+            <div className="modal-overlay">
+              <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
                 <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
                   {isBn ? 'ফিঙ্গারপ্রিন্ট এনরোলমেন্ট' : 'Fingerprint Enrollment'}
                 </h3>
@@ -2563,8 +2563,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
 
           {/* Add Face Scan Modal */}
           {showAddFace && (
-            <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
-              <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+            <div className="modal-overlay">
+              <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
                 <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
                   {isBn ? 'ফেস স্ক্যান এনরোলমেন্ট' : 'Face Scan Enrollment'}
                 </h3>
@@ -2630,10 +2630,10 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
           {/* Kiosk Mode Modal */}
           {kioskMode && (
             <div
-              className="fixed inset-0 flex items-center justify-center z-[800] bg-[var(--bg-primary)] sm:bg-black/80 sm:p-4 overflow-y-auto"
+              className="modal-overlay z-[800] bg-[var(--bg-primary)] sm:bg-black/80 sm:p-4"
               style={{ height: '100dvh' }}
             >
-              <div className="bg-[var(--bg-primary)] rounded-none sm:rounded-2xl w-full sm:max-w-[26.25rem] min-h-[100dvh] sm:min-h-0 sm:h-auto sm:my-auto p-5 sm:p-6 border-0 sm:border border-[var(--border)] shadow-2xl">
+              <div className="modal-content modal-box rounded-none sm:rounded-2xl w-full sm:max-w-[26.25rem] min-h-[100dvh] sm:min-h-0 sm:h-auto sm:my-auto p-5 sm:p-6 border-0 sm:border shadow-2xl">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[var(--teal-light)] flex items-center justify-center">

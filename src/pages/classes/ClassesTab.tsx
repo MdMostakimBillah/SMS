@@ -1142,11 +1142,12 @@ export default function ClassesTab({
       {showBulkTime && (
         <div
           onClick={() => setShowBulkTime(false)}
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000] p-5 overflow-y-auto"
+          className="modal-overlay"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] w-full max-w-[25rem] shadow-lg"
+            className="modal-box modal-content"
+            style={{ maxWidth: '25rem' }}
           >
             <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1231,11 +1232,12 @@ export default function ClassesTab({
       {showBulkSubject && (
         <div
           onClick={() => setShowBulkSubject(false)}
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000] p-5 overflow-y-auto"
+          className="modal-overlay"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] w-full max-w-[26.25rem] max-h-[80vh] flex flex-col shadow-lg"
+            className="modal-box modal-content"
+            style={{ maxWidth: '26.25rem' }}
           >
             <div className="p-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
@@ -1322,11 +1324,12 @@ export default function ClassesTab({
       {showBulkSection && (
         <div
           onClick={() => setShowBulkSection(false)}
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000] p-5 overflow-y-auto"
+          className="modal-overlay"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] w-full max-w-[25rem] shadow-lg"
+            className="modal-box modal-content"
+            style={{ maxWidth: '25rem' }}
           >
             <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1419,35 +1422,12 @@ export default function ClassesTab({
       {showSubjectModal && (
         <div
           onClick={() => setShowSubjectModal(null)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '100dvh',
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1.25rem',
-            overflowY: 'auto',
-          }}
+          className="modal-overlay"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="modal-content"
-            style={{
-              background: 'var(--bg-primary)',
-              borderRadius: '1rem',
-              border: '1px solid var(--border)',
-              width: '100%',
-              maxWidth: '25rem',
-              maxHeight: '80vh',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: 'var(--shadow-lg)',
-            }}
+            className="modal-box modal-content"
+            style={{ maxWidth: '25rem' }}
           >
             <div
               style={{

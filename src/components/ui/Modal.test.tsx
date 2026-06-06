@@ -20,8 +20,8 @@ describe('Modal', () => {
 
   it('calls onClose when backdrop clicked', () => {
     const onClose = vi.fn()
-    const { container } = render(<Modal open={true} onClose={onClose}>Content</Modal>)
-    const backdrop = container.querySelector('.fixed.inset-0')!
+    render(<Modal open={true} onClose={onClose}>Content</Modal>)
+    const backdrop = document.body.querySelector('.modal-overlay')!
     fireEvent.click(backdrop)
     expect(onClose).toHaveBeenCalled()
   })

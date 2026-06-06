@@ -915,6 +915,8 @@ interface ExamState {
 
   lockMarks: (examId: string, classId: string, sectionId: string, subjectId: string) => void
   unlockMarks: (examId: string, classId: string, sectionId: string, subjectId: string) => void
+
+  importExamDataFromSession: (sourceSession: string, targetSession: string) => void
 }
 
 export const useExamStore = create<ExamState>()(
@@ -1397,21 +1399,74 @@ export const useExamStore = create<ExamState>()(
               ),
             }
           }
-          return state
+          // Create new locked entry if none exists
+          const newEntry: MarksEntryStatus = {
+            id: `MES-${Date.now()}`,
+            examId,
+            classId,
+            sectionId,
+            subjectId,
+            teacherId: '',
+            status: 'locked',
+            totalStudents: 0,
+            enteredCount: 0,
+            lockedAt: new Date().toISOString(),
+          }
+          return { marksEntryStatuses: [...state.marksEntryStatuses, newEntry] }
         }),
-      unlockMarks: (examId, classId, sectionId, subjectId) =>
+      unlockMarks: (examId, classId, _sectionId, subjectId) =>
         set((state) => {
-          const entry = state.marksEntryStatuses.find(
-            (m) => m.examId === examId && m.classId === classId && m.sectionId === sectionId && m.subjectId === subjectId
+          // Unlock all entries for this exam+class+subject (any section)
+          const entries = state.marksEntryStatuses.filter(
+            (m) => m.examId === examId && m.classId === classId && m.subjectId === subjectId
           )
-          if (entry) {
+          if (entries.length > 0) {
+            const entryIds = new Set(entries.map((e) => e.id))
             return {
               marksEntryStatuses: state.marksEntryStatuses.map((m) =>
-                m.id === entry.id ? { ...m, status: 'completed' as const, lockedAt: null } : m
+                entryIds.has(m.id) ? { ...m, status: 'completed' as const, lockedAt: null } : m
               ),
             }
           }
           return state
+        }),
+
+      importExamDataFromSession: (sourceSession, targetSession) =>
+        set((state) => {
+          const sourceExams = state.examConfigs.filter((e) => e.session === sourceSession)
+          if (sourceExams.length === 0) return state
+
+          const examIdMap = new Map<string, string>()
+          const newExams = sourceExams.map((e) => {
+            const newId = `EX-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+            examIdMap.set(e.id, newId)
+            return {
+              ...e,
+              id: newId,
+              session: targetSession,
+              isActive: false,
+              createdAt: new Date().toISOString(),
+            }
+          })
+
+          const sourceConfigs = state.subjectMarkConfigs.filter((s) => sourceExams.some((e) => e.id === s.examId))
+          const newConfigs = sourceConfigs.map((s) => {
+            const newExamId = examIdMap.get(s.examId) || s.examId
+            return {
+              ...s,
+              id: `SMC-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              examId: newExamId,
+              subExams: s.subExams.map((se) => ({
+                ...se,
+                id: `SE-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              })),
+            }
+          })
+
+          return {
+            examConfigs: [...state.examConfigs, ...newExams],
+            subjectMarkConfigs: [...state.subjectMarkConfigs, ...newConfigs],
+          }
         }),
     }),
     {

@@ -63,8 +63,8 @@ export default function DepartmentsPage() {
   return (
     <div>
       {(showAdd || editD) && (
-        <div className="fixed inset-0 h-[100dvh] bg-black/50 z-[600] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[25rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-content modal-box" style={{ maxWidth: '25rem' }}>
             <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-[0.875rem]">
               {editD ? (isBn ? 'বিভাগ এডিট করুন' : 'Edit Department') : isBn ? 'নতুন বিভাগ' : 'New Department'}
             </h3>
@@ -130,8 +130,8 @@ export default function DepartmentsPage() {
       )}
 
       {delConfirm && (
-        <div className="fixed inset-0 h-[100dvh] bg-black/50 z-[700] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
             <div className="flex items-center gap-[0.625rem] mb-3">
               <div className="w-9 h-9 rounded-lg bg-[var(--red-light)] flex items-center justify-center">
                 <AlertTriangle size={18} className="text-[var(--red)]" />

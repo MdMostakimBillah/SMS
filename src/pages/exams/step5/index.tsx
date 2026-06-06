@@ -23,6 +23,13 @@ export default function Step5Marksheet() {
   const marksheetConfigs = useExamStore((s) => s.marksheetConfigs)
   const cumulativeSheets = useExamStore((s) => s.cumulativeSheets)
   const promotions = useExamStore((s) => s.promotions)
+
+  const sessionExamIds = useMemo(() => new Set(examConfigs.map((e) => e.id)), [examConfigs])
+  const sessionSubjectMarkConfigs = useMemo(() => subjectMarkConfigs.filter((s) => sessionExamIds.has(s.examId)), [subjectMarkConfigs, sessionExamIds])
+  const sessionStudentMarks = useMemo(() => studentMarks.filter((m) => sessionExamIds.has(m.examId)), [studentMarks, sessionExamIds])
+  const sessionMarksheetConfigs = useMemo(() => marksheetConfigs.filter((mc) => sessionExamIds.has(mc.examId)), [marksheetConfigs, sessionExamIds])
+  const sessionCumulativeSheets = useMemo(() => cumulativeSheets.filter((cs) => cs.examIds.some((id) => sessionExamIds.has(id))), [cumulativeSheets, sessionExamIds])
+  const sessionPromotions = useMemo(() => promotions.filter((p) => sessionExamIds.has(p.examId)), [promotions, sessionExamIds])
   const addMarksheetConfig = useExamStore((s) => s.addMarksheetConfig)
   const deleteMarksheetConfig = useExamStore((s) => s.deleteMarksheetConfig)
   const toggleMarksheetPublished = useExamStore((s) => s.toggleMarksheetPublished)
@@ -65,11 +72,11 @@ export default function Step5Marksheet() {
   // Promotion eligibility
   const promotionData = useMemo(() => {
     if (!selectedExamId || !promoClassId || !promoSectionId) return []
-    const examSubjects = subjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === promoClassId)
+    const examSubjects = sessionSubjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === promoClassId)
     return promoStudents
       .map((student) => {
         const subjectResults = examSubjects.map((sc) => {
-          const mark = studentMarks.find(
+          const mark = sessionStudentMarks.find(
             (m) =>
               m.examId === selectedExamId &&
               m.studentId === student.id &&
@@ -97,7 +104,7 @@ export default function Step5Marksheet() {
                     : percentage >= 33
                       ? 'D'
                       : 'F'
-        const existingPromo = promotions.find((p) => p.studentId === student.id && p.examId === selectedExamId)
+        const existingPromo = sessionPromotions.find((p) => p.studentId === student.id && p.examId === selectedExamId)
         return {
           student,
           totalObtained,
@@ -109,7 +116,7 @@ export default function Step5Marksheet() {
         }
       })
       .sort((a, b) => b.totalObtained - a.totalObtained)
-  }, [selectedExamId, promoClassId, promoSectionId, promoStudents, subjectMarkConfigs, studentMarks, promotions])
+  }, [selectedExamId, promoClassId, promoSectionId, promoStudents, sessionSubjectMarkConfigs, sessionStudentMarks, sessionPromotions])
 
   const promoStats = useMemo(() => {
     const total = promotionData.length
@@ -215,7 +222,7 @@ export default function Step5Marksheet() {
           <>
             <div className="flex justify-between items-center mb-3">
               <span className="text-[0.75rem] text-[var(--text-secondary)]">
-                {marksheetConfigs.length} {isBn ? 'টি মার্কশিট' : 'marksheets'}
+                {sessionMarksheetConfigs.length} {isBn ? 'টি মার্কশিট' : 'marksheets'}
               </span>
               <button onClick={() => setShowMarksheetForm(true)} className={btnPrimary}>
                 <Plus size={14} />
@@ -223,7 +230,7 @@ export default function Step5Marksheet() {
               </button>
             </div>
             <div className="space-y-3">
-              {marksheetConfigs.map((ms) => {
+              {sessionMarksheetConfigs.map((ms) => {
                 const exam = examConfigs.find((e) => e.id === ms.examId)
                 return (
                   <div key={ms.id} className={`${sectionCls} transition-all hover:shadow-sm`}>
@@ -270,7 +277,7 @@ export default function Step5Marksheet() {
                   </div>
                 )
               })}
-              {marksheetConfigs.length === 0 && (
+              {sessionMarksheetConfigs.length === 0 && (
                 <div className={`${sectionCls} text-center py-10`}>
                   <FileText size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
                   <p className="text-[0.8125rem] text-[var(--text-muted)]">{isBn ? 'কোনো মার্কশিট নেই' : 'No marksheets created'}</p>
@@ -285,7 +292,7 @@ export default function Step5Marksheet() {
           <>
             <div className="flex justify-between items-center mb-3">
               <span className="text-[0.75rem] text-[var(--text-secondary)]">
-                {cumulativeSheets.length} {isBn ? 'টি কিউমুলেটিভ' : 'cumulative sheets'}
+                {sessionCumulativeSheets.length} {isBn ? 'টি কিউমুলেটিভ' : 'cumulative sheets'}
               </span>
               <button
                 onClick={() => {
@@ -307,7 +314,7 @@ export default function Step5Marksheet() {
               </button>
             </div>
             <div className="space-y-3">
-              {cumulativeSheets.map((cs) => (
+              {sessionCumulativeSheets.map((cs) => (
                 <div key={cs.id} className={`${sectionCls} transition-all hover:shadow-sm`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -346,7 +353,7 @@ export default function Step5Marksheet() {
                   </div>
                 </div>
               ))}
-              {cumulativeSheets.length === 0 && (
+              {sessionCumulativeSheets.length === 0 && (
                 <div className={`${sectionCls} text-center py-10`}>
                   <Award size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
                   <p className="text-[0.8125rem] text-[var(--text-muted)]">
@@ -565,8 +572,8 @@ export default function Step5Marksheet() {
 
       {/* ═══ Marksheet Form Modal ═══ */}
       {showMarksheetForm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[26.25rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-box modal-content" style={{ maxWidth: '26.25rem' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'নতুন মার্কশিট' : 'New Marksheet'}</h3>
               <button
@@ -663,8 +670,8 @@ export default function Step5Marksheet() {
 
       {/* ═══ Promotion Confirmation Modal ═══ */}
       {showPromoConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[25rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-box modal-content" style={{ maxWidth: '25rem' }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-[var(--green-light)] flex items-center justify-center">
                 <GraduationCap size={20} className="text-[var(--green)]" />

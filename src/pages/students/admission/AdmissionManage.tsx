@@ -46,32 +46,11 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
   const [sendSMS, setSendSMS] = useState(true)
   return (
     <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '100dvh',
-        background: 'rgba(0,0,0,0.55)',
-        zIndex: 600,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-        overflowY: 'auto',
-      }}
+      className="modal-overlay"
     >
       <div
-        className="modal-content"
-        style={{
-          background: 'var(--bg-primary)',
-          borderRadius: '1rem',
-          padding: '1.75rem',
-          maxWidth: '26.25rem',
-          width: '100%',
-          border: '1px solid var(--border)',
-          boxShadow: 'var(--shadow-lg)',
-        }}
+        className="modal-box modal-content"
+        style={{ maxWidth: '26.25rem' }}
       >
         <div
           style={{
@@ -281,34 +260,11 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '100dvh',
-        background: 'rgba(0,0,0,0.55)',
-        zIndex: 600,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-        overflowY: 'auto',
-      }}
+      className="modal-overlay"
     >
       <div
-        className="modal-content"
-        style={{
-          background: 'var(--bg-primary)',
-          borderRadius: '1rem',
-          width: '100%',
-          maxWidth: '51.25rem',
-          maxHeight: '92vh',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          border: '1px solid var(--border)',
-        }}
+        className="modal-box modal-content"
+        style={{ maxWidth: '51.25rem' }}
       >
         <div
           style={{
@@ -527,34 +483,11 @@ const ViewModal = React.memo(function ViewModal({
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '100dvh',
-        background: 'rgba(0,0,0,0.55)',
-        zIndex: 600,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-        overflowY: 'auto',
-      }}
+      className="modal-overlay"
     >
       <div
-        className="modal-content"
-        style={{
-          background: 'var(--bg-primary)',
-          borderRadius: '1rem',
-          width: '100%',
-          maxWidth: '42.5rem',
-          maxHeight: '92vh',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          border: '1px solid var(--border)',
-        }}
+        className="modal-box modal-content"
+        style={{ maxWidth: '42.5rem' }}
       >
         <div
           style={{

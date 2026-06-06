@@ -633,8 +633,8 @@ export default function AttendancePage() {
     <div>
       {/* Mark All Confirm */}
       {showMarkAll && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] overflow-y-auto bg-black/50">
-          <div className="modal-content bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
             <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-3">
               {isBn ? 'সবাইকে উপস্থিত করুন?' : 'Mark All Present?'}
             </h3>
@@ -663,8 +663,8 @@ export default function AttendancePage() {
 
       {/* Single Person Detail Modal */}
       {viewPerson && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] overflow-y-auto bg-black/50">
-          <div className="modal-content bg-[var(--bg-primary)] rounded-2xl max-w-[40.625rem] w-full max-h-[85vh] overflow-hidden flex flex-col border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-content modal-box max-h-[85vh] overflow-hidden flex flex-col" style={{ maxWidth: '40.625rem' }}>
             <div className="px-[1.125rem] py-3.5 border-b border-[var(--border)] flex items-center gap-3 bg-[var(--brand-light)]">
               {(() => {
                 const t = teachers.find((te) => te.id === viewPerson.id)
@@ -868,8 +868,8 @@ export default function AttendancePage() {
 
       {/* Student Detail Modal */}
       {viewStudent && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] overflow-y-auto bg-black/50">
-          <div className="modal-content bg-[var(--bg-primary)] rounded-2xl max-w-[37.5rem] w-full max-h-[85vh] overflow-hidden flex flex-col border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-content modal-box max-h-[85vh] overflow-hidden flex flex-col" style={{ maxWidth: '37.5rem' }}>
             <div className="px-[1.125rem] py-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--brand-light)]">
               <div>
                 <div className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{viewStudent.name}</div>

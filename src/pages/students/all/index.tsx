@@ -212,10 +212,9 @@ export default function AllStudentsPage() {
 
       {viewSt && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto"
-          style={{ background: 'rgba(0,0,0,0.5)' }}
+          className="modal-overlay"
         >
-          <div className="bg-[var(--bg-primary)] rounded-2xl max-w-[35rem] w-full max-h-[90vh] overflow-hidden flex flex-col border border-[var(--border)] shadow-[var(--shadow-lg)] modal-content">
+          <div className="modal-box modal-content" style={{ maxWidth: '35rem' }}>
             <div
               className="flex items-center justify-between px-[1.125rem] py-[0.875rem] border-b border-[var(--border)]"
               style={{ background: 'var(--brand-light)' }}

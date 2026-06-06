@@ -84,6 +84,13 @@ export default function Step2Schedule() {
   const invigilators = useExamStore((s) => s.invigilators)
   const attendances = useExamStore((s) => s.attendances)
   const subjectMarkConfigs = useExamStore((s) => s.subjectMarkConfigs)
+
+  const sessionExamIds = useMemo(() => new Set(examConfigs.map((e) => e.id)), [examConfigs])
+  const sessionRoutines = useMemo(() => routines.filter((r) => sessionExamIds.has(r.examId)), [routines, sessionExamIds])
+  const sessionSeatPlans = useMemo(() => seatPlans.filter((sp) => sessionExamIds.has(sp.examId)), [seatPlans, sessionExamIds])
+  const sessionInvigilators = useMemo(() => invigilators.filter((i) => sessionExamIds.has(i.examId)), [invigilators, sessionExamIds])
+  const sessionAttendances = useMemo(() => attendances.filter((a) => sessionExamIds.has(a.examId)), [attendances, sessionExamIds])
+  const sessionSubjectMarkConfigs = useMemo(() => subjectMarkConfigs.filter((s) => sessionExamIds.has(s.examId)), [subjectMarkConfigs, sessionExamIds])
   const addAttendance = useExamStore((s) => s.addAttendance)
   const addRoutine = useExamStore((s) => s.addRoutine)
   const deleteRoutine = useExamStore((s) => s.deleteRoutine)
@@ -174,8 +181,8 @@ export default function Step2Schedule() {
   }, [calendarRange])
 
   const filteredRoutines = useMemo(
-    () => (selectedExamId ? routines.filter((r) => r.examId === selectedExamId) : routines),
-    [routines, selectedExamId]
+    () => (selectedExamId ? sessionRoutines.filter((r) => r.examId === selectedExamId) : sessionRoutines),
+    [sessionRoutines, selectedExamId]
   )
 
   // Room usage on selected date
@@ -190,18 +197,18 @@ export default function Step2Schedule() {
   }, [filteredRoutines, routineForm.date])
 
   const filteredSeatPlans = useMemo(
-    () => (selectedExamId ? seatPlans.filter((sp) => sp.examId === selectedExamId) : seatPlans),
-    [seatPlans, selectedExamId]
+    () => (selectedExamId ? sessionSeatPlans.filter((sp) => sp.examId === selectedExamId) : sessionSeatPlans),
+    [sessionSeatPlans, selectedExamId]
   )
 
   const filteredInvigilators = useMemo(
-    () => (selectedExamId ? invigilators.filter((i) => i.examId === selectedExamId) : invigilators),
-    [invigilators, selectedExamId]
+    () => (selectedExamId ? sessionInvigilators.filter((i) => i.examId === selectedExamId) : sessionInvigilators),
+    [sessionInvigilators, selectedExamId]
   )
 
   const filteredAttendances = useMemo(
-    () => (selectedExamId ? attendances.filter((a) => a.examId === selectedExamId) : attendances),
-    [attendances, selectedExamId]
+    () => (selectedExamId ? sessionAttendances.filter((a) => a.examId === selectedExamId) : sessionAttendances),
+    [sessionAttendances, selectedExamId]
   )
 
   // QR Scanner state
@@ -1393,8 +1400,8 @@ export default function Step2Schedule() {
 
             {/* Assign Room Modal */}
             {assignRoomStudentId && (
-              <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-                <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[20rem] w-full p-5 border border-[var(--border)]">
+              <div className="modal-overlay">
+                <div className="modal-box modal-content" style={{ maxWidth: '20rem' }}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'কক্ষ বরাদ্দ' : 'Assign Room'}</h3>
                     <button
@@ -2065,16 +2072,16 @@ export default function Step2Schedule() {
             students={students}
             selectedExamId={selectedExamId}
             examConfigs={examConfigs}
-            routines={routines}
-            subjectMarkConfigs={subjectMarkConfigs}
+            routines={sessionRoutines}
+            subjectMarkConfigs={sessionSubjectMarkConfigs}
           />
         )}
       </div>
 
       {/* ═══ Routine Form Modal ═══ */}
       {showRoutineForm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[26.25rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-box modal-content" style={{ maxWidth: '26.25rem' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'নতুন রুটিন' : 'New Routine'}</h3>
               <button
@@ -2227,8 +2234,8 @@ export default function Step2Schedule() {
 
       {/* ═══ Room Form Modal ═══ */}
       {showRoomForm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-box modal-content" style={{ maxWidth: '23.75rem' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
                 {editRoom ? (isBn ? 'কক্ষ এডিট' : 'Edit Room') : isBn ? 'নতুন কক্ষ' : 'New Room'}
@@ -2318,8 +2325,8 @@ export default function Step2Schedule() {
 
       {/* ═══ Invigilator Form Modal ═══ */}
       {showInvigForm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-box modal-content" style={{ maxWidth: '23.75rem' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'ইনভিজিলেটর নিয়োগ' : 'Assign Invigilator'}</h3>
               <button
@@ -2595,8 +2602,8 @@ function QRScannerModal({
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] bg-black/50">
-      <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[25rem] w-full p-5 border border-[var(--border)]">
+    <div className="modal-overlay">
+      <div className="modal-box modal-content" style={{ maxWidth: '25rem' }}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
             <QrCode size={16} className="inline mr-1" />

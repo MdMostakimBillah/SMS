@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Copy,
   Zap,
+  Download,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -23,6 +24,7 @@ import { useExamStore } from '@/store/examStore'
 import type { ExamConfig, ExamType, SubjectMarkConfig } from '@/store/examStore'
 import { sectionCls, sectionTitleCls, inputCls, btnPrimary } from '@/lib/styles'
 import OMRTab from './OMRTab'
+import { generatePlanningReportHTML } from './pdfTemplates/planningReport'
 
 type SubTab = 'exams' | 'subjects' | 'grade-scale' | 'omr'
 
@@ -39,9 +41,12 @@ export default function Step1Planning() {
   const navigate = useNavigate()
   const subjects = useTeacherStore((s) => s.subjects)
   const { classes } = useClassStore()
+  const currentSession = useClassStore((s) => s.institution.currentSession)
+  const sessions = useClassStore((s) => s.institution.sessions)
   const isBn = useBn()
 
-  const examConfigs = useExamStore((s) => s.examConfigs)
+  const allExamConfigs = useExamStore((s) => s.examConfigs)
+  const examConfigs = useMemo(() => allExamConfigs.filter((e) => e.session === currentSession), [allExamConfigs, currentSession])
   const subjectMarkConfigs = useExamStore((s) => s.subjectMarkConfigs)
   const omrConfigs = useExamStore((s) => s.omrConfigs)
   const gradeScales = useExamStore((s) => s.gradeScales)
@@ -53,6 +58,7 @@ export default function Step1Planning() {
   const deleteSubjectMarkConfig = useExamStore((s) => s.deleteSubjectMarkConfig)
   const copyClassMarkConfig = useExamStore((s) => s.copyClassMarkConfig)
   const copyExamPlan = useExamStore((s) => s.copyExamPlan)
+  const importExamDataFromSession = useExamStore((s) => s.importExamDataFromSession)
   const copySubjectConfig = useExamStore((s) => s.copySubjectConfig)
   const addGradeScale = useExamStore((s) => s.addGradeScale)
   const updateGradeScale = useExamStore((s) => s.updateGradeScale)
@@ -69,7 +75,7 @@ export default function Step1Planning() {
     nameBn: '',
     type: 'semester-1' as ExamType,
     customType: '',
-    session: '2025-26',
+    session: '',
     startDate: '',
     endDate: '',
   })
@@ -285,6 +291,46 @@ export default function Step1Planning() {
     return { totalFull, totalPass }
   }
 
+  const handleDownloadReport = () => {
+    if (!activeExam) {
+      alert(isBn ? 'প্রথমে একটি সক্রিয় পরীক্ষা নির্বাচন করুন' : 'Select an active exam first')
+      return
+    }
+    const inst = useClassStore.getState().institution
+    const html = generatePlanningReportHTML({
+      exam: activeExam,
+      subjectMarkConfigs,
+      gradeScales,
+      omrConfigs,
+      subjects,
+      classes,
+      completionPct,
+      checklist,
+      isBn,
+      schoolName: inst.name,
+      schoolNameBn: inst.nameBn,
+      schoolAddress: inst.address,
+    })
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(`<!DOCTYPE html><html><head>
+      <meta charset="utf-8"/>
+      <title>${isBn ? 'পরীক্ষা পরিকল্পনা প্রতিবেদন' : 'Exam Planning Report'}</title>
+      <style>
+        @page{size:A4 portrait;margin:15mm}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:20px}
+        @media print{
+          body{background:#fff;padding:0}
+          *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+        }
+      </style>
+    </head><body>${html}
+      <script>setTimeout(()=>window.print(),600)</script>
+    </body></html>`)
+    win.document.close()
+  }
+
   const handleSaveExam = () => {
     if (!examForm.name) return
     const examType = examForm.type === 'custom' ? (examForm.customType || 'custom') : examForm.type
@@ -310,7 +356,7 @@ export default function Step1Planning() {
     }
     setShowExamForm(false)
     setEditExam(null)
-    setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: '2025-26', startDate: '', endDate: '' })
+    setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: currentSession, startDate: '', endDate: '' })
   }
 
   return (
@@ -344,11 +390,18 @@ export default function Step1Planning() {
             {completionPct}% {isBn ? 'সম্পন্ন' : 'Done'}
           </div>
           <button
+            onClick={handleDownloadReport}
+            className="flex items-center gap-1 py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-primary)] text-xs font-medium cursor-pointer font-[inherit] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
+          >
+            <Download size={14} />
+            {isBn ? 'রিপোর্ট' : 'Report'}
+          </button>
+          <button
             onClick={() => {
               setActiveSubTab('exams')
               setShowExamForm(true)
               setEditExam(null)
-              setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: '2025-26', startDate: '', endDate: '' })
+              setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: currentSession, startDate: '', endDate: '' })
             }}
             className={btnPrimary}
           >
@@ -379,6 +432,43 @@ export default function Step1Planning() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
+        {/* Import from previous session banner */}
+        {examConfigs.length === 0 && sessions.filter((s) => s !== currentSession).length > 0 && (
+          <div className="flex items-center gap-3 mb-3 py-3 px-4 rounded-xl bg-[var(--purple-light)] border border-[var(--purple)] border-dashed">
+            <div className="w-9 h-9 rounded-lg bg-[var(--purple)] flex items-center justify-center shrink-0">
+              <Download size={16} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[0.8125rem] font-semibold text-[var(--purple)]">
+                {isBn ? 'আগের সেশন থেকে পরীক্ষার প্ল্যান আমদানি করুন' : 'Import Exam Plan from Previous Session'}
+              </div>
+              <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                {isBn
+                  ? 'এই সেশনে কোনো পরীক্ষা নেই। আগের সেশন থেকে পরীক্ষা ও বিষয় কনফিগ আমদানি করুন।'
+                  : 'No exams in this session. Import exam configs and subject mark configurations from a previous session.'}
+              </div>
+            </div>
+            <div className="flex gap-1.5 shrink-0">
+              {sessions
+                .filter((s) => s !== currentSession)
+                .map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      if (window.confirm(isBn ? `"${s}" থেকে সব পরীক্ষার প্ল্যান আমদানি করবেন?` : `Import all exam plans from "${s}"?`)) {
+                        importExamDataFromSession(s, currentSession)
+                      }
+                    }}
+                    className="flex items-center gap-[0.25rem] py-[0.375rem] px-3 rounded-lg bg-[var(--purple)] border-none text-white text-[0.6875rem] font-medium cursor-pointer font-[inherit] hover:opacity-90 transition-all"
+                  >
+                    <Download size={11} />
+                    {isBn ? `${s} থেকে আমদানি` : `Import from ${s}`}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
+
         {/* Setup Checklist */}
         <div className={sectionCls}>
           <div className={sectionTitleCls}>
@@ -542,7 +632,7 @@ export default function Step1Planning() {
                 <button
                   onClick={() => {
                     setShowExamForm(true)
-              setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: '2025-26', startDate: '', endDate: '' })
+              setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: currentSession, startDate: '', endDate: '' })
                   }}
                   className={`${btnPrimary} mt-3 text-[0.6875rem]`}
                 >
@@ -820,11 +910,12 @@ export default function Step1Planning() {
                     {/* Sub-exam Form Modal */}
                     {showSubExamForm && editDistConfig && (
                       <div
-                        className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+                        className="modal-overlay"
                         onClick={() => setShowSubExamForm(false)}
                       >
                         <div
-                          className="bg-[var(--bg-primary)] rounded-2xl p-5 w-full max-w-sm shadow-xl border border-[var(--border)]"
+                          className="modal-box modal-content"
+                          style={{ maxWidth: '24rem' }}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="flex items-center justify-between mb-3">
@@ -1030,8 +1121,8 @@ export default function Step1Planning() {
 
       {/* ═══ Exam Form Modal ═══ */}
       {showExamForm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[26.25rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-box modal-content" style={{ maxWidth: '26.25rem' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
                 {editExam ? (isBn ? 'পরীক্ষা এডিট' : 'Edit Exam') : isBn ? 'নতুন পরীক্ষা' : 'New Exam'}
@@ -1141,8 +1232,8 @@ export default function Step1Planning() {
       )}
 
       {showCopyAllConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-box modal-content" style={{ maxWidth: '23.75rem' }}>
             <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-2">
               {isBn ? 'সব কপি করুন' : 'Copy All To Another Class'}
             </h3>
@@ -1184,8 +1275,8 @@ export default function Step1Planning() {
       )}
 
       {showCopySubjectModal && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[27.5rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-box modal-content" style={{ maxWidth: '27.5rem' }}>
             <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-2">
               {isBn ? 'বিষয়ে কপি করুন' : 'Copy Config to Other Subjects'}
             </h3>
@@ -1278,8 +1369,8 @@ export default function Step1Planning() {
 
       {/* ═══ Copy Exam Plan Modal ═══ */}
       {showCopyExamPlanModal && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[25rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-box modal-content" style={{ maxWidth: '25rem' }}>
             <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-2">
               {isBn ? 'পরীক্ষার প্ল্যান কপি করুন' : 'Copy Exam Plan'}
             </h3>
@@ -1361,8 +1452,8 @@ export default function Step1Planning() {
 
       {/* ═══ Grade Scale Form Modal ═══ */}
       {showGradeForm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[31.25rem] w-full p-5 border border-[var(--border)] max-h-[80vh] overflow-y-auto">
+        <div className="modal-overlay">
+          <div className="modal-box modal-content" style={{ maxWidth: '31.25rem' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
                 {editGradeScaleId ? (isBn ? 'গ্রেড স্কেল সম্পাদনা' : 'Edit Grade Scale') : isBn ? 'গ্রেড স্কেল যোগ' : 'Add Grade Scale'}

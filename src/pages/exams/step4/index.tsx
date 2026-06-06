@@ -35,6 +35,11 @@ export default function Step4Results() {
   const studentMarks = useExamStore((s) => s.studentMarks)
   const subjectMarkConfigs = useExamStore((s) => s.subjectMarkConfigs)
   const extraMarks = useExamStore((s) => s.extraMarks)
+
+  const sessionExamIds = useMemo(() => new Set(examConfigs.map((e) => e.id)), [examConfigs])
+  const sessionStudentMarks = useMemo(() => studentMarks.filter((m) => sessionExamIds.has(m.examId)), [studentMarks, sessionExamIds])
+  const sessionSubjectMarkConfigs = useMemo(() => subjectMarkConfigs.filter((s) => sessionExamIds.has(s.examId)), [subjectMarkConfigs, sessionExamIds])
+  const sessionExtraMarks = useMemo(() => extraMarks.filter((e) => sessionExamIds.has(e.examId)), [extraMarks, sessionExamIds])
   const addExtraMark = useExamStore((s) => s.addExtraMark)
   const deleteExtraMark = useExamStore((s) => s.deleteExtraMark)
 
@@ -65,11 +70,11 @@ export default function Step4Results() {
   // Tabulation data
   const tabulationData = useMemo(() => {
     if (!selectedExamId || !selectedClassId || !selectedSectionId) return []
-    const examSubjects = subjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === selectedClassId)
+    const examSubjects = sessionSubjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === selectedClassId)
     return classStudents
       .map((student) => {
         const subjectMarks = examSubjects.map((sc) => {
-          const mark = studentMarks.find(
+          const mark = sessionStudentMarks.find(
             (m) =>
               m.examId === selectedExamId &&
               m.studentId === student.id &&
@@ -110,7 +115,7 @@ export default function Step4Results() {
         return { student, subjectMarks, totalObtained, totalFull, percentage, passedAll, gpa }
       })
       .sort((a, b) => b.totalObtained - a.totalObtained)
-  }, [selectedExamId, selectedClassId, selectedSectionId, classStudents, subjectMarkConfigs, studentMarks, subjects, isBn])
+  }, [selectedExamId, selectedClassId, selectedSectionId, classStudents, sessionSubjectMarkConfigs, sessionStudentMarks, subjects, isBn])
 
   // Position check
   const positionCheck = useMemo(() => {
@@ -133,10 +138,10 @@ export default function Step4Results() {
   // Analysis data
   const analysisData = useMemo(() => {
     if (!selectedExamId) return null
-    const examSubjects = subjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === selectedClassId)
+    const examSubjects = sessionSubjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === selectedClassId)
     const subjectStats = examSubjects.map((sc) => {
       const subject = subjects.find((s) => s.id === sc.subjectId)
-      const marks = studentMarks.filter((m) => m.examId === selectedExamId && m.subjectId === sc.subjectId)
+      const marks = sessionStudentMarks.filter((m) => m.examId === selectedExamId && m.subjectId === sc.subjectId)
       const total = marks.length
       const avg = total > 0 ? Math.round(marks.reduce((a, m) => a + m.totalMarks, 0) / total) : 0
       const passCount = marks.filter((m) => m.totalMarks >= sc.passMarks).length
@@ -161,7 +166,7 @@ export default function Step4Results() {
     const avgPercentage = totalStudents > 0 ? Math.round(tabulationData.reduce((a, d) => a + d.percentage, 0) / totalStudents) : 0
 
     return { subjectStats, totalStudents, passedStudents, passRate, avgPercentage }
-  }, [selectedExamId, selectedClassId, tabulationData, subjectMarkConfigs, studentMarks, subjects, isBn])
+  }, [selectedExamId, selectedClassId, tabulationData, sessionSubjectMarkConfigs, sessionStudentMarks, subjects, isBn])
 
   const handleSaveExtra = () => {
     if (!selectedExamId || !extraForm.studentId || !extraForm.marks) return
@@ -351,7 +356,7 @@ export default function Step4Results() {
           <>
             <div className="flex justify-between items-center mb-3">
               <span className="text-[0.75rem] text-[var(--text-secondary)]">
-                {extraMarks.filter((e) => (selectedExamId ? e.examId === selectedExamId : true)).length} {isBn ? 'টি এন্ট্রি' : 'entries'}
+                {sessionExtraMarks.filter((e) => (selectedExamId ? e.examId === selectedExamId : true)).length} {isBn ? 'টি এন্ট্রি' : 'entries'}
               </span>
               <button onClick={() => setShowExtraForm(true)} className={btnPrimary}>
                 <Plus size={14} />
@@ -360,7 +365,7 @@ export default function Step4Results() {
             </div>
             <div className="grid grid-cols-3 gap-3 mb-3">
               {extraMarkTypes.map((type) => {
-                const count = extraMarks.filter((e) => e.type === type.key && (selectedExamId ? e.examId === selectedExamId : true)).length
+                const count = sessionExtraMarks.filter((e) => e.type === type.key && (selectedExamId ? e.examId === selectedExamId : true)).length
                 return (
                   <div key={type.key} className={sectionCls} style={{ borderColor: `${type.color}30` }}>
                     <div className="flex items-center gap-2">
@@ -378,7 +383,7 @@ export default function Step4Results() {
             </div>
             <div className={sectionCls}>
               <div className="space-y-2">
-                {extraMarks
+                {sessionExtraMarks
                   .filter((e) => (selectedExamId ? e.examId === selectedExamId : true))
                   .map((entry) => {
                     const student = students.find((s) => s.id === entry.studentId)
@@ -551,8 +556,8 @@ export default function Step4Results() {
 
       {/* ═══ Extra Mark Form Modal ═══ */}
       {showExtraForm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[600] bg-black/50">
-          <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[23.75rem] w-full p-5 border border-[var(--border)]">
+        <div className="modal-overlay">
+          <div className="modal-box modal-content" style={{ maxWidth: '23.75rem' }}>
             <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
               {isBn ? 'এক্সট্রা মার্কস যোগ' : 'Add Extra Marks'}
             </h3>

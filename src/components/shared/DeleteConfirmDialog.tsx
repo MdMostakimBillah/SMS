@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { AlertCircle } from 'lucide-react'
 import { modalOverlayCls, modalStyleCls } from '@/pages/hr/utils'
 
@@ -10,7 +11,7 @@ interface DeleteConfirmDialogProps {
 }
 
 export function DeleteConfirmDialog({ title, message, onConfirm, onCancel, isBn }: DeleteConfirmDialogProps) {
-  return (
+  return createPortal(
     <div className={modalOverlayCls} onClick={onCancel}>
       <div className={`modal-content ${modalStyleCls} max-w-[23.75rem]`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-[0.625rem] mb-3">
@@ -35,6 +36,7 @@ export function DeleteConfirmDialog({ title, message, onConfirm, onCancel, isBn 
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

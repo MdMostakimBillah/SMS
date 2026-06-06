@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { X, File, LayoutTemplate, Plus, Trash2, Download } from 'lucide-react'
 
 export interface PDFColumnDef {
@@ -67,37 +68,11 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
     outline: 'none',
   }
 
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '100dvh',
-        background: 'rgba(0,0,0,0.55)',
-        zIndex: 700,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-        overflowY: 'auto',
-      }}
-    >
+  return createPortal(
+    <div className="modal-overlay">
       <div
-        className="modal-content"
-        style={{
-          background: 'var(--bg-primary)',
-          borderRadius: '1rem',
-          width: '100%',
-          maxWidth: showColumns ? '40rem' : '30rem',
-          maxHeight: '92vh',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          border: '1px solid var(--border)',
-          boxShadow: 'var(--shadow-lg)',
-        }}
+        className="modal-box modal-content"
+        style={{ maxWidth: showColumns ? '40rem' : '30rem' }}
       >
         {/* Header */}
         <div
@@ -533,6 +508,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 })

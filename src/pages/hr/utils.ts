@@ -40,8 +40,6 @@ export const inputCls =
 
 export const labelCls = 'text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem] block'
 
-export const modalOverlayCls =
-  'fixed top-0 left-0 right-0 h-[100dvh] z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto'
+export const modalOverlayCls = 'modal-overlay'
 
-export const modalStyleCls =
-  'bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-5 w-full max-w-[28.75rem] max-h-[90vh] overflow-y-auto shadow-[0_20px_60px_rgba(0,0,0,0.12)]'
+export const modalStyleCls = 'modal-box modal-content'

@@ -192,6 +192,16 @@ body {
   background: var(--text-muted);
 }
 
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 a {
   text-decoration: none;
   color: inherit;
@@ -399,6 +409,30 @@ button {
     opacity: 1;
     transform: scale(1) translateY(0);
   }
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.modal-box {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  width: 100%;
+  max-width: 26.25rem;
+  padding: 1.25rem;
+  max-height: 90dvh;
+  overflow-y: auto;
+  animation: modalPopIn 0.2s ease-out;
 }
 
 .modal-content {

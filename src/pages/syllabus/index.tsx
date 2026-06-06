@@ -701,9 +701,9 @@ export default function SyllabusPage() {
 
       {/* ═══ Chapter Modal ═══ */}
       {showChapterModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShowChapterModal(false)}>
+        <div className="modal-overlay" onClick={() => setShowChapterModal(false)}>
           <div
-            className="bg-[var(--bg-primary)] rounded-2xl p-5 w-full max-w-md shadow-xl border border-[var(--border)]"
+            className="modal-box modal-content"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -798,9 +798,9 @@ export default function SyllabusPage() {
 
       {/* ═══ Topic Modal ═══ */}
       {showTopicModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShowTopicModal(false)}>
+        <div className="modal-overlay" onClick={() => setShowTopicModal(false)}>
           <div
-            className="bg-[var(--bg-primary)] rounded-2xl p-5 w-full max-w-lg shadow-xl border border-[var(--border)]"
+            className="modal-box modal-content"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
