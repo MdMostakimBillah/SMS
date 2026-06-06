@@ -452,6 +452,150 @@ export default function Step2Schedule() {
     URL.revokeObjectURL(url)
   }
 
+  const downloadGuardListPDF = () => {
+    if (!selectedExamId || filteredInvigilators.length === 0) return
+    const examName = selectedExam ? (isBn ? selectedExam.nameBn : selectedExam.name) : ''
+    const brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#4f46e5'
+
+    // Group by date
+    const byDate = new Map<string, typeof filteredInvigilators>()
+    for (const inv of filteredInvigilators) {
+      const existing = byDate.get(inv.date) || []
+      existing.push(inv)
+      byDate.set(inv.date, existing)
+    }
+    const sortedDates = Array.from(byDate.keys()).sort()
+
+    let pagesHTML = ''
+    for (const date of sortedDates) {
+      const dayAssignments = byDate.get(date) || []
+      const dateFormatted = new Date(date + 'T00:00:00').toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+
+      const roomAssignments = dayAssignments.filter((a) => a.assignType === 'room')
+      const classAssignments = dayAssignments.filter((a) => a.assignType === 'class')
+
+      let tableHTML = ''
+
+      if (classAssignments.length > 0) {
+        const classRows = classAssignments.map((inv) => {
+          const teacher = teacherMap.get(inv.teacherId)
+          const [cls, sec] = inv.classSection.split('-')
+          const dayRoutine = filteredRoutines.find((r) => r.date === date && r.classId === cls && r.sectionId === sec)
+          const subject = dayRoutine ? subjectMap.get(dayRoutine.subjectId) : null
+          const studentCount = students.filter((s) => s.status === 'approved' && s.class === cls && s.section === sec).length
+          const shiftLabel = inv.shift === 'morning' ? (isBn ? 'সকাল' : 'Morning') : (isBn ? 'বিকাল' : 'Afternoon')
+          return `<tr>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;font-weight:600">${inv.classSection}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px">${teacher?.nameEn || inv.teacherId}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px">${subject ? (isBn ? subject.nameBn : subject.name) : '-'}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center">${studentCount}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center">${shiftLabel}</td>
+          </tr>`
+        }).join('')
+
+        tableHTML += `
+          <div style="margin-bottom:16px">
+            <h3 style="font-size:12px;color:${brandColor};margin-bottom:8px;font-weight:600">${isBn ? 'শ্রেণি/সেকশন ভিত্তিক' : 'Class / Section Wise'}</h3>
+            <table style="width:100%;border-collapse:collapse">
+              <thead>
+                <tr>
+                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'শ্রেণি-সেকশন' : 'Class-Sec'}</th>
+                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'শিক্ষক' : 'Teacher'}</th>
+                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'বিষয়' : 'Subject'}</th>
+                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'ছাত্র' : 'Students'}</th>
+                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'শিফট' : 'Shift'}</th>
+                </tr>
+              </thead>
+              <tbody>${classRows}</tbody>
+            </table>
+          </div>`
+      }
+
+      if (roomAssignments.length > 0) {
+        const roomRows = roomAssignments.map((inv) => {
+          const teacher = teacherMap.get(inv.teacherId)
+          const room = roomMap.get(inv.roomId)
+          const dayRoutines = filteredRoutines.filter((r) => r.date === date && r.roomNo === room?.roomNo)
+          const subjectNames = [...new Set(dayRoutines.map((r) => {
+            const subj = subjectMap.get(r.subjectId)
+            return subj ? (isBn ? subj.nameBn : subj.name) : ''
+          }).filter(Boolean))]
+          const shiftLabel = inv.shift === 'morning' ? (isBn ? 'সকাল' : 'Morning') : (isBn ? 'বিকাল' : 'Afternoon')
+          return `<tr>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;font-weight:600">${room?.roomNo || inv.roomId}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px">${teacher?.nameEn || inv.teacherId}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px">${subjectNames.join(', ') || '-'}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center">${room?.capacity || '-'}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center">${shiftLabel}</td>
+          </tr>`
+        }).join('')
+
+        tableHTML += `
+          <div>
+            <h3 style="font-size:12px;color:${brandColor};margin-bottom:8px;font-weight:600">${isBn ? 'কক্ষ/হল ভিত্তিক' : 'Room / Hall Wise'}</h3>
+            <table style="width:100%;border-collapse:collapse">
+              <thead>
+                <tr>
+                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'কক্ষ' : 'Room'}</th>
+                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'শিক্ষক' : 'Teacher'}</th>
+                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'বিষয়' : 'Subject'}</th>
+                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'ধারণক্ষমতা' : 'Capacity'}</th>
+                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'শিফট' : 'Shift'}</th>
+                </tr>
+              </thead>
+              <tbody>${roomRows}</tbody>
+            </table>
+          </div>`
+      }
+
+      pagesHTML += `
+        <div class="page">
+          <div class="header">
+            <h1>${examName}</h1>
+            <h2>${isBn ? 'পরীক্ষা পরিদর্শক/গার্ড তালিকা' : 'Exam Guard / Invigilator List'}</h2>
+            <div class="date-badge">${dateFormatted}</div>
+          </div>
+          ${tableHTML}
+          <div class="footer">
+            ${isBn ? 'মোট' : 'Total'}: ${dayAssignments.length} ${isBn ? 'জন নিয়োগ' : 'assignments'} |
+            ${isBn ? 'তারিখ' : 'Date'}: ${new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US')}
+          </div>
+        </div>`
+    }
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
+      <title>${examName} - Guard List</title>
+      <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        @page{size:A4 portrait;margin:10mm}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#1e293b;background:#fff;font-size:10px}
+        .page{page-break-after:always;padding:15px}
+        .page:last-child{page-break-after:auto}
+        .header{text-align:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid ${brandColor}}
+        h1{font-size:16px;color:${brandColor};margin-bottom:2px}
+        h2{font-size:11px;color:#64748b;font-weight:400;margin-top:2px}
+        .date-badge{display:inline-block;margin-top:6px;padding:4px 16px;border-radius:20px;background:${brandColor}15;color:${brandColor};font-size:11px;font-weight:600}
+        .footer{margin-top:12px;padding-top:8px;border-top:1px solid #e2e8f0;text-align:center;font-size:8px;color:#94a3b8}
+        @media print{
+          *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+          body{padding:0;margin:0}
+          @page{size:A4 portrait;margin:8mm}
+          .page{padding:10px}
+        }
+      </style>
+    </head><body>${pagesHTML}</body></html>`
+
+    const blob = new Blob([html], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${examName.replace(/\s+/g, '_')}_Guard_List.html`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   const handleSaveInvig = () => {
     if (!selectedExamId || !invigForm.teacherId || !invigForm.date) return
     if (invigAssignType === 'room' && !invigForm.roomId) return
@@ -1337,6 +1481,15 @@ export default function Step2Schedule() {
                 {isBn ? 'শ্রেণি/সেকশন ভিত্তিক' : 'Class / Section Wise'}
               </button>
               <div className="flex-1" />
+              {filteredInvigilators.length > 0 && (
+                <button
+                  onClick={downloadGuardListPDF}
+                  className="px-3 py-2 rounded-lg bg-[var(--teal-light)] border border-[var(--teal)]/20 text-[var(--teal)] text-[0.6875rem] font-medium cursor-pointer hover:shadow-sm flex items-center gap-1.5"
+                >
+                  <Download size={13} />
+                  {isBn ? 'গার্ড তালিকা ডাউনলোড' : 'Download Guard List'}
+                </button>
+              )}
               <button
                 onClick={() => {
                   setShowInvigForm(true)
