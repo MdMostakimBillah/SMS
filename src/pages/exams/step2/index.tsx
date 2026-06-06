@@ -452,14 +452,18 @@ export default function Step2Schedule() {
     URL.revokeObjectURL(url)
   }
 
-  const downloadGuardListPDF = () => {
-    if (!selectedExamId || filteredInvigilators.length === 0) return
+  const downloadGuardListPDF = (type: 'class' | 'room') => {
+    if (!selectedExamId) return
     const examName = selectedExam ? (isBn ? selectedExam.nameBn : selectedExam.name) : ''
     const brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#4f46e5'
+    const isClass = type === 'class'
+
+    const filtered = filteredInvigilators.filter((inv) => inv.assignType === type)
+    if (filtered.length === 0) return
 
     // Group by date
-    const byDate = new Map<string, typeof filteredInvigilators>()
-    for (const inv of filteredInvigilators) {
+    const byDate = new Map<string, typeof filtered>()
+    for (const inv of filtered) {
       const existing = byDate.get(inv.date) || []
       existing.push(inv)
       byDate.set(inv.date, existing)
@@ -471,19 +475,14 @@ export default function Step2Schedule() {
       const dayAssignments = byDate.get(date) || []
       const dateFormatted = new Date(date + 'T00:00:00').toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
-      const roomAssignments = dayAssignments.filter((a) => a.assignType === 'room')
-      const classAssignments = dayAssignments.filter((a) => a.assignType === 'class')
-
-      let tableHTML = ''
-
-      if (classAssignments.length > 0) {
-        const classRows = classAssignments.map((inv) => {
-          const teacher = teacherMap.get(inv.teacherId)
+      const rows = dayAssignments.map((inv) => {
+        const teacher = teacherMap.get(inv.teacherId)
+        const shiftLabel = inv.shift === 'morning' ? (isBn ? 'সকাল' : 'Morning') : (isBn ? 'বিকাল' : 'Afternoon')
+        if (isClass) {
           const [cls, sec] = inv.classSection.split('-')
           const dayRoutine = filteredRoutines.find((r) => r.date === date && r.classId === cls && r.sectionId === sec)
           const subject = dayRoutine ? subjectMap.get(dayRoutine.subjectId) : null
           const studentCount = students.filter((s) => s.status === 'approved' && s.class === cls && s.section === sec).length
-          const shiftLabel = inv.shift === 'morning' ? (isBn ? 'সকাল' : 'Morning') : (isBn ? 'বিকাল' : 'Afternoon')
           return `<tr>
             <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;font-weight:600">${inv.classSection}</td>
             <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px">${teacher?.nameEn || inv.teacherId}</td>
@@ -491,36 +490,13 @@ export default function Step2Schedule() {
             <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center">${studentCount}</td>
             <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center">${shiftLabel}</td>
           </tr>`
-        }).join('')
-
-        tableHTML += `
-          <div style="margin-bottom:16px">
-            <h3 style="font-size:12px;color:${brandColor};margin-bottom:8px;font-weight:600">${isBn ? 'শ্রেণি/সেকশন ভিত্তিক' : 'Class / Section Wise'}</h3>
-            <table style="width:100%;border-collapse:collapse">
-              <thead>
-                <tr>
-                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'শ্রেণি-সেকশন' : 'Class-Sec'}</th>
-                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'শিক্ষক' : 'Teacher'}</th>
-                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'বিষয়' : 'Subject'}</th>
-                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'ছাত্র' : 'Students'}</th>
-                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'শিফট' : 'Shift'}</th>
-                </tr>
-              </thead>
-              <tbody>${classRows}</tbody>
-            </table>
-          </div>`
-      }
-
-      if (roomAssignments.length > 0) {
-        const roomRows = roomAssignments.map((inv) => {
-          const teacher = teacherMap.get(inv.teacherId)
+        } else {
           const room = roomMap.get(inv.roomId)
           const dayRoutines = filteredRoutines.filter((r) => r.date === date && r.roomNo === room?.roomNo)
           const subjectNames = [...new Set(dayRoutines.map((r) => {
             const subj = subjectMap.get(r.subjectId)
             return subj ? (isBn ? subj.nameBn : subj.name) : ''
           }).filter(Boolean))]
-          const shiftLabel = inv.shift === 'morning' ? (isBn ? 'সকাল' : 'Morning') : (isBn ? 'বিকাল' : 'Afternoon')
           return `<tr>
             <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;font-weight:600">${room?.roomNo || inv.roomId}</td>
             <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px">${teacher?.nameEn || inv.teacherId}</td>
@@ -528,34 +504,32 @@ export default function Step2Schedule() {
             <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center">${room?.capacity || '-'}</td>
             <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center">${shiftLabel}</td>
           </tr>`
-        }).join('')
+        }
+      }).join('')
 
-        tableHTML += `
-          <div>
-            <h3 style="font-size:12px;color:${brandColor};margin-bottom:8px;font-weight:600">${isBn ? 'কক্ষ/হল ভিত্তিক' : 'Room / Hall Wise'}</h3>
-            <table style="width:100%;border-collapse:collapse">
-              <thead>
-                <tr>
-                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'কক্ষ' : 'Room'}</th>
-                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'শিক্ষক' : 'Teacher'}</th>
-                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'বিষয়' : 'Subject'}</th>
-                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'ধারণক্ষমতা' : 'Capacity'}</th>
-                  <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'শিফট' : 'Shift'}</th>
-                </tr>
-              </thead>
-              <tbody>${roomRows}</tbody>
-            </table>
-          </div>`
-      }
+      const headers = isClass
+        ? `<th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'শ্রেণি-সেকশন' : 'Class-Sec'}</th>
+           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'শিক্ষক' : 'Teacher'}</th>
+           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'বিষয়' : 'Subject'}</th>
+           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'ছাত্র' : 'Students'}</th>
+           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'শিফট' : 'Shift'}</th>`
+        : `<th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'কক্ষ' : 'Room'}</th>
+           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'শিক্ষক' : 'Teacher'}</th>
+           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'বিষয়' : 'Subject'}</th>
+           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'ধারণক্ষমতা' : 'Capacity'}</th>
+           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'শিফট' : 'Shift'}</th>`
 
       pagesHTML += `
         <div class="page">
           <div class="header">
             <h1>${examName}</h1>
-            <h2>${isBn ? 'পরীক্ষা পরিদর্শক/গার্ড তালিকা' : 'Exam Guard / Invigilator List'}</h2>
+            <h2>${isClass ? (isBn ? 'শ্রেণি/সেকশন ভিত্তিক গার্ড তালিকা' : 'Class / Section Wise Guard List') : (isBn ? 'কক্ষ/হল ভিত্তিক গার্ড তালিকা' : 'Room / Hall Wise Guard List')}</h2>
             <div class="date-badge">${dateFormatted}</div>
           </div>
-          ${tableHTML}
+          <table style="width:100%;border-collapse:collapse">
+            <thead><tr>${headers}</tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
           <div class="footer">
             ${isBn ? 'মোট' : 'Total'}: ${dayAssignments.length} ${isBn ? 'জন নিয়োগ' : 'assignments'} |
             ${isBn ? 'তারিখ' : 'Date'}: ${new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US')}
@@ -563,8 +537,12 @@ export default function Step2Schedule() {
         </div>`
     }
 
+    const title = isClass
+      ? `${examName} - Class Guard List`
+      : `${examName} - Room Guard List`
+
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-      <title>${examName} - Guard List</title>
+      <title>${title}</title>
       <style>
         *{margin:0;padding:0;box-sizing:border-box}
         @page{size:A4 portrait;margin:10mm}
@@ -589,7 +567,7 @@ export default function Step2Schedule() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${examName.replace(/\s+/g, '_')}_Guard_List.html`
+    a.download = `${examName.replace(/\s+/g, '_')}_${isClass ? 'Class' : 'Room'}_Guard_List.html`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -1481,13 +1459,22 @@ export default function Step2Schedule() {
                 {isBn ? 'শ্রেণি/সেকশন ভিত্তিক' : 'Class / Section Wise'}
               </button>
               <div className="flex-1" />
-              {filteredInvigilators.length > 0 && (
+              {filteredInvigilators.some((i) => i.assignType === 'class') && (
                 <button
-                  onClick={downloadGuardListPDF}
+                  onClick={() => downloadGuardListPDF('class')}
                   className="px-3 py-2 rounded-lg bg-[var(--teal-light)] border border-[var(--teal)]/20 text-[var(--teal)] text-[0.6875rem] font-medium cursor-pointer hover:shadow-sm flex items-center gap-1.5"
                 >
                   <Download size={13} />
-                  {isBn ? 'গার্ড তালিকা ডাউনলোড' : 'Download Guard List'}
+                  {isBn ? 'শ্রেণি গার্ড তালিকা' : 'Class Guard List'}
+                </button>
+              )}
+              {filteredInvigilators.some((i) => i.assignType === 'room') && (
+                <button
+                  onClick={() => downloadGuardListPDF('room')}
+                  className="px-3 py-2 rounded-lg bg-[var(--teal-light)] border border-[var(--teal)]/20 text-[var(--teal)] text-[0.6875rem] font-medium cursor-pointer hover:shadow-sm flex items-center gap-1.5"
+                >
+                  <Download size={13} />
+                  {isBn ? 'কক্ষ গার্ড তালিকা' : 'Room Guard List'}
                 </button>
               )}
               <button
