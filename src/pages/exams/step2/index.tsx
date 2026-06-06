@@ -457,22 +457,6 @@ export default function Step2Schedule() {
     if (invigAssignType === 'room' && !invigForm.roomId) return
     if (invigAssignType === 'class' && !invigForm.classSection) return
 
-    // Validate: same teacher can't guard multiple classes/rooms on same day
-    const conflict = filteredInvigilators.find((inv) =>
-      inv.teacherId === invigForm.teacherId &&
-      inv.date === invigForm.date
-    )
-    if (conflict) {
-      const target = conflict.assignType === 'room'
-        ? `${isBn ? 'কক্ষ' : 'Room'}: ${rooms.find((r) => r.id === conflict.roomId)?.roomNo || conflict.roomId}`
-        : `${isBn ? 'শ্রেণি' : 'Class'}: ${conflict.classSection}`
-      alert(isBn
-        ? `এই শিক্ষক ইতিমধ্যে ${conflict.date} তারিখে ${target} এ নিয়োগপ্রাপ্ত। একই দিনে একাধিক শ্রেণি/কক্ষে দায়িত্ব পালন করতে পারবেন না।`
-        : `This teacher is already assigned to ${target} on ${conflict.date}. Cannot guard multiple classes/rooms on the same day.`
-      )
-      return
-    }
-
     addInvigilator({
       examId: selectedExamId,
       teacherId: invigForm.teacherId,
@@ -1962,12 +1946,22 @@ export default function Step2Schedule() {
                   className={`${selectCls} w-full`}
                 >
                   <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                  {teachers.filter((t) => t.status === 'active').map((t) => (
+                  {teachers.filter((t) => {
+                    if (t.status !== 'active') return false
+                    if (!invigForm.date) return true
+                    // Hide teachers already assigned on this date
+                    return !filteredInvigilators.some((inv) => inv.teacherId === t.id && inv.date === invigForm.date)
+                  }).map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.nameEn}
                     </option>
                   ))}
                 </select>
+                {invigForm.date && teachers.filter((t) => t.status === 'active' && filteredInvigilators.some((inv) => inv.teacherId === t.id && inv.date === invigForm.date)).length > 0 && (
+                  <p className="text-[0.5625rem] text-[var(--text-muted)] mt-1">
+                    {isBn ? 'অন্যান্য শ্রেণি/কক্ষে নিয়োগপ্রাপ্ত শিক্ষক লুকানো আছে' : 'Teachers assigned elsewhere on this date are hidden'}
+                  </p>
+                )}
               </div>
               {invigAssignType === 'room' ? (
                 <div>
