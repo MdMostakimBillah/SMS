@@ -457,20 +457,18 @@ export default function Step2Schedule() {
     if (invigAssignType === 'room' && !invigForm.roomId) return
     if (invigAssignType === 'class' && !invigForm.classSection) return
 
-    // Validate: same teacher can't guard multiple classes/rooms at same date+shift
+    // Validate: same teacher can't guard multiple classes/rooms on same day
     const conflict = filteredInvigilators.find((inv) =>
       inv.teacherId === invigForm.teacherId &&
-      inv.date === invigForm.date &&
-      inv.shift === invigForm.shift &&
-      inv.id !== '' // exclude self if editing
+      inv.date === invigForm.date
     )
     if (conflict) {
       const target = conflict.assignType === 'room'
         ? `${isBn ? 'কক্ষ' : 'Room'}: ${rooms.find((r) => r.id === conflict.roomId)?.roomNo || conflict.roomId}`
         : `${isBn ? 'শ্রেণি' : 'Class'}: ${conflict.classSection}`
       alert(isBn
-        ? `এই শিক্ষক ইতিমধ্যে ${target} এ ${conflict.date} তারিখে ${conflict.shift === 'morning' ? 'সকাল' : 'বিকাল'} শিফটে নিয়োগপ্রাপ্ত। একই সময়ে একাধিক শ্রেণি/কক্ষে দায়িত্ব পালন করতে পারবেন না।`
-        : `This teacher is already assigned to ${target} on ${conflict.date} ${conflict.shift} shift. Cannot guard multiple classes/rooms at the same time.`
+        ? `এই শিক্ষক ইতিমধ্যে ${conflict.date} তারিখে ${target} এ নিয়োগপ্রাপ্ত। একই দিনে একাধিক শ্রেণি/কক্ষে দায়িত্ব পালন করতে পারবেন না।`
+        : `This teacher is already assigned to ${target} on ${conflict.date}. Cannot guard multiple classes/rooms on the same day.`
       )
       return
     }
