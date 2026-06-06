@@ -456,6 +456,25 @@ export default function Step2Schedule() {
     if (!selectedExamId || !invigForm.teacherId || !invigForm.date) return
     if (invigAssignType === 'room' && !invigForm.roomId) return
     if (invigAssignType === 'class' && !invigForm.classSection) return
+
+    // Validate: same teacher can't guard multiple classes/rooms at same date+shift
+    const conflict = filteredInvigilators.find((inv) =>
+      inv.teacherId === invigForm.teacherId &&
+      inv.date === invigForm.date &&
+      inv.shift === invigForm.shift &&
+      inv.id !== '' // exclude self if editing
+    )
+    if (conflict) {
+      const target = conflict.assignType === 'room'
+        ? `${isBn ? 'কক্ষ' : 'Room'}: ${rooms.find((r) => r.id === conflict.roomId)?.roomNo || conflict.roomId}`
+        : `${isBn ? 'শ্রেণি' : 'Class'}: ${conflict.classSection}`
+      alert(isBn
+        ? `এই শিক্ষক ইতিমধ্যে ${target} এ ${conflict.date} তারিখে ${conflict.shift === 'morning' ? 'সকাল' : 'বিকাল'} শিফটে নিয়োগপ্রাপ্ত। একই সময়ে একাধিক শ্রেণি/কক্ষে দায়িত্ব পালন করতে পারবেন না।`
+        : `This teacher is already assigned to ${target} on ${conflict.date} ${conflict.shift} shift. Cannot guard multiple classes/rooms at the same time.`
+      )
+      return
+    }
+
     addInvigilator({
       examId: selectedExamId,
       teacherId: invigForm.teacherId,
@@ -1445,7 +1464,7 @@ export default function Step2Schedule() {
                                         <div className="w-full h-10 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[0.5rem] text-[var(--text-muted)] opacity-30">
                                           —
                                         </div>
-                                      ) : assignedList.length > 0 ? (
+                                      ) : (
                                         <div className="space-y-1">
                                           {assignedList.map((inv) => {
                                             const teacher = teacherMap.get(inv.teacherId)
@@ -1461,25 +1480,24 @@ export default function Step2Schedule() {
                                               </div>
                                             )
                                           })}
-                                          {subjectNames.length > 0 && (
+                                          {subjectNames.length > 0 && assignedList.length > 0 && (
                                             <div className="text-[0.5rem] text-[var(--text-muted)] truncate">
                                               {subjectNames.join(', ')}
                                             </div>
                                           )}
-                                          {studentCount > 0 && (
+                                          {studentCount > 0 && assignedList.length > 0 && (
                                             <div className="text-[0.5rem] text-[var(--text-muted)]">{studentCount} {isBn ? 'জন ছাত্র' : 'students'}</div>
                                           )}
+                                          <button
+                                            onClick={() => {
+                                              setInvigForm((p) => ({ ...p, date: dateStr }))
+                                              setShowInvigForm(true)
+                                            }}
+                                            className="w-full h-7 rounded-lg border border-dashed border-[var(--border)] text-[0.5rem] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all flex items-center justify-center"
+                                          >
+                                            +
+                                          </button>
                                         </div>
-                                      ) : (
-                                        <button
-                                          onClick={() => {
-                                            setInvigForm((p) => ({ ...p, date: dateStr }))
-                                            setShowInvigForm(true)
-                                          }}
-                                          className="w-full h-10 rounded-lg border border-dashed border-[var(--border)] text-[0.5rem] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all flex items-center justify-center"
-                                        >
-                                          +
-                                        </button>
                                       )}
                                     </td>
                                   )
@@ -1542,7 +1560,7 @@ export default function Step2Schedule() {
                                           <div className="w-full h-10 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[0.5rem] text-[var(--text-muted)] opacity-30">
                                             —
                                           </div>
-                                        ) : assignedList.length > 0 ? (
+                                        ) : (
                                           <div className="space-y-1">
                                             {assignedList.map((inv) => {
                                               const teacher = teacherMap.get(inv.teacherId)
@@ -1558,22 +1576,21 @@ export default function Step2Schedule() {
                                                 </div>
                                               )
                                             })}
-                                            {subject && (
+                                            {subject && assignedList.length > 0 && (
                                               <div className="text-[0.5rem] text-[var(--text-muted)] truncate">
                                                 {isBn ? subject.nameBn : subject.name}
                                               </div>
                                             )}
+                                            <button
+                                              onClick={() => {
+                                                setInvigForm((p) => ({ ...p, date: dateStr, classSection: cs.label }))
+                                                setShowInvigForm(true)
+                                              }}
+                                              className="w-full h-7 rounded-lg border border-dashed border-[var(--border)] text-[0.5rem] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all flex items-center justify-center"
+                                            >
+                                              +
+                                            </button>
                                           </div>
-                                        ) : (
-                                          <button
-                                            onClick={() => {
-                                              setInvigForm((p) => ({ ...p, date: dateStr, classSection: cs.label }))
-                                              setShowInvigForm(true)
-                                            }}
-                                            className="w-full h-10 rounded-lg border border-dashed border-[var(--border)] text-[0.5rem] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all flex items-center justify-center"
-                                          >
-                                            +
-                                          </button>
                                         )}
                                       </td>
                                     )
