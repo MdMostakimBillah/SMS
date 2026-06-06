@@ -6,6 +6,7 @@ import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import type { StudentAdmission } from './types'
 import { generateA4HTML } from './a4Template'
+import QRCode from 'qrcode'
 
 type FormData = Omit<StudentAdmission, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'approvedAt'>
 
@@ -155,12 +156,13 @@ export default function GeneralAdmission() {
     [form, studentId, addStudent]
   )
 
-  const downloadPDF = useCallback(() => {
+  const downloadPDF = useCallback(async () => {
     const s = useAdmissionStore.getState().students.find((x) => x.id === doneId)
     if (!s) return
+    const qrDataUrl = await QRCode.toDataURL(s.id, { width: 120, margin: 1 })
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(generateA4HTML(s, isBn))
+    win.document.write(generateA4HTML(s, isBn, qrDataUrl))
     win.document.close()
     setTimeout(() => win.print(), 800)
   }, [doneId, isBn])

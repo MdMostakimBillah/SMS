@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, IdCard, Printer, Search, User } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
@@ -6,6 +6,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from '@/pages/students/admission/types'
+import QRCode from 'qrcode'
 
 const TEMPLATES = [
   { id: 'classic', name: 'Classic', nameBn: 'ক্লাসিক', primary: '#6366f1', secondary: '#eef2ff', accent: '#4f46e5', radius: 12 },
@@ -31,6 +32,7 @@ const FIELDS = [
   { key: 'dob', label: 'Date of Birth', labelBn: 'জন্ম তারিখ', default: false },
   { key: 'religion', label: 'Religion', labelBn: 'ধর্ম', default: false },
   { key: 'address', label: 'Address', labelBn: 'ঠিকানা', default: false },
+  { key: 'qrCode', label: 'QR Code', labelBn: 'QR কোড', default: true },
 ]
 
 function IDCard({
@@ -39,12 +41,14 @@ function IDCard({
   fields,
   institution,
   isBn,
+  qrDataUrl,
 }: {
   student: StudentAdmission
   template: (typeof TEMPLATES)[0]
   fields: string[]
   institution: string
   isBn: boolean
+  qrDataUrl?: string
 }) {
   const t = template
   const show = (k: string) => fields.includes(k)
@@ -144,6 +148,13 @@ function IDCard({
             )}
           </div>
         </div>
+
+        {/* QR Code */}
+        {show('qrCode') && qrDataUrl && (
+          <div className="flex flex-col items-center justify-center shrink-0">
+            <img src={qrDataUrl} alt="QR" className="w-[2.75rem] h-[2.75rem]" />
+          </div>
+        )}
       </div>
 
       {/* Footer */}
@@ -215,6 +226,23 @@ export default function IDCardsPage() {
 
   const displayList = selected.length > 0 ? approved.filter((s) => selected.includes(s.id)) : filtered
 
+  // Generate QR code data URLs
+  const [qrMap, setQrMap] = useState<Record<string, string>>({})
+  useEffect(() => {
+    const map: Record<string, string> = {}
+    let cancelled = false
+    Promise.all(
+      displayList.map((s) =>
+        QRCode.toDataURL(s.id, { width: 64, margin: 0 }).then((url) => {
+          map[s.id] = url
+        })
+      )
+    ).then(() => {
+      if (!cancelled) setQrMap({ ...map })
+    })
+    return () => { cancelled = true }
+  }, [displayList])
+
   const toggleField = useCallback((key: string) => {
     setFields((p) => (p.includes(key) ? p.filter((k) => k !== key) : [...p, key]))
   }, [])
@@ -223,13 +251,23 @@ export default function IDCardsPage() {
     setSelected((p) => (p.length === filtered.length ? [] : filtered.map((s) => s.id)))
   }, [filtered])
 
-  const printCards = useCallback(() => {
+  const printCards = useCallback(async () => {
     const win = window.open('', '_blank')
     if (!win) return
+
+    // Generate QR codes for print
+    const qrUrls: Record<string, string> = {}
+    await Promise.all(
+      displayList.map(async (s) => {
+        qrUrls[s.id] = await QRCode.toDataURL(s.id, { width: 64, margin: 0 })
+      })
+    )
+
     const cards = displayList
       .map((s) => {
         const t = template
         const show = (k: string) => fields.includes(k)
+        const qrImg = show('qrCode') && qrUrls[s.id] ? `<div style="display:flex;align-items:center;justify-content:center;flex-shrink:0"><img src="${qrUrls[s.id]}" style="width:44px;height:44px" /></div>` : ''
         return `<div style="width:340px;height:210px;border-radius:${t.radius}px;border:2px solid ${t.primary};overflow:hidden;display:inline-flex;flex-direction:column;font-family:Arial,sans-serif;margin:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);page-break-inside:avoid;background:#fff">
         <div style="background:${t.primary};padding:8px 14px;display:flex;align-items:center;gap:10px">
           <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff">ET</div>
@@ -253,6 +291,7 @@ export default function IDCardsPage() {
               ${show('phone') && s.phone ? `<div style="font-size:8px;color:#666">Mobile: ${s.phone}</div>` : ''}
             </div>
           </div>
+          ${qrImg}
         </div>
         <div style="padding:4px 12px;background:${t.accent};display:flex;justify-content:space-between;align-items:center">
           <span style="font-size:7px;color:rgba(255,255,255,0.7)">Academic Year ${s.academicYear?.replace('-', '–')}</span>
@@ -460,7 +499,7 @@ export default function IDCardsPage() {
           ) : (
             <div className="flex flex-wrap gap-3 justify-start">
               {displayList.map((s) => (
-                <IDCard key={s.id} student={s} template={template} fields={fields} institution={institutionName} isBn={isBn} />
+                <IDCard key={s.id} student={s} template={template} fields={fields} institution={institutionName} isBn={isBn} qrDataUrl={qrMap[s.id]} />
               ))}
             </div>
           )}

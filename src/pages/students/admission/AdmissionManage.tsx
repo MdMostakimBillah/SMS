@@ -28,6 +28,7 @@ import type { StudentAdmission } from './types'
 import { generateA4HTML } from './a4Template'
 import { generateListPDF } from './listPdfTemplate'
 import type { ListPDFOptions } from './listPdfTemplate'
+import QRCode from 'qrcode'
 
 const PER_PAGE = [10, 20, 30, 50, 100, 200, 500, 1000]
 const RELIGIONS = ['Islam', 'Hinduism', 'Christianity', 'Buddhism']
@@ -503,10 +504,11 @@ const ViewModal = React.memo(function ViewModal({
   isBn: boolean
   onClose: () => void
 }) {
-  const download = useCallback(() => {
+  const download = useCallback(async () => {
+    const qrDataUrl = await QRCode.toDataURL(student.id, { width: 120, margin: 1 })
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(generateA4HTML(student, isBn))
+    win.document.write(generateA4HTML(student, isBn, qrDataUrl))
     win.document.close()
     setTimeout(() => win.print(), 800)
   }, [student, isBn])
