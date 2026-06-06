@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -19,6 +19,7 @@ import {
   BookOpen,
   Download,
   GraduationCap,
+  QrCode,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -85,6 +86,8 @@ export default function Step2Schedule() {
   const rooms = useExamStore((s) => s.rooms)
   const seatPlans = useExamStore((s) => s.seatPlans)
   const invigilators = useExamStore((s) => s.invigilators)
+  const attendances = useExamStore((s) => s.attendances)
+  const addAttendance = useExamStore((s) => s.addAttendance)
   const addRoutine = useExamStore((s) => s.addRoutine)
   const deleteRoutine = useExamStore((s) => s.deleteRoutine)
   const addRoom = useExamStore((s) => s.addRoom)
@@ -198,6 +201,19 @@ export default function Step2Schedule() {
     () => (selectedExamId ? invigilators.filter((i) => i.examId === selectedExamId) : invigilators),
     [invigilators, selectedExamId]
   )
+
+  const filteredAttendances = useMemo(
+    () => (selectedExamId ? attendances.filter((a) => a.examId === selectedExamId) : attendances),
+    [attendances, selectedExamId]
+  )
+
+  // QR Scanner state
+  const [attClassId, setAttClassId] = useState('')
+  const [attSectionId, setAttSectionId] = useState('')
+  const [attDate, setAttDate] = useState('')
+  const [attShift, setAttShift] = useState<'morning' | 'afternoon'>('morning')
+  const [showQRScanner, setShowQRScanner] = useState(false)
+  const [lastScanned, setLastScanned] = useState('')
 
   const { classes } = useClassStore()
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
@@ -1787,16 +1803,180 @@ export default function Step2Schedule() {
 
         {/* ═══ ATTENDANCE TAB ═══ */}
         {activeSubTab === 'attendance' && (
-          <div className={sectionCls}>
-            <div className={sectionTitleCls}>
-              <Users size={15} className="text-[var(--brand)]" />
-              {isBn ? 'পরীক্ষাভিত্তিক উপস্থিতি' : 'Exam-wise Student Attendance'}
+          <>
+            {/* Attendance Controls */}
+            <div className={sectionCls}>
+              <div className={sectionTitleCls}>
+                <Users size={15} className="text-[var(--brand)]" />
+                {isBn ? 'পরীক্ষাভিত্তিক উপস্থিতি' : 'Exam-wise Student Attendance'}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
+                  <select
+                    value={attClassId}
+                    onChange={(e) => { setAttClassId(e.target.value); setAttSectionId('') }}
+                    className={`${selectCls} w-full`}
+                  >
+                    <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
+                    {classOptions.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
+                  <select
+                    value={attSectionId}
+                    onChange={(e) => setAttSectionId(e.target.value)}
+                    className={`${selectCls} w-full`}
+                    disabled={!attClassId}
+                  >
+                    <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
+                    {(sectionsMap[attClassId] || []).map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'তারিখ' : 'Date'}</label>
+                  <input
+                    type="date"
+                    value={attDate}
+                    onChange={(e) => setAttDate(e.target.value)}
+                    className={`${inputCls} w-full`}
+                    min={selectedExam?.startDate || ''}
+                    max={selectedExam?.endDate || ''}
+                  />
+                </div>
+                <div>
+                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শিফট' : 'Shift'}</label>
+                  <select
+                    value={attShift}
+                    onChange={(e) => setAttShift(e.target.value as 'morning' | 'afternoon')}
+                    className={`${selectCls} w-full`}
+                  >
+                    <option value="morning">{isBn ? 'সকাল' : 'Morning'}</option>
+                    <option value="afternoon">{isBn ? 'বিকাল' : 'Afternoon'}</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => {
+                    if (!attClassId || !attSectionId || !attDate) {
+                      alert(isBn ? 'শ্রেণি, সেকশন এবং তারিখ নির্বাচন করুন' : 'Select class, section and date')
+                      return
+                    }
+                    setShowQRScanner(true)
+                  }}
+                  disabled={!attClassId || !attSectionId || !attDate}
+                  className={`${btnPrimary} ${!attClassId || !attSectionId || !attDate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <QrCode size={14} />
+                  {isBn ? 'QR স্ক্যান শুরু' : 'Start QR Scan'}
+                </button>
+              </div>
             </div>
-            <div className="text-center py-10 text-[var(--text-muted)] text-[0.75rem]">
-              <Users size={24} className="mx-auto mb-2 opacity-30" />
-              {isBn ? 'পরীক্ষার দিনে উপস্থিতি নেওয়া হবে' : 'Attendance will be taken on exam day'}
-            </div>
-          </div>
+
+            {/* QR Scanner Modal */}
+            {showQRScanner && (
+              <QRScannerModal
+                isBn={isBn}
+                examId={selectedExamId}
+                classId={attClassId}
+                sectionId={attSectionId}
+                date={attDate}
+                shift={attShift}
+                students={students}
+                onScan={(studentId) => {
+                  const student = students.find((s) => s.id === studentId)
+                  if (!student || student.class !== attClassId || student.section !== attSectionId) {
+                    setLastScanned(isBn ? 'ভুল শ্রেণি/সেকশন!' : 'Wrong class/section!')
+                    return
+                  }
+                  addAttendance({
+                    examId: selectedExamId,
+                    studentId: student.id,
+                    classId: attClassId,
+                    sectionId: attSectionId,
+                    date: attDate,
+                    shift: attShift,
+                    status: 'present',
+                    scannedBy: 'QR',
+                    scannedAt: new Date().toISOString(),
+                  })
+                  setLastScanned(`${student.nameEn} - ${isBn ? 'উপস্থিত' : 'Present'}`)
+                  setTimeout(() => setLastScanned(''), 2000)
+                }}
+                onClose={() => setShowQRScanner(false)}
+                lastScanned={lastScanned}
+              />
+            )}
+
+            {/* Attendance Summary */}
+            {attClassId && attSectionId && attDate && (
+              <div className={sectionCls}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">
+                    {attClassId} - {attSectionId} · {attDate}
+                  </div>
+                  <div className="text-[0.6875rem] text-[var(--text-secondary)]">
+                    {filteredAttendances.filter((a) => a.classId === attClassId && a.sectionId === attSectionId && a.date === attDate).length} / {
+                      students.filter((s) => s.status === 'approved' && s.class === attClassId && s.section === attSectionId).length
+                    } {isBn ? 'জন উপস্থিত' : 'present'}
+                  </div>
+                </div>
+                {/* Progress bar */}
+                {(() => {
+                  const total = students.filter((s) => s.status === 'approved' && s.class === attClassId && s.section === attSectionId).length
+                  const present = filteredAttendances.filter((a) => a.classId === attClassId && a.sectionId === attSectionId && a.date === attDate).length
+                  const pct = total > 0 ? Math.round((present / total) * 100) : 0
+                  return (
+                    <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden mb-3">
+                      <div className="h-full bg-[var(--green)] rounded-full transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                  )
+                })()}
+                {/* Student list */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                  {students
+                    .filter((s) => s.status === 'approved' && s.class === attClassId && s.section === attSectionId)
+                    .sort((a, b) => (a.roll || '').localeCompare(b.roll || '', undefined, { numeric: true }))
+                    .map((student) => {
+                      const isPresent = filteredAttendances.some(
+                        (a) => a.studentId === student.id && a.date === attDate && a.shift === attShift
+                      )
+                      return (
+                        <div
+                          key={student.id}
+                          className={`rounded-lg p-2.5 text-center border transition-all ${
+                            isPresent
+                              ? 'bg-[var(--green-light)] border-[var(--green)]/30'
+                              : 'bg-[var(--bg-secondary)] border-[var(--border)]'
+                          }`}
+                        >
+                          <div className="text-[0.625rem] text-[var(--text-muted)] mb-1">Roll: {student.roll || '-'}</div>
+                          <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] truncate">{student.nameEn}</div>
+                          <div className={`text-[0.5625rem] mt-1 font-medium ${isPresent ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
+                            {isPresent ? (isBn ? 'উপস্থিত' : 'Present') : (isBn ? 'অনুপস্থিত' : 'Absent')}
+                          </div>
+                        </div>
+                      )
+                    })}
+                </div>
+              </div>
+            )}
+
+            {!attClassId && !attSectionId && (
+              <div className={`${sectionCls} text-center py-10`}>
+                <QrCode size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
+                <p className="text-[0.8125rem] text-[var(--text-muted)]">
+                  {isBn ? 'শ্রেণি, সেকশন এবং তারিখ নির্বাচন করুন' : 'Select class, section and date to take attendance'}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -2236,6 +2416,145 @@ export default function Step2Schedule() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── QR Scanner Modal ───
+function QRScannerModal({
+  isBn,
+  onScan,
+  onClose,
+  lastScanned,
+}: {
+  isBn: boolean
+  examId: string
+  classId: string
+  sectionId: string
+  date: string
+  shift: string
+  students: { id: string; nameEn: string; class: string; section: string; roll: string; photo: string }[]
+  onScan: (studentId: string) => void
+  onClose: () => void
+  lastScanned: string
+}) {
+  const scannerRef = useRef<HTMLDivElement>(null)
+  const html5QrCodeRef = useRef<any>(null)
+  const [scannerReady, setScannerReady] = useState(false)
+  const [manualId, setManualId] = useState('')
+
+  useEffect(() => {
+    let mounted = true
+    let scanner: any = null
+
+    const startScanner = async () => {
+      try {
+        const { Html5Qrcode } = await import('html5-qrcode')
+        if (!mounted || !scannerRef.current) return
+
+        scanner = new Html5Qrcode('qr-reader')
+        html5QrCodeRef.current = scanner
+
+        await scanner.start(
+          { facingMode: 'environment' },
+          {
+            fps: 5,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+          },
+          (decodedText: string) => {
+            try {
+              const data = JSON.parse(decodedText)
+              if (data.studentId) {
+                onScan(data.studentId)
+              } else if (data.id) {
+                onScan(data.id)
+              }
+            } catch {
+              // Plain text student ID
+              onScan(decodedText.trim())
+            }
+          },
+          () => {}
+        )
+        if (mounted) setScannerReady(true)
+      } catch (err) {
+        console.warn('QR Scanner error:', err)
+        if (mounted) setScannerReady(false)
+      }
+    }
+
+    startScanner()
+
+    return () => {
+      mounted = false
+      if (html5QrCodeRef.current) {
+        html5QrCodeRef.current.stop().catch(() => {})
+        html5QrCodeRef.current.clear().catch(() => {})
+        html5QrCodeRef.current = null
+      }
+    }
+  }, [onScan])
+
+  const handleManualSubmit = () => {
+    if (manualId.trim()) {
+      onScan(manualId.trim())
+      setManualId('')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center p-4 z-[700] bg-black/50">
+      <div className="bg-[var(--bg-primary)] rounded-[0.875rem] max-w-[25rem] w-full p-5 border border-[var(--border)]">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+            <QrCode size={16} className="inline mr-1" />
+            {isBn ? 'QR স্ক্যান' : 'QR Scanner'}
+          </h3>
+          <button onClick={onClose} className="w-7 h-7 rounded-md flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Camera view */}
+        <div id="qr-reader" ref={scannerRef} className="rounded-lg overflow-hidden mb-3 min-h-[15rem] bg-black" />
+
+        {/* Scanner status */}
+        <div className="text-center mb-3">
+          {scannerReady ? (
+            <span className="text-[0.625rem] text-[var(--green)] font-medium">{isBn ? 'স্ক্যানার সক্রিয় — QR কোড দেখান' : 'Scanner active — Show QR code'}</span>
+          ) : (
+            <span className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'স্ক্যানার চালু হচ্ছে...' : 'Starting scanner...'}</span>
+          )}
+        </div>
+
+        {/* Last scanned result */}
+        {lastScanned && (
+          <div className={`text-center text-[0.75rem] font-semibold p-2 rounded-lg mb-3 ${
+            lastScanned.includes('Present') || lastScanned.includes('উপস্থিত')
+              ? 'bg-[var(--green-light)] text-[var(--green)]'
+              : lastScanned.includes('Wrong') || lastScanned.includes('ভুল')
+                ? 'bg-red-50 text-[var(--red)]'
+                : 'bg-[var(--brand-light)] text-[var(--brand)]'
+          }`}>
+            {lastScanned}
+          </div>
+        )}
+
+        {/* Manual entry */}
+        <div className="flex gap-2">
+          <input
+            value={manualId}
+            onChange={(e) => setManualId(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
+            className={`${inputCls} flex-1`}
+            placeholder={isBn ? 'ম্যানুয়াল আইডি লিখুন...' : 'Enter student ID manually...'}
+          />
+          <button onClick={handleManualSubmit} className={btnPrimary}>
+            {isBn ? 'সাবমিট' : 'Submit'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

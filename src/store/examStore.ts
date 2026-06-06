@@ -103,6 +103,19 @@ export interface InvigilatorAssignment {
   classSection: string
 }
 
+export interface ExamAttendance {
+  id: string
+  examId: string
+  studentId: string
+  classId: string
+  sectionId: string
+  date: string
+  shift: 'morning' | 'afternoon'
+  status: 'present' | 'absent' | 'late'
+  scannedBy: string
+  scannedAt: string
+}
+
 // ─── Step 4: OMR ───
 
 export interface OMRConfig {
@@ -817,6 +830,7 @@ interface ExamState {
   cumulativeSheets: CumulativeMarksheet[]
   marksEntryStatuses: MarksEntryStatus[]
   omrTemplates: OMRTemplate[]
+  attendances: ExamAttendance[]
 
   addExamConfig: (config: Omit<ExamConfig, 'id' | 'createdAt'>) => void
   updateExamConfig: (id: string, data: Partial<ExamConfig>) => void
@@ -852,6 +866,8 @@ interface ExamState {
 
   addInvigilator: (inv: Omit<InvigilatorAssignment, 'id'>) => void
   removeInvigilator: (id: string) => void
+  addAttendance: (att: Omit<ExamAttendance, 'id'>) => void
+  removeAttendance: (id: string) => void
 
   upsertOMRConfig: (config: Omit<OMRConfig, 'id' | 'createdAt'>) => void
   deleteOMRConfig: (id: string) => void
@@ -911,6 +927,7 @@ export const useExamStore = create<ExamState>()(
       rooms: defaultRooms,
       seatPlans: defaultSeatPlans,
       invigilators: defaultInvigilators,
+      attendances: [],
       omrConfigs: defaultOMRConfigs,
       extraMarks: defaultExtraMarks,
       marksheetConfigs: defaultMarksheetConfigs,
@@ -1170,6 +1187,22 @@ export const useExamStore = create<ExamState>()(
       removeInvigilator: (id) =>
         set((state) => ({
           invigilators: state.invigilators.filter((i) => i.id !== id),
+        })),
+
+      // ─── Attendance ───
+      addAttendance: (att) =>
+        set((state) => {
+          const existing = state.attendances.find(
+            (a) => a.examId === att.examId && a.studentId === att.studentId && a.date === att.date && a.shift === att.shift
+          )
+          if (existing) {
+            return { attendances: state.attendances.map((a) => (a.id === existing.id ? { ...a, ...att, id: existing.id } : a)) }
+          }
+          return { attendances: [...state.attendances, { ...att, id: `ATT-${Date.now()}` }] }
+        }),
+      removeAttendance: (id) =>
+        set((state) => ({
+          attendances: state.attendances.filter((a) => a.id !== id),
         })),
 
       // ─── OMR Config ───
