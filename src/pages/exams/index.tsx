@@ -15,7 +15,7 @@ import {
   FileSpreadsheet,
   GraduationCap,
 } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useExamStore } from '@/store/examStore'
@@ -67,7 +67,6 @@ function ExamSkeleton() {
 
 export default function ExamDashboard() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
   const { isMobile, isTablet } = useWindowSize()
   const students = useSessionStudents()
   const subjects = useTeacherStore((s) => s.subjects)
@@ -86,7 +85,7 @@ export default function ExamDashboard() {
   const rooms = useExamStore((s) => s.rooms)
   const gradeScales = useExamStore((s) => s.gradeScales)
 
-  const isBn = language === 'bn'
+  const isBn = useBn()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
 

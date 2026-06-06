@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { ArrowLeft, Camera, CheckCircle, GraduationCap, Save, Search, ShieldCheck, User, UserSearch, X } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -69,12 +69,11 @@ async function compressImage(file: File): Promise<string> {
 
 export default function UpdateStudentPage() {
   const location = useLocation()
-  const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const updateStudent = useAdmissionStore((s) => s.updateStudent)
   const students = useSessionStudents()
   const { classes } = useClassStore()
-  const isBn = language === 'bn'
+  const isBn = useBn()
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])

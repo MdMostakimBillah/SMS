@@ -18,7 +18,7 @@ import {
   ChevronsRight,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
@@ -32,9 +32,8 @@ const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
 export default function AllTeachersPage() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
+  const isBn = useBn()
   const { teachers, departments, subjects, deleteTeacher } = useTeacherStore()
-  const isBn = language === 'bn'
 
   const [search, setSearch] = useState('')
   const [fDept, setFDept] = useState('')

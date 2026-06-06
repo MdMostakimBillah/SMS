@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowUpCircle, Check, Info, User, Users } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -27,12 +27,11 @@ const RollCell = React.memo(function RollCell({ value, onChange, isBn }: RollCel
 
 export default function ClassPromotionPage() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const addStudent = useAdmissionStore((s) => s.addStudent)
   const allStudents = useAdmissionStore((s) => s.students)
   const { classes, institution, sessionClasses } = useClassStore()
-  const isBn = language === 'bn'
+  const isBn = useBn()
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])

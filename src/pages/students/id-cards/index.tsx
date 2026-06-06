@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, IdCard, Printer, Search, User } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -177,11 +177,10 @@ function IDCard({
 
 export default function IDCardsPage() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const allStudents = useAdmissionStore((s) => s.students)
   const { classes, institution } = useClassStore()
-  const isBn = language === 'bn'
+  const isBn = useBn()
 
   const currentSession = institution.currentSession
   const sessions = institution.sessions

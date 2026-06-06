@@ -20,7 +20,7 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -106,13 +106,12 @@ async function compressImage(file: File): Promise<string> {
 
 export default function BulkUpdatePage() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const updateStudent = useAdmissionStore((s) => s.updateStudent)
   const allStudents = useAdmissionStore((s) => s.students)
   const classes = useClassStore((s) => s.classes)
   const institution = useClassStore((s) => s.institution)
-  const isBn = language === 'bn'
+  const isBn = useBn()
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])

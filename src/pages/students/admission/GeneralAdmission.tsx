@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react'
 import { CheckCircle, User, GraduationCap, ShieldCheck, IdCard, Camera, X, Download, MessageSquare, Send } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
@@ -100,11 +100,10 @@ function FormField({ labelEn, labelBn, value, onChange, type = 'text', required 
 }
 
 export default function GeneralAdmission() {
-  const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const { addStudent, getNextId } = useAdmissionStore()
   const { classes, institution } = useClassStore()
-  const isBn = language === 'bn'
+  const isBn = useBn()
 
   const currentSession = institution.currentSession
   const sessions = institution.sessions

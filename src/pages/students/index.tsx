@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { UserPlus, Users, User, UserPen, TableProperties, IdCard, ArrowUpCircle, ArrowRight } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useSessionStudents } from '@/store/admissionStore'
 import type { LucideIcon } from 'lucide-react'
@@ -50,10 +50,9 @@ function StudentsSkeleton() {
 
 export default function StudentsPage() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
   const { isMobile, isTablet } = useWindowSize()
   const students = useSessionStudents()
-  const isBn = language === 'bn'
+  const isBn = useBn()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
 

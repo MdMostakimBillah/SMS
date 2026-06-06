@@ -20,6 +20,7 @@ import {
   ClipboardCheck,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNavigate } from 'react-router-dom'
 import { t } from '@/lib/i18n'
@@ -102,6 +103,7 @@ const demoMessages = [
 export default function Topbar() {
   const navigate = useNavigate()
   const { theme, language, setTheme, setLanguage, toggleSidebar } = useAppStore()
+  const isBn = useBn()
   const { isMobile } = useWindowSize()
   const [notifOpen, setNotifOpen] = useState(false)
   const [msgOpen, setMsgOpen] = useState(false)
@@ -133,7 +135,6 @@ export default function Topbar() {
     { value: 'bn', labelKey: 'lang_bn' },
     { value: 'en', labelKey: 'lang_en' },
   ]
-  const isBn = language === 'bn'
   const unreadNotifs = demoNotifications.filter((n) => n.unread).length
   const unreadMsgs = demoMessages.reduce((sum, m) => sum + m.unread, 0)
 

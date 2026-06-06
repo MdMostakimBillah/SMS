@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, AlertTriangle, BookOpen, Filter, X, Edit2, Trash2 } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
@@ -12,10 +12,9 @@ const sel =
 
 export default function SubjectsPage() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
+  const isBn = useBn()
   const { subjects, departments, teachers, addSubject, updateSubject, deleteSubject } = useTeacherStore()
   const { isMobile } = useWindowSize()
-  const isBn = language === 'bn'
 
   const [fDept, setFDept] = useState('')
   const [showAdd, setShowAdd] = useState(false)

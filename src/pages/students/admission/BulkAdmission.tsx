@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import { CheckCircle, Info, Trash2, Plus, Upload, Check, Calendar } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from './types'
@@ -65,11 +65,10 @@ const Cell = React.memo(function Cell({ value, onChange, type = 'text', options,
 })
 
 export default function BulkAdmission() {
-  const { language } = useAppStore()
   const addStudent = useAdmissionStore((s) => s.addStudent)
   const existing = useAdmissionStore((s) => s.students)
   const { classes, institution } = useClassStore()
-  const isBn = language === 'bn'
+  const isBn = useBn()
 
   const currentSession = institution.currentSession
   const sessions = institution.sessions

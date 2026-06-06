@@ -13,29 +13,22 @@ import {
   Target,
   FileSpreadsheet,
 } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
-
-const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-[0.875rem] mb-[0.875rem]'
-const sectionTitleCls = 'flex items-center gap-2 text-[0.8125rem] font-semibold text-[var(--text-primary)]'
-const inputCls =
-  'h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border'
-const btnPrimary =
-  'flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
+import { sectionCls, sectionTitleCls, inputCls, btnPrimary } from '@/lib/styles'
 
 type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position'
 
 export default function Step4Results() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
   const subjects = useTeacherStore((s) => s.subjects)
   const { classes } = useClassStore()
   const currentSession = useClassStore((s) => s.institution.currentSession)
   const students = useSessionStudents()
-  const isBn = language === 'bn'
+  const isBn = useBn()
 
   const allExamConfigs = useExamStore((s) => s.examConfigs)
   const examConfigs = useMemo(() => allExamConfigs.filter((e) => e.session === currentSession), [allExamConfigs, currentSession])

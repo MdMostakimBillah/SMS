@@ -18,7 +18,7 @@ import {
   ChevronsRight,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
@@ -774,14 +774,13 @@ const ViewModal = React.memo(function ViewModal({
 // Main Manage Page
 // ═══════════════════════════════════════════════
 export default function AdmissionManage() {
-  const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const updateStudent = useAdmissionStore((s) => s.updateStudent)
   const approveStudent = useAdmissionStore((s) => s.approveStudent)
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
   const currentSession = institution.currentSession
-  const isBn = language === 'bn'
+  const isBn = useBn()
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])

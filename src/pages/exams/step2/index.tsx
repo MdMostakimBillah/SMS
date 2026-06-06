@@ -20,8 +20,11 @@ import {
   Download,
   GraduationCap,
   QrCode,
+  IdCard,
+  ClipboardCheck,
+  UserX,
 } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -42,17 +45,11 @@ import {
   isBefore,
   startOfDay,
 } from 'date-fns'
+import { sectionCls, sectionTitleCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
+import { generateAttendanceSheetHTML } from './pdfTemplates/attendanceSheet'
+import AdmitCardsTab from './AdmitCardsTab'
 
-const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-[0.875rem] mb-[0.875rem]'
-const sectionTitleCls = 'flex items-center gap-2 text-[0.8125rem] font-semibold text-[var(--text-primary)]'
-const inputCls =
-  'h-8 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border'
-const selectCls =
-  'h-8 px-2 pr-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border appearance-none cursor-pointer bg-[url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2712%27%20height%3D%2712%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%2394a3b8%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")] bg-no-repeat bg-[position:right_8px_center] hover:border-[var(--brand)] focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20 transition-all'
-const btnPrimary =
-  'flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]'
-
-type SubTab = 'routine' | 'rooms' | 'seats' | 'invigilators' | 'attendance'
+type SubTab = 'routine' | 'rooms' | 'seats' | 'invigilators' | 'attendance' | 'admit-cards'
 
 const statusStyles: Record<string, { bg: string; color: string; dot: string; label: string; labelBn: string }> = {
   completed: { bg: 'var(--green-light)', color: 'var(--green)', dot: 'var(--green)', label: 'Completed', labelBn: 'সম্পন্ন' },
@@ -73,11 +70,10 @@ const WEEKDAYS_BN = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', '
 
 export default function Step2Schedule() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
   const teachers = useTeacherStore((s) => s.teachers)
   const subjects = useTeacherStore((s) => s.subjects)
   const students = useSessionStudents()
-  const isBn = language === 'bn'
+  const isBn = useBn()
   const currentSession = useClassStore((s) => s.institution.currentSession)
 
   const allExamConfigs = useExamStore((s) => s.examConfigs)
@@ -87,6 +83,7 @@ export default function Step2Schedule() {
   const seatPlans = useExamStore((s) => s.seatPlans)
   const invigilators = useExamStore((s) => s.invigilators)
   const attendances = useExamStore((s) => s.attendances)
+  const subjectMarkConfigs = useExamStore((s) => s.subjectMarkConfigs)
   const addAttendance = useExamStore((s) => s.addAttendance)
   const addRoutine = useExamStore((s) => s.addRoutine)
   const deleteRoutine = useExamStore((s) => s.deleteRoutine)
@@ -750,7 +747,8 @@ export default function Step2Schedule() {
             icon: <UserCheck size={14} />,
             count: filteredInvigilators.length,
           },
-          { key: 'attendance' as SubTab, label: isBn ? 'উপস্থিতি' : 'Attendance', icon: <Users size={14} /> },
+          { key: 'admit-cards' as SubTab, label: isBn ? 'প্রবেশপত্র' : 'Admit Cards', icon: <IdCard size={14} /> },
+          { key: 'attendance' as SubTab, label: isBn ? 'পরীক্ষার উপস্থিতি' : 'Exam Attendance', icon: <Users size={14} /> },
         ].map((t) => (
           <button
             key={t.key}
@@ -1807,10 +1805,12 @@ export default function Step2Schedule() {
             {/* Attendance Controls */}
             <div className={sectionCls}>
               <div className={sectionTitleCls}>
-                <Users size={15} className="text-[var(--brand)]" />
+                <div className="flex items-center justify-center w-6 h-6 rounded-md bg-[var(--brand-light)]">
+                  <ClipboardCheck size={13} className="text-[var(--brand)]" />
+                </div>
                 {isBn ? 'পরীক্ষাভিত্তিক উপস্থিতি' : 'Exam-wise Student Attendance'}
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
                 <div>
                   <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
                   <select
@@ -1915,141 +1915,159 @@ export default function Step2Schedule() {
             )}
 
             {/* Attendance Summary */}
-            {attClassId && attSectionId && attDate && (
-              <div className={sectionCls}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">
-                    {attClassId} - {attSectionId} · {attDate}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-[0.6875rem] text-[var(--text-secondary)]">
-                      {filteredAttendances.filter((a) => a.classId === attClassId && a.sectionId === attSectionId && a.date === attDate).length} / {
-                        students.filter((s) => s.status === 'approved' && s.class === attClassId && s.section === attSectionId).length
-                      } {isBn ? 'জন উপস্থিত' : 'present'}
-                    </div>
-                    <button
-                      onClick={() => {
-                        const classStudents = students.filter((s) => s.status === 'approved' && s.class === attClassId && s.section === attSectionId)
-                        const presentIds = new Set(
-                          filteredAttendances
-                            .filter((a) => a.classId === attClassId && a.sectionId === attSectionId && a.date === attDate)
-                            .map((a) => a.studentId)
-                        )
-                        const sorted = classStudents.sort((a, b) => (a.roll || '').localeCompare(b.roll || '', undefined, { numeric: true }))
-                        const present = sorted.filter((s) => presentIds.has(s.id))
-                        const absent = sorted.filter((s) => !presentIds.has(s.id))
+            {attClassId && attSectionId && attDate && (() => {
+              const classStudents = students.filter((s) => s.status === 'approved' && s.class === attClassId && s.section === attSectionId)
+              const presentIds = new Set(
+                filteredAttendances
+                  .filter((a) => a.classId === attClassId && a.sectionId === attSectionId && a.date === attDate)
+                  .map((a) => a.studentId)
+              )
+              const total = classStudents.length
+              const present = presentIds.size
+              const absent = total - present
+              const pct = total > 0 ? Math.round((present / total) * 100) : 0
+              const sorted = classStudents.sort((a, b) => (a.roll || '').localeCompare(b.roll || '', undefined, { numeric: true }))
 
-                        const win = window.open('', '_blank')
-                        if (!win) return
-                        win.document.write(`<!DOCTYPE html><html><head><title>Attendance - ${attClassId} ${attSectionId} ${attDate}</title>
-<style>
-  @page{size:A4 portrait;margin:15mm}
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:0}
-  .header{text-align:center;margin-bottom:16px;border-bottom:2px solid #6366f1;padding-bottom:10px}
-  .school{font-size:18px;font-weight:700;color:#6366f1}
-  .sub{font-size:11px;color:#666}
-  .title{font-size:14px;font-weight:700;margin:10px 0;background:#6366f1;color:#fff;padding:6px;border-radius:4px}
-  .info{display:flex;justify-content:space-between;font-size:11px;margin-bottom:12px;color:#444}
-  table{width:100%;border-collapse:collapse}
-  th{background:#eef2ff;color:#6366f1;font-size:10px;padding:6px 8px;text-align:left;border:1px solid #c7d2fe}
-  td{padding:5px 8px;border:1px solid #e5e7eb;font-size:11px}
-  tr:nth-child(even){background:#f9fafb}
-  .present{color:#10b981;font-weight:600}
-  .absent{color:#ef4444;font-weight:600}
-  .summary{margin-top:16px;display:flex;gap:16px;font-size:11px}
-  .summary-box{padding:6px 12px;border-radius:6px;border:1px solid #e5e7eb}
-  .footer{margin-top:20px;padding-top:10px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:10px;color:#888}
-  @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
-</style></head><body>
-<div class="header">
-  <div class="school">EduTech School Management</div>
-  <div class="sub">Sunrise Academy, Dhaka, Bangladesh</div>
-</div>
-<div class="title">Exam Attendance Report / পরীক্ষার উপস্থিতি রিপোর্ট</div>
-<div class="info">
-  <span><b>Class:</b> ${attClassId} - ${attSectionId}</span>
-  <span><b>Date:</b> ${attDate}</span>
-  <span><b>Shift:</b> ${attShift || 'N/A'}</span>
-</div>
-<table>
-  <thead><tr><th>#</th><th>Roll</th><th>Student Name</th><th>Student ID</th><th>Status</th></tr></thead>
-  <tbody>
-    ${present.map((s, i) => `<tr><td>${i + 1}</td><td>${s.roll || '-'}</td><td>${s.nameEn}</td><td>${s.id}</td><td class="present">Present / উপস্থিত</td></tr>`).join('')}
-    ${absent.map((s, i) => `<tr><td>${present.length + i + 1}</td><td>${s.roll || '-'}</td><td>${s.nameEn}</td><td>${s.id}</td><td class="absent">Absent / অনুপস্থিত</td></tr>`).join('')}
-  </tbody>
-</table>
-<div class="summary">
-  <div class="summary-box"><b>Total Students:</b> ${classStudents.length}</div>
-  <div class="summary-box"><b>Present:</b> ${present.length}</div>
-  <div class="summary-box"><b>Absent:</b> ${absent.length}</div>
-  <div class="summary-box"><b>Attendance Rate:</b> ${classStudents.length > 0 ? Math.round((present.length / classStudents.length) * 100) : 0}%</div>
-</div>
-<div class="footer">
-  <span>Generated on ${new Date().toLocaleDateString()}</span>
-  <span>Principal's Signature: _______________</span>
-</div>
-</body></html>`)
-                        win.document.close()
-                        setTimeout(() => win.print(), 500)
-                      }}
-                      className="flex items-center gap-1 text-[0.625rem] text-[var(--brand)] hover:text-[var(--brand-dark)] cursor-pointer"
-                    >
-                      <Download size={12} />
-                      {isBn ? 'PDF' : 'PDF'}
-                    </button>
-                  </div>
-                </div>
-                {/* Progress bar */}
-                {(() => {
-                  const total = students.filter((s) => s.status === 'approved' && s.class === attClassId && s.section === attSectionId).length
-                  const present = filteredAttendances.filter((a) => a.classId === attClassId && a.sectionId === attSectionId && a.date === attDate).length
-                  const pct = total > 0 ? Math.round((present / total) * 100) : 0
-                  return (
-                    <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden mb-3">
-                      <div className="h-full bg-[var(--green)] rounded-full transition-all" style={{ width: `${pct}%` }} />
-                    </div>
-                  )
-                })()}
-                {/* Student list */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                  {students
-                    .filter((s) => s.status === 'approved' && s.class === attClassId && s.section === attSectionId)
-                    .sort((a, b) => (a.roll || '').localeCompare(b.roll || '', undefined, { numeric: true }))
-                    .map((student) => {
-                      const isPresent = filteredAttendances.some(
-                        (a) => a.studentId === student.id && a.date === attDate && a.shift === attShift
-                      )
-                      return (
+              return (
+                <>
+                  {/* Stat Cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                    {[
+                      { label: isBn ? 'মোট ছাত্র' : 'Total Students', value: total, icon: <Users size={14} />, bg: 'var(--brand-light)', color: 'var(--brand)' },
+                      { label: isBn ? 'উপস্থিত' : 'Present', value: present, icon: <CheckCircle size={14} />, bg: 'var(--green-light)', color: 'var(--green)' },
+                      { label: isBn ? 'অনুপস্থিত' : 'Absent', value: absent, icon: <UserX size={14} />, bg: 'var(--red-light)', color: 'var(--red)' },
+                      { label: isBn ? 'হার' : 'Rate', value: `${pct}%`, icon: <ClipboardCheck size={14} />, bg: 'var(--amber-light)', color: 'var(--amber)' },
+                    ].map((s) => (
+                      <div
+                        key={s.label}
+                        className="flex items-center gap-3 rounded-[0.75rem] border border-[var(--border)] bg-[var(--bg-primary)] p-3"
+                      >
                         <div
-                          key={student.id}
-                          className={`rounded-lg p-2.5 text-center border transition-all ${
-                            isPresent
-                              ? 'bg-[var(--green-light)] border-[var(--green)]/30'
-                              : 'bg-[var(--bg-secondary)] border-[var(--border)]'
-                          }`}
+                          className="flex items-center justify-center w-8 h-8 rounded-lg"
+                          style={{ background: s.bg }}
                         >
-                          <div className="text-[0.625rem] text-[var(--text-muted)] mb-1">Roll: {student.roll || '-'}</div>
-                          <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] truncate">{student.nameEn}</div>
-                          <div className={`text-[0.5625rem] mt-1 font-medium ${isPresent ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
-                            {isPresent ? (isBn ? 'উপস্থিত' : 'Present') : (isBn ? 'অনুপস্থিত' : 'Absent')}
-                          </div>
+                          <span style={{ color: s.color }}>{s.icon}</span>
                         </div>
-                      )
-                    })}
-                </div>
-              </div>
-            )}
+                        <div>
+                          <div className="text-[0.6875rem] text-[var(--text-muted)]">{s.label}</div>
+                          <div className="text-[1rem] font-semibold text-[var(--text-primary)]">{s.value}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Attendance Sheet */}
+                  <div className={sectionCls}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[0.75rem] font-medium text-[var(--text-primary)]">
+                          {attClassId} - {attSectionId}
+                        </span>
+                        <span className="text-[0.6875rem] text-[var(--text-muted)]">
+                          {attDate} · {attShift === 'morning' ? (isBn ? 'সকাল' : 'Morning') : (isBn ? 'বিকাল' : 'Afternoon')}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const presentList = sorted.filter((s) => presentIds.has(s.id))
+                          const absentList = sorted.filter((s) => !presentIds.has(s.id))
+                          const html = generateAttendanceSheetHTML({
+                            classId: attClassId,
+                            sectionId: attSectionId,
+                            date: attDate,
+                            shift: attShift,
+                            present: presentList,
+                            absent: absentList,
+                            totalStudents: total,
+                          })
+                          const win = window.open('', '_blank')
+                          if (!win) return
+                          win.document.write(html)
+                          win.document.close()
+                          setTimeout(() => win.print(), 500)
+                        }}
+                        className="flex items-center gap-1 text-[0.625rem] text-[var(--brand)] hover:text-[var(--brand-dark)] cursor-pointer"
+                      >
+                        <Download size={12} />
+                        PDF
+                      </button>
+                    </div>
+
+                    {/* Progress */}
+                    <div className="h-1.5 bg-[var(--border)] rounded-full overflow-hidden mb-4">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${pct}%`,
+                          background: pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)',
+                        }}
+                      />
+                    </div>
+
+                    {/* Student Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                      {sorted.map((student) => {
+                        const isPresent = presentIds.has(student.id)
+                        return (
+                          <div
+                            key={student.id}
+                            className={`relative rounded-xl p-3 border transition-all duration-200 ${
+                              isPresent
+                                ? 'bg-[var(--green-light)] border-[var(--green)]/20 shadow-sm'
+                                : 'bg-[var(--bg-secondary)] border-[var(--border)] hover:border-[var(--red)]/30'
+                            }`}
+                          >
+                            <div className="absolute top-2 right-2">
+                              <span
+                                className="inline-block w-1.5 h-1.5 rounded-full"
+                                style={{ background: isPresent ? 'var(--green)' : 'var(--red)' }}
+                              />
+                            </div>
+                            <div className="text-[0.5625rem] text-[var(--text-muted)] mb-0.5">
+                              {isBn ? 'রোল' : 'Roll'}: {student.roll || '-'}
+                            </div>
+                            <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] truncate pr-3">
+                              {student.nameEn}
+                            </div>
+                            <div className={`text-[0.5625rem] mt-1.5 font-medium ${
+                              isPresent ? 'text-[var(--green)]' : 'text-[var(--red)]'
+                            }`}>
+                              {isPresent ? (isBn ? 'উপস্থিত' : 'Present') : (isBn ? 'অনুপস্থিত' : 'Absent')}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </>
+              )
+            })}
 
             {!attClassId && !attSectionId && (
               <div className={`${sectionCls} text-center py-10`}>
-                <QrCode size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
-                <p className="text-[0.8125rem] text-[var(--text-muted)]">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[var(--bg-secondary)] mb-3">
+                  <ClipboardCheck size={22} className="text-[var(--text-muted)] opacity-40" />
+                </div>
+                <p className="text-[0.8125rem] text-[var(--text-muted)] mb-1">
                   {isBn ? 'শ্রেণি, সেকশন এবং তারিখ নির্বাচন করুন' : 'Select class, section and date to take attendance'}
+                </p>
+                <p className="text-[0.6875rem] text-[var(--text-muted)] opacity-60">
+                  {isBn ? 'QR স্ক্যান বা ম্যানুয়াল এন্ট্রি দ্বারা উপস্থিতি নিন' : 'Mark attendance via QR scan or manual entry'}
                 </p>
               </div>
             )}
           </>
+        )}
+
+        {/* ═══ ADMIT CARDS TAB ═══ */}
+        {activeSubTab === 'admit-cards' && (
+          <AdmitCardsTab
+            students={students}
+            selectedExamId={selectedExamId}
+            examConfigs={examConfigs}
+            routines={routines}
+            subjectMarkConfigs={subjectMarkConfigs}
+          />
         )}
       </div>
 

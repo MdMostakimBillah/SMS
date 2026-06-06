@@ -14,7 +14,7 @@ import {
   UserCheck,
   UserX,
 } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -61,11 +61,10 @@ function DashboardSkeleton() {
 }
 
 export default function DashboardPage() {
-  const { language } = useAppStore()
+  const isBn = useBn()
   const students = useSessionStudents()
   const { teachers } = useTeacherStore()
   const { isMobile, isTablet } = useWindowSize()
-  const isBn = language === 'bn'
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
 

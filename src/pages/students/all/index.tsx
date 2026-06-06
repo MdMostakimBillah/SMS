@@ -17,7 +17,7 @@ import {
   ChevronsRight,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -33,12 +33,11 @@ const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
 export default function AllStudentsPage() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
   const currentSession = institution.currentSession
-  const isBn = language === 'bn'
+  const isBn = useBn()
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])

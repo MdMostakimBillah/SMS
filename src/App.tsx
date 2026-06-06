@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layouts/AppLayout'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import DashboardPage from '@/pages/dashboard'
 import StudentsPage from '@/pages/students'
 import StudentAdmission from '@/pages/students/admission'
@@ -39,38 +40,38 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route element={<AppLayout />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/students" element={<StudentsPage />} />
-        <Route path="/students/admission" element={<StudentAdmission />} />
-        <Route path="/students/all" element={<AllStudentsPage />} />
-        <Route path="/students/update" element={<UpdateStudentPage />} />
-        <Route path="/students/bulk-update" element={<BulkUpdatePage />} />
-        <Route path="/students/id-cards" element={<IDCardsPage />} />
-        <Route path="/students/promotion" element={<PromotionPage />} />
-        <Route path="/teachers" element={<TeachersPage />} />
-        <Route path="/teachers/add" element={<AddTeacherPage />} />
-        <Route path="/teachers/all" element={<AllTeachersPage />} />
-        <Route path="/teachers/all/:id" element={<TeacherDetailPage />} />
-        <Route path="/teachers/edit/:id" element={<EditTeacherPage />} />
-        <Route path="/teachers/bulk-update" element={<TeacherBulkUpdatePage />} />
-        <Route path="/teachers/departments" element={<DepartmentsPage />} />
-        <Route path="/teachers/subjects" element={<SubjectsPage />} />
-        <Route path="/teachers/designations" element={<DesignationsPage />} />
-        <Route path="/classes" element={<ClassesPage />} />
-        <Route path="/hr" element={<HRPage />} />
-        <Route path="/attendance" element={<AttendancePage />} />
-        <Route path="/exams" element={<ExamDashboard />} />
-        <Route path="/exams/planning" element={<Step1Planning />} />
-        <Route path="/exams/scheduling" element={<Step2Schedule />} />
-        <Route path="/exams/evaluation" element={<Step3Evaluation />} />
-        <Route path="/exams/results" element={<Step4Results />} />
-        <Route path="/exams/marksheet" element={<Step5Marksheet />} />
-        <Route path="/exams/omr" element={<OMRSheetPage />} />
-        <Route path="/syllabus" element={<SyllabusPage />} />
+        <Route path="/dashboard" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
+        <Route path="/students" element={<ErrorBoundary><StudentsPage /></ErrorBoundary>} />
+        <Route path="/students/admission" element={<ErrorBoundary><StudentAdmission /></ErrorBoundary>} />
+        <Route path="/students/all" element={<ErrorBoundary><AllStudentsPage /></ErrorBoundary>} />
+        <Route path="/students/update" element={<ErrorBoundary><UpdateStudentPage /></ErrorBoundary>} />
+        <Route path="/students/bulk-update" element={<ErrorBoundary><BulkUpdatePage /></ErrorBoundary>} />
+        <Route path="/students/id-cards" element={<ErrorBoundary><IDCardsPage /></ErrorBoundary>} />
+        <Route path="/students/promotion" element={<ErrorBoundary><PromotionPage /></ErrorBoundary>} />
+        <Route path="/teachers" element={<ErrorBoundary><TeachersPage /></ErrorBoundary>} />
+        <Route path="/teachers/add" element={<ErrorBoundary><AddTeacherPage /></ErrorBoundary>} />
+        <Route path="/teachers/all" element={<ErrorBoundary><AllTeachersPage /></ErrorBoundary>} />
+        <Route path="/teachers/all/:id" element={<ErrorBoundary><TeacherDetailPage /></ErrorBoundary>} />
+        <Route path="/teachers/edit/:id" element={<ErrorBoundary><EditTeacherPage /></ErrorBoundary>} />
+        <Route path="/teachers/bulk-update" element={<ErrorBoundary><TeacherBulkUpdatePage /></ErrorBoundary>} />
+        <Route path="/teachers/departments" element={<ErrorBoundary><DepartmentsPage /></ErrorBoundary>} />
+        <Route path="/teachers/subjects" element={<ErrorBoundary><SubjectsPage /></ErrorBoundary>} />
+        <Route path="/teachers/designations" element={<ErrorBoundary><DesignationsPage /></ErrorBoundary>} />
+        <Route path="/classes" element={<ErrorBoundary><ClassesPage /></ErrorBoundary>} />
+        <Route path="/hr" element={<ErrorBoundary><HRPage /></ErrorBoundary>} />
+        <Route path="/attendance" element={<ErrorBoundary><AttendancePage /></ErrorBoundary>} />
+        <Route path="/exams" element={<ErrorBoundary><ExamDashboard /></ErrorBoundary>} />
+        <Route path="/exams/planning" element={<ErrorBoundary><Step1Planning /></ErrorBoundary>} />
+        <Route path="/exams/scheduling" element={<ErrorBoundary><Step2Schedule /></ErrorBoundary>} />
+        <Route path="/exams/evaluation" element={<ErrorBoundary><Step3Evaluation /></ErrorBoundary>} />
+        <Route path="/exams/results" element={<ErrorBoundary><Step4Results /></ErrorBoundary>} />
+        <Route path="/exams/marksheet" element={<ErrorBoundary><Step5Marksheet /></ErrorBoundary>} />
+        <Route path="/exams/omr" element={<ErrorBoundary><OMRSheetPage /></ErrorBoundary>} />
+        <Route path="/syllabus" element={<ErrorBoundary><SyllabusPage /></ErrorBoundary>} />
         <Route path="/assignments" element={<P name="Assignments" />} />
         <Route path="/online" element={<P name="Online Classes" />} />
         <Route path="/finance" element={<P name="Finance" />} />
-        <Route path="/payroll" element={<PayrollPage />} />
+        <Route path="/payroll" element={<ErrorBoundary><PayrollPage /></ErrorBoundary>} />
         <Route path="/store" element={<P name="School Store" />} />
         <Route path="/expenses" element={<P name="Expenses" />} />
         <Route path="/library" element={<P name="Library" />} />

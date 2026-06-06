@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle, Camera, Clock, Users, Send, Briefcase, X, IdCard, MessageSquare } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
@@ -47,10 +47,9 @@ function FormField({ labelEn, labelBn, value, onChange, type = 'text', required 
 
 export default function AddTeacherPage() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
+  const isBn = useBn()
   const { isMobile } = useWindowSize()
   const { departments, subjects, designations, addTeacher, getNextTeacherId } = useTeacherStore()
-  const isBn = language === 'bn'
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [photo, setPhoto] = useState('')

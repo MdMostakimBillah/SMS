@@ -31,6 +31,7 @@ import {
   Check,
   type LucideIcon,
 } from 'lucide-react'
+import { useBn } from '@/hooks/useBn'
 import { useAppStore } from '@/store/appStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -68,8 +69,8 @@ const iconMap: Record<string, LucideIcon> = {
 }
 
 export default function Sidebar() {
+  const isBn = useBn()
   const { language } = useAppStore()
-  const isBn = language === 'bn'
   const { width: screenWidth } = useWindowSize()
   const isLargeScreen = screenWidth >= 1600
   const isXLargeScreen = screenWidth >= 1920

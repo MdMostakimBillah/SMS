@@ -15,7 +15,7 @@ import {
   XCircle,
   Clock,
 } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -49,7 +49,7 @@ function toBnNum(n: number): string {
 
 export default function HRPage() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
+  const isBn = useBn()
   const { isMobile, isTablet } = useWindowSize()
   const { teachers, departments, attendance } = useTeacherStore()
   const {
@@ -81,7 +81,6 @@ export default function HRPage() {
     removeTeacherFacility,
     upsertTeacherFacilities,
   } = useHRStore()
-  const isBn = language === 'bn'
 
   // ─── Tab & Modal State ───
   const [activeTab, setActiveTab] = useState<Tab>('overview')

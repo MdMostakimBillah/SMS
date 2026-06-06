@@ -15,7 +15,7 @@ import {
   Layers,
   GraduationCap,
 } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useClassStore, extractClassNumber } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useSyllabusStore } from '@/store/syllabusStore'
@@ -32,8 +32,7 @@ const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded
 type View = 'home' | 'sections' | 'subjects' | 'detail'
 
 export default function SyllabusPage() {
-  const { language } = useAppStore()
-  const isBn = language === 'bn'
+  const isBn = useBn()
   const classes = useClassStore((s) => s.classes)
   const currentSession = useClassStore((s) => s.institution.currentSession)
   const subjects = useTeacherStore((s) => s.subjects)

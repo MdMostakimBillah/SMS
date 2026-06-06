@@ -1,15 +1,14 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, User, FileText, AlertCircle } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
 
 export default function TeacherDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const { language } = useAppStore()
+  const isBn = useBn()
   const { teachers, departments, subjects } = useTeacherStore()
-  const isBn = language === 'bn'
 
   const teacher = useMemo(() => teachers.find((t) => t.id === id), [teachers, id])
 

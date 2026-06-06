@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, UserPlus, Users, ListChecks } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import GeneralAdmission from './admission/GeneralAdmission'
 import BulkAdmission from './admission/BulkAdmission'
@@ -15,10 +15,9 @@ const tabs = [
 
 export default function StudentAdmission() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
   const { isMobile } = useWindowSize()
   const [activeTab, setActiveTab] = useState('general')
-  const isBn = language === 'bn'
+  const isBn = useBn()
 
   return (
     <div className="flex flex-col gap-[0.875rem]">

@@ -16,7 +16,7 @@ import {
   Upload,
   Zap,
 } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 
@@ -78,10 +78,9 @@ async function compressImage(file: File): Promise<string> {
 
 export default function TeacherBulkUpdatePage() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
+  const isBn = useBn()
   const { isMobile } = useWindowSize()
   const { teachers, updateTeacher, departments, designations } = useTeacherStore()
-  const isBn = language === 'bn'
 
   const [op, setOp] = useState<Op>('salary')
   const [search, setSearch] = useState('')

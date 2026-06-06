@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CheckCircle, Camera, Clock, Users, Save, Briefcase, X, IdCard } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { TeacherStatus } from '@/pages/teachers/types'
@@ -48,10 +48,9 @@ function FormField({ labelEn, labelBn, value, onChange, type = 'text', required 
 export default function EditTeacherPage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const { language } = useAppStore()
+  const isBn = useBn()
   const { isMobile } = useWindowSize()
   const { teachers, departments, subjects, designations, updateTeacher } = useTeacherStore()
-  const isBn = language === 'bn'
   const fileRef = useRef<HTMLInputElement>(null)
 
   const teacher = useMemo(() => teachers.find((t) => t.id === id), [teachers, id])

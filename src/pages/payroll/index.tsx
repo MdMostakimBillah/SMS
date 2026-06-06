@@ -14,7 +14,7 @@ import {
   Calendar,
   Download,
 } from 'lucide-react'
-import { useAppStore } from '@/store/appStore'
+import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useHRStore } from '@/store/hrStore'
@@ -23,11 +23,10 @@ type SortKey = 'name' | 'salary' | 'department' | 'designation'
 
 export default function PayrollPage() {
   const navigate = useNavigate()
-  const { language } = useAppStore()
+  const isBn = useBn()
   const { isMobile } = useWindowSize()
   const { teachers, departments } = useTeacherStore()
   const { monthlySalaryConfigs, facilities, teacherFacilities } = useHRStore()
-  const isBn = language === 'bn'
 
   const [search, setSearch] = useState('')
   const [fDept, setFDept] = useState('')
