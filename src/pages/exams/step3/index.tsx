@@ -74,48 +74,21 @@ export default function Step3Evaluation() {
   const sectionOptions = useMemo(() => (entryClassId ? sectionsMap[entryClassId] || [] : []), [entryClassId, sectionsMap])
   const publishSectionOptions = useMemo(() => (publishClassId ? sectionsMap[publishClassId] || [] : []), [publishClassId, sectionsMap])
 
-  // Build a lookup: any classId format → canonical classOptions value
-  const classIdLookup = useMemo(() => {
-    const map = new Map<string, string>()
-    classes.forEach((c) => {
-      const canonical = extractClassNumber(c.name)
-      // Map ALL possible formats to canonical
-      map.set(canonical, canonical)
-      map.set(c.name, canonical)
-      // Also map numeric variants
-      const num = parseInt(c.name.replace(/\D/g, ''), 10)
-      if (!isNaN(num)) map.set(String(num), canonical)
-    })
-    return map
-  }, [classes])
-
-  const resolveClassId = useCallback((classId: string): string => {
-    return classIdLookup.get(classId) || classId
-  }, [classIdLookup])
-
-  const publishClassIdVariants = useMemo(() => {
+  // Look up subjectIds for selected class+section from the Classes store
+  const publishSubjectIds = useMemo(() => {
     if (!publishClassId) return null
-    const variants = new Set<string>()
-    variants.add(publishClassId)
-    classes.forEach((c) => {
-      if (extractClassNumber(c.name) === publishClassId || c.name === publishClassId) {
-        variants.add(c.name)
-        variants.add(extractClassNumber(c.name))
-        const num = parseInt(c.name.replace(/\D/g, ''), 10)
-        if (!isNaN(num)) variants.add(String(num))
-      }
-    })
-    return variants
-  }, [publishClassId, classes])
-
-  const publishSectionIdVariants = useMemo(() => {
-    if (!publishSectionId) return null
-    const variants = new Set<string>()
-    variants.add(publishSectionId)
-    // Also match trimmed/lowercase variants
-    variants.add(publishSectionId.trim())
-    return variants
-  }, [publishSectionId])
+    const cls = classes.find((c) => extractClassNumber(c.name) === publishClassId || c.name === publishClassId)
+    if (!cls) return null
+    if (!publishSectionId) {
+      // All sections: collect all subjectIds across all sections
+      const allIds = new Set<string>()
+      cls.sections.forEach((sec) => (sec.subjectIds || []).forEach((id) => allIds.add(id)))
+      return allIds.size > 0 ? allIds : null
+    }
+    const section = cls.sections.find((s) => s.name === publishSectionId)
+    if (!section || !section.subjectIds || section.subjectIds.length === 0) return null
+    return new Set(section.subjectIds)
+  }, [publishClassId, publishSectionId, classes])
 
   const classStudents = useMemo(() => {
     if (!entryClassId || !entrySectionId) return []
@@ -1096,8 +1069,7 @@ export default function Step3Evaluation() {
                 {(() => {
                   const filtered = sessionMarksEntryStatuses.filter((m) => {
                     if (selectedExamId && m.examId !== selectedExamId) return false
-                    if (publishClassIdVariants && !publishClassIdVariants.has(m.classId) && !publishClassIdVariants.has(resolveClassId(m.classId))) return false
-                    if (publishSectionIdVariants && !publishSectionIdVariants.has(m.sectionId)) return false
+                    if (publishSubjectIds && !publishSubjectIds.has(m.subjectId)) return false
                     return true
                   })
                   if (filtered.length === 0) {
@@ -1112,11 +1084,12 @@ export default function Step3Evaluation() {
                   return filtered.map((entry) => {
                     const subject = subjects.find((s) => s.id === entry.subjectId)
                     const isLocked = entry.status === 'locked'
-                    const totalStudents = students.filter(
-                      (s) => s.status === 'approved' && s.class === resolveClassId(entry.classId) && s.section === entry.sectionId
-                    ).length
+                    // Count students from the selected class+section (from class store)
+                    const totalStudents = publishClassId
+                      ? students.filter((s) => s.status === 'approved' && s.class === publishClassId && (!publishSectionId || s.section === publishSectionId)).length
+                      : students.filter((s) => s.status === 'approved').length
                     const enteredCount = sessionStudentMarks.filter(
-                      (m) => m.examId === entry.examId && m.subjectId === entry.subjectId && resolveClassId(m.classId) === resolveClassId(entry.classId) && m.sectionId === entry.sectionId
+                      (m) => m.examId === entry.examId && m.subjectId === entry.subjectId
                     ).length
                     const pct = totalStudents > 0 ? Math.round((enteredCount / totalStudents) * 100) : 0
                     return (
