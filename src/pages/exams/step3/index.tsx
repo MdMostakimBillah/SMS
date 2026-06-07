@@ -74,28 +74,46 @@ export default function Step3Evaluation() {
   const sectionOptions = useMemo(() => (entryClassId ? sectionsMap[entryClassId] || [] : []), [entryClassId, sectionsMap])
   const publishSectionOptions = useMemo(() => (publishClassId ? sectionsMap[publishClassId] || [] : []), [publishClassId, sectionsMap])
 
-  // Find matching class and its valid classId variants for filtering
-  const publishClassMatch = useMemo(() => {
+  // Find matching class from the Classes store
+  const publishClassData = useMemo(() => {
     if (!publishClassId) return null
-    const cls = classes.find((c) => extractClassNumber(c.name) === publishClassId || c.name === publishClassId)
-    if (!cls) return null
-    const classIdVariants = new Set<string>()
-    classIdVariants.add(cls.name)
-    classIdVariants.add(extractClassNumber(cls.name))
-    return { class: cls, classIdVariants }
+    return classes.find((c) => extractClassNumber(c.name) === publishClassId || c.name === publishClassId) || null
   }, [publishClassId, classes])
 
-  // SubjectIds for selected section (fallback to class-level subjectIds)
+  // SubjectIds for selected class+section from the Classes store
   const publishSubjectIds = useMemo(() => {
-    if (!publishClassMatch) return null
+    if (!publishClassData) return []
     if (publishSectionId) {
-      const section = publishClassMatch.class.sections.find((s) => s.name === publishSectionId)
-      if (section && section.subjectIds && section.subjectIds.length > 0) return new Set(section.subjectIds)
+      const section = publishClassData.sections.find((s) => s.name === publishSectionId)
+      if (section && section.subjectIds && section.subjectIds.length > 0) return section.subjectIds
     }
     const allIds = new Set<string>()
-    publishClassMatch.class.sections.forEach((sec) => (sec.subjectIds || []).forEach((id) => allIds.add(id)))
-    return allIds.size > 0 ? allIds : null
-  }, [publishClassMatch, publishSectionId])
+    publishClassData.sections.forEach((sec) => (sec.subjectIds || []).forEach((id) => allIds.add(id)))
+    return Array.from(allIds)
+  }, [publishClassData, publishSectionId])
+
+  // Build lock/unlock rows: subjects from Classes store + status from marksEntryStatuses
+  const publishRows = useMemo(() => {
+    if (!publishClassData || publishSubjectIds.length === 0) return []
+    return publishSubjectIds.map((subjectId) => {
+      const subject = subjects.find((s) => s.id === subjectId)
+      const entry = sessionMarksEntryStatuses.find(
+        (m) =>
+          m.examId === selectedExamId &&
+          m.subjectId === subjectId &&
+          m.classId === publishClassData.name &&
+          (!publishSectionId || m.sectionId === publishSectionId)
+      )
+      return {
+        subjectId,
+        subjectName: subject ? (isBn ? subject.nameBn : subject.name) : subjectId,
+        classId: publishClassData.name,
+        sectionId: publishSectionId || '',
+        isLocked: entry?.status === 'locked',
+        entry,
+      }
+    })
+  }, [publishClassData, publishSubjectIds, subjects, sessionMarksEntryStatuses, selectedExamId, publishSectionId, isBn])
 
   const classStudents = useMemo(() => {
     if (!entryClassId || !entrySectionId) return []
@@ -1074,41 +1092,40 @@ export default function Step3Evaluation() {
 
               <div className="space-y-2">
                 {(() => {
-                  const filtered = sessionMarksEntryStatuses.filter((m) => {
-                    if (selectedExamId && m.examId !== selectedExamId) return false
-                    if (publishClassMatch && !publishClassMatch.classIdVariants.has(m.classId)) return false
-                    if (publishSectionId && m.sectionId !== publishSectionId) return false
-                    if (publishSubjectIds && !publishSubjectIds.has(m.subjectId)) return false
-                    return true
-                  })
-                  if (filtered.length === 0) {
+                  if (publishRows.length === 0) {
                     return (
                       <div className="text-center py-8 text-[var(--text-muted)] text-[0.75rem]">
-                        {sessionMarksEntryStatuses.length === 0
-                          ? (isBn ? 'এখনো মার্কস এন্ট্রি শুরু হয়নি' : 'No marks entry records yet')
-                          : (isBn ? 'এই ফিল্টারে কোনো ডাটা নেই' : 'No data for this filter')}
+                        {!publishClassId
+                          ? (isBn ? 'একটি শ্রেণি নির্বাচন করুন' : 'Select a class to view subjects')
+                          : publishSubjectIds.length === 0
+                            ? (isBn ? 'এই শ্রেণিতে কোনো বিষয় নেই' : 'No subjects assigned to this class')
+                            : (isBn ? 'এই ফিল্টারে কোনো ডাটা নেই' : 'No data for this filter')}
                       </div>
                     )
                   }
-                  return filtered.map((entry) => {
-                    const subject = subjects.find((s) => s.id === entry.subjectId)
-                    const isLocked = entry.status === 'locked'
-                    // Count students from the selected class+section (from class store)
-                    const totalStudents = publishClassId
-                      ? students.filter((s) => s.status === 'approved' && s.class === publishClassId && (!publishSectionId || s.section === publishSectionId)).length
-                      : students.filter((s) => s.status === 'approved').length
-                    const enteredCount = sessionStudentMarks.filter(
-                      (m) => m.examId === entry.examId && m.subjectId === entry.subjectId
+                  return publishRows.map((row) => {
+                    const totalStudents = students.filter(
+                      (s) => s.status === 'approved' && s.class === publishClassId && (!publishSectionId || s.section === publishSectionId)
                     ).length
+                    const enteredCount = row.entry
+                      ? sessionStudentMarks.filter(
+                          (m) => m.examId === selectedExamId && m.subjectId === row.subjectId
+                        ).length
+                      : 0
                     const pct = totalStudents > 0 ? Math.round((enteredCount / totalStudents) * 100) : 0
                     return (
                       <div
-                        key={entry.id}
+                        key={row.subjectId}
                         className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
-                            {isBn ? subject?.nameBn : subject?.name} — {entry.classId} {entry.sectionId}
+                            {row.subjectName}
+                            {publishSectionId && (
+                              <span className="text-[0.625rem] font-normal text-[var(--text-muted)] ml-1.5">
+                                — {publishClassId} {publishSectionId}
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 text-[0.625rem] text-[var(--text-muted)] mt-0.5">
                             <span>
@@ -1119,7 +1136,7 @@ export default function Step3Evaluation() {
                                 className="h-full rounded-full transition-all"
                                 style={{
                                   width: `${pct}%`,
-                                  background: isLocked ? 'var(--red)' : pct === 100 ? 'var(--green)' : 'var(--amber)',
+                                  background: row.isLocked ? 'var(--red)' : pct === 100 ? 'var(--green)' : 'var(--amber)',
                                 }}
                               />
                             </div>
@@ -1127,14 +1144,16 @@ export default function Step3Evaluation() {
                           </div>
                         </div>
                         <button
-                          onClick={() =>
-                            isLocked
-                              ? unlockMarks(entry.examId, entry.classId, entry.sectionId, entry.subjectId)
-                              : lockMarks(entry.examId, entry.classId, entry.sectionId, entry.subjectId)
-                          }
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium cursor-pointer border-none ${isLocked ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--green-light)] text-[var(--green)]'}`}
+                          onClick={() => {
+                            if (row.isLocked) {
+                              unlockMarks(selectedExamId, publishClassData!.name, publishSectionId || '', row.subjectId)
+                            } else {
+                              lockMarks(selectedExamId, publishClassData!.name, publishSectionId || '', row.subjectId)
+                            }
+                          }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium cursor-pointer border-none ${row.isLocked ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--green-light)] text-[var(--green)]'}`}
                         >
-                          {isLocked ? (
+                          {row.isLocked ? (
                             <>
                               <Unlock size={12} />
                               {isBn ? 'আনলক' : 'Unlock'}
