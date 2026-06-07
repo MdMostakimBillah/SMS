@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -632,7 +633,7 @@ export default function AttendancePage() {
   return (
     <div>
       {/* Mark All Confirm */}
-      {showMarkAll && (
+      {showMarkAll && createPortal(
         <div className="modal-overlay">
           <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
             <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-3">
@@ -658,11 +659,12 @@ export default function AttendancePage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Single Person Detail Modal */}
-      {viewPerson && (
+      {viewPerson && createPortal(
         <div className="modal-overlay">
           <div className="modal-content modal-box max-h-[85vh] overflow-hidden flex flex-col" style={{ maxWidth: '40.625rem' }}>
             <div className="px-[1.125rem] py-3.5 border-b border-[var(--border)] flex items-center gap-3 bg-[var(--brand-light)]">
@@ -863,11 +865,12 @@ export default function AttendancePage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Student Detail Modal */}
-      {viewStudent && (
+      {viewStudent && createPortal(
         <div className="modal-overlay">
           <div className="modal-content modal-box max-h-[85vh] overflow-hidden flex flex-col" style={{ maxWidth: '37.5rem' }}>
             <div className="px-[1.125rem] py-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--brand-light)]">
@@ -1016,7 +1019,8 @@ export default function AttendancePage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Header */}

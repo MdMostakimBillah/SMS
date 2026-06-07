@@ -428,7 +428,7 @@ export default function GeneralAdmission() {
             onChange={(v) => set('academicYear', v)}
             required
             isBn={isBn}
-            options={sessions.map((s) => s === currentSession ? `${s} (${isBn ? 'সক্রিয়' : 'Active'})` : s)}
+            options={sessions}
           />
           <FormField
             labelEn="Admission Date"

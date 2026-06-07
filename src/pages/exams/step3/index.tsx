@@ -56,7 +56,6 @@ export default function Step3Evaluation() {
   const [structEditForm, setStructEditForm] = useState<{ subExams: { id: string; name: string; nameBn: string; fullMarks: string; passMarks: string }[] } | null>(null)
 
   // Marks Entry
-  const [entryExamId] = useState(selectedExamId)
   const [entryClassId, setEntryClassId] = useState('')
   const [entrySectionId, setEntrySectionId] = useState('')
   const [entrySubjectId, setEntrySubjectId] = useState('')
@@ -86,25 +85,27 @@ export default function Step3Evaluation() {
   }, [sessionSubjectMarkConfigs, selectedExamId, structClassId, structSectionId, classes])
 
   const entrySubjectConfig = useMemo(() => {
-    if (!entryExamId || !entrySubjectId || !entryClassId) return null
-    return sessionSubjectMarkConfigs.find((s) => s.examId === entryExamId && s.classId === entryClassId && s.subjectId === entrySubjectId)
-  }, [sessionSubjectMarkConfigs, entryExamId, entrySubjectId, entryClassId])
+    if (!selectedExamId || !entrySubjectId || !entryClassId) return null
+    return sessionSubjectMarkConfigs.find((s) => s.examId === selectedExamId && s.classId === entryClassId && s.subjectId === entrySubjectId)
+  }, [sessionSubjectMarkConfigs, selectedExamId, entrySubjectId, entryClassId])
 
   const prevInputsRef = useRef<Record<string, Record<string, number>>>({})
+  const prevContextRef = useRef('')
 
   useEffect(() => {
-    if (!entryExamId || !entryClassId || !entrySectionId || !entrySubjectId) {
+    if (!selectedExamId || !entryClassId || !entrySectionId || !entrySubjectId) {
       if (Object.keys(prevInputsRef.current).length > 0) {
         prevInputsRef.current = {}
         setMarkInputs({})
       }
       return
     }
+    prevContextRef.current = `${selectedExamId}|${entryClassId}|${entrySectionId}|${entrySubjectId}`
     const inputs: Record<string, Record<string, number>> = {}
     classStudents.forEach((s) => {
       const existing = sessionStudentMarks.find(
         (m) =>
-          m.examId === entryExamId &&
+          m.examId === selectedExamId &&
           m.studentId === s.id &&
           m.subjectId === entrySubjectId &&
           m.classId === entryClassId &&
@@ -117,47 +118,59 @@ export default function Step3Evaluation() {
       setMarkInputs(inputs)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entryExamId, entryClassId, entrySectionId, entrySubjectId])
+  }, [selectedExamId, entryClassId, entrySectionId, entrySubjectId])
 
-  const handleMarkChange = useCallback((studentId: string, subExamId: string, value: string, maxMarks: number) => {
+  const handleMarkChange = useCallback((studentId: string, subExamId: string, value: string, maxMarks: number, totalFullMarks: number, otherSubExamSum: number) => {
     const digits = value.replace(/\D/g, '')
     if (digits === '') {
       setMarkInputs((prev) => ({ ...prev, [studentId]: { ...(prev[studentId] || {}), [subExamId]: 0 } }))
       setMarkErrors((prev) => ({ ...prev, [studentId]: { ...(prev[studentId] || {}), [subExamId]: false } }))
       return
     }
-    const maxDigits = String(maxMarks).length
+    const remainingForTotal = totalFullMarks - otherSubExamSum
+    const effectiveMax = Math.min(maxMarks, remainingForTotal)
+    const maxDigits = String(effectiveMax).length
     let truncated = digits.slice(0, maxDigits)
     let num = Number(truncated)
-    while (num > maxMarks && truncated.length > 1) {
+    while (num > effectiveMax && truncated.length > 1) {
       truncated = truncated.slice(0, -1)
       num = Number(truncated)
     }
-    const hasError = num > maxMarks || digits.length > maxDigits
+    const hasError = num > effectiveMax || digits.length > maxDigits
     setMarkInputs((prev) => ({ ...prev, [studentId]: { ...(prev[studentId] || {}), [subExamId]: num } }))
     setMarkErrors((prev) => ({ ...prev, [studentId]: { ...(prev[studentId] || {}), [subExamId]: hasError } }))
   }, [])
 
   useEffect(() => {
-    if (!entryExamId || !entryClassId || !entrySectionId || !entrySubjectId || !entrySubjectConfig) return
+    if (!selectedExamId || !entryClassId || !entrySectionId || !entrySubjectId || !entrySubjectConfig) return
+    const currentContext = `${selectedExamId}|${entryClassId}|${entrySectionId}|${entrySubjectId}`
+    if (prevContextRef.current !== currentContext) return
     const hasChanges = Object.keys(markInputs).some((sid) => {
       const marks = markInputs[sid]
       return marks && Object.keys(marks).length > 0
     })
     if (!hasChanges) return
     const timer = setTimeout(() => {
+      const validSubIds = new Set(entrySubjectConfig.subExams.map((se) => se.id))
       const marksToSave = classStudents
-        .map((s) => ({
-          examId: entryExamId,
-          studentId: s.id,
-          subjectId: entrySubjectId,
-          classId: entryClassId,
-          sectionId: entrySectionId,
-          subExamMarks: markInputs[s.id] || {},
-          totalMarks: Object.values(markInputs[s.id] || {}).reduce((a, b) => a + b, 0),
-          enteredAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }))
+        .map((s) => {
+          const raw = markInputs[s.id] || {}
+          const filtered: Record<string, number> = {}
+          for (const [k, v] of Object.entries(raw)) {
+            if (validSubIds.has(k)) filtered[k] = v
+          }
+          return {
+            examId: selectedExamId,
+            studentId: s.id,
+            subjectId: entrySubjectId,
+            classId: entryClassId,
+            sectionId: entrySectionId,
+            subExamMarks: filtered,
+            totalMarks: Object.values(filtered).reduce((a, b) => a + b, 0),
+            enteredAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }
+        })
         .filter((m) => Object.keys(m.subExamMarks).length > 0)
       if (marksToSave.length > 0) {
         saveBulkStudentMarks(marksToSave)
@@ -170,7 +183,7 @@ export default function Step3Evaluation() {
     }, 1000)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markInputs, entryExamId, entryClassId, entrySectionId, entrySubjectId, entrySubjectConfig])
+  }, [markInputs, selectedExamId, entryClassId, entrySectionId, entrySubjectId, entrySubjectConfig])
 
   // Entry status summary
   const entryStatusSummary = useMemo(() => {
@@ -271,7 +284,7 @@ export default function Step3Evaluation() {
       {/* Exam Selector */}
       <div className="px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-primary)]">
         <select
-          value={selectedExamId || entryExamId}
+          value={selectedExamId}
           onChange={(e) => {
             setSelectedExamId(e.target.value)
           }}
@@ -755,7 +768,7 @@ export default function Step3Evaluation() {
               )}
             </div>
 
-            {entryExamId && entryClassId && entrySectionId && entrySubjectId && entrySubjectConfig && (
+            {selectedExamId && entryClassId && entrySectionId && entrySubjectId && entrySubjectConfig && (
               <div className={sectionCls}>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
@@ -836,6 +849,7 @@ export default function Step3Evaluation() {
                             <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-secondary)]">{student.roll || '—'}</td>
                             {entrySubjectConfig.subExams.map((se) => {
                               const maxForSub = se.fullMarks
+                              const otherSum = entrySubjectConfig.subExams.filter((o) => o.id !== se.id).reduce((s, o) => s + (marks[o.id] || 0), 0)
                               const hasError = markErrors[student.id]?.[se.id] || false
                               return (
                                 <td key={se.id} className="py-2 px-2 text-center">
@@ -844,7 +858,7 @@ export default function Step3Evaluation() {
                                     min={0}
                                     max={maxForSub}
                                     value={marks[se.id] || ''}
-                                    onChange={(e) => handleMarkChange(student.id, se.id, e.target.value, maxForSub)}
+                                    onChange={(e) => handleMarkChange(student.id, se.id, e.target.value, maxForSub, entrySubjectConfig.fullMarks, otherSum)}
                                     className={`w-full h-7 px-1 rounded border bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.6875rem] text-center outline-none transition-all ${hasError ? 'border-[var(--red)] bg-[var(--red-light)]' : 'border-[var(--border)] focus:border-[var(--brand)]'}`}
                                     placeholder={`${maxForSub}/${se.passMarks}`}
                                   />
@@ -853,9 +867,12 @@ export default function Step3Evaluation() {
                             })}
                             <td className="py-2 px-2 text-center">
                               <span
-                                className={`text-[0.75rem] font-bold ${!failedSubExam && total >= entrySubjectConfig.passMarks ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}
+                                className={`text-[0.75rem] font-bold ${total > entrySubjectConfig.fullMarks ? 'text-[var(--red)]' : !failedSubExam && total >= entrySubjectConfig.passMarks ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}
                               >
-                                {total}
+                                {Math.min(total, entrySubjectConfig.fullMarks)}
+                                {total > entrySubjectConfig.fullMarks && (
+                                  <span className="text-[0.5rem] ml-0.5">⚠</span>
+                                )}
                               </span>
                             </td>
                             <td className="py-2 px-2 text-center">
@@ -887,7 +904,7 @@ export default function Step3Evaluation() {
               </div>
             )}
 
-            {entryExamId && entryClassId && entrySectionId && entrySubjectId && !entrySubjectConfig && (
+            {selectedExamId && entryClassId && entrySectionId && entrySubjectId && !entrySubjectConfig && (
               <div className={`${sectionCls} text-center py-10`}>
                 <AlertTriangle size={24} className="mx-auto mb-2 opacity-30 text-[var(--text-muted)]" />
                 <p className="text-[0.8125rem] text-[var(--text-muted)]">

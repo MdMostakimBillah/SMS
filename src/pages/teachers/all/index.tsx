@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -261,7 +262,7 @@ ${photoHtml}
         />
       )}
 
-      {viewT && (
+      {viewT && createPortal(
         <div className="modal-overlay">
           <div className="modal-content modal-box max-h-[90vh] overflow-hidden flex flex-col shadow-[var(--shadow-lg)]" style={{ maxWidth: '35rem' }}>
             <div
@@ -384,10 +385,11 @@ ${photoHtml}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {delConfirm && (
+      {delConfirm && createPortal(
         <div className="modal-overlay">
           <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
             <div className="flex items-center gap-[0.625rem] mb-3">
@@ -414,7 +416,8 @@ ${photoHtml}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Top Section */}

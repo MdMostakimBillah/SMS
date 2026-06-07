@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   X,
@@ -210,7 +211,7 @@ export default function AllStudentsPage() {
         <PDFOptionsModal count={selected.length || filtered.length} isBn={isBn} onClose={() => setShowPDF(false)} onDownload={handlePDF} />
       )}
 
-      {viewSt && (
+      {viewSt && createPortal(
         <div
           className="modal-overlay"
         >
@@ -326,7 +327,8 @@ export default function AllStudentsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Top Section - fixed */}

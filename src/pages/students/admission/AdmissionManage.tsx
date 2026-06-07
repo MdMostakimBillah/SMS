@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import {
   CheckCircle,
+  XCircle,
   X,
   Save,
   Download,
@@ -44,7 +46,7 @@ interface ApproveModalProps {
 }
 const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, onApprove }: ApproveModalProps) {
   const [sendSMS, setSendSMS] = useState(true)
-  return (
+  return createPortal(
     <div
       className="modal-overlay"
     >
@@ -185,7 +187,165 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
+  )
+})
+
+// ═══════════════════════════════════════════════
+// Reject Modal — with SMS option
+// ═══════════════════════════════════════════════
+interface RejectModalProps {
+  student: StudentAdmission
+  isBn: boolean
+  onClose: () => void
+  onReject: (sms: boolean) => void
+}
+const RejectModal = React.memo(function RejectModal({ student, isBn, onClose, onReject }: RejectModalProps) {
+  const [sendSMS, setSendSMS] = useState(true)
+  return createPortal(
+    <div
+      className="modal-overlay"
+    >
+      <div
+        className="modal-box modal-content"
+        style={{ maxWidth: '26.25rem' }}
+      >
+        <div
+          style={{
+            width: '3.25rem',
+            height: '3.25rem',
+            borderRadius: '50%',
+            background: 'var(--red-light)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 14px',
+          }}
+        >
+          <XCircle size={26} style={{ color: 'var(--red)' }} />
+        </div>
+        <h3 style={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', marginBottom: '0.375rem' }}>
+          {isBn ? 'ভর্তি প্রত্যাখ্যান করবেন?' : 'Reject Admission?'}
+        </h3>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '1rem' }}>
+          <strong>{student.nameEn}</strong> · {student.phone}
+        </p>
+
+        {/* SMS toggle */}
+        <div
+          onClick={() => setSendSMS((p) => !p)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.625rem',
+            padding: '12px 14px',
+            background: sendSMS ? 'var(--teal-light)' : 'var(--bg-secondary)',
+            border: `1px solid ${sendSMS ? 'var(--teal)' : 'var(--border)'}`,
+            borderRadius: '0.625rem',
+            cursor: 'pointer',
+            marginBottom: '1rem',
+            transition: 'all 0.15s',
+          }}
+        >
+          <div
+            style={{
+              width: '2.25rem',
+              height: '1.25rem',
+              borderRadius: '0.625rem',
+              background: sendSMS ? 'var(--teal)' : 'var(--border-2)',
+              position: 'relative',
+              flexShrink: 0,
+              transition: 'background 0.2s',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: '0.125rem',
+                left: sendSMS ? '18px' : '0.125rem',
+                width: '1rem',
+                height: '1rem',
+                background: '#fff',
+                borderRadius: '50%',
+                transition: 'left 0.2s',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              }}
+            />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+              {isBn ? 'SMS নোটিফিকেশন পাঠান' : 'Send SMS Notification'}
+            </div>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: '0.0625rem' }}>
+              {isBn ? `${student.phone} নম্বরে যাবে` : `Will be sent to ${student.phone}`}
+            </div>
+          </div>
+        </div>
+
+        {sendSMS && (
+          <div
+            style={{
+              background: 'var(--bg-secondary)',
+              borderRadius: '0.5rem',
+              padding: '10px 12px',
+              marginBottom: '0.875rem',
+              fontSize: '0.75rem',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginBottom: '0.25rem', textTransform: 'uppercase', fontWeight: 600 }}>
+              {isBn ? 'SMS প্রিভিউ' : 'SMS Preview'}
+            </div>
+            {isBn
+              ? `প্রিয় ${student.nameBn || student.nameEn}, আপনার ভর্তি আবেদন (${student.id}) প্রত্যাখ্যাত হয়েছে।`
+              : `Dear ${student.nameEn}, your admission application (${student.id}) has been rejected.`}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            onClick={onClose}
+            style={{
+              flex: 1,
+              padding: '0.625rem',
+              borderRadius: '0.5625rem',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-secondary)',
+              fontSize: '0.8125rem',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            {isBn ? 'বাতিল' : 'Cancel'}
+          </button>
+          <button
+            onClick={() => {
+              onReject(sendSMS)
+              onClose()
+            }}
+            style={{
+              flex: 2,
+              padding: '0.625rem',
+              borderRadius: '0.5625rem',
+              background: 'var(--red)',
+              border: 'none',
+              color: '#fff',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              boxShadow: '0 4px 12px rgba(239,68,68,0.3)',
+            }}
+          >
+            ✗ {isBn ? 'প্রত্যাখ্যান করুন' : 'Reject'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   )
 })
 
@@ -258,7 +418,7 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
-  return (
+  return createPortal(
     <div
       className="modal-overlay"
     >
@@ -444,7 +604,8 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 })
 
@@ -481,7 +642,7 @@ const ViewModal = React.memo(function ViewModal({
     </div>
   )
 
-  return (
+  return createPortal(
     <div
       className="modal-overlay"
     >
@@ -699,7 +860,8 @@ const ViewModal = React.memo(function ViewModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 })
 
@@ -710,6 +872,7 @@ export default function AdmissionManage() {
   const { isMobile } = useWindowSize()
   const updateStudent = useAdmissionStore((s) => s.updateStudent)
   const approveStudent = useAdmissionStore((s) => s.approveStudent)
+  const rejectStudent = useAdmissionStore((s) => s.rejectStudent)
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
   const currentSession = institution.currentSession
@@ -737,15 +900,15 @@ export default function AdmissionManage() {
   const [selected, setSelected] = useState<string[]>([])
 
   const [approvingStudent, setApprovingStudent] = useState<StudentAdmission | null>(null)
+  const [rejectingStudent, setRejectingStudent] = useState<StudentAdmission | null>(null)
   const [editingStudent, setEditingStudent] = useState<StudentAdmission | null>(null)
   const [viewingStudent, setViewingStudent] = useState<StudentAdmission | null>(null)
   const [showPDFModal, setShowPDFModal] = useState(false)
-  useScrollLock(approvingStudent !== null || editingStudent !== null || viewingStudent !== null || showPDFModal)
+  useScrollLock(approvingStudent !== null || rejectingStudent !== null || editingStudent !== null || viewingStudent !== null || showPDFModal)
 
   const filtered = useMemo(
     () =>
       students.filter((s) => {
-        if (s.academicYear !== currentSession) return false
         if (search) {
           const q = search.toLowerCase()
           if (!s.nameEn.toLowerCase().includes(q) && !s.nameBn.includes(search) && !s.id.includes(search) && !s.phone.includes(search))
@@ -800,6 +963,14 @@ export default function AdmissionManage() {
       if (sms) console.log(`📱 SMS → ${student.phone}: আপনার ভর্তি অনুমোদিত হয়েছে! আইডি: ${student.id} — Sunrise Academy`)
     },
     [approveStudent]
+  )
+
+  const handleReject = useCallback(
+    (student: StudentAdmission, sms: boolean) => {
+      rejectStudent(student.id)
+      if (sms) console.log(`📱 SMS → ${student.phone}: আপনার ভর্তি আবেদন প্রত্যাখ্যাত হয়েছে। আইডি: ${student.id}`)
+    },
+    [rejectStudent]
   )
 
   const exportExcel = useCallback(() => {
@@ -904,6 +1075,14 @@ export default function AdmissionManage() {
           isBn={isBn}
           onClose={() => setApprovingStudent(null)}
           onApprove={(sms) => handleApprove(approvingStudent, sms)}
+        />
+      )}
+      {rejectingStudent && (
+        <RejectModal
+          student={rejectingStudent}
+          isBn={isBn}
+          onClose={() => setRejectingStudent(null)}
+          onReject={(sms) => handleReject(rejectingStudent, sms)}
         />
       )}
       {editingStudent && (
@@ -1419,24 +1598,44 @@ export default function AdmissionManage() {
                           <Edit2 size={12} />
                         </button>
                         {s.status === 'pending' && (
-                          <button
-                            onClick={() => setApprovingStudent(s)}
-                            title={isBn ? 'Approve' : 'Approve'}
-                            style={{
-                              width: '1.625rem',
-                              height: '1.625rem',
-                              borderRadius: '0.375rem',
-                              background: 'var(--green-light)',
-                              border: 'none',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: 'var(--green)',
-                            }}
-                          >
-                            <Check size={12} />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => setApprovingStudent(s)}
+                              title={isBn ? 'অনুমোদন' : 'Approve'}
+                              style={{
+                                width: '1.625rem',
+                                height: '1.625rem',
+                                borderRadius: '0.375rem',
+                                background: 'var(--green-light)',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'var(--green)',
+                              }}
+                            >
+                              <Check size={12} />
+                            </button>
+                            <button
+                              onClick={() => setRejectingStudent(s)}
+                              title={isBn ? 'প্রত্যাখ্যান' : 'Reject'}
+                              style={{
+                                width: '1.625rem',
+                                height: '1.625rem',
+                                borderRadius: '0.375rem',
+                                background: 'var(--red-light)',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'var(--red)',
+                              }}
+                            >
+                              <XCircle size={12} />
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>
