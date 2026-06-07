@@ -1104,14 +1104,14 @@ export default function Step3Evaluation() {
                     )
                   }
                   return publishRows.map((row) => {
-                    const totalStudents = students.filter(
-                      (s) => s.status === 'approved' && s.class === publishClassId && (!publishSectionId || s.section === publishSectionId)
-                    ).length
-                    const enteredCount = row.entry
-                      ? sessionStudentMarks.filter(
-                          (m) => m.examId === selectedExamId && m.subjectId === row.subjectId
+                    const totalStudents = publishClassData
+                      ? students.filter(
+                          (s) => s.status === 'approved' && s.class === publishClassData.name && (!publishSectionId || s.section === publishSectionId)
                         ).length
                       : 0
+                    const enteredCount = sessionStudentMarks.filter(
+                      (m) => m.examId === selectedExamId && m.subjectId === row.subjectId && m.classId === publishClassData?.name && (!publishSectionId || m.sectionId === publishSectionId)
+                    ).length
                     const pct = totalStudents > 0 ? Math.round((enteredCount / totalStudents) * 100) : 0
                     return (
                       <div
