@@ -740,18 +740,19 @@ export default function Step3Evaluation() {
                     </span>
                   )}
                 </div>
-                {!saving && lastSaved && (
-                  <div className="flex items-center gap-1 text-[0.625rem] text-[var(--text-muted)]">
-                    <CheckCircle size={10} className="text-[var(--green)]" />
-                    {isBn ? 'সেভ হয়েছে' : 'Saved'} {lastSaved}
-                  </div>
-                )}
-                {saving && (
-                  <div className="flex items-center gap-1 text-[0.625rem] text-[var(--green)]">
-                    <Loader size={10} className="animate-spin" />
-                    {isBn ? 'সেভ হচ্ছে...' : 'Saving...'}
-                  </div>
-                )}
+                <div className="flex items-center gap-1 text-[0.625rem] min-w-[8rem] justify-end">
+                  {saving ? (
+                    <>
+                      <Loader size={10} className="animate-spin text-[var(--green)]" />
+                      <span className="text-[var(--green)]">{isBn ? 'সেভ হচ্ছে...' : 'Saving...'}</span>
+                    </>
+                  ) : lastSaved ? (
+                    <>
+                      <CheckCircle size={10} className="text-[var(--green)]" />
+                      <span className="text-[var(--text-muted)]">{isBn ? 'সেভ হয়েছে' : 'Saved'} {lastSaved}</span>
+                    </>
+                  ) : null}
+                </div>
               </div>
               <div className="flex items-end gap-3 mt-3 flex-wrap">
                 <div className="flex-1 min-w-[10rem]">
@@ -819,12 +820,19 @@ export default function Step3Evaluation() {
                   </select>
                 </div>
               </div>
-              {!saving && lastSaved && (
-                <div className="mt-2 flex items-center gap-1.5 text-[0.6875rem] text-[var(--text-muted)]">
-                  <CheckCircle size={12} />
-                  {isBn ? `শেষ সেভ: ${lastSaved}` : `Last saved: ${lastSaved}`}
-                </div>
-              )}
+              <div className="mt-2 flex items-center gap-1.5 text-[0.6875rem] min-h-[1.25rem]">
+                {saving ? (
+                  <>
+                    <Loader size={12} className="animate-spin text-[var(--green)]" />
+                    <span className="text-[var(--green)]">{isBn ? 'সেভ হচ্ছে...' : 'Saving...'}</span>
+                  </>
+                ) : lastSaved ? (
+                  <>
+                    <CheckCircle size={12} className="text-[var(--text-muted)]" />
+                    <span className="text-[var(--text-muted)]">{isBn ? `শেষ সেভ: ${lastSaved}` : `Last saved: ${lastSaved}`}</span>
+                  </>
+                ) : null}
+              </div>
             </div>
 
             {selectedExamId && entryClassId && entrySectionId && entrySubjectId && entrySubjectConfig && (
