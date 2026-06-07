@@ -74,21 +74,28 @@ export default function Step3Evaluation() {
   const sectionOptions = useMemo(() => (entryClassId ? sectionsMap[entryClassId] || [] : []), [entryClassId, sectionsMap])
   const publishSectionOptions = useMemo(() => (publishClassId ? sectionsMap[publishClassId] || [] : []), [publishClassId, sectionsMap])
 
-  // Look up subjectIds for selected class+section from the Classes store
-  const publishSubjectIds = useMemo(() => {
+  // Find matching class and its valid classId variants for filtering
+  const publishClassMatch = useMemo(() => {
     if (!publishClassId) return null
     const cls = classes.find((c) => extractClassNumber(c.name) === publishClassId || c.name === publishClassId)
     if (!cls) return null
-    if (!publishSectionId) {
-      // All sections: collect all subjectIds across all sections
-      const allIds = new Set<string>()
-      cls.sections.forEach((sec) => (sec.subjectIds || []).forEach((id) => allIds.add(id)))
-      return allIds.size > 0 ? allIds : null
+    const classIdVariants = new Set<string>()
+    classIdVariants.add(cls.name)
+    classIdVariants.add(extractClassNumber(cls.name))
+    return { class: cls, classIdVariants }
+  }, [publishClassId, classes])
+
+  // SubjectIds for selected section (fallback to class-level subjectIds)
+  const publishSubjectIds = useMemo(() => {
+    if (!publishClassMatch) return null
+    if (publishSectionId) {
+      const section = publishClassMatch.class.sections.find((s) => s.name === publishSectionId)
+      if (section && section.subjectIds && section.subjectIds.length > 0) return new Set(section.subjectIds)
     }
-    const section = cls.sections.find((s) => s.name === publishSectionId)
-    if (!section || !section.subjectIds || section.subjectIds.length === 0) return null
-    return new Set(section.subjectIds)
-  }, [publishClassId, publishSectionId, classes])
+    const allIds = new Set<string>()
+    publishClassMatch.class.sections.forEach((sec) => (sec.subjectIds || []).forEach((id) => allIds.add(id)))
+    return allIds.size > 0 ? allIds : null
+  }, [publishClassMatch, publishSectionId])
 
   const classStudents = useMemo(() => {
     if (!entryClassId || !entrySectionId) return []
@@ -1069,6 +1076,8 @@ export default function Step3Evaluation() {
                 {(() => {
                   const filtered = sessionMarksEntryStatuses.filter((m) => {
                     if (selectedExamId && m.examId !== selectedExamId) return false
+                    if (publishClassMatch && !publishClassMatch.classIdVariants.has(m.classId)) return false
+                    if (publishSectionId && m.sectionId !== publishSectionId) return false
                     if (publishSubjectIds && !publishSubjectIds.has(m.subjectId)) return false
                     return true
                   })
