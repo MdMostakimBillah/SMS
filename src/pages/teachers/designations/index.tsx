@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, AlertTriangle, Briefcase, Edit2, Trash2 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -57,7 +58,7 @@ export default function DesignationsPage() {
   return (
     <div>
       {/* Add/Edit Modal */}
-      {(showAdd || editD) && (
+      {(showAdd || editD) && createPortal(
         <div className="modal-overlay">
           <div className="modal-content modal-box" style={{ maxWidth: '25rem' }}>
             <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-[0.875rem]">
@@ -107,11 +108,12 @@ export default function DesignationsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Delete Confirmation */}
-      {delConfirm && (
+      {delConfirm && createPortal(
         <div className="modal-overlay">
           <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
             <div className="flex items-center gap-[0.625rem] mb-3">
@@ -141,7 +143,8 @@ export default function DesignationsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Header */}
