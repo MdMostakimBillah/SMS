@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Clock,
   Plus,
@@ -1139,7 +1140,7 @@ export default function ClassesTab({
       })}
 
       {/* ===== BULK TIME MODAL ===== */}
-      {showBulkTime && (
+      {showBulkTime && createPortal(
         <div
           onClick={() => setShowBulkTime(false)}
           className="modal-overlay"
@@ -1225,11 +1226,12 @@ export default function ClassesTab({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ===== BULK SUBJECT MODAL ===== */}
-      {showBulkSubject && (
+      {showBulkSubject && createPortal(
         <div
           onClick={() => setShowBulkSubject(false)}
           className="modal-overlay"
@@ -1317,11 +1319,12 @@ export default function ClassesTab({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ===== BULK SECTION MODAL ===== */}
-      {showBulkSection && (
+      {showBulkSection && createPortal(
         <div
           onClick={() => setShowBulkSection(false)}
           className="modal-overlay"
@@ -1415,11 +1418,12 @@ export default function ClassesTab({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Subject Selection Modal */}
-      {showSubjectModal && (
+      {showSubjectModal && createPortal(
         <div
           onClick={() => setShowSubjectModal(null)}
           className="modal-overlay"
@@ -1564,7 +1568,8 @@ export default function ClassesTab({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )
