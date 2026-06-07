@@ -14,6 +14,8 @@ export interface ExamConfig {
   startDate: string
   endDate: string
   isActive: boolean
+  isPublished: boolean
+  publishedAt: string | null
   createdAt: string
 }
 
@@ -338,6 +340,8 @@ const defaultExamConfigs: ExamConfig[] = [
     startDate: '2025-06-15',
     endDate: '2025-06-25',
     isActive: true,
+    isPublished: false,
+    publishedAt: null,
     createdAt: '2025-05-01',
   },
   {
@@ -349,6 +353,8 @@ const defaultExamConfigs: ExamConfig[] = [
     startDate: '2025-11-10',
     endDate: '2025-11-20',
     isActive: false,
+    isPublished: false,
+    publishedAt: null,
     createdAt: '2025-05-01',
   },
   {
@@ -360,6 +366,8 @@ const defaultExamConfigs: ExamConfig[] = [
     startDate: '2026-03-01',
     endDate: '2026-03-15',
     isActive: false,
+    isPublished: false,
+    publishedAt: null,
     createdAt: '2025-05-01',
   },
   {
@@ -371,6 +379,8 @@ const defaultExamConfigs: ExamConfig[] = [
     startDate: '2025-08-20',
     endDate: '2025-08-22',
     isActive: false,
+    isPublished: false,
+    publishedAt: null,
     createdAt: '2025-05-01',
   },
 ]
@@ -836,6 +846,7 @@ interface ExamState {
   updateExamConfig: (id: string, data: Partial<ExamConfig>) => void
   deleteExamConfig: (id: string) => void
   toggleExamActive: (id: string) => void
+  toggleExamPublished: (id: string) => void
 
   upsertSubjectMarkConfig: (config: Omit<SubjectMarkConfig, 'id'>) => void
   deleteSubjectMarkConfig: (id: string) => void
@@ -944,7 +955,7 @@ export const useExamStore = create<ExamState>()(
       // ─── Exam Config ───
       addExamConfig: (config) =>
         set((state) => ({
-          examConfigs: [...state.examConfigs, { ...config, id: `EXAM-${Date.now()}`, createdAt: new Date().toISOString() }],
+          examConfigs: [...state.examConfigs, { ...config, id: `EXAM-${Date.now()}`, isPublished: config.isPublished ?? false, publishedAt: config.publishedAt ?? null, createdAt: new Date().toISOString() }],
         })),
       updateExamConfig: (id, data) =>
         set((state) => ({
@@ -964,6 +975,12 @@ export const useExamStore = create<ExamState>()(
             if (e.isActive) return { ...e, isActive: false }
             return e
           }),
+        })),
+      toggleExamPublished: (id) =>
+        set((state) => ({
+          examConfigs: state.examConfigs.map((e) =>
+            e.id === id ? { ...e, isPublished: !e.isPublished, publishedAt: !e.isPublished ? new Date().toISOString() : null } : e
+          ),
         })),
 
       // ─── Subject Mark Config ───
@@ -1445,6 +1462,8 @@ export const useExamStore = create<ExamState>()(
               id: newId,
               session: targetSession,
               isActive: false,
+              isPublished: false,
+              publishedAt: null,
               createdAt: new Date().toISOString(),
             }
           })
@@ -1471,10 +1490,19 @@ export const useExamStore = create<ExamState>()(
     }),
     {
       name: 'edutech-exams',
-      version: 5,
+      version: 6,
       migrate: (persistedState: any, version: number) => {
         if (version < 5) {
           if (!persistedState.omrTemplates) persistedState.omrTemplates = []
+        }
+        if (version < 6) {
+          if (persistedState.examConfigs) {
+            persistedState.examConfigs = persistedState.examConfigs.map((e: any) => ({
+              ...e,
+              isPublished: e.isPublished ?? false,
+              publishedAt: e.publishedAt ?? null,
+            }))
+          }
         }
         return persistedState
       },

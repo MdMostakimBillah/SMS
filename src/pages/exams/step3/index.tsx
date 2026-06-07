@@ -44,6 +44,7 @@ export default function Step3Evaluation() {
   const upsertSubjectMarkConfig = useExamStore((s) => s.upsertSubjectMarkConfig)
   const lockMarks = useExamStore((s) => s.lockMarks)
   const unlockMarks = useExamStore((s) => s.unlockMarks)
+  const toggleExamPublished = useExamStore((s) => s.toggleExamPublished)
 
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('entry')
   const [selectedExamId, setSelectedExamId] = useState(examConfigs.find((e) => e.isActive)?.id || '')
@@ -88,6 +89,13 @@ export default function Step3Evaluation() {
     if (!selectedExamId || !entrySubjectId || !entryClassId) return null
     return sessionSubjectMarkConfigs.find((s) => s.examId === selectedExamId && s.classId === entryClassId && s.subjectId === entrySubjectId)
   }, [sessionSubjectMarkConfigs, selectedExamId, entrySubjectId, entryClassId])
+
+  const isEntrySubjectLocked = useMemo(() => {
+    if (!selectedExamId || !entryClassId || !entrySectionId || !entrySubjectId) return false
+    return sessionMarksEntryStatuses.some(
+      (m) => m.examId === selectedExamId && m.classId === entryClassId && m.sectionId === entrySectionId && m.subjectId === entrySubjectId && m.status === 'locked'
+    )
+  }, [sessionMarksEntryStatuses, selectedExamId, entryClassId, entrySectionId, entrySubjectId])
 
   const prevInputsRef = useRef<Record<string, Record<string, number>>>({})
   const prevContextRef = useRef('')
@@ -293,7 +301,7 @@ export default function Step3Evaluation() {
           <option value="">{isBn ? 'সকল পরীক্ষা' : 'All Exams'}</option>
           {examConfigs.map((e) => (
             <option key={e.id} value={e.id}>
-              {isBn ? e.nameBn : e.name} {e.isActive ? '(Active)' : ''}
+              {isBn ? e.nameBn : e.name} {e.isActive ? '(Active)' : ''}{e.isPublished ? ` ${isBn ? '(প্রকাশিত)' : '(Published)'}` : ''}
             </option>
           ))}
         </select>
@@ -752,11 +760,16 @@ export default function Step3Evaluation() {
                         if (!section || !section.subjectIds || section.subjectIds.length === 0) return true
                         return section.subjectIds.includes(s.id)
                       })
-                      .map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {isBn ? s.nameBn : s.name}
-                        </option>
-                      ))}
+                      .map((s) => {
+                        const isLocked = sessionMarksEntryStatuses.some(
+                          (m) => m.examId === selectedExamId && m.classId === entryClassId && m.sectionId === entrySectionId && m.subjectId === s.id && m.status === 'locked'
+                        )
+                        return (
+                          <option key={s.id} value={s.id}>
+                            {isBn ? s.nameBn : s.name}{isLocked ? ` ${isBn ? '(লকড)' : '(Locked)'}` : ''}
+                          </option>
+                        )
+                      })}
                   </select>
                 </div>
               </div>
@@ -776,6 +789,12 @@ export default function Step3Evaluation() {
                     <span className="text-[0.6875rem] text-[var(--text-muted)] ml-2">
                       Full: {entrySubjectConfig.fullMarks} · Pass: {entrySubjectConfig.passMarks}
                     </span>
+                    {isEntrySubjectLocked && (
+                      <span className="inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold bg-[var(--red-light)] text-[var(--red)]">
+                        <Lock size={9} />
+                        {isBn ? 'লকড' : 'LOCKED'}
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="overflow-x-auto">
@@ -859,7 +878,8 @@ export default function Step3Evaluation() {
                                     max={maxForSub}
                                     value={marks[se.id] || ''}
                                     onChange={(e) => handleMarkChange(student.id, se.id, e.target.value, maxForSub, entrySubjectConfig.fullMarks, otherSum)}
-                                    className={`w-full h-7 px-1 rounded border bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.6875rem] text-center outline-none transition-all ${hasError ? 'border-[var(--red)] bg-[var(--red-light)]' : 'border-[var(--border)] focus:border-[var(--brand)]'}`}
+                                    disabled={isEntrySubjectLocked}
+                                    className={`w-full h-7 px-1 rounded border bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.6875rem] text-center outline-none transition-all ${isEntrySubjectLocked ? 'opacity-50 cursor-not-allowed border-[var(--border)]' : hasError ? 'border-[var(--red)] bg-[var(--red-light)]' : 'border-[var(--border)] focus:border-[var(--brand)]'}`}
                                     placeholder={`${maxForSub}/${se.passMarks}`}
                                   />
                                 </td>
@@ -901,6 +921,14 @@ export default function Step3Evaluation() {
                     {isBn ? 'এই সেকশনে কোনো শিক্ষার্থী নেই' : 'No students in this section'}
                   </div>
                 )}
+                {isEntrySubjectLocked && (
+                  <div className="mt-3 p-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)]/20 flex items-center gap-2">
+                    <Lock size={14} className="text-[var(--red)]" />
+                    <span className="text-[0.75rem] text-[var(--red)] font-medium">
+                      {isBn ? 'এই বিষয়টি লক করা আছে। মার্কস এন্ট্রি করতে প্রকাশ/লক ট্যাব থেকে আনলক করুন।' : 'This subject is locked. Unlock from Publish/Lock tab to enter marks.'}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -927,6 +955,55 @@ export default function Step3Evaluation() {
         {/* ═══ PUBLISH/LOCK TAB ═══ */}
         {activeSubTab === 'publish' && (
           <>
+            {/* Publish Result */}
+            {selectedExam && (
+              <div className={`${sectionCls} !mb-3`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`flex items-center justify-center w-9 h-9 rounded-lg ${selectedExam.isPublished ? 'bg-[var(--green-light)]' : 'bg-[var(--bg-secondary)]'}`}>
+                      <CheckCircle size={18} className={selectedExam.isPublished ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'} />
+                    </div>
+                    <div>
+                      <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+                        {isBn ? 'ফলাফল প্রকাশ' : 'Publish Result'}
+                      </h3>
+                      <p className="text-[0.625rem] text-[var(--text-muted)]">
+                        {selectedExam.isPublished
+                          ? (isBn ? 'শিক্ষার্থী ও অভিভাবকরা ফলাফল দেখতে পাবেন' : 'Students and guardians can view results')
+                          : (isBn ? 'প্রকাশ করলে শিক্ষার্থী ও অভিভাবকরা ফলাফল দেখতে পাবেন' : 'Publish to allow students and guardians to view results')}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => toggleExamPublished(selectedExam.id)}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-medium cursor-pointer border-none transition-all ${
+                      selectedExam.isPublished
+                        ? 'bg-[var(--red-light)] text-[var(--red)] hover:bg-[var(--red)]/15'
+                        : 'bg-[var(--green)] text-white hover:opacity-90'
+                    }`}
+                  >
+                    {selectedExam.isPublished ? (
+                      <>
+                        <X size={14} />
+                        {isBn ? 'অপ্রকাশিত করুন' : 'Unpublish'}
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle size={14} />
+                        {isBn ? 'প্রকাশ করুন' : 'Publish'}
+                      </>
+                    )}
+                  </button>
+                </div>
+                {selectedExam.isPublished && selectedExam.publishedAt && (
+                  <div className="mt-2 text-[0.625rem] text-[var(--text-muted)]">
+                    {isBn ? 'প্রকাশিত:' : 'Published:'} {new Date(selectedExam.publishedAt).toLocaleString()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Lock/Unlock individual subjects */}
             <div className={sectionCls}>
               <div className={sectionTitleCls}>
                 <Lock size={15} className="text-[var(--brand)]" />

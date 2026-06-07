@@ -352,6 +352,8 @@ export default function Step1Planning() {
         startDate: examForm.startDate,
         endDate: examForm.endDate,
         isActive: false,
+        isPublished: false,
+        publishedAt: null,
       })
     }
     setShowExamForm(false)
