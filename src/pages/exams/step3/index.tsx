@@ -74,15 +74,48 @@ export default function Step3Evaluation() {
   const sectionOptions = useMemo(() => (entryClassId ? sectionsMap[entryClassId] || [] : []), [entryClassId, sectionsMap])
   const publishSectionOptions = useMemo(() => (publishClassId ? sectionsMap[publishClassId] || [] : []), [publishClassId, sectionsMap])
 
-  // Normalize classId from any format to classOptions format
-  const normalizeClassId = useCallback((classId: string): string => {
-    if (classOptions.includes(classId)) return classId
-    const cls = classes.find((c) => c.name === classId)
-    if (cls) return extractClassNumber(cls.name)
-    const extracted = extractClassNumber(classId)
-    if (classOptions.includes(extracted)) return extracted
-    return classId
-  }, [classOptions, classes])
+  // Build a lookup: any classId format → canonical classOptions value
+  const classIdLookup = useMemo(() => {
+    const map = new Map<string, string>()
+    classes.forEach((c) => {
+      const canonical = extractClassNumber(c.name)
+      // Map ALL possible formats to canonical
+      map.set(canonical, canonical)
+      map.set(c.name, canonical)
+      // Also map numeric variants
+      const num = parseInt(c.name.replace(/\D/g, ''), 10)
+      if (!isNaN(num)) map.set(String(num), canonical)
+    })
+    return map
+  }, [classes])
+
+  const resolveClassId = useCallback((classId: string): string => {
+    return classIdLookup.get(classId) || classId
+  }, [classIdLookup])
+
+  const publishClassIdVariants = useMemo(() => {
+    if (!publishClassId) return null
+    const variants = new Set<string>()
+    variants.add(publishClassId)
+    classes.forEach((c) => {
+      if (extractClassNumber(c.name) === publishClassId || c.name === publishClassId) {
+        variants.add(c.name)
+        variants.add(extractClassNumber(c.name))
+        const num = parseInt(c.name.replace(/\D/g, ''), 10)
+        if (!isNaN(num)) variants.add(String(num))
+      }
+    })
+    return variants
+  }, [publishClassId, classes])
+
+  const publishSectionIdVariants = useMemo(() => {
+    if (!publishSectionId) return null
+    const variants = new Set<string>()
+    variants.add(publishSectionId)
+    // Also match trimmed/lowercase variants
+    variants.add(publishSectionId.trim())
+    return variants
+  }, [publishSectionId])
 
   const classStudents = useMemo(() => {
     if (!entryClassId || !entrySectionId) return []
@@ -1063,8 +1096,8 @@ export default function Step3Evaluation() {
                 {(() => {
                   const filtered = sessionMarksEntryStatuses.filter((m) => {
                     if (selectedExamId && m.examId !== selectedExamId) return false
-                    if (publishClassId && normalizeClassId(m.classId) !== publishClassId) return false
-                    if (publishSectionId && m.sectionId !== publishSectionId) return false
+                    if (publishClassIdVariants && !publishClassIdVariants.has(m.classId) && !publishClassIdVariants.has(resolveClassId(m.classId))) return false
+                    if (publishSectionIdVariants && !publishSectionIdVariants.has(m.sectionId)) return false
                     return true
                   })
                   if (filtered.length === 0) {
@@ -1080,10 +1113,10 @@ export default function Step3Evaluation() {
                     const subject = subjects.find((s) => s.id === entry.subjectId)
                     const isLocked = entry.status === 'locked'
                     const totalStudents = students.filter(
-                      (s) => s.status === 'approved' && s.class === normalizeClassId(entry.classId) && s.section === entry.sectionId
+                      (s) => s.status === 'approved' && s.class === resolveClassId(entry.classId) && s.section === entry.sectionId
                     ).length
                     const enteredCount = sessionStudentMarks.filter(
-                      (m) => m.examId === entry.examId && m.subjectId === entry.subjectId && normalizeClassId(m.classId) === normalizeClassId(entry.classId) && m.sectionId === entry.sectionId
+                      (m) => m.examId === entry.examId && m.subjectId === entry.subjectId && resolveClassId(m.classId) === resolveClassId(entry.classId) && m.sectionId === entry.sectionId
                     ).length
                     const pct = totalStudents > 0 ? Math.round((enteredCount / totalStudents) * 100) : 0
                     return (
