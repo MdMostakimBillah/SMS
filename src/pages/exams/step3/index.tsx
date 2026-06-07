@@ -65,9 +65,14 @@ export default function Step3Evaluation() {
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<string | null>(null)
 
+  // Publish/Lock filters
+  const [publishClassId, setPublishClassId] = useState('')
+  const [publishSectionId, setPublishSectionId] = useState('')
+
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
   const sectionOptions = useMemo(() => (entryClassId ? sectionsMap[entryClassId] || [] : []), [entryClassId, sectionsMap])
+  const publishSectionOptions = useMemo(() => (publishClassId ? sectionsMap[publishClassId] || [] : []), [publishClassId, sectionsMap])
 
   const classStudents = useMemo(() => {
     if (!entryClassId || !entrySectionId) return []
@@ -1012,13 +1017,65 @@ export default function Step3Evaluation() {
               <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
                 {isBn ? 'সম্পন্ন এন্ট্রি লক করুন বা পরিবর্তনের জন্য আনলক করুন' : 'Lock completed entries or unlock for changes'}
               </p>
+
+              {/* Class & Section Filter */}
+              <div className="flex items-end gap-3 mb-3 flex-wrap">
+                <div className="flex-1 min-w-[10rem]">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-muted)] mb-1 block uppercase tracking-wider">{isBn ? 'শ্রেণি' : 'Class'}</label>
+                  <select
+                    value={publishClassId}
+                    onChange={(e) => { setPublishClassId(e.target.value); setPublishSectionId('') }}
+                    className={`${inputCls} w-full`}
+                  >
+                    <option value="">{isBn ? 'সকল শ্রেণি' : 'All Classes'}</option>
+                    {classOptions.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1 min-w-[10rem]">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-muted)] mb-1 block uppercase tracking-wider">{isBn ? 'সেকশন' : 'Section'}</label>
+                  <select
+                    value={publishSectionId}
+                    onChange={(e) => setPublishSectionId(e.target.value)}
+                    className={`${inputCls} w-full`}
+                    disabled={!publishClassId}
+                  >
+                    <option value="">{isBn ? 'সকল সেকশন' : 'All Sections'}</option>
+                    {publishSectionOptions.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                {sessionMarksEntryStatuses
-                  .filter((m) => (selectedExamId ? m.examId === selectedExamId : true))
-                  .map((entry) => {
+                {(() => {
+                  const filtered = sessionMarksEntryStatuses.filter((m) => {
+                    if (selectedExamId && m.examId !== selectedExamId) return false
+                    if (publishClassId && m.classId !== publishClassId) return false
+                    if (publishSectionId && m.sectionId !== publishSectionId) return false
+                    return true
+                  })
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-[var(--text-muted)] text-[0.75rem]">
+                        {sessionMarksEntryStatuses.length === 0
+                          ? (isBn ? 'এখনো মার্কস এন্ট্রি শুরু হয়নি' : 'No marks entry records yet')
+                          : (isBn ? 'এই ফিল্টারে কোনো ডাটা নেই' : 'No data for this filter')}
+                      </div>
+                    )
+                  }
+                  return filtered.map((entry) => {
                     const subject = subjects.find((s) => s.id === entry.subjectId)
                     const isLocked = entry.status === 'locked'
-                    const pct = entry.totalStudents > 0 ? Math.round((entry.enteredCount / entry.totalStudents) * 100) : 0
+                    const totalStudents = students.filter(
+                      (s) => s.status === 'approved' && s.class === entry.classId && s.section === entry.sectionId
+                    ).length
+                    const enteredCount = sessionStudentMarks.filter(
+                      (m) => m.examId === entry.examId && m.subjectId === entry.subjectId && m.classId === entry.classId && m.sectionId === entry.sectionId
+                    ).length
+                    const pct = totalStudents > 0 ? Math.round((enteredCount / totalStudents) * 100) : 0
                     return (
                       <div
                         key={entry.id}
@@ -1030,17 +1087,18 @@ export default function Step3Evaluation() {
                           </div>
                           <div className="flex items-center gap-2 text-[0.625rem] text-[var(--text-muted)] mt-0.5">
                             <span>
-                              {entry.enteredCount}/{entry.totalStudents} entered
+                              {enteredCount}/{totalStudents} {isBn ? 'এন্ট্রি' : 'entered'}
                             </span>
-                            <div className="w-16 h-1.5 bg-[var(--border)] rounded-full">
+                            <div className="w-20 h-1.5 bg-[var(--border)] rounded-full">
                               <div
-                                className="h-full rounded-full"
+                                className="h-full rounded-full transition-all"
                                 style={{
                                   width: `${pct}%`,
                                   background: isLocked ? 'var(--red)' : pct === 100 ? 'var(--green)' : 'var(--amber)',
                                 }}
                               />
                             </div>
+                            <span className="text-[0.5625rem] font-medium">{pct}%</span>
                           </div>
                         </div>
                         <button
@@ -1065,12 +1123,8 @@ export default function Step3Evaluation() {
                         </button>
                       </div>
                     )
-                  })}
-                {sessionMarksEntryStatuses.length === 0 && (
-                  <div className="text-center py-8 text-[var(--text-muted)] text-[0.75rem]">
-                    {isBn ? 'এখনো মার্কস এন্ট্রি শুরু হয়নি' : 'No marks entry records yet'}
-                  </div>
-                )}
+                  })
+                })()}
               </div>
             </div>
           </>
