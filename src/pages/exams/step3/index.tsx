@@ -4,7 +4,7 @@ import { ArrowLeft, Edit2, BookOpen, Settings, Save, CheckCircle, Lock, Unlock, 
 import { useBn } from '@/hooks/useBn'
 
 import { useTeacherStore } from '@/store/teacherStore'
-import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
+import { useClassStore, getClassOptions, buildSectionsMap, extractClassNumber } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
 import type { SubjectMarkConfig } from '@/store/examStore'
@@ -73,6 +73,16 @@ export default function Step3Evaluation() {
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
   const sectionOptions = useMemo(() => (entryClassId ? sectionsMap[entryClassId] || [] : []), [entryClassId, sectionsMap])
   const publishSectionOptions = useMemo(() => (publishClassId ? sectionsMap[publishClassId] || [] : []), [publishClassId, sectionsMap])
+
+  // Normalize classId from any format to classOptions format
+  const normalizeClassId = useCallback((classId: string): string => {
+    if (classOptions.includes(classId)) return classId
+    const cls = classes.find((c) => c.name === classId)
+    if (cls) return extractClassNumber(cls.name)
+    const extracted = extractClassNumber(classId)
+    if (classOptions.includes(extracted)) return extracted
+    return classId
+  }, [classOptions, classes])
 
   const classStudents = useMemo(() => {
     if (!entryClassId || !entrySectionId) return []
@@ -260,8 +270,8 @@ export default function Step3Evaluation() {
     if (locked) {
       unlockMarks(config.examId, config.classId, '', config.subjectId)
     } else {
-      // Create or update marksEntryStatus for each section
-      const sections = classes.find((c) => c.name === config.classId)?.sections || []
+      const classEntry = classes.find((c) => extractClassNumber(c.name) === config.classId)
+      const sections = classEntry?.sections || []
       if (sections.length === 0) {
         lockMarks(config.examId, config.classId, '', config.subjectId)
       } else {
@@ -1053,7 +1063,7 @@ export default function Step3Evaluation() {
                 {(() => {
                   const filtered = sessionMarksEntryStatuses.filter((m) => {
                     if (selectedExamId && m.examId !== selectedExamId) return false
-                    if (publishClassId && m.classId !== publishClassId) return false
+                    if (publishClassId && normalizeClassId(m.classId) !== publishClassId) return false
                     if (publishSectionId && m.sectionId !== publishSectionId) return false
                     return true
                   })
@@ -1070,10 +1080,10 @@ export default function Step3Evaluation() {
                     const subject = subjects.find((s) => s.id === entry.subjectId)
                     const isLocked = entry.status === 'locked'
                     const totalStudents = students.filter(
-                      (s) => s.status === 'approved' && s.class === entry.classId && s.section === entry.sectionId
+                      (s) => s.status === 'approved' && s.class === normalizeClassId(entry.classId) && s.section === entry.sectionId
                     ).length
                     const enteredCount = sessionStudentMarks.filter(
-                      (m) => m.examId === entry.examId && m.subjectId === entry.subjectId && m.classId === entry.classId && m.sectionId === entry.sectionId
+                      (m) => m.examId === entry.examId && m.subjectId === entry.subjectId && normalizeClassId(m.classId) === normalizeClassId(entry.classId) && m.sectionId === entry.sectionId
                     ).length
                     const pct = totalStudents > 0 ? Math.round((enteredCount / totalStudents) * 100) : 0
                     return (
