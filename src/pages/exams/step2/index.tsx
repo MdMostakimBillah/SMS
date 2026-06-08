@@ -47,6 +47,7 @@ import {
 } from 'date-fns'
 import { sectionCls, sectionTitleCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
 import { generateAttendanceSheetHTML } from './pdfTemplates/attendanceSheet'
+import { generateScheduleReportHTML } from './pdfTemplates/scheduleReport'
 import AdmitCardsTab from './AdmitCardsTab'
 
 type SubTab = 'routine' | 'rooms' | 'seats' | 'invigilators' | 'attendance' | 'admit-cards'
@@ -273,6 +274,47 @@ export default function Step2Schedule() {
     )
     return classSubjects.filter((s) => !scheduledSubjectIds.has(s.id))
   }, [classes, routineForm.classId, routineForm.sectionId, routineForm.date, subjects, filteredRoutines])
+
+  const handleDownloadReport = () => {
+    if (!selectedExam) {
+      alert(isBn ? 'প্রথমে একটি সক্রিয় পরীক্ষা নির্বাচন করুন' : 'Select an active exam first')
+      return
+    }
+    const inst = useClassStore.getState().institution
+    const teachers = useTeacherStore.getState().teachers
+    const html = generateScheduleReportHTML({
+      exam: selectedExam,
+      routines: filteredRoutines,
+      rooms,
+      seatPlans: filteredSeatPlans,
+      invigilators: filteredInvigilators,
+      subjects,
+      teachers,
+      classes,
+      isBn,
+      schoolName: inst.name,
+      schoolNameBn: inst.nameBn,
+      schoolAddress: inst.address,
+    })
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(`<!DOCTYPE html><html><head>
+      <meta charset="utf-8"/>
+      <title>${isBn ? 'পরীক্ষার সময়সূচি প্রতিবেদন' : 'Exam Schedule Report'}</title>
+      <style>
+        @page{size:A4 landscape;margin:12mm}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:20px}
+        @media print{
+          body{background:#fff;padding:0}
+          *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+        }
+      </style>
+    </head><body>${html}
+      <script>setTimeout(()=>window.print(),600)</script>
+    </body></html>`)
+    win.document.close()
+  }
 
   const handleSaveRoutine = useCallback(() => {
     if (!selectedExamId || !routineForm.classId || !routineForm.subjectId || !routineForm.date) return
@@ -718,6 +760,13 @@ export default function Step2Schedule() {
             </p>
           </div>
         </div>
+        <button
+          onClick={handleDownloadReport}
+          className="flex items-center gap-1.5 py-2 px-3 rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] font-medium cursor-pointer font-[inherit] hover:bg-[var(--green)]/15 transition-all"
+        >
+          <Download size={14} />
+          {isBn ? 'রিপোর্ট' : 'Report'}
+        </button>
       </div>
 
       {/* Exam Selector */}
@@ -775,43 +824,19 @@ export default function Step2Schedule() {
         {activeSubTab === 'routine' && (
           <div className="flex flex-col h-full">
             {/* Stats Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-              <div className={`${sectionCls} !mb-0 flex items-center gap-3`}>
-                <div className="w-9 h-9 rounded-xl bg-[var(--brand-light)] flex items-center justify-center">
-                  <Calendar size={16} className="text-[var(--brand)]" />
+            <div className="flex items-center gap-5 mb-4 flex-wrap">
+              {[
+                { icon: <Calendar size={14} />, value: examDayCount, label: isBn ? 'পরীক্ষার দিন' : 'Exam Days', color: 'var(--brand)' },
+                { icon: <BookOpen size={14} />, value: filteredRoutines.length, label: isBn ? 'মোট রুটিন' : 'Total Routines', color: 'var(--teal)' },
+                { icon: <CheckCircle size={14} />, value: completedDays, label: isBn ? 'সম্পন্ন' : 'Completed', color: 'var(--green)' },
+                { icon: <Clock size={14} />, value: upcomingDays, label: isBn ? 'আসন্ন' : 'Upcoming', color: 'var(--amber)' },
+              ].map((s) => (
+                <div key={s.label} className="flex items-center gap-2">
+                  <span style={{ color: s.color }}>{s.icon}</span>
+                  <span className="text-[0.9375rem] font-bold text-[var(--text-primary)]">{s.value}</span>
+                  <span className="text-[0.6875rem] text-[var(--text-muted)]">{s.label}</span>
                 </div>
-                <div>
-                  <div className="text-[1rem] font-bold text-[var(--text-primary)]">{examDayCount}</div>
-                  <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'পরীক্ষার দিন' : 'Exam Days'}</div>
-                </div>
-              </div>
-              <div className={`${sectionCls} !mb-0 flex items-center gap-3`}>
-                <div className="w-9 h-9 rounded-xl bg-[var(--brand-light)] flex items-center justify-center">
-                  <BookOpen size={16} className="text-[var(--brand)]" />
-                </div>
-                <div>
-                  <div className="text-[1rem] font-bold text-[var(--text-primary)]">{filteredRoutines.length}</div>
-                  <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'মোট রুটিন' : 'Total Routines'}</div>
-                </div>
-              </div>
-              <div className={`${sectionCls} !mb-0 flex items-center gap-3`}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--green-light)' }}>
-                  <CheckCircle size={16} style={{ color: 'var(--green)' }} />
-                </div>
-                <div>
-                  <div className="text-[1rem] font-bold text-[var(--text-primary)]">{completedDays}</div>
-                  <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'সম্পন্ন' : 'Completed'}</div>
-                </div>
-              </div>
-              <div className={`${sectionCls} !mb-0 flex items-center gap-3`}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--amber-light)' }}>
-                  <Clock size={16} style={{ color: 'var(--amber)' }} />
-                </div>
-                <div>
-                  <div className="text-[1rem] font-bold text-[var(--text-primary)]">{upcomingDays}</div>
-                  <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'আসন্ন' : 'Upcoming'}</div>
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* Calendar Header */}
@@ -1456,30 +1481,39 @@ export default function Step2Schedule() {
         {activeSubTab === 'invigilators' && (
           <>
             {/* Mode Toggle */}
-            <div className="flex items-center gap-2 mb-3">
-              <button
-                onClick={() => setInvigAssignType('room')}
-                className={`px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium border cursor-pointer transition-all ${
-                  invigAssignType === 'room'
-                    ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
-                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]'
-                }`}
-              >
-                <MapPin size={12} className="inline mr-1" />
-                {isBn ? 'কক্ষ/হল ভিত্তিক' : 'Room / Hall Wise'}
-              </button>
-              <button
-                onClick={() => setInvigAssignType('class')}
-                className={`px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium border cursor-pointer transition-all ${
-                  invigAssignType === 'class'
-                    ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
-                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]'
-                }`}
-              >
-                <GraduationCap size={12} className="inline mr-1" />
-                {isBn ? 'শ্রেণি/সেকশন ভিত্তিক' : 'Class / Section Wise'}
-              </button>
-              <div className="flex-1" />
+            {(() => {
+              const hasRoomAssign = filteredInvigilators.some((i) => i.assignType === 'room')
+              const hasClassAssign = filteredInvigilators.some((i) => i.assignType === 'class')
+              return (
+                <div className="mb-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => !hasClassAssign && setInvigAssignType('room')}
+                      disabled={hasClassAssign}
+                      className={`px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium border transition-all ${
+                        hasClassAssign ? 'opacity-40 cursor-not-allowed bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)]' :
+                        invigAssignType === 'room'
+                          ? 'bg-[var(--brand)] text-white border-[var(--brand)] cursor-pointer'
+                          : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)] cursor-pointer'
+                      }`}
+                    >
+                      <MapPin size={12} className="inline mr-1" />
+                      {isBn ? 'কক্ষ/হল ভিত্তিক' : 'Room / Hall Wise'}
+                    </button>
+                    <button
+                      onClick={() => !hasRoomAssign && setInvigAssignType('class')}
+                      disabled={hasRoomAssign}
+                      className={`px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium border transition-all ${
+                        hasRoomAssign ? 'opacity-40 cursor-not-allowed bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)]' :
+                        invigAssignType === 'class'
+                          ? 'bg-[var(--brand)] text-white border-[var(--brand)] cursor-pointer'
+                          : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)] cursor-pointer'
+                      }`}
+                    >
+                      <GraduationCap size={12} className="inline mr-1" />
+                      {isBn ? 'শ্রেণি/সেকশন ভিত্তিক' : 'Class / Section Wise'}
+                    </button>
+                    <div className="flex-1" />
               {filteredInvigilators.some((i) => i.assignType === 'class') && (
                 <button
                   onClick={() => downloadGuardListPDF('class')}
@@ -1508,7 +1542,17 @@ export default function Step2Schedule() {
                 <Plus size={14} />
                 {isBn ? 'নতুন নিয়োগ' : 'New Assignment'}
               </button>
-            </div>
+                    </div>
+                    {(hasRoomAssign || hasClassAssign) && (
+                      <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1.5">
+                        {isBn
+                          ? `একটি ধরনের নিয়োগ আছে — অন্য ধরনে পরিবর্তন করতে সকল ${hasRoomAssign ? 'কক্ষ/হল' : 'শ্রেণি/সেকশন'} নিয়োগ মুছুন`
+                          : `One type is active — remove all ${hasRoomAssign ? 'room' : 'class'} assignments to switch`}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
 
             {/* Info hint */}
             <div className="text-[0.625rem] text-[var(--text-muted)] mb-3">
@@ -2337,25 +2381,6 @@ export default function Step2Schedule() {
               </button>
             </div>
             <div className="space-y-3">
-              {/* Assign type toggle */}
-              <div className="flex gap-1.5 bg-[var(--bg-secondary)] rounded-lg p-1">
-                <button
-                  onClick={() => setInvigAssignType('room')}
-                  className={`flex-1 py-1.5 rounded-md text-[0.6875rem] font-medium cursor-pointer transition-all ${
-                    invigAssignType === 'room' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-secondary)]'
-                  }`}
-                >
-                  {isBn ? 'কক্ষ ভিত্তিক' : 'Room Wise'}
-                </button>
-                <button
-                  onClick={() => setInvigAssignType('class')}
-                  className={`flex-1 py-1.5 rounded-md text-[0.6875rem] font-medium cursor-pointer transition-all ${
-                    invigAssignType === 'class' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-secondary)]'
-                  }`}
-                >
-                  {isBn ? 'শ্রেণি ভিত্তিক' : 'Class Wise'}
-                </button>
-              </div>
               <div>
                 <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শিক্ষক' : 'Teacher'}</label>
                 <select

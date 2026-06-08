@@ -17,6 +17,34 @@ interface PlanningReportParams {
   schoolAddress: string
 }
 
+const BRAND = '#4f46e5'
+const BRAND_LIGHT = '#eef2ff'
+
+const sectionHeading = (title: string) => `
+  <div style="display:flex;align-items:center;gap:8px;margin:0 0 10px 0;padding-bottom:6px;border-bottom:2px solid ${BRAND}">
+    <div style="width:4px;height:18px;background:${BRAND};border-radius:2px;flex-shrink:0"></div>
+    <h3 style="font-size:13px;font-weight:700;margin:0;color:#1e293b">${title}</h3>
+  </div>
+`
+
+const tableHead = (cols: string) => `
+  <thead>
+    <tr style="background:${BRAND}">
+      ${cols}
+    </tr>
+  </thead>
+`
+
+const th = (text: string, align = 'left', extra = '') => `
+  <th style="padding:7px 10px;text-align:${align};font-weight:600;font-size:10px;color:#fff;border-bottom:2px solid ${BRAND};${extra}">${text}</th>
+`
+
+const td = (content: string, align = 'left', extra = '') => `
+  <td style="padding:6px 10px;text-align:${align};font-size:10px;border-bottom:1px solid #f1f5f9;${extra}">${content}</td>
+`
+
+const zebraRow = (idx: number) => idx % 2 === 0 ? '#fff' : '#f8fafc'
+
 export function generatePlanningReportHTML(params: PlanningReportParams): string {
   const {
     exam,
@@ -54,149 +82,124 @@ export function generatePlanningReportHTML(params: PlanningReportParams): string
 
   let html = ''
 
-  // Header
+  // ─── Header ───
   html += `
-    <div style="text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #e2e8f0">
-      <h1 style="font-size:18px;font-weight:700;margin:0 0 4px 0;color:#1e293b">
+    <div style="position:relative;text-align:center;margin-bottom:28px;padding:20px 16px 16px;background:linear-gradient(135deg,${BRAND}08,${BRAND}03);border-radius:10px;border:1px solid ${BRAND}15">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:${BRAND};border-radius:10px 10px 0 0"></div>
+      <div style="font-size:10px;font-weight:600;color:${BRAND};text-transform:uppercase;letter-spacing:2px;margin-bottom:6px">
+        ${isBn ? 'গোপনীয়' : 'CONFIDENTIAL'}
+      </div>
+      <h1 style="font-size:20px;font-weight:800;margin:0 0 4px 0;color:#1e293b;letter-spacing:-0.5px">
         ${isBn ? schoolNameBn : schoolName}
       </h1>
-      <p style="font-size:11px;color:#64748b;margin:0 0 2px 0">${schoolAddress}</p>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0">
-        <h2 style="font-size:15px;font-weight:700;margin:0;color:#0f172a">
-          ${isBn ? 'পরীক্ষা পরিকল্পনা প্রতিবেদন' : 'Exam Planning Report'}
-        </h2>
-        <p style="font-size:11px;color:#64748b;margin:4px 0 0 0">
-          ${isBn ? 'ধাপ ১: পরিকল্পনা ও প্রস্তুতি' : 'Step 1: Planning & Preparation'}
-        </p>
+      <p style="font-size:11px;color:#64748b;margin:0 0 12px 0">${schoolAddress}</p>
+      <div style="display:inline-block;padding:8px 24px;background:${BRAND};color:#fff;border-radius:6px">
+        <div style="font-size:14px;font-weight:700">${isBn ? 'পরীক্ষা পরিকল্পনা প্রতিবেদন' : 'Exam Planning Report'}</div>
+        <div style="font-size:10px;opacity:0.85;margin-top:2px">${isBn ? 'ধাপ ১: পরিকল্পনা ও প্রস্তুতি' : 'Step 1: Planning & Preparation'}</div>
       </div>
     </div>
   `
 
-  // Completion Summary
+  // ─── Summary Stats ───
+  const stats = [
+    { value: `${completionPct}%`, label: isBn ? 'সম্পন্ন' : 'Completion', color: completionPct === 100 ? '#10b981' : '#f59e0b', bg: completionPct === 100 ? '#ecfdf5' : '#fffbeb' },
+    { value: `${classIds.length}`, label: isBn ? 'শ্রেণি' : 'Classes', color: '#3b82f6', bg: '#eff6ff' },
+    { value: `${examConfigs.length}`, label: isBn ? 'বিষয় কনফিগ' : 'Subject Configs', color: '#8b5cf6', bg: '#f5f3ff' },
+    { value: `${omrConfigs.length}`, label: isBn ? 'OMR' : 'OMR Configs', color: '#ec4899', bg: '#fdf2f8' },
+  ]
+
   html += `
-    <div style="display:flex;gap:12px;margin-bottom:20px">
-      <div style="flex:1;padding:12px;border:1px solid #e2e8f0;border-radius:8px;text-align:center">
-        <div style="font-size:20px;font-weight:700;color:${completionPct === 100 ? '#10b981' : '#f59e0b'}">${completionPct}%</div>
-        <div style="font-size:10px;color:#64748b;margin-top:2px">${isBn ? 'সম্পন্ন' : 'Completed'}</div>
-      </div>
-      <div style="flex:1;padding:12px;border:1px solid #e2e8f0;border-radius:8px;text-align:center">
-        <div style="font-size:20px;font-weight:700;color:#3b82f6">${classIds.length}</div>
-        <div style="font-size:10px;color:#64748b;margin-top:2px">${isBn ? 'শ্রেণি কনফিগ' : 'Classes Configured'}</div>
-      </div>
-      <div style="flex:1;padding:12px;border:1px solid #e2e8f0;border-radius:8px;text-align:center">
-        <div style="font-size:20px;font-weight:700;color:#8b5cf6">${examConfigs.length}</div>
-        <div style="font-size:10px;color:#64748b;margin-top:2px">${isBn ? 'বিষয় কনফিগ' : 'Subject Configs'}</div>
-      </div>
-      <div style="flex:1;padding:12px;border:1px solid #e2e8f0;border-radius:8px;text-align:center">
-        <div style="font-size:20px;font-weight:700;color:#ec4899">${omrConfigs.length}</div>
-        <div style="font-size:10px;color:#64748b;margin-top:2px">${isBn ? 'OMR কনফিগ' : 'OMR Configs'}</div>
-      </div>
+    <div style="display:flex;gap:10px;margin-bottom:24px">
+      ${stats.map((s) => `
+        <div style="flex:1;padding:14px 10px;background:${s.bg};border-radius:8px;text-align:center;border:1px solid ${s.color}15">
+          <div style="font-size:22px;font-weight:800;color:${s.color};line-height:1">${s.value}</div>
+          <div style="font-size:9px;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">${s.label}</div>
+        </div>
+      `).join('')}
     </div>
   `
 
-  // Exam Details
-  html += `
-    <div style="margin-bottom:20px">
-      <h3 style="font-size:13px;font-weight:600;margin:0 0 8px 0;color:#1e293b;padding-bottom:4px;border-bottom:1px solid #e2e8f0">
-        ${isBn ? 'পরীক্ষার বিবরণ' : 'Exam Details'}
-      </h3>
-      <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <tr>
-          <td style="padding:6px 8px;color:#64748b;width:120px;border-bottom:1px solid #f1f5f9">${isBn ? 'নাম' : 'Name'}</td>
-          <td style="padding:6px 8px;font-weight:500;border-bottom:1px solid #f1f5f9">${isBn ? exam.nameBn : exam.name}</td>
-        </tr>
-        <tr>
-          <td style="padding:6px 8px;color:#64748b;border-bottom:1px solid #f1f5f9">${isBn ? 'ধরন' : 'Type'}</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${isBn ? typeLabel.bn : typeLabel.en}</td>
-        </tr>
-        <tr>
-          <td style="padding:6px 8px;color:#64748b;border-bottom:1px solid #f1f5f9">${isBn ? 'সেশন' : 'Session'}</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${exam.session}</td>
-        </tr>
-        <tr>
-          <td style="padding:6px 8px;color:#64748b;border-bottom:1px solid #f1f5f9">${isBn ? 'শুরু' : 'Start Date'}</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${exam.startDate || '-'}</td>
-        </tr>
-        <tr>
-          <td style="padding:6px 8px;color:#64748b;border-bottom:1px solid #f1f5f9">${isBn ? 'শেষ' : 'End Date'}</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${exam.endDate || '-'}</td>
-        </tr>
-        <tr>
-          <td style="padding:6px 8px;color:#64748b">${isBn ? 'স্ট্যাটাস' : 'Status'}</td>
-          <td style="padding:6px 8px;font-weight:500;color:${exam.isActive ? '#10b981' : '#64748b'}">${exam.isActive ? (isBn ? 'সক্রিয়' : 'Active') : (isBn ? 'নিষ্ক্রিয়' : 'Inactive')}</td>
-        </tr>
-      </table>
-    </div>
-  `
+  // ─── Exam Details ───
+  const details = [
+    [isBn ? 'নাম' : 'Name', isBn ? exam.nameBn : exam.name],
+    [isBn ? 'ধরন' : 'Type', isBn ? typeLabel.bn : typeLabel.en],
+    [isBn ? 'সেশন' : 'Session', exam.session],
+    [isBn ? 'শুরু' : 'Start', exam.startDate || '-'],
+    [isBn ? 'শেষ' : 'End', exam.endDate || '-'],
+    [isBn ? 'স্ট্যাটাস' : 'Status', exam.isActive ? (isBn ? 'সক্রিয়' : 'Active') : (isBn ? 'নিষ্ক্রিয়' : 'Inactive')],
+  ]
 
-  // Checklist
   html += `
-    <div style="margin-bottom:20px">
-      <h3 style="font-size:13px;font-weight:600;margin:0 0 8px 0;color:#1e293b;padding-bottom:4px;border-bottom:1px solid #e2e8f0">
-        ${isBn ? 'সেটআপ চেকলিস্ট' : 'Setup Checklist'}
-      </h3>
-      <table style="width:100%;border-collapse:collapse;font-size:11px">
-        ${checklist
-          .map(
-            (item) => `
-          <tr>
-            <td style="padding:6px 8px;width:20px;border-bottom:1px solid #f1f5f9">
-              ${item.done ? '<span style="color:#10b981">&#10003;</span>' : '<span style="color:#cbd5e1">&#9675;</span>'}
-            </td>
-            <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;color:${item.done ? '#1e293b' : '#94a3b8'}">${item.label}</td>
+    <div style="margin-bottom:24px">
+      ${sectionHeading(isBn ? 'পরীক্ষার বিবরণ' : 'Exam Details')}
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+        ${details.map(([label, value], i) => `
+          <tr style="background:${zebraRow(i)}">
+            <td style="padding:8px 12px;width:130px;font-size:11px;color:#64748b;font-weight:500;border-bottom:1px solid #f1f5f9">${label}</td>
+            <td style="padding:8px 12px;font-size:11px;font-weight:600;color:#1e293b;border-bottom:1px solid #f1f5f9">${value}</td>
           </tr>
-        `
-          )
-          .join('')}
+        `).join('')}
       </table>
     </div>
   `
 
-  // Subject & Mark Configuration per class
+  // ─── Checklist ───
+  html += `
+    <div style="margin-bottom:24px">
+      ${sectionHeading(isBn ? 'সেটআপ চেকলিস্ট' : 'Setup Checklist')}
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${checklist.map((item) => `
+          <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;font-size:10px;font-weight:500;border:1px solid ${item.done ? '#bbf7d0' : '#e2e8f0'};background:${item.done ? '#f0fdf4' : '#fff'};color:${item.done ? '#166534' : '#64748b'}">
+            <span style="width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:${item.done ? '#22c55e' : '#e2e8f0'};color:#fff;flex-shrink:0">
+              ${item.done ? '&#10003;' : ''}
+            </span>
+            ${item.label}
+            ${item.pct !== undefined ? `<span style="font-size:8px;color:#94a3b8;margin-left:2px">(${item.pct}%)</span>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `
+
+  // ─── Subject & Mark Configuration ───
   if (classIds.length > 0) {
-    html += `
-      <div style="margin-bottom:20px">
-        <h3 style="font-size:13px;font-weight:600;margin:0 0 8px 0;color:#1e293b;padding-bottom:4px;border-bottom:1px solid #e2e8f0">
-          ${isBn ? 'বিষয় ও মার্কস কনফিগারেশন' : 'Subject & Mark Configuration'}
-        </h3>
-    `
+    html += `<div style="margin-bottom:24px">${sectionHeading(isBn ? 'বিষয় ও মার্কস কনফিগারেশন' : 'Subject & Mark Configuration')}`
 
     for (const classId of classIds) {
       const cls = classMap.get(classId)
       const configs = examConfigs.filter((c) => c.classId === classId)
 
       html += `
-        <div style="margin-bottom:12px">
-          <div style="font-size:12px;font-weight:600;color:#3b82f6;margin-bottom:6px">${cls?.name || classId}</div>
-          <table style="width:100%;border-collapse:collapse;font-size:10px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden">
-            <thead>
-              <tr style="background:#f8fafc">
-                <th style="padding:6px 8px;text-align:left;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">#</th>
-                <th style="padding:6px 8px;text-align:left;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">${isBn ? 'বিষয়' : 'Subject'}</th>
-                <th style="padding:6px 8px;text-align:left;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">${isBn ? 'সাব-এক্সাম' : 'Sub-exams'}</th>
-                <th style="padding:6px 8px;text-align:center;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">${isBn ? 'পূর্ণমান' : 'Full'}</th>
-                <th style="padding:6px 8px;text-align:center;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">${isBn ? 'পাসমান' : 'Pass'}</th>
-              </tr>
-            </thead>
+        <div style="margin-bottom:14px">
+          <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:${BRAND_LIGHT};color:${BRAND};border-radius:4px;font-size:11px;font-weight:700;margin-bottom:8px">
+            <span style="width:6px;height:6px;border-radius:50%;background:${BRAND}"></span>
+            ${cls?.name || classId}
+          </div>
+          <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+            ${tableHead(
+              th('#', 'center', 'width:30px') +
+              th(isBn ? 'বিষয়' : 'Subject') +
+              th(isBn ? 'সাব-এক্সাম' : 'Sub-exams') +
+              th(isBn ? 'পূর্ণমান' : 'Full Marks', 'center', 'width:70px') +
+              th(isBn ? 'পাসমান' : 'Pass Marks', 'center', 'width:70px')
+            )}
             <tbody>
               ${configs
                 .sort((a, b) => {
                   const sa = subjectMap.get(a.subjectId)
                   const sb = subjectMap.get(b.subjectId)
-                  const nameA = (isBn ? sa?.nameBn : sa?.name) || ''
-                  const nameB = (isBn ? sb?.nameBn : sb?.name) || ''
-                  return nameA.localeCompare(nameB)
+                  return ((isBn ? sa?.nameBn : sa?.name) || '').localeCompare((isBn ? sb?.nameBn : sb?.name) || '')
                 })
                 .map((cfg, i) => {
                   const sub = subjectMap.get(cfg.subjectId)
                   const subExamNames = cfg.subExams.map((se) => `${se.name} (${se.fullMarks})`).join(', ') || '-'
                   return `
-                    <tr>
-                      <td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;color:#94a3b8">${i + 1}</td>
-                      <td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-weight:500">${isBn ? sub?.nameBn || sub?.name : sub?.name || cfg.subjectId}</td>
-                      <td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;color:#64748b">${subExamNames}</td>
-                      <td style="padding:5px 8px;text-align:center;border-bottom:1px solid #f1f5f9;font-weight:600">${cfg.fullMarks}</td>
-                      <td style="padding:5px 8px;text-align:center;border-bottom:1px solid #f1f5f9">${cfg.passMarks}</td>
+                    <tr style="background:${zebraRow(i)}">
+                      ${td(`${i + 1}`, 'center', 'color:#94a3b8;font-weight:500')}
+                      ${td((isBn ? sub?.nameBn || sub?.name : sub?.name) || cfg.subjectId, 'left', 'font-weight:600')}
+                      ${td(subExamNames, 'left', 'color:#64748b')}
+                      ${td(`${cfg.fullMarks}`, 'center', 'font-weight:700;color:#1e293b')}
+                      ${td(`${cfg.passMarks}`, 'center', '')}
                     </tr>
                   `
                 })
@@ -210,49 +213,21 @@ export function generatePlanningReportHTML(params: PlanningReportParams): string
     html += `</div>`
   }
 
-  // Grade Scale
+  // ─── Grade Scale ───
   if (activeGradeScale) {
     html += `
-      <div style="margin-bottom:20px">
-        <h3 style="font-size:13px;font-weight:600;margin:0 0 8px 0;color:#1e293b;padding-bottom:4px;border-bottom:1px solid #e2e8f0">
-          ${isBn ? 'গ্রেড স্কেল' : 'Grade Scale'} ${activeGradeScale.name ? `— ${isBn ? activeGradeScale.nameBn : activeGradeScale.name}` : ''}
-        </h3>
-        <table style="width:100%;border-collapse:collapse;font-size:10px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden">
-          <thead>
-            <tr style="background:#f8fafc">
-              ${activeGradeScale.grades
-                .map(
-                  (g) => `
-                <th style="padding:6px 8px;text-align:center;font-weight:600;border-bottom:1px solid #e2e8f0">
-                  <span style="color:${g.color}">${g.grade}</span>
-                </th>
-              `
-                )
-                .join('')}
-            </tr>
-          </thead>
+      <div style="margin-bottom:24px">
+        ${sectionHeading(`${isBn ? 'গ্রেড স্কেল' : 'Grade Scale'}${activeGradeScale.name ? ` — ${isBn ? activeGradeScale.nameBn : activeGradeScale.name}` : ''}`)}
+        <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+          ${tableHead(
+            activeGradeScale.grades.map((g) => th(g.grade, 'center')).join('')
+          )}
           <tbody>
             <tr>
-              ${activeGradeScale.grades
-                .map(
-                  (g) => `
-                <td style="padding:5px 8px;text-align:center;border-bottom:1px solid #f1f5f9;font-size:10px">
-                  ${g.minPct}%
-                </td>
-              `
-                )
-                .join('')}
+              ${activeGradeScale.grades.map((g) => td(`${g.minPct}%`, 'center', `color:${g.color};font-weight:600`)).join('')}
             </tr>
-            <tr>
-              ${activeGradeScale.grades
-                .map(
-                  (g) => `
-                <td style="padding:5px 8px;text-align:center;font-weight:500;font-size:10px">
-                  GPA ${g.gpa.toFixed(1)}
-                </td>
-              `
-                )
-                .join('')}
+            <tr style="background:#f8fafc">
+              ${activeGradeScale.grades.map((g) => td(`GPA ${g.gpa.toFixed(1)}`, 'center', 'font-weight:600')).join('')}
             </tr>
           </tbody>
         </table>
@@ -260,36 +235,32 @@ export function generatePlanningReportHTML(params: PlanningReportParams): string
     `
   }
 
-  // OMR Configs
+  // ─── OMR Configuration ───
   if (omrConfigs.length > 0) {
     html += `
-      <div style="margin-bottom:20px">
-        <h3 style="font-size:13px;font-weight:600;margin:0 0 8px 0;color:#1e293b;padding-bottom:4px;border-bottom:1px solid #e2e8f0">
-          ${isBn ? 'OMR কনফিগারেশন' : 'OMR Configuration'}
-        </h3>
-        <table style="width:100%;border-collapse:collapse;font-size:10px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden">
-          <thead>
-            <tr style="background:#f8fafc">
-              <th style="padding:6px 8px;text-align:left;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">#</th>
-              <th style="padding:6px 8px;text-align:left;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">${isBn ? 'বিষয়' : 'Subject'}</th>
-              <th style="padding:6px 8px;text-align:center;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">${isBn ? 'প্রশ্ন' : 'Questions'}</th>
-              <th style="padding:6px 8px;text-align:center;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">${isBn ? 'সঠিক' : 'Correct'}</th>
-              <th style="padding:6px 8px;text-align:center;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">${isBn ? 'নেগেটিভ' : 'Negative'}</th>
-              <th style="padding:6px 8px;text-align:center;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">${isBn ? 'ফরম্যাট' : 'Format'}</th>
-            </tr>
-          </thead>
+      <div style="margin-bottom:24px">
+        ${sectionHeading(isBn ? 'OMR কনফিগারেশন' : 'OMR Configuration')}
+        <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+          ${tableHead(
+            th('#', 'center', 'width:30px') +
+            th(isBn ? 'বিষয়' : 'Subject') +
+            th(isBn ? 'প্রশ্ন' : 'Questions', 'center', 'width:80px') +
+            th(isBn ? 'সঠিক' : 'Correct', 'center', 'width:70px') +
+            th(isBn ? 'নেগেটিভ' : 'Negative', 'center', 'width:70px') +
+            th(isBn ? 'ফরম্যাট' : 'Format', 'center', 'width:80px')
+          )}
           <tbody>
             ${omrConfigs
               .map((cfg, i) => {
                 const sub = subjectMap.get(cfg.subjectId)
                 return `
-                  <tr>
-                    <td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;color:#94a3b8">${i + 1}</td>
-                    <td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;font-weight:500">${isBn ? sub?.nameBn || sub?.name : sub?.name || cfg.subjectId}</td>
-                    <td style="padding:5px 8px;text-align:center;border-bottom:1px solid #f1f5f9">${cfg.totalQuestions}</td>
-                    <td style="padding:5px 8px;text-align:center;border-bottom:1px solid #f1f5f9">+${cfg.correctMark}</td>
-                    <td style="padding:5px 8px;text-align:center;border-bottom:1px solid #f1f5f9">${cfg.negativeMark > 0 ? `-${cfg.negativeMark}` : '0'}</td>
-                    <td style="padding:5px 8px;text-align:center;border-bottom:1px solid #f1f5f9">Sheet ${cfg.sheetFormat}</td>
+                  <tr style="background:${zebraRow(i)}">
+                    ${td(`${i + 1}`, 'center', 'color:#94a3b8;font-weight:500')}
+                    ${td((isBn ? sub?.nameBn || sub?.name : sub?.name) || cfg.subjectId, 'left', 'font-weight:600')}
+                    ${td(`${cfg.totalQuestions}`, 'center')}
+                    ${td(`+${cfg.correctMark}`, 'center', 'color:#10b981;font-weight:600')}
+                    ${td(`${cfg.negativeMark > 0 ? `-${cfg.negativeMark}` : '0'}`, 'center', cfg.negativeMark > 0 ? 'color:#ef4444;font-weight:600' : '')}
+                    ${td(`Sheet ${cfg.sheetFormat}`, 'center')}
                   </tr>
                 `
               })
@@ -300,11 +271,14 @@ export function generatePlanningReportHTML(params: PlanningReportParams): string
     `
   }
 
-  // Footer
+  // ─── Footer ───
   html += `
-    <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:10px;color:#94a3b8">
-      <div>${isBn ? 'তৈরি: ' : 'Generated: '}${new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US')}</div>
-      <div>${isBn ? schoolNameBn : schoolName}</div>
+    <div style="margin-top:28px;padding-top:12px;border-top:2px solid ${BRAND};display:flex;justify-content:space-between;align-items:center;font-size:9px;color:#94a3b8">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="width:6px;height:6px;border-radius:50%;background:${BRAND}"></div>
+        ${isBn ? 'তৈরি' : 'Generated'}: ${new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+      </div>
+      <div style="font-weight:600;color:#64748b">${isBn ? schoolNameBn : schoolName}</div>
     </div>
   `
 

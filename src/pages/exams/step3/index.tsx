@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Edit2, BookOpen, Settings, Save, CheckCircle, Lock, Unlock, Loader, Users, AlertTriangle, ChevronRight, Pencil, X } from 'lucide-react'
+import { ArrowLeft, Edit2, BookOpen, Settings, Save, CheckCircle, Lock, Unlock, Loader, Users, AlertTriangle, ChevronRight, Pencil, X, GraduationCap, Search } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 
 import { useTeacherStore } from '@/store/teacherStore'
@@ -64,6 +64,7 @@ export default function Step3Evaluation() {
   const [markErrors, setMarkErrors] = useState<Record<string, Record<string, boolean>>>({})
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<string | null>(null)
+  const [studentSearch, setStudentSearch] = useState('')
 
   // Publish/Lock filters
   const [publishClassId, setPublishClassId] = useState('')
@@ -119,6 +120,17 @@ export default function Step3Evaluation() {
     if (!entryClassId || !entrySectionId) return []
     return students.filter((s) => s.status === 'approved' && s.class === entryClassId && s.section === entrySectionId)
   }, [students, entryClassId, entrySectionId])
+
+  const filteredStudents = useMemo(() => {
+    if (!studentSearch.trim()) return classStudents
+    const q = studentSearch.toLowerCase()
+    return classStudents.filter((s) =>
+      s.nameEn.toLowerCase().includes(q) ||
+      (s.nameBn && s.nameBn.toLowerCase().includes(q)) ||
+      (s.roll && s.roll.toLowerCase().includes(q)) ||
+      s.id.toLowerCase().includes(q)
+    )
+  }, [classStudents, studentSearch])
 
   const structConfigs = useMemo(() => {
     if (!selectedExamId || !structClassId) return []
@@ -837,9 +849,14 @@ export default function Step3Evaluation() {
 
             {selectedExamId && entryClassId && entrySectionId && entrySubjectId && entrySubjectConfig && (
               <div className={sectionCls}>
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                   <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
                     {classStudents.length} {isBn ? 'জন শিক্ষার্থী' : 'students'}
+                    {studentSearch && filteredStudents.length !== classStudents.length && (
+                      <span className="text-[0.6875rem] text-[var(--text-muted)] ml-1">
+                        ({filteredStudents.length} {isBn ? 'ফল্টার' : 'filtered'})
+                      </span>
+                    )}
                     <span className="text-[0.6875rem] text-[var(--text-muted)] ml-2">
                       Full: {entrySubjectConfig.fullMarks} · Pass: {entrySubjectConfig.passMarks}
                     </span>
@@ -850,6 +867,24 @@ export default function Step3Evaluation() {
                       </span>
                     )}
                   </span>
+                  <div className="relative">
+                    <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                    <input
+                      type="text"
+                      value={studentSearch}
+                      onChange={(e) => setStudentSearch(e.target.value)}
+                      placeholder={isBn ? 'নাম বা রোল দিয়ে খুঁজুন...' : 'Search by name or roll...'}
+                      className="h-7 pl-7 pr-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] font-[inherit] outline-none box-border w-[14rem] focus:border-[var(--brand)] transition-all"
+                    />
+                    {studentSearch && (
+                      <button
+                        onClick={() => setStudentSearch('')}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[var(--border)] flex items-center justify-center cursor-pointer hover:bg-[var(--text-muted)] transition-colors"
+                      >
+                        <X size={8} className="text-[var(--text-primary)]" />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
@@ -887,7 +922,7 @@ export default function Step3Evaluation() {
                       </tr>
                     </thead>
                     <tbody>
-                      {classStudents.map((student, idx) => {
+                      {filteredStudents.map((student, idx) => {
                         const marks = markInputs[student.id] || {}
                         const total = Object.values(marks).reduce((a, b) => a + b, 0)
                         const pct = entrySubjectConfig.fullMarks > 0 ? (total / entrySubjectConfig.fullMarks) * 100 : 0
@@ -973,6 +1008,12 @@ export default function Step3Evaluation() {
                   <div className="text-center py-8 text-[var(--text-muted)] text-[0.75rem]">
                     <Users size={24} className="mx-auto mb-2 opacity-30" />
                     {isBn ? 'এই সেকশনে কোনো শিক্ষার্থী নেই' : 'No students in this section'}
+                  </div>
+                )}
+                {classStudents.length > 0 && filteredStudents.length === 0 && (
+                  <div className="text-center py-8 text-[var(--text-muted)] text-[0.75rem]">
+                    <Search size={24} className="mx-auto mb-2 opacity-30" />
+                    {isBn ? 'কোনো শিক্ষার্থী পাওয়া যায়নি' : 'No students found'}
                   </div>
                 )}
                 {isEntrySubjectLocked && (
@@ -1067,36 +1108,80 @@ export default function Step3Evaluation() {
                 {isBn ? 'সম্পন্ন এন্ট্রি লক করুন বা পরিবর্তনের জন্য আনলক করুন' : 'Lock completed entries or unlock for changes'}
               </p>
 
-              {/* Class & Section Filter */}
-              <div className="flex items-end gap-3 mb-3 flex-wrap">
-                <div className="flex-1 min-w-[10rem]">
-                  <label className="text-[0.625rem] font-medium text-[var(--text-muted)] mb-1 block uppercase tracking-wider">{isBn ? 'শ্রেণি' : 'Class'}</label>
-                  <select
-                    value={publishClassId}
-                    onChange={(e) => { setPublishClassId(e.target.value); setPublishSectionId('') }}
-                    className={`${inputCls} w-full`}
-                  >
-                    <option value="">{isBn ? 'সকল শ্রেণি' : 'All Classes'}</option>
-                    {classOptions.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+              {/* Class Chip Selector */}
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wider">{isBn ? 'শ্রেণি' : 'Class'}</label>
+                  {publishClassId && (
+                    <button
+                      onClick={() => { setPublishClassId(''); setPublishSectionId('') }}
+                      className="text-[0.5625rem] text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-none font-[inherit]"
+                    >
+                      {isBn ? 'মুছুন' : 'Clear'}
+                    </button>
+                  )}
                 </div>
-                <div className="flex-1 min-w-[10rem]">
-                  <label className="text-[0.625rem] font-medium text-[var(--text-muted)] mb-1 block uppercase tracking-wider">{isBn ? 'সেকশন' : 'Section'}</label>
-                  <select
-                    value={publishSectionId}
-                    onChange={(e) => setPublishSectionId(e.target.value)}
-                    className={`${inputCls} w-full`}
-                    disabled={!publishClassId}
-                  >
-                    <option value="">{isBn ? 'সকল সেকশন' : 'All Sections'}</option>
-                    {publishSectionOptions.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                <div className="flex flex-wrap gap-1.5">
+                  {classOptions.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => { setPublishClassId(c === publishClassId ? '' : c); setPublishSectionId('') }}
+                      className={`px-3 py-1.5 rounded-full text-[0.6875rem] font-medium cursor-pointer border transition-all ${
+                        publishClassId === c
+                          ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-sm'
+                          : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)]'
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
                 </div>
               </div>
+
+              {/* Section Chip Selector */}
+              {publishClassId && publishSectionOptions.length > 0 && (
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wider">{isBn ? 'সেকশন' : 'Section'}</label>
+                    {publishSectionId && (
+                      <button
+                        onClick={() => setPublishSectionId('')}
+                        className="text-[0.5625rem] text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-none font-[inherit]"
+                      >
+                        {isBn ? 'মুছুন' : 'Clear'}
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {publishSectionOptions.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setPublishSectionId(s === publishSectionId ? '' : s)}
+                        className={`px-3 py-1.5 rounded-full text-[0.6875rem] font-medium cursor-pointer border transition-all ${
+                          publishSectionId === s
+                            ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-sm'
+                            : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)]'
+                        }`}
+                      >
+                        {isBn ? 'সেকশন' : 'Sec'} {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Selection Summary */}
+              {publishClassData && (
+                <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-[var(--brand-light)]/50 border border-[var(--brand)]/10">
+                  <GraduationCap size={14} className="text-[var(--brand)] flex-shrink-0" />
+                  <span className="text-[0.6875rem] text-[var(--brand)] font-medium">
+                    {publishClassData.name}{publishSectionId ? ` — ${isBn ? 'সেকশন' : 'Sec'} ${publishSectionId}` : ` — ${isBn ? 'সকল সেকশন' : 'All Sections'}`}
+                  </span>
+                  <span className="text-[0.5625rem] text-[var(--text-muted)] ml-auto">
+                    {publishSubjectIds.length} {isBn ? 'টি বিষয়' : 'subjects'}
+                  </span>
+                </div>
+              )}
 
               <div className="space-y-2">
                 {(() => {
@@ -1124,31 +1209,45 @@ export default function Step3Evaluation() {
                     return (
                       <div
                         key={row.subjectId}
-                        className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]"
+                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                          row.isLocked
+                            ? 'bg-[var(--red-light)]/30 border-[var(--red)]/15'
+                            : 'bg-[var(--bg-secondary)] border-[var(--border)]'
+                        }`}
                       >
+                        {/* Status indicator dot */}
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ background: row.isLocked ? 'var(--red)' : pct === 100 ? 'var(--green)' : 'var(--amber)' }}
+                        />
                         <div className="flex-1 min-w-0">
-                          <div className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
-                            {row.subjectName}
-                            {publishSectionId && (
-                              <span className="text-[0.625rem] font-normal text-[var(--text-muted)] ml-1.5">
-                                — {publishClassId} {publishSectionId}
+                          <div className="flex items-center gap-2">
+                            <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
+                              {row.subjectName}
+                            </span>
+                            {row.isLocked && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[0.5rem] font-medium bg-[var(--red-light)] text-[var(--red)]">
+                                <Lock size={8} />
+                                {isBn ? 'লকড' : 'Locked'}
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-[0.625rem] text-[var(--text-muted)] mt-0.5">
-                            <span>
+                          <div className="flex items-center gap-2.5 mt-1">
+                            <span className="text-[0.625rem] text-[var(--text-muted)]">
                               {enteredCount}/{totalStudents} {isBn ? 'এন্ট্রি' : 'entered'}
                             </span>
-                            <div className="w-20 h-1.5 bg-[var(--border)] rounded-full">
+                            <div className="flex-1 max-w-[10rem] h-1.5 bg-[var(--border)] rounded-full overflow-hidden">
                               <div
-                                className="h-full rounded-full transition-all"
+                                className="h-full rounded-full transition-all duration-500"
                                 style={{
                                   width: `${pct}%`,
                                   background: row.isLocked ? 'var(--red)' : pct === 100 ? 'var(--green)' : 'var(--amber)',
                                 }}
                               />
                             </div>
-                            <span className="text-[0.5625rem] font-medium">{pct}%</span>
+                            <span className="text-[0.5625rem] font-semibold" style={{ color: pct === 100 ? 'var(--green)' : 'var(--text-muted)' }}>
+                              {pct}%
+                            </span>
                           </div>
                         </div>
                         <button
@@ -1159,7 +1258,11 @@ export default function Step3Evaluation() {
                               lockMarks(selectedExamId, publishClassData!.name, publishSectionId || '', row.subjectId)
                             }
                           }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium cursor-pointer border-none ${row.isLocked ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--green-light)] text-[var(--green)]'}`}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium cursor-pointer border-none transition-all ${
+                            row.isLocked
+                              ? 'bg-[var(--red-light)] text-[var(--red)] hover:bg-[var(--red)]/15'
+                              : 'bg-[var(--green-light)] text-[var(--green)] hover:bg-[var(--green)]/15'
+                          }`}
                         >
                           {row.isLocked ? (
                             <>
