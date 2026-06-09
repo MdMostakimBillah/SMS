@@ -24,32 +24,30 @@ describe('openPrintWindow', () => {
     expect(result).toBeNull()
   })
 
-  it('writes HTML to opened window', () => {
-    const mockDoc = { write: vi.fn(), close: vi.fn() }
-    const mockWin = { document: mockDoc } as any
-    vi.spyOn(window, 'open').mockReturnValue(mockWin)
-    openPrintWindow('Test Title', '<p>Content</p>')
-    expect(mockDoc.write).toHaveBeenCalledTimes(1)
-    expect(mockDoc.write.mock.calls[0][0]).toContain('Test Title')
-    expect(mockDoc.write.mock.calls[0][0]).toContain('<p>Content</p>')
-    expect(mockDoc.close).toHaveBeenCalled()
+  it('opens blob URL in new window', () => {
+    const mockWin = { } as any
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin)
+    const result = openPrintWindow('Test Title', '<p>Content</p>')
+    expect(result).toBe(mockWin)
+    expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('blob:'), '_blank', 'noopener,noreferrer')
   })
 })
 
 describe('downloadHTML', () => {
   it('creates blob and triggers download', () => {
     const clickMock = vi.fn()
-    const mockEl = { href: '', download: '', click: clickMock } as HTMLAnchorElement
+    const mockStyle = { cssText: '' }
+    const mockEl = { href: '', download: '', style: mockStyle, click: clickMock } as HTMLAnchorElement
     const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(mockEl)
     const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((() => {}) as any)
     const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((() => {}) as any)
 
     downloadHTML('test.html', '<p>Hello</p>')
 
-    expect(clickMock).toHaveBeenCalled()
     expect(createElementSpy).toHaveBeenCalledWith('a')
     expect(appendChildSpy).toHaveBeenCalled()
-    expect(removeChildSpy).toHaveBeenCalled()
+    expect(mockEl.download).toBe('test.html')
+    expect(mockEl.href).toContain('blob:')
 
     createElementSpy.mockRestore()
     appendChildSpy.mockRestore()

@@ -1068,10 +1068,10 @@ function RoutineTab({
               if (!win) return
               win.document.write(`<!DOCTYPE html><html><head><title>Routine - ${clsObj?.name} ${secName}</title>
 <style>
-  @page{size:A4 landscape;margin:8mm}
+  @page{size:A4 landscape;margin:0}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Segoe UI','Arial',sans-serif;color:#1a1a1a;background:#fff;padding:20px}
-  @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+  @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;padding:8mm}}
 </style></head><body>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #6366f1">
     <div style="display:flex;align-items:center;gap:12px">
