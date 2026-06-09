@@ -47,6 +47,7 @@ describe('examStore - exam config', () => {
     useExamStore.getState().addExamConfig({
       name: 'Test', nameBn: 'Test', type: 'annual', session: '2025-26',
       startDate: '2025-06-01', endDate: '2025-06-10', isActive: false,
+      isPublished: false, publishedAt: null, publishedClasses: [],
     })
     expect(useExamStore.getState().examConfigs).toHaveLength(1)
   })
@@ -55,6 +56,7 @@ describe('examStore - exam config', () => {
     useExamStore.getState().addExamConfig({
       name: 'Test', nameBn: 'Test', type: 'annual', session: '2025-26',
       startDate: '2025-06-01', endDate: '2025-06-10', isActive: false,
+      isPublished: false, publishedAt: null, publishedClasses: [],
     })
     const id = useExamStore.getState().examConfigs[0].id
     useExamStore.getState().updateExamConfig(id, { name: 'Updated' })
@@ -65,6 +67,7 @@ describe('examStore - exam config', () => {
     useExamStore.getState().addExamConfig({
       name: 'Test', nameBn: 'Test', type: 'annual', session: '2025-26',
       startDate: '2025-06-01', endDate: '2025-06-10', isActive: false,
+      isPublished: false, publishedAt: null, publishedClasses: [],
     })
     const examId = useExamStore.getState().examConfigs[0].id
     useExamStore.getState().upsertSubjectMarkConfig({
@@ -84,11 +87,13 @@ describe('examStore - exam config', () => {
     useExamStore.getState().addExamConfig({
       name: 'Exam 1', nameBn: '', type: 'annual', session: '2025-26',
       startDate: '', endDate: '', isActive: true,
+      isPublished: false, publishedAt: null, publishedClasses: [],
     })
     tick()
     useExamStore.getState().addExamConfig({
       name: 'Exam 2', nameBn: '', type: 'annual', session: '2025-26',
       startDate: '', endDate: '', isActive: false,
+      isPublished: false, publishedAt: null, publishedClasses: [],
     })
     const [id1, id2] = useExamStore.getState().examConfigs.map(e => e.id)
     useExamStore.getState().toggleExamActive(id2)

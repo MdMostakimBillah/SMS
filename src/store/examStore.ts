@@ -16,6 +16,7 @@ export interface ExamConfig {
   isActive: boolean
   isPublished: boolean
   publishedAt: string | null
+  publishedClasses: string[]
   createdAt: string
 }
 
@@ -140,11 +141,21 @@ export interface ExtraMarkEntry {
   studentId: string
   classId: string
   sectionId: string
-  type: 'attendance' | 'discipline' | 'homework'
+  typeId: string
   marks: number
   maxMarks: number
   note: string
   createdAt: string
+}
+
+export interface ExtraMarkType {
+  id: string
+  name: string
+  nameBn: string
+  icon: string
+  color: string
+  defaultMaxMarks: number
+  isActive: boolean
 }
 
 // ─── Step 9: Marksheet ───
@@ -342,6 +353,7 @@ const defaultExamConfigs: ExamConfig[] = [
     isActive: true,
     isPublished: false,
     publishedAt: null,
+    publishedClasses: [],
     createdAt: '2025-05-01',
   },
   {
@@ -355,6 +367,7 @@ const defaultExamConfigs: ExamConfig[] = [
     isActive: false,
     isPublished: false,
     publishedAt: null,
+    publishedClasses: [],
     createdAt: '2025-05-01',
   },
   {
@@ -368,6 +381,7 @@ const defaultExamConfigs: ExamConfig[] = [
     isActive: false,
     isPublished: false,
     publishedAt: null,
+    publishedClasses: [],
     createdAt: '2025-05-01',
   },
   {
@@ -381,6 +395,7 @@ const defaultExamConfigs: ExamConfig[] = [
     isActive: false,
     isPublished: false,
     publishedAt: null,
+    publishedClasses: [],
     createdAt: '2025-05-01',
   },
 ]
@@ -559,7 +574,7 @@ const defaultExtraMarks: ExtraMarkEntry[] = [
     studentId: 'STU-001',
     classId: 'Class-1',
     sectionId: 'A',
-    type: 'attendance',
+    typeId: 'EMT-001',
     marks: 8,
     maxMarks: 10,
     note: '80% attendance',
@@ -571,7 +586,7 @@ const defaultExtraMarks: ExtraMarkEntry[] = [
     studentId: 'STU-001',
     classId: 'Class-1',
     sectionId: 'A',
-    type: 'discipline',
+    typeId: 'EMT-002',
     marks: 9,
     maxMarks: 10,
     note: 'Excellent behavior',
@@ -583,7 +598,7 @@ const defaultExtraMarks: ExtraMarkEntry[] = [
     studentId: 'STU-001',
     classId: 'Class-1',
     sectionId: 'A',
-    type: 'homework',
+    typeId: 'EMT-003',
     marks: 18,
     maxMarks: 20,
     note: '90% completion',
@@ -595,7 +610,7 @@ const defaultExtraMarks: ExtraMarkEntry[] = [
     studentId: 'STU-002',
     classId: 'Class-1',
     sectionId: 'A',
-    type: 'attendance',
+    typeId: 'EMT-001',
     marks: 9,
     maxMarks: 10,
     note: '90% attendance',
@@ -607,7 +622,7 @@ const defaultExtraMarks: ExtraMarkEntry[] = [
     studentId: 'STU-002',
     classId: 'Class-1',
     sectionId: 'A',
-    type: 'discipline',
+    typeId: 'EMT-002',
     marks: 10,
     maxMarks: 10,
     note: 'Perfect conduct',
@@ -619,12 +634,18 @@ const defaultExtraMarks: ExtraMarkEntry[] = [
     studentId: 'STU-002',
     classId: 'Class-1',
     sectionId: 'A',
-    type: 'homework',
+    typeId: 'EMT-003',
     marks: 19,
     maxMarks: 20,
     note: '95% completion',
     createdAt: '2025-06-25',
   },
+]
+
+const defaultExtraMarkTypes: ExtraMarkType[] = [
+  { id: 'EMT-001', name: 'Attendance', nameBn: 'উপস্থিতি', icon: 'ClipboardCheck', color: '#10b981', defaultMaxMarks: 10, isActive: true },
+  { id: 'EMT-002', name: 'Discipline', nameBn: 'শৃঙ্খলা', icon: 'Shield', color: '#3b82f6', defaultMaxMarks: 10, isActive: true },
+  { id: 'EMT-003', name: 'Homework', nameBn: 'হোমওয়ার্ক', icon: 'BookOpen', color: '#f59e0b', defaultMaxMarks: 20, isActive: true },
 ]
 
 const defaultMarksheetConfigs: MarksheetConfig[] = [
@@ -832,6 +853,7 @@ interface ExamState {
   invigilators: InvigilatorAssignment[]
   omrConfigs: OMRConfig[]
   extraMarks: ExtraMarkEntry[]
+  extraMarkTypes: ExtraMarkType[]
   marksheetConfigs: MarksheetConfig[]
   generalAbilities: GeneralAbilityConfig[]
   gradeScales: GradeScale[]
@@ -847,6 +869,7 @@ interface ExamState {
   deleteExamConfig: (id: string) => void
   toggleExamActive: (id: string) => void
   toggleExamPublished: (id: string) => void
+  toggleClassPublished: (examId: string, className: string) => void
 
   upsertSubjectMarkConfig: (config: Omit<SubjectMarkConfig, 'id'>) => void
   deleteSubjectMarkConfig: (id: string) => void
@@ -894,6 +917,9 @@ interface ExamState {
   updateExtraMark: (id: string, data: Partial<ExtraMarkEntry>) => void
   deleteExtraMark: (id: string) => void
   bulkAddExtraMarks: (entries: Omit<ExtraMarkEntry, 'id' | 'createdAt'>[]) => void
+  addExtraMarkType: (type: Omit<ExtraMarkType, 'id'>) => void
+  updateExtraMarkType: (id: string, data: Partial<ExtraMarkType>) => void
+  deleteExtraMarkType: (id: string) => void
 
   addMarksheetConfig: (config: Omit<MarksheetConfig, 'id' | 'createdAt'>) => void
   updateMarksheetConfig: (id: string, data: Partial<MarksheetConfig>) => void
@@ -943,6 +969,7 @@ export const useExamStore = create<ExamState>()(
       attendances: [],
       omrConfigs: defaultOMRConfigs,
       extraMarks: defaultExtraMarks,
+      extraMarkTypes: defaultExtraMarkTypes,
       marksheetConfigs: defaultMarksheetConfigs,
       generalAbilities: defaultGeneralAbilities,
       gradeScales: defaultGradeScale,
@@ -955,7 +982,7 @@ export const useExamStore = create<ExamState>()(
       // ─── Exam Config ───
       addExamConfig: (config) =>
         set((state) => ({
-          examConfigs: [...state.examConfigs, { ...config, id: `EXAM-${Date.now()}`, isPublished: config.isPublished ?? false, publishedAt: config.publishedAt ?? null, createdAt: new Date().toISOString() }],
+          examConfigs: [...state.examConfigs, { ...config, id: `EXAM-${Date.now()}`, isPublished: config.isPublished ?? false, publishedAt: config.publishedAt ?? null, publishedClasses: config.publishedClasses ?? [], createdAt: new Date().toISOString() }],
         })),
       updateExamConfig: (id, data) =>
         set((state) => ({
@@ -981,6 +1008,16 @@ export const useExamStore = create<ExamState>()(
           examConfigs: state.examConfigs.map((e) =>
             e.id === id ? { ...e, isPublished: !e.isPublished, publishedAt: !e.isPublished ? new Date().toISOString() : null } : e
           ),
+        })),
+      toggleClassPublished: (examId, className) =>
+        set((state) => ({
+          examConfigs: state.examConfigs.map((e) => {
+            if (e.id !== examId) return e
+            const classes = e.publishedClasses || []
+            const hasClass = classes.includes(className)
+            const updated = hasClass ? classes.filter((c) => c !== className) : [...classes, className]
+            return { ...e, publishedClasses: updated }
+          }),
         })),
 
       // ─── Subject Mark Config ───
@@ -1297,6 +1334,18 @@ export const useExamStore = create<ExamState>()(
             ...entries.map((e, i) => ({ ...e, id: `EM-${Date.now()}-${i}`, createdAt: new Date().toISOString() })),
           ],
         })),
+      addExtraMarkType: (type) =>
+        set((state) => ({
+          extraMarkTypes: [...state.extraMarkTypes, { ...type, id: `EMT-${Date.now()}` }],
+        })),
+      updateExtraMarkType: (id, data) =>
+        set((state) => ({
+          extraMarkTypes: state.extraMarkTypes.map((t) => (t.id === id ? { ...t, ...data } : t)),
+        })),
+      deleteExtraMarkType: (id) =>
+        set((state) => ({
+          extraMarkTypes: state.extraMarkTypes.filter((t) => t.id !== id),
+        })),
 
       // ─── Marksheet Config ───
       addMarksheetConfig: (config) =>
@@ -1490,7 +1539,7 @@ export const useExamStore = create<ExamState>()(
     }),
     {
       name: 'edutech-exams',
-      version: 6,
+      version: 8,
       migrate: (persistedState: any, version: number) => {
         if (version < 5) {
           if (!persistedState.omrTemplates) persistedState.omrTemplates = []
@@ -1502,6 +1551,25 @@ export const useExamStore = create<ExamState>()(
               isPublished: e.isPublished ?? false,
               publishedAt: e.publishedAt ?? null,
             }))
+          }
+        }
+        if (version < 7) {
+          if (persistedState.examConfigs) {
+            persistedState.examConfigs = persistedState.examConfigs.map((e: any) => ({
+              ...e,
+              publishedClasses: e.publishedClasses ?? [],
+            }))
+          }
+        }
+        if (version < 8) {
+          if (persistedState.extraMarks) {
+            persistedState.extraMarks = persistedState.extraMarks.map((e: any) => ({
+              ...e,
+              typeId: e.typeId ?? (e.type === 'attendance' ? 'EMT-001' : e.type === 'discipline' ? 'EMT-002' : 'EMT-003'),
+            }))
+          }
+          if (!persistedState.extraMarkTypes) {
+            persistedState.extraMarkTypes = defaultExtraMarkTypes
           }
         }
         return persistedState

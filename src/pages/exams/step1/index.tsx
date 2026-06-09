@@ -354,6 +354,7 @@ export default function Step1Planning() {
         isActive: false,
         isPublished: false,
         publishedAt: null,
+        publishedClasses: [],
       })
     }
     setShowExamForm(false)

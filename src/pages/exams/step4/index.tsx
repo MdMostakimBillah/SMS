@@ -19,13 +19,25 @@ import {
   LayoutTemplate,
   ArrowUpDown,
   X,
+  Save,
+  ClipboardCheck,
+  Shield,
+  BookOpen,
+  Star,
+  Heart,
+  Zap,
+  Coffee,
+  Music,
+  Settings,
+  Search,
+  Edit,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions, buildSectionsMap, extractClassNumber } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
-import { sectionCls, sectionTitleCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
+import { sectionCls, sectionTitleCls, inputCls, selectCls } from '@/lib/styles'
 import { getBrandColor, downloadHTML } from '@/lib/pdf'
 
 type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position'
@@ -43,6 +55,9 @@ export default function Step4Results() {
   const studentMarks = useExamStore((s) => s.studentMarks)
   const subjectMarkConfigs = useExamStore((s) => s.subjectMarkConfigs)
   const extraMarks = useExamStore((s) => s.extraMarks)
+  const extraMarkTypes = useExamStore((s) => s.extraMarkTypes)
+  const updateExtraMarkType = useExamStore((s) => s.updateExtraMarkType)
+  const deleteExtraMarkType = useExamStore((s) => s.deleteExtraMarkType)
 
   const sessionExamIds = useMemo(() => new Set(examConfigs.map((e) => e.id)), [examConfigs])
   const sessionStudentMarks = useMemo(() => studentMarks.filter((m) => sessionExamIds.has(m.examId)), [studentMarks, sessionExamIds])
@@ -98,9 +113,14 @@ export default function Step4Results() {
 
   // Extra marks form
   const [showExtraForm, setShowExtraForm] = useState(false)
+  const [showTypeManager, setShowTypeManager] = useState(false)
+  const [showAddTypeForm, setShowAddTypeForm] = useState(false)
+  const [editingType, setEditingType] = useState<string | null>(null)
   const [extraForm, setExtraForm] = useState({
     studentId: '',
-    type: 'attendance' as 'attendance' | 'discipline' | 'homework',
+    studentSearch: '',
+    showSuggestions: false,
+    typeId: '',
     marks: '0',
     maxMarks: '10',
     note: '',
@@ -285,25 +305,27 @@ export default function Step4Results() {
 
   const handleSaveExtra = () => {
     if (!selectedExamId || !extraForm.studentId || !extraForm.marks) return
+    const typeConfig = extraMarkTypes.find((t) => t.id === extraForm.typeId)
     addExtraMark({
       examId: selectedExamId,
       studentId: extraForm.studentId,
       classId: selectedClassId,
       sectionId: selectedSectionId,
-      type: extraForm.type,
+      typeId: extraForm.typeId,
       marks: Number(extraForm.marks) || 0,
-      maxMarks: Number(extraForm.maxMarks) || 10,
+      maxMarks: Number(extraForm.maxMarks) || typeConfig?.defaultMaxMarks || 10,
       note: extraForm.note,
     })
     setShowExtraForm(false)
-    setExtraForm({ studentId: '', type: 'attendance', marks: '0', maxMarks: '10', note: '' })
+    setExtraForm({ studentId: '', studentSearch: '', showSuggestions: false, typeId: extraMarkTypes[0]?.id || '', marks: '0', maxMarks: '10', note: '' })
   }
 
-  const extraMarkTypes = [
-    { key: 'attendance' as const, label: isBn ? 'উপস্থিতি' : 'Attendance', icon: '📋', color: 'var(--green)' },
-    { key: 'discipline' as const, label: isBn ? 'শৃঙ্খলা' : 'Discipline', icon: '🎯', color: 'var(--brand)' },
-    { key: 'homework' as const, label: isBn ? 'হোমওয়ার্ক' : 'Homework', icon: '📝', color: 'var(--amber)' },
-  ]
+  // Icon mapping from string name to Lucide component
+  const iconMap: Record<string, React.ElementType> = {
+    ClipboardCheck, Shield, BookOpen, Award, Users, CheckCircle, TrendingUp,
+    Target, FileSpreadsheet, BarChart2, Star, Heart, Zap, Coffee, Music,
+  }
+  const getIcon = (iconName: string) => iconMap[iconName] || Award
 
   const handleDownloadTabulation = () => {
     const selected = enrichedTabulationData.filter((d) => selectedStudents.has(d.student.id))
@@ -313,12 +335,13 @@ export default function Step4Results() {
     const tdBorder = `border:1.5px solid #cbd5e1;padding:6px 8px;font-size:11px;text-align:center`
     const tdBorderLeft = `border:1.5px solid #cbd5e1;border-left:2.5px solid ${brand};padding:6px 8px;font-size:11px`
     const headers = selected[0].subjectMarks.map((s) => s.subjectName)
+    const fullMarksList = selected[0].subjectMarks.map((s) => s.fullMarks)
     const rows = selected
       .map((row, i) => {
         const cells = row.subjectMarks
           .map((s) => {
             const failStyle = !s.passed ? 'color:#ef4444;font-weight:700;background:#fef2f2;' : ''
-            return `<td style="${tdBorder};text-align:center;${failStyle}">${s.obtained}<span style="font-size:9px;color:#94a3b8">/${s.fullMarks}</span></td>`
+            return `<td style="${tdBorder};text-align:center;${failStyle}">${s.obtained}</td>`
           })
           .join('')
         const obtainedCell = pdfShowObtained ? `<td style="${tdBorder};font-weight:700;background:#eff6ff;color:${brand};font-size:12px">${row.totalObtained}</td>` : ''
@@ -336,11 +359,12 @@ export default function Step4Results() {
     const thClass = rotateHeaders ? ' class="th-rotate"' : ''
 
     const subjectThs = headers
-      .map((h) => {
+      .map((h, idx) => {
+        const fm = fullMarksList[idx]
         if (rotateHeaders) {
-          return `<th class="th-rotate" style="min-width:36px">${h}</th>`
+          return `<th class="th-rotate" style="min-width:36px">${h} (${fm})</th>`
         }
-        return `<th style="${thStyle('80px')}text-align:center;vertical-align:middle"><div style="font-weight:700">${h}</div></th>`
+        return `<th style="${thStyle('80px')}text-align:center;vertical-align:middle"><div style="font-weight:700">${h}</div><div style="font-size:9px;font-weight:400;opacity:0.8">/${fm}</div></th>`
       })
       .join('')
 
@@ -564,21 +588,19 @@ export default function Step4Results() {
                             {rotateHeaders ? (
                               <div className="flex items-center justify-center" style={{ height: '7rem' }}>
                                 <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600, letterSpacing: '0.02em' }}>
-                                  {sm.subjectName}
+                                  {sm.subjectName} ({sm.fullMarks})
                                 </span>
                               </div>
                             ) : (
                               <div className="text-center">
                                 <div className="font-semibold text-[0.625rem] leading-tight">{sm.subjectName}</div>
+                                <div className="text-[0.5rem] text-[var(--text-muted)] font-normal">/{sm.fullMarks}</div>
                               </div>
                             )}
                           </th>
                         ))}
                         <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-center'}`} style={rotateHeaders ? { width: '2.5rem', minWidth: '2.5rem' } : undefined}>
                           {rotateHeaders ? <div className="flex items-center justify-center" style={{ height: '7rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>{isBn ? 'প্রাপ্ত' : 'Obt'}</span></div> : <>{isBn ? 'প্রাপ্ত' : 'Obtained'}</>}
-                        </th>
-                        <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-center'}`} style={rotateHeaders ? { width: '2.5rem', minWidth: '2.5rem' } : undefined}>
-                          {rotateHeaders ? <div className="flex items-center justify-center" style={{ height: '7rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>{isBn ? 'গড়' : 'Avg'}</span></div> : <>{isBn ? 'গড়' : 'Avg'}</>}
                         </th>
                         <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-center'}`} style={rotateHeaders ? { width: '2rem', minWidth: '2rem' } : undefined}>
                           {rotateHeaders ? <div className="flex items-center justify-center" style={{ height: '7rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>%</span></div> : '%'}
@@ -618,7 +640,6 @@ export default function Step4Results() {
                               <span className={`text-[0.6875rem] font-medium ${sm.passed ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
                                 {sm.obtained}
                               </span>
-                              <span className="text-[0.5625rem] text-[var(--text-muted)]">/{sm.fullMarks}</span>
                             </td>
                           ))}
                           <td className="py-2 px-2 text-center text-[0.75rem] font-bold text-[var(--text-primary)]">{row.totalObtained}</td>
@@ -668,69 +689,104 @@ export default function Step4Results() {
         {/* ═══ EXTRA MARKS TAB ═══ */}
         {activeSubTab === 'extra-marks' && (
           <>
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-[0.75rem] text-[var(--text-secondary)]">
-                {sessionExtraMarks.filter((e) => (selectedExamId ? e.examId === selectedExamId : true)).length} {isBn ? 'টি এন্ট্রি' : 'entries'}
-              </span>
-              <button onClick={() => setShowExtraForm(true)} className={btnPrimary}>
-                <Plus size={14} />
-                {isBn ? 'নতুন এন্ট্রি' : 'New Entry'}
-              </button>
+            {/* Header with count + add button */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2">
+                <Award size={15} className="text-[var(--brand)]" />
+                <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                  {isBn ? 'এক্সট্রা মার্কস' : 'Extra Marks'}
+                </span>
+                <span className="text-[0.625rem] font-medium px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] border border-[var(--border)]">
+                  {sessionExtraMarks.filter((e) => (selectedExamId ? e.examId === selectedExamId : true)).length} {isBn ? 'এন্ট্রি' : 'entries'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => { setShowTypeManager(true); setShowAddTypeForm(true) }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
+                >
+                  <Settings size={13} />
+                  {isBn ? 'ধরন' : 'Types'}
+                </button>
+                <button onClick={() => setShowExtraForm(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none hover:opacity-90 transition-all">
+                  <Plus size={13} />
+                  {isBn ? 'নতুন' : 'Add'}
+                </button>
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-3 mb-3">
-              {extraMarkTypes.map((type) => {
-                const count = sessionExtraMarks.filter((e) => e.type === type.key && (selectedExamId ? e.examId === selectedExamId : true)).length
+
+            {/* Type summary - compact inline with Lucide icons */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-3">
+              {extraMarkTypes.filter((t) => t.isActive).map((type) => {
+                const count = sessionExtraMarks.filter((e) => e.typeId === type.id && (selectedExamId ? e.examId === selectedExamId : true)).length
+                const IconComponent = getIcon(type.icon)
                 return (
-                  <div key={type.key} className={sectionCls} style={{ borderColor: `${type.color}30` }}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[1rem]">{type.icon}</span>
-                      <div>
-                        <div className="text-[0.75rem] font-semibold text-[var(--text-primary)]">{type.label}</div>
-                        <div className="text-[0.625rem] text-[var(--text-muted)]">
-                          {count} {isBn ? 'টি এন্ট্রি' : 'entries'}
-                        </div>
-                      </div>
+                  <div
+                    key={type.id}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]"
+                  >
+                    <div className="flex items-center justify-center w-9 h-9 rounded-lg shrink-0" style={{ background: `${type.color}15` }}>
+                      <IconComponent size={17} style={{ color: type.color }} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[1rem] font-bold text-[var(--text-primary)] leading-none">{count}</div>
+                      <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1 leading-none truncate">{isBn ? type.nameBn : type.name}</div>
                     </div>
                   </div>
                 )
               })}
             </div>
-            <div className={sectionCls}>
-              <div className="space-y-2">
-                {sessionExtraMarks
-                  .filter((e) => (selectedExamId ? e.examId === selectedExamId : true))
-                  .map((entry) => {
-                    const student = students.find((s) => s.id === entry.studentId)
-                    const typeInfo = extraMarkTypes.find((t) => t.key === entry.type)
-                    return (
-                      <div
-                        key={entry.id}
-                        className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]"
-                      >
-                        <span className="text-[0.875rem]">{typeInfo?.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">{student?.nameEn || entry.studentId}</div>
-                          <div className="text-[0.625rem] text-[var(--text-muted)]">
-                            {entry.note} · {entry.classId} {entry.sectionId}
-                          </div>
+
+            {/* Entry list */}
+            <div className="space-y-1.5">
+              {sessionExtraMarks
+                .filter((e) => (selectedExamId ? e.examId === selectedExamId : true))
+                .map((entry) => {
+                  const student = students.find((s) => s.id === entry.studentId)
+                  const typeInfo = extraMarkTypes.find((t) => t.id === entry.typeId)
+                  const IconComponent = typeInfo ? getIcon(typeInfo.icon) : Award
+                  return (
+                    <div
+                      key={entry.id}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/20 transition-all group"
+                    >
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg" style={{ background: `${typeInfo?.color || '#6b7280'}15` }}>
+                        <IconComponent size={15} style={{ color: typeInfo?.color || '#6b7280' }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[0.75rem] font-medium text-[var(--text-primary)] truncate">
+                          {isBn ? student?.nameBn || student?.nameEn || entry.studentId : student?.nameEn || entry.studentId}
                         </div>
-                        <div className="text-right shrink-0">
-                          <div className="text-[0.8125rem] font-bold text-[var(--text-primary)]">
-                            {entry.marks}/{entry.maxMarks}
-                          </div>
+                        <div className="flex items-center gap-1.5 text-[0.5625rem] text-[var(--text-muted)]">
+                          <span>{entry.note}</span>
+                          {entry.note && <span>·</span>}
+                          <span>{entry.classId}</span>
+                          {entry.sectionId && <span>/ {entry.sectionId}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="text-right">
+                          <span className="text-[0.8125rem] font-bold text-[var(--text-primary)]">{entry.marks}</span>
+                          <span className="text-[0.625rem] text-[var(--text-muted)]">/{entry.maxMarks}</span>
                         </div>
                         <button
                           onClick={() => {
                             if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteExtraMark(entry.id)
                           }}
-                          className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)] shrink-0"
+                          className="w-6 h-6 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)] hover:border-[var(--red)]/30 opacity-0 group-hover:opacity-100 transition-all"
                         >
-                          <Trash2 size={11} />
+                          <Trash2 size={10} />
                         </button>
                       </div>
-                    )
-                  })}
-              </div>
+                    </div>
+                  )
+                })}
+              {sessionExtraMarks.filter((e) => (selectedExamId ? e.examId === selectedExamId : true)).length === 0 && (
+                <div className="text-center py-8 text-[var(--text-muted)] text-[0.75rem]">
+                  <Award size={24} className="mx-auto mb-2 opacity-30" />
+                  {isBn ? 'কোনো এক্সট্রা মার্কস নেই' : 'No extra marks yet'}
+                </div>
+              )}
             </div>
           </>
         )}
@@ -869,84 +925,221 @@ export default function Step4Results() {
       </div>
 
       {/* ═══ Extra Mark Form Modal ═══ */}
-      {showExtraForm && (
+      {showExtraForm && createPortal(
         <div className="modal-overlay">
-          <div className="modal-box modal-content" style={{ maxWidth: '23.75rem' }}>
-            <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
-              {isBn ? 'এক্সট্রা মার্কস যোগ' : 'Add Extra Marks'}
-            </h3>
-            <div className="space-y-3">
-              <div>
-                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শিক্ষার্থী' : 'Student'}</label>
-                <select
-                  value={extraForm.studentId}
-                  onChange={(e) => setExtraForm((p) => ({ ...p, studentId: e.target.value }))}
-                  className={`${inputCls} w-full`}
-                >
-                  <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                  {classStudents.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {isBn ? s.nameBn || s.nameEn : s.nameEn}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ধরন' : 'Type'}</label>
-                <select
-                  value={extraForm.type}
-                  onChange={(e) => setExtraForm((p) => ({ ...p, type: e.target.value as 'attendance' | 'discipline' | 'homework' }))}
-                  className={`${inputCls} w-full`}
-                >
-                  {extraMarkTypes.map((t) => (
-                    <option key={t.key} value={t.key}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'প্রাপ্ত' : 'Marks'}</label>
-                  <input
-                    type="number"
-                    value={extraForm.marks}
-                    onChange={(e) => setExtraForm((p) => ({ ...p, marks: e.target.value }))}
-                    className={`${inputCls} w-full`}
-                  />
+          <div className="modal-box modal-content" style={{ maxWidth: '30rem' }}>
+            {/* Header */}
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.625rem', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Award size={18} style={{ color: 'var(--brand)' }} />
                 </div>
                 <div>
-                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সর্বোচ্চ' : 'Max'}</label>
-                  <input
-                    type="number"
-                    value={extraForm.maxMarks}
-                    onChange={(e) => setExtraForm((p) => ({ ...p, maxMarks: e.target.value }))}
-                    className={`${inputCls} w-full`}
-                  />
+                  <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'এক্সট্রা মার্কস যোগ' : 'Add Extra Marks'}</h2>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>{isBn ? 'শিক্ষার্থীর এক্সট্রা মার্কস যোগ করুন' : 'Add extra marks for a student'}</p>
                 </div>
               </div>
+              <button onClick={() => setShowExtraForm(false)} style={{ width: '1.875rem', height: '1.875rem', borderRadius: '0.5rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={15} style={{ color: 'var(--text-secondary)' }} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
+              {/* Student */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.0313rem', marginBottom: '0.5rem' }}>
+                  ① {isBn ? 'শিক্ষার্থী নির্বাচন' : 'Select Student'}
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="text"
+                    value={extraForm.studentSearch}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setExtraForm((p) => ({ ...p, studentSearch: val, studentId: val === '' ? '' : p.studentId }))
+                    }}
+                    onFocus={() => setExtraForm((p) => ({ ...p, showSuggestions: true }))}
+                    onBlur={() => setTimeout(() => setExtraForm((p) => ({ ...p, showSuggestions: false })), 200)}
+                    style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: '0.5rem', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.8125rem', fontFamily: 'inherit', outline: 'none' }}
+                    placeholder={isBn ? 'নাম বা আইডি দিয়ে খুঁজুন...' : 'Search by name or ID...'}
+                  />
+                  {extraForm.studentSearch && (
+                    <button onClick={() => setExtraForm((p) => ({ ...p, studentSearch: '', studentId: '' }))} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', width: '1.25rem', height: '1.25rem', borderRadius: '50%', background: 'var(--border)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <X size={10} style={{ color: 'var(--text-primary)' }} />
+                    </button>
+                  )}
+                  {extraForm.studentId && (
+                    <div style={{ marginTop: '0.375rem', fontSize: '0.75rem', color: 'var(--green)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <CheckCircle size={12} />
+                      {isBn ? 'নির্বাচিত' : 'Selected'}: {classStudents.find((s) => s.id === extraForm.studentId)?.nameEn}
+                    </div>
+                  )}
+                  {extraForm.showSuggestions && extraForm.studentSearch && !extraForm.studentId && (
+                    <div style={{ position: 'absolute', zIndex: 50, marginTop: '0.25rem', width: '100%', maxHeight: '12rem', overflowY: 'auto', borderRadius: '0.5rem', border: '1px solid var(--border)', background: 'var(--bg-primary)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                      {classStudents
+                        .filter((s) => {
+                          const q = extraForm.studentSearch.toLowerCase()
+                          return s.nameEn.toLowerCase().includes(q) || (s.nameBn && s.nameBn.toLowerCase().includes(q)) || s.id.toLowerCase().includes(q) || (s.roll && s.roll.toLowerCase().includes(q))
+                        })
+                        .slice(0, 10)
+                        .map((s) => (
+                          <button key={s.id} onMouseDown={() => setExtraForm((p) => ({ ...p, studentId: s.id, studentSearch: isBn ? s.nameBn || s.nameEn : s.nameEn, showSuggestions: false }))} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '8px 12px', textAlign: 'left', cursor: 'pointer', border: 'none', background: 'transparent', fontFamily: 'inherit' }} onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                            <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: 'var(--brand)', flexShrink: 0 }}>
+                              {(isBn ? s.nameBn || s.nameEn : s.nameEn)?.charAt(0)?.toUpperCase()}
+                            </div>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{isBn ? s.nameBn || s.nameEn : s.nameEn}</div>
+                              <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{s.id}{s.roll ? ` · Roll: ${s.roll}` : ''}</div>
+                            </div>
+                          </button>
+                        ))}
+                      {classStudents.filter((s) => { const q = extraForm.studentSearch.toLowerCase(); return s.nameEn.toLowerCase().includes(q) || (s.nameBn && s.nameBn.toLowerCase().includes(q)) || s.id.toLowerCase().includes(q) || (s.roll && s.roll.toLowerCase().includes(q)) }).length === 0 && (
+                        <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{isBn ? 'কোনো শিক্ষার্থী পাওয়া যায়নি' : 'No students found'}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Type */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.0313rem' }}>
+                    ② {isBn ? 'ধরন' : 'Type'}
+                  </div>
+                  <button onClick={() => { setShowTypeManager(true); setShowAddTypeForm(true) }} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '4px 8px', borderRadius: '0.375rem', fontSize: '0.6875rem', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <Settings size={11} />
+                    {isBn ? 'ধরন ম্যানেজ' : 'Manage'}
+                  </button>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {extraMarkTypes.filter((t) => t.isActive).map((t) => {
+                    const IconComponent = getIcon(t.icon)
+                    return (
+                      <button key={t.id} onClick={() => setExtraForm((p) => ({ ...p, typeId: t.id, maxMarks: String(t.defaultMaxMarks) }))} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem', padding: '0.5rem 0.875rem', borderRadius: '0.5rem', border: `2px solid ${extraForm.typeId === t.id ? 'var(--brand)' : 'var(--border)'}`, background: extraForm.typeId === t.id ? 'var(--brand-light)' : 'var(--bg-secondary)', color: extraForm.typeId === t.id ? 'var(--brand)' : 'var(--text-secondary)', fontSize: '0.6875rem', fontWeight: extraForm.typeId === t.id ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s' }}>
+                        <IconComponent size={12} />
+                        {isBn ? t.nameBn : t.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Marks */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.0313rem', marginBottom: '0.5rem' }}>③ {isBn ? 'প্রাপ্ত মার্কস' : 'Marks Obtained'}</div>
+                  <input type="number" value={extraForm.marks} onChange={(e) => setExtraForm((p) => ({ ...p, marks: e.target.value }))} style={{ width: '100%', padding: '9px 12px', borderRadius: '0.5rem', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.8125rem', fontFamily: 'inherit', outline: 'none' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.0313rem', marginBottom: '0.5rem' }}>④ {isBn ? 'সর্বোচ্চ মার্কস' : 'Maximum Marks'}</div>
+                  <input type="number" value={extraForm.maxMarks} onChange={(e) => setExtraForm((p) => ({ ...p, maxMarks: e.target.value }))} style={{ width: '100%', padding: '9px 12px', borderRadius: '0.5rem', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.8125rem', fontFamily: 'inherit', outline: 'none' }} />
+                </div>
+              </div>
+
+              {/* Note */}
               <div>
-                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'নোট' : 'Note'}</label>
-                <input
-                  value={extraForm.note}
-                  onChange={(e) => setExtraForm((p) => ({ ...p, note: e.target.value }))}
-                  className={`${inputCls} w-full`}
-                />
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.0313rem', marginBottom: '0.5rem' }}>⑤ {isBn ? 'নোট' : 'Note'}</div>
+                <input value={extraForm.note} onChange={(e) => setExtraForm((p) => ({ ...p, note: e.target.value }))} placeholder={isBn ? 'ঐচ্ছিক...' : 'Optional...'} style={{ width: '100%', padding: '9px 12px', borderRadius: '0.5rem', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.8125rem', fontFamily: 'inherit', outline: 'none' }} />
               </div>
             </div>
-            <div className="flex gap-2 justify-end mt-4">
-              <button
-                onClick={() => setShowExtraForm(false)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
-              >
+
+            {/* Footer */}
+            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', background: 'var(--bg-secondary)' }}>
+              <button onClick={() => setShowExtraForm(false)} style={{ padding: '9px 16px', borderRadius: '0.5625rem', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit' }}>
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button onClick={handleSaveExtra} className={`${btnPrimary} text-[0.75rem]`}>
+              <button onClick={handleSaveExtra} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '9px 20px', borderRadius: '0.5625rem', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                <Save size={14} />
                 {isBn ? 'সংরক্ষণ' : 'Save'}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Type Manager Modal */}
+      {showTypeManager && createPortal(
+        <div className="modal-overlay" style={{ zIndex: 700 }}>
+          <div className="modal-box modal-content" style={{ maxWidth: '28rem' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.625rem', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Settings size={16} style={{ color: 'var(--brand)' }} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'এক্সট্রা মার্কস ধরন ম্যানেজ' : 'Manage Extra Mark Types'}</h2>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>{isBn ? 'নতুন ধরন তৈরি ও পরিচালনা করুন' : 'Create and manage mark types'}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowTypeManager(false)} style={{ width: '1.875rem', height: '1.875rem', borderRadius: '0.5rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={15} style={{ color: 'var(--text-secondary)' }} />
+              </button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
+              {/* Add Type Form */}
+              {showAddTypeForm && (
+                <div style={{ marginBottom: '1rem', padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--brand)', background: 'var(--brand-light)' }}>
+                  <AddTypeForm onClose={() => setShowAddTypeForm(false)} onAdded={() => setShowAddTypeForm(false)} />
+                </div>
+              )}
+
+              {/* Existing types list */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {extraMarkTypes.map((type) => {
+                  const IconComponent = getIcon(type.icon)
+                  const isEditing = editingType === type.id
+                  return (
+                    <div key={type.id} style={{ padding: '10px 12px', borderRadius: '0.625rem', border: `1px solid ${isEditing ? 'var(--brand)' : 'var(--border)'}`, background: isEditing ? 'var(--brand-light)' : 'var(--bg-primary)' }}>
+                      {isEditing ? (
+                        <EditTypeForm
+                          type={type}
+                          onClose={() => setEditingType(null)}
+                          onSaved={() => setEditingType(null)}
+                        />
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem', background: `${type.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <IconComponent size={16} style={{ color: type.color }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>{isBn ? type.nameBn : type.name}</div>
+                            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{type.icon} · Max: {type.defaultMaxMarks}</div>
+                          </div>
+                          <button onClick={() => updateExtraMarkType(type.id, { isActive: !type.isActive })} style={{ padding: '4px 10px', borderRadius: '0.375rem', fontSize: '0.6875rem', fontWeight: 500, cursor: 'pointer', border: `1px solid ${type.isActive ? 'var(--green)' : 'var(--border)'}`, background: type.isActive ? 'var(--green-light)' : 'var(--bg-secondary)', color: type.isActive ? 'var(--green)' : 'var(--text-muted)', fontFamily: 'inherit' }}>
+                            {type.isActive ? (isBn ? 'সক্রিয়' : 'Active') : (isBn ? 'নিষ্ক্রিয়' : 'Inactive')}
+                          </button>
+                          <button onClick={() => setEditingType(type.id)} style={{ width: '1.75rem', height: '1.75rem', borderRadius: '0.375rem', border: '1px solid var(--border)', background: 'var(--bg-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--brand)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}>
+                            <Edit size={12} />
+                          </button>
+                          <button onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteExtraMarkType(type.id) }} style={{ width: '1.75rem', height: '1.75rem', borderRadius: '0.375rem', border: '1px solid var(--border)', background: 'var(--bg-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--red)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}>
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', background: 'var(--bg-secondary)' }}>
+              <button onClick={() => setShowTypeManager(false)} style={{ padding: '9px 16px', borderRadius: '0.5625rem', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+                {isBn ? 'বন্ধ' : 'Close'}
+              </button>
+              <button onClick={() => setShowAddTypeForm(!showAddTypeForm)} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '9px 20px', borderRadius: '0.5625rem', background: showAddTypeForm ? 'var(--bg-primary)' : 'var(--brand)', border: showAddTypeForm ? '1px solid var(--border)' : 'none', color: showAddTypeForm ? 'var(--text-secondary)' : '#fff', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                <Plus size={14} />
+                {isBn ? 'নতুন যোগ' : 'Add New'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* PDF Download Modal */}
@@ -1079,6 +1272,193 @@ export default function Step4Results() {
         </div>,
         document.body
       )}
+    </div>
+  )
+}
+
+// ─── Edit Type Form Component ───
+function EditTypeForm({ type, onClose, onSaved }: { type: { id: string; name: string; nameBn: string; icon: string; color: string; defaultMaxMarks: number }; onClose: () => void; onSaved: () => void }) {
+  const isBn = useBn()
+  const updateExtraMarkType = useExamStore((s) => s.updateExtraMarkType)
+  const [name, setName] = useState(type.name)
+  const [nameBn, setNameBn] = useState(type.nameBn)
+  const [icon, setIcon] = useState(type.icon)
+  const [color, setColor] = useState(type.color)
+  const [defaultMaxMarks, setDefaultMaxMarks] = useState(String(type.defaultMaxMarks))
+
+  const iconOptions = [
+    'ClipboardCheck', 'Shield', 'BookOpen', 'Award', 'Users', 'CheckCircle',
+    'TrendingUp', 'Target', 'FileSpreadsheet', 'BarChart2', 'Star', 'Heart',
+    'Zap', 'Coffee', 'Music',
+  ]
+
+  const handleSave = () => {
+    if (!name.trim()) return
+    updateExtraMarkType(type.id, {
+      name: name.trim(),
+      nameBn: nameBn.trim() || name.trim(),
+      icon,
+      color,
+      defaultMaxMarks: Number(defaultMaxMarks) || 10,
+    })
+    onSaved()
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Name</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} className={`${inputCls} w-full`} />
+        </div>
+        <div>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Name (Bn)</label>
+          <input value={nameBn} onChange={(e) => setNameBn(e.target.value)} className={`${inputCls} w-full`} />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Icon</label>
+          <select value={icon} onChange={(e) => setIcon(e.target.value)} className={`${selectCls} w-full`}>
+            {iconOptions.map((i) => (<option key={i} value={i}>{i}</option>))}
+          </select>
+        </div>
+        <div>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Color</label>
+          <div className="flex items-center gap-2">
+            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 rounded-md border border-[var(--border)] cursor-pointer" />
+            <span className="text-[0.625rem] text-[var(--text-muted)]">{color}</span>
+          </div>
+        </div>
+        <div>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Max</label>
+          <input type="number" value={defaultMaxMarks} onChange={(e) => setDefaultMaxMarks(e.target.value)} className={`${inputCls} w-full`} />
+        </div>
+      </div>
+      <div className="flex gap-2 justify-end">
+        <button onClick={onClose} className="px-3 py-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer">
+          {isBn ? 'বাতিল' : 'Cancel'}
+        </button>
+        <button onClick={handleSave} disabled={!name.trim()} className="flex items-center gap-1 px-3 py-1 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none disabled:opacity-50">
+          <Save size={11} />
+          {isBn ? 'সংরক্ষণ' : 'Save'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Add Type Form Component ───
+function AddTypeForm({ onClose, onAdded }: { onClose: () => void; onAdded?: () => void }) {
+  const isBn = useBn()
+  const addExtraMarkType = useExamStore((s) => s.addExtraMarkType)
+  const [name, setName] = useState('')
+  const [nameBn, setNameBn] = useState('')
+  const [icon, setIcon] = useState('Award')
+  const [color, setColor] = useState('#3b82f6')
+  const [defaultMaxMarks, setDefaultMaxMarks] = useState('10')
+
+  const iconOptions = [
+    'ClipboardCheck', 'Shield', 'BookOpen', 'Award', 'Users', 'CheckCircle',
+    'TrendingUp', 'Target', 'FileSpreadsheet', 'BarChart2', 'Star', 'Heart',
+    'Zap', 'Coffee', 'Music',
+  ]
+
+  const handleAdd = () => {
+    if (!name.trim()) return
+    addExtraMarkType({
+      name: name.trim(),
+      nameBn: nameBn.trim() || name.trim(),
+      icon,
+      color,
+      defaultMaxMarks: Number(defaultMaxMarks) || 10,
+      isActive: true,
+    })
+    setName('')
+    setNameBn('')
+    setIcon('Award')
+    setColor('#3b82f6')
+    setDefaultMaxMarks('10')
+    if (onAdded) onAdded()
+    else onClose()
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
+        {isBn ? 'নতুন ধরন যোগ করুন' : 'Add New Type'}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Name</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={`${inputCls} w-full`}
+            placeholder="e.g. Participation"
+          />
+        </div>
+        <div>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Name (Bn)</label>
+          <input
+            value={nameBn}
+            onChange={(e) => setNameBn(e.target.value)}
+            className={`${inputCls} w-full`}
+            placeholder="e.g. অংশগ্রহণ"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Icon</label>
+          <select
+            value={icon}
+            onChange={(e) => setIcon(e.target.value)}
+            className={`${selectCls} w-full`}
+          >
+            {iconOptions.map((i) => (
+              <option key={i} value={i}>{i}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Color</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="w-8 h-8 rounded-md border border-[var(--border)] cursor-pointer"
+            />
+            <span className="text-[0.625rem] text-[var(--text-muted)]">{color}</span>
+          </div>
+        </div>
+        <div>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Max Marks</label>
+          <input
+            type="number"
+            value={defaultMaxMarks}
+            onChange={(e) => setDefaultMaxMarks(e.target.value)}
+            className={`${inputCls} w-full`}
+          />
+        </div>
+      </div>
+      <div className="flex gap-2 justify-end mt-3 pt-3 border-t border-[var(--border)]">
+        <button
+          onClick={onClose}
+          className="px-3.5 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer hover:border-[var(--text-muted)] transition-all"
+        >
+          {isBn ? 'বাতিল' : 'Close'}
+        </button>
+        <button
+          onClick={handleAdd}
+          disabled={!name.trim()}
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Save size={12} />
+          {isBn ? 'সংরক্ষণ' : 'Save'}
+        </button>
+      </div>
     </div>
   )
 }

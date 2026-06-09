@@ -44,7 +44,7 @@ export default function Step3Evaluation() {
   const upsertSubjectMarkConfig = useExamStore((s) => s.upsertSubjectMarkConfig)
   const lockMarks = useExamStore((s) => s.lockMarks)
   const unlockMarks = useExamStore((s) => s.unlockMarks)
-  const toggleExamPublished = useExamStore((s) => s.toggleExamPublished)
+  const toggleClassPublished = useExamStore((s) => s.toggleClassPublished)
 
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('entry')
   const [selectedExamId, setSelectedExamId] = useState(examConfigs.find((e) => e.isActive)?.id || '')
@@ -261,13 +261,6 @@ export default function Step3Evaluation() {
     return { total: filtered.length, completed, inProgress, pending, locked }
   }, [sessionMarksEntryStatuses, selectedExamId])
 
-  // Structure tab: check if config is locked
-  const isConfigLocked = useCallback((config: SubjectMarkConfig) => {
-    return sessionMarksEntryStatuses.some(
-      (m) => m.examId === config.examId && m.classId === config.classId && m.subjectId === config.subjectId && m.status === 'locked'
-    )
-  }, [sessionMarksEntryStatuses])
-
   const handleStartEditStruct = (config: SubjectMarkConfig) => {
     setEditingStructId(config.id)
     setStructEditForm({
@@ -306,23 +299,6 @@ export default function Step3Evaluation() {
   const handleCancelEditStruct = () => {
     setEditingStructId(null)
     setStructEditForm(null)
-  }
-
-  const handleToggleLockStruct = (config: SubjectMarkConfig) => {
-    const locked = isConfigLocked(config)
-    if (locked) {
-      unlockMarks(config.examId, config.classId, '', config.subjectId)
-    } else {
-      const classEntry = classes.find((c) => extractClassNumber(c.name) === config.classId)
-      const sections = classEntry?.sections || []
-      if (sections.length === 0) {
-        lockMarks(config.examId, config.classId, '', config.subjectId)
-      } else {
-        sections.forEach((sec) => {
-          lockMarks(config.examId, config.classId, sec.name, config.subjectId)
-        })
-      }
-    }
   }
 
   return (
@@ -472,7 +448,7 @@ export default function Step3Evaluation() {
 
             {/* Subject Cards */}
             {structClassId && (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {structConfigs.length === 0 && (
                   <div className={`${sectionCls} text-center py-8`}>
                     <BookOpen size={24} className="mx-auto mb-2 opacity-30 text-[var(--text-muted)]" />
@@ -487,7 +463,6 @@ export default function Step3Evaluation() {
 
                 {structConfigs.map((config, configIdx) => {
                   const subject = subjects.find((s) => s.id === config.subjectId)
-                  const locked = isConfigLocked(config)
                   const isEditing = editingStructId === config.id
                   const form = isEditing ? structEditForm : null
 
@@ -495,35 +470,23 @@ export default function Step3Evaluation() {
                     <div
                       key={config.id}
                       className={`rounded-xl border transition-all overflow-hidden ${
-                        locked
-                          ? 'border-[var(--red)]/20 bg-[var(--bg-primary)]'
-                          : isEditing
-                            ? 'border-[var(--brand)]/30 bg-[var(--bg-primary)] shadow-sm ring-1 ring-[var(--brand)]/10'
-                            : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/20'
+                        isEditing
+                          ? 'border-[var(--brand)]/30 bg-[var(--bg-primary)] ring-1 ring-[var(--brand)]/10'
+                          : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/20'
                       }`}
                     >
                       {/* Subject Header */}
                       <div className={`flex items-center justify-between px-4 py-3 ${
-                        locked ? 'bg-[var(--red-light)]' : isEditing ? 'bg-[var(--brand-light)]' : 'bg-[var(--bg-secondary)]'
+                        isEditing ? 'bg-[var(--brand-light)]' : 'bg-[var(--bg-secondary)]'
                       }`}>
                         <div className="flex items-center gap-3">
-                          <div className={`flex items-center justify-center w-8 h-8 rounded-lg text-[0.6875rem] font-bold ${
-                            locked ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--brand-light)] text-[var(--brand)]'
-                          }`}>
+                          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--brand-light)] text-[0.6875rem] font-bold text-[var(--brand)]">
                             {configIdx + 1}
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-                                {isBn ? subject?.nameBn || subject?.name : subject?.name}
-                              </span>
-                              {locked && (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.5rem] font-semibold bg-[var(--red-light)] text-[var(--red)]">
-                                  <Lock size={8} />
-                                  {isBn ? 'লকড' : 'LOCKED'}
-                                </span>
-                              )}
-                            </div>
+                            <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                              {isBn ? subject?.nameBn || subject?.name : subject?.name}
+                            </span>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-[0.625rem] text-[var(--text-muted)]">
                                 {isBn ? 'পূর্ণমান' : 'Full'}: <span className="font-semibold text-[var(--text-secondary)]">{config.fullMarks}</span>
@@ -544,45 +507,32 @@ export default function Step3Evaluation() {
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          {!locked && (
-                            isEditing ? (
-                              <>
-                                <button
-                                  onClick={() => handleSaveStruct(config)}
-                                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--green)] text-white text-[0.6875rem] font-medium cursor-pointer border-none hover:opacity-90 transition-all"
-                                >
-                                  <Save size={12} />
-                                  {isBn ? 'সেভ' : 'Save'}
-                                </button>
-                                <button
-                                  onClick={handleCancelEditStruct}
-                                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--border)] hover:border-[var(--text-muted)] transition-all"
-                                >
-                                  <X size={12} />
-                                  {isBn ? 'বাতিল' : 'Cancel'}
-                                </button>
-                              </>
-                            ) : (
+                          {isEditing ? (
+                            <>
                               <button
-                                onClick={() => handleStartEditStruct(config)}
-                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
+                                onClick={() => handleSaveStruct(config)}
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--green)] text-white text-[0.6875rem] font-medium cursor-pointer border-none hover:opacity-90 transition-all"
                               >
-                                <Pencil size={12} />
-                                {isBn ? 'সম্পাদনা' : 'Edit'}
+                                <Save size={12} />
+                                {isBn ? 'সেভ' : 'Save'}
                               </button>
-                            )
+                              <button
+                                onClick={handleCancelEditStruct}
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--border)] hover:border-[var(--text-muted)] transition-all"
+                              >
+                                <X size={12} />
+                                {isBn ? 'বাতিল' : 'Cancel'}
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => handleStartEditStruct(config)}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
+                            >
+                              <Pencil size={12} />
+                              {isBn ? 'সম্পাদনা' : 'Edit'}
+                            </button>
                           )}
-                          <button
-                            onClick={() => handleToggleLockStruct(config)}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium cursor-pointer border-none transition-all ${
-                              locked
-                                ? 'bg-[var(--red-light)] text-[var(--red)] hover:bg-[var(--red)]/15'
-                                : 'bg-[var(--amber-light)] text-[var(--amber)] hover:bg-[var(--amber)]/15'
-                            }`}
-                          >
-                            {locked ? <Unlock size={12} /> : <Lock size={12} />}
-                            {locked ? (isBn ? 'আনলক' : 'Unlock') : (isBn ? 'লক' : 'Lock')}
-                          </button>
                         </div>
                       </div>
 
@@ -593,22 +543,16 @@ export default function Step3Evaluation() {
                             {config.subExams.map((se, idx) => (
                               <div
                                 key={se.id}
-                                className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                                  locked
-                                    ? 'bg-[var(--bg-secondary)] border-[var(--border)]/60'
-                                    : 'bg-[var(--bg-secondary)] border-[var(--border)] hover:border-[var(--brand)]/20'
-                                }`}
+                                className="flex items-center gap-3 p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/20 transition-all"
                               >
-                                <div className={`flex items-center justify-center w-7 h-7 rounded-md text-[0.625rem] font-bold ${
-                                  locked ? 'bg-[var(--border)] text-[var(--text-muted)]' : 'bg-[var(--brand-light)] text-[var(--brand)]'
-                                }`}>
+                                <div className="flex items-center justify-center w-7 h-7 rounded-md bg-[var(--brand-light)] text-[0.625rem] font-bold text-[var(--brand)]">
                                   {idx + 1}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">
                                     {isBn ? se.nameBn : se.name}
                                   </div>
-                                  {isEditing && form && !locked ? (
+                                  {isEditing && form ? (
                                     <div className="flex items-center gap-1.5 mt-1.5">
                                       <input
                                         type="number"
@@ -635,8 +579,8 @@ export default function Step3Evaluation() {
                                       />
                                     </div>
                                   ) : (
-                                    <div className="flex items-center gap-1.5 mt-1">
-                                      <span className={`text-[0.6875rem] font-semibold ${locked ? 'text-[var(--text-muted)]' : 'text-[var(--text-primary)]'}`}>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                      <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">
                                         {se.fullMarks}
                                       </span>
                                       <span className="text-[0.5rem] text-[var(--text-muted)]">/</span>
@@ -656,7 +600,7 @@ export default function Step3Evaluation() {
                         )}
 
                         {/* Auto-calculated totals */}
-                        {isEditing && form && !locked && (
+                        {isEditing && form && (
                           <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[var(--border)]">
                             <div className="flex items-center gap-1.5">
                               <span className="text-[0.625rem] font-medium text-[var(--text-muted)]">{isBn ? 'মোট পূর্ণমান' : 'Total Full'}:</span>
@@ -672,16 +616,6 @@ export default function Step3Evaluation() {
                             </div>
                           </div>
                         )}
-
-                        {/* Locked overlay message */}
-                        {locked && (
-                          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[var(--border)]">
-                            <Lock size={12} className="text-[var(--red)]" />
-                            <span className="text-[0.6875rem] text-[var(--red)] font-medium">
-                              {isBn ? 'এই বিষয়টি লক করা আছে। সম্পাদনা করতে আনলক করুন।' : 'This subject is locked. Unlock to edit.'}
-                            </span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   )
@@ -693,14 +627,14 @@ export default function Step3Evaluation() {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1.5 text-[0.6875rem]">
-                          <div className="w-2 h-2 rounded-full bg-[var(--green)]" />
-                          <span className="text-[var(--text-muted)]">{isBn ? 'লকড' : 'Locked'}:</span>
-                          <span className="font-semibold text-[var(--text-primary)]">{structConfigs.filter((c) => isConfigLocked(c)).length}</span>
+                          <div className="w-2 h-2 rounded-full bg-[var(--brand)]" />
+                          <span className="text-[var(--text-muted)]">{isBn ? 'মোট বিষয়' : 'Total Subjects'}:</span>
+                          <span className="font-semibold text-[var(--text-primary)]">{structConfigs.length}</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-[0.6875rem]">
-                          <div className="w-2 h-2 rounded-full bg-[var(--amber)]" />
-                          <span className="text-[var(--text-muted)]">{isBn ? 'খোলা' : 'Open'}:</span>
-                          <span className="font-semibold text-[var(--text-primary)]">{structConfigs.filter((c) => !isConfigLocked(c)).length}</span>
+                          <div className="w-2 h-2 rounded-full bg-[var(--green)]" />
+                          <span className="text-[var(--text-muted)]">{isBn ? 'মোট সাব-এক্সাম' : 'Total Sub-exams'}:</span>
+                          <span className="font-semibold text-[var(--text-primary)]">{structConfigs.reduce((sum, c) => sum + c.subExams.length, 0)}</span>
                         </div>
                       </div>
                     </div>
@@ -1052,49 +986,50 @@ export default function Step3Evaluation() {
           <>
             {/* Publish Result */}
             {selectedExam && (
-              <div className={`${sectionCls} !mb-3`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`flex items-center justify-center w-9 h-9 rounded-lg ${selectedExam.isPublished ? 'bg-[var(--green-light)]' : 'bg-[var(--bg-secondary)]'}`}>
-                      <CheckCircle size={18} className={selectedExam.isPublished ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'} />
-                    </div>
-                    <div>
-                      <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
-                        {isBn ? 'ফলাফল প্রকাশ' : 'Publish Result'}
-                      </h3>
-                      <p className="text-[0.625rem] text-[var(--text-muted)]">
-                        {selectedExam.isPublished
-                          ? (isBn ? 'শিক্ষার্থী ও অভিভাবকরা ফলাফল দেখতে পাবেন' : 'Students and guardians can view results')
-                          : (isBn ? 'প্রকাশ করলে শিক্ষার্থী ও অভিভাবকরা ফলাফল দেখতে পাবেন' : 'Publish to allow students and guardians to view results')}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => toggleExamPublished(selectedExam.id)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-medium cursor-pointer border-none transition-all ${
-                      selectedExam.isPublished
-                        ? 'bg-[var(--red-light)] text-[var(--red)] hover:bg-[var(--red)]/15'
-                        : 'bg-[var(--green)] text-white hover:opacity-90'
-                    }`}
-                  >
-                    {selectedExam.isPublished ? (
-                      <>
-                        <X size={14} />
-                        {isBn ? 'অপ্রকাশিত করুন' : 'Unpublish'}
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle size={14} />
-                        {isBn ? 'প্রকাশ করুন' : 'Publish'}
-                      </>
-                    )}
-                  </button>
+              <div className={sectionCls}>
+                <div className={sectionTitleCls}>
+                  <CheckCircle size={15} className="text-[var(--brand)]" />
+                  {isBn ? 'ফলাফল প্রকাশ' : 'Publish Result'}
                 </div>
-                {selectedExam.isPublished && selectedExam.publishedAt && (
-                  <div className="mt-2 text-[0.625rem] text-[var(--text-muted)]">
-                    {isBn ? 'প্রকাশিত:' : 'Published:'} {new Date(selectedExam.publishedAt).toLocaleString()}
-                  </div>
-                )}
+                <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
+                  {isBn ? 'শ্রেণি অনুযায়ী ফলাফল প্রকাশ করুন' : 'Publish results class by class'}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {classOptions.map((c) => {
+                    const isClassPublished = (selectedExam.publishedClasses || []).includes(c)
+                    const classSubjects = sessionSubjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === c)
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => toggleClassPublished(selectedExamId, c)}
+                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
+                          isClassPublished
+                            ? 'border-[var(--green)]/30 bg-[var(--green-light)]/30'
+                            : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/30'
+                        }`}
+                      >
+                        <div className={`flex items-center justify-center w-9 h-9 rounded-lg ${
+                          isClassPublished ? 'bg-[var(--green)]' : 'bg-[var(--bg-primary)] border border-[var(--border)]'
+                        }`}>
+                          <GraduationCap size={16} className={isClassPublished ? 'text-white' : 'text-[var(--text-muted)]'} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                            {isBn ? classes.find((cl) => cl.name === c)?.nameBn || c : c}
+                          </div>
+                          <div className="text-[0.625rem] text-[var(--text-muted)]">
+                            {classSubjects.length} {isBn ? 'টি বিষয়' : 'subjects'}
+                          </div>
+                        </div>
+                        <div className={`px-2.5 py-1 rounded-md text-[0.625rem] font-semibold ${
+                          isClassPublished ? 'bg-[var(--green)] text-white' : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border)]'
+                        }`}>
+                          {isClassPublished ? (isBn ? 'প্রকাশিত' : 'Published') : (isBn ? 'প্রকাশ করুন' : 'Publish')}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             )}
 
@@ -1104,71 +1039,72 @@ export default function Step3Evaluation() {
                 <Lock size={15} className="text-[var(--brand)]" />
                 {isBn ? 'মার্কস লক/আনলক' : 'Marks Lock/Unlock'}
               </div>
-              <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
-                {isBn ? 'সম্পন্ন এন্ট্রি লক করুন বা পরিবর্তনের জন্য আনলক করুন' : 'Lock completed entries or unlock for changes'}
-              </p>
 
-              {/* Class Chip Selector */}
-              <div className="mb-3">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wider">{isBn ? 'শ্রেণি' : 'Class'}</label>
-                  {publishClassId && (
-                    <button
-                      onClick={() => { setPublishClassId(''); setPublishSectionId('') }}
-                      className="text-[0.5625rem] text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-none font-[inherit]"
-                    >
-                      {isBn ? 'মুছুন' : 'Clear'}
-                    </button>
+              {/* Class & Section Selector - Same as Structure tab */}
+              <div className={`${sectionCls} !p-3 !mb-3`}>
+                <div className="flex items-start gap-3">
+                  {/* Class chips - left side */}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center justify-center w-6 h-6 rounded-md bg-[var(--brand-light)] shrink-0">
+                      <Settings size={13} className="text-[var(--brand)]" />
+                    </div>
+                    <div className={`flex gap-1 min-w-0 ${classOptions.length >= 10 ? 'overflow-x-auto' : 'flex-wrap'}`}>
+                      {classOptions.map((c) => {
+                        const subjectCount = sessionSubjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === c).length
+                        return (
+                          <button
+                            key={c}
+                            onClick={() => { setPublishClassId(c); setPublishSectionId('') }}
+                            className={`px-2.5 py-1 rounded-md text-[0.6875rem] font-medium cursor-pointer border transition-all whitespace-nowrap shrink-0 ${
+                              publishClassId === c
+                                ? 'border-[var(--brand)] bg-[var(--brand)] text-white'
+                                : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40'
+                            }`}
+                          >
+                            {isBn ? classes.find((cl) => cl.name === c)?.nameBn || c : c}
+                            <span className="ml-0.5 opacity-60">({subjectCount})</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Section chips - right side */}
+                  {publishClassId && publishSectionOptions.length > 0 && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="w-px h-4 bg-[var(--border)]" />
+                      <span className="text-[0.75rem] font-semibold text-[var(--text-primary)] shrink-0">
+                        {isBn ? 'সেকশন' : 'Section'}
+                      </span>
+                      <div className={`flex gap-1 ${publishSectionOptions.length >= 5 ? 'overflow-x-auto max-w-[18.75rem]' : 'flex-wrap'}`}>
+                        <button
+                          onClick={() => setPublishSectionId('')}
+                          className={`px-2.5 py-1 rounded-md text-[0.6875rem] font-medium cursor-pointer border transition-all whitespace-nowrap shrink-0 ${
+                            publishSectionId === ''
+                              ? 'border-[var(--brand)] bg-[var(--brand)] text-white'
+                              : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40'
+                          }`}
+                        >
+                          {isBn ? 'সকল' : 'All'}
+                        </button>
+                        {publishSectionOptions.map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setPublishSectionId(s)}
+                            className={`px-2.5 py-1 rounded-md text-[0.6875rem] font-medium cursor-pointer border transition-all whitespace-nowrap shrink-0 ${
+                              publishSectionId === s
+                                ? 'border-[var(--brand)] bg-[var(--brand)] text-white'
+                                : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40'
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {classOptions.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => { setPublishClassId(c === publishClassId ? '' : c); setPublishSectionId('') }}
-                      className={`px-3 py-1.5 rounded-full text-[0.6875rem] font-medium cursor-pointer border transition-all ${
-                        publishClassId === c
-                          ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-sm'
-                          : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)]'
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
               </div>
-
-              {/* Section Chip Selector */}
-              {publishClassId && publishSectionOptions.length > 0 && (
-                <div className="mb-3">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wider">{isBn ? 'সেকশন' : 'Section'}</label>
-                    {publishSectionId && (
-                      <button
-                        onClick={() => setPublishSectionId('')}
-                        className="text-[0.5625rem] text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-none font-[inherit]"
-                      >
-                        {isBn ? 'মুছুন' : 'Clear'}
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {publishSectionOptions.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setPublishSectionId(s === publishSectionId ? '' : s)}
-                        className={`px-3 py-1.5 rounded-full text-[0.6875rem] font-medium cursor-pointer border transition-all ${
-                          publishSectionId === s
-                            ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-sm'
-                            : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)]'
-                        }`}
-                      >
-                        {isBn ? 'সেকশন' : 'Sec'} {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Selection Summary */}
               {publishClassData && (
