@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react'
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { CheckCircle, User, GraduationCap, ShieldCheck, IdCard, Camera, X, Download, MessageSquare, Send } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -102,6 +102,7 @@ function FormField({ labelEn, labelBn, value, onChange, type = 'text', required 
 export default function GeneralAdmission() {
   const { isMobile } = useWindowSize()
   const { addStudent, getNextId } = useAdmissionStore()
+  const students = useAdmissionStore((s) => s.students)
   const { classes, institution } = useClassStore()
   const isBn = useBn()
 
@@ -127,6 +128,19 @@ export default function GeneralAdmission() {
   const set = useCallback((key: keyof FormData, val: string) => {
     setForm((p) => ({ ...p, [key]: val }))
   }, [])
+
+  // Auto-set roll number when class, section, or academic year changes
+  useEffect(() => {
+    if (!form.class || !form.section || !form.academicYear) return
+    const sameGroup = students.filter(
+      (s) => s.class === form.class && s.section === form.section && s.academicYear === form.academicYear
+    )
+    const maxRoll = sameGroup.reduce((max, s) => {
+      const r = parseInt(s.roll, 10)
+      return !isNaN(r) && r > max ? r : max
+    }, 0)
+    set('roll', String(maxRoll + 1))
+  }, [form.class, form.section, form.academicYear, students, set])
 
   const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
