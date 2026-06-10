@@ -21,7 +21,7 @@ interface FieldProps {
 }
 function FormField({ labelEn, labelBn, value, onChange, type = 'text', required = false, options, isBn }: FieldProps) {
   const base =
-    'w-full px-3 py-[0.5625rem] rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors'
+    'w-full h-[2.125rem] px-3 rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors'
   return (
     <div>
       <label className="text-xs font-medium text-[var(--text-secondary)] mb-[0.3125rem] block">
@@ -29,7 +29,7 @@ function FormField({ labelEn, labelBn, value, onChange, type = 'text', required 
         {required && <span className="text-[var(--red)] ml-[0.1875rem]">*</span>}
       </label>
       {options ? (
-        <select value={value} onChange={(e) => onChange(e.target.value)} required={required} className={`${base} cursor-pointer`}>
+        <select value={value} onChange={(e) => onChange(e.target.value)} required={required} className={`${base} cursor-pointer appearance-none`}>
           <option value="">{isBn ? 'বেছে নিন' : 'Select'}</option>
           {options.map((o) => (
             <option key={o} value={o}>
@@ -220,7 +220,7 @@ export default function EditTeacherPage() {
 
   // ── helpers ──
   // Tailwind JIT: these literal class names must exist in source for detection
-  const g = (n: number) => isMobile ? 'grid grid-cols-1 gap-3' : n === 2 ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-3 gap-3'
+  const g = (n: number) => isMobile ? 'grid grid-cols-1 gap-y-[0.625rem]' : n === 2 ? 'grid grid-cols-2 gap-x-3 gap-y-[0.625rem]' : 'grid grid-cols-3 gap-x-3 gap-y-[0.625rem]'
   const card = isMobile
     ? 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-3.5 mb-[0.875rem]'
     : 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-5 mb-[0.875rem]'
@@ -346,7 +346,7 @@ export default function EditTeacherPage() {
           </div>
           {/* Name + DOB + Gender */}
           <div className="flex-1 min-w-[12.5rem]">
-            <div className={`${g(2)} mb-[0.625rem]`}>
+            <div className={g(2)}>
               <FormField labelEn="Name (English)" labelBn="নাম (ইংরেজি)" value={nameEn} onChange={setNameEn} required isBn={isBn} />
               <FormField labelEn="Name (Bangla)" labelBn="নাম (বাংলা)" value={nameBn} onChange={setNameBn} isBn={isBn} />
             </div>
@@ -364,7 +364,7 @@ export default function EditTeacherPage() {
             </div>
           </div>
         </div>
-        <div className={`${g(3)} mb-[0.625rem]`}>
+        <div className={g(3)}>
           <FormField
             labelEn="Blood Group"
             labelBn="রক্তের গ্রুপ"
@@ -383,7 +383,7 @@ export default function EditTeacherPage() {
           />
           <FormField labelEn="NID" labelBn="জাতীয় পরিচয়পত্র" value={nid} onChange={setNid} isBn={isBn} />
         </div>
-        <div className={`${g(3)} mb-[0.625rem]`}>
+        <div className={g(3)}>
           <FormField labelEn="Mobile" labelBn="মোবাইল" value={phone} onChange={setPhone} type="tel" required isBn={isBn} />
           <FormField labelEn="Email" labelBn="ইমেইল" value={email} onChange={setEmail} type="email" isBn={isBn} />
           <FormField
@@ -422,7 +422,7 @@ export default function EditTeacherPage() {
       {/* Professional */}
       <div className={card}>
         {sHead(<Briefcase />, 'পেশাদার তথ্য', 'Professional Information', 'var(--amber)', 'var(--amber-light)')}
-        <div className={`${g(3)} mb-[0.625rem]`}>
+        <div className={g(3)}>
           <FormField
             labelEn="Department"
             labelBn="বিভাগ"
@@ -446,7 +446,7 @@ export default function EditTeacherPage() {
           />
           <FormField labelEn="Qualification" labelBn="যোগ্যতা" value={qualification} onChange={setQualification} isBn={isBn} />
         </div>
-        <div className={`${g(3)} mb-[0.625rem]`}>
+        <div className={g(3)}>
           <FormField labelEn="Experience" labelBn="অভিজ্ঞতা" value={experience} onChange={setExperience} isBn={isBn} />
           <FormField
             labelEn="Joining Date"
@@ -583,7 +583,7 @@ export default function EditTeacherPage() {
       {/* Father */}
       <div className={card}>
         {sHead(<Users />, 'পিতার তথ্য', "Father's Info", 'var(--teal)', 'var(--teal-light)')}
-        <div className={`${g(3)} mb-[0.625rem]`}>
+        <div className={g(3)}>
           <FormField labelEn="Name (EN)" labelBn="নাম (ইংরেজি)" value={fatherNameEn} onChange={setFatherNameEn} required isBn={isBn} />
           <FormField labelEn="Name (BN)" labelBn="নাম (বাংলা)" value={fatherNameBn} onChange={setFatherNameBn} isBn={isBn} />
           <FormField labelEn="Phone" labelBn="মোবাইল" value={fatherPhone} onChange={setFatherPhone} type="tel" isBn={isBn} />
@@ -596,7 +596,7 @@ export default function EditTeacherPage() {
       {/* Mother */}
       <div className={card}>
         {sHead(<Users />, 'মাতার তথ্য', "Mother's Info", 'var(--purple)', 'var(--purple-light)')}
-        <div className={`${g(3)} mb-[0.625rem]`}>
+        <div className={g(3)}>
           <FormField labelEn="Name (EN)" labelBn="নাম (ইংরেজি)" value={motherNameEn} onChange={setMotherNameEn} required isBn={isBn} />
           <FormField labelEn="Name (BN)" labelBn="নাম (বাংলা)" value={motherNameBn} onChange={setMotherNameBn} isBn={isBn} />
           <FormField labelEn="Phone" labelBn="মোবাইল" value={motherPhone} onChange={setMotherPhone} type="tel" isBn={isBn} />
@@ -606,7 +606,7 @@ export default function EditTeacherPage() {
       {/* Guardian */}
       <div className={card}>
         {sHead(<Users />, 'অভিভাবক (ঐচ্ছিক)', 'Guardian (Optional)', 'var(--green)', 'var(--green-light)')}
-        <div className={`${g(3)} mb-[0.625rem]`}>
+        <div className={g(3)}>
           <FormField labelEn="Name" labelBn="নাম" value={guardianName} onChange={setGuardianName} isBn={isBn} />
           <FormField
             labelEn="Relation"
