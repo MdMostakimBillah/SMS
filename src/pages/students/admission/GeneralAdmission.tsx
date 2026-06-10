@@ -76,15 +76,15 @@ interface FieldProps {
 }
 function FormField({ labelEn, labelBn, value, onChange, type = 'text', required = false, options, isBn }: FieldProps) {
   const base =
-    'w-full py-[0.5625rem] px-3 rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--brand)]'
+    'w-full h-[2.5rem] px-3.5 rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--brand)] transition-colors'
   return (
-    <div>
-      <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem] block">
+    <div className="mb-[0.625rem]">
+      <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-[0.375rem] block">
         {isBn ? labelBn : labelEn}
         {required && <span className="text-[var(--red)] ml-[0.1875rem]">*</span>}
       </label>
       {options ? (
-        <select value={value} onChange={(e) => onChange(e.target.value)} required={required} className={`${base} cursor-pointer`}>
+        <select value={value} onChange={(e) => onChange(e.target.value)} required={required} className={`${base} cursor-pointer appearance-none`}>
           <option value="">{isBn ? 'বেছে নিন' : 'Select'}</option>
           {options.map((o) => (
             <option key={o} value={o}>
@@ -168,7 +168,7 @@ export default function GeneralAdmission() {
 
   const g = (n: number) => {
     const cols = n === 3 ? 'grid-cols-3' : 'grid-cols-2'
-    return isMobile ? 'grid grid-cols-1 gap-3' : `grid ${cols} gap-3`
+    return isMobile ? 'grid grid-cols-1 gap-y-[0.375rem]' : `grid ${cols} gap-x-4 gap-y-[0.375rem]`
   }
 
   const card = `bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] mb-[0.875rem] ${isMobile ? 'p-[0.875rem]' : 'p-5'}`
