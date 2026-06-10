@@ -20,6 +20,7 @@ interface AdmissionState {
   updateStudent: (id: string, data: Partial<StudentAdmission>) => void
   approveStudent: (id: string) => void
   rejectStudent: (id: string) => void
+  toggleStudentActive: (id: string) => void
   getNextId: () => string
 }
 
@@ -42,6 +43,7 @@ export const useAdmissionStore = create<AdmissionState>()(
               ? {
                   ...s,
                   status: 'approved',
+                  active: true,
                   approvedAt: new Date().toISOString().split('T')[0],
                   updatedAt: new Date().toISOString().split('T')[0],
                 }
@@ -56,6 +58,13 @@ export const useAdmissionStore = create<AdmissionState>()(
           ),
         })),
 
+      toggleStudentActive: (id) =>
+        set((state) => ({
+          students: state.students.map((s) =>
+            s.id === id ? { ...s, active: s.active === false ? true : false, updatedAt: new Date().toISOString().split('T')[0] } : s
+          ),
+        })),
+
       getNextId: () => {
         const year = new Date().getFullYear()
         const count = get().students.length + 1
@@ -65,7 +74,7 @@ export const useAdmissionStore = create<AdmissionState>()(
     }),
     {
       name: 'edutech-admissions',
-      version: 3,
+      version: 4,
       migrate: (persistedState: any, version: number) => {
         if (version < 3) {
           persistedState = { ...persistedState, students: [] }
@@ -74,6 +83,7 @@ export const useAdmissionStore = create<AdmissionState>()(
         const students = (persistedState?.students || []).map((s: StudentAdmission) => ({
           ...s,
           class: normalizeClassName(s.class, classes),
+          active: s.active !== undefined ? s.active : s.status === 'approved',
         }))
         return { ...persistedState, students }
       },
@@ -84,5 +94,8 @@ export const useAdmissionStore = create<AdmissionState>()(
 export function useSessionStudents() {
   const students = useAdmissionStore((s) => s.students)
   const currentSession = useClassStore((s) => s.institution.currentSession)
-  return useMemo(() => students.filter((s) => s.academicYear === currentSession), [students, currentSession])
+  return useMemo(
+    () => students.filter((s) => s.academicYear === currentSession && s.status === 'approved' && s.active !== false),
+    [students, currentSession]
+  )
 }

@@ -16,12 +16,14 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsRight,
+  UserX,
+  UserCheck,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
-import { useSessionStudents } from '@/store/admissionStore'
+import { useSessionStudents, useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
 import { generateListPDF } from '@/pages/students/admission/listPdfTemplate'
@@ -36,6 +38,7 @@ export default function AllStudentsPage() {
   const navigate = useNavigate()
   const { isMobile } = useWindowSize()
   const students = useSessionStudents()
+  const toggleStudentActive = useAdmissionStore((s) => s.toggleStudentActive)
   const { classes, institution } = useClassStore()
   const currentSession = institution.currentSession
   const isBn = useBn()
@@ -94,8 +97,8 @@ export default function AllStudentsPage() {
         if (fClass && s.class !== fClass) return false
         if (fSection && s.section !== fSection) return false
         if (fGender && !s.gender.includes(fGender)) return false
-        if (fActive === 'active' && s.status !== 'approved') return false
-        if (fActive === 'inactive' && s.status === 'approved') return false
+        if (fActive === 'active' && s.active === false) return false
+        if (fActive === 'inactive' && s.active !== false) return false
         if (fReligion && !s.religion.includes(fReligion)) return false
         if (fBlood && s.bloodGroup !== fBlood) return false
         return true
@@ -185,19 +188,20 @@ export default function AllStudentsPage() {
   const sel =
     'px-2 py-[0.4375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs outline-none cursor-pointer'
 
-  const statusBadge = (st: string) => {
+  const statusBadge = (st: string, active?: boolean) => {
     const m: Record<string, { b: string; c: string; l: string; lb: string }> = {
       pending: { b: 'var(--amber-light)', c: 'var(--amber)', l: 'Pending', lb: 'অপেক্ষমান' },
-      approved: { b: 'var(--green-light)', c: 'var(--green)', l: 'Approved', lb: 'অনুমোদিত' },
+      approved: { b: 'var(--green-light)', c: 'var(--green)', l: 'Active', lb: 'সক্রিয়' },
       rejected: { b: 'var(--red-light)', c: 'var(--red)', l: 'Rejected', lb: 'প্রত্যাখ্যাত' },
     }
     const x = m[st] || m.pending
+    const inactive = st === 'approved' && active === false
     return (
       <span
         className="text-[0.625rem] font-semibold px-[0.4375rem] py-[0.125rem] rounded-[0.625rem] whitespace-nowrap"
-        style={{ background: x.b, color: x.c }}
+        style={{ background: inactive ? 'var(--red-light)' : x.b, color: inactive ? 'var(--red)' : x.c }}
       >
-        {isBn ? x.lb : x.l}
+        {inactive ? (isBn ? 'নিষ্ক্রিয়' : 'Inactive') : isBn ? x.lb : x.l}
       </span>
     )
   }
@@ -227,7 +231,7 @@ export default function AllStudentsPage() {
                 <div className="text-[0.6875rem] text-[var(--brand)] font-mono">{viewSt.id}</div>
               </div>
               <div className="flex items-center gap-2">
-                {statusBadge(viewSt.status)}
+                {statusBadge(viewSt.status, viewSt.active)}
                 <button
                   onClick={() => setViewSt(null)}
                   className="w-7 h-7 rounded-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center"
@@ -604,7 +608,10 @@ export default function AllStudentsPage() {
                   <tr
                     key={s.id}
                     className="border-b border-[var(--border)] group"
-                    style={{ background: selected.includes(s.id) ? 'rgba(99,102,241,0.04)' : undefined }}
+                    style={{
+                      background: selected.includes(s.id) ? 'rgba(99,102,241,0.04)' : s.active === false ? 'rgba(239,68,68,0.04)' : undefined,
+                      opacity: s.active === false ? 0.6 : 1,
+                    }}
                   >
                     <td className="p-2.5" style={sc('0')}>
                       <input
@@ -657,7 +664,7 @@ export default function AllStudentsPage() {
                     <td className="p-2 text-[var(--text-secondary)] font-mono text-[0.6875rem]">{s.phone}</td>
                     <td className="p-2 text-[var(--text-secondary)] font-mono text-[0.6875rem]">{s.fatherPhone}</td>
                     <td className="p-2 text-[var(--text-secondary)] text-[0.6875rem]">{s.district || '—'}</td>
-                    <td className="p-2">{statusBadge(s.status)}</td>
+                    <td className="p-2">{statusBadge(s.status, s.active)}</td>
                     <td className="p-2">
                       <div className="flex gap-[0.1875rem]">
                         <button
@@ -673,6 +680,17 @@ export default function AllStudentsPage() {
                           className="w-[1.625rem] h-[1.625rem] rounded-[0.375rem] bg-[var(--amber-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--amber)]"
                         >
                           <Edit2 size={12} />
+                        </button>
+                        <button
+                          onClick={() => toggleStudentActive(s.id)}
+                          title={s.active === false ? 'Reactivate' : 'Inactive'}
+                          className={`w-[1.625rem] h-[1.625rem] rounded-[0.375rem] border-0 cursor-pointer flex items-center justify-center ${
+                            s.active === false
+                              ? 'bg-[var(--green-light)] text-[var(--green)]'
+                              : 'bg-[var(--red-light)] text-[var(--red)]'
+                          }`}
+                        >
+                          {s.active === false ? <UserCheck size={12} /> : <UserX size={12} />}
                         </button>
                       </div>
                     </td>

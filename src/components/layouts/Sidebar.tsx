@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import {
@@ -33,7 +33,7 @@ import {
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useAppStore } from '@/store/appStore'
-import { useSessionStudents } from '@/store/admissionStore'
+import { useAdmissionStore } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { t } from '@/lib/i18n'
@@ -74,7 +74,7 @@ export default function Sidebar() {
   const { width: screenWidth } = useWindowSize()
   const isLargeScreen = screenWidth >= 1600
   const isXLargeScreen = screenWidth >= 1920
-  const students = useSessionStudents()
+  const allStudents = useAdmissionStore((s) => s.students)
   const { teachers } = useTeacherStore()
   const location = useLocation()
   const { institution, switchSession, addSession } = useClassStore()
@@ -82,8 +82,15 @@ export default function Sidebar() {
   const [newSession, setNewSession] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
+  const students = useMemo(
+    () => allStudents.filter((s) => s.academicYear === institution.currentSession && s.status === 'approved' && s.active !== false),
+    [allStudents, institution.currentSession]
+  )
   const studentCount = students.length
-  const pendingCount = students.filter((s) => s.status === 'pending').length
+  const pendingCount = useMemo(
+    () => allStudents.filter((s) => s.academicYear === institution.currentSession && s.status === 'pending').length,
+    [allStudents, institution.currentSession]
+  )
   const teacherCount = teachers.length
   const activeTeacherCount = teachers.filter((t) => t.status === 'active').length
 

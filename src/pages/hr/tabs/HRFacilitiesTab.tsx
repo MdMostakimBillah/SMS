@@ -345,7 +345,7 @@ export default function HRFacilitiesTab({
             {isBn ? 'সকল বরাদ্দ' : 'All Assignments'}
             <span className="text-[0.6875rem] font-medium text-[var(--text-muted)] ml-2">({filteredAssignments.length})</span>
           </div>
-          <div className="flex gap-1.5 items-center shrink-0">
+          <div className="flex gap-1.5 items-center flex-wrap">
             <input
               type="date"
               value={assignDateFrom}
@@ -353,9 +353,9 @@ export default function HRFacilitiesTab({
                 setAssignDateFrom(e.target.value)
                 setPage(1)
               }}
-              className={`${inputCls} w-[8.125rem] shrink-0 py-[0.3125rem] px-2 text-[0.6875rem]`}
+              className={`${inputCls} w-full sm:w-[8.125rem] py-[0.3125rem] px-2 text-[0.6875rem]`}
             />
-            <span className="text-[0.6875rem] text-[var(--text-muted)] shrink-0">—</span>
+            <span className="text-[0.6875rem] text-[var(--text-muted)]">—</span>
             <input
               type="date"
               value={assignDateTo}
@@ -363,17 +363,15 @@ export default function HRFacilitiesTab({
                 setAssignDateTo(e.target.value)
                 setPage(1)
               }}
-              className={`${inputCls} w-[8.125rem] shrink-0 py-[0.3125rem] px-2 text-[0.6875rem]`}
+              className={`${inputCls} w-full sm:w-[8.125rem] py-[0.3125rem] px-2 text-[0.6875rem]`}
             />
-            {selectedAssign.length > 0 && (
-              <button
-                onClick={() => setShowPDFModal('assignment')}
-                className="flex items-center gap-[0.3125rem] py-[0.375rem] px-[0.625rem] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.6875rem] font-medium cursor-pointer font-[inherit] shrink-0"
-              >
-                <FileText size={12} />
-                PDF ({selectedAssign.length})
-              </button>
-            )}
+            <button
+              onClick={() => setShowPDFModal('assignment')}
+              className="flex items-center gap-[0.3125rem] py-[0.375rem] px-[0.625rem] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.6875rem] font-medium cursor-pointer font-[inherit]"
+            >
+              <FileText size={12} />
+              PDF {selectedAssign.length > 0 ? `(${selectedAssign.length})` : `(${filteredAssignments.length})`}
+            </button>
           </div>
         </div>
 
@@ -387,12 +385,15 @@ export default function HRFacilitiesTab({
                   <th className="p-2 w-9">
                     <input
                       type="checkbox"
-                      checked={selectedAssign.length === filteredAssignments.length && filteredAssignments.length > 0}
-                      onChange={() =>
+                      checked={paginatedAssignments.length > 0 && paginatedAssignments.every((tf: any) => selectedAssign.includes(tf.id))}
+                      onChange={() => {
+                        const pageIds = paginatedAssignments.map((tf: any) => tf.id)
                         setSelectedAssign((p: string[]) =>
-                          p.length === filteredAssignments.length ? [] : filteredAssignments.map((tf: any) => tf.id)
+                          pageIds.every((id: string) => p.includes(id))
+                            ? p.filter((id: string) => !pageIds.includes(id))
+                            : [...new Set([...p, ...pageIds])]
                         )
-                      }
+                      }}
                       className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                     />
                   </th>
@@ -437,7 +438,7 @@ export default function HRFacilitiesTab({
                           className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
                         />
                       </td>
-                      <td className="p-2 text-[var(--text-muted)] text-[0.625rem] text-center">{i + 1}</td>
+                      <td className="p-2 text-[var(--text-muted)] text-[0.625rem] text-center">{(page - 1) * perPage + i + 1}</td>
                       <td className="p-2 text-[0.6875rem] font-medium text-[var(--text-primary)]">{t?.nameEn || tf.teacherId}</td>
                       <td className="p-2 text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? fac?.nameBn || fac?.name : fac?.name}</td>
                       <td className="p-2 text-[0.6875rem] font-semibold text-[var(--green)] text-right">৳{tf.amount.toLocaleString()}</td>
@@ -470,7 +471,7 @@ export default function HRFacilitiesTab({
         )}
         <PaginationControls
           page={page}
-          setPage={(p) => typeof p === 'number' ? setPage(p) : setPage(p(page))}
+          setPage={setPage}
           totalPages={assignmentTotalPages}
           total={filteredAssignments.length}
           perPage={perPage}

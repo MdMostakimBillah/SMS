@@ -78,7 +78,15 @@ export default function PayrollPage() {
     [teacherFacilities, facilities]
   )
 
-  const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
+  const activeTeachers = useMemo(() => {
+    return teachers.filter((t) => {
+      if (t.status !== 'active') return false
+      if (!month) return true
+      if (!t.salaryStartDate) return true
+      const startMonth = t.salaryStartDate.slice(0, 7)
+      return startMonth <= month
+    })
+  }, [teachers, month])
 
   const filtered = useMemo(() => {
     let list = activeTeachers

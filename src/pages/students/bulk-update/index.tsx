@@ -151,9 +151,11 @@ export default function BulkUpdatePage() {
     [allStudents, fSession]
   )
 
+  const approved = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
+
   const filtered = useMemo(
     () =>
-      students.filter((s) => {
+      approved.filter((s) => {
         if (fClass && s.class !== fClass) return false
         if (fSection && s.section !== fSection) return false
         if (search) {
@@ -162,7 +164,7 @@ export default function BulkUpdatePage() {
         }
         return true
       }),
-    [students, search, fClass, fSection]
+    [approved, search, fClass, fSection]
   )
 
   const allSel = filtered.length > 0 && filtered.every((s) => selected.includes(s.id))

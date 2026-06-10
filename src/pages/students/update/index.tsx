@@ -96,9 +96,11 @@ export default function UpdateStudentPage() {
     }
   }, [location.state, students])
 
+  const approved = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
+
   const results =
     search.length >= 2
-      ? students
+      ? approved
           .filter(
             (s) =>
               s.nameEn.toLowerCase().includes(search.toLowerCase()) ||

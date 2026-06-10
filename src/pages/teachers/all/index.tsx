@@ -23,6 +23,7 @@ import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
+import { openPrintWindow } from '@/lib/pdf'
 import { TeacherPDFOptionsModal } from '@/components/shared/TeacherPDFOptionsModal'
 import { generateTeacherListPDF } from '@/pages/teachers/listPdfTemplate'
 import type { TeacherListPDFOptions } from '@/pages/teachers/listPdfTemplate'
@@ -188,11 +189,10 @@ export default function AllTeachersPage() {
   const handlePDF = useCallback(
     (opts: TeacherListPDFOptions) => {
       const list = selected.length > 0 ? filtered.filter((t) => selected.includes(t.id)) : filtered
-      const win = window.open('', '_blank')
-      if (!win) return
-      win.document.write(generateTeacherListPDF(list, opts, departments))
-      win.document.close()
-      setTimeout(() => win.print(), 800)
+      const html = generateTeacherListPDF(list, opts, departments)
+      openPrintWindow(opts.title || 'Teacher List', html, {
+        css: `@page{size:A4 ${opts.orientation || 'landscape'};margin:8mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10px;color:#1a1a1a;background:#fff;padding:0}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:5px;text-align:left;font-size:8px;font-weight:700;border:0.5px solid #5356d4}td{padding:4px 5px;border:0.5px solid #e5e7eb;vertical-align:middle}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`,
+      })
       setShowPDF(false)
     },
     [selected, filtered, departments]
@@ -200,14 +200,10 @@ export default function AllTeachersPage() {
 
   const downloadSinglePDF = useCallback(
     (t: Teacher) => {
-      const win = window.open('', '_blank')
-      if (!win) return
       const photoHtml = t.photo
         ? `<div style="text-align:center;margin-bottom:10px"><img src="${t.photo}" alt="${t.nameEn}" style="width:100px;height:120px;border-radius:8px;border:2px solid #6366f1;object-fit:cover" /></div>`
         : ''
-      win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${t.nameEn}</title>
-<style>@page{size:A4 portrait;margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:12px;padding-bottom:7px;border-bottom:2px solid #6366f1;margin-bottom:12px}.logo{width:36px;height:36px;background:#6366f1;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700}.ttl{text-align:center;font-size:14px;font-weight:700;margin:10px 0 4px}.sub{text-align:center;font-size:10px;color:#666;margin-bottom:12px}.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:12px}.info div{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0}.info .lbl{font-size:10px;color:#888;width:100px;flex-shrink:0}.info .val{font-size:11px;font-weight:500;color:#1a1a1a}.ftr{margin-top:14px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
-<div class="hdr"><div class="logo">ET</div><div><div style="font-size:14px;font-weight:700;color:#6366f1">EduTech — Sunrise Academy</div><div style="font-size:9px;color:#888">Employee Profile</div></div></div>
+      const html = `<div class="hdr"><div class="logo">ET</div><div><div style="font-size:14px;font-weight:700;color:#6366f1">EduTech — Sunrise Academy</div><div style="font-size:9px;color:#888">Employee Profile</div></div></div>
 ${photoHtml}
 <div class="ttl">${t.nameEn}</div>
 <div class="sub">${t.nameBn} · ${t.id}</div>
@@ -240,9 +236,10 @@ ${photoHtml}
     <div><span class="lbl">${isBn ? 'মাতার মোবাইল' : 'Mother Phone'}</span><span class="val">${t.motherPhone}</span></div>
   </div>
 </div>
-<div class="ftr"><span>EduTech School Management System</span><div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div></body></html>`)
-      win.document.close()
-      setTimeout(() => win.print(), 800)
+<div class="ftr"><span>EduTech School Management System</span><div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div>`
+      openPrintWindow(t.nameEn, html, {
+        css: '@page{size:A4 portrait;margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:12px;padding-bottom:7px;border-bottom:2px solid #6366f1;margin-bottom:12px}.logo{width:36px;height:36px;background:#6366f1;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700}.ttl{text-align:center;font-size:14px;font-weight:700;margin:10px 0 4px}.sub{text-align:center;font-size:10px;color:#666;margin-bottom:12px}.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:12px}.info div{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0}.info .lbl{font-size:10px;color:#888;width:100px;flex-shrink:0}.info .val{font-size:11px;font-weight:500;color:#1a1a1a}.ftr{margin-top:14px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}',
+      })
     },
     [departments, isBn]
   )
@@ -335,9 +332,11 @@ ${photoHtml}
                 [isBn ? 'অভিজ্ঞতা' : 'Experience', viewT.experience],
                 [isBn ? 'যোগদানের তারিখ' : 'Joining Date', viewT.joiningDate],
                 [isBn ? 'বেতন' : 'Salary', `৳${viewT.salary.toLocaleString()}`],
+                [isBn ? 'বেতন শুরুর তারিখ' : 'Salary Start Date', viewT.salaryStartDate || '—'],
                 [isBn ? 'প্রবেশ সময়' : 'In Time', viewT.inTime],
                 [isBn ? 'প্রস্থান সময়' : 'Out Time', viewT.outTime],
                 [isBn ? 'জাতীয় পরিচয়' : 'NID', viewT.nid],
+                [isBn ? 'পিতার NID' : 'Father NID', viewT.fatherNid],
                 [isBn ? 'জরুরি মোবাইল' : 'Emergency Phone', viewT.emergencyPhone],
                 [isBn ? 'পিতার নাম' : 'Father', viewT.fatherNameEn],
                 [isBn ? 'পিতার মোবাইল' : 'Father Phone', viewT.fatherPhone],
@@ -345,7 +344,10 @@ ${photoHtml}
                 [isBn ? 'মাতার মোবাইল' : 'Mother Phone', viewT.motherPhone],
                 [isBn ? 'অভিভাবক' : 'Guardian', viewT.guardianName],
                 [isBn ? 'অভিভাবক মোবাইল' : 'Guardian Phone', viewT.guardianPhone],
+                [isBn ? 'অভিভাবক সম্পর্ক' : 'Guardian Relation', viewT.guardianRelation],
                 [isBn ? 'অভিভাবক ঠিকানা' : 'Parent Address', viewT.parentAddress],
+                [isBn ? 'ওভারটাইম (ঘণ্টা)' : 'Overtime Rate', viewT.overtime ? `৳${viewT.overtime}/hr` : ''],
+                [isBn ? 'সিগনেচার' : 'Signature', viewT.signature || ''],
               ].map(([l, v]) =>
                 v ? (
                   <div
@@ -354,7 +356,11 @@ ${photoHtml}
                     style={{ borderBottomWidth: '0.0313rem' }}
                   >
                     <span className="text-[0.6875rem] text-[var(--text-muted)] w-[7.5rem] shrink-0">{l}</span>
-                    <span className="text-xs font-medium text-[var(--text-primary)]">{v}</span>
+                    {String(l) === (isBn ? 'সিগনেচার' : 'Signature') ? (
+                      <img src={v as string} alt="" className="h-[2.5rem] max-w-[10rem] object-contain" />
+                    ) : (
+                      <span className="text-xs font-medium text-[var(--text-primary)]">{v as string}</span>
+                    )}
                   </div>
                 ) : null
               )}

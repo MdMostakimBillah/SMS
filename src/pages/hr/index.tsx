@@ -170,6 +170,19 @@ export default function HRPage() {
 
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
 
+  // Check if teacher's salary is active for a given month (YYYY-MM format)
+  const isSalaryActive = useCallback((teacher: any, month: string) => {
+    if (!teacher.salaryStartDate) return true
+    const startMonth = teacher.salaryStartDate.slice(0, 7)
+    return startMonth <= month
+  }, [])
+
+  // Teachers eligible for salary in the selected month
+  const salaryActiveTeachers = useMemo(
+    () => activeTeachers.filter((t) => isSalaryActive(t, salarySetupMonth)),
+    [activeTeachers, salarySetupMonth, isSalaryActive]
+  )
+
   const allDesignations = useMemo(() => {
     const set = new Set<string>()
     teachers.forEach((t) => {
@@ -236,7 +249,7 @@ export default function HRPage() {
   const filteredAssignments = useMemo(() => {
     let list = teacherFacilities
     if (assignDateFrom) list = list.filter((tf) => tf.createdAt >= assignDateFrom)
-    if (assignDateTo) list = list.filter((tf) => tf.createdAt <= assignDateTo + 'T23:59:59')
+    if (assignDateTo) list = list.filter((tf) => tf.createdAt <= assignDateTo)
     return list
   }, [teacherFacilities, assignDateFrom, assignDateTo])
 
@@ -253,7 +266,7 @@ export default function HRPage() {
   }, [activeTeachers, facStaffFilter, facStaffSearch])
 
   // ─── Totals ───
-  const totalSalary = useMemo(() => activeTeachers.reduce((s, t) => s + t.salary, 0), [activeTeachers])
+  const totalSalary = useMemo(() => salaryActiveTeachers.reduce((s, t) => s + t.salary, 0), [salaryActiveTeachers])
   const totalIncrements = increments.reduce((s, i) => s + i.amount, 0)
   const totalBonuses = bonuses.reduce((s, b) => s + b.amount, 0)
   const fundBalance = funds.reduce(
@@ -375,7 +388,7 @@ export default function HRPage() {
     const from = new Date(dateFrom)
     const to = new Date(dateTo)
     const daysInMonth = 30
-    activeTeachers.forEach((t) => {
+    salaryActiveTeachers.forEach((t) => {
       if (!t.applySalaryRule || !t.salary) return
       let daysPresent = 0
       const dd = new Date(from)
@@ -392,7 +405,7 @@ export default function HRPage() {
       }
     })
     return totalDeduction
-  }, [activeTeachers, attendance, dateFrom, dateTo])
+  }, [salaryActiveTeachers, attendance, dateFrom, dateTo])
 
   const adjustedTotalSalary = totalSalary - salaryDeductions
 
@@ -678,7 +691,7 @@ export default function HRPage() {
   }
 
   const handleBulkApplyDeduction = () => {
-    const configs: MonthlySalaryConfig[] = activeTeachers.map((t) => {
+    const configs: MonthlySalaryConfig[] = salaryActiveTeachers.map((t) => {
       const existing = monthlySalaryConfigs.find((c) => c.teacherId === t.id && c.month === salarySetupMonth)
       return {
         id: existing?.id || `MSC-${Date.now()}-${t.id}`,
@@ -698,7 +711,7 @@ export default function HRPage() {
 
   const handleBulkApplyFund = () => {
     const percent = Number(bulkFundPercent) || 0
-    const configs: MonthlySalaryConfig[] = activeTeachers.map((t) => {
+    const configs: MonthlySalaryConfig[] = salaryActiveTeachers.map((t) => {
       const existing = monthlySalaryConfigs.find((c) => c.teacherId === t.id && c.month === salarySetupMonth)
       return {
         id: existing?.id || `MSC-${Date.now()}-${t.id}`,
@@ -737,7 +750,7 @@ export default function HRPage() {
         const list = selectedAssign.length > 0 ? teacherFacilities.filter((tf) => selectedAssign.includes(tf.id)) : filteredAssignments
         html = generateAssignmentPDF(list, opts, getTeacherName, (id) => facilities.find((f) => f.id === id)?.name || id)
       } else if (type === 'salary') {
-        const teachersToShow = selectedSalary.length > 0 ? activeTeachers.filter((t) => selectedSalary.includes(t.id)) : activeTeachers
+        const teachersToShow = selectedSalary.length > 0 ? salaryActiveTeachers.filter((t) => selectedSalary.includes(t.id)) : salaryActiveTeachers
         const salaryData = teachersToShow.map((t) => {
           const existing = monthlySalaryConfigs.find((c) => c.teacherId === t.id && c.month === salarySetupMonth)
           const local = salaryConfigs[t.id] || {}
@@ -868,6 +881,7 @@ export default function HRPage() {
             onClick={() => {
               setActiveTab(tab.id)
               setPage(1)
+              setPerPage(20)
             }}
             className={`flex items-center justify-center gap-[0.4375rem] py-[0.5625rem] px-[0.875rem] rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-all whitespace-nowrap ${isMobile ? 'shrink-0' : 'flex-1'} ${activeTab === tab.id ? 'bg-[var(--brand)]' : 'bg-transparent'} ${activeTab === tab.id ? 'text-white' : 'text-[var(--text-secondary)]'} ${activeTab === tab.id ? 'shadow-[0_4px_12px_rgba(99,102,241,0.3)]' : 'shadow-none'}`}
           >
@@ -1047,10 +1061,10 @@ export default function HRPage() {
           isBn={isBn}
           isMobile={isMobile}
           teachers={teachers}
-          activeTeachers={activeTeachers}
+          activeTeachers={salaryActiveTeachers}
           bonuses={bonuses}
-          paginatedActiveTeachers={activeTeachers.slice((page - 1) * perPage, page * perPage)}
-          salaryTotalPages={Math.max(1, Math.ceil(activeTeachers.length / perPage))}
+          paginatedActiveTeachers={salaryActiveTeachers.slice((page - 1) * perPage, page * perPage)}
+          salaryTotalPages={Math.max(1, Math.ceil(salaryActiveTeachers.length / perPage))}
           selectedSalary={selectedSalary}
           toggleSalary={toggleSalary}
           toggleAllSalary={toggleAllSalary}

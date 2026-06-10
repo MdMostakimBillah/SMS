@@ -5,6 +5,7 @@ export interface StudentAdmission {
   createdAt: string
   updatedAt: string
   status: AdmissionStatus
+  active?: boolean
   approvedAt?: string
   photo: string
   nameEn: string

@@ -15,7 +15,7 @@ interface HRIncrementTabProps {
   toggle: (id: string) => void
   toggleAll: () => void
   page: number
-  setPage: (p: number) => void
+  setPage: (p: number | ((prev: number) => number)) => void
   perPage: number
   setPerPage: (n: number) => void
   totalPages: number
@@ -215,7 +215,7 @@ export default function HRIncrementTab({
       </div>
       <PaginationControls
         page={page}
-        setPage={(p) => typeof p === 'number' ? setPage(p) : setPage(p(page))}
+        setPage={setPage}
         perPage={perPage}
         setPerPage={setPerPage}
         total={filteredIncrements.length}

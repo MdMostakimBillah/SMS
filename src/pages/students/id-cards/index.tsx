@@ -192,7 +192,7 @@ export default function IDCardsPage() {
     [allStudents, fSession]
   )
 
-  const approved = useMemo(() => students.filter((s) => s.status === 'approved'), [students])
+  const approved = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
   const allSections = useMemo(() => {

@@ -56,7 +56,7 @@ export default function StudentsPage() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const approvedStudents = students.filter((s) => s.status === 'approved')
+  const approvedStudents = students.filter((s) => s.status === 'approved' && s.active !== false)
   const totalStudents = approvedStudents.length
   const maleStudents = approvedStudents.filter((s) => s.gender.includes('Male')).length
   const femaleStudents = approvedStudents.filter((s) => s.gender.includes('Female')).length

@@ -23,7 +23,7 @@ import * as XLSX from 'xlsx'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
-import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
+import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
 import type { StudentAdmission } from './types'
@@ -873,9 +873,14 @@ export default function AdmissionManage() {
   const updateStudent = useAdmissionStore((s) => s.updateStudent)
   const approveStudent = useAdmissionStore((s) => s.approveStudent)
   const rejectStudent = useAdmissionStore((s) => s.rejectStudent)
-  const students = useSessionStudents()
+  const allStudents = useAdmissionStore((s) => s.students)
   const { classes, institution } = useClassStore()
   const currentSession = institution.currentSession
+
+  const students = useMemo(
+    () => allStudents.filter((s) => s.academicYear === currentSession),
+    [allStudents, currentSession]
+  )
   const isBn = useBn()
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])

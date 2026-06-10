@@ -51,6 +51,7 @@ export interface Teacher {
   experience: string
   joiningDate: string
   salary: number
+  salaryStartDate?: string
   bonus?: number
   overtime?: number
   festivalBonus?: number

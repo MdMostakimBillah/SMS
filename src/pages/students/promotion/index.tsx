@@ -46,7 +46,7 @@ export default function ClassPromotionPage() {
     [allStudents, fSession]
   )
 
-  const approved = useMemo(() => students.filter((s) => s.status === 'approved'), [students])
+  const approved = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
 
   const [fromClass, setFromClass] = useState('')
   const [fromSection, setFromSection] = useState('')

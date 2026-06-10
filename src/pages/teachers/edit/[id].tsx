@@ -52,6 +52,7 @@ export default function EditTeacherPage() {
   const { isMobile } = useWindowSize()
   const { teachers, departments, subjects, designations, updateTeacher } = useTeacherStore()
   const fileRef = useRef<HTMLInputElement>(null)
+  const signatureRef = useRef<HTMLInputElement>(null)
 
   const teacher = useMemo(() => teachers.find((t) => t.id === id), [teachers, id])
 
@@ -74,6 +75,7 @@ export default function EditTeacherPage() {
   const [experience, setExperience] = useState('')
   const [joiningDate, setJoiningDate] = useState('')
   const [salary, setSalary] = useState('')
+  const [salaryStartDate, setSalaryStartDate] = useState('')
   const [overtime, setOvertime] = useState('')
   const [status, setStatus] = useState<TeacherStatus>('active')
   const [inTime, setInTime] = useState('')
@@ -89,6 +91,7 @@ export default function EditTeacherPage() {
   const [guardianPhone, setGuardianPhone] = useState('')
   const [guardianRelation, setGuardianRelation] = useState('')
   const [parentAddress, setParentAddress] = useState('')
+  const [signature, setSignature] = useState('')
   const [saved, setSaved] = useState(false)
   const [photoErr, setPhotoErr] = useState('')
 
@@ -113,6 +116,7 @@ export default function EditTeacherPage() {
     setExperience(teacher.experience)
     setJoiningDate(teacher.joiningDate || '')
     setSalary(String(teacher.salary))
+    setSalaryStartDate(teacher.salaryStartDate || '')
     setOvertime(String(teacher.overtime || ''))
     setStatus(teacher.status)
     setInTime(teacher.inTime || '')
@@ -128,6 +132,7 @@ export default function EditTeacherPage() {
     setGuardianPhone(teacher.guardianPhone || '')
     setGuardianRelation(teacher.guardianRelation || '')
     setParentAddress(teacher.parentAddress || '')
+    setSignature(teacher.signature || '')
   }, [teacher])
 
   const { recommendedSubjects, otherSubjects } = useMemo(() => {
@@ -150,6 +155,18 @@ export default function EditTeacherPage() {
     }
     const reader = new FileReader()
     reader.onload = (ev) => setPhoto(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const handleSignature = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 1 * 1024 * 1024) {
+      alert(isBn ? 'সিগনেচারের সাইজ সর্বোচ্চ ১ MB' : 'Signature must be under 1MB')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (ev) => setSignature(ev.target?.result as string)
     reader.readAsDataURL(file)
   }
 
@@ -179,6 +196,7 @@ export default function EditTeacherPage() {
         experience: experience.trim(),
         joiningDate,
         salary: Number(salary) || 0,
+        salaryStartDate: salaryStartDate || undefined,
         overtime: Number(overtime) || 0,
         status,
         inTime,
@@ -194,18 +212,22 @@ export default function EditTeacherPage() {
         guardianPhone: guardianPhone.trim(),
         guardianRelation: guardianRelation.trim(),
         parentAddress: parentAddress.trim(),
+        signature,
       })
       setSaved(true)
       setTimeout(() => navigate(`/teachers/all`), 1200)
     }
 
   // ── helpers ──
-  const g = (n: number) => `grid ${isMobile ? 'grid-cols-1' : `grid-cols-${n}`} gap-3`
-  const card = `bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] ${isMobile ? 'p-3.5' : 'p-5'} mb-[0.875rem]`
+  // Tailwind JIT: these literal class names must exist in source for detection
+  const g = (n: number) => isMobile ? 'grid grid-cols-1 gap-3' : n === 2 ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-3 gap-3'
+  const card = isMobile
+    ? 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-3.5 mb-[0.875rem]'
+    : 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-5 mb-[0.875rem]'
   const sHead = (icon: React.ReactNode, bn: string, en: string, col = 'var(--brand)', bg = 'var(--brand-light)') => (
     <div className="flex items-center gap-2 mb-4 pb-2.5 border-b border-[var(--border)]">
       <div className="w-[1.875rem] h-[1.875rem] rounded-lg flex items-center justify-center" style={{ background: bg }}>
-        {React.cloneElement(icon as React.ReactElement<{ size?: number; className?: string }>, { size: 15, className: `text-[${col}]` })}
+        {React.cloneElement(icon as React.ReactElement<{ size?: number; className?: string; style?: React.CSSProperties }>, { size: 15, style: { color: col } })}
       </div>
       <span className="text-sm font-semibold text-[var(--text-primary)]">{isBn ? bn : en}</span>
     </div>
@@ -460,6 +482,50 @@ export default function EditTeacherPage() {
             type="number"
             isBn={isBn}
           />
+        </div>
+        <div className={g(2)}>
+          <FormField
+            labelEn="Salary Start Date (Billing)"
+            labelBn="বেতন শুরুর তারিখ (বিলিং)"
+            value={salaryStartDate}
+            onChange={setSalaryStartDate}
+            type="date"
+            isBn={isBn}
+          />
+        </div>
+
+        {/* Signature */}
+        <div className="mt-[0.875rem]">
+          <div className="text-xs font-medium text-[var(--text-secondary)] mb-[0.3125rem]">
+            {isBn ? 'সিগনেচার (সর্বোচ্চ ১ MB)' : 'Signature (max 1MB)'}
+          </div>
+          <div className="flex items-center gap-3">
+            <div
+              onClick={() => signatureRef.current?.click()}
+              className={`w-[10rem] h-[3.5rem] rounded-[0.5rem] border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden bg-[var(--bg-secondary)] relative ${signature ? 'border-[var(--brand)]' : 'border-[var(--border-2)]'}`}
+            >
+              {signature ? (
+                <img src={signature} alt="" className="w-full h-full object-contain" />
+              ) : (
+                <div className="text-center text-[var(--text-muted)] pointer-events-none">
+                  <div className="text-[0.625rem]">{isBn ? 'সিগনেচার' : 'Signature'}</div>
+                </div>
+              )}
+              {signature && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSignature('')
+                  }}
+                  className="absolute top-[0.1875rem] right-[0.1875rem] w-[1.125rem] h-[1.125rem] rounded-full bg-[var(--red)] border-0 cursor-pointer flex items-center justify-center text-white"
+                >
+                  <X size={10} />
+                </button>
+              )}
+            </div>
+            <input ref={signatureRef} type="file" accept="image/*" onChange={handleSignature} className="hidden" />
+          </div>
         </div>
 
         {/* Subjects */}
