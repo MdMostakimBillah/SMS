@@ -21,10 +21,10 @@ interface FieldProps {
 }
 function FormField({ labelEn, labelBn, value, onChange, type = 'text', required = false, options, isBn }: FieldProps) {
   const base =
-    'w-full h-[2.125rem] px-3 rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors'
+    'w-full h-[2.5rem] px-3.5 rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors'
   return (
-    <div>
-      <label className="text-xs font-medium text-[var(--text-secondary)] mb-[0.3125rem] block">
+    <div className="mb-[0.625rem]">
+      <label className="text-xs font-medium text-[var(--text-secondary)] mb-[0.375rem] block">
         {isBn ? labelBn : labelEn}
         {required && <span className="text-[var(--red)] ml-[0.1875rem]">*</span>}
       </label>
@@ -220,7 +220,7 @@ export default function EditTeacherPage() {
 
   // ── helpers ──
   // Tailwind JIT: these literal class names must exist in source for detection
-  const g = (n: number) => isMobile ? 'grid grid-cols-1 gap-y-[0.625rem]' : n === 2 ? 'grid grid-cols-2 gap-x-3 gap-y-[0.625rem]' : 'grid grid-cols-3 gap-x-3 gap-y-[0.625rem]'
+  const g = (n: number) => isMobile ? 'grid grid-cols-1 gap-y-[0.375rem]' : n === 2 ? 'grid grid-cols-2 gap-x-4 gap-y-[0.375rem]' : 'grid grid-cols-3 gap-x-4 gap-y-[0.375rem]'
   const card = isMobile
     ? 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-3.5 mb-[0.875rem]'
     : 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-5 mb-[0.875rem]'
