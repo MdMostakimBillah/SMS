@@ -391,14 +391,14 @@ const EField = React.memo(function EField({ label, value, onChange, type = 'text
 
   return (
     <div>
-      <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
+      <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
         {label}
       </label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full h-[2.5rem] px-3.5 rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-[inherit] outline-none focus:border-[var(--brand)] transition-colors"
+        className="w-full h-[2.75rem] px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-sm)] transition-all duration-200"
       />
     </div>
   )
