@@ -4,6 +4,8 @@ import { CheckCircle, Camera, Clock, Users, Send, Briefcase, X, IdCard, MessageS
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
+import { Select } from '@/components/ui/Select'
+import { DatePicker } from '@/components/ui/DatePicker'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
@@ -20,26 +22,46 @@ interface FieldProps {
   isBn: boolean
 }
 function FormField({ labelEn, labelBn, value, onChange, type = 'text', required = false, options, isBn }: FieldProps) {
-  const base =
-    'w-full h-[2.5rem] px-3.5 rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors'
+  if (options) {
+    return (
+      <Select
+        value={value}
+        onChange={onChange}
+        options={options.map((o) => ({ value: o, label: o }))}
+        label={labelEn}
+        labelBn={labelBn}
+        required={required}
+        isBn={isBn}
+      />
+    )
+  }
+
+  if (type === 'date') {
+    return (
+      <DatePicker
+        value={value}
+        onChange={onChange}
+        label={labelEn}
+        labelBn={labelBn}
+        required={required}
+        isBn={isBn}
+      />
+    )
+  }
+
   return (
     <div className="mb-[0.625rem]">
       <label className="text-xs font-medium text-[var(--text-secondary)] mb-[0.375rem] block">
         {isBn ? labelBn : labelEn}
         {required && <span className="text-[var(--red)] ml-[0.1875rem]">*</span>}
       </label>
-      {options ? (
-        <select value={value} onChange={(e) => onChange(e.target.value)} required={required} className={`${base} cursor-pointer appearance-none`}>
-          <option value="">{isBn ? 'বেছে নিন' : 'Select'}</option>
-          {options.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} required={required} className={base} />
-      )}
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className="w-full h-[2.5rem] px-3.5 rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors"
+      />
     </div>
   )
 }

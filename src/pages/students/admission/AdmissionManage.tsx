@@ -26,6 +26,8 @@ import { useScrollLock } from '@/hooks/useScrollLock'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
+import { Select } from '@/components/ui/Select'
+import { DatePicker } from '@/components/ui/DatePicker'
 import type { StudentAdmission } from './types'
 import { generateA4HTML } from './a4Template'
 import { generateListPDF } from './listPdfTemplate'
@@ -366,40 +368,38 @@ interface EFieldProps {
   opts?: string[]
 }
 const EField = React.memo(function EField({ label, value, onChange, type = 'text', opts }: EFieldProps) {
-  const s: React.CSSProperties = {
-    width: '100%',
-    padding: '7px 10px',
-    borderRadius: '0.5rem',
-    border: '1px solid var(--border)',
-    background: 'var(--bg-secondary)',
-    color: 'var(--text-primary)',
-    fontSize: '0.75rem',
-    fontFamily: 'inherit',
-    outline: 'none',
+  if (opts) {
+    return (
+      <Select
+        value={value}
+        onChange={onChange}
+        options={opts.map((o) => ({ value: o, label: o }))}
+        label={label}
+      />
+    )
   }
+
+  if (type === 'date') {
+    return (
+      <DatePicker
+        value={value}
+        onChange={onChange}
+        label={label}
+      />
+    )
+  }
+
   return (
     <div>
-      <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>
+      <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
         {label}
       </label>
-      {opts ? (
-        <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...s, cursor: 'pointer' }}>
-          {opts.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          style={s}
-          onFocus={(e) => (e.target.style.borderColor = 'var(--brand)')}
-          onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-        />
-      )}
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-[2.5rem] px-3.5 rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-[inherit] outline-none focus:border-[var(--brand)] transition-colors"
+      />
     </div>
   )
 })

@@ -5,6 +5,8 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
+import { Select } from '@/components/ui/Select'
+import { DatePicker } from '@/components/ui/DatePicker'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 
 interface FP {
@@ -16,34 +18,42 @@ interface FP {
   req?: boolean
 }
 const F = React.memo(function F({ l, v, onChange, type = 'text', opts, req }: FP) {
-  const s =
-    'w-full py-2 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none'
+  if (opts) {
+    return (
+      <Select
+        value={v}
+        onChange={onChange}
+        options={opts.map((o) => ({ value: o, label: o }))}
+        label={l}
+        required={req}
+      />
+    )
+  }
+
+  if (type === 'date') {
+    return (
+      <DatePicker
+        value={v}
+        onChange={onChange}
+        label={l}
+        required={req}
+      />
+    )
+  }
+
   return (
     <div>
       <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
         {l}
         {req && <span className="text-[var(--red)] ml-0.5">*</span>}
       </label>
-      {opts ? (
-        <select value={v} onChange={(e) => onChange(e.target.value)} className={`${s} cursor-pointer`}>
-          <option value="">—</option>
-          {opts.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input
-          type={type}
-          value={v}
-          onChange={(e) => onChange(e.target.value)}
-          required={req}
-          className={s}
-          onFocus={(e) => (e.target.style.borderColor = 'var(--brand)')}
-          onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-        />
-      )}
+      <input
+        type={type}
+        value={v}
+        onChange={(e) => onChange(e.target.value)}
+        required={req}
+        className="w-full h-[2.5rem] px-3.5 rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--brand)] transition-colors"
+      />
     </div>
   )
 })
