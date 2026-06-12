@@ -396,6 +396,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
   const [kioskFaceDetected, setKioskFaceDetected] = useState(false)
   const kioskDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const kioskStableCountRef = useRef(0)
+  const kioskIdentifiedRef = useRef<boolean>(false)
   // WiFi verification state
   const [institutionWifi, setInstitutionWifi] = useState(() => localStorage.getItem('institutionWifi') || '')
   const [institutionGateway, setInstitutionGateway] = useState(() => localStorage.getItem('institutionGateway') || '')
@@ -802,6 +803,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     }
     useTeacherStore.setState({ attendance: updatedAttendance })
     setKioskIdentified({ staffId, staffName, photo, punchType, time: timeStr })
+    kioskIdentifiedRef.current = true
     setKioskMsg({
       type: 'success',
       text: `${staffName} ${punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'} ${timeStr}`,
@@ -812,6 +814,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     setTimeout(() => {
       setKioskMsg(null)
       setKioskIdentified(null)
+      kioskIdentifiedRef.current = false
       setKioskCapturedPhoto(null)
     }, 4000)
   }
@@ -910,7 +913,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     setKioskDetecting(true)
     setKioskFaceDetected(false)
     kioskDetectIntervalRef.current = setInterval(() => {
-      if (kioskIdentified) return
+      if (kioskIdentifiedRef.current) return
       const detected = detectFaceInCenter()
       setKioskFaceDetected(detected)
       if (detected) {
@@ -954,6 +957,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     if (kioskDetectIntervalRef.current) clearInterval(kioskDetectIntervalRef.current)
     kioskDetectIntervalRef.current = null
     kioskStableCountRef.current = 0
+    kioskIdentifiedRef.current = false
     setKioskDetecting(false)
     setKioskFaceDetected(false)
   }
