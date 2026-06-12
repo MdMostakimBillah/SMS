@@ -970,19 +970,11 @@ export default function Step2Schedule() {
                 <div style={{ position: 'relative' }} ref={examRoutineActionMenuRef}>
                   <button
                     onClick={() => setShowExamRoutineActionMenu(!showExamRoutineActionMenu)}
+                    className={btnPrimary}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.375rem',
-                      padding: '9px 18px',
-                      borderRadius: '0.5rem',
                       background: 'var(--brand-light)',
                       border: '1px solid var(--brand)',
                       color: 'var(--brand)',
-                      fontSize: '0.8125rem',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
                     }}
                   >
                     <MoreVertical size={15} />
@@ -1605,19 +1597,11 @@ export default function Step2Schedule() {
                 <div style={{ position: 'relative' }} ref={invigActionMenuRef}>
                   <button
                     onClick={() => setShowInvigActionMenu(!showInvigActionMenu)}
+                    className={btnPrimary}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.375rem',
-                      padding: '9px 18px',
-                      borderRadius: '0.5rem',
                       background: 'var(--brand-light)',
                       border: '1px solid var(--brand)',
                       color: 'var(--brand)',
-                      fontSize: '0.8125rem',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
                     }}
                   >
                     <MoreVertical size={15} />

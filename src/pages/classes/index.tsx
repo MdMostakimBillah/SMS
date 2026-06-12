@@ -33,6 +33,7 @@ import { RoutinePDFOptionsModal } from '@/components/shared/RoutinePDFOptionsMod
 import { generateRoutineGridPDF } from '@/pages/classes/routinePdfTemplate'
 import type { RoutineListPDFOptions, RoutineGridData } from '@/pages/classes/routinePdfTemplate'
 import { openPrintWindow } from '@/lib/pdf'
+import { btnPrimary } from '@/lib/styles'
 import * as XLSX from 'xlsx'
 
 export default function ClassesPage() {
@@ -1121,19 +1122,11 @@ function RoutineTab({
         <div style={{ position: 'relative', marginBottom: '0.875rem', display: 'flex', justifyContent: 'flex-end' }}>
           <button
             onClick={() => setShowActionMenu(!showActionMenu)}
+            className={btnPrimary}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-              padding: '9px 18px',
-              borderRadius: '0.5rem',
               background: 'var(--brand-light)',
               border: '1px solid var(--brand)',
               color: 'var(--brand)',
-              fontSize: '0.8125rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
             }}
           >
             <MoreVertical size={15} />
