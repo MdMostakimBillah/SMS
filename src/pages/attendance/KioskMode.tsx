@@ -120,12 +120,16 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     regStableCountRef.current = 0
   }
 
+  const isVideoReady = (v: HTMLVideoElement) =>
+    v.readyState >= 2 && v.videoWidth > 0 && v.videoHeight > 0
+
   const startRegDetectLoop = () => {
     if (regDetectIntervalRef.current) clearInterval(regDetectIntervalRef.current)
     regStableCountRef.current = 0
     regDetectIntervalRef.current = setInterval(async () => {
-      if (!videoRef.current || !faceApiLoaded || !selectedStaff) return
-      const result = await detectFace(videoRef.current)
+      const v = videoRef.current
+      if (!v || !faceApiLoaded || !selectedStaff || !isVideoReady(v)) return
+      const result = await detectFace(v)
       if (result) {
         setFaceDetected(true)
         regStableCountRef.current++
@@ -160,6 +164,11 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     if (!teacher) return
     if (!faceApiLoaded) {
       setStatusMsg({ type: 'error', text: isBn ? 'ML মডেল লোড হচ্ছে...' : 'ML models loading...' })
+      setTimeout(() => setStatusMsg(null), 3000)
+      return
+    }
+    if (!isVideoReady(videoRef.current)) {
+      setStatusMsg({ type: 'error', text: isBn ? 'ক্যামেরা প্রস্তুত হয়নি। অপেক্ষা করুন...' : 'Camera not ready. Wait...' })
       setTimeout(() => setStatusMsg(null), 3000)
       return
     }
@@ -237,8 +246,9 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     setFaceDetected(false)
     detectIntervalRef.current = setInterval(async () => {
       if (identifiedRef.current) return
-      if (!videoRef.current || !faceApiLoaded) return
-      const result = await detectFace(videoRef.current)
+      const v = videoRef.current
+      if (!v || !faceApiLoaded || !isVideoReady(v)) return
+      const result = await detectFace(v)
       if (result) {
         setFaceDetected(true)
         stableCountRef.current++
