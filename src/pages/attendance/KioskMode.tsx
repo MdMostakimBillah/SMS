@@ -138,7 +138,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
           regDetectIntervalRef.current = null
           regStableCountRef.current = 0
           setFaceDetected(false)
-          await handleRegister()
+          saveRegistration(result.descriptor)
         }
       } else {
         setFaceDetected(false)
@@ -158,10 +158,33 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     return canvas.toDataURL('image/jpeg', 0.6)
   }
 
-  const handleRegister = async () => {
-    if (!selectedStaff || !videoRef.current) return
+  const saveRegistration = (descriptor: Float32Array) => {
+    if (!selectedStaff) return
     const teacher = activeTeachers.find((t) => t.id === selectedStaff)
     if (!teacher) return
+    const photo = capturePhoto()
+    if (!photo) return
+    const entry: RegisteredFace = {
+      staffId: teacher.id,
+      staffName: isBn ? teacher.nameBn || teacher.nameEn : teacher.nameEn,
+      photo,
+      descriptor: Array.from(descriptor),
+    }
+    const updated = [...registeredFaces.filter((f) => f.staffId !== teacher.id), entry]
+    setRegisteredFaces(updated)
+    saveFaces(updated)
+    setStatusMsg({
+      type: 'success',
+      text: isBn ? `${entry.staffName} নিবন্ধন সম্পন্ন!` : `${entry.staffName} registered!`,
+    })
+    setSelectedStaff('')
+    setCapturedPhoto(null)
+    stopCamera()
+    setTimeout(() => setStatusMsg(null), 3000)
+  }
+
+  const handleRegister = async () => {
+    if (!selectedStaff || !videoRef.current) return
     if (!faceApiLoaded) {
       setStatusMsg({ type: 'error', text: isBn ? 'ML মডেল লোড হচ্ছে...' : 'ML models loading...' })
       setTimeout(() => setStatusMsg(null), 3000)
@@ -178,25 +201,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       setTimeout(() => setStatusMsg(null), 3000)
       return
     }
-    const photo = capturePhoto()
-    if (!photo) return
-    const entry: RegisteredFace = {
-      staffId: teacher.id,
-      staffName: isBn ? teacher.nameBn || teacher.nameEn : teacher.nameEn,
-      photo,
-      descriptor: Array.from(result.descriptor),
-    }
-    const updated = [...registeredFaces.filter((f) => f.staffId !== teacher.id), entry]
-    setRegisteredFaces(updated)
-    saveFaces(updated)
-    setStatusMsg({
-      type: 'success',
-      text: isBn ? `${entry.staffName} নিবন্ধন সম্পন্ন!` : `${entry.staffName} registered!`,
-    })
-    setSelectedStaff('')
-    setCapturedPhoto(null)
-    stopCamera()
-    setTimeout(() => setStatusMsg(null), 3000)
+    saveRegistration(result.descriptor)
   }
 
   const handleDeleteFace = (staffId: string) => {
