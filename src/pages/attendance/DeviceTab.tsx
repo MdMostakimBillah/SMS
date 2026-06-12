@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import {
   CheckCircle,
   Clock,
@@ -371,8 +371,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     text: string
   } | null>(null)
   const [mobileSearch, setMobileSearch] = useState('')
-  const [kioskMode, setKioskMode] = useState(false)
-  const [kioskPending, setKioskPending] = useState(false)
+  const [kioskAttendanceOpen, setKioskAttendanceOpen] = useState(false)
   const [kioskMsg, setKioskMsg] = useState<{
     type: 'success' | 'error'
     text: string
@@ -383,7 +382,6 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     punchType: 'in' | 'out'
     time: string
   } | null>(null)
-  const [kioskRegMode, setKioskRegMode] = useState(false)
   const [kioskRegStaff, setKioskRegStaff] = useState('')
   const [kioskCamActive, setKioskCamActive] = useState(false)
   const [kioskCapturedPhoto, setKioskCapturedPhoto] = useState<string | null>(null)
@@ -395,6 +393,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     }
   })
   const [kioskEditFace, setKioskEditFace] = useState<string | null>(null)
+  const [kioskSearch, setKioskSearch] = useState('')
   const [, setKioskDetecting] = useState(false)
   const [kioskFaceDetected, setKioskFaceDetected] = useState(false)
   const kioskDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -407,7 +406,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
   const [showWifiSettings, setShowWifiSettings] = useState(false)
   const [authMode, setAuthMode] = useState<'kiosk' | 'personal'>('personal')
 
-  useScrollLock(showAddDevice || showAddRFID || showAddFP || showAddFace || kioskCamActive)
+  useScrollLock(showAddDevice || showAddRFID || showAddFP || showAddFace || kioskCamActive || kioskAttendanceOpen)
 
   const kioskVideoRef = useRef<HTMLVideoElement | null>(null)
   const kioskCanvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -465,15 +464,6 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     ctx.drawImage(kioskVideoRef.current, 0, 0, 320, 240)
     return canvas.toDataURL('image/jpeg', 0.6)
   }
-
-  useEffect(() => {
-    if (!kioskMode) {
-      stopKioskCamera()
-      stopKioskDetectLoop()
-      setKioskCapturedPhoto(null)
-      setKioskRegMode(false)
-    }
-  }, [kioskMode])
 
 
   // WebAuthn helpers
@@ -770,19 +760,10 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
       type: 'success',
       text: isBn ? `${faceEntry.staffName} নিবন্ধন সম্পন্ন!` : `${faceEntry.staffName} registered!`,
     })
-    setKioskRegMode(false)
     setKioskRegStaff('')
     setKioskCapturedPhoto(null)
     stopKioskCamera()
     setTimeout(() => setKioskMsg(null), 3000)
-  }
-
-  const handleKioskScan = () => {
-    setKioskPending(true)
-    setKioskMsg(null)
-    setKioskIdentified(null)
-    startKioskCamera()
-    setKioskPending(false)
   }
 
   const handleKioskPunch = (staffId: string, staffName: string) => {
@@ -812,7 +793,49 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     setTimeout(() => {
       setKioskMsg(null)
       setKioskIdentified(null)
-    }, 4000)
+      if (kioskAttendanceOpen) {
+        setTimeout(() => {
+          setKioskCapturedPhoto(null)
+          startKioskCamera()
+        }, 500)
+      }
+    }, 3000)
+  }
+
+  const matchFaceToStaff = (capturedPhoto: string): { staffId: string; staffName: string } | null => {
+    if (kioskRegisteredFaces.length === 0) return null
+    const img = new Image()
+    img.src = capturedPhoto
+    const canvas = document.createElement('canvas')
+    const SIZE = 50
+    canvas.width = SIZE
+    canvas.height = SIZE
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    ctx.drawImage(img, 0, 0, SIZE, SIZE)
+    const capturedData = ctx.getImageData(0, 0, SIZE, SIZE).data
+    let bestMatch: { staffId: string; staffName: string } | null = null
+    let bestScore = Infinity
+    for (const face of kioskRegisteredFaces) {
+      const refImg = new Image()
+      refImg.src = face.photo
+      ctx.clearRect(0, 0, SIZE, SIZE)
+      ctx.drawImage(refImg, 0, 0, SIZE, SIZE)
+      const refData = ctx.getImageData(0, 0, SIZE, SIZE).data
+      let diff = 0
+      for (let i = 0; i < capturedData.length; i += 4) {
+        diff += Math.abs(capturedData[i] - refData[i])
+        diff += Math.abs(capturedData[i + 1] - refData[i + 1])
+        diff += Math.abs(capturedData[i + 2] - refData[i + 2])
+      }
+      if (diff < bestScore) {
+        bestScore = diff
+        bestMatch = { staffId: face.staffId, staffName: face.staffName }
+      }
+    }
+    const threshold = SIZE * SIZE * 3 * 255 * 0.3
+    if (bestScore < threshold) return bestMatch
+    return null
   }
 
   const handleKioskDeleteFace = (staffId: string) => {
@@ -883,7 +906,24 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
           setKioskFaceDetected(false)
           kioskStableCountRef.current = 0
           const photo = captureKioskPhoto()
-          if (photo) setKioskCapturedPhoto(photo)
+          if (photo) {
+            setKioskCapturedPhoto(photo)
+            if (kioskAttendanceOpen) {
+              setTimeout(() => {
+                const match = matchFaceToStaff(photo)
+                if (match) {
+                  handleKioskPunch(match.staffId, match.staffName)
+                } else {
+                  setKioskMsg({ type: 'error', text: isBn ? 'মুখ চিহ্নিত হয়নি' : 'Face not recognized' })
+                  setKioskCapturedPhoto(null)
+                  setTimeout(() => {
+                    setKioskMsg(null)
+                    startKioskDetectLoop()
+                  }, 2000)
+                }
+              }, 500)
+            }
+          }
         }
       } else {
         kioskStableCountRef.current = 0
@@ -1004,7 +1044,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
             )}
             {deviceTab === 'mobile' && (
               <button
-                onClick={() => setKioskMode(true)}
+                onClick={() => setAuthMode('kiosk')}
                 className="flex items-center gap-[0.3125rem] px-3 py-[0.375rem] rounded-lg bg-[var(--teal)] text-white text-[0.6875rem] cursor-pointer font-medium"
               >
                 <Wifi size={12} />
@@ -2038,14 +2078,11 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   </div>
                 </button>
                 <button
-                  onClick={() => {
-                    setAuthMode('kiosk')
-                    setKioskMode(true)
-                  }}
-                  className="p-4 rounded-xl border-2 border-[var(--border)] bg-[var(--bg-primary)] text-left transition-all hover:border-[var(--green)]"
+                  onClick={() => setAuthMode('kiosk')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${authMode === 'kiosk' ? 'border-[var(--green)] bg-[var(--green-light)]' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--green)]'}`}
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--green)]">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${authMode === 'kiosk' ? 'bg-[var(--green)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--green)]'}`}>
                       <Layers size={16} />
                     </div>
                     <div>
@@ -2314,7 +2351,416 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   </div>
                 </>
               )}
+
+              {/* Kiosk Mode Content */}
+              {authMode === 'kiosk' && (
+                <>
+                  {/* Info Banner */}
+                  <div className="bg-[var(--green-light)] border border-[var(--green)] rounded-xl p-3 mb-4">
+                    <div className="flex items-start gap-2">
+                      <Layers size={16} className="text-[var(--green)] mt-0.5 shrink-0" />
+                      <div>
+                        <div className="text-[0.75rem] font-semibold text-[var(--green)]">
+                          {isBn ? 'কিওস্ক মোড' : 'Kiosk Mode'}
+                        </div>
+                        <div className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5">
+                          {isBn
+                            ? 'শেয়ার্ড ডিভাইস হিসেবে ব্যবহার করুন। সবাই একটি ফোনে মুখ দেখিয়ে চেক ইন করবে।'
+                            : 'Use as shared device. All staff check in by showing face on one phone.'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* HTTPS warning */}
+                  {window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && (
+                    <div className="mb-4 py-3 px-4 rounded-xl bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.75rem] font-medium text-center">
+                      <span className="font-bold">🔒 {isBn ? 'HTTPS প্রয়োজন!' : 'HTTPS Required!'}</span>
+                      <br />
+                      {isBn
+                        ? 'বায়োমেট্রিক কাজ করতে https:// দিয়ে খুলুন।'
+                        : 'Open with https:// for biometric to work.'}
+                    </div>
+                  )}
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-2.5 mb-4">
+                    {[
+                      {
+                        label: isBn ? 'নিবন্ধিত' : 'Registered',
+                        value: kioskRegisteredFaces.length,
+                        icon: <Layers size={15} />,
+                        color: 'var(--green)',
+                      },
+                      {
+                        label: isBn ? 'আজ চেক-ইন' : 'Today',
+                        value: kioskRegisteredFaces.filter((f) => {
+                          const att = attendance[date]?.[f.staffId]
+                          return att?.punches?.length
+                        }).length,
+                        icon: <CheckCircle size={15} />,
+                        color: 'var(--teal)',
+                      },
+                      {
+                        label: isBn ? 'সক্রিয়' : 'Active',
+                        value: kioskRegisteredFaces.filter((f) => {
+                          const att = attendance[date]?.[f.staffId]
+                          return att?.status === 'present'
+                        }).length,
+                        icon: <Clock size={15} />,
+                        color: 'var(--brand)',
+                      },
+                    ].map((s, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2.5 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]"
+                      >
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={{ background: `${s.color}15`, color: s.color }}
+                        >
+                          {s.icon}
+                        </div>
+                        <div>
+                          <div className="text-[1rem] font-bold" style={{ color: s.color }}>
+                            {s.value}
+                          </div>
+                          <div className="text-[0.625rem] text-[var(--text-muted)]">{s.label}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Message */}
+                  {kioskMsg && (
+                    <div
+                      className={`mb-3 py-2 px-3 rounded-lg text-[0.75rem] font-medium flex items-center gap-2 ${kioskMsg.type === 'success' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}
+                    >
+                      {kioskMsg.type === 'success' ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                      {kioskMsg.text}
+                      <button
+                        onClick={() => setKioskMsg(null)}
+                        className="ml-auto bg-transparent border-none cursor-pointer text-[inherit]"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Identified person display */}
+                  {kioskIdentified && (
+                    <div className="mb-4 p-5 rounded-2xl bg-[var(--green-light)] border-2 border-[var(--green)] text-center">
+                      <div className="w-16 h-16 rounded-full bg-[var(--green)] flex items-center justify-center mx-auto mb-3">
+                        <CheckCircle size={32} className="text-white" />
+                      </div>
+                      <div className="text-[1.25rem] font-bold text-[var(--green)]">{kioskIdentified.staffName}</div>
+                      <div className="text-[0.75rem] text-[var(--text-secondary)] font-mono mt-1">{kioskIdentified.staffId}</div>
+                      <div className="mt-3 flex items-center justify-center gap-3">
+                        <span className={`px-3 py-1.5 rounded-lg text-[0.8125rem] font-bold ${kioskIdentified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
+                          {kioskIdentified.punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'}
+                        </span>
+                        <span className="text-[1.375rem] font-bold text-[var(--text-primary)] font-mono">{kioskIdentified.time}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Register + Scan Side by Side */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                    {/* Register Face */}
+                    <div className="border border-[var(--border)] rounded-xl p-4 bg-[var(--bg-primary)]">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-[var(--green-light)] flex items-center justify-center">
+                          <ScanFace size={15} className="text-[var(--green)]" />
+                        </div>
+                        <div>
+                          <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                            {isBn ? 'মুখ নিবন্ধন' : 'Register Face'}
+                          </div>
+                          <div className="text-[0.625rem] text-[var(--text-muted)]">
+                            {isBn ? 'ক্যামেরায় মুখ তুলুন' : 'Capture face with camera'}
+                          </div>
+                        </div>
+                      </div>
+                      <select
+                        value={kioskRegStaff}
+                        onChange={(e) => {
+                          setKioskRegStaff(e.target.value)
+                          setKioskMsg(null)
+                          setKioskCapturedPhoto(null)
+                        }}
+                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] outline-none mb-2"
+                      >
+                        <option value="">{isBn ? 'স্টাফ নির্বাচন করুন...' : 'Select staff...'}</option>
+                        {activeTeachers.map((t) => {
+                          const registered = kioskRegisteredFaces.find((f) => f.staffId === t.id)
+                          return (
+                            <option key={t.id} value={t.id}>
+                              {isBn ? t.nameBn || t.nameEn : t.nameEn} ({t.id}){registered ? ' ✓' : ''}
+                            </option>
+                          )
+                        })}
+                      </select>
+                      {kioskRegStaff && !kioskCamActive && (
+                        <button
+                          onClick={startKioskCamera}
+                          className="w-full py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--green)] text-white border-none cursor-pointer flex items-center justify-center gap-2"
+                        >
+                          <ScanFace size={14} />
+                          {isBn ? 'ক্যামেরা খুলুন' : 'Open Camera'}
+                        </button>
+                      )}
+                      {kioskRegStaff && kioskCamActive && (
+                        <div className="space-y-2">
+                          <div className="relative rounded-xl overflow-hidden bg-black w-full" style={{ aspectRatio: '4/3', maxHeight: '30vh' }}>
+                            <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+                            <canvas ref={kioskCanvasRef} className="hidden" />
+                            <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[0.5625rem] flex items-center gap-1 z-10">
+                              <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />
+                              LIVE
+                            </div>
+                            {!kioskCapturedPhoto && (
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                <div className="absolute inset-[15%] grid grid-cols-3 grid-rows-3">
+                                  {[...Array(9)].map((_, i) => (
+                                    <div key={i} className={`border ${kioskFaceDetected ? 'border-[var(--green)]/70' : 'border-white/30'} transition-colors duration-200`} />
+                                  ))}
+                                </div>
+                                <div className={`w-24 h-32 border-2 rounded-[50%] transition-all duration-300 ${kioskFaceDetected ? 'border-[var(--green)] shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'border-white/50'}`} />
+                              </div>
+                            )}
+                          </div>
+                          {kioskCapturedPhoto ? (
+                            <div className="space-y-2">
+                              <img src={kioskCapturedPhoto} alt="" className="w-full max-w-[17.5rem] mx-auto rounded-xl border-2 border-[var(--green)]" />
+                              <div className="flex gap-2">
+                                <button onClick={() => { setKioskCapturedPhoto(null); startKioskDetectLoop() }} className="flex-1 py-2 rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer">
+                                  {isBn ? 'আবার' : 'Retake'}
+                                </button>
+                                <button onClick={kioskEditFace ? () => handleKioskUpdateFace(kioskEditFace) : handleKioskRegister} className="flex-1 py-2 rounded-lg text-[0.75rem] bg-[var(--green)] text-white border-none font-semibold cursor-pointer">
+                                  {kioskEditFace ? (isBn ? 'আপডেট' : 'Update') : isBn ? 'নিবন্ধন করুন' : 'Register'}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-full py-2 rounded-lg text-[0.75rem] font-bold bg-[var(--green-light)] text-[var(--green)] text-center">
+                              {kioskFaceDetected ? (isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...') : (isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid')}
+                            </div>
+                          )}
+                          <button onClick={() => { stopKioskCamera(); stopKioskDetectLoop(); setKioskCapturedPhoto(null) }} className="w-full py-2 text-[0.75rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none underline">
+                            {isBn ? 'বন্ধ করুন' : 'Cancel'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Take Attendance */}
+                    <div className="border border-[var(--border)] rounded-xl p-4 bg-[var(--bg-primary)]">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-[var(--teal-light)] flex items-center justify-center">
+                          <ScanFace size={15} className="text-[var(--teal)]" />
+                        </div>
+                        <div>
+                          <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                            {isBn ? 'উপস্থিতি নিন' : 'Take Attendance'}
+                          </div>
+                          <div className="text-[0.625rem] text-[var(--text-muted)]">
+                            {isBn ? 'ক্যামেরায় মুখ দেখান' : 'Show face to camera'}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setKioskAttendanceOpen(true)
+                          setKioskCapturedPhoto(null)
+                          setKioskIdentified(null)
+                          setKioskMsg(null)
+                          setTimeout(() => startKioskCamera(), 300)
+                        }}
+                        className="w-full py-3 rounded-lg text-[0.8125rem] font-bold cursor-pointer border-none bg-[var(--teal)] text-white hover:shadow-md transition-all"
+                      >
+                        <span className="flex items-center justify-center gap-2">
+                          <ScanFace size={16} />
+                          {isBn ? 'উপস্থিতি শুরু করুন' : 'Start Attendance'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Registered Staff Table */}
+                  <div className="border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+                      <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                        {isBn ? `নিবন্ধিত স্টাফ (${kioskRegisteredFaces.length})` : `Registered Staff (${kioskRegisteredFaces.length})`}
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-[0.3125rem]">
+                        <Search size={12} className="text-[var(--text-muted)]" />
+                        <input
+                          value={kioskSearch}
+                          onChange={(e) => setKioskSearch(e.target.value)}
+                          placeholder={isBn ? 'খুঁজুন...' : 'Search...'}
+                          className="flex-1 border-none bg-transparent outline-none text-[0.6875rem] text-[var(--text-primary)] w-[6.25rem]"
+                        />
+                      </div>
+                    </div>
+                    <div className="overflow-auto max-h-[35vh]">
+                      <table className="w-full border-collapse text-[0.6875rem]">
+                        <thead>
+                          <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                            <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.1875rem]">#</th>
+                            <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.75rem]"></th>
+                            <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
+                            <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'আইডি' : 'ID'}</th>
+                            <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'অ্যাকশন' : 'Action'}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {kioskRegisteredFaces
+                            .filter((f) => {
+                              if (!kioskSearch) return true
+                              const q = kioskSearch.toLowerCase()
+                              return f.staffName.toLowerCase().includes(q) || f.staffId.toLowerCase().includes(q)
+                            })
+                            .map((f, i) => (
+                              <tr key={f.staffId} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)] transition-colors">
+                                <td className="p-2.5 text-center text-[var(--text-muted)]">{i + 1}</td>
+                                <td className="p-2.5 text-center">
+                                  <img src={f.photo} alt="" className="w-8 h-8 rounded-full object-cover border border-[var(--border)] mx-auto" />
+                                </td>
+                                <td className="p-2.5 font-medium text-[var(--text-primary)]">{f.staffName}</td>
+                                <td className="p-2.5 text-[var(--text-muted)] font-mono">{f.staffId}</td>
+                                <td className="p-2.5 text-center">
+                                  <div className="flex items-center justify-center gap-1">
+                                    <button
+                                      onClick={() => handleKioskPunch(f.staffId, f.staffName)}
+                                      className="px-2 py-1 rounded-md bg-[var(--green)] text-white text-[0.625rem] font-semibold cursor-pointer border-none"
+                                    >
+                                      {isBn ? 'পাঞ্চ' : 'Punch'}
+                                    </button>
+                                    <button
+                                      onClick={() => { setKioskEditFace(f.staffId); setKioskCapturedPhoto(null); setKioskRegStaff(f.staffId); startKioskCamera() }}
+                                      className="w-6 h-6 rounded-md bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]"
+                                    >
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                      </svg>
+                                    </button>
+                                    <button
+                                      onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) handleKioskDeleteFace(f.staffId) }}
+                                      className="w-6 h-6 rounded-md bg-[var(--red-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--red)]"
+                                    >
+                                      <X size={11} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          {kioskRegisteredFaces.length === 0 && (
+                            <tr>
+                              <td colSpan={5} className="p-8 text-center text-[var(--text-muted)] text-[0.75rem]">
+                                {isBn ? 'কোনো স্টাফ নিবন্ধিত নেই' : 'No staff registered'}
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
             </>
+          )}
+
+          {/* Kiosk Attendance Popup */}
+          {kioskAttendanceOpen && (
+            <div className="fixed inset-0 z-[800] bg-black flex flex-col items-center justify-center">
+              {/* Close button */}
+              <button
+                onClick={() => {
+                  stopKioskCamera()
+                  stopKioskDetectLoop()
+                  setKioskAttendanceOpen(false)
+                  setKioskCapturedPhoto(null)
+                  setKioskIdentified(null)
+                  setKioskMsg(null)
+                }}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center cursor-pointer text-white hover:bg-white/20 z-20"
+              >
+                <X size={20} />
+              </button>
+
+              {/* Camera feed */}
+              <div className="relative w-full max-w-[28rem] mx-auto px-4">
+                <div className="relative rounded-2xl overflow-hidden bg-gray-900 w-full" style={{ aspectRatio: '3/4', maxHeight: '70vh' }}>
+                  <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+                  <canvas ref={kioskCanvasRef} className="hidden" />
+
+                  {/* LIVE indicator */}
+                  {kioskCamActive && !kioskIdentified && (
+                    <div className="absolute top-3 left-3 bg-black/60 rounded-lg px-3 py-1.5 text-white text-[0.6875rem] font-medium flex items-center gap-2 z-10">
+                      <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
+                      {isBn ? 'লাইভ' : 'LIVE'}
+                    </div>
+                  )}
+
+                  {/* Face guide overlay */}
+                  {kioskCamActive && !kioskCapturedPhoto && !kioskIdentified && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                      <div className="absolute inset-[12%] grid grid-cols-3 grid-rows-3">
+                        {[...Array(9)].map((_, i) => (
+                          <div key={i} className={`border ${kioskFaceDetected ? 'border-[var(--green)]/70' : 'border-white/20'} transition-colors duration-200`} />
+                        ))}
+                      </div>
+                      <div className={`w-32 h-40 border-2 rounded-[50%] transition-all duration-300 ${kioskFaceDetected ? 'border-[var(--green)] shadow-[0_0_30px_rgba(34,197,94,0.5)]' : 'border-white/40'}`} />
+                    </div>
+                  )}
+
+                  {/* Status text overlay */}
+                  {kioskCamActive && !kioskIdentified && (
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+                      <div className={`px-4 py-2 rounded-full text-[0.8125rem] font-bold transition-colors duration-200 ${kioskFaceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/50 text-white/80'}`}>
+                        {kioskFaceDetected
+                          ? isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...'
+                          : isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid'}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Result display */}
+                {kioskIdentified && (
+                  <div className="absolute inset-0 flex items-center justify-center z-20">
+                    <div className="bg-black/70 backdrop-blur-sm rounded-2xl p-8 text-center max-w-[20rem] mx-4">
+                      <div className="w-20 h-20 rounded-full bg-[var(--green)] flex items-center justify-center mx-auto mb-4">
+                        <CheckCircle size={40} className="text-white" />
+                      </div>
+                      <div className="text-[1.5rem] font-bold text-white mb-1">{kioskIdentified.staffName}</div>
+                      <div className="text-[0.875rem] text-white/70 font-mono mb-4">{kioskIdentified.staffId}</div>
+                      <div className="flex items-center justify-center gap-3">
+                        <span className={`px-4 py-2 rounded-lg text-[1rem] font-bold ${kioskIdentified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
+                          {kioskIdentified.punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'}
+                        </span>
+                        <span className="text-[1.5rem] font-bold text-white font-mono">{kioskIdentified.time}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error message */}
+                {kioskMsg && !kioskIdentified && (
+                  <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20">
+                    <div className={`px-4 py-2 rounded-lg text-[0.875rem] font-bold ${kioskMsg.type === 'success' ? 'bg-[var(--green)] text-white' : 'bg-[var(--red)] text-white'}`}>
+                      {kioskMsg.text}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom info */}
+              <div className="absolute bottom-4 left-0 right-0 text-center text-white/50 text-[0.75rem]">
+                {isBn ? 'বন্ধ করতে X বাটন চাপুন' : 'Press X to close'}
+              </div>
+            </div>
           )}
 
           {/* Add Device Modal */}
@@ -2622,525 +3068,6 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   >
                     {isBn ? 'স্ক্যান শুরু করুন' : 'Start Scan'}
                   </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Kiosk Mode Modal */}
-          {kioskMode && (
-            <div
-              className="modal-overlay z-[800] bg-[var(--bg-primary)] sm:bg-black/80 sm:p-4"
-              style={{ height: '100dvh' }}
-            >
-              <div className="modal-content modal-box rounded-none sm:rounded-2xl w-full sm:max-w-[26.25rem] min-h-[100dvh] sm:min-h-0 sm:h-auto sm:my-auto p-5 sm:p-6 border-0 sm:border shadow-2xl">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[var(--teal-light)] flex items-center justify-center">
-                      <Wifi size={20} className="text-[var(--teal)]" />
-                    </div>
-                    <div>
-                      <h3 className="text-[1rem] font-bold text-[var(--text-primary)]">{isBn ? 'কিওস্ক মোড' : 'Kiosk Mode'}</h3>
-                      <p className="text-[0.6875rem] text-[var(--text-muted)]">
-                        {isBn ? 'শেয়ার্ড ডিভাইস হিসেবে ব্যবহার করুন' : 'Use as shared device'}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setKioskMode(false)
-                      setKioskMsg(null)
-                      setKioskIdentified(null)
-                    }}
-                    className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-
-                {/* HTTPS warning */}
-                {window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && (
-                  <div className="mb-4 py-3 px-4 rounded-xl bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.75rem] font-medium text-center">
-                    <span className="font-bold">🔒 {isBn ? 'HTTPS প্রয়োজন!' : 'HTTPS Required!'}</span>
-                    <br />
-                    {isBn
-                      ? 'বায়োমেট্রিক কাজ করতে https:// দিয়ে খুলুন। যেমন: https://192.168.0.188:5173'
-                      : 'Open with https:// for biometric to work. E.g.: https://192.168.0.188:5173'}
-                  </div>
-                )}
-
-                {kioskMsg && (
-                  <div
-                    className={`mb-4 py-3 px-4 rounded-xl text-center text-[0.875rem] font-bold ${kioskMsg.type === 'success' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}
-                  >
-                    {kioskMsg.text}
-                  </div>
-                )}
-
-                {/* Identified person display */}
-                {kioskIdentified && (
-                  <div className="mb-4 p-5 rounded-2xl bg-[var(--green-light)] border-2 border-[var(--green)] text-center">
-                    <div className="w-16 h-16 rounded-full bg-[var(--green)] flex items-center justify-center mx-auto mb-3">
-                      <CheckCircle size={32} className="text-white" />
-                    </div>
-                    <div className="text-[1.25rem] font-bold text-[var(--green)]">{kioskIdentified.staffName}</div>
-                    <div className="text-[0.75rem] text-[var(--text-secondary)] font-mono mt-1">{kioskIdentified.staffId}</div>
-                    <div className="mt-3 flex items-center justify-center gap-3">
-                      <span
-                        className={`px-3 py-1.5 rounded-lg text-[0.8125rem] font-bold ${kioskIdentified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}
-                      >
-                        {kioskIdentified.punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'}
-                      </span>
-                      <span className="text-[1.375rem] font-bold text-[var(--text-primary)] font-mono">{kioskIdentified.time}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Camera view */}
-                {kioskCamActive && !kioskIdentified && (
-                  <div className="mb-4">
-                    <div
-                      className="relative rounded-2xl overflow-hidden bg-black w-full mb-3"
-                      style={{ aspectRatio: '4/3', maxHeight: '50vh' }}
-                    >
-                      <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-                      <canvas ref={kioskCanvasRef} className="hidden" />
-                      <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[0.625rem] font-medium flex items-center gap-1.5 z-10">
-                        <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
-                        {isBn ? 'লাইভ' : 'LIVE'}
-                      </div>
-                      {/* Face guide grid overlay */}
-                      {!kioskCapturedPhoto && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                          {/* Grid lines */}
-                          <div className="absolute inset-[15%] grid grid-cols-3 grid-rows-3">
-                            {[...Array(9)].map((_, i) => (
-                              <div
-                                key={i}
-                                className={`border ${kioskFaceDetected ? 'border-[var(--green)]/70' : 'border-white/30'} transition-colors duration-200`}
-                              />
-                            ))}
-                          </div>
-                          {/* Center oval guide */}
-                          <div
-                            className={`w-28 h-36 border-2 rounded-[50%] transition-all duration-300 ${
-                              kioskFaceDetected ? 'border-[var(--green)] shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'border-white/50'
-                            }`}
-                          />
-                          {/* Status label */}
-                          <div
-                            className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[0.625rem] font-bold ${
-                              kioskFaceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/60 text-white/70'
-                            } transition-colors duration-200`}
-                          >
-                            {kioskFaceDetected
-                              ? isBn
-                                ? 'মুখ সনাক্ত হয়েছে — ধরুন...'
-                                : 'Face detected — Hold...'
-                              : isBn
-                                ? 'মুখ গ্রিডে রাখুন'
-                                : 'Position face in grid'}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    {kioskCapturedPhoto ? (
-                      <div className="space-y-2">
-                        <img
-                          src={kioskCapturedPhoto}
-                          alt=""
-                          className="w-full max-w-[18.75rem] mx-auto rounded-xl border-2 border-[var(--green)]"
-                        />
-                        <p className="text-[0.75rem] text-center text-[var(--green)] font-medium">
-                          {isBn ? 'ছবি তোলা হয়েছে — নাম নির্বাচন করুন' : 'Photo captured — Select your name below'}
-                        </p>
-                        <div className="grid grid-cols-1 gap-2 max-h-[15.625rem] overflow-y-auto">
-                          {kioskRegisteredFaces.map((f) => (
-                            <div
-                              key={f.staffId}
-                              className="flex items-center gap-2 p-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]"
-                            >
-                              <img
-                                src={f.photo}
-                                alt=""
-                                className="w-10 h-10 rounded-full object-cover border border-[var(--border)] shrink-0"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="text-[0.75rem] font-medium text-[var(--text-primary)] truncate">{f.staffName}</div>
-                                <div className="text-[0.625rem] text-[var(--text-muted)]">{f.staffId}</div>
-                              </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <button
-                                  onClick={() => {
-                                    setKioskEditFace(f.staffId)
-                                    setKioskCapturedPhoto(null)
-                                    startKioskCamera()
-                                  }}
-                                  className="w-7 h-7 rounded-lg bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]"
-                                  title={isBn ? 'সম্পাদনা' : 'Edit'}
-                                >
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                  </svg>
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) handleKioskDeleteFace(f.staffId)
-                                  }}
-                                  className="w-7 h-7 rounded-lg bg-[var(--red-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--red)]"
-                                  title={isBn ? 'মুছুন' : 'Delete'}
-                                >
-                                  <X size={12} />
-                                </button>
-                                <button
-                                  onClick={() => handleKioskPunch(f.staffId, f.staffName)}
-                                  className="px-2 py-1 rounded-lg bg-[var(--green)] border-0 text-white text-[0.625rem] font-semibold cursor-pointer"
-                                  title={isBn ? 'উপস্থিতি' : 'Punch'}
-                                >
-                                  {isBn ? 'পাঞ্চ' : 'Punch'}
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        {kioskRegisteredFaces.length === 0 && (
-                          <p className="text-[0.6875rem] text-center text-[var(--text-muted)]">
-                            {isBn ? 'কোনো নিবন্ধিত স্টাফ নেই। প্রথমে নিবন্ধন করুন।' : 'No registered staff. Register first.'}
-                          </p>
-                        )}
-                        <button
-                          onClick={() => {
-                            setKioskCapturedPhoto(null)
-                          }}
-                          className="w-full py-2 rounded-lg text-[0.75rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border border-[var(--border)]"
-                        >
-                          {isBn ? 'আবার তুলুন' : 'Retake Photo'}
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="w-full py-3 rounded-xl text-[0.875rem] font-bold bg-[var(--teal-light)] text-[var(--teal)] text-center">
-                        {kioskFaceDetected
-                          ? isBn
-                            ? 'মুখ সনাক্ত হয়েছে — ধরুন...'
-                            : 'Face detected — Hold still...'
-                          : isBn
-                            ? 'মুখকে গ্রিডের মাঝখানে রাখুন'
-                            : 'Center your face in the grid'}
-                      </div>
-                    )}
-                    <button
-                      onClick={() => {
-                        stopKioskCamera()
-                        stopKioskDetectLoop()
-                        setKioskCapturedPhoto(null)
-                      }}
-                      className="w-full mt-2 py-2 text-[0.75rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none underline"
-                    >
-                      {isBn ? 'বন্ধ করুন' : 'Cancel'}
-                    </button>
-                  </div>
-                )}
-
-                {/* Scan prompt - main CTA */}
-                {!kioskIdentified && !kioskCamActive && (
-                  <div className="text-center mb-5">
-                    <div className="w-24 h-24 rounded-full bg-[var(--teal-light)] border-2 border-[var(--teal)] flex items-center justify-center mx-auto mb-4">
-                      <ScanFace size={44} className="text-[var(--teal)]" />
-                    </div>
-                    <p className="text-[1rem] font-bold text-[var(--text-primary)]">{isBn ? 'ক্যামেরায় মুখ দেখান' : 'Show your face'}</p>
-                    <p className="text-[0.75rem] text-[var(--text-muted)] mt-1">
-                      {isBn ? 'একবার ক্লিক করুন — গ্রিডে মুখ রাখলে অটো ছবি তোলবে' : 'One click — face in grid, photo auto-captured'}
-                    </p>
-                  </div>
-                )}
-
-                {/* Scan / Retry button */}
-                {!kioskCamActive && !kioskIdentified && (
-                  <button
-                    onClick={handleKioskScan}
-                    disabled={kioskPending}
-                    className={`w-full py-4 rounded-xl text-[0.9375rem] font-bold cursor-pointer border-none transition-all ${kioskPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : 'bg-[var(--teal)] text-white hover:shadow-lg hover:scale-[1.02]'}`}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <ScanFace size={18} />
-                      {isBn ? 'ক্যামেরা খুলুন' : 'Open Camera'}
-                    </span>
-                  </button>
-                )}
-
-                {kioskIdentified && (
-                  <button
-                    onClick={() => {
-                      setKioskIdentified(null)
-                      setKioskMsg(null)
-                    }}
-                    className="w-full py-4 rounded-xl text-[0.9375rem] font-bold cursor-pointer border-none bg-[var(--teal)] text-white hover:shadow-lg hover:scale-[1.02] transition-all"
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <ScanFace size={18} />
-                      {isBn ? 'আবার স্ক্যান করুন' : 'Scan Again'}
-                    </span>
-                  </button>
-                )}
-
-                {/* Registration section */}
-                <div className="mt-4">
-                  {!kioskRegMode ? (
-                    <button
-                      onClick={() => {
-                        setKioskRegMode(true)
-                        setKioskRegStaff('')
-                        setKioskMsg(null)
-                        setKioskCapturedPhoto(null)
-                      }}
-                      className="w-full py-3 rounded-xl text-[0.8125rem] font-semibold cursor-pointer border-2 border-dashed border-[var(--teal)] bg-transparent text-[var(--teal)] hover:bg-[var(--teal-light)] transition-all flex items-center justify-center gap-2"
-                    >
-                      <Plus size={16} />
-                      {isBn ? 'নতুন স্টাফ নিবন্ধন করুন' : 'Register New Staff'}
-                    </button>
-                  ) : (
-                    <div className="p-4 rounded-xl border-2 border-[var(--teal)] bg-[var(--teal-light)]">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[0.8125rem] font-bold text-[var(--teal)]">{isBn ? 'নিবন্ধন' : 'Registration'}</span>
-                        <button
-                          onClick={() => {
-                            setKioskRegMode(false)
-                            setKioskRegStaff('')
-                            setKioskCapturedPhoto(null)
-                            stopKioskCamera()
-                          }}
-                          className="text-[0.6875rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none underline"
-                        >
-                          {isBn ? 'বাতিল' : 'Cancel'}
-                        </button>
-                      </div>
-                      <select
-                        value={kioskRegStaff}
-                        onChange={(e) => {
-                          setKioskRegStaff(e.target.value)
-                          setKioskMsg(null)
-                          setKioskCapturedPhoto(null)
-                        }}
-                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none mb-3"
-                      >
-                        <option value="">{isBn ? 'স্টাফ নির্বাচন করুন...' : 'Select staff...'}</option>
-                        {activeTeachers.map((t) => {
-                          const registered = kioskRegisteredFaces.find((f) => f.staffId === t.id)
-                          return (
-                            <option key={t.id} value={t.id}>
-                              {isBn ? t.nameBn || t.nameEn : t.nameEn} ({t.id}){registered ? ' ✓' : ''}
-                            </option>
-                          )
-                        })}
-                      </select>
-                      {kioskRegStaff && (
-                        <>
-                          {kioskCamActive ? (
-                            <div className="space-y-3">
-                              <div
-                                className="relative rounded-2xl overflow-hidden bg-black w-full"
-                                style={{
-                                  aspectRatio: '4/3',
-                                  maxHeight: '40vh',
-                                }}
-                              >
-                                <video
-                                  ref={kioskVideoRef}
-                                  autoPlay
-                                  playsInline
-                                  muted
-                                  className="absolute inset-0 w-full h-full object-cover"
-                                />
-                                <canvas ref={kioskCanvasRef} className="hidden" />
-                                <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[0.5625rem] flex items-center gap-1 z-10">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />
-                                  LIVE
-                                </div>
-                                {!kioskCapturedPhoto && (
-                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                                    <div className="absolute inset-[15%] grid grid-cols-3 grid-rows-3">
-                                      {[...Array(9)].map((_, i) => (
-                                        <div
-                                          key={i}
-                                          className={`border ${kioskFaceDetected ? 'border-[var(--green)]/70' : 'border-white/30'} transition-colors duration-200`}
-                                        />
-                                      ))}
-                                    </div>
-                                    <div
-                                      className={`w-24 h-32 border-2 rounded-[50%] transition-all duration-300 ${
-                                        kioskFaceDetected
-                                          ? 'border-[var(--green)] shadow-[0_0_20px_rgba(34,197,94,0.4)]'
-                                          : 'border-white/50'
-                                      }`}
-                                    />
-                                    <div
-                                      className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[0.625rem] font-bold ${
-                                        kioskFaceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/60 text-white/70'
-                                      } transition-colors duration-200`}
-                                    >
-                                      {kioskFaceDetected
-                                        ? isBn
-                                          ? 'মুখ সনাক্ত হয়েছে — ধরুন...'
-                                          : 'Face detected — Hold...'
-                                        : isBn
-                                          ? 'মুখ গ্রিডে রাখুন'
-                                          : 'Position face in grid'}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                              {kioskCapturedPhoto ? (
-                                <div className="space-y-2">
-                                  <img
-                                    src={kioskCapturedPhoto}
-                                    alt=""
-                                    className="w-full max-w-[17.5rem] mx-auto rounded-xl border-2 border-[var(--green)]"
-                                  />
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => {
-                                        setKioskCapturedPhoto(null)
-                                        startKioskDetectLoop()
-                                      }}
-                                      className="flex-1 py-2 rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer"
-                                    >
-                                      {isBn ? 'আবার' : 'Retake'}
-                                    </button>
-                                    <button
-                                      onClick={kioskEditFace ? () => handleKioskUpdateFace(kioskEditFace) : handleKioskRegister}
-                                      className="flex-1 py-2 rounded-lg text-[0.75rem] bg-[var(--green)] text-white border-none font-semibold cursor-pointer"
-                                    >
-                                      {kioskEditFace ? (isBn ? 'আপডেট' : 'Update') : isBn ? 'নিবন্ধন করুন' : 'Register'}
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="w-full py-2.5 rounded-xl text-[0.8125rem] font-bold bg-[var(--teal-light)] text-[var(--teal)] text-center">
-                                  {kioskFaceDetected
-                                    ? isBn
-                                      ? 'মুখ সনাক্ত হয়েছে — ধরুন...'
-                                      : 'Face detected — Hold still...'
-                                    : isBn
-                                      ? 'মুখকে গ্রিডের মাঝখানে রাখুন'
-                                      : 'Center your face in the grid'}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <button
-                              onClick={startKioskCamera}
-                              className="w-full py-3 rounded-xl text-[0.8125rem] font-bold bg-[var(--teal)] text-white border-none cursor-pointer flex items-center justify-center gap-2"
-                            >
-                              <ScanFace size={16} />
-                              {isBn ? 'ক্যামেরা খুলুন' : 'Open Camera'}
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* WiFi check */}
-                <div className="mt-4 flex items-center justify-center gap-2">
-                  {wifiConnected === true ? (
-                    <span className="text-[0.625rem] text-[var(--green)] flex items-center gap-1">
-                      <Wifi size={12} />
-                      {isBn ? 'নেটওয়ার্ক সংযুক্ত' : 'Network connected'}
-                    </span>
-                  ) : wifiConnected === false ? (
-                    <span className="text-[0.625rem] text-[var(--red)] flex items-center gap-1">
-                      <WifiOff size={12} />
-                      {isBn ? 'নেটওয়ার্ক সংযোগ নেই' : 'No network'}
-                    </span>
-                  ) : null}
-                </div>
-
-                {/* Registered Staff Table */}
-                {kioskRegisteredFaces.length > 0 && (
-                  <div className="mt-4 border-t border-[var(--border)] pt-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[0.8125rem] font-bold text-[var(--text-primary)]">
-                        {isBn ? `নিবন্ধিত স্টাফ (${kioskRegisteredFaces.length})` : `Registered Staff (${kioskRegisteredFaces.length})`}
-                      </span>
-                    </div>
-                    <div className="border border-[var(--border)] rounded-xl overflow-hidden">
-                      <table className="w-full text-[0.6875rem]">
-                        <thead>
-                          <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                            <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.5rem]">#</th>
-                            <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.75rem]"></th>
-                            <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
-                            <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'আইডি' : 'ID'}</th>
-                            <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[6.25rem]">
-                              {isBn ? 'অ্যাকশন' : 'Actions'}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {kioskRegisteredFaces.map((f, i) => (
-                            <tr
-                              key={f.staffId}
-                              className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)] transition-colors"
-                            >
-                              <td className="p-2 text-center text-[var(--text-muted)]">{i + 1}</td>
-                              <td className="p-2 text-center">
-                                <img
-                                  src={f.photo}
-                                  alt=""
-                                  className="w-8 h-8 rounded-full object-cover border border-[var(--border)] mx-auto"
-                                />
-                              </td>
-                              <td className="p-2 font-medium text-[var(--text-primary)]">{f.staffName}</td>
-                              <td className="p-2 text-[var(--text-muted)] font-mono">{f.staffId}</td>
-                              <td className="p-2 text-center">
-                                <div className="flex items-center justify-center gap-1">
-                                  <button
-                                    onClick={() => handleKioskPunch(f.staffId, f.staffName)}
-                                    className="px-2 py-1 rounded-md bg-[var(--green)] text-white text-[0.625rem] font-semibold cursor-pointer border-none"
-                                    title={isBn ? 'পাঞ্চ' : 'Punch'}
-                                  >
-                                    {isBn ? 'পাঞ্চ' : 'Punch'}
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setKioskEditFace(f.staffId)
-                                      setKioskCapturedPhoto(null)
-                                      startKioskCamera()
-                                    }}
-                                    className="w-6 h-6 rounded-md bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]"
-                                    title={isBn ? 'সম্পাদনা' : 'Edit'}
-                                  >
-                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) handleKioskDeleteFace(f.staffId)
-                                    }}
-                                    className="w-6 h-6 rounded-md bg-[var(--red-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--red)]"
-                                    title={isBn ? 'মুছুন' : 'Delete'}
-                                  >
-                                    <X size={11} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* Stats footer */}
-                <div className="mt-3 text-center text-[0.625rem] text-[var(--text-muted)]">
-                  {isBn
-                    ? `মোট স্টাফ: ${activeTeachers.length} · নিবন্ধিত: ${kioskRegisteredFaces.length}`
-                    : `Total staff: ${activeTeachers.length} · Registered: ${kioskRegisteredFaces.length}`}
                 </div>
               </div>
             </div>

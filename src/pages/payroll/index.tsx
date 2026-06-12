@@ -12,12 +12,15 @@ import {
   Calculator,
   Building2,
   Calendar,
-  Download,
+  FileText,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useHRStore } from '@/store/hrStore'
+import { SalarySlipPDFOptionsModal } from '@/components/shared/SalarySlipPDFOptionsModal'
+import type { SalarySlipEmployee } from '@/pages/payroll/pdfTemplates/salarySlipPdfTemplate'
+import { downloadHTML } from '@/lib/pdf'
 
 type SortKey = 'name' | 'salary' | 'department' | 'designation'
 
@@ -35,6 +38,9 @@ export default function PayrollPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [selected, setSelected] = useState<string[]>([])
   const [month, setMonth] = useState('')
+  const [showPdfModal, setShowPdfModal] = useState(false)
+  const [pdfMode, setPdfMode] = useState<'single' | 'batch'>('batch')
+  const [pdfEmployee, setPdfEmployee] = useState<SalarySlipEmployee | null>(null)
   const monthSelected = month !== ''
   const currentYear = new Date().getFullYear()
   const MONTHS = [
@@ -136,182 +142,27 @@ export default function PayrollPage() {
     [monthlySalaryConfigs, month]
   )
 
-  const handlePrintSelected = useCallback(() => {
-    const list = filtered.filter((t) => selected.includes(t.id))
-    if (list.length === 0) return
-    const rows = list
-      .map((t, i) => {
-        const basic = t.salary
-        const cfg = getMonthConfigs(t.id)
-        const bonusVal = cfg?.bonus || 0
-        const festivalVal = cfg?.festivalBonus || 0
-        const facilityTotal = getTeacherFacilityAmount(t.id)
-        const deductionAmount = cfg?.applyDeductionRule ? Math.round(basic / 30) : 0
-        const fundAmount = Math.round((basic * (cfg?.fundContributionPercent || 0)) / 100)
-        const gross =
-          basic +
-          Math.round(basic * 0.15) +
-          Math.round(basic * 0.1) +
-          Math.round(basic * 0.05) +
-          bonusVal +
-          (t.overtime || 0) +
-          festivalVal +
-          facilityTotal
-        const net = gross - deductionAmount - fundAmount
-        return `<tr style="border-bottom:1px solid #eee">
-        <td style="padding:6px 8px;font-size:11px">${i + 1}</td>
-        <td style="padding:6px 8px;font-size:11px;font-family:monospace;color:#6366f1">${t.id}</td>
-        <td style="padding:6px 8px;font-size:11px;font-weight:500">${t.nameEn}</td>
-        <td style="padding:6px 8px;font-size:11px">${getDeptName(t.departmentId)}</td>
-        <td style="padding:6px 8px;font-size:11px">${t.designation || '—'}</td>
-        <td style="padding:6px 8px;font-size:11px;text-align:right">৳${basic.toLocaleString()}</td>
-        <td style="padding:6px 8px;font-size:11px;text-align:right">৳${bonusVal.toLocaleString()}</td>
-        <td style="padding:6px 8px;font-size:11px;text-align:right">৳${(t.overtime || 0).toLocaleString()}</td>
-        <td style="padding:6px 8px;font-size:11px;text-align:right">৳${festivalVal.toLocaleString()}</td>
-        <td style="padding:6px 8px;font-size:11px;text-align:right">৳${facilityTotal.toLocaleString()}</td>
-        <td style="padding:6px 8px;font-size:12px;font-weight:700;text-align:right;color:#10b981">৳${net.toLocaleString()}</td>
-      </tr>`
-      })
-      .join('')
-    const totalNet = list.reduce((s, t) => {
-      const b = t.salary
+  const buildSalarySlipEmployee = useCallback(
+    (t: (typeof teachers)[0]): SalarySlipEmployee => {
       const cfg = getMonthConfigs(t.id)
-      const bv = cfg?.bonus || 0
-      const fv = cfg?.festivalBonus || 0
-      const ft = getTeacherFacilityAmount(t.id)
-      const da = cfg?.applyDeductionRule ? Math.round(b / 30) : 0
-      const fa = Math.round((b * (cfg?.fundContributionPercent || 0)) / 100)
-      const g = b + Math.round(b * 0.15) + Math.round(b * 0.1) + Math.round(b * 0.05) + bv + (t.overtime || 0) + fv + ft
-      return s + g - Math.round(b * 0.08) - Math.round(g * 0.05) - da - fa
-    }, 0)
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(`<!DOCTYPE html><html><head><title>Payroll - ${list.length} employees</title>
-<style>
-  @page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:12px;background:#fff;padding:15px}
-  h1{font-size:16px;color:#6366f1;margin-bottom:4px}
-  .sub{font-size:11px;color:#666;margin-bottom:12px}
-  table{width:100%;border-collapse:collapse}
-  th{background:#6366f1;color:#fff;padding:7px 8px;font-size:10px;text-align:left;font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
-  th:last-child,th:nth-child(n+6){text-align:right}
-  .total-row td{border-top:2px solid #6366f1;font-weight:700;background:#eef2ff}
-  @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
-</style></head><body>
-<h1>EduTech School — Selected Payroll</h1>
-<div class="sub">Month: ${month} | Selected: ${list.length} employees | Generated: ${new Date().toLocaleDateString()}</div>
-<table><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Dept</th><th>Designation</th><th>Basic</th><th>Bonus</th><th>Overtime</th><th>Festival</th><th>Facilities</th><th>Net Pay</th></tr></thead>
-<tbody>${rows}
-<tr class="total-row"><td colspan="5" style="padding:8px;font-size:12px">TOTAL (${list.length} employees)</td><td colspan="5"></td><td style="padding:8px;text-align:right;font-size:12px;font-weight:700;color:#10b981">৳${totalNet.toLocaleString()}</td></tr>
-</tbody></table></body></html>`)
-    win.document.close()
-    setTimeout(() => win.print(), 600)
-  }, [filtered, selected, month, getDeptName, isBn])
-
-  const handlePrintPayslip = (t: (typeof teachers)[0]) => {
-    const basic = t.salary
-    const cfg = getMonthConfigs(t.id)
-    const house = Math.round(basic * 0.15)
-    const medical = Math.round(basic * 0.1)
-    const conveyance = Math.round(basic * 0.05)
-    const bonusVal = cfg?.bonus || 0
-    const overtimeVal = t.overtime || 0
-    const festivalVal = cfg?.festivalBonus || 0
-    const facilityDetails = getTeacherFacilityDetails(t.id)
-    const facilityTotal = facilityDetails.reduce((s, f) => s + f.amount, 0)
-    const deductionAmount = cfg?.applyDeductionRule ? Math.round(basic / 30) : 0
-    const fundAmount = Math.round((basic * (cfg?.fundContributionPercent || 0)) / 100)
-    const gross = basic + house + medical + conveyance + bonusVal + overtimeVal + festivalVal + facilityTotal
-    const totalDeduction = deductionAmount + fundAmount
-    const net = gross - totalDeduction
-
-    const facilityRows = facilityDetails
-      .map((f) => `<tr><td>${isBn ? f.nameBn : f.name}</td><td style="text-align:right">৳${f.amount.toLocaleString()}</td></tr>`)
-      .join('')
-
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(`<!DOCTYPE html><html><head><title>Payslip - ${t.id}</title>
-<style>
-  @page{size:A4 portrait;margin:10mm}
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:11px;background:#fff;padding:10px}
-  .slip{border:1.5px solid #c7d2fe;border-radius:8px;padding:12px;max-width:190mm;margin:0 auto}
-  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #6366f1}
-  .logo-box{width:32px;height:32px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
-  .school h1{font-size:12px;font-weight:700;color:#6366f1}
-  .school p{font-size:8px;color:#666}
-  .title{text-align:center;font-size:10px;font-weight:700;color:#fff;background:#6366f1;padding:5px;margin-bottom:8px;border-radius:4px;letter-spacing:1px}
-  .info-row{display:flex;justify-content:space-between;background:#eef2ff;padding:5px 8px;border-radius:6px;margin-bottom:8px;border:1px solid #c7d2fe}
-  .info-item .label{font-size:7px;color:#666;text-transform:uppercase}
-  .info-item .value{font-size:10px;font-weight:700;color:#6366f1}
-  .section{margin-bottom:6px}
-  .section-title{font-size:8px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e0e7ff;padding-bottom:2px;margin-bottom:4px}
-  table{width:100%;border-collapse:collapse}
-  td{padding:2px 6px;border-bottom:0.5px solid #eee;font-size:9px}
-  td:first-child{font-weight:500;color:#555;width:50%}
-  td:last-child{text-align:right;font-weight:600}
-  .total td{border-top:1.5px solid #6366f1;font-weight:700;font-size:10px;color:#1a1a1a}
-  .net td{background:#eef2ff;color:#6366f1;font-size:11px;font-weight:700}
-  .footer{margin-top:10px;padding-top:6px;border-top:1px solid #ddd;display:flex;justify-content:space-between}
-  .sign-line{text-align:center}
-  .sign-line .line{width:80px;height:1px;background:#333;margin:12px auto 3px}
-  .sign-label{font-size:7px;color:#555}
-  @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
-</style></head><body>
-<div class="slip">
-  <div class="header">
-    <div style="display:flex;align-items:center;gap:6px">
-      <div class="logo-box">ET</div>
-      <div class="school"><h1>EduTech School</h1><p>Sunrise Academy</p></div>
-    </div>
-    <div style="text-align:right"><div style="font-size:7px;color:#666">Payslip For</div><div style="font-size:10px;font-weight:700;color:#6366f1">${month}</div></div>
-  </div>
-  <div class="title">SALARY SLIP / বেতন পর্চি</div>
-  <div class="info-row">
-    <div class="info-item"><div class="label">ID</div><div class="value">${t.id}</div></div>
-    <div class="info-item"><div class="label">Name</div><div class="value">${t.nameEn}</div></div>
-    <div class="info-item"><div class="label">Dept</div><div class="value">${getDeptName(t.departmentId)}</div></div>
-    <div class="info-item"><div class="label">Designation</div><div class="value">${t.designation || '—'}</div></div>
-  </div>
-  <div style="display:flex;gap:12px">
-    <div class="section" style="flex:1">
-      <div class="section-title">Earnings</div>
-      <table>
-        <tr><td>Basic Salary</td><td>৳${basic.toLocaleString()}</td></tr>
-        <tr><td>House Rent (15%)</td><td>৳${house.toLocaleString()}</td></tr>
-        <tr><td>Medical (10%)</td><td>৳${medical.toLocaleString()}</td></tr>
-        <tr><td>Conveyance (5%)</td><td>৳${conveyance.toLocaleString()}</td></tr>
-        ${bonusVal > 0 ? `<tr><td>Bonus</td><td>৳${bonusVal.toLocaleString()}</td></tr>` : ''}
-        ${overtimeVal > 0 ? `<tr><td>Overtime</td><td>৳${overtimeVal.toLocaleString()}</td></tr>` : ''}
-        ${festivalVal > 0 ? `<tr><td>Festival Bonus</td><td>৳${festivalVal.toLocaleString()}</td></tr>` : ''}
-        ${facilityRows}
-        <tr class="total"><td>Gross Earnings</td><td>৳${gross.toLocaleString()}</td></tr>
-      </table>
-    </div>
-    <div class="section" style="flex:1">
-      <div class="section-title">Deductions</div>
-      <table>
-        ${deductionAmount > 0 ? `<tr><td>Salary Deduction (1 day)</td><td>-৳${deductionAmount.toLocaleString()}</td></tr>` : ''}
-        ${fundAmount > 0 ? `<tr><td>Fund Contribution</td><td>-৳${fundAmount.toLocaleString()}</td></tr>` : ''}
-        <tr class="total"><td>Total Deductions</td><td>-৳${totalDeduction.toLocaleString()}</td></tr>
-      </table>
-    </div>
-  </div>
-  <div class="section">
-    <table>
-      <tr class="net"><td>NET SALARY</td><td>৳${net.toLocaleString()}</td></tr>
-    </table>
-  </div>
-  <div class="footer">
-    <div class="sign-line"><div class="line"></div><div class="sign-label">Admin Approval</div></div>
-    <div style="text-align:center;font-size:7px;color:#888"><div>Date: ___________</div></div>
-    <div class="sign-line"><div class="line"></div><div class="sign-label">Employee Signature</div></div>
-  </div>
-</div></body></html>`)
-    win.document.close()
-    setTimeout(() => win.print(), 600)
-  }
+      return {
+        id: t.id,
+        nameEn: t.nameEn,
+        nameBn: t.nameBn,
+        departmentId: getDeptName(t.departmentId),
+        designation: t.designation,
+        salary: t.salary,
+        overtime: t.overtime || 0,
+        facilityTotal: getTeacherFacilityAmount(t.id),
+        facilityDetails: getTeacherFacilityDetails(t.id),
+        bonus: cfg?.bonus || 0,
+        festivalBonus: cfg?.festivalBonus || 0,
+        applyDeductionRule: cfg?.applyDeductionRule || false,
+        fundContributionPercent: cfg?.fundContributionPercent || 0,
+      }
+    },
+    [getMonthConfigs, getDeptName, getTeacherFacilityAmount, getTeacherFacilityDetails]
+  )
 
   const handlePrintAll = () => {
     const rows = filtered
@@ -433,13 +284,26 @@ export default function PayrollPage() {
           )}
         </div>
         {monthSelected && (
-          <button
-            onClick={handlePrintAll}
-            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3.5 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
-          >
-            <Printer size={13} />
-            {isBn ? 'সব প্রিন্ট' : 'Print All'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrintAll}
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3.5 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+            >
+              <Printer size={13} />
+              {isBn ? 'সব প্রিন্ট' : 'Print All'}
+            </button>
+            <button
+              onClick={() => {
+                setPdfMode('batch')
+                setPdfEmployee(null)
+                setShowPdfModal(true)
+              }}
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3.5 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-xs font-medium cursor-pointer font-[inherit]"
+            >
+              <FileText size={13} />
+              PDF
+            </button>
+          </div>
         )}
       </div>
 
@@ -607,17 +471,23 @@ export default function PayrollPage() {
 
           <div className={`${card} p-0 overflow-hidden`}>
             {selected.length > 0 && (
-              <div className="py-[0.625rem] px-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--brand-light)] flex-wrap gap-2">
+              <div className="py-[0.625rem] px-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--brand-light)]">
                 <span className="text-xs font-medium text-[var(--brand)]">
                   {selected.length} {isBn ? 'জন নির্বাচিত' : 'selected'}
                 </span>
-                <button
-                  onClick={handlePrintSelected}
-                  className="flex items-center gap-[0.3125rem] py-1.5 px-3.5 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
-                >
-                  <Download size={13} />
-                  {isBn ? 'নির্বাচিত ডাউনলোড' : 'Download Selected'}
-                </button>
+                <div className="flex gap-1 justify-center md:justify-end">
+                  <button
+                    onClick={() => {
+                      setPdfMode('batch')
+                      setPdfEmployee(null)
+                      setShowPdfModal(true)
+                    }}
+                    className="py-1 px-2 rounded-md bg-[var(--brand-light)] border border-[var(--brand)] cursor-pointer text-[0.625rem] text-[var(--brand)] font-[inherit] flex items-center gap-[0.1875rem]"
+                  >
+                    <FileText size={11} />
+                    PDF
+                  </button>
+                </div>
               </div>
             )}
             <div className={`overflow-x-auto ${isMobile ? 'max-h-[60vh] overflow-y-auto' : ''}`}>
@@ -645,7 +515,7 @@ export default function PayrollPage() {
                     <th className="py-[0.625rem] px-3 text-right text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase">
                       {isBn ? 'বেতন' : 'Salary'}
                     </th>
-                    <th className="py-[0.625rem] px-3 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase">
+                    <th className="py-[0.625rem] px-3 text-center md:text-right text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase">
                       {isBn ? 'অ্যাকশন' : 'Action'}
                     </th>
                   </tr>
@@ -697,8 +567,8 @@ export default function PayrollPage() {
                             <td className="py-[0.625rem] px-3 text-xs font-semibold text-[var(--text-primary)] text-right">
                               ৳{t.salary.toLocaleString()}
                             </td>
-                            <td className="py-[0.625rem] px-3 text-center">
-                              <div className="flex gap-1 justify-center">
+                            <td className="py-[0.625rem] px-3 text-center md:text-right">
+                              <div className="flex gap-1 justify-center md:justify-end">
                                 <button
                                   onClick={() => setExpandedId(isExpanded ? null : t.id)}
                                   className="py-1 px-2 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer text-[0.625rem] text-[var(--text-secondary)] font-[inherit] flex items-center gap-[0.1875rem]"
@@ -707,10 +577,14 @@ export default function PayrollPage() {
                                   {isBn ? 'বিস্তারিত' : 'Details'}
                                 </button>
                                 <button
-                                  onClick={() => handlePrintPayslip(t)}
+                                  onClick={() => {
+                                    setPdfMode('single')
+                                    setPdfEmployee(buildSalarySlipEmployee(t))
+                                    setShowPdfModal(true)
+                                  }}
                                   className="py-1 px-2 rounded-md bg-[var(--brand-light)] border border-[var(--brand)] cursor-pointer text-[0.625rem] text-[var(--brand)] font-[inherit] flex items-center gap-[0.1875rem]"
                                 >
-                                  <Printer size={11} />
+                                  <FileText size={11} />
                                   PDF
                                 </button>
                               </div>
@@ -799,6 +673,34 @@ export default function PayrollPage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* PDF Download Modal */}
+      {showPdfModal && pdfMode === 'single' && pdfEmployee && (
+        <SalarySlipPDFOptionsModal
+          mode="single"
+          employee={pdfEmployee}
+          month={month}
+          isBn={isBn}
+          onClose={() => setShowPdfModal(false)}
+          onDownload={(html) => {
+            downloadHTML(`payroll_${month}.html`, html)
+            setShowPdfModal(false)
+          }}
+        />
+      )}
+      {showPdfModal && pdfMode === 'batch' && (
+        <SalarySlipPDFOptionsModal
+          mode="batch"
+          employees={filtered.filter((t) => (selected.length > 0 ? selected.includes(t.id) : true)).map(buildSalarySlipEmployee)}
+          month={month}
+          isBn={isBn}
+          onClose={() => setShowPdfModal(false)}
+          onDownload={(html) => {
+            downloadHTML(`payroll_${month}.html`, html)
+            setShowPdfModal(false)
+          }}
+        />
       )}
     </div>
   )
