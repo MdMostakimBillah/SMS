@@ -670,6 +670,30 @@ export default function AttendancePage() {
     [filteredEmployees, selectedEmployees, getPersonMonthData, getDeptName, dateFrom, dateTo, rangeDays]
   )
 
+  // Helper to generate student attendance records for modal
+  const studentAttendanceRecords = useMemo(() => {
+    return filteredStudents.map((s) => ({
+      id: s.id,
+      nameEn: s.nameEn,
+      nameBn: s.nameBn,
+      class: s.class,
+      section: s.section || '',
+      days: getStudentMonthData(s.id),
+    }))
+  }, [filteredStudents, getStudentMonthData])
+
+  // Helper to generate employee attendance records for modal
+  const employeeAttendanceRecords = useMemo(() => {
+    return filteredEmployees.map((t) => ({
+      id: t.id,
+      nameEn: t.nameEn,
+      nameBn: t.nameBn,
+      dept: getDeptName(t.departmentId),
+      designation: t.designation || '',
+      days: getPersonMonthData(t.id),
+    }))
+  }, [filteredEmployees, getPersonMonthData, getDeptName])
+
   const tabs = [
     {
       key: 'today' as Tab,
@@ -2780,6 +2804,10 @@ export default function AttendancePage() {
           count={filteredStudents.length}
           isBn={isBn}
           type="student"
+          records={studentAttendanceRecords}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          rangeDays={rangeDays}
           onClose={() => setShowStudentPDF(false)}
           onDownload={exportStudentPDFFromOpts}
           onPreview={previewStudentPDFFromOpts}
@@ -2792,6 +2820,10 @@ export default function AttendancePage() {
           count={filteredEmployees.length}
           isBn={isBn}
           type="employee"
+          records={employeeAttendanceRecords}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          rangeDays={rangeDays}
           onClose={() => setShowEmployeePDF(false)}
           onDownload={exportEmployeePDFFromOpts}
           onPreview={previewEmployeePDFFromOpts}
@@ -2804,6 +2836,10 @@ export default function AttendancePage() {
           count={selectedStudents.length || filteredStudents.length}
           isBn={isBn}
           type="student"
+          records={studentAttendanceRecords.filter((r) => selectedStudents.length === 0 || selectedStudents.includes(r.id))}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          rangeDays={rangeDays}
           onClose={() => setShowStudentPreview(false)}
           onDownload={(opts) => {
             exportStudentPDFFromOpts(opts)
@@ -2822,6 +2858,10 @@ export default function AttendancePage() {
           count={selectedEmployees.length || filteredEmployees.length}
           isBn={isBn}
           type="employee"
+          records={employeeAttendanceRecords.filter((r) => selectedEmployees.length === 0 || selectedEmployees.includes(r.id))}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          rangeDays={rangeDays}
           onClose={() => setShowEmployeePreview(false)}
           onDownload={(opts) => {
             exportEmployeePDFFromOpts(opts)
