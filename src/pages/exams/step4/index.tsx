@@ -1063,6 +1063,7 @@ export default function Step4Results() {
           count={selectedStudents.size}
           isBn={isBn}
           rows={enrichedTabulationData.filter((d) => selectedStudents.has(d.student.id))}
+          rotateHeaders={rotateHeaders}
           examName={examConfigs.find((e) => e.id === selectedExamId)?.name}
           className={selectedClassId}
           sectionName={selectedSectionId}

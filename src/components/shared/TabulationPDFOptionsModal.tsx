@@ -8,6 +8,7 @@ interface Props {
   count: number
   isBn: boolean
   rows: TabulationStudentRow[]
+  rotateHeaders: boolean
   examName?: string
   className?: string
   sectionName?: string
@@ -15,11 +16,11 @@ interface Props {
   onDownload: (opts: TabulationPdfOptions) => void
 }
 
-export const TabulationPDFOptionsModal = React.memo(function TabulationPDFOptionsModal({ count, isBn, rows, examName, className, sectionName, onClose, onDownload }: Props) {
+export const TabulationPDFOptionsModal = React.memo(function TabulationPDFOptionsModal({ count, isBn, rows, rotateHeaders, examName, className, sectionName, onClose, onDownload }: Props) {
   const previewRenderer = useCallback(
     (opts: GenericPDFOptionsResult) =>
-      generateTabulationPDF(rows, { ...opts, examName, className, sectionName }),
-    [rows, examName, className, sectionName]
+      generateTabulationPDF(rows, { ...opts, rotateHeaders, examName, className, sectionName }),
+    [rows, rotateHeaders, examName, className, sectionName]
   )
 
   return (
@@ -39,6 +40,7 @@ export const TabulationPDFOptionsModal = React.memo(function TabulationPDFOption
           selectedCols: opts.selectedCols,
           orientation: opts.orientation,
           isBn: opts.isBn,
+          rotateHeaders,
         })
       }
     />

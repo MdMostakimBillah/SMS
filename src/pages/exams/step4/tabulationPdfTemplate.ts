@@ -17,6 +17,7 @@ export interface TabulationPdfOptions {
   selectedCols: string[]
   orientation: 'portrait' | 'landscape'
   isBn: boolean
+  rotateHeaders?: boolean
 }
 
 export const ALL_TABULATION_PDF_COLUMNS = [
@@ -30,6 +31,30 @@ export const ALL_TABULATION_PDF_COLUMNS = [
   { key: 'result', label: 'Result', labelBn: 'ফলাফল', default: true },
 ]
 
+function rotatedTh(label: string, brand: string, darkBg: string, height = '100px'): string {
+  return `<th style="padding:0;background:${darkBg};color:#fff;font-weight:700;font-size:9px;border:2px solid ${brand};text-align:center;white-space:nowrap;height:${height};vertical-align:bottom">
+    <div style="display:flex;align-items:flex-end;justify-content:center;height:100%;padding-bottom:6px">
+      <span style="writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:9px;font-weight:700;letter-spacing:0.02em">${label}</span>
+    </div>
+  </th>`
+}
+
+function rotatedThSubject(name: string, fullMarks: number, brand: string, darkBg: string): string {
+  return `<th style="padding:0;background:${darkBg};color:#fff;font-weight:700;font-size:9px;border:2px solid ${brand};text-align:center;white-space:nowrap;height:100px;vertical-align:bottom">
+    <div style="display:flex;align-items:flex-end;justify-content:center;height:100%;padding-bottom:6px">
+      <span style="writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:8px;font-weight:700;letter-spacing:0.02em">${name} (${fullMarks})</span>
+    </div>
+  </th>`
+}
+
+function normalTh(label: string, brand: string, darkBg: string, align = 'center'): string {
+  return `<th style="padding:7px 5px;background:${darkBg};color:#fff;font-weight:700;font-size:10px;border:2px solid ${brand};text-align:${align};white-space:nowrap">${label}</th>`
+}
+
+function normalThSubject(name: string, fullMarks: number, brand: string, darkBg: string): string {
+  return `<th style="padding:7px 4px;background:${darkBg};color:#fff;font-weight:700;font-size:9px;border:2px solid ${brand};text-align:center;white-space:nowrap"><div>${name}</div><div style="font-size:8px;font-weight:400;opacity:0.7">/${fullMarks}</div></th>`
+}
+
 export function generateTabulationPDF(
   rows: TabulationStudentRow[],
   opts: TabulationPdfOptions & { examName?: string; className?: string; sectionName?: string }
@@ -41,6 +66,7 @@ export function generateTabulationPDF(
   const isBn = opts.isBn
   const cols = opts.selectedCols || []
   const orientation = opts.orientation || 'landscape'
+  const rotate = opts.rotateHeaders ?? false
 
   const tdBase = `border:1.5px solid #cbd5e1;padding:5px 6px;font-size:10px;text-align:center;white-space:nowrap`
   const tdName = `border:1.5px solid #cbd5e1;border-left:2.5px solid ${brand};padding:5px 6px;font-size:10px;white-space:nowrap;text-align:left`
@@ -48,16 +74,19 @@ export function generateTabulationPDF(
   const subjectHeaders = rows[0].subjectMarks.map((s) => s.subjectName || '')
   const fullMarksList = rows[0].subjectMarks.map((s) => s.fullMarks)
 
-  // Build column definitions: key → { th, td for each row }
   interface ColDef { key: string; width: string; th: string }
   const allCols: ColDef[] = []
 
+  const thFn = rotate
+    ? (label: string) => rotatedTh(label, brand, darkBg)
+    : (label: string) => normalTh(label, brand, darkBg)
+
   // Fixed columns
-  allCols.push({ key: '__sn', width: '28px', th: `<th style="padding:7px 5px;background:${darkBg};color:#fff;font-weight:700;font-size:10px;border:2px solid ${brand};text-align:center;white-space:nowrap">#</th>` })
-  allCols.push({ key: '__name', width: '120px', th: `<th style="padding:7px 5px;background:${darkBg};color:#fff;font-weight:700;font-size:10px;border:2px solid ${brand};text-align:left;white-space:nowrap">${isBn ? 'নাম' : 'Name'}</th>` })
+  allCols.push({ key: '__sn', width: rotate ? '26px' : '28px', th: rotate ? rotatedTh('#', brand, darkBg, '100px') : normalTh('#', brand, darkBg) })
+  allCols.push({ key: '__name', width: rotate ? '26px' : '120px', th: rotate ? rotatedTh(isBn ? 'নাম' : 'Name', brand, darkBg, '100px') : normalTh(isBn ? 'নাম' : 'Name', brand, darkBg, 'left') })
 
   if (cols.includes('roll')) {
-    allCols.push({ key: 'roll', width: '42px', th: `<th style="padding:7px 5px;background:${darkBg};color:#fff;font-weight:700;font-size:10px;border:2px solid ${brand};text-align:center;white-space:nowrap">${isBn ? 'রোল' : 'Roll'}</th>` })
+    allCols.push({ key: 'roll', width: rotate ? '26px' : '42px', th: thFn(isBn ? 'রোল' : 'Roll') })
   }
 
   // Subject columns
@@ -65,36 +94,31 @@ export function generateTabulationPDF(
     const fm = fullMarksList[idx]
     allCols.push({
       key: `subj_${idx}`,
-      width: '52px',
-      th: `<th style="padding:7px 4px;background:${darkBg};color:#fff;font-weight:700;font-size:9px;border:2px solid ${brand};text-align:center;white-space:nowrap"><div>${h}</div><div style="font-size:8px;font-weight:400;opacity:0.7">/${fm}</div></th>`,
+      width: rotate ? '28px' : '52px',
+      th: rotate ? rotatedThSubject(h, fm, brand, darkBg) : normalThSubject(h, fm, brand, darkBg),
     })
   })
 
   // Summary columns
-  if (cols.includes('obtained')) allCols.push({ key: 'obtained', width: '50px', th: `<th style="padding:7px 5px;background:${darkBg};color:#fff;font-weight:700;font-size:10px;border:2px solid ${brand};text-align:center;white-space:nowrap">${isBn ? 'প্রাপ্ত' : 'Obtained'}</th>` })
-  if (cols.includes('avg')) allCols.push({ key: 'avg', width: '38px', th: `<th style="padding:7px 5px;background:${darkBg};color:#fff;font-weight:700;font-size:10px;border:2px solid ${brand};text-align:center;white-space:nowrap">${isBn ? 'গড়' : 'Avg'}</th>` })
-  if (cols.includes('percentage')) allCols.push({ key: 'pct', width: '38px', th: `<th style="padding:7px 5px;background:${darkBg};color:#fff;font-weight:700;font-size:10px;border:2px solid ${brand};text-align:center;white-space:nowrap">%</th>` })
-  if (cols.includes('gpa')) allCols.push({ key: 'gpa', width: '36px', th: `<th style="padding:7px 5px;background:${darkBg};color:#fff;font-weight:700;font-size:10px;border:2px solid ${brand};text-align:center;white-space:nowrap">GPA</th>` })
-  if (cols.includes('classRank')) allCols.push({ key: 'classRank', width: '56px', th: `<th style="padding:7px 5px;background:${darkBg};color:#fff;font-weight:700;font-size:10px;border:2px solid ${brand};text-align:center;white-space:nowrap">${isBn ? 'ক্লাস র‍্যাঙ্ক' : 'Class Rank'}</th>` })
-  if (cols.includes('sectionRank')) allCols.push({ key: 'secRank', width: '52px', th: `<th style="padding:7px 5px;background:${darkBg};color:#fff;font-weight:700;font-size:10px;border:2px solid ${brand};text-align:center;white-space:nowrap">${isBn ? 'সে. র‍্যাঙ্ক' : 'Sec Rank'}</th>` })
-  if (cols.includes('result')) allCols.push({ key: 'result', width: '44px', th: `<th style="padding:7px 5px;background:${darkBg};color:#fff;font-weight:700;font-size:10px;border:2px solid ${brand};text-align:center;white-space:nowrap">${isBn ? 'ফলাফল' : 'Result'}</th>` })
+  if (cols.includes('obtained')) allCols.push({ key: 'obtained', width: rotate ? '30px' : '50px', th: thFn(isBn ? 'প্রাপ্ত' : 'Obt') })
+  if (cols.includes('avg')) allCols.push({ key: 'avg', width: rotate ? '26px' : '38px', th: thFn(isBn ? 'গড়' : 'Avg') })
+  if (cols.includes('percentage')) allCols.push({ key: 'pct', width: rotate ? '26px' : '38px', th: thFn('%') })
+  if (cols.includes('gpa')) allCols.push({ key: 'gpa', width: rotate ? '26px' : '36px', th: thFn('GPA') })
+  if (cols.includes('classRank')) allCols.push({ key: 'classRank', width: rotate ? '30px' : '56px', th: thFn(isBn ? 'ক্লাস' : 'CRank') })
+  if (cols.includes('sectionRank')) allCols.push({ key: 'secRank', width: rotate ? '30px' : '52px', th: thFn(isBn ? 'সেকশন' : 'SRank') })
+  if (cols.includes('result')) allCols.push({ key: 'result', width: rotate ? '28px' : '44px', th: thFn(isBn ? 'ফলাফল' : 'Status') })
 
   // Build table rows
   const tableRows = rows
     .map((row, i) => {
       const cells: string[] = []
-      // SN
       cells.push(`<td style="${tdBase};font-weight:600;color:#64748b">${i + 1}</td>`)
-      // Name
       cells.push(`<td style="${tdName};font-weight:500">${isBn ? row.student.nameBn : row.student.nameEn}</td>`)
-      // Roll
       if (cols.includes('roll')) cells.push(`<td style="${tdBase};color:#64748b">${row.student.roll || ''}</td>`)
-      // Subjects
       row.subjectMarks.forEach((s) => {
         const failStyle = !s.passed ? 'color:#ef4444;font-weight:700;background:#fef2f2;' : ''
         cells.push(`<td style="${tdBase};${failStyle}">${s.obtained}</td>`)
       })
-      // Summary
       if (cols.includes('obtained')) cells.push(`<td style="${tdBase};font-weight:700;background:#eff6ff;color:${brand};font-size:11px">${row.totalObtained}</td>`)
       if (cols.includes('avg')) cells.push(`<td style="${tdBase};color:${brand};font-weight:700">${row.avgMark}</td>`)
       if (cols.includes('percentage')) cells.push(`<td style="${tdBase};color:#64748b;font-weight:500">${row.percentage}%</td>`)
