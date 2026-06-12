@@ -15,8 +15,6 @@ import {
   FileSpreadsheet,
   RotateCw,
   Download,
-  File,
-  LayoutTemplate,
   ArrowUpDown,
   X,
   Save,
@@ -38,7 +36,10 @@ import { useClassStore, getClassOptions, buildSectionsMap, extractClassNumber } 
 import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
 import { sectionCls, sectionTitleCls, inputCls, selectCls } from '@/lib/styles'
-import { getBrandColor, downloadHTML } from '@/lib/pdf'
+import { downloadHTML } from '@/lib/pdf'
+import { TabulationPDFOptionsModal } from '@/components/shared/TabulationPDFOptionsModal'
+import type { TabulationPdfOptions } from '@/pages/exams/step4/tabulationPdfTemplate'
+import { generateTabulationPDF } from '@/pages/exams/step4/tabulationPdfTemplate'
 
 type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position'
 
@@ -75,13 +76,6 @@ export default function Step4Results() {
 
   // PDF download modal
   const [showPdfModal, setShowPdfModal] = useState(false)
-  const [pdfOrientation, setPdfOrientation] = useState<'landscape' | 'portrait'>('landscape')
-  const [pdfShowRoll, setPdfShowRoll] = useState(true)
-  const [pdfShowResult, setPdfShowResult] = useState(true)
-  const [pdfShowClassRank, setPdfShowClassRank] = useState(true)
-  const [pdfShowSectionRank, setPdfShowSectionRank] = useState(true)
-  const [pdfShowAverage, setPdfShowAverage] = useState(true)
-  const [pdfShowObtained, setPdfShowObtained] = useState(true)
 
   // Table selection
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set())
@@ -327,94 +321,16 @@ export default function Step4Results() {
   }
   const getIcon = (iconName: string) => iconMap[iconName] || Award
 
-  const handleDownloadTabulation = () => {
+  const handleDownloadTabulation = (opts: TabulationPdfOptions) => {
     const selected = enrichedTabulationData.filter((d) => selectedStudents.has(d.student.id))
     if (selected.length === 0) return
-    const brand = getBrandColor()
-    const darkBg = '#1e293b'
-    const tdBorder = `border:1.5px solid #cbd5e1;padding:6px 8px;font-size:11px;text-align:center`
-    const tdBorderLeft = `border:1.5px solid #cbd5e1;border-left:2.5px solid ${brand};padding:6px 8px;font-size:11px`
-    const headers = selected[0].subjectMarks.map((s) => s.subjectName)
-    const fullMarksList = selected[0].subjectMarks.map((s) => s.fullMarks)
-    const rows = selected
-      .map((row, i) => {
-        const cells = row.subjectMarks
-          .map((s) => {
-            const failStyle = !s.passed ? 'color:#ef4444;font-weight:700;background:#fef2f2;' : ''
-            return `<td style="${tdBorder};text-align:center;${failStyle}">${s.obtained}</td>`
-          })
-          .join('')
-        const obtainedCell = pdfShowObtained ? `<td style="${tdBorder};font-weight:700;background:#eff6ff;color:${brand};font-size:12px">${row.totalObtained}</td>` : ''
-        const avgCell = pdfShowAverage ? `<td style="${tdBorder};color:${brand};font-weight:700">${row.avgMark}</td>` : ''
-        const classRankCell = pdfShowClassRank ? `<td style="${tdBorder};${row.classRank <= 3 ? 'background:#fef3c7;color:#92400e;font-weight:700' : 'color:#64748b;font-weight:600'}">${row.classRank}</td>` : ''
-        const secRankCell = pdfShowSectionRank ? `<td style="${tdBorder};${row.sectionRank <= 3 ? 'background:#dcfce7;color:#166534;font-weight:700' : 'color:#64748b;font-weight:600'}">${row.sectionRank}</td>` : ''
-        const resultCell = pdfShowResult
-          ? `<td style="${tdBorder};font-weight:700;${row.passedAll ? 'color:#166534;background:#dcfce7' : 'color:#ef4444;background:#fef2f2'}">${row.passedAll ? (isBn ? 'পাস' : 'PASS') : (isBn ? 'ফেল' : 'FAIL')}</td>`
-          : ''
-        return `<tr style="page-break-inside:avoid;${i % 2 === 0 ? '' : 'background:#f8fafc'}"><td style="${tdBorder};font-weight:600;color:#64748b">${i + 1}</td><td style="${tdBorderLeft};font-weight:500;white-space:nowrap">${isBn ? row.student.nameBn : row.student.nameEn}</td>${pdfShowRoll ? `<td style="${tdBorder};color:#64748b">${row.student.roll || ''}</td>` : ''}${cells}${obtainedCell}${avgCell}<td style="${tdBorder};color:#64748b;font-weight:500">${row.percentage}%</td><td style="${tdBorder};font-weight:700;color:${brand};font-size:12px">${row.gpa}</td>${classRankCell}${secRankCell}${resultCell}</tr>`
-      })
-      .join('')
-
-    const thStyle = (w?: string) => `padding:10px 8px;background:${darkBg};color:#fff;font-weight:700;font-size:11px;border:2px solid ${brand};${w ? `min-width:${w};` : ''}text-transform:uppercase;letter-spacing:0.5px`
-    const thClass = rotateHeaders ? ' class="th-rotate"' : ''
-
-    const subjectThs = headers
-      .map((h, idx) => {
-        const fm = fullMarksList[idx]
-        if (rotateHeaders) {
-          return `<th class="th-rotate" style="min-width:36px">${h} (${fm})</th>`
-        }
-        return `<th style="${thStyle('80px')}text-align:center;vertical-align:middle"><div style="font-weight:700">${h}</div><div style="font-size:9px;font-weight:400;opacity:0.8">/${fm}</div></th>`
-      })
-      .join('')
-
-    const fixedCols = [
-      `<th${thClass} style="${rotateHeaders ? 'min-width:30px' : thStyle('30px')}">#</th>`,
-      `<th${thClass} style="${rotateHeaders ? 'min-width:30px' : thStyle('140px')}">${isBn ? 'নাম' : 'Name'}</th>`,
-    ]
-    if (pdfShowRoll) fixedCols.push(`<th${thClass} style="${rotateHeaders ? 'min-width:30px' : thStyle('40px')}">${isBn ? 'রোল' : 'Roll'}</th>`)
-    const summaryCols: string[] = []
-    if (pdfShowObtained) summaryCols.push(`<th${thClass} style="${rotateHeaders ? 'min-width:36px' : thStyle('50px')}">${isBn ? 'প্রাপ্ত' : 'Obtained'}</th>`)
-    if (pdfShowAverage) summaryCols.push(`<th${thClass} style="${rotateHeaders ? 'min-width:36px' : thStyle('42px')}">${isBn ? 'গড়' : 'Avg'}</th>`)
-    summaryCols.push(`<th${thClass} style="${rotateHeaders ? 'min-width:30px' : thStyle('42px')}">%</th>`)
-    summaryCols.push(`<th${thClass} style="${rotateHeaders ? 'min-width:30px' : thStyle('38px')}">GPA</th>`)
-    if (pdfShowClassRank) summaryCols.push(`<th${thClass} style="${rotateHeaders ? 'min-width:36px' : thStyle('50px')}">${isBn ? 'ক্লাস র‍্যাঙ্ক' : 'Class Rank'}</th>`)
-    if (pdfShowSectionRank) summaryCols.push(`<th${thClass} style="${rotateHeaders ? 'min-width:36px' : thStyle('50px')}">${isBn ? 'সেকশন র‍্যাঙ্ক' : 'Sec Rank'}</th>`)
-    if (pdfShowResult) summaryCols.push(`<th${thClass} style="${rotateHeaders ? 'min-width:36px' : thStyle('48px')}">${isBn ? 'ফলাফল' : 'Result'}</th>`)
-
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Tabulation</title><style>
-      @page{size:${pdfOrientation};margin:6mm}
-      *{margin:0;padding:0;box-sizing:border-box}
-      body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#1e293b;background:#fff;font-size:11px}
-      .header{text-align:center;margin-bottom:14px;padding-bottom:10px;border-bottom:3px solid ${brand}}
-      .header h1{font-size:20px;color:${darkBg};letter-spacing:1.5px;text-transform:uppercase;font-weight:800}
-      .header .subtitle{font-size:12px;color:#64748b;margin-top:4px;font-weight:500}
-      .header .info{display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:10px;color:#64748b}
-      .header .info span{background:#f1f5f9;padding:3px 12px;border-radius:20px;border:1px solid #e2e8f0;font-weight:500}
-      table{width:100%;border-collapse:collapse;border:2px solid ${brand}}
-      thead{overflow:visible}
-      th,td{font-size:10px}
-      th{position:sticky;top:0;z-index:1}
-      .th-rotate{padding:8px 4px;background:${darkBg};color:#fff;font-weight:700;font-size:10px;border:2px solid ${brand};text-transform:uppercase;letter-spacing:0.5px;height:120px;white-space:nowrap;text-align:center;vertical-align:middle;writing-mode:vertical-rl;transform:rotate(180deg)}
-      tr:nth-child(even){background:#f8fafc}
-      .footer{margin-top:10px;display:flex;justify-content:space-between;align-items:center;font-size:9px;color:#94a3b8;border-top:2px solid ${brand};padding-top:6px}
-      .footer .brand{color:${brand};font-weight:700;font-size:10px}
-      @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact}tr{page-break-inside:avoid}th,td{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;overflow:visible}}
-    </style></head><body>
-      <div class="header">
-        <h1>${isBn ? 'ট্যাবুলেশন শিট' : 'Tabulation Sheet'}</h1>
-        <p class="subtitle">${isBn ? 'শিক্ষাবর্ষ' : 'Academic Year'}: ${selected[0]?.student?.academicYear || '—'}</p>
-        <div class="info">
-          <span>${isBn ? 'পরীক্ষা' : 'Exam'}: ${selectedExamId}</span>
-          <span>${isBn ? 'শ্রেণি' : 'Class'}: ${selectedClassId}</span>
-          <span>${isBn ? 'সেকশন' : 'Section'}: ${selectedSectionId}</span>
-          <span>${isBn ? 'মোট ছাত্র' : 'Total Students'}: ${selected.length}</span>
-        </div>
-      </div>
-      <table><thead><tr>${fixedCols.join('')}${subjectThs}${summaryCols.join('')}</tr></thead><tbody>${rows}</tbody></table>
-      <div class="footer"><span class="brand">SMS EduTech</span><span>${isBn ? 'তৈরি করা হয়েছে' : 'Generated'}: ${new Date().toLocaleString()}</span></div>
-      <script>setTimeout(()=>window.print(),600)</script>
-    </body></html>`
+    const examName = examConfigs.find((e) => e.id === selectedExamId)?.name || selectedExamId
+    const html = generateTabulationPDF(selected, {
+      ...opts,
+      examName,
+      className: selectedClassId,
+      sectionName: selectedSectionId,
+    })
     downloadHTML(`tabulation_${selectedExamId}_${selectedClassId}_${selectedSectionId}.html`, html)
     setShowPdfModal(false)
   }
@@ -1143,134 +1059,17 @@ export default function Step4Results() {
       )}
 
       {/* PDF Download Modal */}
-      {showPdfModal && createPortal(
-        <div className="modal-overlay">
-          <div className="modal-box modal-content" style={{ maxWidth: '36rem' }}>
-            {/* Header */}
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
-              <div>
-                <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? 'PDF বিকল্প' : 'PDF Options'}</h2>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>
-                  {selectedStudents.size} {isBn ? 'জন শিক্ষার্থী' : 'students selected'}
-                  {' · '}
-                  {tabulationData[0]?.subjectMarks.length || 0} {isBn ? 'টি বিষয়' : 'subjects'}
-                </p>
-              </div>
-              <button onClick={() => setShowPdfModal(false)} style={{ width: '1.875rem', height: '1.875rem', borderRadius: '0.5rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X size={15} style={{ color: 'var(--text-secondary)' }} />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
-              {/* ① Page Orientation */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.0313rem', marginBottom: '0.5rem' }}>
-                  ① {isBn ? 'কাগজের দিক' : 'Page Orientation'}
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {(['landscape', 'portrait'] as const).map((o) => (
-                    <button
-                      key={o}
-                      onClick={() => setPdfOrientation(o)}
-                      style={{
-                        flex: 1, padding: '0.625rem', borderRadius: '0.625rem',
-                        border: `2px solid ${pdfOrientation === o ? 'var(--brand)' : 'var(--border)'}`,
-                        background: pdfOrientation === o ? 'var(--brand-light)' : 'var(--bg-secondary)',
-                        color: pdfOrientation === o ? 'var(--brand)' : 'var(--text-secondary)',
-                        fontSize: '0.8125rem', fontWeight: pdfOrientation === o ? 600 : 400,
-                        cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem',
-                      }}
-                    >
-                      {o === 'landscape' ? <LayoutTemplate size={15} /> : <File size={15} />}
-                      {isBn ? (o === 'landscape' ? 'আনুভূমিক (Landscape)' : 'উল্লম্ব (Portrait)') : o === 'landscape' ? 'Landscape' : 'Portrait'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* ② Column Selection */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.0313rem' }}>
-                    ② {isBn ? 'কলাম বেছে নিন' : 'Select Columns'}
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.3125rem' }}>
-                    <button
-                      onClick={() => { setPdfShowRoll(true); setPdfShowResult(true); setPdfShowObtained(true); setPdfShowAverage(true); setPdfShowClassRank(true); setPdfShowSectionRank(true) }}
-                      style={{ fontSize: '0.6875rem', padding: '3px 9px', borderRadius: '0.375rem', background: 'var(--brand-light)', border: '1px solid var(--brand)', color: 'var(--brand)', cursor: 'pointer', fontFamily: 'inherit' }}
-                    >
-                      {isBn ? 'সব' : 'All'}
-                    </button>
-                    <button
-                      onClick={() => { setPdfShowRoll(false); setPdfShowResult(false); setPdfShowObtained(false); setPdfShowAverage(false); setPdfShowClassRank(false); setPdfShowSectionRank(false) }}
-                      style={{ fontSize: '0.6875rem', padding: '3px 9px', borderRadius: '0.375rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}
-                    >
-                      {isBn ? 'পরিষ্কার' : 'Clear'}
-                    </button>
-                  </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.3125rem' }}>
-                  {[
-                    { key: 'roll', label: isBn ? 'রোল' : 'Roll', checked: pdfShowRoll, set: setPdfShowRoll },
-                    { key: 'obtained', label: isBn ? 'প্রাপ্তমান' : 'Obtained', checked: pdfShowObtained, set: setPdfShowObtained },
-                    { key: 'avg', label: isBn ? 'গড়মান' : 'Average', checked: pdfShowAverage, set: setPdfShowAverage },
-                    { key: 'classRank', label: isBn ? 'ক্লাস র‍্যাঙ্ক' : 'Class Rank', checked: pdfShowClassRank, set: setPdfShowClassRank },
-                    { key: 'secRank', label: isBn ? 'সেকশন র‍্যাঙ্ক' : 'Section Rank', checked: pdfShowSectionRank, set: setPdfShowSectionRank },
-                    { key: 'result', label: isBn ? 'ফলাফল' : 'Result', checked: pdfShowResult, set: setPdfShowResult },
-                  ].map((col) => (
-                    <label
-                      key={col.key}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '0.4375rem', padding: '6px 9px', borderRadius: '0.5rem',
-                        border: `1px solid ${col.checked ? 'var(--brand)' : 'var(--border)'}`,
-                        background: col.checked ? 'var(--brand-light)' : 'var(--bg-secondary)',
-                        cursor: 'pointer', transition: 'all 0.1s',
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={col.checked}
-                        onChange={(e) => col.set(e.target.checked)}
-                        style={{ width: '0.8125rem', height: '0.8125rem', accentColor: 'var(--brand)', cursor: 'pointer', flexShrink: 0 }}
-                      />
-                      <span style={{ fontSize: '0.6875rem', color: col.checked ? 'var(--brand)' : 'var(--text-secondary)', fontWeight: col.checked ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {col.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginRight: 'auto' }}>
-                {selectedStudents.size} {isBn ? 'জন নির্বাচিত' : 'selected'}
-              </span>
-              <button
-                onClick={() => setShowPdfModal(false)}
-                style={{ padding: '9px 16px', borderRadius: '0.5625rem', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                {isBn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button
-                onClick={handleDownloadTabulation}
-                disabled={selectedStudents.size === 0}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '9px 20px', borderRadius: '0.5625rem',
-                  background: selectedStudents.size === 0 ? 'var(--border)' : 'var(--brand)',
-                  border: 'none', color: '#fff', fontSize: '0.8125rem', fontWeight: 600,
-                  cursor: selectedStudents.size === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                <Download size={14} />
-                {isBn ? 'PDF ডাউনলোড' : 'Download PDF'}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {showPdfModal && (
+        <TabulationPDFOptionsModal
+          count={selectedStudents.size}
+          isBn={isBn}
+          rows={enrichedTabulationData.filter((d) => selectedStudents.has(d.student.id))}
+          examName={examConfigs.find((e) => e.id === selectedExamId)?.name}
+          className={selectedClassId}
+          sectionName={selectedSectionId}
+          onClose={() => setShowPdfModal(false)}
+          onDownload={handleDownloadTabulation}
+        />
       )}
     </div>
   )
