@@ -359,6 +359,8 @@ export default function CommandPalette() {
               background: 'transparent',
               border: 'none',
               outline: 'none',
+              boxShadow: 'none',
+              borderColor: 'transparent',
               fontSize: '1rem',
               color: 'var(--text-primary)',
               fontFamily: 'inherit',
