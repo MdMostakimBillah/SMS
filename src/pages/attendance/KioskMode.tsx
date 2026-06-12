@@ -71,6 +71,8 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const stableCountRef = useRef(0)
   const identifiedRef = useRef(false)
   const cooldownRef = useRef<Record<string, number>>({})
+  const regDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const regStableCountRef = useRef(0)
 
   const videoCallbackRef = useCallback((node: HTMLVideoElement | null) => {
     videoRef.current = node
@@ -103,12 +105,42 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   }
 
   const stopCamera = () => {
+    stopRegDetectLoop()
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop())
       streamRef.current = null
     }
     setCamActive(false)
     setFaceDetected(false)
+  }
+
+  const stopRegDetectLoop = () => {
+    if (regDetectIntervalRef.current) clearInterval(regDetectIntervalRef.current)
+    regDetectIntervalRef.current = null
+    regStableCountRef.current = 0
+  }
+
+  const startRegDetectLoop = () => {
+    if (regDetectIntervalRef.current) clearInterval(regDetectIntervalRef.current)
+    regStableCountRef.current = 0
+    regDetectIntervalRef.current = setInterval(async () => {
+      if (!videoRef.current || !faceApiLoaded || !selectedStaff) return
+      const result = await detectFace(videoRef.current)
+      if (result) {
+        setFaceDetected(true)
+        regStableCountRef.current++
+        if (regStableCountRef.current >= 3) {
+          if (regDetectIntervalRef.current) clearInterval(regDetectIntervalRef.current)
+          regDetectIntervalRef.current = null
+          regStableCountRef.current = 0
+          setFaceDetected(false)
+          await handleRegister()
+        }
+      } else {
+        setFaceDetected(false)
+        regStableCountRef.current = 0
+      }
+    }, DETECT_INTERVAL_MS)
   }
 
   const capturePhoto = (): string | null => {
@@ -280,8 +312,20 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   }, [camActive, kioskMode])
 
   useEffect(() => {
+    if (camActive && kioskMode === 'register' && selectedStaff && faceApiLoaded) {
+      const t = setTimeout(() => startRegDetectLoop(), 800)
+      return () => {
+        clearTimeout(t)
+        stopRegDetectLoop()
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [camActive, kioskMode, selectedStaff, faceApiLoaded])
+
+  useEffect(() => {
     return () => {
       stopDetectLoop()
+      stopRegDetectLoop()
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop())
       }
