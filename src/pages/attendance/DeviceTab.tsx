@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import {
   CheckCircle,
   Clock,
@@ -414,7 +414,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
   const kioskRegCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const kioskStreamRef = useRef<MediaStream | null>(null)
 
-  const startKioskCamera = async (targetRef?: React.RefObject<HTMLVideoElement | null>) => {
+  const startKioskCamera = async () => {
     try {
       if (kioskStreamRef.current) {
         kioskStreamRef.current.getTracks().forEach((t) => t.stop())
@@ -429,23 +429,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
       kioskStreamRef.current = stream
       setKioskCapturedPhoto(null)
       setKioskCamActive(true)
-      await new Promise((r) => setTimeout(r, 200))
-      const ref = targetRef || kioskVideoRef
-      for (let i = 0; i < 30; i++) {
-        await new Promise((r) => setTimeout(r, 100))
-        const video = ref.current
-        if (video) {
-          video.srcObject = null
-          video.srcObject = stream
-          video.onloadedmetadata = () => {
-            video.play().catch(() => {})
-            if (kioskAttendanceOpenRef.current) {
-              startKioskDetectLoop()
-            }
-          }
-          break
-        }
-      }
+      console.log('Camera stream acquired', stream.getVideoTracks())
     } catch (err) {
       console.error('Camera error:', err)
       setKioskMsg({
@@ -454,6 +438,39 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
       })
     }
   }
+
+  const attachStreamToVideo = (video: HTMLVideoElement | null) => {
+    if (!video || !kioskStreamRef.current) {
+      console.log('attachStreamToVideo: bail', { video: !!video, stream: !!kioskStreamRef.current })
+      return
+    }
+    if (video.srcObject === kioskStreamRef.current) {
+      console.log('attachStreamToVideo: already attached')
+      return
+    }
+    console.log('attachStreamToVideo: setting srcObject on', video)
+    video.srcObject = kioskStreamRef.current
+    video.onloadedmetadata = () => {
+      console.log('attachStreamToVideo: metadata loaded, playing')
+      video.play().catch((e) => console.warn('play() rejected:', e))
+    }
+  }
+
+  const regVideoCallbackRef = useCallback((node: HTMLVideoElement | null) => {
+    kioskRegVideoRef.current = node
+    if (node && kioskStreamRef.current) {
+      attachStreamToVideo(node)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const attVideoCallbackRef = useCallback((node: HTMLVideoElement | null) => {
+    kioskVideoRef.current = node
+    if (node && kioskStreamRef.current) {
+      attachStreamToVideo(node)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const stopKioskCamera = () => {
     if (kioskStreamRef.current) {
@@ -485,6 +502,147 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     return canvas.toDataURL('image/jpeg', 0.6)
   }
 
+  const matchFaceToStaff = (capturedPhoto: string): { staffId: string; staffName: string; photo: string } | null => {
+    if (kioskRegisteredFaces.length === 0) return null
+    const img = new Image()
+    img.src = capturedPhoto
+    const canvas = document.createElement('canvas')
+    const SIZE = 50
+    canvas.width = SIZE
+    canvas.height = SIZE
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    ctx.drawImage(img, 0, 0, SIZE, SIZE)
+    const capturedData = ctx.getImageData(0, 0, SIZE, SIZE).data
+    let bestMatch: { staffId: string; staffName: string; photo: string } | null = null
+    let bestScore = Infinity
+    for (const face of kioskRegisteredFaces) {
+      const refImg = new Image()
+      refImg.src = face.photo
+      ctx.clearRect(0, 0, SIZE, SIZE)
+      ctx.drawImage(refImg, 0, 0, SIZE, SIZE)
+      const refData = ctx.getImageData(0, 0, SIZE, SIZE).data
+      let diff = 0
+      for (let i = 0; i < capturedData.length; i += 4) {
+        diff += Math.abs(capturedData[i] - refData[i])
+        diff += Math.abs(capturedData[i + 1] - refData[i + 1])
+        diff += Math.abs(capturedData[i + 2] - refData[i + 2])
+      }
+      if (diff < bestScore) {
+        bestScore = diff
+        bestMatch = { staffId: face.staffId, staffName: face.staffName, photo: face.photo }
+      }
+    }
+    const threshold = SIZE * SIZE * 3 * 255 * 0.3
+    if (bestScore < threshold) return bestMatch
+    return null
+  }
+
+  const detectFaceInCenter = (): boolean => {
+    const video = kioskVideoRef.current
+    const canvas = kioskCanvasRef.current
+    if (!video || !canvas) return false
+    if (video.readyState < 1 || !video.videoWidth || !video.videoHeight) return false
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return false
+    canvas.width = 160
+    canvas.height = 120
+    ctx.drawImage(video, 0, 0, 160, 120)
+    const cx = 40,
+      cy = 20,
+      cw = 80,
+      ch = 80
+    const imageData = ctx.getImageData(cx, cy, cw, ch)
+    const d = imageData.data
+    let skinPixels = 0
+    const total = cw * ch
+    for (let i = 0; i < d.length; i += 16) {
+      const r = d[i],
+        g = d[i + 1],
+        b = d[i + 2]
+      if (r > 95 && g > 40 && b > 20 && r > g && r > b && Math.abs(r - g) > 15 && r - b > 15) skinPixels++
+    }
+    return skinPixels / (total / 4) > 0.25
+  }
+
+  const startKioskDetectLoop = () => {
+    if (kioskDetectIntervalRef.current) clearInterval(kioskDetectIntervalRef.current)
+    kioskStableCountRef.current = 0
+    setKioskDetecting(true)
+    setKioskFaceDetected(false)
+    kioskDetectIntervalRef.current = setInterval(() => {
+      if (kioskIdentifiedRef.current) return
+      const detected = detectFaceInCenter()
+      setKioskFaceDetected(detected)
+      if (detected) {
+        kioskStableCountRef.current++
+        if (kioskStableCountRef.current >= 5) {
+          if (kioskDetectIntervalRef.current) clearInterval(kioskDetectIntervalRef.current)
+          setKioskDetecting(false)
+          setKioskFaceDetected(false)
+          kioskStableCountRef.current = 0
+          const photo = captureKioskPhoto()
+          if (photo) {
+            setKioskCapturedPhoto(photo)
+            if (kioskAttendanceOpenRef.current) {
+              setTimeout(() => {
+                const match = matchFaceToStaff(photo)
+                if (match) {
+                  const lastPunch = kioskCooldownRef.current[match.staffId] || 0
+                  if (Date.now() - lastPunch < 10000) {
+                    setKioskCapturedPhoto(null)
+                    startKioskDetectLoop()
+                    return
+                  }
+                  handleKioskPunch(match.staffId, match.staffName, match.photo)
+                  setKioskCapturedPhoto(null)
+                  startKioskDetectLoop()
+                } else {
+                  setKioskCapturedPhoto(null)
+                  startKioskDetectLoop()
+                }
+              }, 500)
+            }
+          }
+        }
+      } else {
+        kioskStableCountRef.current = 0
+      }
+    }, 200)
+  }
+
+  const stopKioskDetectLoop = () => {
+    if (kioskDetectIntervalRef.current) clearInterval(kioskDetectIntervalRef.current)
+    kioskDetectIntervalRef.current = null
+    kioskStableCountRef.current = 0
+    kioskIdentifiedRef.current = false
+    setKioskDetecting(false)
+    setKioskFaceDetected(false)
+  }
+
+  useEffect(() => {
+    if (kioskCamActive && !kioskAttendanceOpen && kioskRegVideoRef.current && kioskStreamRef.current) {
+      attachStreamToVideo(kioskRegVideoRef.current)
+    }
+  }, [kioskCamActive, kioskAttendanceOpen])
+
+  useEffect(() => {
+    if (kioskCamActive && kioskAttendanceOpen && kioskVideoRef.current && kioskStreamRef.current) {
+      attachStreamToVideo(kioskVideoRef.current)
+      const t = setTimeout(() => startKioskDetectLoop(), 300)
+      return () => clearTimeout(t)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kioskCamActive, kioskAttendanceOpen])
+
+  useEffect(() => {
+    return () => {
+      stopKioskDetectLoop()
+      if (kioskStreamRef.current) {
+        kioskStreamRef.current.getTracks().forEach((t) => t.stop())
+      }
+    }
+  }, [])
 
   // WebAuthn helpers
   const generateChallenge = () => {
@@ -840,42 +998,6 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     }, 4000)
   }
 
-  const matchFaceToStaff = (capturedPhoto: string): { staffId: string; staffName: string; photo: string } | null => {
-    if (kioskRegisteredFaces.length === 0) return null
-    const img = new Image()
-    img.src = capturedPhoto
-    const canvas = document.createElement('canvas')
-    const SIZE = 50
-    canvas.width = SIZE
-    canvas.height = SIZE
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-    ctx.drawImage(img, 0, 0, SIZE, SIZE)
-    const capturedData = ctx.getImageData(0, 0, SIZE, SIZE).data
-    let bestMatch: { staffId: string; staffName: string; photo: string } | null = null
-    let bestScore = Infinity
-    for (const face of kioskRegisteredFaces) {
-      const refImg = new Image()
-      refImg.src = face.photo
-      ctx.clearRect(0, 0, SIZE, SIZE)
-      ctx.drawImage(refImg, 0, 0, SIZE, SIZE)
-      const refData = ctx.getImageData(0, 0, SIZE, SIZE).data
-      let diff = 0
-      for (let i = 0; i < capturedData.length; i += 4) {
-        diff += Math.abs(capturedData[i] - refData[i])
-        diff += Math.abs(capturedData[i + 1] - refData[i + 1])
-        diff += Math.abs(capturedData[i + 2] - refData[i + 2])
-      }
-      if (diff < bestScore) {
-        bestScore = diff
-        bestMatch = { staffId: face.staffId, staffName: face.staffName, photo: face.photo }
-      }
-    }
-    const threshold = SIZE * SIZE * 3 * 255 * 0.3
-    if (bestScore < threshold) return bestMatch
-    return null
-  }
-
   const handleKioskDeleteFace = (staffId: string) => {
     const updated = kioskRegisteredFaces.filter((f) => f.staffId !== staffId)
     setKioskRegisteredFaces(updated)
@@ -900,88 +1022,6 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
       text: isBn ? 'ছবি আপডেট হয়েছে' : 'Photo updated',
     })
     setTimeout(() => setKioskMsg(null), 2000)
-  }
-
-  const detectFaceInCenter = (): boolean => {
-    const video = kioskVideoRef.current
-    const canvas = kioskCanvasRef.current
-    if (!video || !canvas) return false
-    if (video.readyState < 1 || !video.videoWidth || !video.videoHeight) return false
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return false
-    canvas.width = 160
-    canvas.height = 120
-    ctx.drawImage(video, 0, 0, 160, 120)
-    const cx = 40,
-      cy = 20,
-      cw = 80,
-      ch = 80
-    const imageData = ctx.getImageData(cx, cy, cw, ch)
-    const d = imageData.data
-    let skinPixels = 0
-    const total = cw * ch
-    for (let i = 0; i < d.length; i += 16) {
-      const r = d[i],
-        g = d[i + 1],
-        b = d[i + 2]
-      if (r > 95 && g > 40 && b > 20 && r > g && r > b && Math.abs(r - g) > 15 && r - b > 15) skinPixels++
-    }
-    return skinPixels / (total / 4) > 0.25
-  }
-
-  const startKioskDetectLoop = () => {
-    if (kioskDetectIntervalRef.current) clearInterval(kioskDetectIntervalRef.current)
-    kioskStableCountRef.current = 0
-    setKioskDetecting(true)
-    setKioskFaceDetected(false)
-    kioskDetectIntervalRef.current = setInterval(() => {
-      if (kioskIdentifiedRef.current) return
-      const detected = detectFaceInCenter()
-      setKioskFaceDetected(detected)
-      if (detected) {
-        kioskStableCountRef.current++
-        if (kioskStableCountRef.current >= 5) {
-          if (kioskDetectIntervalRef.current) clearInterval(kioskDetectIntervalRef.current)
-          setKioskDetecting(false)
-          setKioskFaceDetected(false)
-          kioskStableCountRef.current = 0
-          const photo = captureKioskPhoto()
-          if (photo) {
-            setKioskCapturedPhoto(photo)
-            if (kioskAttendanceOpenRef.current) {
-              setTimeout(() => {
-                const match = matchFaceToStaff(photo)
-                if (match) {
-                  const lastPunch = kioskCooldownRef.current[match.staffId] || 0
-                  if (Date.now() - lastPunch < 10000) {
-                    setKioskCapturedPhoto(null)
-                    startKioskDetectLoop()
-                    return
-                  }
-                  handleKioskPunch(match.staffId, match.staffName, match.photo)
-                  setKioskCapturedPhoto(null)
-                  startKioskDetectLoop()
-                } else {
-                  setKioskCapturedPhoto(null)
-                  startKioskDetectLoop()
-                }
-              }, 500)
-            }
-          }
-        }
-      } else {
-        kioskStableCountRef.current = 0
-      }
-    }, 200)
-  }
-
-  const stopKioskDetectLoop = () => {
-    if (kioskDetectIntervalRef.current) clearInterval(kioskDetectIntervalRef.current)
-    kioskDetectIntervalRef.current = null
-    kioskStableCountRef.current = 0
-    kioskIdentifiedRef.current = false
-    setKioskDetecting(false)
-    setKioskFaceDetected(false)
   }
 
   return (
@@ -2381,7 +2421,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                       </select>
                       {kioskRegStaff && !kioskCamActive && (
                         <button
-                          onClick={() => { startKioskCamera(kioskRegVideoRef) }}
+                          onClick={() => { startKioskCamera() }}
                           className="w-full py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--green)] text-white border-none cursor-pointer flex items-center justify-center gap-2"
                         >
                           <ScanFace size={14} />
@@ -2391,7 +2431,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                       {kioskRegStaff && kioskCamActive && !kioskAttendanceOpen && (
                         <div className="space-y-2">
                           <div className="relative rounded-xl overflow-hidden bg-black w-full" style={{ aspectRatio: '4/3', maxHeight: '30vh' }}>
-                            <video ref={kioskRegVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+                            <video ref={regVideoCallbackRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
                             <canvas ref={kioskRegCanvasRef} className="hidden" />
                             <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[0.5625rem] flex items-center gap-1 z-10">
                               <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />
@@ -2534,7 +2574,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                                 <td className="p-2.5 text-center">
                                   <div className="flex items-center justify-center gap-1">
                                     <button
-                                      onClick={() => { setKioskEditFace(f.staffId); setKioskCapturedPhoto(null); setKioskRegStaff(f.staffId); startKioskCamera(kioskRegVideoRef) }}
+                                      onClick={() => { setKioskEditFace(f.staffId); setKioskCapturedPhoto(null); setKioskRegStaff(f.staffId); startKioskCamera() }}
                                       className="w-6 h-6 rounded-md bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]"
                                     >
                                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -2573,7 +2613,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
             <div className="fixed inset-0 z-[800] bg-black flex flex-col overflow-hidden">
               {/* Top: Camera feed - 2/3 */}
               <div className="relative flex-[2] min-h-0">
-                <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+                <video ref={attVideoCallbackRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
                 <canvas ref={kioskCanvasRef} className="hidden" />
 
                 {/* Close button */}
