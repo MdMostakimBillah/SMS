@@ -559,7 +559,6 @@ export default function Step4Results() {
                             </td>
                           ))}
                           <td className="py-2 px-2 text-center text-[0.75rem] font-bold text-[var(--text-primary)]">{row.totalObtained}</td>
-                          <td className="py-2 px-2 text-center text-[0.6875rem] font-medium text-[var(--brand)]">{row.avgMark}</td>
                           <td className="py-2 px-2 text-center text-[0.6875rem] font-medium text-[var(--text-secondary)]">{row.percentage}%</td>
                           <td className="py-2 px-2 text-center">
                             <span
