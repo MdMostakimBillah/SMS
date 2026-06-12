@@ -766,6 +766,24 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     setTimeout(() => setKioskMsg(null), 3000)
   }
 
+  const playSuccessSound = () => {
+    try {
+      const ctx = new AudioContext()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(880, ctx.currentTime)
+      osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1)
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.2)
+      gain.gain.setValueAtTime(0.3, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4)
+      osc.start(ctx.currentTime)
+      osc.stop(ctx.currentTime + 0.4)
+    } catch {}
+  }
+
   const handleKioskPunch = (staffId: string, staffName: string) => {
     const now = new Date()
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
@@ -788,6 +806,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
       type: 'success',
       text: `${staffName} ${punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'} ${timeStr}`,
     })
+    playSuccessSound()
     stopKioskCamera()
     setKioskCapturedPhoto(null)
     setTimeout(() => {
@@ -2631,12 +2650,6 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                                 <td className="p-2.5 text-center">
                                   <div className="flex items-center justify-center gap-1">
                                     <button
-                                      onClick={() => handleKioskPunch(f.staffId, f.staffName)}
-                                      className="px-2 py-1 rounded-md bg-[var(--green)] text-white text-[0.625rem] font-semibold cursor-pointer border-none"
-                                    >
-                                      {isBn ? 'পাঞ্চ' : 'Punch'}
-                                    </button>
-                                    <button
                                       onClick={() => { setKioskEditFace(f.staffId); setKioskCapturedPhoto(null); setKioskRegStaff(f.staffId); startKioskCamera() }}
                                       className="w-6 h-6 rounded-md bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]"
                                     >
@@ -2727,20 +2740,22 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   )}
                 </div>
 
-                {/* Result display */}
+                {/* Result display - bottom right */}
                 {kioskIdentified && (
-                  <div className="absolute inset-0 flex items-center justify-center z-20">
-                    <div className="bg-black/70 backdrop-blur-sm rounded-2xl p-8 text-center max-w-[20rem] mx-4">
-                      <div className="w-20 h-20 rounded-full bg-[var(--green)] flex items-center justify-center mx-auto mb-4">
-                        <CheckCircle size={40} className="text-white" />
+                  <div className="absolute bottom-4 right-4 left-4 z-20">
+                    <div className="bg-black/80 backdrop-blur-sm rounded-xl p-4 flex items-center gap-4 max-w-[24rem] ml-auto">
+                      <div className="w-12 h-12 rounded-full bg-[var(--green)] flex items-center justify-center shrink-0">
+                        <CheckCircle size={24} className="text-white" />
                       </div>
-                      <div className="text-[1.5rem] font-bold text-white mb-1">{kioskIdentified.staffName}</div>
-                      <div className="text-[0.875rem] text-white/70 font-mono mb-4">{kioskIdentified.staffId}</div>
-                      <div className="flex items-center justify-center gap-3">
-                        <span className={`px-4 py-2 rounded-lg text-[1rem] font-bold ${kioskIdentified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
-                          {kioskIdentified.punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[1rem] font-bold text-white truncate">{kioskIdentified.staffName}</div>
+                        <div className="text-[0.75rem] text-white/60 font-mono">{kioskIdentified.staffId}</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className={`px-2 py-1 rounded text-[0.6875rem] font-bold ${kioskIdentified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
+                          {kioskIdentified.punchType === 'in' ? 'IN' : 'OUT'}
                         </span>
-                        <span className="text-[1.5rem] font-bold text-white font-mono">{kioskIdentified.time}</span>
+                        <div className="text-[1.25rem] font-bold text-white font-mono mt-1">{kioskIdentified.time}</div>
                       </div>
                     </div>
                   </div>
