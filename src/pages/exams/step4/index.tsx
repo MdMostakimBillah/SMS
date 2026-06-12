@@ -487,13 +487,13 @@ export default function Step4Results() {
                           />
                         </th>
                         <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-left w-8'}`} style={rotateHeaders ? { width: '2rem', minWidth: '2rem' } : undefined}>
-                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>#</span></div> : '#'}
+                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem', paddingBottom: '0.5rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>#</span></div> : '#'}
                         </th>
                         <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-left'}`} style={rotateHeaders ? { width: '5rem', minWidth: '5rem' } : undefined}>
-                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>{isBn ? 'নাম' : 'Name'}</span></div> : <>{isBn ? 'নাম' : 'Name'}</>}
+                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem', paddingBottom: '0.5rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>{isBn ? 'নাম' : 'Name'}</span></div> : <>{isBn ? 'নাম' : 'Name'}</>}
                         </th>
                         <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-center'}`} style={rotateHeaders ? { width: '3rem', minWidth: '3rem' } : undefined}>
-                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>{isBn ? 'রোল' : 'Roll'}</span></div> : <>{isBn ? 'রোল' : 'Roll'}</>}
+                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem', paddingBottom: '0.5rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>{isBn ? 'রোল' : 'Roll'}</span></div> : <>{isBn ? 'রোল' : 'Roll'}</>}
                         </th>
                         {enrichedTabulationData[0]?.subjectMarks.map((sm) => (
                           <th
@@ -502,7 +502,7 @@ export default function Step4Results() {
                             style={rotateHeaders ? { width: '3rem', minWidth: '3rem' } : undefined}
                           >
                             {rotateHeaders ? (
-                              <div className="flex items-end justify-center" style={{ height: '7rem' }}>
+                              <div className="flex items-end justify-center" style={{ height: '7rem', paddingBottom: '0.5rem' }}>
                                 <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600, letterSpacing: '0.02em' }}>
                                   {sm.subjectName} ({sm.fullMarks})
                                 </span>
@@ -516,22 +516,22 @@ export default function Step4Results() {
                           </th>
                         ))}
                         <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-center'}`} style={rotateHeaders ? { width: '3rem', minWidth: '3rem' } : undefined}>
-                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>{isBn ? 'প্রাপ্ত' : 'Obt'}</span></div> : <>{isBn ? 'প্রাপ্ত' : 'Obtained'}</>}
+                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem', paddingBottom: '0.5rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>{isBn ? 'প্রাপ্ত' : 'Obt'}</span></div> : <>{isBn ? 'প্রাপ্ত' : 'Obtained'}</>}
                         </th>
                         <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-center'}`} style={rotateHeaders ? { width: '2.5rem', minWidth: '2.5rem' } : undefined}>
-                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>%</span></div> : '%'}
+                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem', paddingBottom: '0.5rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>%</span></div> : '%'}
                         </th>
                         <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-center'}`} style={rotateHeaders ? { width: '2.5rem', minWidth: '2.5rem' } : undefined}>
-                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>GPA</span></div> : 'GPA'}
+                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem', paddingBottom: '0.5rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>GPA</span></div> : 'GPA'}
                         </th>
                         <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-center'}`} style={rotateHeaders ? { width: '3rem', minWidth: '3rem' } : undefined}>
-                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 700 }}>{isBn ? 'ক্লাস' : 'CRank'}</span></div> : <>{isBn ? 'ক্লাস র‍্যাঙ্ক' : 'Class Rank'}</>}
+                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem', paddingBottom: '0.5rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 700 }}>{isBn ? 'ক্লাস' : 'CRank'}</span></div> : <>{isBn ? 'ক্লাস র‍্যাঙ্ক' : 'Class Rank'}</>}
                         </th>
                         <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-center'}`} style={rotateHeaders ? { width: '3rem', minWidth: '3rem' } : undefined}>
-                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>{isBn ? 'সেকশন' : 'SRank'}</span></div> : <>{isBn ? 'সেকশন র‍্যাঙ্ক' : 'Sec Rank'}</>}
+                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem', paddingBottom: '0.5rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>{isBn ? 'সেকশন' : 'SRank'}</span></div> : <>{isBn ? 'সেকশন র‍্যাঙ্ক' : 'Sec Rank'}</>}
                         </th>
                         <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-center'}`} style={rotateHeaders ? { width: '3rem', minWidth: '3rem' } : undefined}>
-                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>{isBn ? 'অবস্থা' : 'Status'}</span></div> : <>{isBn ? 'অবস্থা' : 'Status'}</>}
+                          {rotateHeaders ? <div className="flex items-end justify-center" style={{ height: '7rem', paddingBottom: '0.5rem' }}><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontSize: '0.5625rem', fontWeight: 600 }}>{isBn ? 'অবস্থা' : 'Status'}</span></div> : <>{isBn ? 'অবস্থা' : 'Status'}</>}
                         </th>
                       </tr>
                     </thead>
