@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import {
+  Camera,
   CheckCircle,
   Clock,
   CreditCard,
@@ -1586,7 +1587,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
               </div>
 
               {/* Mode Selection */}
-              <div className="grid grid-cols-1 gap-3 mb-4">
+              <div className="grid grid-cols-2 gap-3 mb-4">
                 <button
                   onClick={() => setAuthMode('personal')}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${authMode === 'personal' ? 'border-[var(--teal)] bg-[var(--teal-light)]' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--teal)]'}`}
@@ -1608,6 +1609,30 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                     {isBn
                       ? 'স্টাফ নিজের ফোনে ফিঙ্গারপ্রিন্ট দিয়ে চেক ইন করে। WiFi যাচাই সহ।'
                       : 'Staff authenticates on own device. WiFi verification included.'}
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setAuthMode('kiosk')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${authMode === 'kiosk' ? 'border-[var(--amber)] bg-[var(--amber-light)]' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--amber)]'}`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${authMode === 'kiosk' ? 'bg-[var(--amber)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--amber)]'}`}
+                    >
+                      <Camera size={16} />
+                    </div>
+                    <div>
+                      <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                        {isBn ? 'কিয়োস্ক মোড' : 'Kiosk Mode'}
+                      </div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'শেয়ার্ড ফোনে চেক ইন' : 'Shared phone check in'}</div>
+                    </div>
+                  </div>
+                  <div className="text-[0.625rem] text-[var(--text-secondary)]">
+                    {isBn
+                      ? 'শেয়ার্ড ডিভাইস। সব স্টাফ একটি ফোনে মুখ দেখিয়ে চেক ইন করবে।'
+                      : 'Shared device. All staff check in by showing face on one phone.'}
                   </div>
                 </button>
               </div>
