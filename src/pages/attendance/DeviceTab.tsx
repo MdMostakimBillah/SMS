@@ -2545,26 +2545,26 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
 
           {/* Kiosk Attendance Popup */}
           {kioskAttendanceOpen && (
-            <div className="fixed inset-0 z-[800] bg-black flex flex-col items-center justify-center overflow-hidden">
-              {/* Close button */}
-              <button
-                onClick={() => {
-                  stopKioskCamera()
-                  stopKioskDetectLoop()
-                  setKioskAttendanceOpen(false)
-                  setKioskCapturedPhoto(null)
-                  setKioskIdentified(null)
-                  setKioskMsg(null)
-                }}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center cursor-pointer text-white hover:bg-white/20 z-20"
-              >
-                <X size={20} />
-              </button>
-
-              {/* Camera feed - full viewport */}
-              <div className="relative w-full h-full">
+            <div className="fixed inset-0 z-[800] bg-black flex flex-col overflow-hidden">
+              {/* Top: Camera feed - 2/3 */}
+              <div className="relative flex-[2] min-h-0">
                 <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
                 <canvas ref={kioskCanvasRef} className="hidden" />
+
+                {/* Close button */}
+                <button
+                  onClick={() => {
+                    stopKioskCamera()
+                    stopKioskDetectLoop()
+                    setKioskAttendanceOpen(false)
+                    setKioskCapturedPhoto(null)
+                    setKioskIdentified(null)
+                    setKioskMsg(null)
+                  }}
+                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 border border-white/20 flex items-center justify-center cursor-pointer text-white hover:bg-black/70 z-20"
+                >
+                  <X size={20} />
+                </button>
 
                 {/* LIVE indicator */}
                 {kioskCamActive && !kioskIdentified && (
@@ -2588,7 +2588,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
 
                 {/* Status text overlay */}
                 {kioskCamActive && !kioskIdentified && (
-                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
                     <div className={`px-4 py-2 rounded-full text-[0.8125rem] font-bold transition-colors duration-200 ${kioskFaceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/50 text-white/80'}`}>
                       {kioskFaceDetected
                         ? isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...'
@@ -2596,44 +2596,55 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                     </div>
                   </div>
                 )}
+              </div>
 
-                {/* Result display - bottom right */}
+              {/* Bottom: Success alert & staff info - 1/3 */}
+              <div className="flex-[1] min-h-0 bg-gradient-to-t from-black via-gray-900 to-gray-900 border-t border-white/10 flex flex-col items-center justify-center px-6 relative">
+                {/* Identified person card */}
                 {kioskIdentified && (
-                  <div className="absolute bottom-6 right-6 z-20">
-                    <div className="bg-black/80 backdrop-blur-sm rounded-2xl p-5 flex items-center gap-4 max-w-[26rem] border border-white/10 shadow-2xl">
+                  <div className="w-full max-w-lg animate-[slideUp_0.3s_ease-out]">
+                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 flex items-center gap-5 border border-white/10">
                       <div className="relative shrink-0">
-                        <img src={kioskIdentified.photo} alt="" className="w-16 h-16 rounded-xl object-cover border-2 border-[var(--green)]" />
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[var(--green)] flex items-center justify-center">
-                          <CheckCircle size={12} className="text-white" />
+                        <img src={kioskIdentified.photo} alt="" className="w-20 h-20 rounded-2xl object-cover border-2 border-[var(--green)]" />
+                        <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-[var(--green)] flex items-center justify-center border-2 border-gray-900">
+                          <CheckCircle size={16} className="text-white" />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[1.125rem] font-bold text-white truncate">{kioskIdentified.staffName}</div>
-                        <div className="text-[0.8125rem] text-white/50 font-mono mt-0.5">{kioskIdentified.staffId}</div>
+                        <div className="text-[1.25rem] font-bold text-white truncate">{kioskIdentified.staffName}</div>
+                        <div className="text-[0.875rem] text-white/50 font-mono mt-1">{kioskIdentified.staffId}</div>
+                        <div className="mt-2">
+                          <span className={`inline-block px-3 py-1 rounded-lg text-[0.75rem] font-bold ${kioskIdentified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
+                            {kioskIdentified.punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'}
+                          </span>
+                        </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className={`px-2.5 py-1 rounded-lg text-[0.75rem] font-bold ${kioskIdentified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
-                          {kioskIdentified.punchType === 'in' ? 'CHECKED IN' : 'CHECKED OUT'}
-                        </span>
-                        <div className="text-[1.5rem] font-bold text-white font-mono mt-1">{kioskIdentified.time}</div>
+                        <div className="text-[2rem] font-bold text-white font-mono leading-none">{kioskIdentified.time}</div>
+                        <div className="text-[0.6875rem] text-white/40 mt-1">{isBn ? 'পাঞ্চ সময়' : 'Punch Time'}</div>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Error message */}
-                {kioskMsg && !kioskIdentified && (
-                  <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20">
-                    <div className={`px-4 py-2 rounded-lg text-[0.875rem] font-bold ${kioskMsg.type === 'success' ? 'bg-[var(--green)] text-white' : 'bg-[var(--red)] text-white'}`}>
-                      {kioskMsg.text}
+                {/* Success/Error message */}
+                {kioskMsg && (
+                  <div className={`absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-[0.8125rem] font-bold ${kioskMsg.type === 'success' ? 'bg-[var(--green)] text-white' : 'bg-[var(--red)] text-white'}`}>
+                    {kioskMsg.text}
+                  </div>
+                )}
+
+                {/* Waiting text when no one identified */}
+                {!kioskIdentified && !kioskMsg && (
+                  <div className="text-center">
+                    <div className="text-white/30 text-[0.875rem] font-medium">
+                      {isBn ? 'অপেক্ষা করুন...' : 'Waiting for face...'}
+                    </div>
+                    <div className="text-white/15 text-[0.6875rem] mt-1">
+                      {isBn ? 'বন্ধ করতে X চাপুন' : 'Press X to close'}
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Bottom info */}
-              <div className="absolute bottom-4 left-0 right-0 text-center text-white/50 text-[0.75rem] z-10">
-                {isBn ? 'বন্ধ করতে X বাটন চাপুন' : 'Press X to close'}
               </div>
             </div>
           )}
