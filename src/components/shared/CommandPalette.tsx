@@ -167,15 +167,15 @@ interface QuickAction {
 }
 
 export default function CommandPalette() {
-  const { commandPaletteOpen, setCommandPaletteOpen, theme, setTheme, language, setLanguage, searchDivRect } = useAppStore()
+  const { commandPaletteOpen, setCommandPaletteOpen, theme, setTheme, language, setLanguage } = useAppStore()
   const isBn = useBn()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
-  const overlayRef = useRef<HTMLDivElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
+  const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
   const quickActions: QuickAction[] = useMemo(() => [
     {
@@ -239,50 +239,33 @@ export default function CommandPalette() {
     return groups
   }, [filteredItems, isBn])
 
-  // GSAP open animation
+  // Staggered item animation on query change
   useEffect(() => {
-    if (commandPaletteOpen && overlayRef.current && dialogRef.current) {
-      const rect = searchDivRect
-
-      if (rect) {
-        const viewportW = window.innerWidth
-        const viewportH = window.innerHeight
-        const dialogW = Math.min(576, viewportW - 32)
-        const dialogH = viewportH * 0.7
-
-        const scaleX = rect.width / dialogW
-        const scaleY = rect.height / dialogH
-        const translateX = rect.left + rect.width / 2 - viewportW / 2
-        const translateY = rect.top + rect.height / 2 - (viewportH * 0.15 + dialogH / 2)
-
-        gsap.set(dialogRef.current, {
-          scale: Math.max(scaleX, scaleY),
-          x: translateX,
-          y: translateY,
-          opacity: 0,
-          transformOrigin: 'center center',
-        })
-      }
-
-      gsap.fromTo(
-        overlayRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.15, ease: 'power2.out' }
-      )
-
-      gsap.to(dialogRef.current, {
-        scale: 1,
-        x: 0,
-        y: 0,
-        opacity: 1,
-        duration: 0.2,
-        ease: 'back.out(1.1)',
-        onComplete: () => {
-          setTimeout(() => inputRef.current?.focus(), 10)
-        },
+    if (!commandPaletteOpen) return
+    const timer = setTimeout(() => {
+      itemRefs.current.forEach((el, idx) => {
+        if (el) {
+          gsap.fromTo(
+            el,
+            { opacity: 0, y: 6 },
+            { opacity: 1, y: 0, duration: 0.15, ease: 'power2.out', delay: idx * 0.015 }
+          )
+        }
       })
+    }, 10)
+    return () => clearTimeout(timer)
+  }, [query, commandPaletteOpen, allResults.length])
+
+  // Simple open/close animation
+  useEffect(() => {
+    if (commandPaletteOpen && dialogRef.current) {
+      gsap.fromTo(
+        dialogRef.current,
+        { opacity: 0, scale: 0.96, y: -8 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.18, ease: 'power2.out', onComplete: () => inputRef.current?.focus() }
+      )
     }
-  }, [commandPaletteOpen, searchDivRect])
+  }, [commandPaletteOpen])
 
   // Reset on open
   useEffect(() => {
@@ -305,41 +288,19 @@ export default function CommandPalette() {
   }, [selectedIndex])
 
   const handleClose = useCallback(() => {
-    if (overlayRef.current && dialogRef.current) {
-      const rect = searchDivRect
-      if (rect) {
-        const viewportW = window.innerWidth
-        const viewportH = window.innerHeight
-        const dialogW = Math.min(576, viewportW - 32)
-        const dialogH = viewportH * 0.7
-
-        const scaleX = rect.width / dialogW
-        const scaleY = rect.height / dialogH
-        const translateX = rect.left + rect.width / 2 - viewportW / 2
-        const translateY = rect.top + rect.height / 2 - (viewportH * 0.15 + dialogH / 2)
-
-        gsap.to(dialogRef.current, {
-          scale: Math.max(scaleX, scaleY),
-          x: translateX,
-          y: translateY,
-          opacity: 0,
-          duration: 0.15,
-          ease: 'power2.in',
-        })
-      }
-
-      gsap.to(overlayRef.current, {
+    if (dialogRef.current) {
+      gsap.to(dialogRef.current, {
         opacity: 0,
+        scale: 0.96,
+        y: -8,
         duration: 0.12,
         ease: 'power2.in',
-        onComplete: () => {
-          setCommandPaletteOpen(false)
-        },
+        onComplete: () => setCommandPaletteOpen(false),
       })
     } else {
       setCommandPaletteOpen(false)
     }
-  }, [searchDivRect, setCommandPaletteOpen])
+  }, [setCommandPaletteOpen])
 
   const handleSelect = useCallback((result: typeof allResults[number]) => {
     if (result.type === 'action') {
@@ -395,49 +356,24 @@ export default function CommandPalette() {
 
   let runningIndex = -1
 
+  const registerItem = (idx: number, el: HTMLDivElement | null) => {
+    if (el) itemRefs.current.set(idx, el)
+    else itemRefs.current.delete(idx)
+  }
+
   return createPortal(
     <div
-      ref={overlayRef}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        display: 'flex',
-        justifyContent: 'center',
-        paddingTop: '15vh',
-        background: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
-      }}
+      className="fixed inset-0 z-[9999] flex justify-center pt-[15vh] bg-black/60 backdrop-blur-sm"
       onClick={handleClose}
     >
       <div
         ref={dialogRef}
-        style={{
-          width: '100%',
-          maxWidth: '36rem',
-          maxHeight: '70vh',
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'var(--bg-primary)',
-          border: '1px solid var(--border)',
-          borderRadius: '0.75rem',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-          overflow: 'hidden',
-          margin: '0 1rem',
-        }}
+        className="w-full max-w-[36rem] max-h-[70vh] flex flex-col bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl shadow-2xl overflow-hidden mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.875rem 1rem',
-            borderBottom: '1px solid var(--border)',
-          }}
-        >
-          <Search size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--border)]">
+          <Search size={18} className="text-[var(--text-muted)] shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -445,52 +381,18 @@ export default function CommandPalette() {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={isBn ? 'কমান্ড বা পৃষ্ঠা খুঁজুন...' : 'Search commands or pages...'}
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              boxShadow: 'none',
-              borderColor: 'transparent',
-              fontSize: '1rem',
-              color: 'var(--text-primary)',
-              fontFamily: 'inherit',
-            }}
+            className="flex-1 bg-transparent border-none outline-none text-base text-[var(--text-primary)] font-[inherit]"
+            style={{ boxShadow: 'none', borderColor: 'transparent' }}
           />
-          <kbd
-            style={{
-              fontSize: '0.6875rem',
-              background: 'var(--bg-secondary)',
-              border: '1px solid var(--border)',
-              padding: '2px 6px',
-              borderRadius: '0.25rem',
-              color: 'var(--text-muted)',
-              fontFamily: 'monospace',
-              flexShrink: 0,
-            }}
-          >
+          <kbd className="text-[0.6875rem] bg-[var(--bg-secondary)] border border-[var(--border)] px-1.5 py-0.5 rounded text-[var(--text-muted)] font-mono shrink-0">
             ESC
           </kbd>
         </div>
 
         {/* Results */}
-        <div
-          ref={listRef}
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '0.375rem',
-          }}
-        >
+        <div ref={listRef} className="flex-1 overflow-y-auto p-1.5">
           {allResults.length === 0 && (
-            <div
-              style={{
-                padding: '2rem',
-                textAlign: 'center',
-                color: 'var(--text-muted)',
-                fontSize: '0.875rem',
-              }}
-            >
+            <div className="py-8 text-center text-[var(--text-muted)] text-sm">
               {isBn ? 'কোনো ফলাফল পাওয়া যায়নি' : 'No results found'}
             </div>
           )}
@@ -498,16 +400,7 @@ export default function CommandPalette() {
           {/* Quick Actions */}
           {filteredQuickActions.length > 0 && (
             <>
-              <div
-                style={{
-                  padding: '0.375rem 0.5rem',
-                  fontSize: '0.6875rem',
-                  fontWeight: 600,
-                  color: 'var(--text-muted)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
+              <div className="px-2 py-1.5 text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 {isBn ? 'দ্রুত কাজ' : 'Quick Actions'}
               </div>
               {filteredQuickActions.map((action) => {
@@ -518,59 +411,33 @@ export default function CommandPalette() {
                 return (
                   <div
                     key={action.id}
+                    ref={(el) => registerItem(idx, el)}
                     onClick={() => handleSelect({ type: 'action', item: action })}
                     onMouseEnter={() => setSelectedIndex(idx)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.75rem',
-                      padding: '0.625rem 0.75rem',
-                      borderRadius: '0.5rem',
-                      cursor: 'pointer',
-                      background: isSelected ? 'var(--bg-secondary)' : 'transparent',
-                      transition: 'background 0.1s',
-                    }}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors duration-100 ${
+                      isSelected ? 'bg-[var(--bg-secondary)]' : ''
+                    }`}
                   >
-                    <div
-                      style={{
-                        width: '2rem',
-                        height: '2rem',
-                        borderRadius: '0.375rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: 'var(--brand-light)',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Icon size={14} style={{ color: 'var(--brand)' }} />
+                    <div className="w-8 h-8 rounded-[0.375rem] flex items-center justify-center bg-[var(--brand-light)] shrink-0">
+                      <Icon size={14} className="text-[var(--brand)]" />
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[0.8125rem] text-[var(--text-primary)] font-medium">
                         {isBn ? action.labelBn : action.label}
                       </div>
                     </div>
-                    <ArrowRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                    <ArrowRight size={14} className="text-[var(--text-muted)] shrink-0" />
                   </div>
                 )
               })}
-              <div style={{ height: '1px', background: 'var(--border)', margin: '0.375rem 0.5rem' }} />
+              <div className="h-px bg-[var(--border)] mx-2 my-1.5" />
             </>
           )}
 
           {/* Navigation Items */}
           {Array.from(groupedNavItems.entries()).map(([groupKey, groupItems]) => (
             <div key={groupKey}>
-              <div
-                style={{
-                  padding: '0.375rem 0.5rem',
-                  fontSize: '0.6875rem',
-                  fontWeight: 600,
-                  color: 'var(--text-muted)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
+              <div className="px-2 py-1.5 text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 {groupKey}
               </div>
               {groupItems.map((item) => {
@@ -581,42 +448,29 @@ export default function CommandPalette() {
                 return (
                   <div
                     key={item.id}
+                    ref={(el) => registerItem(idx, el)}
                     onClick={() => handleSelect({ type: 'nav', item })}
                     onMouseEnter={() => setSelectedIndex(idx)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.75rem',
-                      padding: '0.625rem 0.75rem',
-                      borderRadius: '0.5rem',
-                      cursor: 'pointer',
-                      background: isSelected ? 'var(--bg-secondary)' : 'transparent',
-                      transition: 'background 0.1s',
-                    }}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors duration-100 ${
+                      isSelected ? 'bg-[var(--bg-secondary)]' : ''
+                    }`}
                   >
                     <div
-                      style={{
-                        width: '2rem',
-                        height: '2rem',
-                        borderRadius: '0.375rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: isSelected ? 'var(--brand)' : 'var(--bg-secondary)',
-                        flexShrink: 0,
-                      }}
+                      className={`w-8 h-8 rounded-[0.375rem] flex items-center justify-center shrink-0 ${
+                        isSelected ? 'bg-[var(--brand)]' : 'bg-[var(--bg-secondary)]'
+                      }`}
                     >
-                      <Icon size={14} style={{ color: isSelected ? 'white' : 'var(--text-muted)' }} />
+                      <Icon size={14} className={isSelected ? 'text-white' : 'text-[var(--text-muted)]'} />
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[0.8125rem] text-[var(--text-primary)] font-medium">
                         {isBn ? item.labelBn : item.label}
                       </div>
-                      <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                      <div className="text-[0.6875rem] text-[var(--text-muted)] font-mono">
                         {item.path}
                       </div>
                     </div>
-                    <ArrowRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                    <ArrowRight size={14} className="text-[var(--text-muted)] shrink-0" />
                   </div>
                 )
               })}
@@ -625,27 +479,17 @@ export default function CommandPalette() {
         </div>
 
         {/* Footer */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            padding: '0.5rem 1rem',
-            borderTop: '1px solid var(--border)',
-            fontSize: '0.6875rem',
-            color: 'var(--text-muted)',
-          }}
-        >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <kbd style={{ fontSize: '0.5625rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '1px 4px', borderRadius: '3px', fontFamily: 'monospace' }}>↑↓</kbd>
+        <div className="flex items-center gap-4 px-4 py-2 border-t border-[var(--border)] text-[0.6875rem] text-[var(--text-muted)]">
+          <span className="flex items-center gap-1">
+            <kbd className="text-[0.5625rem] bg-[var(--bg-secondary)] border border-[var(--border)] px-1 py-px rounded font-mono">↑↓</kbd>
             {isBn ? 'নেভিগেট' : 'Navigate'}
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <kbd style={{ fontSize: '0.5625rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '1px 4px', borderRadius: '3px', fontFamily: 'monospace' }}>↵</kbd>
+          <span className="flex items-center gap-1">
+            <kbd className="text-[0.5625rem] bg-[var(--bg-secondary)] border border-[var(--border)] px-1 py-px rounded font-mono">↵</kbd>
             {isBn ? 'খুলুন' : 'Open'}
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <kbd style={{ fontSize: '0.5625rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '1px 4px', borderRadius: '3px', fontFamily: 'monospace' }}>esc</kbd>
+          <span className="flex items-center gap-1">
+            <kbd className="text-[0.5625rem] bg-[var(--bg-secondary)] border border-[var(--border)] px-1 py-px rounded font-mono">esc</kbd>
             {isBn ? 'বন্ধ' : 'Close'}
           </span>
         </div>

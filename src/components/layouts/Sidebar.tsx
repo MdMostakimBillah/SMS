@@ -249,7 +249,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
 
         {/* Session Switcher */}
         {!collapsed && (
-          <div ref={dropdownRef} className="relative p-2">
+          <div ref={dropdownRef} className="relative p-2 z-50">
             <div
               onClick={() => setShowSessionDropdown(!showSessionDropdown)}
               className="flex items-center gap-2 rounded-lg px-2.5 py-2 cursor-pointer transition-all duration-150 bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--surface-2)] hover:border-[var(--brand)]"
@@ -273,7 +273,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
             </div>
 
             {showSessionDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-[0.625rem] shadow-lg z-100 overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-[0.625rem] shadow-lg z-[60] overflow-hidden">
                 <div className="px-2.5 py-2 border-b border-[var(--border)]">
                   <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1">
                     {isBn ? 'সেশন পরিবর্তন' : 'Switch Session'}
@@ -379,18 +379,18 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
 
         {/* Bottom */}
         {!collapsed && (
-          <div className="p-2.5 border-t border-[var(--border)]">
-            <div className="bg-[var(--brand-light)] rounded-[0.625rem] p-3 border border-[var(--border)]">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">Enterprise Plan</span>
-                <span className="text-[0.5625rem] font-semibold text-[var(--green)] bg-[var(--green-light)] px-1.5 py-px rounded-[0.375rem]">
+          <div className="p-2 border-t border-[var(--border)]">
+            <div className="bg-[var(--brand-light)] rounded-lg p-2.5 border border-[var(--border)]">
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-[0.625rem] font-semibold text-[var(--text-primary)]">Enterprise Plan</span>
+                <span className="text-[0.5rem] font-semibold text-[var(--green)] bg-[var(--green-light)] px-1.5 py-px rounded">
                   Active
                 </span>
               </div>
-              <div className="h-1.5 bg-[var(--border)] rounded-[0.125rem]">
-                <div className="h-full w-[67%] bg-[var(--brand)] rounded-[0.125rem]" />
+              <div className="h-1 bg-[var(--border)] rounded-full">
+                <div className="h-full w-[67%] bg-[var(--brand)] rounded-full" />
               </div>
-              <div className="text-[0.625rem] text-[var(--text-muted)] mt-1.5">67% storage used</div>
+              <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1">67% storage used</div>
             </div>
           </div>
         )}

@@ -103,7 +103,7 @@ const demoMessages = [
 
 export default function Topbar() {
   const navigate = useNavigate()
-  const { theme, language, setTheme, setLanguage, sidebarCollapsed, setSidebarCollapsed, setCommandPaletteOpen, setSearchDivRect } = useAppStore()
+  const { theme, language, setTheme, setLanguage, sidebarCollapsed, setSidebarCollapsed, setCommandPaletteOpen } = useAppStore()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
   const searchDivRef = useRef<HTMLDivElement>(null)
@@ -246,12 +246,7 @@ export default function Topbar() {
       ) : (
         <div
           ref={searchDivRef}
-          onClick={() => {
-            if (searchDivRef.current) {
-              setSearchDivRect(searchDivRef.current.getBoundingClientRect())
-            }
-            setCommandPaletteOpen(true)
-          }}
+          onClick={() => setCommandPaletteOpen(true)}
           style={{
             flex: 1,
             maxWidth: '18.75rem',
