@@ -6,11 +6,15 @@ interface AppState {
   theme: Theme
   language: Language
   sidebarOpen: boolean
+  sidebarCollapsed: boolean
   commandPaletteOpen: boolean
+  searchDivRect: DOMRect | null
   setTheme: (theme: Theme) => void
   setLanguage: (language: Language) => void
   toggleSidebar: () => void
+  setSidebarCollapsed: (collapsed: boolean) => void
   setCommandPaletteOpen: (open: boolean) => void
+  setSearchDivRect: (rect: DOMRect | null) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -19,7 +23,9 @@ export const useAppStore = create<AppState>()(
       theme: 'dark',
       language: 'bn',
       sidebarOpen: false,
+      sidebarCollapsed: false,
       commandPaletteOpen: false,
+      searchDivRect: null,
 
       setTheme: (theme) => {
         set({ theme })
@@ -35,7 +41,11 @@ export const useAppStore = create<AppState>()(
 
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+
       setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
+
+      setSearchDivRect: (rect) => set({ searchDivRect: rect }),
     }),
     {
       name: 'edutech-settings',

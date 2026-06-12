@@ -102,9 +102,10 @@ const demoMessages = [
 
 export default function Topbar() {
   const navigate = useNavigate()
-  const { theme, language, setTheme, setLanguage, toggleSidebar, setCommandPaletteOpen } = useAppStore()
+  const { theme, language, setTheme, setLanguage, setSidebarCollapsed, setCommandPaletteOpen, setSearchDivRect } = useAppStore()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
+  const searchDivRef = useRef<HTMLDivElement>(null)
   const [notifOpen, setNotifOpen] = useState(false)
   const [msgOpen, setMsgOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -225,10 +226,12 @@ export default function Topbar() {
         zIndex: 100,
       }}
     >
-      {/* Hamburger */}
-      <button onClick={toggleSidebar} style={iconBtn}>
-        <Menu size={16} />
-      </button>
+      {/* Sidebar Toggle — desktop only */}
+      {!isMobile && (
+        <button onClick={() => setSidebarCollapsed(true)} style={iconBtn} title={isBn ? 'সাইডবার সংকুচিত করুন' : 'Collapse sidebar'}>
+          <Menu size={16} />
+        </button>
+      )}
 
       {/* Search */}
       {isMobile ? (
@@ -237,7 +240,13 @@ export default function Topbar() {
         </button>
       ) : (
         <div
-          onClick={() => setCommandPaletteOpen(true)}
+          ref={searchDivRef}
+          onClick={() => {
+            if (searchDivRef.current) {
+              setSearchDivRect(searchDivRef.current.getBoundingClientRect())
+            }
+            setCommandPaletteOpen(true)
+          }}
           style={{
             flex: 1,
             maxWidth: '18.75rem',

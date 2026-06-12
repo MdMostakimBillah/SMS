@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import { gsap } from 'gsap'
 import {
   Search,
   LayoutDashboard,
@@ -166,13 +167,15 @@ interface QuickAction {
 }
 
 export default function CommandPalette() {
-  const { commandPaletteOpen, setCommandPaletteOpen, theme, setTheme, language, setLanguage } = useAppStore()
+  const { commandPaletteOpen, setCommandPaletteOpen, theme, setTheme, language, setLanguage, searchDivRect } = useAppStore()
   const isBn = useBn()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   const quickActions: QuickAction[] = useMemo(() => [
     {
@@ -236,11 +239,61 @@ export default function CommandPalette() {
     return groups
   }, [filteredItems, isBn])
 
+  // GSAP open animation
+  useEffect(() => {
+    if (commandPaletteOpen && overlayRef.current && dialogRef.current) {
+      const rect = searchDivRect
+
+      // Set initial state: dialog starts at search div position
+      if (rect) {
+        const viewportW = window.innerWidth
+        const viewportH = window.innerHeight
+        const dialogW = Math.min(576, viewportW - 32)
+        const dialogH = viewportH * 0.7
+
+        // Calculate scale and translate to morph from search bar to center
+        const scaleX = rect.width / dialogW
+        const scaleY = rect.height / dialogH
+        const translateX = rect.left + rect.width / 2 - viewportW / 2
+        const translateY = rect.top + rect.height / 2 - (viewportH * 0.15 + dialogH / 2)
+
+        gsap.set(dialogRef.current, {
+          scale: Math.max(scaleX, scaleY),
+          x: translateX,
+          y: translateY,
+          opacity: 0,
+          transformOrigin: 'center center',
+        })
+      }
+
+      // Animate overlay background
+      gsap.fromTo(
+        overlayRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.25, ease: 'power2.out' }
+      )
+
+      // Animate dialog to center
+      gsap.to(dialogRef.current, {
+        scale: 1,
+        x: 0,
+        y: 0,
+        opacity: 1,
+        duration: 0.35,
+        ease: 'power3.out',
+        delay: 0.05,
+        onComplete: () => {
+          setTimeout(() => inputRef.current?.focus(), 10)
+        },
+      })
+    }
+  }, [commandPaletteOpen, searchDivRect])
+
+  // Reset on open
   useEffect(() => {
     if (commandPaletteOpen) {
       setQuery('')
       setSelectedIndex(0)
-      setTimeout(() => inputRef.current?.focus(), 50)
     }
   }, [commandPaletteOpen])
 
@@ -256,6 +309,45 @@ export default function CommandPalette() {
     }
   }, [selectedIndex])
 
+  const handleClose = useCallback(() => {
+    if (overlayRef.current && dialogRef.current) {
+      // Animate dialog back to search div position
+      const rect = searchDivRect
+      if (rect) {
+        const viewportW = window.innerWidth
+        const viewportH = window.innerHeight
+        const dialogW = Math.min(576, viewportW - 32)
+        const dialogH = viewportH * 0.7
+
+        const scaleX = rect.width / dialogW
+        const scaleY = rect.height / dialogH
+        const translateX = rect.left + rect.width / 2 - viewportW / 2
+        const translateY = rect.top + rect.height / 2 - (viewportH * 0.15 + dialogH / 2)
+
+        gsap.to(dialogRef.current, {
+          scale: Math.max(scaleX, scaleY),
+          x: translateX,
+          y: translateY,
+          opacity: 0,
+          duration: 0.25,
+          ease: 'power2.in',
+        })
+      }
+
+      // Animate overlay out
+      gsap.to(overlayRef.current, {
+        opacity: 0,
+        duration: 0.2,
+        ease: 'power2.in',
+        onComplete: () => {
+          setCommandPaletteOpen(false)
+        },
+      })
+    } else {
+      setCommandPaletteOpen(false)
+    }
+  }, [searchDivRect, setCommandPaletteOpen])
+
   const handleSelect = useCallback((result: typeof allResults[number]) => {
     if (result.type === 'action') {
       const action = result.item as QuickAction
@@ -268,8 +360,8 @@ export default function CommandPalette() {
       const item = result.item as SearchItem
       navigate(item.path)
     }
-    setCommandPaletteOpen(false)
-  }, [navigate, theme, language, setTheme, setLanguage, setCommandPaletteOpen])
+    handleClose()
+  }, [navigate, theme, language, setTheme, setLanguage, handleClose])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -285,22 +377,26 @@ export default function CommandPalette() {
           handleSelect(allResults[selectedIndex])
         }
       } else if (e.key === 'Escape') {
-        setCommandPaletteOpen(false)
+        handleClose()
       }
     },
-    [allResults, selectedIndex, handleSelect, setCommandPaletteOpen]
+    [allResults, selectedIndex, handleSelect, handleClose]
   )
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
-        setCommandPaletteOpen(!commandPaletteOpen)
+        if (commandPaletteOpen) {
+          handleClose()
+        } else {
+          setCommandPaletteOpen(true)
+        }
       }
     }
     document.addEventListener('keydown', handleGlobalKeyDown)
     return () => document.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [commandPaletteOpen, setCommandPaletteOpen])
+  }, [commandPaletteOpen, setCommandPaletteOpen, handleClose])
 
   if (!commandPaletteOpen) return null
 
@@ -308,6 +404,7 @@ export default function CommandPalette() {
 
   return createPortal(
     <div
+      ref={overlayRef}
       style={{
         position: 'fixed',
         inset: 0,
@@ -318,9 +415,10 @@ export default function CommandPalette() {
         background: 'rgba(0, 0, 0, 0.6)',
         backdropFilter: 'blur(4px)',
       }}
-      onClick={() => setCommandPaletteOpen(false)}
+      onClick={handleClose}
     >
       <div
+        ref={dialogRef}
         style={{
           width: '100%',
           maxWidth: '36rem',

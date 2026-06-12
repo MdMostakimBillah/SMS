@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { useWindowSize } from '@/hooks/useWindowSize'
+import { gsap } from 'gsap'
 import {
   GraduationCap,
   LayoutDashboard,
@@ -29,6 +29,7 @@ import {
   Settings,
   ChevronsUpDown,
   Check,
+  PanelLeftClose,
   type LucideIcon,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -68,12 +69,9 @@ const iconMap: Record<string, LucideIcon> = {
   settings: Settings,
 }
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const isBn = useBn()
-  const { language } = useAppStore()
-  const { width: screenWidth } = useWindowSize()
-  const isLargeScreen = screenWidth >= 1600
-  const isXLargeScreen = screenWidth >= 1920
+  const { language, setSidebarCollapsed } = useAppStore()
   const allStudents = useAdmissionStore((s) => s.students)
   const { teachers } = useTeacherStore()
   const location = useLocation()
@@ -81,6 +79,9 @@ export default function Sidebar() {
   const [showSessionDropdown, setShowSessionDropdown] = useState(false)
   const [newSession, setNewSession] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const asideRef = useRef<HTMLElement>(null)
+  const [hoveredItem, setHoveredItem] = useState<{ label: string; path: string; rect: DOMRect } | null>(null)
+  const tooltipRef = useRef<HTMLDivElement>(null)
 
   const students = useMemo(
     () => allStudents.filter((s) => s.academicYear === institution.currentSession && s.status === 'approved' && s.active !== false),
@@ -103,6 +104,17 @@ export default function Sidebar() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // GSAP animate width on collapsed change
+  useEffect(() => {
+    if (asideRef.current) {
+      gsap.to(asideRef.current, {
+        width: collapsed ? '4.5rem' : '13.75rem',
+        duration: 0.3,
+        ease: 'power2.inOut',
+      })
+    }
+  }, [collapsed])
 
   const handleSwitchSession = (session: string) => {
     switchSession(session)
@@ -214,394 +226,417 @@ export default function Sidebar() {
     },
   ]
 
+  // Close tooltip on escape or navigation
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setHoveredItem(null)
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [])
+
+  useEffect(() => {
+    setHoveredItem(null)
+  }, [location.pathname])
+
   return (
-    <aside
-      style={{
-        width: isXLargeScreen ? '17.5rem' : isLargeScreen ? '16rem' : '13.75rem',
-        height: '100%',
-        background: 'var(--glass)',
-        backdropFilter: 'blur(16px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-        borderRight: '1px solid var(--glass-border)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        flexShrink: 0,
-      }}
-    >
-      {/* Logo */}
-      <div
+    <>
+      <aside
+        ref={asideRef}
         style={{
-          padding: '16px 14px 14px',
-          borderBottom: '1px solid var(--border)',
+          width: collapsed ? '4.5rem' : '13.75rem',
+          height: '100%',
+          background: 'var(--glass)',
+          backdropFilter: 'blur(16px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+          borderRight: '1px solid var(--glass-border)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          flexShrink: 0,
+          transition: 'none',
         }}
       >
+        {/* Logo */}
         <div
           style={{
+            padding: collapsed ? '16px 0 14px' : '16px 14px 14px',
+            borderBottom: '1px solid var(--border)',
             display: 'flex',
+            flexDirection: collapsed ? 'column' : 'row',
             alignItems: 'center',
-            gap: '0.625rem',
-            marginBottom: '0.875rem',
           }}
         >
           <div
             style={{
-              width: '2rem',
-              height: '2rem',
-              borderRadius: '0.5rem',
-              background: 'var(--brand)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <GraduationCap size={17} color="#fff" />
-          </div>
-          <div>
-            <div
-              style={{
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                lineHeight: 1,
-              }}
-            >
-              EduTech
-            </div>
-            <div
-              style={{
-                fontSize: '0.5625rem',
-                color: 'var(--text-muted)',
-                marginTop: '0.125rem',
-              }}
-            >
-              School Management
-            </div>
-          </div>
-        </div>
-
-        {/* Tenant / Session Switcher */}
-        <div ref={dropdownRef} style={{ position: 'relative' }}>
-          <div
-            onClick={() => setShowSessionDropdown(!showSessionDropdown)}
-            style={{
-              background: 'var(--bg-secondary)',
-              borderRadius: '0.5rem',
-              padding: '8px 10px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              border: '1px solid var(--border)',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--surface-2)'
-              e.currentTarget.style.borderColor = 'var(--brand)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--bg-secondary)'
-              e.currentTarget.style.borderColor = 'var(--border)'
+              gap: '0.625rem',
+              marginBottom: collapsed ? 0 : '0.875rem',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              width: collapsed ? '100%' : 'auto',
             }}
           >
             <div
               style={{
-                width: '1.625rem',
-                height: '1.625rem',
-                borderRadius: '0.375rem',
-                background: 'var(--teal)',
+                width: '2rem',
+                height: '2rem',
+                borderRadius: '0.5rem',
+                background: 'var(--brand)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '0.5625rem',
-                fontWeight: 600,
-                color: '#fff',
                 flexShrink: 0,
               }}
             >
-              SA
+              <GraduationCap size={17} color="#fff" />
             </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div
-                style={{
-                  fontSize: '0.6875rem',
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Sunrise Academy
+            {!collapsed && (
+              <div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1 }}>
+                  EduTech
+                </div>
+                <div style={{ fontSize: '0.5625rem', color: 'var(--text-muted)', marginTop: '0.125rem' }}>
+                  School Management
+                </div>
               </div>
-              <div style={{ fontSize: '0.5625rem', color: 'var(--brand)', fontWeight: 600 }}>
-                {institution.currentSession || 'No Session'}
-              </div>
-            </div>
-            <ChevronsUpDown
-              size={11}
-              style={{
-                color: 'var(--text-muted)',
-                flexShrink: 0,
-                transition: 'transform 0.2s',
-                transform: showSessionDropdown ? 'rotate(180deg)' : 'rotate(0)',
-              }}
-            />
+            )}
           </div>
 
-          {showSessionDropdown && (
-            <div
+          {/* Expand button when collapsed */}
+          {collapsed && (
+            <button
+              onClick={() => setSidebarCollapsed(false)}
               style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                marginTop: '0.25rem',
-                background: 'var(--surface)',
+                marginTop: '0.75rem',
+                width: '2rem',
+                height: '2rem',
+                borderRadius: '0.5rem',
+                background: 'var(--bg-secondary)',
                 border: '1px solid var(--border)',
-                borderRadius: '0.625rem',
-                boxShadow: 'var(--shadow-lg)',
-                zIndex: 100,
-                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+                transition: 'all 0.15s',
+              }}
+              title={isBn ? 'সাইডবার প্রসারিত করুন' : 'Expand sidebar'}
+            >
+              <PanelLeftClose size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* Session Switcher — hidden when collapsed */}
+        {!collapsed && (
+          <div ref={dropdownRef} style={{ padding: '10px 8px', position: 'relative' }}>
+            <div
+              onClick={() => setShowSessionDropdown(!showSessionDropdown)}
+              style={{
+                background: 'var(--bg-secondary)',
+                borderRadius: '0.5rem',
+                padding: '8px 10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                border: '1px solid var(--border)',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--surface-2)'
+                e.currentTarget.style.borderColor = 'var(--brand)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--bg-secondary)'
+                e.currentTarget.style.borderColor = 'var(--border)'
               }}
             >
-              <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.0313rem', marginBottom: '0.375rem' }}>
-                  {t('academic_year', language)}
+              <div
+                style={{
+                  width: '1.625rem',
+                  height: '1.625rem',
+                  borderRadius: '0.375rem',
+                  background: 'var(--teal)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.5625rem',
+                  fontWeight: 600,
+                  color: '#fff',
+                  flexShrink: 0,
+                }}
+              >
+                SA
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  Sunrise Academy
                 </div>
-                {institution.sessions.map((s) => (
-                  <div
-                    key={s}
-                    onClick={() => handleSwitchSession(s)}
+                <div style={{ fontSize: '0.5625rem', color: 'var(--brand)', fontWeight: 600 }}>
+                  {institution.currentSession || 'No Session'}
+                </div>
+              </div>
+              <ChevronsUpDown
+                size={11}
+                style={{
+                  color: 'var(--text-muted)',
+                  flexShrink: 0,
+                  transition: 'transform 0.2s',
+                  transform: showSessionDropdown ? 'rotate(180deg)' : 'rotate(0)',
+                }}
+              />
+            </div>
+
+            {showSessionDropdown && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '0.25rem',
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '0.625rem',
+                  boxShadow: 'var(--shadow-lg)',
+                  zIndex: 100,
+                  overflow: 'hidden',
+                }}
+              >
+                <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                    {isBn ? 'সেশন পরিবর্তন' : 'Switch Session'}
+                  </div>
+                  {institution.sessions.map((s) => (
+                    <div
+                      key={s}
+                      onClick={() => handleSwitchSession(s)}
+                      style={{
+                        padding: '6px 8px',
+                        borderRadius: '0.375rem',
+                        cursor: 'pointer',
+                        fontSize: '0.6875rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        background: s === institution.currentSession ? 'var(--brand-light)' : 'transparent',
+                        color: s === institution.currentSession ? 'var(--brand)' : 'var(--text-secondary)',
+                        fontWeight: s === institution.currentSession ? 600 : 400,
+                      }}
+                    >
+                      {s}
+                      {s === institution.currentSession && <Check size={12} />}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ padding: '8px 10px' }}>
+                  <div style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                    {isBn ? 'নতুন সেশন' : 'New Session'}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <input
+                      value={newSession}
+                      onChange={(e) => setNewSession(e.target.value)}
+                      placeholder="e.g. 2026-27"
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddSession()}
+                      style={{
+                        flex: 1,
+                        padding: '5px 8px',
+                        borderRadius: '0.375rem',
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg-secondary)',
+                        fontSize: '0.6875rem',
+                        color: 'var(--text-primary)',
+                        outline: 'none',
+                      }}
+                    />
+                    <button
+                      onClick={handleAddSession}
+                      disabled={!newSession.trim() || institution.sessions.includes(newSession.trim())}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: '0.375rem',
+                        border: 'none',
+                        background: 'var(--brand)',
+                        color: '#fff',
+                        fontSize: '0.625rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        opacity: !newSession.trim() || institution.sessions.includes(newSession.trim()) ? 0.5 : 1,
+                      }}
+                    >
+                      {isBn ? 'যোগ' : 'Add'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Nav */}
+        <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: collapsed ? '10px 4px' : '10px 8px' }}>
+          {navGroups.map((group) => (
+            <div key={group.key} style={{ marginBottom: collapsed ? '0.5rem' : '1rem' }}>
+              {!collapsed && (
+                <div
+                  style={{
+                    fontSize: '0.5625rem',
+                    fontWeight: 600,
+                    color: 'var(--text-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05rem',
+                    padding: '0 8px',
+                    marginBottom: '0.25rem',
+                  }}
+                >
+                  {t(group.key as TranslationKey, language)}
+                </div>
+              )}
+
+              {group.items.map((item) => {
+                const isActive = location.pathname === item.page || location.pathname.startsWith(item.page + '/')
+                const IconComp = iconMap[item.icon] || LayoutDashboard
+                return (
+                  <NavLink
+                    key={item.page}
+                    to={item.page}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem',
-                      padding: '6px 8px',
-                      borderRadius: '0.375rem',
-                      cursor: 'pointer',
-                      fontSize: '0.6875rem',
-                      fontWeight: s === institution.currentSession ? 600 : 400,
-                      color: s === institution.currentSession ? 'var(--brand)' : 'var(--text-primary)',
-                      background: s === institution.currentSession ? 'var(--brand-light)' : 'transparent',
-                      transition: 'all 0.12s',
+                      padding: collapsed ? '8px 0' : '8px 10px',
+                      borderRadius: '0.5rem',
+                      marginBottom: '0.125rem',
+                      fontSize: '0.75rem',
+                      fontWeight: isActive ? 500 : 400,
+                      textDecoration: 'none',
+                      transition: 'all 0.15s ease',
+                      background: isActive ? 'var(--brand-light)' : 'transparent',
+                      color: isActive ? 'var(--brand)' : 'var(--text-secondary)',
+                      justifyContent: collapsed ? 'center' : 'flex-start',
+                      position: 'relative',
                     }}
                     onMouseEnter={(e) => {
-                      if (s !== institution.currentSession) e.currentTarget.style.background = 'var(--bg-secondary)'
+                      if (!isActive) {
+                        e.currentTarget.style.background = 'var(--bg-secondary)'
+                        e.currentTarget.style.color = 'var(--text-primary)'
+                      }
+                      if (collapsed) {
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setHoveredItem({
+                          label: t(item.key as TranslationKey, language),
+                          path: item.page,
+                          rect,
+                        })
+                      }
                     }}
-                    onMouseLeave={(e) => {
-                      if (s !== institution.currentSession) e.currentTarget.style.background = 'transparent'
-                    }}
-                  >
-                    <span style={{ flex: 1 }}>{s}</span>
-                    {s === institution.currentSession && <Check size={12} style={{ color: 'var(--brand)' }} />}
-                  </div>
-                ))}
-              </div>
-              <div style={{ padding: '8px 10px' }}>
-                <div style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
-                  {isBn ? 'নতুন সেশন' : 'New Session'}
-                </div>
-                <div style={{ display: 'flex', gap: '0.25rem' }}>
-                  <input
-                    value={newSession}
-                    onChange={(e) => setNewSession(e.target.value)}
-                    placeholder="e.g. 2026-27"
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddSession()}
-                    style={{
-                      flex: 1,
-                      padding: '5px 8px',
-                      borderRadius: '0.375rem',
-                      border: '1px solid var(--border)',
-                      background: 'var(--bg-secondary)',
-                      fontSize: '0.6875rem',
-                      color: 'var(--text-primary)',
-                      outline: 'none',
-                    }}
-                  />
-                  <button
-                    onClick={handleAddSession}
-                    disabled={!newSession.trim() || institution.sessions.includes(newSession.trim())}
-                    style={{
-                      padding: '5px 10px',
-                      borderRadius: '0.375rem',
-                      border: 'none',
-                      background: 'var(--brand)',
-                      color: '#fff',
-                      fontSize: '0.625rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      opacity: !newSession.trim() || institution.sessions.includes(newSession.trim()) ? 0.5 : 1,
+                    onMouseLeave={() => {
+                      setHoveredItem(null)
                     }}
                   >
-                    {isBn ? 'যোগ' : 'Add'}
-                  </button>
-                </div>
-              </div>
+                    <IconComp
+                      size={15}
+                      style={{
+                        flexShrink: 0,
+                        color: isActive ? 'var(--brand)' : 'var(--text-muted)',
+                      }}
+                    />
+                    {!collapsed && (
+                      <>
+                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {t(item.key as TranslationKey, language)}
+                        </span>
+                        {item.badge && (
+                          <span
+                            style={{
+                              fontSize: '0.5625rem',
+                              fontWeight: 600,
+                              padding: '1px 6px',
+                              borderRadius: '0.5rem',
+                              background: item.badgeColor === 'red' ? 'var(--red-light)' : 'var(--brand-light)',
+                              color: item.badgeColor === 'red' ? 'var(--red)' : 'var(--brand)',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </NavLink>
+                )
+              })}
             </div>
-          )}
-        </div>
-      </div>
+          ))}
+        </nav>
 
-      {/* Nav */}
-      <nav style={{ flex: 1, overflowY: 'auto', padding: '10px 8px' }}>
-        {navGroups.map((group) => (
-          <div key={group.key} style={{ marginBottom: '1rem' }}>
+        {/* Bottom — hidden when collapsed */}
+        {!collapsed && (
+          <div style={{ padding: '0.625rem', borderTop: '1px solid var(--border)' }}>
             <div
               style={{
-                fontSize: '0.5625rem',
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05rem',
-                padding: '0 8px',
-                marginBottom: '0.25rem',
+                background: 'var(--brand-light)',
+                borderRadius: '0.625rem',
+                padding: '0.75rem',
+                border: '1px solid var(--border)',
               }}
             >
-              {t(group.key as TranslationKey, language)}
-            </div>
-
-            {group.items.map((item) => {
-              const isActive = location.pathname === item.page || location.pathname.startsWith(item.page + '/')
-              const IconComp = iconMap[item.icon] || LayoutDashboard
-              return (
-                <NavLink
-                  key={item.page}
-                  to={item.page}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Enterprise Plan
+                </span>
+                <span
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '8px 10px',
-                    borderRadius: '0.5rem',
-                    marginBottom: '0.125rem',
-                    fontSize: '0.75rem',
-                    fontWeight: isActive ? 500 : 400,
-                    textDecoration: 'none',
-                    transition: 'all 0.15s ease',
-                    background: isActive ? 'var(--brand-light)' : 'transparent',
-                    color: isActive ? 'var(--brand)' : 'var(--text-secondary)',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'var(--bg-secondary)'
-                      e.currentTarget.style.color = 'var(--text-primary)'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'transparent'
-                      e.currentTarget.style.color = 'var(--text-secondary)'
-                    }
+                    fontSize: '0.5625rem',
+                    fontWeight: 600,
+                    color: 'var(--green)',
+                    background: 'var(--green-light)',
+                    padding: '2px 6px',
+                    borderRadius: '0.375rem',
                   }}
                 >
-                  <IconComp
-                    size={15}
-                    style={{
-                      flexShrink: 0,
-                      color: isActive ? 'var(--brand)' : 'var(--text-muted)',
-                    }}
-                  />
-                  <span
-                    style={{
-                      flex: 1,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {t(item.key as TranslationKey, language)}
-                  </span>
-                  {item.badge && (
-                    <span
-                      style={{
-                        fontSize: '0.5625rem',
-                        fontWeight: 600,
-                        padding: '1px 6px',
-                        borderRadius: '0.5rem',
-                        background: item.badgeColor === 'red' ? 'var(--red-light)' : 'var(--brand-light)',
-                        color: item.badgeColor === 'red' ? 'var(--red)' : 'var(--brand)',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </NavLink>
-              )
-            })}
+                  Active
+                </span>
+              </div>
+              <div style={{ height: '0.1875rem', background: 'var(--border)', borderRadius: '0.125rem' }}>
+                <div style={{ height: '100%', width: '67%', background: 'var(--brand)', borderRadius: '0.125rem' }} />
+              </div>
+              <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: '0.3125rem' }}>
+                67% storage used
+              </div>
+            </div>
           </div>
-        ))}
-      </nav>
+        )}
+      </aside>
 
-      {/* Bottom */}
-      <div style={{ padding: '0.625rem', borderTop: '1px solid var(--border)' }}>
+      {/* Tooltip for collapsed sidebar hover */}
+      {collapsed && hoveredItem && (
         <div
+          ref={tooltipRef}
           style={{
-            background: 'var(--brand-light)',
-            borderRadius: '0.625rem',
-            padding: '0.75rem',
+            position: 'fixed',
+            left: hoveredItem.rect.right + 8,
+            top: hoveredItem.rect.top + hoveredItem.rect.height / 2,
+            transform: 'translateY(-50%)',
+            background: 'var(--bg-primary)',
             border: '1px solid var(--border)',
+            borderRadius: '0.5rem',
+            padding: '6px 12px',
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            color: 'var(--text-primary)',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 9000,
+            pointerEvents: 'none',
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '0.5rem',
-            }}
-          >
-            <span
-              style={{
-                fontSize: '0.6875rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-              }}
-            >
-              Enterprise Plan
-            </span>
-            <span
-              style={{
-                fontSize: '0.5625rem',
-                fontWeight: 600,
-                color: 'var(--green)',
-                background: 'var(--green-light)',
-                padding: '2px 6px',
-                borderRadius: '0.375rem',
-              }}
-            >
-              Active
-            </span>
-          </div>
-          <div
-            style={{
-              height: '0.1875rem',
-              background: 'var(--border)',
-              borderRadius: '0.125rem',
-            }}
-          >
-            <div
-              style={{
-                height: '100%',
-                width: '67%',
-                background: 'var(--brand)',
-                borderRadius: '0.125rem',
-              }}
-            />
-          </div>
-          <div
-            style={{
-              fontSize: '0.625rem',
-              color: 'var(--text-muted)',
-              marginTop: '0.3125rem',
-            }}
-          >
-            67% storage used
-          </div>
+          {hoveredItem.label}
         </div>
-      </div>
-    </aside>
+      )}
+    </>
   )
 }

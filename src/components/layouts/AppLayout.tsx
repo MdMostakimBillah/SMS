@@ -7,7 +7,7 @@ import Topbar from './Topbar'
 import CommandPalette from '@/components/shared/CommandPalette'
 
 export default function AppLayout() {
-  const { theme, sidebarOpen, toggleSidebar } = useAppStore()
+  const { theme, sidebarCollapsed } = useAppStore()
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
   const [isLoading, setIsLoading] = useState(true)
@@ -114,34 +114,10 @@ export default function AppLayout() {
         background: 'var(--bg-tertiary)',
       }}
     >
-      {/* Mobile overlay */}
-      {isSmall && sidebarOpen && (
-        <div
-          onClick={toggleSidebar}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            zIndex: 40,
-            backdropFilter: 'blur(2px)',
-          }}
-        />
+      {/* Sidebar — desktop only (mobile uses command palette) */}
+      {!isSmall && (
+        <Sidebar collapsed={sidebarCollapsed} />
       )}
-
-      {/* Sidebar */}
-      <div
-        style={{
-          position: isSmall ? 'fixed' : 'relative',
-          inset: isSmall ? '0 auto 0 0' : 'auto',
-          zIndex: isSmall ? 50 : 'auto',
-          transform: isSmall ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)',
-          transition: 'transform 0.25s ease',
-          height: '100%',
-          flexShrink: 0,
-        }}
-      >
-        <Sidebar />
-      </div>
 
       {/* Main */}
       <div
