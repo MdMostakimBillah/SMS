@@ -5,15 +5,12 @@ import {
   CreditCard,
   Fingerprint,
   Layers,
-  Loader,
   Plus,
   RefreshCw,
   ScanFace,
   Search,
   Settings,
   Smartphone,
-  Tag,
-  Users,
   Wifi,
   WifiOff,
   X,
@@ -1075,210 +1072,98 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
           {/* ===== Device Management ===== */}
           {deviceTab === 'devices' && (
             <>
-              {/* Summary Stat Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
-                {[
-                  {
-                    label: isBn ? 'মোট ডিভাইস' : 'Total Devices',
-                    value: devices.length,
-                    icon: <Layers size={16} />,
-                    bg: 'bg-[#7C3AED12]',
-                    color: '#7C3AED',
-                    border: 'border-[#7C3AED30]',
-                  },
-                  {
-                    label: isBn ? 'অনলাইন' : 'Online',
-                    value: devices.filter((d) => d.status === 'online').length,
-                    icon: <Wifi size={16} />,
-                    bg: 'bg-[var(--green-light)]',
-                    color: 'var(--green)',
-                    border: 'border-[var(--green-light)]',
-                  },
-                  {
-                    label: isBn ? 'অফলাইন' : 'Offline',
-                    value: devices.filter((d) => d.status === 'offline').length,
-                    icon: <WifiOff size={16} />,
-                    bg: 'bg-[var(--red-light)]',
-                    color: 'var(--red)',
-                    border: 'border-[var(--red-light)]',
-                  },
-                  {
-                    label: isBn ? 'মোট স্টাফ' : 'Total Staff',
-                    value: devices.reduce((s, d) => s + d.staffCount, 0),
-                    icon: <Users size={16} />,
-                    bg: 'bg-[var(--brand-light)]',
-                    color: 'var(--brand)',
-                    border: 'border-[var(--brand-light)]',
-                  },
-                ].map((s, i) => (
-                  <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${s.border} ${s.bg} backdrop-blur-sm`}>
-                    <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center"
-                      style={{ background: `${s.color}20`, color: s.color }}
-                    >
-                      {s.icon}
-                    </div>
-                    <div>
-                      <div className="text-[1.125rem] font-bold" style={{ color: s.color }}>
-                        {s.value}
-                      </div>
-                      <div className="text-[0.625rem] text-[var(--text-muted)] font-medium">{s.label}</div>
-                    </div>
-                  </div>
-                ))}
+              {/* Summary Stats */}
+              <div className="flex items-center gap-4 mb-4 text-[0.75rem]">
+                <span className="text-[var(--text-muted)]">
+                  {devices.length} {isBn ? 'ডিভাইস' : 'devices'}
+                </span>
+                <span className="flex items-center gap-1 text-[var(--green)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--green)]" />
+                  {devices.filter((d) => d.status === 'online').length} {isBn ? 'অনলাইন' : 'online'}
+                </span>
+                <span className="flex items-center gap-1 text-[var(--red)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--red)]" />
+                  {devices.filter((d) => d.status === 'offline').length} {isBn ? 'অফলাইন' : 'offline'}
+                </span>
+                <span className="text-[var(--text-muted)]">
+                  {devices.reduce((s, d) => s + d.staffCount, 0)} {isBn ? 'স্টাফ' : 'staff'}
+                </span>
               </div>
 
-              {/* Device Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                {devices.map((d) => {
-                  const typeColor = d.type === 'rfid' ? '#7C3AED' : d.type === 'fingerprint' ? 'var(--amber)' : 'var(--green)'
-                  const typeLabel = d.type === 'rfid' ? 'RFID' : d.type === 'fingerprint' ? 'FP' : 'Face'
-                  return (
-                    <div
-                      key={d.id}
-                      className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
-                    >
-                      {/* Card Header */}
-                      <div
-                        className="px-4 pt-3.5 pb-2.5"
-                        style={{
-                          background: `linear-gradient(135deg, ${typeColor}08 0%, transparent 60%)`,
-                        }}
-                      >
-                        <div className="flex items-start justify-between mb-2.5">
+              {/* Device Table */}
+              <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
+                <table className="w-full border-collapse text-[0.75rem]">
+                  <thead>
+                    <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                      <th className="p-3 text-left text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'ডিভাইস' : 'Device'}</th>
+                      <th className="p-3 text-left text-[0.6875rem] font-semibold text-[var(--text-muted)]">IP</th>
+                      <th className="p-3 text-left text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'টাইপ' : 'Type'}</th>
+                      <th className="p-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'স্টাফ' : 'Staff'}</th>
+                      <th className="p-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'সিঙ্ক' : 'Sync'}</th>
+                      <th className="p-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'অ্যাকশন' : 'Action'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {devices.map((d) => (
+                      <tr key={d.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)] transition-colors">
+                        <td className="p-3">
                           <div className="flex items-center gap-2.5">
-                            <div
-                              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md"
-                              style={{ background: typeColor }}
-                            >
-                              {d.type === 'rfid' ? (
-                                <CreditCard size={18} className="text-white" />
-                              ) : d.type === 'fingerprint' ? (
-                                <Fingerprint size={18} className="text-white" />
-                              ) : (
-                                <ScanFace size={18} className="text-white" />
-                              )}
-                            </div>
+                            <div className={`w-2 h-2 rounded-full shrink-0 ${d.status === 'online' ? 'bg-[var(--green)]' : 'bg-[var(--red)]'}`} />
                             <div>
-                              <div className="text-[0.8125rem] font-bold text-[var(--text-primary)]">{d.name}</div>
-                              <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
-                                {d.model} · <span className="font-mono">{d.ip}</span>
-                              </div>
+                              <div className="font-medium text-[var(--text-primary)]">{d.name}</div>
+                              <div className="text-[0.625rem] text-[var(--text-muted)]">{d.model}</div>
                             </div>
                           </div>
-                          <div
-                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.5625rem] font-bold uppercase tracking-wide ${
-                              d.status === 'online'
-                                ? 'bg-[var(--green-light)] text-[var(--green)]'
-                                : d.status === 'offline'
-                                  ? 'bg-[var(--red-light)] text-[var(--red)]'
-                                  : 'bg-[var(--amber-light)] text-[var(--amber)]'
-                            }`}
-                          >
-                            <span
-                              className={`w-1.5 h-1.5 rounded-full ${d.status === 'online' ? 'bg-[var(--green)] animate-pulse' : d.status === 'offline' ? 'bg-[var(--red)]' : 'bg-[var(--amber)]'}`}
-                            ></span>
-                            {d.status}
+                        </td>
+                        <td className="p-3 font-mono text-[var(--text-secondary)]">{d.ip}</td>
+                        <td className="p-3">
+                          <span className={`text-[0.625rem] px-2 py-0.5 rounded-full font-medium ${d.type === 'rfid' ? 'bg-purple-100 text-purple-700' : d.type === 'fingerprint' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {d.type === 'rfid' ? 'RFID' : d.type === 'fingerprint' ? 'FP' : 'Face'}
+                          </span>
+                        </td>
+                        <td className="p-3 text-center text-[var(--text-secondary)]">{d.staffCount}</td>
+                        <td className="p-3 text-center text-[0.625rem] text-[var(--text-muted)]">
+                          {d.lastSync ? new Date(d.lastSync).toLocaleString('en', { hour: '2-digit', minute: '2-digit', hour12: true, day: '2-digit', month: 'short' }) : '—'}
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => {
+                                setSyncingDevice(d.id)
+                                setTimeout(() => {
+                                  setDevices((prev) => prev.map((dev) => dev.id === d.id ? { ...dev, lastSync: new Date().toISOString(), status: 'online' } : dev))
+                                  setSyncingDevice(null)
+                                }, 2000)
+                              }}
+                              disabled={syncingDevice === d.id}
+                              className="w-7 h-7 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer hover:bg-[var(--green-light)] hover:border-[var(--green)] hover:text-[var(--green)] transition-all"
+                            >
+                              <RefreshCw size={11} className={syncingDevice === d.id ? 'animate-spin' : ''} />
+                            </button>
+                            <button
+                              onClick={() => setShowDeviceSettings(d.id)}
+                              className="w-7 h-7 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
+                            >
+                              <Settings size={11} />
+                            </button>
+                            <button
+                              onClick={() => setDevices((prev) => prev.map((dev) => dev.id === d.id ? { ...dev, status: dev.status === 'online' ? 'offline' : 'online' } : dev))}
+                              className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer transition-all ${d.status === 'online' ? 'bg-[var(--red-light)] border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white' : 'bg-[var(--green-light)] border-[var(--green)] text-[var(--green)] hover:bg-[var(--green)] hover:text-white'}`}
+                            >
+                              {d.status === 'online' ? <WifiOff size={11} /> : <Wifi size={11} />}
+                            </button>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-3 text-[0.625rem] text-[var(--text-muted)]">
-                          <span className="flex items-center gap-1">
-                            <Tag size={10} /> {typeLabel}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Users size={10} /> {d.staffCount} {isBn ? 'স্টাফ' : 'staff'}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock size={10} />{' '}
-                            {d.lastSync
-                              ? new Date(d.lastSync).toLocaleString('en', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  hour12: true,
-                                  day: '2-digit',
-                                  month: 'short',
-                                })
-                              : '—'}
-                          </span>
-                        </div>
-                      </div>
-                      {/* Card Actions */}
-                      <div className="px-4 py-2.5 border-t border-[var(--border)] flex gap-1.5">
-                        <button
-                          onClick={() => {
-                            setSyncingDevice(d.id)
-                            setTimeout(() => {
-                              setDevices((prev) =>
-                                prev.map((dev) =>
-                                  dev.id === d.id
-                                    ? {
-                                        ...dev,
-                                        lastSync: new Date().toISOString(),
-                                        status: 'online',
-                                      }
-                                    : dev
-                                )
-                              )
-                              setSyncingDevice(null)
-                            }, 2000)
-                          }}
-                          disabled={syncingDevice === d.id}
-                          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[0.625rem] font-semibold cursor-pointer transition-all duration-200 ${
-                            syncingDevice === d.id
-                              ? 'bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] animate-pulse'
-                              : 'bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] hover:bg-[var(--green)] hover:text-white hover:shadow-md'
-                          }`}
-                        >
-                          {syncingDevice === d.id ? (
-                            <>
-                              <Loader size={11} className="animate-spin" />
-                              {isBn ? 'সিঙ্ক...' : 'Syncing...'}
-                            </>
-                          ) : (
-                            <>
-                              <RefreshCw size={11} />
-                              {isBn ? 'সিঙ্ক' : 'Sync'}
-                            </>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => setShowDeviceSettings(d.id)}
-                          className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.625rem] font-medium cursor-pointer hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all duration-200"
-                        >
-                          <Settings size={11} />
-                          {isBn ? 'সেটিং' : 'Settings'}
-                        </button>
-                        <button
-                          onClick={() =>
-                            setDevices((prev) =>
-                              prev.map((dev) =>
-                                dev.id === d.id
-                                  ? {
-                                      ...dev,
-                                      status: dev.status === 'online' ? 'offline' : 'online',
-                                    }
-                                  : dev
-                              )
-                            )
-                          }
-                          className={`flex items-center justify-center px-2.5 py-2 rounded-lg border text-[0.625rem] cursor-pointer transition-all duration-200 ${
-                            d.status === 'online'
-                              ? 'bg-[var(--red-light)] border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white hover:shadow-md'
-                              : 'bg-[var(--green-light)] border-[var(--green)] text-[var(--green)] hover:bg-[var(--green)] hover:text-white hover:shadow-md'
-                          }`}
-                        >
-                          {d.status === 'online' ? <WifiOff size={11} /> : <Wifi size={11} />}
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
               {/* Device Settings Modal */}
               {showDeviceSettings && (
                 <div className="modal-overlay">
-                  <div className="modal-content modal-box" style={{ maxWidth: '27.5rem' }}>
+                  <div className="modal-content modal-box" style={{ maxWidth: '25rem' }}>
                     {(() => {
                       const d = devices.find((dev) => dev.id === showDeviceSettings)
                       if (!d) return null
@@ -1295,9 +1180,9 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                               <X size={14} className="text-[var(--text-secondary)]" />
                             </button>
                           </div>
-                          <div className="space-y-3 mb-4">
+                          <div className="space-y-2 mb-4">
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'ডিভাইস নাম' : 'Device Name'}</span>
+                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'ডিভাইস' : 'Device'}</span>
                               <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">{d.name}</span>
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
@@ -1305,48 +1190,14 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                               <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">{d.model}</span>
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">IP {isBn ? 'ঠিকানা' : 'Address'}</span>
+                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">IP</span>
                               <span className="text-[0.6875rem] font-mono font-semibold text-[var(--text-primary)]">{d.ip}</span>
-                            </div>
-                            <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'টাইপ' : 'Type'}</span>
-                              <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)] capitalize">{d.type}</span>
-                            </div>
-                            <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'স্টাফ সংখ্যা' : 'Staff Count'}</span>
-                              <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">{d.staffCount}</span>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <h4 className="text-[0.6875rem] font-semibold text-[var(--text-secondary)]">
-                              {isBn ? 'সিঙ্ক সেটিং' : 'Sync Settings'}
-                            </h4>
-                            <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'অটো সিঙ্ক' : 'Auto Sync'}</span>
-                              <button
-                                onClick={() =>
-                                  setDeviceSettings((s) => ({
-                                    ...s,
-                                    autoSync: !s.autoSync,
-                                  }))
-                                }
-                                className={`w-9 h-5 rounded-full cursor-pointer relative transition-all duration-200 border-0 outline-none ${deviceSettings.autoSync ? 'bg-[var(--green)]' : 'bg-[var(--border)]'}`}
-                              >
-                                <span
-                                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${deviceSettings.autoSync ? 'right-0.5' : 'left-0.5'}`}
-                                ></span>
-                              </button>
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
                               <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'সিঙ্ক ইন্টারভাল' : 'Sync Interval'}</span>
                               <select
                                 value={deviceSettings.syncInterval}
-                                onChange={(e) =>
-                                  setDeviceSettings((s) => ({
-                                    ...s,
-                                    syncInterval: +e.target.value,
-                                  }))
-                                }
+                                onChange={(e) => setDeviceSettings((s) => ({ ...s, syncInterval: +e.target.value }))}
                                 className="px-2 py-1 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[0.625rem] text-[var(--text-secondary)]"
                               >
                                 <option value={5}>5 {isBn ? 'মিনিট' : 'min'}</option>
@@ -1355,28 +1206,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                                 <option value={60}>1 {isBn ? 'ঘণ্টা' : 'hr'}</option>
                               </select>
                             </div>
-                            <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'সাউন্ড' : 'Sound'}</span>
-                              <button
-                                onClick={() =>
-                                  setDeviceSettings((s) => ({
-                                    ...s,
-                                    playSound: !s.playSound,
-                                  }))
-                                }
-                                className={`w-9 h-5 rounded-full cursor-pointer relative transition-all duration-200 border-0 outline-none ${deviceSettings.playSound ? 'bg-[var(--green)]' : 'bg-[var(--border)]'}`}
-                              >
-                                <span
-                                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${deviceSettings.playSound ? 'right-0.5' : 'left-0.5'}`}
-                                ></span>
-                              </button>
-                            </div>
-                            <div className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-secondary)]">
-                              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'ভার্সন' : 'Version'}</span>
-                              <span className="text-[0.625rem] font-mono text-[var(--text-muted)]">v4.2.1</span>
-                            </div>
                           </div>
-                          <div className="flex gap-2 justify-end mt-5">
+                          <div className="flex gap-2 justify-end">
                             <button
                               onClick={() => setShowDeviceSettings(null)}
                               className="px-4 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] font-medium cursor-pointer hover:bg-[var(--border)] transition-all"
@@ -1384,11 +1215,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                               {isBn ? 'বন্ধ' : 'Close'}
                             </button>
                             <button
-                              onClick={() => {
-                                setDevices((prev) => prev.map((dev) => (dev.id === showDeviceSettings ? { ...dev, name: d.name } : dev)))
-                                setShowDeviceSettings(null)
-                              }}
-                              className="px-4 py-2 rounded-lg bg-[var(--green)] text-white text-[0.75rem] font-semibold cursor-pointer hover:opacity-90 hover:shadow-md transition-all"
+                              onClick={() => setShowDeviceSettings(null)}
+                              className="px-4 py-2 rounded-lg bg-[var(--green)] text-white text-[0.75rem] font-semibold cursor-pointer hover:opacity-90 transition-all"
                             >
                               {isBn ? 'সংরক্ষণ' : 'Save'}
                             </button>
