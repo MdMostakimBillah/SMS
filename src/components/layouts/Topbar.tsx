@@ -102,7 +102,7 @@ const demoMessages = [
 
 export default function Topbar() {
   const navigate = useNavigate()
-  const { theme, language, setTheme, setLanguage, toggleSidebar } = useAppStore()
+  const { theme, language, setTheme, setLanguage, toggleSidebar, setCommandPaletteOpen } = useAppStore()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
   const [notifOpen, setNotifOpen] = useState(false)
@@ -232,11 +232,12 @@ export default function Topbar() {
 
       {/* Search */}
       {isMobile ? (
-        <button style={{ ...iconBtn, flexShrink: 0 }}>
+        <button style={{ ...iconBtn, flexShrink: 0 }} onClick={() => setCommandPaletteOpen(true)}>
           <Search size={16} />
         </button>
       ) : (
         <div
+          onClick={() => setCommandPaletteOpen(true)}
           style={{
             flex: 1,
             maxWidth: '18.75rem',
@@ -247,7 +248,7 @@ export default function Topbar() {
             border: '1px solid var(--border)',
             borderRadius: '0.5rem',
             padding: '6px 12px',
-            cursor: 'text',
+            cursor: 'pointer',
             minWidth: 0,
           }}
         >

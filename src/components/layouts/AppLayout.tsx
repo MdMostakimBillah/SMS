@@ -4,6 +4,7 @@ import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
+import CommandPalette from '@/components/shared/CommandPalette'
 
 export default function AppLayout() {
   const { theme, sidebarOpen, toggleSidebar } = useAppStore()
@@ -166,6 +167,8 @@ export default function AppLayout() {
           </div>
         </main>
       </div>
+
+      <CommandPalette />
     </div>
   )
 }

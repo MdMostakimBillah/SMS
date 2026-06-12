@@ -6,9 +6,11 @@ interface AppState {
   theme: Theme
   language: Language
   sidebarOpen: boolean
+  commandPaletteOpen: boolean
   setTheme: (theme: Theme) => void
   setLanguage: (language: Language) => void
   toggleSidebar: () => void
+  setCommandPaletteOpen: (open: boolean) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -17,6 +19,7 @@ export const useAppStore = create<AppState>()(
       theme: 'dark',
       language: 'bn',
       sidebarOpen: false,
+      commandPaletteOpen: false,
 
       setTheme: (theme) => {
         set({ theme })
@@ -31,6 +34,8 @@ export const useAppStore = create<AppState>()(
       setLanguage: (language) => set({ language }),
 
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+
+      setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
     }),
     {
       name: 'edutech-settings',
