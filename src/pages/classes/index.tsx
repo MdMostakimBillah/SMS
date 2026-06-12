@@ -1,4 +1,4 @@
-import { useState, useMemo, Fragment } from 'react'
+import { useState, useMemo, Fragment, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -18,6 +18,10 @@ import {
   Download,
   BookOpen,
   Copy,
+  ChevronDown,
+  MoreVertical,
+  FileSpreadsheet,
+  FileText,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -25,6 +29,11 @@ import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import ClassesTab from './ClassesTab'
+import { RoutinePDFOptionsModal } from '@/components/shared/RoutinePDFOptionsModal'
+import { generateRoutineGridPDF } from '@/pages/classes/routinePdfTemplate'
+import type { RoutineListPDFOptions, RoutineGridData } from '@/pages/classes/routinePdfTemplate'
+import { openPrintWindow } from '@/lib/pdf'
+import * as XLSX from 'xlsx'
 
 export default function ClassesPage() {
   const navigate = useNavigate()
@@ -734,6 +743,21 @@ function RoutineTab({
   const [copyFrom, setCopyFrom] = useState(0)
   const [copyTo, setCopyTo] = useState(1)
   const [showCustomDuration, setShowCustomDuration] = useState(false)
+  const [showPDF, setShowPDF] = useState(false)
+  const [showActionMenu, setShowActionMenu] = useState(false)
+  const actionMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+        setShowActionMenu(false)
+      }
+    }
+    if (showActionMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showActionMenu])
 
   const cls = classes.find((c) => c.id === selectedClass)
   const sections = cls?.sections || []
@@ -852,6 +876,77 @@ function RoutineTab({
   const hasDayData = (dayIdx: number) => {
     return (resolvedPeriods[dayIdx] || []).some((s: any) => s?.subjectId)
   }
+
+  const exportExcel = useCallback(() => {
+    const clsObj = classes.find((c) => c.id === selectedClass)
+    const secObj = clsObj?.sections.find((s: any) => s.id === effectiveSection)
+    const secName = secObj?.name || ''
+    const className = isBn ? clsObj?.nameBn : clsObj?.name
+
+    const routineData = activeDays
+      .map((d) => {
+        return Array.from({ length: totalPeriods }, (_, p) => {
+          const slot = resolvedPeriods[d.index]?.[p]
+          const time = getPeriodTime(p)
+          if (slot?.subjectId) {
+            return {
+              Day: isBn ? d.nameBn : d.name,
+              Period: `P${p + 1}`,
+              Time: `${time.start} - ${time.end}`,
+              Subject: getSubjectName(slot.subjectId),
+              Teacher: slot.teacherName || getTeacherName(slot.teacherId),
+            }
+          }
+          return {
+            Day: isBn ? d.nameBn : d.name,
+            Period: `P${p + 1}`,
+            Time: `${time.start} - ${time.end}`,
+            Subject: '—',
+            Teacher: '—',
+          }
+        })
+      })
+      .flat()
+
+    const instName = institution.name || 'EduTech'
+    const instAddress = institution.address || 'Dhaka, Bangladesh'
+
+    const ws = XLSX.utils.json_to_sheet(routineData)
+    XLSX.utils.sheet_add_aoa(ws, [
+      [instName],
+      [instAddress],
+      [`Class: ${className} - Section: ${secName}`],
+      [`Periods: ${totalPeriods}`],
+      [],
+    ], { origin: 'A1' })
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Routine')
+    XLSX.writeFile(wb, `routine_${className}_${secName}_${new Date().toISOString().split('T')[0]}.xlsx`)
+  }, [classes, selectedClass, effectiveSection, activeDays, totalPeriods, resolvedPeriods, institution, isBn])
+
+  const routineGridData: RoutineGridData = useMemo(() => {
+    const periodTimes = Array.from({ length: totalPeriods }, (_, p) => getPeriodTime(p))
+    const grid = activeDays.map((d) => {
+      return Array.from({ length: totalPeriods }, (_, p) => {
+        const slot = resolvedPeriods[d.index]?.[p]
+        return {
+          subject: slot?.subjectId ? getSubjectName(slot.subjectId) : '',
+          teacher: slot?.teacherId ? (slot.teacherName || getTeacherName(slot.teacherId)) : '',
+        }
+      })
+    })
+    return { activeDays, totalPeriods, periodTimes, grid }
+  }, [activeDays, totalPeriods, resolvedPeriods, getSubjectName, getTeacherName, getPeriodTime])
+
+  const handlePDF = useCallback(
+    (opts: RoutineListPDFOptions) => {
+      const html = generateRoutineGridPDF(routineGridData, opts)
+      openPrintWindow(opts.title || 'Routine', html)
+      setShowPDF(false)
+    },
+    [routineGridData]
+  )
 
   return (
     <div>
@@ -1021,104 +1116,112 @@ function RoutineTab({
         </div>
       )}
 
-      {/* Download button */}
+      {/* Action button dropdown */}
       {resolvedPeriods.some((day: any) => day?.some((slot: any) => slot?.subjectId)) && (
-        <div style={{ marginBottom: '0.875rem' }}>
+        <div style={{ position: 'relative', marginBottom: '0.875rem', display: 'flex', justifyContent: 'flex-end' }}>
           <button
-            onClick={() => {
-              const clsObj = classes.find((c) => c.id === selectedClass)
-              const secObj = clsObj?.sections.find((s: any) => s.id === effectiveSection)
-              const secName = secObj?.name || ''
-
-              const gridRows = activeDays
-                .map((d) => {
-                  const cells = Array.from({ length: totalPeriods }, (_, p) => {
-                    const slot = resolvedPeriods[d.index]?.[p]
-                    const time = getPeriodTime(p)
-                    if (slot?.subjectId) {
-                      return `<td style="padding:10px 8px;border:1px solid #e5e7eb;text-align:center;vertical-align:middle">
-                    <div style="font-size:9px;color:#8b5cf6;font-weight:600;margin-bottom:3px">P${p + 1} · ${time.start}</div>
-                    <div style="font-size:11px;font-weight:600;color:#1a1a1a;margin-bottom:2px">${getSubjectName(slot.subjectId)}</div>
-                    <div style="font-size:9px;color:#6b7280">${slot.teacherName || getTeacherName(slot.teacherId)}</div>
-                  </td>`
-                    }
-                    return `<td style="padding:10px 8px;border:1px solid #e5e7eb;text-align:center;vertical-align:middle"><span style="font-size:10px;color:#d1d5db">—</span></td>`
-                  }).join('')
-                  return `<tr>
-                <td style="padding:10px 14px;font-weight:600;font-size:12px;text-align:center;white-space:nowrap;border:1px solid #e5e7eb;background:#f9fafb">${isBn ? d.nameBn : d.name}</td>
-                ${cells}
-              </tr>`
-                })
-                .join('')
-
-              const headerCells = Array.from({ length: totalPeriods }, (_, p) => {
-                const time = getPeriodTime(p)
-                const breakAfter = breakPositions.filter((b: any) => b.afterPeriod === p)
-                const breakLabel = breakAfter.map((b: any) => `${isBn ? 'বিরতি' : 'Break'} ${b.start}-${b.end}`).join(', ')
-                return `<th style="padding:8px 6px;font-size:10px;font-weight:600;text-align:center;border:1px solid #e5e7eb;background:#f3f4f6;min-width:100px">P${p + 1}<br/><span style="font-weight:400;color:#6b7280">${time.start}</span>${breakLabel ? `<br/><span style="font-weight:400;color:#d97706;font-size:8px">${breakLabel}</span>` : ''}</th>`
-              }).join('')
-
-              const breaksInfo = (institution.breaks || []).length > 0
-                ? `<div style="margin-top:12px;padding:8px 12px;background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;font-size:9px;color:#92400e"><strong>${isBn ? 'বিরতির সময়:' : 'Break Times:'}</strong> ${(institution.breaks || []).map((b: any) => `${b.label}: ${b.start} - ${b.end}`).join(' · ')}</div>`
-                : ''
-
-              const usedMin = periodDurations.slice(0, totalPeriods).reduce((sum: number, d: number) => sum + d, 0)
-
-              const win = window.open('', '_blank')
-              if (!win) return
-              win.document.write(`<!DOCTYPE html><html><head><title>Routine - ${clsObj?.name} ${secName}</title>
-<style>
-  @page{size:A4 landscape;margin:0}
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Segoe UI','Arial',sans-serif;color:#1a1a1a;background:#fff;padding:20px}
-  @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;padding:8mm}}
-</style></head><body>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #6366f1">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div style="width:40px;height:40px;background:#6366f1;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px">ET</div>
-      <div>
-        <div style="font-size:16px;font-weight:700;color:#6366f1">EduTech School Management</div>
-        <div style="font-size:10px;color:#6b7280">${institution?.address || ''}</div>
-      </div>
-    </div>
-    <div style="text-align:right">
-      <div style="font-size:13px;font-weight:600;color:#1a1a1a">${clsObj?.name || ''} — ${isBn ? 'সেকশন' : 'Section'} ${secName}</div>
-      <div style="font-size:10px;color:#6b7280">${isBn ? 'পিরিয়ড' : 'Periods'}: ${totalPeriods} · ${usedMin} ${isBn ? 'মিনিট মোট' : 'min total'} · Generated: ${new Date().toLocaleDateString()}</div>
-    </div>
-  </div>
-  <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb">
-    <thead><tr><th style="padding:8px 12px;font-size:10px;font-weight:600;text-align:center;border:1px solid #e5e7eb;background:#f3f4f6;min-width:80px">${isBn ? 'দিন' : 'Day'}</th>${headerCells}</tr></thead>
-    <tbody>${gridRows}</tbody>
-  </table>
-  ${breaksInfo}
-  <div style="margin-top:16px;padding-top:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between">
-    <div style="font-size:9px;color:#9ca3af">EduTech School Management System</div>
-    <div style="font-size:9px;color:#9ca3af">${isBn ? 'মুদ্রণের তারিখ' : 'Printed'}: ${new Date().toLocaleDateString()}</div>
-  </div>
-</body></html>`)
-              win.document.close()
-              setTimeout(() => win.print(), 600)
-            }}
+            onClick={() => setShowActionMenu(!showActionMenu)}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.375rem',
               padding: '9px 18px',
               borderRadius: '0.5rem',
-              background: 'var(--brand)',
-              border: 'none',
-              color: '#fff',
+              background: 'var(--brand-light)',
+              border: '1px solid var(--brand)',
+              color: 'var(--brand)',
               fontSize: '0.8125rem',
               fontWeight: 500,
               cursor: 'pointer',
               fontFamily: 'inherit',
-              boxShadow: '0 4px 14px rgba(99,102,241,0.3)',
             }}
           >
-            <Download size={15} />
-            {isBn ? 'রুটিন ডাউনলোড' : 'Download Routine'}
+            <MoreVertical size={15} />
+            {isBn ? 'অ্যাকশন' : 'Action'}
+            <ChevronDown size={12} />
           </button>
+          {showActionMenu && (
+            <div
+              ref={actionMenuRef}
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '0.375rem',
+                background: 'var(--bg-primary)',
+                border: '1px solid var(--border)',
+                borderRadius: '0.5rem',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                minWidth: '12.5rem',
+                zIndex: 100,
+                overflow: 'hidden',
+              }}
+            >
+              <button
+                onClick={() => {
+                  exportExcel()
+                  setShowActionMenu(false)
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.625rem 0.875rem',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.8125rem',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
+                {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+              </button>
+              <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+              <button
+                onClick={() => {
+                  setShowPDF(true)
+                  setShowActionMenu(false)
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.625rem 0.875rem',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.8125rem',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <FileText size={14} style={{ color: 'var(--red)' }} />
+                {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+              </button>
+            </div>
+          )}
         </div>
+      )}
+
+      {/* PDF Modal */}
+      {showPDF && (
+        <RoutinePDFOptionsModal
+          count={activeDays.length}
+          isBn={isBn}
+          routineGridData={routineGridData}
+          onClose={() => setShowPDF(false)}
+          onDownload={handlePDF}
+        />
       )}
 
       {/* Edit slot modal */}

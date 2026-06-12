@@ -95,7 +95,7 @@ export function useSessionStudents() {
   const students = useAdmissionStore((s) => s.students)
   const currentSession = useClassStore((s) => s.institution.currentSession)
   return useMemo(
-    () => students.filter((s) => s.academicYear === currentSession && s.status === 'approved' && s.active !== false),
+    () => students.filter((s) => s.academicYear === currentSession),
     [students, currentSession]
   )
 }

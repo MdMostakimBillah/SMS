@@ -74,21 +74,23 @@ export default function HRPromotionTab({
           </button>
         </div>
       </div>
-      <DateRangeFilter
-        dateFrom={proDateFrom}
-        dateTo={proDateTo}
-        setDateFrom={(v) => {
-          setProDateFrom(v)
-          setPage(1)
-        }}
-        setDateTo={(v) => {
-          setProDateTo(v)
-          setPage(1)
-        }}
-        onReset={() => setPage(1)}
-        isBn={isBn}
-        variant="compact"
-      />
+      <div className="mb-3 p-3 bg-[var(--bg-secondary)] rounded-lg">
+        <DateRangeFilter
+          dateFrom={proDateFrom}
+          dateTo={proDateTo}
+          setDateFrom={(v) => {
+            setProDateFrom(v)
+            setPage(1)
+          }}
+          setDateTo={(v) => {
+            setProDateTo(v)
+            setPage(1)
+          }}
+          onReset={() => setPage(1)}
+          isBn={isBn}
+          variant="compact"
+        />
+      </div>
       {filteredPromotions.length === 0 ? (
         <div className="p-[1.875rem] text-center text-[var(--text-muted)] text-[0.8125rem]">
           {isBn ? 'কোনো পদোন্নতি নেই' : 'No promotions yet'}

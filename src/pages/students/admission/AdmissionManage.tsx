@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import {
   CheckCircle,
@@ -18,6 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsRight,
+  ChevronDown,
+  MoreVertical,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useBn } from '@/hooks/useBn'
@@ -909,6 +911,21 @@ export default function AdmissionManage() {
   const [editingStudent, setEditingStudent] = useState<StudentAdmission | null>(null)
   const [viewingStudent, setViewingStudent] = useState<StudentAdmission | null>(null)
   const [showPDFModal, setShowPDFModal] = useState(false)
+  const [showActionMenu, setShowActionMenu] = useState(false)
+  const actionMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+        setShowActionMenu(false)
+      }
+    }
+    if (showActionMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showActionMenu])
+
   useScrollLock(approvingStudent !== null || rejectingStudent !== null || editingStudent !== null || viewingStudent !== null || showPDFModal)
 
   const filtered = useMemo(
@@ -979,7 +996,13 @@ export default function AdmissionManage() {
   )
 
   const exportExcel = useCallback(() => {
-    const data = (selected.length > 0 ? filtered.filter((s) => selected.includes(s.id)) : filtered).map((s, i) => ({
+    const instName = institution.name || 'Institution'
+    const instNameBn = institution.nameBn || ''
+    const instAddress = institution.address || ''
+    const instPhone = institution.phone || ''
+    const instEmail = institution.email || ''
+
+    const studentsData = (selected.length > 0 ? filtered.filter((s) => selected.includes(s.id)) : filtered).map((s, i) => ({
       '#': i + 1,
       'Student ID': s.id,
       'Name EN': s.nameEn,
@@ -1001,11 +1024,20 @@ export default function AdmissionManage() {
       'Admission Date': s.admissionDate,
       Status: s.status,
     }))
-    const ws = XLSX.utils.json_to_sheet(data)
+
+    const ws = XLSX.utils.json_to_sheet(studentsData)
+    XLSX.utils.sheet_add_aoa(ws, [
+      [instName],
+      [instNameBn],
+      [instAddress],
+      [`Phone: ${instPhone} | Email: ${instEmail}`],
+      [],
+    ], { origin: 'A1' })
+
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Admissions')
     XLSX.writeFile(wb, `admissions_${new Date().toISOString().split('T')[0]}.xlsx`)
-  }, [selected, filtered])
+  }, [selected, filtered, institution])
 
   const handleListPDF = useCallback(
     (opts: ListPDFOptions) => {
@@ -1103,6 +1135,7 @@ export default function AdmissionManage() {
         <PDFOptionsModal
           count={selected.length > 0 ? selected.length : filtered.length}
           isBn={isBn}
+          students={selected.length > 0 ? filtered.filter((s) => selected.includes(s.id)) : filtered}
           onClose={() => setShowPDFModal(false)}
           onDownload={handleListPDF}
         />
@@ -1341,47 +1374,98 @@ export default function AdmissionManage() {
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.375rem' }}>
+        <div style={{ position: 'relative', display: 'flex', gap: '0.375rem' }}>
           <button
-            onClick={exportExcel}
+            onClick={() => setShowActionMenu(!showActionMenu)}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.3125rem',
               padding: '7px 12px',
               borderRadius: '0.5rem',
-              background: 'var(--green-light)',
-              border: '1px solid var(--green)',
-              color: 'var(--green)',
+              background: 'var(--brand-light)',
+              border: '1px solid var(--brand)',
+              color: 'var(--brand)',
               fontSize: '0.75rem',
               cursor: 'pointer',
               fontFamily: 'inherit',
               fontWeight: 500,
             }}
           >
-            <FileSpreadsheet size={13} />
-            {isBn ? 'Excel' : 'Excel'}
+            <MoreVertical size={13} />
+            {isBn ? 'অ্যাকশন' : 'Action'}
+            <ChevronDown size={12} />
           </button>
-          <button
-            onClick={() => setShowPDFModal(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3125rem',
-              padding: '7px 12px',
-              borderRadius: '0.5rem',
-              background: 'var(--red-light)',
-              border: '1px solid var(--red)',
-              color: 'var(--red)',
-              fontSize: '0.75rem',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontWeight: 500,
-            }}
-          >
-            <FileText size={13} />
-            PDF {selected.length > 0 ? `(${selected.length})` : `(${filtered.length})`}
-          </button>
+          {showActionMenu && (
+            <div
+              ref={actionMenuRef}
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '0.375rem',
+                background: 'var(--bg-primary)',
+                border: '1px solid var(--border)',
+                borderRadius: '0.5rem',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                minWidth: '12.5rem',
+                zIndex: 100,
+                overflow: 'hidden',
+              }}
+            >
+              <button
+                onClick={() => {
+                  exportExcel()
+                  setShowActionMenu(false)
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.625rem 0.875rem',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.8125rem',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
+                {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+              </button>
+              <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+              <button
+                onClick={() => {
+                  setShowPDFModal(true)
+                  setShowActionMenu(false)
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.625rem 0.875rem',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.8125rem',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <FileText size={14} style={{ color: 'var(--red)' }} />
+                {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

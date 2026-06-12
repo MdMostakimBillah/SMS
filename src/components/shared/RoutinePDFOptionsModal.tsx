@@ -1,31 +1,30 @@
 import React, { useCallback } from 'react'
-import { ALL_PDF_COLUMNS, generateListPDF } from '@/pages/students/admission/listPdfTemplate'
-import type { ListPDFOptions } from '@/pages/students/admission/listPdfTemplate'
-import type { StudentAdmission } from '@/pages/students/admission/types'
+import { ALL_ROUTINE_PDF_COLUMNS, generateRoutineGridPDF } from '@/pages/classes/routinePdfTemplate'
+import type { RoutineListPDFOptions, RoutineGridData } from '@/pages/classes/routinePdfTemplate'
 import { GenericPDFOptionsModal } from './GenericPDFOptionsModal'
 import type { GenericPDFOptionsResult } from './GenericPDFOptionsModal'
 
 interface Props {
   count: number
   isBn: boolean
-  students: StudentAdmission[]
+  routineGridData: RoutineGridData
   onClose: () => void
-  onDownload: (opts: ListPDFOptions) => void
+  onDownload: (opts: RoutineListPDFOptions) => void
 }
 
-export const PDFOptionsModal = React.memo(function PDFOptionsModal({ count, isBn, students, onClose, onDownload }: Props) {
+export const RoutinePDFOptionsModal = React.memo(function RoutinePDFOptionsModal({ count, isBn, routineGridData, onClose, onDownload }: Props) {
   const previewRenderer = useCallback(
-    (opts: GenericPDFOptionsResult) => generateListPDF(students, opts),
-    [students]
+    (opts: GenericPDFOptionsResult) => generateRoutineGridPDF(routineGridData, opts),
+    [routineGridData]
   )
 
   return (
     <GenericPDFOptionsModal
-      columns={ALL_PDF_COLUMNS}
-      defaultTitle="Student List"
-      defaultTitleBn="ছাত্র তালিকা"
-      recordLabel="students"
-      recordLabelBn="জন"
+      columns={ALL_ROUTINE_PDF_COLUMNS}
+      defaultTitle="Routine"
+      defaultTitleBn="রুটিন"
+      recordLabel="days"
+      recordLabelBn="টি দিন"
       count={count}
       isBn={isBn}
       previewRenderer={previewRenderer}

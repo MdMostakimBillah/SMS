@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -18,6 +18,8 @@ import {
   ChevronsRight,
   UserX,
   UserCheck,
+  ChevronDown,
+  MoreVertical,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useBn } from '@/hooks/useBn'
@@ -66,7 +68,9 @@ export default function AllStudentsPage() {
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
   const [fGender, setFGender] = useState('')
-  const [fActive, setFActive] = useState('')
+  const [fStatus, setFStatus] = useState('')
+  const [fActive, setFActive] = useState<'active' | 'inactive' | ''>('active')
+  const setFActiveState = useCallback((v: 'active' | 'inactive' | '') => setFActive(v), [])
   const [fReligion, setFReligion] = useState('')
   const [fBlood, setFBlood] = useState('')
   const [perPage, setPerPage] = useState(20)
@@ -74,13 +78,28 @@ export default function AllStudentsPage() {
   const [selected, setSelected] = useState<string[]>([])
   const [showPDF, setShowPDF] = useState(false)
   const [viewSt, setViewSt] = useState<StudentAdmission | null>(null)
+  const [showActionMenu, setShowActionMenu] = useState(false)
+  const actionMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+        setShowActionMenu(false)
+      }
+    }
+    if (showActionMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showActionMenu])
+
   useScrollLock(showPDF || viewSt !== null)
 
   const filtered = useMemo(
     () =>
       students.filter((s) => {
         if (s.academicYear !== currentSession) return false
-        if (s.status !== 'approved') return false
+        if (fStatus && s.status !== fStatus) return false
         if (search) {
           const q = search.toLowerCase()
           if (
@@ -103,7 +122,7 @@ export default function AllStudentsPage() {
         if (fBlood && s.bloodGroup !== fBlood) return false
         return true
       }),
-    [students, currentSession, search, fClass, fSection, fGender, fActive, fReligion, fBlood]
+    [students, currentSession, search, fClass, fSection, fGender, fStatus, fActive, fReligion, fBlood]
   )
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
@@ -124,6 +143,7 @@ export default function AllStudentsPage() {
       total: filtered.length,
       approved: filtered.filter((s) => s.status === 'approved').length,
       pending: filtered.filter((s) => s.status === 'pending').length,
+      rejected: filtered.filter((s) => s.status === 'rejected').length,
       male: filtered.filter((s) => s.gender.includes('Male')).length,
       female: filtered.filter((s) => s.gender.includes('Female')).length,
     }),
@@ -131,8 +151,14 @@ export default function AllStudentsPage() {
   )
 
   const exportExcel = useCallback(() => {
+    const instName = institution.name || 'Institution'
+    const instNameBn = institution.nameBn || ''
+    const instAddress = institution.address || ''
+    const instPhone = institution.phone || ''
+    const instEmail = institution.email || ''
+
     const list = selected.length > 0 ? filtered.filter((s) => selected.includes(s.id)) : filtered
-    const data = list.map((s, i) => ({
+    const studentsData = list.map((s, i) => ({
       '#': i + 1,
       'Student ID': s.id,
       'Name EN': s.nameEn,
@@ -154,11 +180,20 @@ export default function AllStudentsPage() {
       'Admission Date': s.admissionDate,
       Status: s.status,
     }))
-    const ws = XLSX.utils.json_to_sheet(data)
+
+    const ws = XLSX.utils.json_to_sheet(studentsData)
+    XLSX.utils.sheet_add_aoa(ws, [
+      [instName],
+      [instNameBn],
+      [instAddress],
+      [`Phone: ${instPhone} | Email: ${instEmail}`],
+      [],
+    ], { origin: 'A1' })
+
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Students')
     XLSX.writeFile(wb, `students_${new Date().toISOString().split('T')[0]}.xlsx`)
-  }, [selected, filtered])
+  }, [selected, filtered, institution, isBn, classNameMap])
 
   const handlePDF = useCallback(
     (opts: ListPDFOptions) => {
@@ -178,12 +213,13 @@ export default function AllStudentsPage() {
     setFClass('')
     setFSection('')
     setFGender('')
-    setFActive('')
+    setFStatus('')
+    setFActive('active')
     setFReligion('')
     setFBlood('')
     setPage(1)
   }, [])
-  const hasFilter = search || fClass || fSection || fGender || fActive || fReligion || fBlood
+  const hasFilter = search || fClass || fSection || fGender || fStatus || fActive || fReligion || fBlood
 
   const sel =
     'px-2 py-[0.4375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs outline-none cursor-pointer'
@@ -212,7 +248,13 @@ export default function AllStudentsPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-60px)]">
       {showPDF && (
-        <PDFOptionsModal count={selected.length || filtered.length} isBn={isBn} onClose={() => setShowPDF(false)} onDownload={handlePDF} />
+        <PDFOptionsModal
+          count={selected.length || filtered.length}
+          isBn={isBn}
+          students={selected.length > 0 ? filtered.filter((s) => selected.includes(s.id)) : filtered}
+          onClose={() => setShowPDF(false)}
+          onDownload={handlePDF}
+        />
       )}
 
       {viewSt && createPortal(
@@ -355,6 +397,7 @@ export default function AllStudentsPage() {
                 { label: isBn ? 'মোট' : 'Total', value: stats.total },
                 { label: isBn ? 'অনুমোদিত' : 'Approved', value: stats.approved, color: 'var(--green)' },
                 { label: isBn ? 'অপেক্ষমান' : 'Pending', value: stats.pending, color: 'var(--amber)' },
+                { label: isBn ? 'প্রত্যাখ্যাত' : 'Rejected', value: stats.rejected, color: 'var(--red)' },
                 { label: isBn ? 'ছেলে' : 'Male', value: stats.male, color: 'var(--teal)' },
                 { label: isBn ? 'মেয়ে' : 'Female', value: stats.female, color: 'var(--purple)' },
               ].map((s) => (
@@ -461,6 +504,19 @@ export default function AllStudentsPage() {
                 <option value="Female">{isBn ? 'মেয়ে' : 'Female'}</option>
               </select>
               <select
+                value={fStatus}
+                onChange={(e) => {
+                  setFStatus(e.target.value)
+                  setPage(1)
+                }}
+                className={sel}
+              >
+                <option value="">{isBn ? 'সব স্ট্যাটাস' : 'All Status'}</option>
+                <option value="approved">{isBn ? 'অনুমোদিত' : 'Approved'}</option>
+                <option value="pending">{isBn ? 'অপেক্ষমান' : 'Pending'}</option>
+                <option value="rejected">{isBn ? 'প্রত্যাখ্যাত' : 'Rejected'}</option>
+              </select>
+              <select
                 value={fReligion}
                 onChange={(e) => {
                   setFReligion(e.target.value)
@@ -492,7 +548,7 @@ export default function AllStudentsPage() {
               <select
                 value={fActive}
                 onChange={(e) => {
-                  setFActive(e.target.value)
+                  setFActiveState(e.target.value as 'active' | 'inactive' | '')
                   setPage(1)
                 }}
                 className={sel}
@@ -537,21 +593,85 @@ export default function AllStudentsPage() {
                 </span>
               )}
             </div>
-            <div className="flex gap-1.5 flex-wrap">
+            <div style={{ position: 'relative', display: 'flex', gap: '0.375rem' }}>
               <button
-                onClick={exportExcel}
-                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-xs cursor-pointer font-medium"
+                onClick={() => setShowActionMenu(!showActionMenu)}
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-xs cursor-pointer font-medium"
               >
-                <FileSpreadsheet size={13} />
-                Excel
+                <MoreVertical size={13} />
+                {isBn ? 'অ্যাকশন' : 'Action'}
+                <ChevronDown size={12} />
               </button>
-              <button
-                onClick={() => setShowPDF(true)}
-                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs cursor-pointer font-medium"
-              >
-                <FileText size={13} />
-                PDF {selected.length > 0 ? `(${selected.length})` : `(${filtered.length})`}
-              </button>
+              {showActionMenu && (
+                <div
+                  ref={actionMenuRef}
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '0.375rem',
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    minWidth: '12.5rem',
+                    zIndex: 100,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      exportExcel()
+                      setShowActionMenu(false)
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.625rem 0.875rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.8125rem',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
+                    {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                  </button>
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+                  <button
+                    onClick={() => {
+                      setShowPDF(true)
+                      setShowActionMenu(false)
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.625rem 0.875rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.8125rem',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <FileText size={14} style={{ color: 'var(--red)' }} />
+                    {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

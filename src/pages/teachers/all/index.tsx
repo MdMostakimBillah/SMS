@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -17,6 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsRight,
+  ChevronDown,
+  MoreVertical,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useBn } from '@/hooks/useBn'
@@ -50,6 +52,21 @@ export default function AllTeachersPage() {
   const [delConfirm, setDelConfirm] = useState<string | null>(null)
   const [showPDF, setShowPDF] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
+  const [showActionMenu, setShowActionMenu] = useState(false)
+  const actionMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+        setShowActionMenu(false)
+      }
+    }
+    if (showActionMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showActionMenu])
+
   useScrollLock(viewT !== null || delConfirm !== null || showPDF)
 
   const filtered = useMemo(
@@ -155,8 +172,11 @@ export default function AllTeachersPage() {
   }
 
   const exportExcel = useCallback(() => {
+    const instName = 'EduTech — Sunrise Academy'
+    const instAddress = 'Dhaka, Bangladesh'
+
     const list = selected.length > 0 ? filtered.filter((t) => selected.includes(t.id)) : filtered
-    const data = list.map((t, i) => ({
+    const teachersData = list.map((t, i) => ({
       '#': i + 1,
       'Teacher ID': t.id,
       'Name EN': t.nameEn,
@@ -180,7 +200,14 @@ export default function AllTeachersPage() {
       Mother: t.motherNameEn,
       'Mother Phone': t.motherPhone,
     }))
-    const ws = XLSX.utils.json_to_sheet(data)
+
+    const ws = XLSX.utils.json_to_sheet(teachersData)
+    XLSX.utils.sheet_add_aoa(ws, [
+      [instName],
+      [instAddress],
+      [],
+    ], { origin: 'A1' })
+
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Teachers')
     XLSX.writeFile(wb, `teachers_${new Date().toISOString().split('T')[0]}.xlsx`)
@@ -254,6 +281,8 @@ ${photoHtml}
         <TeacherPDFOptionsModal
           count={selected.length || filtered.length}
           isBn={isBn}
+          teachers={selected.length > 0 ? filtered.filter((t) => selected.includes(t.id)) : filtered}
+          departments={departments}
           onClose={() => setShowPDF(false)}
           onDownload={handlePDF}
         />
@@ -593,21 +622,85 @@ ${photoHtml}
                 </span>
               )}
             </div>
-            <div className="flex gap-1.5 flex-wrap">
+            <div style={{ position: 'relative', display: 'flex', gap: '0.375rem' }}>
               <button
-                onClick={exportExcel}
-                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-xs cursor-pointer font-medium"
+                onClick={() => setShowActionMenu(!showActionMenu)}
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-xs cursor-pointer font-medium"
               >
-                <FileSpreadsheet size={13} />
-                Excel
+                <MoreVertical size={13} />
+                {isBn ? 'অ্যাকশন' : 'Action'}
+                <ChevronDown size={12} />
               </button>
-              <button
-                onClick={() => setShowPDF(true)}
-                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs cursor-pointer font-medium"
-              >
-                <FileText size={13} />
-                PDF {selected.length > 0 ? `(${selected.length})` : `(${filtered.length})`}
-              </button>
+              {showActionMenu && (
+                <div
+                  ref={actionMenuRef}
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '0.375rem',
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    minWidth: '12.5rem',
+                    zIndex: 100,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      exportExcel()
+                      setShowActionMenu(false)
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.625rem 0.875rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.8125rem',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
+                    {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                  </button>
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+                  <button
+                    onClick={() => {
+                      setShowPDF(true)
+                      setShowActionMenu(false)
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.625rem 0.875rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.8125rem',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <FileText size={14} style={{ color: 'var(--red)' }} />
+                    {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

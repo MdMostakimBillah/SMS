@@ -85,7 +85,7 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
 
   // Headers
   const dataHeaders = cols.map((c) => `<th>${isBn ? c.labelBn : c.label}</th>`).join('')
-  const extraHeaders = emptyColumns.map((h) => `<th style="min-width:85px">${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`).join('')
+  const extraHeaders = emptyColumns.map((h) => `<th>${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`).join('')
 
   // Data rows
   const dataRows = students
@@ -129,9 +129,9 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
   .logo { width:32px; height:32px; background:#6366f1; border-radius:7px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:700; }
   .meta { text-align:right; font-size:8px; color:#666; line-height:1.7; }
   .ttl  { text-align:center; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
-  table { width:100%; border-collapse:collapse; }
-  th { background:#6366f1; color:#fff; padding:5px 5px; text-align:left; font-size:8px; font-weight:700; text-transform:uppercase; border:0.5px solid #5356d4; white-space:nowrap; }
-  td { padding:4px 5px; border:0.5px solid #e5e7eb; vertical-align:middle; }
+  table { border-collapse:collapse; table-layout:auto; width:100%; }
+  th { background:#6366f1; color:#fff; padding:5px 8px; text-align:center; font-size:8px; font-weight:700; text-transform:uppercase; border:0.5px solid #5356d4; white-space:nowrap; }
+  td { padding:4px 8px; border:0.5px solid #e5e7eb; vertical-align:middle; text-align:center; white-space:nowrap; }
   tr.alt td { background:#f9fafb; }
   tr.er td  { background:#fafafa; height:20px; }
   .ftr { margin-top:10px; padding-top:7px; border-top:1px solid #ddd; display:flex; justify-content:space-between; font-size:8px; color:#888; }
