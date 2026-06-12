@@ -244,14 +244,12 @@ export default function CommandPalette() {
     if (commandPaletteOpen && overlayRef.current && dialogRef.current) {
       const rect = searchDivRect
 
-      // Set initial state: dialog starts at search div position
       if (rect) {
         const viewportW = window.innerWidth
         const viewportH = window.innerHeight
         const dialogW = Math.min(576, viewportW - 32)
         const dialogH = viewportH * 0.7
 
-        // Calculate scale and translate to morph from search bar to center
         const scaleX = rect.width / dialogW
         const scaleY = rect.height / dialogH
         const translateX = rect.left + rect.width / 2 - viewportW / 2
@@ -266,22 +264,19 @@ export default function CommandPalette() {
         })
       }
 
-      // Animate overlay background
       gsap.fromTo(
         overlayRef.current,
         { opacity: 0 },
-        { opacity: 1, duration: 0.25, ease: 'power2.out' }
+        { opacity: 1, duration: 0.15, ease: 'power2.out' }
       )
 
-      // Animate dialog to center
       gsap.to(dialogRef.current, {
         scale: 1,
         x: 0,
         y: 0,
         opacity: 1,
-        duration: 0.35,
-        ease: 'power3.out',
-        delay: 0.05,
+        duration: 0.2,
+        ease: 'back.out(1.1)',
         onComplete: () => {
           setTimeout(() => inputRef.current?.focus(), 10)
         },
@@ -311,7 +306,6 @@ export default function CommandPalette() {
 
   const handleClose = useCallback(() => {
     if (overlayRef.current && dialogRef.current) {
-      // Animate dialog back to search div position
       const rect = searchDivRect
       if (rect) {
         const viewportW = window.innerWidth
@@ -329,15 +323,14 @@ export default function CommandPalette() {
           x: translateX,
           y: translateY,
           opacity: 0,
-          duration: 0.25,
+          duration: 0.15,
           ease: 'power2.in',
         })
       }
 
-      // Animate overlay out
       gsap.to(overlayRef.current, {
         opacity: 0,
-        duration: 0.2,
+        duration: 0.12,
         ease: 'power2.in',
         onComplete: () => {
           setCommandPaletteOpen(false)

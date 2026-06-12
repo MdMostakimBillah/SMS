@@ -29,7 +29,6 @@ import {
   Settings,
   ChevronsUpDown,
   Check,
-  PanelLeftClose,
   type LucideIcon,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -71,7 +70,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const isBn = useBn()
-  const { language, setSidebarCollapsed } = useAppStore()
+  const { language } = useAppStore()
   const allStudents = useAdmissionStore((s) => s.students)
   const { teachers } = useTeacherStore()
   const location = useLocation()
@@ -80,8 +79,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const [newSession, setNewSession] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const asideRef = useRef<HTMLElement>(null)
-  const [hoveredItem, setHoveredItem] = useState<{ label: string; path: string; rect: DOMRect } | null>(null)
-  const tooltipRef = useRef<HTMLDivElement>(null)
+  const [hoveredItem, setHoveredItem] = useState<{ label: string; rect: DOMRect } | null>(null)
 
   const students = useMemo(
     () => allStudents.filter((s) => s.academicYear === institution.currentSession && s.status === 'approved' && s.active !== false),
@@ -105,13 +103,12 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // GSAP animate width on collapsed change
   useEffect(() => {
     if (asideRef.current) {
       gsap.to(asideRef.current, {
         width: collapsed ? '4.5rem' : '13.75rem',
-        duration: 0.3,
-        ease: 'power2.inOut',
+        duration: 0.25,
+        ease: 'power3.out',
       })
     }
   }, [collapsed])
@@ -138,28 +135,10 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     {
       key: 'grp_manage',
       items: [
-        {
-          key: 'nav_students',
-          page: '/students',
-          icon: 'users',
-          badge: String(studentCount),
-          badgeColor: 'blue' as const,
-        },
-        {
-          key: 'nav_teachers',
-          page: '/teachers',
-          icon: 'graduation-cap',
-          badge: String(teacherCount),
-          badgeColor: 'blue' as const,
-        },
+        { key: 'nav_students', page: '/students', icon: 'users', badge: String(studentCount), badgeColor: 'blue' as const },
+        { key: 'nav_teachers', page: '/teachers', icon: 'graduation-cap', badge: String(teacherCount), badgeColor: 'blue' as const },
         { key: 'nav_classes', page: '/classes', icon: 'school' },
-        {
-          key: 'nav_hr',
-          page: '/hr',
-          icon: 'briefcase',
-          badge: String(activeTeacherCount),
-          badgeColor: 'blue' as const,
-        },
+        { key: 'nav_hr', page: '/hr', icon: 'briefcase', badge: String(activeTeacherCount), badgeColor: 'blue' as const },
       ],
     },
     {
@@ -192,13 +171,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     {
       key: 'grp_comm',
       items: [
-        {
-          key: 'nav_messages',
-          page: '/messages',
-          icon: 'message-circle',
-          badge: String(pendingCount),
-          badgeColor: 'red' as const,
-        },
+        { key: 'nav_messages', page: '/messages', icon: 'message-circle', badge: String(pendingCount), badgeColor: 'red' as const },
         { key: 'nav_notice', page: '/notice', icon: 'megaphone' },
         { key: 'nav_notifications', page: '/notifications', icon: 'bell' },
       ],
@@ -226,7 +199,6 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     },
   ]
 
-  // Close tooltip on escape or navigation
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setHoveredItem(null)
@@ -243,229 +215,100 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     <>
       <aside
         ref={asideRef}
+        className="h-full flex flex-col overflow-hidden shrink-0"
         style={{
           width: collapsed ? '4.5rem' : '13.75rem',
-          height: '100%',
           background: 'var(--glass)',
           backdropFilter: 'blur(16px) saturate(180%)',
           WebkitBackdropFilter: 'blur(16px) saturate(180%)',
           borderRight: '1px solid var(--glass-border)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          flexShrink: 0,
-          transition: 'none',
         }}
       >
         {/* Logo */}
         <div
-          style={{
-            padding: collapsed ? '16px 0 14px' : '16px 14px 14px',
-            borderBottom: '1px solid var(--border)',
-            display: 'flex',
-            flexDirection: collapsed ? 'column' : 'row',
-            alignItems: 'center',
-          }}
+          className={`flex items-center border-b border-[var(--border)] ${
+            collapsed ? 'flex-col px-0 py-4' : 'flex-row px-3.5 py-4'
+          }`}
         >
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.625rem',
-              marginBottom: collapsed ? 0 : '0.875rem',
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              width: collapsed ? '100%' : 'auto',
-            }}
+            className={`flex items-center gap-2.5 ${
+              collapsed ? 'w-full justify-center mb-0' : 'mb-3.5'
+            }`}
           >
-            <div
-              style={{
-                width: '2rem',
-                height: '2rem',
-                borderRadius: '0.5rem',
-                background: 'var(--brand)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
+            <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
               <GraduationCap size={17} color="#fff" />
             </div>
             {!collapsed && (
               <div>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1 }}>
-                  EduTech
-                </div>
-                <div style={{ fontSize: '0.5625rem', color: 'var(--text-muted)', marginTop: '0.125rem' }}>
-                  School Management
-                </div>
+                <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">EduTech</div>
+                <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">School Management</div>
               </div>
             )}
           </div>
-
-          {/* Expand button when collapsed */}
-          {collapsed && (
-            <button
-              onClick={() => setSidebarCollapsed(false)}
-              style={{
-                marginTop: '0.75rem',
-                width: '2rem',
-                height: '2rem',
-                borderRadius: '0.5rem',
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: 'var(--text-muted)',
-                transition: 'all 0.15s',
-              }}
-              title={isBn ? 'সাইডবার প্রসারিত করুন' : 'Expand sidebar'}
-            >
-              <PanelLeftClose size={14} />
-            </button>
-          )}
         </div>
 
-        {/* Session Switcher — hidden when collapsed */}
+        {/* Session Switcher */}
         {!collapsed && (
-          <div ref={dropdownRef} style={{ padding: '10px 8px', position: 'relative' }}>
+          <div ref={dropdownRef} className="relative p-2">
             <div
               onClick={() => setShowSessionDropdown(!showSessionDropdown)}
-              style={{
-                background: 'var(--bg-secondary)',
-                borderRadius: '0.5rem',
-                padding: '8px 10px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                border: '1px solid var(--border)',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--surface-2)'
-                e.currentTarget.style.borderColor = 'var(--brand)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'var(--bg-secondary)'
-                e.currentTarget.style.borderColor = 'var(--border)'
-              }}
+              className="flex items-center gap-2 rounded-lg px-2.5 py-2 cursor-pointer transition-all duration-150 bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--surface-2)] hover:border-[var(--brand)]"
             >
-              <div
-                style={{
-                  width: '1.625rem',
-                  height: '1.625rem',
-                  borderRadius: '0.375rem',
-                  background: 'var(--teal)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.5625rem',
-                  fontWeight: 600,
-                  color: '#fff',
-                  flexShrink: 0,
-                }}
-              >
+              <div className="w-6.5 h-6.5 rounded-[0.375rem] bg-[var(--teal)] flex items-center justify-center text-[0.5625rem] font-semibold text-white shrink-0">
                 SA
               </div>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div className="min-w-0 flex-1">
+                <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
                   Sunrise Academy
                 </div>
-                <div style={{ fontSize: '0.5625rem', color: 'var(--brand)', fontWeight: 600 }}>
+                <div className="text-[0.5625rem] text-[var(--brand)] font-semibold">
                   {institution.currentSession || 'No Session'}
                 </div>
               </div>
               <ChevronsUpDown
                 size={11}
-                style={{
-                  color: 'var(--text-muted)',
-                  flexShrink: 0,
-                  transition: 'transform 0.2s',
-                  transform: showSessionDropdown ? 'rotate(180deg)' : 'rotate(0)',
-                }}
+                className="text-[var(--text-muted)] shrink-0 transition-transform duration-200"
+                style={{ transform: showSessionDropdown ? 'rotate(180deg)' : 'rotate(0)' }}
               />
             </div>
 
             {showSessionDropdown && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  marginTop: '0.25rem',
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '0.625rem',
-                  boxShadow: 'var(--shadow-lg)',
-                  zIndex: 100,
-                  overflow: 'hidden',
-                }}
-              >
-                <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-[0.625rem] shadow-lg z-100 overflow-hidden">
+                <div className="px-2.5 py-2 border-b border-[var(--border)]">
+                  <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1">
                     {isBn ? 'সেশন পরিবর্তন' : 'Switch Session'}
                   </div>
                   {institution.sessions.map((s) => (
                     <div
                       key={s}
                       onClick={() => handleSwitchSession(s)}
-                      style={{
-                        padding: '6px 8px',
-                        borderRadius: '0.375rem',
-                        cursor: 'pointer',
-                        fontSize: '0.6875rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        background: s === institution.currentSession ? 'var(--brand-light)' : 'transparent',
-                        color: s === institution.currentSession ? 'var(--brand)' : 'var(--text-secondary)',
-                        fontWeight: s === institution.currentSession ? 600 : 400,
-                      }}
+                      className={`flex items-center justify-between px-2 py-1.5 rounded-[0.375rem] cursor-pointer text-[0.6875rem] ${
+                        s === institution.currentSession
+                          ? 'bg-[var(--brand-light)] text-[var(--brand)] font-semibold'
+                          : 'text-[var(--text-secondary)]'
+                      }`}
                     >
                       {s}
                       {s === institution.currentSession && <Check size={12} />}
                     </div>
                   ))}
                 </div>
-                <div style={{ padding: '8px 10px' }}>
-                  <div style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                <div className="px-2.5 py-2">
+                  <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1">
                     {isBn ? 'নতুন সেশন' : 'New Session'}
                   </div>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  <div className="flex gap-1">
                     <input
                       value={newSession}
                       onChange={(e) => setNewSession(e.target.value)}
                       placeholder="e.g. 2026-27"
                       onKeyDown={(e) => e.key === 'Enter' && handleAddSession()}
-                      style={{
-                        flex: 1,
-                        padding: '5px 8px',
-                        borderRadius: '0.375rem',
-                        border: '1px solid var(--border)',
-                        background: 'var(--bg-secondary)',
-                        fontSize: '0.6875rem',
-                        color: 'var(--text-primary)',
-                        outline: 'none',
-                      }}
+                      className="flex-1 px-2 py-1 rounded-[0.375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
                     />
                     <button
                       onClick={handleAddSession}
                       disabled={!newSession.trim() || institution.sessions.includes(newSession.trim())}
-                      style={{
-                        padding: '5px 10px',
-                        borderRadius: '0.375rem',
-                        border: 'none',
-                        background: 'var(--brand)',
-                        color: '#fff',
-                        fontSize: '0.625rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        opacity: !newSession.trim() || institution.sessions.includes(newSession.trim()) ? 0.5 : 1,
-                      }}
+                      className="px-2.5 py-1 rounded-[0.375rem] border-none bg-[var(--brand)] text-white text-[0.625rem] font-semibold cursor-pointer disabled:opacity-50"
                     >
                       {isBn ? 'যোগ' : 'Add'}
                     </button>
@@ -477,21 +320,11 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         )}
 
         {/* Nav */}
-        <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: collapsed ? '10px 4px' : '10px 8px' }}>
+        <nav className={`flex-1 overflow-y-auto overflow-x-auto ${collapsed ? 'px-1 py-2.5' : 'px-2 py-2.5'}`}>
           {navGroups.map((group) => (
-            <div key={group.key} style={{ marginBottom: collapsed ? '0.5rem' : '1rem' }}>
+            <div key={group.key} className={collapsed ? 'mb-2' : 'mb-4'}>
               {!collapsed && (
-                <div
-                  style={{
-                    fontSize: '0.5625rem',
-                    fontWeight: 600,
-                    color: 'var(--text-muted)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05rem',
-                    padding: '0 8px',
-                    marginBottom: '0.25rem',
-                  }}
-                >
+                <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider px-2 mb-1">
                   {t(group.key as TranslationKey, language)}
                 </div>
               )}
@@ -503,63 +336,34 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                   <NavLink
                     key={item.page}
                     to={item.page}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: collapsed ? '8px 0' : '8px 10px',
-                      borderRadius: '0.5rem',
-                      marginBottom: '0.125rem',
-                      fontSize: '0.75rem',
-                      fontWeight: isActive ? 500 : 400,
-                      textDecoration: 'none',
-                      transition: 'all 0.15s ease',
-                      background: isActive ? 'var(--brand-light)' : 'transparent',
-                      color: isActive ? 'var(--brand)' : 'var(--text-secondary)',
-                      justifyContent: collapsed ? 'center' : 'flex-start',
-                      position: 'relative',
-                    }}
+                    className={`flex items-center gap-2 rounded-lg mb-0.5 text-xs no-underline transition-all duration-150 relative ${
+                      collapsed ? 'px-0 py-2 justify-center' : 'px-2.5 py-2'
+                    } ${
+                      isActive
+                        ? 'bg-[var(--brand-light)] text-[var(--brand)] font-medium'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]'
+                    }`}
                     onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = 'var(--bg-secondary)'
-                        e.currentTarget.style.color = 'var(--text-primary)'
-                      }
                       if (collapsed) {
                         const rect = e.currentTarget.getBoundingClientRect()
-                        setHoveredItem({
-                          label: t(item.key as TranslationKey, language),
-                          path: item.page,
-                          rect,
-                        })
+                        setHoveredItem({ label: t(item.key as TranslationKey, language), rect })
                       }
                     }}
-                    onMouseLeave={() => {
-                      setHoveredItem(null)
-                    }}
+                    onMouseLeave={() => setHoveredItem(null)}
                   >
-                    <IconComp
-                      size={15}
-                      style={{
-                        flexShrink: 0,
-                        color: isActive ? 'var(--brand)' : 'var(--text-muted)',
-                      }}
-                    />
+                    <IconComp size={15} className={`shrink-0 ${isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`} />
                     {!collapsed && (
                       <>
-                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                           {t(item.key as TranslationKey, language)}
                         </span>
                         {item.badge && (
                           <span
-                            style={{
-                              fontSize: '0.5625rem',
-                              fontWeight: 600,
-                              padding: '1px 6px',
-                              borderRadius: '0.5rem',
-                              background: item.badgeColor === 'red' ? 'var(--red-light)' : 'var(--brand-light)',
-                              color: item.badgeColor === 'red' ? 'var(--red)' : 'var(--brand)',
-                              flexShrink: 0,
-                            }}
+                            className={`text-[0.5625rem] font-semibold px-1.5 py-px rounded-full shrink-0 ${
+                              item.badgeColor === 'red'
+                                ? 'bg-[var(--red-light)] text-[var(--red)]'
+                                : 'bg-[var(--brand-light)] text-[var(--brand)]'
+                            }`}
                           >
                             {item.badge}
                           </span>
@@ -573,65 +377,33 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
           ))}
         </nav>
 
-        {/* Bottom — hidden when collapsed */}
+        {/* Bottom */}
         {!collapsed && (
-          <div style={{ padding: '0.625rem', borderTop: '1px solid var(--border)' }}>
-            <div
-              style={{
-                background: 'var(--brand-light)',
-                borderRadius: '0.625rem',
-                padding: '0.75rem',
-                border: '1px solid var(--border)',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Enterprise Plan
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.5625rem',
-                    fontWeight: 600,
-                    color: 'var(--green)',
-                    background: 'var(--green-light)',
-                    padding: '2px 6px',
-                    borderRadius: '0.375rem',
-                  }}
-                >
+          <div className="p-2.5 border-t border-[var(--border)]">
+            <div className="bg-[var(--brand-light)] rounded-[0.625rem] p-3 border border-[var(--border)]">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">Enterprise Plan</span>
+                <span className="text-[0.5625rem] font-semibold text-[var(--green)] bg-[var(--green-light)] px-1.5 py-px rounded-[0.375rem]">
                   Active
                 </span>
               </div>
-              <div style={{ height: '0.1875rem', background: 'var(--border)', borderRadius: '0.125rem' }}>
-                <div style={{ height: '100%', width: '67%', background: 'var(--brand)', borderRadius: '0.125rem' }} />
+              <div className="h-1.5 bg-[var(--border)] rounded-[0.125rem]">
+                <div className="h-full w-[67%] bg-[var(--brand)] rounded-[0.125rem]" />
               </div>
-              <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: '0.3125rem' }}>
-                67% storage used
-              </div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-1.5">67% storage used</div>
             </div>
           </div>
         )}
       </aside>
 
-      {/* Tooltip for collapsed sidebar hover */}
+      {/* Tooltip */}
       {collapsed && hoveredItem && (
         <div
-          ref={tooltipRef}
+          className="fixed bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] whitespace-nowrap shadow-md z-[9000] pointer-events-none"
           style={{
-            position: 'fixed',
             left: hoveredItem.rect.right + 8,
             top: hoveredItem.rect.top + hoveredItem.rect.height / 2,
             transform: 'translateY(-50%)',
-            background: 'var(--bg-primary)',
-            border: '1px solid var(--border)',
-            borderRadius: '0.5rem',
-            padding: '6px 12px',
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            color: 'var(--text-primary)',
-            whiteSpace: 'nowrap',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            zIndex: 9000,
-            pointerEvents: 'none',
           }}
         >
           {hoveredItem.label}
