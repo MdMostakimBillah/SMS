@@ -15,9 +15,10 @@ interface Props {
   type: 'student' | 'employee'
   onClose: () => void
   onDownload: (opts: AttendancePDFOptions) => void
+  onPreview?: (opts: AttendancePDFOptions) => void
 }
 
-export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOptionsModal({ count, isBn, type, onClose, onDownload }: Props) {
+export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOptionsModal({ count, isBn, type, onClose, onDownload, onPreview }: Props) {
   return (
     <GenericPDFOptionsModal
       columns={[]}
@@ -38,6 +39,15 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
           isBn: opts.isBn,
         })
       }
+      onPreview={onPreview ? (opts) =>
+        onPreview({
+          title: opts.title,
+          selectedCols: [],
+          emptyRows: 0,
+          orientation: opts.orientation,
+          isBn: opts.isBn,
+        })
+      : undefined}
     />
   )
 })

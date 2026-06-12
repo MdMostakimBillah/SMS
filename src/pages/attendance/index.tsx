@@ -520,6 +520,156 @@ export default function AttendancePage() {
     [filteredEmployees, selectedEmployees, getPersonMonthData, getDeptName, dateFrom, dateTo, rangeDays]
   )
 
+  const previewStudentPDFFromOpts = useCallback(
+    (opts: AttendancePDFOptions) => {
+      const { title, orientation, isBn: optsIsBn } = opts
+      const selectedList = filteredStudents.filter((s) => selectedStudents.includes(s.id))
+
+      const generateStudentRow = (s: any, idx: number) => {
+        const days = getStudentMonthData(s.id)
+        const p = days.filter((d: any) => d.status === 'present').length
+        const a = days.filter((d: any) => d.status === 'absent').length
+        const l = days.filter((d: any) => d.status === 'on-leave' && !d.isWeeklyHoliday).length
+        const w = days.filter((d: any) => d.isWeeklyHoliday).length
+
+        const dayGrid = rangeDays
+          .map((_ds, di) => {
+            const dayData = days[di]
+            if (dayData?.isWeeklyHoliday)
+              return '<td style="width:16px;height:14px;text-align:center;font-size:7px;background:#f3e8ff;color:#8b5cf6;border:0.5px solid #e5e7eb">W</td>'
+            if (dayData?.status === 'present')
+              return '<td style="width:16px;height:14px;text-align:center;font-size:7px;background:#d1fae5;color:#059669;border:0.5px solid #e5e7eb">P</td>'
+            if (dayData?.status === 'absent')
+              return '<td style="width:16px;height:14px;text-align:center;font-size:7px;background:#fee2e2;color:#dc2626;border:0.5px solid #e5e7eb">A</td>'
+            return '<td style="width:16px;height:14px;text-align:center;font-size:7px;background:#fef3c7;color:#d97706;border:0.5px solid #e5e7eb">L</td>'
+          })
+          .join('')
+
+        return `<tr class="${idx % 2 === 1 ? 'alt' : ''}">
+        <td style="padding:4px;font-size:9px">${idx + 1}</td>
+        <td style="padding:4px;font-size:8px;font-family:monospace;color:#6366f1">${s.id}</td>
+        <td style="padding:4px;font-size:9px;font-weight:500">${optsIsBn ? s.nameBn || s.nameEn : s.nameEn}</td>
+        <td style="padding:4px;font-size:8px">${s.class}</td>
+        <td style="padding:4px;font-size:8px">${s.section || '—'}</td>
+        <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#059669">${p}</td>
+        <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#dc2626">${a}</td>
+        <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#d97706">${l}</td>
+        <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#8b5cf6">${w}</td>
+        ${dayGrid}
+      </tr>`
+      }
+
+      const rowsHtml = selectedList.map((s, i) => generateStudentRow(s, i)).join('')
+
+      const dayHeaders = rangeDays
+        .map((ds) => {
+          const dayNum = ds.slice(8, 10)
+          const dayName = isFriday(ds) ? 'F' : new Date(ds).toLocaleDateString('en', { weekday: 'narrow' })
+          return `<th style="width:16px;padding:2px;font-size:6px;text-align:center">${dayNum}<br/>${dayName}</th>`
+        })
+        .join('')
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+<style>@page{size:A4 ${orientation};margin:6mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:10px;padding-bottom:5px;border-bottom:2px solid #6366f1;margin-bottom:8px}.logo{width:28px;height:28px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}.ttl{text-align:center;font-size:11px;font-weight:700;margin-bottom:3px}.sub{text-align:center;font-size:8px;color:#666;margin-bottom:8px}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:3px;text-align:left;font-size:7px;font-weight:700;text-transform:uppercase;border:0.5px solid #5356d4}td{padding:3px;border:0.5px solid #e5e7eb}tr.alt td{background:#f9fafb}.ftr{margin-top:8px;padding-top:5px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:7px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
+<div class="hdr"><div class="logo">ET</div><div><div style="font-size:11px;font-weight:700;color:#6366f1">EduTech — Sunrise Academy</div><div style="font-size:7px;color:#888">Student Monthly Attendance</div></div></div>
+<div class="ttl">${title}</div>
+<div class="sub">${optsIsBn ? 'মোট' : 'Total'}: ${selectedList.length} ${optsIsBn ? 'জন' : 'students'} · ${dateFrom} → ${dateTo} · ${rangeDays.length} ${optsIsBn ? 'দিন' : 'days'}</div>
+<table><thead><tr>
+  <th style="width:20px">#</th>
+  <th style="width:65px">ID</th>
+  <th style="width:100px">${optsIsBn ? 'নাম' : 'Name'}</th>
+  <th style="width:35px">${optsIsBn ? 'শ্রেণি' : 'C'}</th>
+  <th style="width:25px">${optsIsBn ? 'সে' : 'S'}</th>
+  <th style="width:20px">P</th>
+  <th style="width:20px">A</th>
+  <th style="width:20px">L</th>
+  <th style="width:20px">W</th>
+  ${dayHeaders}
+</tr></thead><tbody>${rowsHtml}</tbody></table>
+<div class="ftr"><span>EduTech School Management System</span><div>${optsIsBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div></body></html>`
+      const win = window.open('', '_blank')
+      if (!win) return
+      win.document.write(html)
+      win.document.close()
+    },
+    [filteredStudents, selectedStudents, getStudentMonthData, dateFrom, dateTo, rangeDays]
+  )
+
+  const previewEmployeePDFFromOpts = useCallback(
+    (opts: AttendancePDFOptions) => {
+      const { title, orientation, isBn: optsIsBn } = opts
+      const selectedList = filteredEmployees.filter((t) => selectedEmployees.includes(t.id))
+
+      const generateEmployeeRow = (t: any, idx: number) => {
+        const days = getPersonMonthData(t.id)
+        const p = days.filter((d: any) => d.status === 'present').length
+        const a = days.filter((d: any) => d.status === 'absent').length
+        const l = days.filter((d: any) => d.status === 'on-leave').length
+        const w = rangeDays.filter((ds) => isFriday(ds)).length
+
+        const dayGrid = rangeDays
+          .map((ds, di) => {
+            if (isFriday(ds))
+              return '<td style="width:16px;height:14px;text-align:center;font-size:7px;background:#f3e8ff;color:#8b5cf6;border:0.5px solid #e5e7eb">W</td>'
+            const dayData = days[di]
+            if (dayData?.status === 'present')
+              return '<td style="width:16px;height:14px;text-align:center;font-size:7px;background:#d1fae5;color:#059669;border:0.5px solid #e5e7eb">P</td>'
+            if (dayData?.status === 'absent')
+              return '<td style="width:16px;height:14px;text-align:center;font-size:7px;background:#fee2e2;color:#dc2626;border:0.5px solid #e5e7eb">A</td>'
+            return '<td style="width:16px;height:14px;text-align:center;font-size:7px;background:#fef3c7;color:#d97706;border:0.5px solid #e5e7eb">L</td>'
+          })
+          .join('')
+
+        return `<tr class="${idx % 2 === 1 ? 'alt' : ''}">
+        <td style="padding:4px;font-size:9px">${idx + 1}</td>
+        <td style="padding:4px;font-size:8px;font-family:monospace;color:#6366f1">${t.id}</td>
+        <td style="padding:4px;font-size:9px;font-weight:500">${optsIsBn ? t.nameBn || t.nameEn : t.nameEn}</td>
+        <td style="padding:4px;font-size:8px">${t.dept}</td>
+        <td style="padding:4px;font-size:8px">${t.designation || '—'}</td>
+        <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#059669">${p}</td>
+        <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#dc2626">${a}</td>
+        <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#d97706">${l}</td>
+        <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#8b5cf6">${w}</td>
+        ${dayGrid}
+      </tr>`
+      }
+
+      const rowsHtml = selectedList.map((t, i) => generateEmployeeRow(t, i)).join('')
+
+      const dayHeaders = rangeDays
+        .map((ds) => {
+          const dayNum = ds.slice(8, 10)
+          const dayName = isFriday(ds) ? 'F' : new Date(ds).toLocaleDateString('en', { weekday: 'narrow' })
+          return `<th style="width:16px;padding:2px;font-size:6px;text-align:center">${dayNum}<br/>${dayName}</th>`
+        })
+        .join('')
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+<style>@page{size:A4 ${orientation};margin:6mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:10px;padding-bottom:5px;border-bottom:2px solid #6366f1;margin-bottom:8px}.logo{width:28px;height:28px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}.ttl{text-align:center;font-size:11px;font-weight:700;margin-bottom:3px}.sub{text-align:center;font-size:8px;color:#666;margin-bottom:8px}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:3px;text-align:left;font-size:7px;font-weight:700;text-transform:uppercase;border:0.5px solid #5356d4}td{padding:3px;border:0.5px solid #e5e7eb}tr.alt td{background:#f9fafb}.ftr{margin-top:8px;padding-top:5px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:7px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
+<div class="hdr"><div class="logo">ET</div><div><div style="font-size:11px;font-weight:700;color:#6366f1">EduTech — Sunrise Academy</div><div style="font-size:7px;color:#888">Employee Monthly Attendance</div></div></div>
+<div class="ttl">${title}</div>
+<div class="sub">${optsIsBn ? 'মোট' : 'Total'}: ${selectedList.length} ${optsIsBn ? 'জন' : 'employees'} · ${dateFrom} → ${dateTo} · ${rangeDays.length} ${optsIsBn ? 'দিন' : 'days'}</div>
+<table><thead><tr>
+  <th style="width:20px">#</th>
+  <th style="width:65px">ID</th>
+  <th style="width:100px">${optsIsBn ? 'নাম' : 'Name'}</th>
+  <th style="width:60px">${optsIsBn ? 'বিভাগ' : 'Dept'}</th>
+  <th style="width:60px">${optsIsBn ? 'পদবি' : 'Desig'}</th>
+  <th style="width:20px">P</th>
+  <th style="width:20px">A</th>
+  <th style="width:20px">L</th>
+  <th style="width:20px">W</th>
+  ${dayHeaders}
+</tr></thead><tbody>${rowsHtml}</tbody></table>
+<div class="ftr"><span>EduTech School Management System</span><div>${optsIsBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div></body></html>`
+      const win = window.open('', '_blank')
+      if (!win) return
+      win.document.write(html)
+      win.document.close()
+    },
+    [filteredEmployees, selectedEmployees, getPersonMonthData, getDeptName, dateFrom, dateTo, rangeDays]
+  )
+
   const tabs = [
     {
       key: 'today' as Tab,
@@ -2632,6 +2782,7 @@ export default function AttendancePage() {
           type="student"
           onClose={() => setShowStudentPDF(false)}
           onDownload={exportStudentPDFFromOpts}
+          onPreview={previewStudentPDFFromOpts}
         />
       )}
 
@@ -2643,6 +2794,7 @@ export default function AttendancePage() {
           type="employee"
           onClose={() => setShowEmployeePDF(false)}
           onDownload={exportEmployeePDFFromOpts}
+          onPreview={previewEmployeePDFFromOpts}
         />
       )}
 
@@ -2657,6 +2809,10 @@ export default function AttendancePage() {
             exportStudentPDFFromOpts(opts)
             setShowStudentPreview(false)
           }}
+          onPreview={(opts) => {
+            previewStudentPDFFromOpts(opts)
+            setShowStudentPreview(false)
+          }}
         />
       )}
 
@@ -2669,6 +2825,10 @@ export default function AttendancePage() {
           onClose={() => setShowEmployeePreview(false)}
           onDownload={(opts) => {
             exportEmployeePDFFromOpts(opts)
+            setShowEmployeePreview(false)
+          }}
+          onPreview={(opts) => {
+            previewEmployeePDFFromOpts(opts)
             setShowEmployeePreview(false)
           }}
         />

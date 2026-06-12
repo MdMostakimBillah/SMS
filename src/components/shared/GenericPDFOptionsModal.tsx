@@ -30,6 +30,7 @@ interface Props {
   previewRenderer?: (opts: GenericPDFOptionsResult) => string
   onClose: () => void
   onDownload: (opts: GenericPDFOptionsResult) => void
+  onPreview?: (opts: GenericPDFOptionsResult) => void
 }
 
 export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal({
@@ -44,6 +45,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
   previewRenderer,
   onClose,
   onDownload,
+  onPreview,
 }: Props) {
   const [cols, setCols] = useState<string[]>(columns.filter((c) => c.default).map((c) => c.key))
   const [title, setTitle] = useState(isBn ? defaultTitleBn : defaultTitle)
@@ -592,6 +594,28 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
           >
             {isBn ? 'বাতিল' : 'Cancel'}
           </button>
+          {onPreview && (
+            <button
+              onClick={() => onPreview({ title, selectedCols: showColumns ? cols : [], emptyRows, emptyColumns, orientation, isBn })}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                padding: '9px 16px',
+                borderRadius: '0.5625rem',
+                background: 'var(--brand)',
+                border: 'none',
+                color: '#fff',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              <Eye size={14} />
+              {isBn ? 'প্রিভিউ' : 'Preview'}
+            </button>
+          )}
           <button
             onClick={() => onDownload({ title, selectedCols: showColumns ? cols : [], emptyRows, emptyColumns, orientation, isBn })}
             disabled={showColumns && cols.length === 0}
