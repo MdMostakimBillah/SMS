@@ -397,6 +397,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
   const kioskDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const kioskStableCountRef = useRef(0)
   const kioskIdentifiedRef = useRef<boolean>(false)
+  const kioskAttendanceOpenRef = useRef<boolean>(false)
   // WiFi verification state
   const [institutionWifi, setInstitutionWifi] = useState(() => localStorage.getItem('institutionWifi') || '')
   const [institutionGateway, setInstitutionGateway] = useState(() => localStorage.getItem('institutionGateway') || '')
@@ -408,10 +409,12 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
   useScrollLock(showAddDevice || showAddRFID || showAddFP || showAddFace || kioskCamActive || kioskAttendanceOpen)
 
   const kioskVideoRef = useRef<HTMLVideoElement | null>(null)
+  const kioskRegVideoRef = useRef<HTMLVideoElement | null>(null)
   const kioskCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const kioskRegCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const kioskStreamRef = useRef<MediaStream | null>(null)
 
-  const startKioskCamera = async () => {
+  const startKioskCamera = async (targetRef?: React.RefObject<HTMLVideoElement | null>) => {
     try {
       if (kioskStreamRef.current) {
         kioskStreamRef.current.getTracks().forEach((t) => t.stop())
@@ -424,18 +427,25 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
         },
       })
       kioskStreamRef.current = stream
-      setKioskCamActive(true)
       setKioskCapturedPhoto(null)
-      await new Promise((r) => setTimeout(r, 100))
-      if (kioskVideoRef.current) {
-        kioskVideoRef.current.srcObject = stream
-        try {
-          await kioskVideoRef.current.play()
-        } catch {
-          /* autoplay blocked */
+      setKioskCamActive(true)
+      await new Promise((r) => setTimeout(r, 200))
+      const ref = targetRef || kioskVideoRef
+      for (let i = 0; i < 30; i++) {
+        await new Promise((r) => setTimeout(r, 100))
+        const video = ref.current
+        if (video) {
+          video.srcObject = null
+          video.srcObject = stream
+          video.onloadedmetadata = () => {
+            video.play().catch(() => {})
+            if (kioskAttendanceOpenRef.current) {
+              startKioskDetectLoop()
+            }
+          }
+          break
         }
       }
-      startKioskDetectLoop()
     } catch (err) {
       console.error('Camera error:', err)
       setKioskMsg({
@@ -461,6 +471,17 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     canvas.width = 320
     canvas.height = 240
     ctx.drawImage(kioskVideoRef.current, 0, 0, 320, 240)
+    return canvas.toDataURL('image/jpeg', 0.6)
+  }
+
+  const captureKioskRegPhoto = (): string | null => {
+    if (!kioskRegVideoRef.current || !kioskRegCanvasRef.current) return null
+    const canvas = kioskRegCanvasRef.current
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    canvas.width = 320
+    canvas.height = 240
+    ctx.drawImage(kioskRegVideoRef.current, 0, 0, 320, 240)
     return canvas.toDataURL('image/jpeg', 0.6)
   }
 
@@ -884,7 +905,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
   const detectFaceInCenter = (): boolean => {
     const video = kioskVideoRef.current
     const canvas = kioskCanvasRef.current
-    if (!video || !canvas || video.readyState < 2) return false
+    if (!video || !canvas) return false
+    if (video.readyState < 1 || !video.videoWidth || !video.videoHeight) return false
     const ctx = canvas.getContext('2d')
     if (!ctx) return false
     canvas.width = 160
@@ -926,7 +948,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
           const photo = captureKioskPhoto()
           if (photo) {
             setKioskCapturedPhoto(photo)
-            if (kioskAttendanceOpen) {
+            if (kioskAttendanceOpenRef.current) {
               setTimeout(() => {
                 const match = matchFaceToStaff(photo)
                 if (match) {
@@ -2359,7 +2381,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                       </select>
                       {kioskRegStaff && !kioskCamActive && (
                         <button
-                          onClick={startKioskCamera}
+                          onClick={() => { startKioskCamera(kioskRegVideoRef) }}
                           className="w-full py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--green)] text-white border-none cursor-pointer flex items-center justify-center gap-2"
                         >
                           <ScanFace size={14} />
@@ -2369,8 +2391,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                       {kioskRegStaff && kioskCamActive && !kioskAttendanceOpen && (
                         <div className="space-y-2">
                           <div className="relative rounded-xl overflow-hidden bg-black w-full" style={{ aspectRatio: '4/3', maxHeight: '30vh' }}>
-                            <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-                            <canvas ref={kioskCanvasRef} className="hidden" />
+                            <video ref={kioskRegVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+                            <canvas ref={kioskRegCanvasRef} className="hidden" />
                             <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[0.5625rem] flex items-center gap-1 z-10">
                               <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />
                               LIVE
@@ -2390,7 +2412,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                             <div className="space-y-2">
                               <img src={kioskCapturedPhoto} alt="" className="w-full max-w-[17.5rem] mx-auto rounded-xl border-2 border-[var(--green)]" />
                               <div className="flex gap-2">
-                                <button onClick={() => { setKioskCapturedPhoto(null); startKioskDetectLoop() }} className="flex-1 py-2 rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer">
+                                <button onClick={() => { const p = captureKioskRegPhoto(); if (p) setKioskCapturedPhoto(p) }} className="flex-1 py-2 rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer">
                                   {isBn ? 'আবার' : 'Retake'}
                                 </button>
                                 <button onClick={kioskEditFace ? () => handleKioskUpdateFace(kioskEditFace) : handleKioskRegister} className="flex-1 py-2 rounded-lg text-[0.75rem] bg-[var(--green)] text-white border-none font-semibold cursor-pointer">
@@ -2430,6 +2452,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                           stopKioskCamera()
                           stopKioskDetectLoop()
                           setKioskAttendanceOpen(true)
+                          kioskAttendanceOpenRef.current = true
                           setKioskCapturedPhoto(null)
                           setKioskIdentified(null)
                           setKioskMsg(null)
@@ -2511,7 +2534,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                                 <td className="p-2.5 text-center">
                                   <div className="flex items-center justify-center gap-1">
                                     <button
-                                      onClick={() => { setKioskEditFace(f.staffId); setKioskCapturedPhoto(null); setKioskRegStaff(f.staffId); startKioskCamera() }}
+                                      onClick={() => { setKioskEditFace(f.staffId); setKioskCapturedPhoto(null); setKioskRegStaff(f.staffId); startKioskCamera(kioskRegVideoRef) }}
                                       className="w-6 h-6 rounded-md bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]"
                                     >
                                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -2559,6 +2582,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                     stopKioskCamera()
                     stopKioskDetectLoop()
                     setKioskAttendanceOpen(false)
+                    kioskAttendanceOpenRef.current = false
                     setKioskCapturedPhoto(null)
                     setKioskIdentified(null)
                     setKioskMsg(null)
