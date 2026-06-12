@@ -86,6 +86,8 @@ export default function AttendancePage() {
   } | null>(null)
   const [showStudentPDF, setShowStudentPDF] = useState(false)
   const [showEmployeePDF, setShowEmployeePDF] = useState(false)
+  const [showStudentPreview, setShowStudentPreview] = useState(false)
+  const [showEmployeePreview, setShowEmployeePreview] = useState(false)
   const [selectedStudents, setSelectedStudents] = useState<string[]>([])
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
   const [empPage, setEmpPage] = useState(1)
@@ -102,7 +104,9 @@ export default function AttendancePage() {
       viewPerson !== null ||
       viewStudent !== null ||
       showStudentPDF ||
-      showEmployeePDF
+      showEmployeePDF ||
+      showStudentPreview ||
+      showEmployeePreview
   )
 
   // Device functions moved to DeviceTab component
@@ -1435,6 +1439,35 @@ export default function AttendancePage() {
                     {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
                     {selectedEmployees.length > 0 && ` (${selectedEmployees.length})`}
                   </button>
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+                  <button
+                    onClick={() => {
+                      setShowEmployeePreview(true)
+                      setShowEmployeeActionMenu(false)
+                    }}
+                    disabled={selectedEmployees.length === 0}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.625rem 0.875rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: selectedEmployees.length === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
+                      fontSize: '0.8125rem',
+                      cursor: selectedEmployees.length === 0 ? 'not-allowed' : 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                      opacity: selectedEmployees.length === 0 ? 0.5 : 1,
+                    }}
+                    onMouseEnter={(e) => { if (selectedEmployees.length > 0) e.currentTarget.style.background = 'var(--brand-light)' }}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <Eye size={14} style={{ color: 'var(--brand)' }} />
+                    {isBn ? 'প্রিভিউ' : 'Preview'}
+                    {selectedEmployees.length > 0 && ` (${selectedEmployees.length})`}
+                  </button>
                 </div>
               )}
             </div>
@@ -2369,6 +2402,35 @@ export default function AttendancePage() {
                     {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
                     {selectedStudents.length > 0 && ` (${selectedStudents.length})`}
                   </button>
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+                  <button
+                    onClick={() => {
+                      setShowStudentPreview(true)
+                      setShowStudentActionMenu(false)
+                    }}
+                    disabled={selectedStudents.length === 0}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.625rem 0.875rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: selectedStudents.length === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
+                      fontSize: '0.8125rem',
+                      cursor: selectedStudents.length === 0 ? 'not-allowed' : 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                      opacity: selectedStudents.length === 0 ? 0.5 : 1,
+                    }}
+                    onMouseEnter={(e) => { if (selectedStudents.length > 0) e.currentTarget.style.background = 'var(--brand-light)' }}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <Eye size={14} style={{ color: 'var(--brand)' }} />
+                    {isBn ? 'প্রিভিউ' : 'Preview'}
+                    {selectedStudents.length > 0 && ` (${selectedStudents.length})`}
+                  </button>
                 </div>
               )}
             </div>
@@ -2581,6 +2643,34 @@ export default function AttendancePage() {
           type="employee"
           onClose={() => setShowEmployeePDF(false)}
           onDownload={exportEmployeePDFFromOpts}
+        />
+      )}
+
+      {/* Student Preview Modal */}
+      {showStudentPreview && (
+        <AttendancePDFOptionsModal
+          count={selectedStudents.length || filteredStudents.length}
+          isBn={isBn}
+          type="student"
+          onClose={() => setShowStudentPreview(false)}
+          onDownload={(opts) => {
+            exportStudentPDFFromOpts(opts)
+            setShowStudentPreview(false)
+          }}
+        />
+      )}
+
+      {/* Employee Preview Modal */}
+      {showEmployeePreview && (
+        <AttendancePDFOptionsModal
+          count={selectedEmployees.length || filteredEmployees.length}
+          isBn={isBn}
+          type="employee"
+          onClose={() => setShowEmployeePreview(false)}
+          onDownload={(opts) => {
+            exportEmployeePDFFromOpts(opts)
+            setShowEmployeePreview(false)
+          }}
         />
       )}
     </div>
