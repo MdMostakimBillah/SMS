@@ -1,16 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { gsap } from 'gsap'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import CommandPalette from '@/components/shared/CommandPalette'
 
 export default function AppLayout() {
-  const { theme, sidebarCollapsed } = useAppStore()
+  const { theme, sidebarCollapsed, sidebarOpen, toggleSidebar } = useAppStore()
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
   const [isLoading, setIsLoading] = useState(true)
+  const backdropRef = useRef<HTMLDivElement>(null)
+  const drawerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (theme === 'system') {
@@ -25,6 +28,33 @@ export default function AppLayout() {
     const timer = setTimeout(() => setIsLoading(false), 600)
     return () => clearTimeout(timer)
   }, [])
+
+  // Mobile sidebar GSAP animation
+  useEffect(() => {
+    if (!isSmall) return
+
+    if (sidebarOpen && backdropRef.current && drawerRef.current) {
+      // Open animation
+      gsap.set(backdropRef.current, { display: 'block' })
+      gsap.set(drawerRef.current, { display: 'flex' })
+      gsap.fromTo(backdropRef.current, { opacity: 0 }, { opacity: 1, duration: 0.25, ease: 'power2.out' })
+      gsap.fromTo(drawerRef.current, { x: '-100%' }, { x: '0%', duration: 0.3, ease: 'power3.out' })
+    } else if (!sidebarOpen && backdropRef.current && drawerRef.current) {
+      // Close animation
+      gsap.to(backdropRef.current, { opacity: 0, duration: 0.2, ease: 'power2.in' })
+      gsap.to(drawerRef.current, { x: '-100%', duration: 0.25, ease: 'power3.in', onComplete: () => {
+        gsap.set(backdropRef.current, { display: 'none' })
+        gsap.set(drawerRef.current, { display: 'none' })
+      }})
+    }
+  }, [sidebarOpen, isSmall])
+
+  // Close sidebar on resize to desktop
+  useEffect(() => {
+    if (!isSmall && sidebarOpen) {
+      toggleSidebar()
+    }
+  }, [isSmall])
 
   if (isLoading) {
     return (
@@ -53,7 +83,27 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-tertiary)]">
-      {!isSmall && <Sidebar collapsed={sidebarCollapsed} />}
+      {/* Desktop / Tablet Sidebar */}
+      {!isMobile && <Sidebar collapsed={isTablet ? true : sidebarCollapsed} />}
+
+      {/* Mobile Drawer Overlay */}
+      {isMobile && (
+        <>
+          <div
+            ref={backdropRef}
+            className="fixed inset-0 bg-black/50 z-40"
+            style={{ display: 'none' }}
+            onClick={toggleSidebar}
+          />
+          <div
+            ref={drawerRef}
+            className="fixed left-0 top-0 bottom-0 z-50 flex"
+            style={{ display: 'none' }}
+          >
+            <Sidebar collapsed={false} />
+          </div>
+        </>
+      )}
 
       <div className="flex-1 flex flex-col min-w-0 relative">
         <Topbar />

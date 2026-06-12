@@ -29,9 +29,11 @@ import {
   Settings,
   ChevronsUpDown,
   Check,
+  X,
   type LucideIcon,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAppStore } from '@/store/appStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -70,7 +72,8 @@ const iconMap: Record<string, LucideIcon> = {
 
 export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const isBn = useBn()
-  const { language } = useAppStore()
+  const { language, toggleSidebar } = useAppStore()
+  const { isMobile, width } = useWindowSize()
   const allStudents = useAdmissionStore((s) => s.students)
   const { teachers } = useTeacherStore()
   const location = useLocation()
@@ -93,6 +96,11 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const teacherCount = teachers.length
   const activeTeacherCount = teachers.filter((t) => t.status === 'active').length
 
+  // Responsive collapsed width and icon size
+  const collapsedWidth = width >= 1280 ? '4.25rem' : width >= 1024 ? '3.75rem' : '3.25rem'
+  const expandedWidth = '13.75rem'
+  const navIconSize = collapsed ? (width >= 1280 ? 19 : width >= 1024 ? 17 : 16) : 15
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -106,12 +114,12 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   useEffect(() => {
     if (asideRef.current) {
       gsap.to(asideRef.current, {
-        width: collapsed ? '4.5rem' : '13.75rem',
+        width: collapsed ? collapsedWidth : expandedWidth,
         duration: 0.25,
         ease: 'power3.out',
       })
     }
-  }, [collapsed])
+  }, [collapsed, collapsedWidth])
 
   const handleSwitchSession = (session: string) => {
     switchSession(session)
@@ -217,7 +225,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         ref={asideRef}
         className="h-full flex flex-col overflow-hidden shrink-0"
         style={{
-          width: collapsed ? '4.5rem' : '13.75rem',
+          width: collapsed ? collapsedWidth : expandedWidth,
           background: 'var(--glass)',
           backdropFilter: 'blur(16px) saturate(180%)',
           WebkitBackdropFilter: 'blur(16px) saturate(180%)',
@@ -227,12 +235,12 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         {/* Logo */}
         <div
           className={`flex items-center border-b border-[var(--border)] ${
-            collapsed ? 'flex-col px-0 py-4' : 'flex-row px-3.5 py-4'
+            collapsed ? 'flex-col px-0 py-3' : 'flex-row px-3.5 py-3'
           }`}
         >
           <div
             className={`flex items-center gap-2.5 ${
-              collapsed ? 'w-full justify-center mb-0' : 'mb-3.5'
+              collapsed ? 'w-full justify-center' : 'flex-1'
             }`}
           >
             <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
@@ -245,16 +253,24 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
               </div>
             )}
           </div>
+          {isMobile && !collapsed && (
+            <button
+              onClick={toggleSidebar}
+              className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
 
         {/* Session Switcher */}
         {!collapsed && (
-          <div ref={dropdownRef} className="relative p-2 z-50">
+          <div ref={dropdownRef} className="relative px-2 pt-2 pb-1 z-50">
             <div
               onClick={() => setShowSessionDropdown(!showSessionDropdown)}
               className="flex items-center gap-2 rounded-lg px-2.5 py-2 cursor-pointer transition-all duration-150 bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--surface-2)] hover:border-[var(--brand)]"
             >
-              <div className="w-6.5 h-6.5 rounded-[0.375rem] bg-[var(--teal)] flex items-center justify-center text-[0.5625rem] font-semibold text-white shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-[var(--teal)] flex items-center justify-center text-[0.625rem] font-bold text-white shrink-0">
                 SA
               </div>
               <div className="min-w-0 flex-1">
@@ -336,6 +352,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                   <NavLink
                     key={item.page}
                     to={item.page}
+                    onClick={() => { if (isMobile) toggleSidebar() }}
                     className={`flex items-center gap-2 rounded-lg mb-0.5 text-xs no-underline transition-all duration-150 relative ${
                       collapsed ? 'px-0 py-2 justify-center' : 'px-2.5 py-2'
                     } ${
@@ -351,7 +368,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                     }}
                     onMouseLeave={() => setHoveredItem(null)}
                   >
-                    <IconComp size={15} className={`shrink-0 ${isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`} />
+                    <IconComp size={navIconSize} className={`shrink-0 ${isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`} />
                     {!collapsed && (
                       <>
                         <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">

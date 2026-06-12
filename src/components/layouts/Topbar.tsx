@@ -19,6 +19,7 @@ import {
   ClipboardCheck,
   PanelLeftClose,
   PanelLeftOpen,
+  Menu,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useBn } from '@/hooks/useBn'
@@ -103,7 +104,7 @@ const demoMessages = [
 
 export default function Topbar() {
   const navigate = useNavigate()
-  const { theme, language, setTheme, setLanguage, sidebarCollapsed, setSidebarCollapsed, setCommandPaletteOpen } = useAppStore()
+  const { theme, language, setTheme, setLanguage, sidebarCollapsed, setSidebarCollapsed, setCommandPaletteOpen, toggleSidebar } = useAppStore()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
   const searchDivRef = useRef<HTMLDivElement>(null)
@@ -228,13 +229,21 @@ export default function Topbar() {
       }}
     >
       {/* Sidebar Toggle — desktop only */}
-      {!isMobile && (
+      {!isMobile ? (
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-secondary)] relative shrink-0 transition-all duration-150 hover:bg-[var(--bg-secondary)]"
           title={sidebarCollapsed ? (isBn ? 'সাইডবার প্রসারিত করুন' : 'Expand sidebar') : (isBn ? 'সাইডবার সংকুচিত করুন' : 'Collapse sidebar')}
         >
           {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        </button>
+      ) : (
+        <button
+          onClick={toggleSidebar}
+          className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-secondary)] relative shrink-0 transition-all duration-150 hover:bg-[var(--bg-secondary)]"
+          title={isBn ? 'মেনু' : 'Menu'}
+        >
+          <Menu size={16} />
         </button>
       )}
 

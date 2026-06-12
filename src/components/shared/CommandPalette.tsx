@@ -247,12 +247,12 @@ export default function CommandPalette() {
         if (el) {
           gsap.fromTo(
             el,
-            { opacity: 0, y: 6 },
-            { opacity: 1, y: 0, duration: 0.15, ease: 'power2.out', delay: idx * 0.015 }
+            { opacity: 0, y: 8 },
+            { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out', delay: idx * 0.03 }
           )
         }
       })
-    }, 10)
+    }, 20)
     return () => clearTimeout(timer)
   }, [query, commandPaletteOpen, allResults.length])
 
@@ -261,8 +261,8 @@ export default function CommandPalette() {
     if (commandPaletteOpen && dialogRef.current) {
       gsap.fromTo(
         dialogRef.current,
-        { opacity: 0, scale: 0.96, y: -8 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.18, ease: 'power2.out', onComplete: () => inputRef.current?.focus() }
+        { opacity: 0, scale: 0.97, y: -10 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.25, ease: 'power3.out', onComplete: () => inputRef.current?.focus() }
       )
     }
   }, [commandPaletteOpen])
@@ -291,9 +291,9 @@ export default function CommandPalette() {
     if (dialogRef.current) {
       gsap.to(dialogRef.current, {
         opacity: 0,
-        scale: 0.96,
-        y: -8,
-        duration: 0.12,
+        scale: 0.97,
+        y: -10,
+        duration: 0.18,
         ease: 'power2.in',
         onComplete: () => setCommandPaletteOpen(false),
       })
