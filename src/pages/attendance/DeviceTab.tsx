@@ -376,6 +376,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
   const [kioskIdentified, setKioskIdentified] = useState<{
     staffId: string
     staffName: string
+    photo: string
     punchType: 'in' | 'out'
     time: string
   } | null>(null)
@@ -781,7 +782,9 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     } catch {}
   }
 
-  const handleKioskPunch = (staffId: string, staffName: string) => {
+  const kioskCooldownRef = useRef<Record<string, number>>({})
+
+  const handleKioskPunch = (staffId: string, staffName: string, photo: string) => {
     const now = new Date()
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
     const existing = attendance[date]?.[staffId]
@@ -798,27 +801,22 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
       },
     }
     useTeacherStore.setState({ attendance: updatedAttendance })
-    setKioskIdentified({ staffId, staffName, punchType, time: timeStr })
+    setKioskIdentified({ staffId, staffName, photo, punchType, time: timeStr })
     setKioskMsg({
       type: 'success',
       text: `${staffName} ${punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'} ${timeStr}`,
     })
     playSuccessSound()
-    stopKioskCamera()
     setKioskCapturedPhoto(null)
+    kioskCooldownRef.current[staffId] = Date.now()
     setTimeout(() => {
       setKioskMsg(null)
       setKioskIdentified(null)
-      if (kioskAttendanceOpen) {
-        setTimeout(() => {
-          setKioskCapturedPhoto(null)
-          startKioskCamera()
-        }, 500)
-      }
-    }, 3000)
+      setKioskCapturedPhoto(null)
+    }, 4000)
   }
 
-  const matchFaceToStaff = (capturedPhoto: string): { staffId: string; staffName: string } | null => {
+  const matchFaceToStaff = (capturedPhoto: string): { staffId: string; staffName: string; photo: string } | null => {
     if (kioskRegisteredFaces.length === 0) return null
     const img = new Image()
     img.src = capturedPhoto
@@ -830,7 +828,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     if (!ctx) return null
     ctx.drawImage(img, 0, 0, SIZE, SIZE)
     const capturedData = ctx.getImageData(0, 0, SIZE, SIZE).data
-    let bestMatch: { staffId: string; staffName: string } | null = null
+    let bestMatch: { staffId: string; staffName: string; photo: string } | null = null
     let bestScore = Infinity
     for (const face of kioskRegisteredFaces) {
       const refImg = new Image()
@@ -846,7 +844,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
       }
       if (diff < bestScore) {
         bestScore = diff
-        bestMatch = { staffId: face.staffId, staffName: face.staffName }
+        bestMatch = { staffId: face.staffId, staffName: face.staffName, photo: face.photo }
       }
     }
     const threshold = SIZE * SIZE * 3 * 255 * 0.3
@@ -912,6 +910,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     setKioskDetecting(true)
     setKioskFaceDetected(false)
     kioskDetectIntervalRef.current = setInterval(() => {
+      if (kioskIdentified) return
       const detected = detectFaceInCenter()
       setKioskFaceDetected(detected)
       if (detected) {
@@ -928,14 +927,18 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
               setTimeout(() => {
                 const match = matchFaceToStaff(photo)
                 if (match) {
-                  handleKioskPunch(match.staffId, match.staffName)
-                } else {
-                  setKioskMsg({ type: 'error', text: isBn ? 'মুখ চিহ্নিত হয়নি' : 'Face not recognized' })
-                  setKioskCapturedPhoto(null)
-                  setTimeout(() => {
-                    setKioskMsg(null)
+                  const lastPunch = kioskCooldownRef.current[match.staffId] || 0
+                  if (Date.now() - lastPunch < 10000) {
+                    setKioskCapturedPhoto(null)
                     startKioskDetectLoop()
-                  }, 2000)
+                    return
+                  }
+                  handleKioskPunch(match.staffId, match.staffName, match.photo)
+                  setKioskCapturedPhoto(null)
+                  startKioskDetectLoop()
+                } else {
+                  setKioskCapturedPhoto(null)
+                  startKioskDetectLoop()
                 }
               }, 500)
             }
@@ -2297,8 +2300,11 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   {/* Identified person display */}
                   {kioskIdentified && (
                     <div className="mb-4 p-5 rounded-2xl bg-[var(--green-light)] border-2 border-[var(--green)] text-center">
-                      <div className="w-16 h-16 rounded-full bg-[var(--green)] flex items-center justify-center mx-auto mb-3">
-                        <CheckCircle size={32} className="text-white" />
+                      <div className="relative w-20 h-20 mx-auto mb-3">
+                        <img src={kioskIdentified.photo} alt="" className="w-full h-full rounded-2xl object-cover border-2 border-[var(--green)]" />
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[var(--green)] flex items-center justify-center">
+                          <CheckCircle size={14} className="text-white" />
+                        </div>
                       </div>
                       <div className="text-[1.25rem] font-bold text-[var(--green)]">{kioskIdentified.staffName}</div>
                       <div className="text-[0.75rem] text-[var(--text-secondary)] font-mono mt-1">{kioskIdentified.staffId}</div>
@@ -2457,6 +2463,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                             <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.75rem]"></th>
                             <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
                             <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'আইডি' : 'ID'}</th>
+                            <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'পাঞ্চ' : 'Punches'}</th>
                             <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'অ্যাকশন' : 'Action'}</th>
                           </tr>
                         </thead>
@@ -2471,10 +2478,30 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                               <tr key={f.staffId} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)] transition-colors">
                                 <td className="p-2.5 text-center text-[var(--text-muted)]">{i + 1}</td>
                                 <td className="p-2.5 text-center">
-                                  <img src={f.photo} alt="" className="w-8 h-8 rounded-full object-cover border border-[var(--border)] mx-auto" />
+                                  <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-[var(--border)] mx-auto bg-[var(--bg-secondary)]">
+                                    <img src={f.photo} alt="" className="w-full h-full object-cover" />
+                                  </div>
                                 </td>
                                 <td className="p-2.5 font-medium text-[var(--text-primary)]">{f.staffName}</td>
                                 <td className="p-2.5 text-[var(--text-muted)] font-mono">{f.staffId}</td>
+                                <td className="p-2.5 text-center">
+                                  {(() => {
+                                    const att = attendance[date]?.[f.staffId]
+                                    const punches = att?.punches || []
+                                    if (punches.length === 0) {
+                                      return <span className="text-[var(--text-muted)]">—</span>
+                                    }
+                                    return (
+                                      <div className="flex flex-wrap gap-1 justify-center">
+                                        {punches.map((p, pi) => (
+                                          <span key={pi} className={`px-1.5 py-0.5 rounded text-[0.5625rem] font-mono font-semibold ${p.type === 'in' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'}`}>
+                                            {p.type === 'in' ? 'IN' : 'OUT'} {p.time}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )
+                                  })()}
+                                </td>
                                 <td className="p-2.5 text-center">
                                   <div className="flex items-center justify-center gap-1">
                                     <button
@@ -2498,7 +2525,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                             ))}
                           {kioskRegisteredFaces.length === 0 && (
                             <tr>
-                              <td colSpan={5} className="p-8 text-center text-[var(--text-muted)] text-[0.75rem]">
+                              <td colSpan={6} className="p-8 text-center text-[var(--text-muted)] text-[0.75rem]">
                                 {isBn ? 'কোনো স্টাফ নিবন্ধিত নেই' : 'No staff registered'}
                               </td>
                             </tr>
@@ -2514,7 +2541,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
 
           {/* Kiosk Attendance Popup */}
           {kioskAttendanceOpen && (
-            <div className="fixed inset-0 z-[800] bg-black flex flex-col items-center justify-center">
+            <div className="fixed inset-0 z-[800] bg-black flex flex-col items-center justify-center overflow-hidden">
               {/* Close button */}
               <button
                 onClick={() => {
@@ -2530,60 +2557,61 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                 <X size={20} />
               </button>
 
-              {/* Camera feed */}
-              <div className="relative w-full max-w-[28rem] mx-auto px-4">
-                <div className="relative rounded-2xl overflow-hidden bg-gray-900 w-full" style={{ aspectRatio: '3/4', maxHeight: '70vh' }}>
-                  <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-                  <canvas ref={kioskCanvasRef} className="hidden" />
+              {/* Camera feed - full viewport */}
+              <div className="relative w-full h-full">
+                <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+                <canvas ref={kioskCanvasRef} className="hidden" />
 
-                  {/* LIVE indicator */}
-                  {kioskCamActive && !kioskIdentified && (
-                    <div className="absolute top-3 left-3 bg-black/60 rounded-lg px-3 py-1.5 text-white text-[0.6875rem] font-medium flex items-center gap-2 z-10">
-                      <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
-                      {isBn ? 'লাইভ' : 'LIVE'}
-                    </div>
-                  )}
+                {/* LIVE indicator */}
+                {kioskCamActive && !kioskIdentified && (
+                  <div className="absolute top-4 left-4 bg-black/60 rounded-lg px-3 py-1.5 text-white text-[0.6875rem] font-medium flex items-center gap-2 z-10">
+                    <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
+                    {isBn ? 'লাইভ' : 'LIVE'}
+                  </div>
+                )}
 
-                  {/* Face guide overlay */}
-                  {kioskCamActive && !kioskCapturedPhoto && !kioskIdentified && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <div className="absolute inset-[12%] grid grid-cols-3 grid-rows-3">
-                        {[...Array(9)].map((_, i) => (
-                          <div key={i} className={`border ${kioskFaceDetected ? 'border-[var(--green)]/70' : 'border-white/20'} transition-colors duration-200`} />
-                        ))}
-                      </div>
-                      <div className={`w-32 h-40 border-2 rounded-[50%] transition-all duration-300 ${kioskFaceDetected ? 'border-[var(--green)] shadow-[0_0_30px_rgba(34,197,94,0.5)]' : 'border-white/40'}`} />
+                {/* Face guide overlay */}
+                {kioskCamActive && !kioskCapturedPhoto && !kioskIdentified && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                    <div className="absolute inset-[10%] grid grid-cols-3 grid-rows-3 gap-0.5">
+                      {[...Array(9)].map((_, i) => (
+                        <div key={i} className={`border ${kioskFaceDetected ? 'border-[var(--green)]/60' : 'border-white/15'} transition-colors duration-300`} />
+                      ))}
                     </div>
-                  )}
+                    <div className={`w-36 h-44 border-[3px] rounded-[50%] transition-all duration-300 ${kioskFaceDetected ? 'border-[var(--green)] shadow-[0_0_40px_rgba(34,197,94,0.4)]' : 'border-white/30'}`} />
+                  </div>
+                )}
 
-                  {/* Status text overlay */}
-                  {kioskCamActive && !kioskIdentified && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
-                      <div className={`px-4 py-2 rounded-full text-[0.8125rem] font-bold transition-colors duration-200 ${kioskFaceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/50 text-white/80'}`}>
-                        {kioskFaceDetected
-                          ? isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...'
-                          : isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid'}
-                      </div>
+                {/* Status text overlay */}
+                {kioskCamActive && !kioskIdentified && (
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
+                    <div className={`px-4 py-2 rounded-full text-[0.8125rem] font-bold transition-colors duration-200 ${kioskFaceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/50 text-white/80'}`}>
+                      {kioskFaceDetected
+                        ? isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...'
+                        : isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid'}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Result display - bottom right */}
                 {kioskIdentified && (
-                  <div className="absolute bottom-4 right-4 left-4 z-20">
-                    <div className="bg-black/80 backdrop-blur-sm rounded-xl p-4 flex items-center gap-4 max-w-[24rem] ml-auto">
-                      <div className="w-12 h-12 rounded-full bg-[var(--green)] flex items-center justify-center shrink-0">
-                        <CheckCircle size={24} className="text-white" />
+                  <div className="absolute bottom-6 right-6 z-20">
+                    <div className="bg-black/80 backdrop-blur-sm rounded-2xl p-5 flex items-center gap-4 max-w-[26rem] border border-white/10 shadow-2xl">
+                      <div className="relative shrink-0">
+                        <img src={kioskIdentified.photo} alt="" className="w-16 h-16 rounded-xl object-cover border-2 border-[var(--green)]" />
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[var(--green)] flex items-center justify-center">
+                          <CheckCircle size={12} className="text-white" />
+                        </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[1rem] font-bold text-white truncate">{kioskIdentified.staffName}</div>
-                        <div className="text-[0.75rem] text-white/60 font-mono">{kioskIdentified.staffId}</div>
+                        <div className="text-[1.125rem] font-bold text-white truncate">{kioskIdentified.staffName}</div>
+                        <div className="text-[0.8125rem] text-white/50 font-mono mt-0.5">{kioskIdentified.staffId}</div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className={`px-2 py-1 rounded text-[0.6875rem] font-bold ${kioskIdentified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
-                          {kioskIdentified.punchType === 'in' ? 'IN' : 'OUT'}
+                        <span className={`px-2.5 py-1 rounded-lg text-[0.75rem] font-bold ${kioskIdentified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
+                          {kioskIdentified.punchType === 'in' ? 'CHECKED IN' : 'CHECKED OUT'}
                         </span>
-                        <div className="text-[1.25rem] font-bold text-white font-mono mt-1">{kioskIdentified.time}</div>
+                        <div className="text-[1.5rem] font-bold text-white font-mono mt-1">{kioskIdentified.time}</div>
                       </div>
                     </div>
                   </div>
@@ -2600,7 +2628,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
               </div>
 
               {/* Bottom info */}
-              <div className="absolute bottom-4 left-0 right-0 text-center text-white/50 text-[0.75rem]">
+              <div className="absolute bottom-4 left-0 right-0 text-center text-white/50 text-[0.75rem] z-10">
                 {isBn ? 'বন্ধ করতে X বাটন চাপুন' : 'Press X to close'}
               </div>
             </div>
