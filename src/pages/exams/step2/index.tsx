@@ -23,6 +23,10 @@ import {
   IdCard,
   ClipboardCheck,
   UserX,
+  MoreVertical,
+  ChevronDown,
+  FileSpreadsheet,
+  FileText,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -46,8 +50,16 @@ import {
   startOfDay,
 } from 'date-fns'
 import { sectionCls, sectionTitleCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
+import { openPrintWindow } from '@/lib/pdf'
+import * as XLSX from 'xlsx'
 import { generateAttendanceSheetHTML } from './pdfTemplates/attendanceSheet'
 import { generateScheduleReportHTML } from './pdfTemplates/scheduleReport'
+import { generateExamRoutineGridPDF } from './pdfTemplates/examRoutinePdfTemplate'
+import type { ExamRoutineGridData, ExamRoutineGridCell, ExamRoutinePDFOptions } from './pdfTemplates/examRoutinePdfTemplate'
+import { generateInvigilatorGuardListPDF } from './pdfTemplates/invigilatorPdfTemplate'
+import type { InvigilatorGridData, InvigilatorGridDay, InvigilatorGridRow, InvigilatorPDFOptions } from './pdfTemplates/invigilatorPdfTemplate'
+import { ExamRoutinePDFOptionsModal } from '@/components/shared/ExamRoutinePDFOptionsModal'
+import { InvigilatorPDFOptionsModal } from '@/components/shared/InvigilatorPDFOptionsModal'
 import AdmitCardsTab from './AdmitCardsTab'
 
 type SubTab = 'routine' | 'rooms' | 'seats' | 'invigilators' | 'attendance' | 'admit-cards'
@@ -128,7 +140,13 @@ export default function Step2Schedule() {
     endTime: '',
     roomNo: '',
   })
-  const [routineOrientation, setRoutineOrientation] = useState<'landscape' | 'portrait'>('landscape')
+  const [showExamRoutinePDF, setShowExamRoutinePDF] = useState(false)
+  const [showExamRoutineActionMenu, setShowExamRoutineActionMenu] = useState(false)
+  const examRoutineActionMenuRef = useRef<HTMLDivElement>(null)
+  const [showInvigPDF, setShowInvigPDF] = useState(false)
+  const [invigGuardType, setInvigGuardType] = useState<'class' | 'room'>('class')
+  const [showInvigActionMenu, setShowInvigActionMenu] = useState(false)
+  const invigActionMenuRef = useRef<HTMLDivElement>(null)
 
   // Student count for routine form class/section
   const routineStudentCount = useMemo(() => {
@@ -514,128 +532,6 @@ export default function Step2Schedule() {
     URL.revokeObjectURL(url)
   }
 
-  const downloadGuardListPDF = (type: 'class' | 'room') => {
-    if (!selectedExamId) return
-    const examName = selectedExam ? (isBn ? selectedExam.nameBn : selectedExam.name) : ''
-    const brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#4f46e5'
-    const isClass = type === 'class'
-
-    const filtered = filteredInvigilators.filter((inv) => inv.assignType === type)
-    if (filtered.length === 0) return
-
-    // Group by date
-    const byDate = new Map<string, typeof filtered>()
-    for (const inv of filtered) {
-      const existing = byDate.get(inv.date) || []
-      existing.push(inv)
-      byDate.set(inv.date, existing)
-    }
-    const sortedDates = Array.from(byDate.keys()).sort()
-
-    let pagesHTML = ''
-    for (const date of sortedDates) {
-      const dayAssignments = byDate.get(date) || []
-      const dateFormatted = new Date(date + 'T00:00:00').toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-
-      const rows = dayAssignments.map((inv) => {
-        const teacher = teacherMap.get(inv.teacherId)
-        const shiftLabel = inv.shift === 'morning' ? (isBn ? 'সকাল' : 'Morning') : (isBn ? 'বিকাল' : 'Afternoon')
-        if (isClass) {
-          const [cls, sec] = inv.classSection.split('-')
-          const dayRoutine = filteredRoutines.find((r) => r.date === date && r.classId === cls && r.sectionId === sec)
-          const subject = dayRoutine ? subjectMap.get(dayRoutine.subjectId) : null
-          const studentCount = students.filter((s) => s.status === 'approved' && s.class === cls && s.section === sec).length
-          return `<tr>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;font-weight:600">${inv.classSection}</td>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px">${teacher?.nameEn || inv.teacherId}</td>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px">${subject ? (isBn ? subject.nameBn : subject.name) : '-'}</td>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center">${studentCount}</td>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center">${shiftLabel}</td>
-          </tr>`
-        } else {
-          const room = roomMap.get(inv.roomId)
-          const dayRoutines = filteredRoutines.filter((r) => r.date === date && r.roomNo === room?.roomNo)
-          const subjectNames = [...new Set(dayRoutines.map((r) => {
-            const subj = subjectMap.get(r.subjectId)
-            return subj ? (isBn ? subj.nameBn : subj.name) : ''
-          }).filter(Boolean))]
-          return `<tr>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;font-weight:600">${room?.roomNo || inv.roomId}</td>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px">${teacher?.nameEn || inv.teacherId}</td>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px">${subjectNames.join(', ') || '-'}</td>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center">${room?.capacity || '-'}</td>
-            <td style="padding:6px 8px;border:1px solid #e2e8f0;font-size:11px;text-align:center">${shiftLabel}</td>
-          </tr>`
-        }
-      }).join('')
-
-      const headers = isClass
-        ? `<th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'শ্রেণি-সেকশন' : 'Class-Sec'}</th>
-           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'শিক্ষক' : 'Teacher'}</th>
-           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'বিষয়' : 'Subject'}</th>
-           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'ছাত্র' : 'Students'}</th>
-           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'শিফট' : 'Shift'}</th>`
-        : `<th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'কক্ষ' : 'Room'}</th>
-           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'শিক্ষক' : 'Teacher'}</th>
-           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:left">${isBn ? 'বিষয়' : 'Subject'}</th>
-           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'ধারণক্ষমতা' : 'Capacity'}</th>
-           <th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:10px;font-weight:600;background:${brandColor}15;color:${brandColor};text-align:center">${isBn ? 'শিফট' : 'Shift'}</th>`
-
-      pagesHTML += `
-        <div class="page">
-          <div class="header">
-            <h1>${examName}</h1>
-            <h2>${isClass ? (isBn ? 'শ্রেণি/সেকশন ভিত্তিক গার্ড তালিকা' : 'Class / Section Wise Guard List') : (isBn ? 'কক্ষ/হল ভিত্তিক গার্ড তালিকা' : 'Room / Hall Wise Guard List')}</h2>
-            <div class="date-badge">${dateFormatted}</div>
-          </div>
-          <table style="width:100%;border-collapse:collapse">
-            <thead><tr>${headers}</tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-          <div class="footer">
-            ${isBn ? 'মোট' : 'Total'}: ${dayAssignments.length} ${isBn ? 'জন নিয়োগ' : 'assignments'} |
-            ${isBn ? 'তারিখ' : 'Date'}: ${new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US')}
-          </div>
-        </div>`
-    }
-
-    const title = isClass
-      ? `${examName} - Class Guard List`
-      : `${examName} - Room Guard List`
-
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-      <title>${title}</title>
-      <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        @page{size:A4 portrait;margin:10mm}
-        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#1e293b;background:#fff;font-size:10px}
-        .page{page-break-after:always;padding:15px}
-        .page:last-child{page-break-after:auto}
-        .header{text-align:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid ${brandColor}}
-        h1{font-size:16px;color:${brandColor};margin-bottom:2px}
-        h2{font-size:11px;color:#64748b;font-weight:400;margin-top:2px}
-        .date-badge{display:inline-block;margin-top:6px;padding:4px 16px;border-radius:20px;background:${brandColor}15;color:${brandColor};font-size:11px;font-weight:600}
-        .footer{margin-top:12px;padding-top:8px;border-top:1px solid #e2e8f0;text-align:center;font-size:8px;color:#94a3b8}
-        @media print{
-          *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
-          body{padding:0;margin:0}
-          @page{size:A4 portrait;margin:8mm}
-          .page{padding:10px}
-        }
-      </style>
-    </head><body>${pagesHTML}</body></html>`
-
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${examName.replace(/\s+/g, '_')}_${isClass ? 'Class' : 'Room'}_Guard_List.html`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
   const handleSaveInvig = () => {
     if (!selectedExamId || !invigForm.teacherId || !invigForm.date) return
     if (invigAssignType === 'room' && !invigForm.roomId) return
@@ -727,6 +623,94 @@ export default function Step2Schedule() {
     return getRoutinesForDay(selectedDate)
   }, [selectedDate, getRoutinesForDay])
 
+  // Click-outside handler for exam routine action menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (examRoutineActionMenuRef.current && !examRoutineActionMenuRef.current.contains(event.target as Node)) {
+        setShowExamRoutineActionMenu(false)
+      }
+    }
+    if (showExamRoutineActionMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showExamRoutineActionMenu])
+
+  // Exam routine grid data for PDF
+  const examRoutineGridData: ExamRoutineGridData = useMemo(() => {
+    const examName = selectedExam ? (isBn ? selectedExam.nameBn : selectedExam.name) : ''
+    const examDateRange = selectedExam ? `${selectedExam.startDate} — ${selectedExam.endDate}` : ''
+
+    const byDate = new Map<string, ExamRoutine[]>()
+    for (const r of filteredRoutines) {
+      const existing = byDate.get(r.date) || []
+      existing.push(r)
+      byDate.set(r.date, existing)
+    }
+    const sortedDates = [...byDate.keys()].sort()
+
+    const dates = sortedDates.map((date) => {
+      const weekday = new Date(date).toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { weekday: 'short' })
+      return { date, weekday }
+    })
+
+    const classNames = [...new Set(filteredRoutines.map((r) => r.classId))].sort()
+
+    const grid: Record<string, Record<string, ExamRoutineGridCell[]>> = {}
+    for (const date of sortedDates) {
+      grid[date] = {}
+      const dayRoutines = byDate.get(date) || []
+      for (const cls of classNames) {
+        const cellRoutines = dayRoutines.filter((r) => r.classId === cls)
+        grid[date][cls] = cellRoutines.map((r) => {
+          const subject = subjectMap.get(r.subjectId)
+          const subjName = isBn ? subject?.nameBn : subject?.name || ''
+          return {
+            subject: subjName || '',
+            section: `Sec ${r.sectionId}`,
+            time: `${r.startTime}–${r.endTime}`,
+            room: r.roomNo,
+          }
+        })
+      }
+    }
+
+    return { dates, classNames, grid, examName, examDateRange }
+  }, [filteredRoutines, selectedExam, isBn, subjectMap])
+
+  const handleExamRoutinePDF = useCallback(
+    (opts: ExamRoutinePDFOptions) => {
+      const html = generateExamRoutineGridPDF(examRoutineGridData, opts)
+      openPrintWindow(opts.title || examRoutineGridData.examName || 'Exam Routine', html)
+      setShowExamRoutinePDF(false)
+    },
+    [examRoutineGridData]
+  )
+
+  const handleExamRoutineExcel = useCallback(() => {
+    const { dates, classNames, grid, examName } = examRoutineGridData
+
+    const rows = dates.map((d) => {
+      const row: Record<string, string> = { Date: d.date, Day: d.weekday }
+      for (const cls of classNames) {
+        const cells = grid[d.date]?.[cls] || []
+        row[cls] = cells.map((c) => `${c.subject} (${c.section}) ${c.time} ${c.room}`).join('\n')
+      }
+      return row
+    })
+
+    const ws = XLSX.utils.json_to_sheet(rows)
+    XLSX.utils.sheet_add_aoa(ws, [
+      [examName],
+      [examRoutineGridData.examDateRange],
+      [],
+    ], { origin: 'A1' })
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Routine')
+    XLSX.writeFile(wb, `${examName.replace(/\s+/g, '_')}_Routine_${new Date().toISOString().split('T')[0]}.xlsx`)
+  }, [examRoutineGridData])
+
   const examDayCount = useMemo(() => {
     if (!calendarRange) return 0
     return eachDayOfInterval({ start: calendarRange.start, end: calendarRange.end }).length
@@ -739,6 +723,121 @@ export default function Step2Schedule() {
   const upcomingDays = useMemo(() => {
     return filteredRoutines.filter((r) => getAutoStatus(r.date) === 'upcoming').length
   }, [filteredRoutines])
+
+  // Click-outside handler for invigilator action menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (invigActionMenuRef.current && !invigActionMenuRef.current.contains(event.target as Node)) {
+        setShowInvigActionMenu(false)
+      }
+    }
+    if (showInvigActionMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showInvigActionMenu])
+
+  // Invigilator guard list grid data
+  const invigilatorGridData: InvigilatorGridData = useMemo(() => {
+    const examName = selectedExam ? (isBn ? selectedExam.nameBn : selectedExam.name) : ''
+
+    const filtered = filteredInvigilators.filter((inv) => inv.assignType === invigGuardType)
+
+    const byDate = new Map<string, typeof filtered>()
+    for (const inv of filtered) {
+      const existing = byDate.get(inv.date) || []
+      existing.push(inv)
+      byDate.set(inv.date, existing)
+    }
+    const sortedDates = Array.from(byDate.keys()).sort()
+
+    const days: InvigilatorGridDay[] = sortedDates.map((date) => {
+      const dayAssignments = byDate.get(date) || []
+      const dateFormatted = new Date(date + 'T00:00:00').toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+
+      const rows: InvigilatorGridRow[] = dayAssignments.map((inv) => {
+        const teacher = teacherMap.get(inv.teacherId)
+        const shiftLabel = inv.shift === 'morning' ? (isBn ? 'সকাল' : 'Morning') : (isBn ? 'বিকাল' : 'Afternoon')
+
+        if (invigGuardType === 'class') {
+          const [cls, sec] = inv.classSection.split('-')
+          const dayRoutine = filteredRoutines.find((r) => r.date === date && r.classId === cls && r.sectionId === sec)
+          const subject = dayRoutine ? subjectMap.get(dayRoutine.subjectId) : null
+          const studentCount = students.filter((s) => s.status === 'approved' && s.class === cls && s.section === sec).length
+          return {
+            classSection: inv.classSection,
+            teacher: teacher?.nameEn || inv.teacherId,
+            subject: subject ? (isBn ? subject.nameBn : subject.name) : '-',
+            students: studentCount,
+            shift: shiftLabel,
+          }
+        } else {
+          const room = roomMap.get(inv.roomId)
+          const dayRoutines = filteredRoutines.filter((r) => r.date === date && r.roomNo === room?.roomNo)
+          const subjectNames = [...new Set(dayRoutines.map((r) => {
+            const subj = subjectMap.get(r.subjectId)
+            return subj ? (isBn ? subj.nameBn : subj.name) : ''
+          }).filter(Boolean))]
+          return {
+            room: room?.roomNo || inv.roomId,
+            teacher: teacher?.nameEn || inv.teacherId,
+            subject: subjectNames.join(', ') || '-',
+            capacity: room?.capacity,
+            shift: shiftLabel,
+          }
+        }
+      })
+
+      return { date, dateFormatted, rows }
+    })
+
+    return { type: invigGuardType, examName, days }
+  }, [filteredInvigilators, invigGuardType, selectedExam, isBn, teacherMap, subjectMap, roomMap, filteredRoutines, students])
+
+  const handleInvigPDF = useCallback(
+    (opts: InvigilatorPDFOptions) => {
+      const html = generateInvigilatorGuardListPDF(invigilatorGridData, opts)
+      openPrintWindow(opts.title || invigilatorGridData.examName || 'Guard List', html)
+      setShowInvigPDF(false)
+    },
+    [invigilatorGridData]
+  )
+
+  const handleInvigExcel = useCallback(() => {
+    const { type, examName, days } = invigilatorGridData
+    const isClass = type === 'class'
+
+    const rows = days.flatMap((day) =>
+      day.rows.map((row) => {
+        const base: Record<string, string> = { Date: day.date }
+        if (isClass) {
+          base['Class-Sec'] = row.classSection || ''
+          base['Teacher'] = row.teacher
+          base['Subject'] = row.subject
+          base['Students'] = String(row.students ?? '')
+        } else {
+          base['Room'] = row.room || ''
+          base['Teacher'] = row.teacher
+          base['Subject'] = row.subject
+          base['Capacity'] = String(row.capacity ?? '')
+        }
+        base['Shift'] = row.shift
+        return base
+      })
+    )
+
+    const ws = XLSX.utils.json_to_sheet(rows)
+    XLSX.utils.sheet_add_aoa(ws, [
+      [examName],
+      [isClass ? 'Class / Section Wise Guard List' : 'Room / Hall Wise Guard List'],
+      [],
+    ], { origin: 'A1' })
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Guard List')
+    const fileName = `${examName.replace(/\s+/g, '_')}_${isClass ? 'Class' : 'Room'}_Guard_List_${new Date().toISOString().split('T')[0]}.xlsx`
+    XLSX.writeFile(wb, fileName)
+  }, [invigilatorGridData])
 
   return (
     <div className="flex flex-col h-[calc(100vh-60px)]">
@@ -868,109 +967,97 @@ export default function Step2Schedule() {
                 </button>
               </div>
               {filteredRoutines.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <select
-                    value={routineOrientation}
-                    onChange={(e) => setRoutineOrientation(e.target.value as 'landscape' | 'portrait')}
-                    className="h-7 px-2 pr-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2710%27%20height%3D%2710%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%2394a3b8%27%20stroke-width%3D%272%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_6px_center] hover:border-[var(--brand)] transition-all"
+                <div style={{ position: 'relative' }} ref={examRoutineActionMenuRef}>
+                  <button
+                    onClick={() => setShowExamRoutineActionMenu(!showExamRoutineActionMenu)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.375rem',
+                      padding: '9px 18px',
+                      borderRadius: '0.5rem',
+                      background: 'var(--brand-light)',
+                      border: '1px solid var(--brand)',
+                      color: 'var(--brand)',
+                      fontSize: '0.8125rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
                   >
-                    <option value="landscape">{isBn ? 'ল্যান্ডস্কেপ' : 'Landscape'}</option>
-                    <option value="portrait">{isBn ? 'পোর্ট্রেট' : 'Portrait'}</option>
-                  </select>
-                <button
-                  onClick={() => {
-                    const examName = selectedExam ? (isBn ? selectedExam.nameBn : selectedExam.name) : ''
-
-                    // Get brand color from CSS variable
-                    const brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#4f46e5'
-
-                    // Group routines by date
-                    const byDate = new Map<string, typeof filteredRoutines>()
-                    for (const r of filteredRoutines) {
-                      const existing = byDate.get(r.date) || []
-                      existing.push(r)
-                      byDate.set(r.date, existing)
-                    }
-                    const sortedDates = [...byDate.keys()].sort()
-
-                    // Get unique class names for columns
-                    const classNames = [...new Set(filteredRoutines.map((r) => r.classId))].sort()
-
-                    // Build date rows
-                    const dateRows = sortedDates.map((date, idx) => {
-                      const dayRoutines = byDate.get(date) || []
-                      const weekday = new Date(date).toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { weekday: 'short' })
-                      const bgColor = idx % 2 === 0 ? '#fff' : '#f8fafc'
-                      const classCells = classNames.map((cls) => {
-                        const cellRoutines = dayRoutines.filter((r) => r.classId === cls)
-                        if (cellRoutines.length === 0) return `<td style="padding:4px 6px;border:1px solid #e2e8f0;background:${bgColor}"></td>`
-                        const items = cellRoutines.map((r) => {
-                          const subject = subjectMap.get(r.subjectId)
-                          const subjName = isBn ? subject?.nameBn : subject?.name || ''
-                          return `<div style="margin-bottom:2px"><strong style="color:#1e293b;font-size:9px">${subjName}</strong> <span style="font-size:7px;color:#fff;background:${brandColor};padding:1px 4px;border-radius:3px;font-weight:600">Sec ${r.sectionId}</span><br/><span style="font-size:8px;color:#64748b">${r.startTime}–${r.endTime}</span> <span style="font-size:8px;color:#94a3b8">${r.roomNo}</span></div>`
-                        }).join('')
-                        return `<td style="padding:4px 6px;border:1px solid #e2e8f0;background:${bgColor};vertical-align:top;text-align:center">${items}</td>`
-                      }).join('')
-                      return `<tr>
-                        <td style="padding:4px 6px;border:1px solid #e2e8f0;background:${bgColor};white-space:nowrap;text-align:center"><strong style="font-size:9px">${date}</strong><br/><span style="font-size:8px;color:#94a3b8">${weekday}</span></td>
-                        ${classCells}
-                      </tr>`
-                    }).join('')
-
-                    const classHeaders = classNames.map((cls) => `<th style="background:${brandColor};color:#fff;padding:5px 8px;border:1px solid ${brandColor};text-align:center;font-weight:600;font-size:10px;white-space:nowrap">${cls}</th>`).join('')
-
-                    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-                      <title>${examName} - Routine</title>
-                      <style>
-                        *{margin:0;padding:0;box-sizing:border-box}
-                        @page{size:A4 ${routineOrientation};margin:10mm}
-                        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:15px;color:#1e293b;background:#fff;font-size:10px}
-                        .header{text-align:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid ${brandColor}}
-                        h1{font-size:16px;color:${brandColor};margin-bottom:2px}
-                        h2{font-size:11px;color:#64748b;font-weight:400;margin-top:2px}
-                        .info{font-size:10px;color:#94a3b8;margin-top:4px}
-                        table{width:auto;border-collapse:collapse;font-size:9px}
-                        th{padding:5px 8px;border:1px solid ${brandColor};text-align:center;font-weight:600;font-size:10px}
-                        td{border:1px solid #e2e8f0;text-align:center}
-                        .footer{margin-top:12px;padding-top:8px;border-top:1px solid #e2e8f0;text-align:center;font-size:8px;color:#94a3b8}
-                        @media print{
-                          body{padding:0;margin:0}
-                          @page{size:A4 ${routineOrientation};margin:8mm}
-                          th{color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-                          td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-                        }
-                      </style>
-                    </head><body>
-                      <div class="header">
-                        <h1>${examName}</h1>
-                        <h2>${isBn ? 'পরীক্ষার সময়সূচী' : 'Exam Routine'}</h2>
-                        <div class="info">${selectedExam?.startDate || ''} — ${selectedExam?.endDate || ''}</div>
-                      </div>
-                      <div style="display:flex;justify-content:center">
-                      <table>
-                        <thead><tr>
-                          <th style="background:${brandColor};color:#fff;padding:5px 8px;border:1px solid ${brandColor};text-align:center;font-weight:600;font-size:10px;white-space:nowrap">${isBn ? 'তারিখ' : 'Date'}</th>
-                          ${classHeaders}
-                        </tr></thead>
-                        <tbody>${dateRows}</tbody>
-                      </table>
-                      </div>
-                      <div class="footer">${isBn ? 'ইহা সিস্টেম দ্বারা নির্মিত' : 'System Generated'} • ${new Date().toLocaleDateString()}</div>
-                    </body></html>`
-
-                    const blob = new Blob([html], { type: 'text/html' })
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url
-                    a.download = `${examName.replace(/\s+/g, '_')}_Routine.html`
-                    a.click()
-                    URL.revokeObjectURL(url)
-                  }}
-                  className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none hover:shadow-sm"
-                >
-                  <Download size={13} />
-                  {isBn ? 'রুটিন ডাউনলোড' : 'Download Routine'}
-                </button>
+                    <MoreVertical size={15} />
+                    {isBn ? 'অ্যাকশন' : 'Action'}
+                    <ChevronDown size={12} />
+                  </button>
+                  {showExamRoutineActionMenu && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        marginTop: '0.375rem',
+                        background: 'var(--bg-primary)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '0.5rem',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                        minWidth: '12.5rem',
+                        zIndex: 100,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <button
+                        onClick={() => {
+                          handleExamRoutineExcel()
+                          setShowExamRoutineActionMenu(false)
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.625rem 0.875rem',
+                          border: 'none',
+                          background: 'transparent',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.8125rem',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          textAlign: 'left',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
+                        {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                      </button>
+                      <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+                      <button
+                        onClick={() => {
+                          setShowExamRoutinePDF(true)
+                          setShowExamRoutineActionMenu(false)
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.625rem 0.875rem',
+                          border: 'none',
+                          background: 'transparent',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.8125rem',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          textAlign: 'left',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <FileText size={14} style={{ color: 'var(--red)' }} />
+                        {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1514,23 +1601,95 @@ export default function Step2Schedule() {
                       {isBn ? 'শ্রেণি/সেকশন ভিত্তিক' : 'Class / Section Wise'}
                     </button>
                     <div className="flex-1" />
-              {filteredInvigilators.some((i) => i.assignType === 'class') && (
-                <button
-                  onClick={() => downloadGuardListPDF('class')}
-                  className="px-3 py-2 rounded-lg bg-[var(--teal-light)] border border-[var(--teal)]/20 text-[var(--teal)] text-[0.6875rem] font-medium cursor-pointer hover:shadow-sm flex items-center gap-1.5"
-                >
-                  <Download size={13} />
-                  {isBn ? 'শ্রেণি গার্ড তালিকা' : 'Class Guard List'}
-                </button>
-              )}
-              {filteredInvigilators.some((i) => i.assignType === 'room') && (
-                <button
-                  onClick={() => downloadGuardListPDF('room')}
-                  className="px-3 py-2 rounded-lg bg-[var(--teal-light)] border border-[var(--teal)]/20 text-[var(--teal)] text-[0.6875rem] font-medium cursor-pointer hover:shadow-sm flex items-center gap-1.5"
-                >
-                  <Download size={13} />
-                  {isBn ? 'কক্ষ গার্ড তালিকা' : 'Room Guard List'}
-                </button>
+              {filteredInvigilators.length > 0 && (
+                <div style={{ position: 'relative' }} ref={invigActionMenuRef}>
+                  <button
+                    onClick={() => setShowInvigActionMenu(!showInvigActionMenu)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.375rem',
+                      padding: '9px 18px',
+                      borderRadius: '0.5rem',
+                      background: 'var(--brand-light)',
+                      border: '1px solid var(--brand)',
+                      color: 'var(--brand)',
+                      fontSize: '0.8125rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    <MoreVertical size={15} />
+                    {isBn ? 'অ্যাকশন' : 'Action'}
+                    <ChevronDown size={12} />
+                  </button>
+                  {showInvigActionMenu && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        marginTop: '0.375rem',
+                        background: 'var(--bg-primary)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '0.5rem',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                        minWidth: '14rem',
+                        zIndex: 100,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {filteredInvigilators.some((i) => i.assignType === 'class') && (
+                        <>
+                          <button
+                            onClick={() => { setInvigGuardType('class'); handleInvigExcel(); setShowInvigActionMenu(false) }}
+                            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.875rem', border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                          >
+                            <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
+                            {isBn ? 'শ্রেণি গার্ড তালিকা (এক্সেল)' : 'Class Guard List (Excel)'}
+                          </button>
+                          <button
+                            onClick={() => { setInvigGuardType('class'); setShowInvigPDF(true); setShowInvigActionMenu(false) }}
+                            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.875rem', border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                          >
+                            <FileText size={14} style={{ color: 'var(--red)' }} />
+                            {isBn ? 'শ্রেণি গার্ড তালিকা (পিডিএফ)' : 'Class Guard List (PDF)'}
+                          </button>
+                        </>
+                      )}
+                      {filteredInvigilators.some((i) => i.assignType === 'class') && filteredInvigilators.some((i) => i.assignType === 'room') && (
+                        <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+                      )}
+                      {filteredInvigilators.some((i) => i.assignType === 'room') && (
+                        <>
+                          <button
+                            onClick={() => { setInvigGuardType('room'); handleInvigExcel(); setShowInvigActionMenu(false) }}
+                            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.875rem', border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                          >
+                            <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
+                            {isBn ? 'কক্ষ গার্ড তালিকা (এক্সেল)' : 'Room Guard List (Excel)'}
+                          </button>
+                          <button
+                            onClick={() => { setInvigGuardType('room'); setShowInvigPDF(true); setShowInvigActionMenu(false) }}
+                            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.875rem', border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                          >
+                            <FileText size={14} style={{ color: 'var(--red)' }} />
+                            {isBn ? 'কক্ষ গার্ড তালিকা (পিডিএফ)' : 'Room Guard List (PDF)'}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
               <button
                 onClick={() => {
@@ -2538,6 +2697,28 @@ export default function Step2Schedule() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Exam Routine PDF Modal */}
+      {showExamRoutinePDF && (
+        <ExamRoutinePDFOptionsModal
+          count={examRoutineGridData.dates.length}
+          isBn={isBn}
+          gridData={examRoutineGridData}
+          onClose={() => setShowExamRoutinePDF(false)}
+          onDownload={handleExamRoutinePDF}
+        />
+      )}
+
+      {/* Invigilator Guard List PDF Modal */}
+      {showInvigPDF && (
+        <InvigilatorPDFOptionsModal
+          count={invigilatorGridData.days.reduce((sum, day) => sum + day.rows.length, 0)}
+          isBn={isBn}
+          gridData={invigilatorGridData}
+          onClose={() => setShowInvigPDF(false)}
+          onDownload={handleInvigPDF}
+        />
       )}
     </div>
   )
