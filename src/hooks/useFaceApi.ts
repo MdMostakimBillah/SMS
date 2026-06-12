@@ -26,14 +26,16 @@ export function useFaceApi() {
     const load = async () => {
       try {
         const uri = '/models'
-        await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri(uri),
-          faceapi.nets.faceLandmark68Net.loadFromUri(uri),
-          faceapi.nets.faceRecognitionNet.loadFromUri(uri),
-        ])
+        console.log('[face-api] Loading models from', uri)
+        await faceapi.nets.ssdMobilenetv1.loadFromUri(uri)
+        console.log('[face-api] ssdMobilenetv1 loaded')
+        await faceapi.nets.faceLandmark68Net.loadFromUri(uri)
+        console.log('[face-api] faceLandmark68 loaded')
+        await faceapi.nets.faceRecognitionNet.loadFromUri(uri)
+        console.log('[face-api] faceRecognition loaded')
         setLoaded(true)
       } catch (err) {
-        console.error('Failed to load face-api models:', err)
+        console.error('[face-api] Failed to load models:', err)
       } finally {
         setLoading(false)
       }
@@ -47,7 +49,7 @@ export function useFaceApi() {
     if (!loaded) return null
     try {
       const result = await faceapi
-        .detectSingleFace(input, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+        .detectSingleFace(input, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
         .withFaceLandmarks()
         .withFaceDescriptor()
       if (!result) return null
@@ -55,7 +57,8 @@ export function useFaceApi() {
         descriptor: result.descriptor,
         box: result.detection.box,
       }
-    } catch {
+    } catch (err) {
+      console.error('[face-api] detectFace error:', err)
       return null
     }
   }

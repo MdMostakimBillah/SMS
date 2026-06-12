@@ -126,11 +126,16 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const startRegDetectLoop = () => {
     if (regDetectIntervalRef.current) clearInterval(regDetectIntervalRef.current)
     regStableCountRef.current = 0
+    console.log('[Kiosk] Starting reg detect loop, faceApiLoaded:', faceApiLoaded, 'selectedStaff:', selectedStaff)
     regDetectIntervalRef.current = setInterval(async () => {
       const v = videoRef.current
-      if (!v || !faceApiLoaded || !selectedStaff || !isVideoReady(v)) return
+      if (!v || !faceApiLoaded || !selectedStaff || !isVideoReady(v)) {
+        if (v) console.log('[Kiosk] Skipping detect - ready:', v.readyState, 'w:', v.videoWidth, 'loaded:', faceApiLoaded, 'staff:', selectedStaff)
+        return
+      }
       const result = await detectFace(v)
       if (result) {
+        console.log('[Kiosk] Face detected! Stable count:', regStableCountRef.current + 1)
         setFaceDetected(true)
         regStableCountRef.current++
         if (regStableCountRef.current >= 3) {
