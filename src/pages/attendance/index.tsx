@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -9,6 +9,7 @@ import {
   CalendarRange,
   CalendarX,
   CheckCircle,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -21,6 +22,7 @@ import {
   Fingerprint,
   GraduationCap,
   LogOut,
+  MoreVertical,
   Search,
   User,
   Users,
@@ -90,6 +92,10 @@ export default function AttendancePage() {
   const [empPerPage, setEmpPerPage] = useState(20)
   const [stuPage, setStuPage] = useState(1)
   const [stuPerPage, setStuPerPage] = useState(20)
+  const [showEmployeeActionMenu, setShowEmployeeActionMenu] = useState(false)
+  const [showStudentActionMenu, setShowStudentActionMenu] = useState(false)
+  const employeeActionMenuRef = useRef<HTMLDivElement>(null)
+  const studentActionMenuRef = useRef<HTMLDivElement>(null)
   // Device tab state moved to DeviceTab component
   useScrollLock(
     showMarkAll ||
@@ -100,6 +106,20 @@ export default function AttendancePage() {
   )
 
   // Device functions moved to DeviceTab component
+
+  // Click outside handlers for action menus
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (employeeActionMenuRef.current && !employeeActionMenuRef.current.contains(event.target as Node)) {
+        setShowEmployeeActionMenu(false)
+      }
+      if (studentActionMenuRef.current && !studentActionMenuRef.current.contains(event.target as Node)) {
+        setShowStudentActionMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     setEmpPage(1)
@@ -1336,26 +1356,87 @@ export default function AttendancePage() {
                 </span>
               )}
             </div>
-            <div className="flex gap-1.5">
+            <div className="relative" ref={employeeActionMenuRef}>
               <button
-                onClick={exportEmployeeExcel}
-                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] cursor-pointer font-medium"
+                onClick={() => setShowEmployeeActionMenu(!showEmployeeActionMenu)}
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-[0.75rem] cursor-pointer font-medium"
               >
-                <FileSpreadsheet size={13} />
-                Excel
+                <MoreVertical size={13} />
+                {isBn ? 'অ্যাকশন' : 'Action'}
+                <ChevronDown size={12} />
               </button>
-              <button
-                onClick={() => setShowEmployeePDF(true)}
-                disabled={selectedEmployees.length === 0}
-                className={`flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg text-[0.75rem] font-medium ${
-                  selectedEmployees.length === 0
-                    ? 'bg-[var(--border-2)] border border-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'
-                    : 'bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] cursor-pointer'
-                }`}
-              >
-                <FileText size={13} />
-                PDF {selectedEmployees.length > 0 && `(${selectedEmployees.length})`}
-              </button>
+              {showEmployeeActionMenu && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '0.375rem',
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    minWidth: '12.5rem',
+                    zIndex: 100,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      exportEmployeeExcel()
+                      setShowEmployeeActionMenu(false)
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.625rem 0.875rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.8125rem',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
+                    {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                  </button>
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+                  <button
+                    onClick={() => {
+                      setShowEmployeePDF(true)
+                      setShowEmployeeActionMenu(false)
+                    }}
+                    disabled={selectedEmployees.length === 0}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.625rem 0.875rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: selectedEmployees.length === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
+                      fontSize: '0.8125rem',
+                      cursor: selectedEmployees.length === 0 ? 'not-allowed' : 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                      opacity: selectedEmployees.length === 0 ? 0.5 : 1,
+                    }}
+                    onMouseEnter={(e) => { if (selectedEmployees.length > 0) e.currentTarget.style.background = 'var(--red-light)' }}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <FileText size={14} style={{ color: 'var(--red)' }} />
+                    {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                    {selectedEmployees.length > 0 && ` (${selectedEmployees.length})`}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -2209,26 +2290,87 @@ export default function AttendancePage() {
                 </span>
               )}
             </div>
-            <div className="flex gap-1.5">
+            <div className="relative" ref={studentActionMenuRef}>
               <button
-                onClick={exportStudentExcel}
-                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] cursor-pointer font-medium"
+                onClick={() => setShowStudentActionMenu(!showStudentActionMenu)}
+                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-[0.75rem] cursor-pointer font-medium"
               >
-                <FileSpreadsheet size={13} />
-                Excel
+                <MoreVertical size={13} />
+                {isBn ? 'অ্যাকশন' : 'Action'}
+                <ChevronDown size={12} />
               </button>
-              <button
-                onClick={() => setShowStudentPDF(true)}
-                disabled={selectedStudents.length === 0}
-                className={`flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg text-[0.75rem] font-medium ${
-                  selectedStudents.length === 0
-                    ? 'bg-[var(--border-2)] border border-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'
-                    : 'bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] cursor-pointer'
-                }`}
-              >
-                <FileText size={13} />
-                PDF {selectedStudents.length > 0 && `(${selectedStudents.length})`}
-              </button>
+              {showStudentActionMenu && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '0.375rem',
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    minWidth: '12.5rem',
+                    zIndex: 100,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      exportStudentExcel()
+                      setShowStudentActionMenu(false)
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.625rem 0.875rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.8125rem',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
+                    {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                  </button>
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+                  <button
+                    onClick={() => {
+                      setShowStudentPDF(true)
+                      setShowStudentActionMenu(false)
+                    }}
+                    disabled={selectedStudents.length === 0}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.625rem 0.875rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: selectedStudents.length === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
+                      fontSize: '0.8125rem',
+                      cursor: selectedStudents.length === 0 ? 'not-allowed' : 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                      opacity: selectedStudents.length === 0 ? 0.5 : 1,
+                    }}
+                    onMouseEnter={(e) => { if (selectedStudents.length > 0) e.currentTarget.style.background = 'var(--red-light)' }}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <FileText size={14} style={{ color: 'var(--red)' }} />
+                    {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                    {selectedStudents.length > 0 && ` (${selectedStudents.length})`}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
