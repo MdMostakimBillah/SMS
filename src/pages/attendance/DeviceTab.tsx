@@ -2366,7 +2366,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                           {isBn ? 'ক্যামেরা খুলুন' : 'Open Camera'}
                         </button>
                       )}
-                      {kioskRegStaff && kioskCamActive && (
+                      {kioskRegStaff && kioskCamActive && !kioskAttendanceOpen && (
                         <div className="space-y-2">
                           <div className="relative rounded-xl overflow-hidden bg-black w-full" style={{ aspectRatio: '4/3', maxHeight: '30vh' }}>
                             <video ref={kioskVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
@@ -2427,6 +2427,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                       </div>
                       <button
                         onClick={() => {
+                          stopKioskCamera()
+                          stopKioskDetectLoop()
                           setKioskAttendanceOpen(true)
                           setKioskCapturedPhoto(null)
                           setKioskIdentified(null)
