@@ -49,7 +49,7 @@ function playSuccessSound() {
 export default function KioskMode({ isBn, date }: { isBn: boolean; date: string }) {
   const { teachers, attendance } = useTeacherStore()
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
-  const { loaded: faceApiLoaded, detectFace, matchFace } = useFaceApi()
+  const { loaded: faceApiLoaded, loading: faceApiLoading, error: faceApiError, detectFace, matchFace } = useFaceApi()
 
   const [kioskMode, setKioskMode] = useState<'register' | 'attendance'>('register')
   const [registeredFaces, setRegisteredFaces] = useState<RegisteredFace[]>(loadFaces)
@@ -398,7 +398,11 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       {/* ML loading indicator */}
       {!faceApiLoaded && (
         <div className="mb-4 py-3 px-4 rounded-xl bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.75rem] font-medium text-center">
-          {isBn ? '🧠 ML মডেল লোড হচ্ছে...' : '🧠 Loading face recognition models...'}
+          {faceApiLoading
+            ? (isBn ? '🧠 ML মডেল লোড হচ্ছে...' : '🧠 Loading face recognition models...')
+            : faceApiError
+              ? `❌ ${faceApiError}`
+              : (isBn ? '🧠 ML মডেল লোড হয়েছে' : '🧠 ML models loaded')}
         </div>
       )}
 

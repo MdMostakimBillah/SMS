@@ -11,6 +11,10 @@ export interface TabulationStudentRow {
   classRank: number
   sectionRank: number
   passedAll: boolean
+  adjustmentMarks?: number
+  adjustedTotal?: number
+  adjustedPercentage?: number
+  adjustedGpa?: number
 }
 
 export interface TabulationPdfOptions {
@@ -119,10 +123,14 @@ export function generateTabulationPDF(
         const failStyle = !s.passed ? 'color:#ef4444;font-weight:700;background:#fef2f2;' : ''
         cells.push(`<td style="${tdBase};${failStyle}">${s.obtained}</td>`)
       })
-      if (cols.includes('obtained')) cells.push(`<td style="${tdBase};font-weight:700;background:#eff6ff;color:${brand};font-size:11px">${row.totalObtained}</td>`)
+      if (cols.includes('obtained')) {
+        const val = row.adjustedTotal ?? row.totalObtained
+        const adjNote = row.adjustmentMarks ? ` <span style="font-size:7px;color:${brand}">adj</span>` : ''
+        cells.push(`<td style="${tdBase};font-weight:700;background:#eff6ff;color:${brand};font-size:11px">${val}${adjNote}</td>`)
+      }
       if (cols.includes('avg')) cells.push(`<td style="${tdBase};color:${brand};font-weight:700">${row.avgMark}</td>`)
-      if (cols.includes('percentage')) cells.push(`<td style="${tdBase};color:#64748b;font-weight:500">${row.percentage}%</td>`)
-      if (cols.includes('gpa')) cells.push(`<td style="${tdBase};font-weight:700;color:${brand};font-size:11px">${row.gpa}</td>`)
+      if (cols.includes('percentage')) cells.push(`<td style="${tdBase};color:#64748b;font-weight:500">${row.adjustedPercentage ?? row.percentage}%</td>`)
+      if (cols.includes('gpa')) cells.push(`<td style="${tdBase};font-weight:700;color:${brand};font-size:11px">${(row.adjustedGpa ?? row.gpa).toFixed(1)}</td>`)
       if (cols.includes('classRank')) cells.push(`<td style="${tdBase};${row.classRank <= 3 ? 'background:#fef3c7;color:#92400e;font-weight:700' : 'color:#64748b;font-weight:600'}">${row.classRank}</td>`)
       if (cols.includes('sectionRank')) cells.push(`<td style="${tdBase};${row.sectionRank <= 3 ? 'background:#dcfce7;color:#166534;font-weight:700' : 'color:#64748b;font-weight:600'}">${row.sectionRank}</td>`)
       if (cols.includes('result')) cells.push(`<td style="${tdBase};font-weight:700;${row.passedAll ? 'color:#166534;background:#dcfce7' : 'color:#ef4444;background:#fef2f2'}">${row.passedAll ? (isBn ? 'পাস' : 'PASS') : (isBn ? 'ফেল' : 'FAIL')}</td>`)

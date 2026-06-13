@@ -18,6 +18,7 @@ const MATCH_THRESHOLD = 0.5
 export function useFaceApi() {
   const [loaded, setLoaded] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const loadingRef = useRef(false)
 
   useEffect(() => {
@@ -28,14 +29,16 @@ export function useFaceApi() {
         const uri = '/models'
         console.log('[face-api] Loading models from', uri)
         await faceapi.nets.ssdMobilenetv1.loadFromUri(uri)
-        console.log('[face-api] ssdMobilenetv1 loaded')
+        console.log('[face-api] ssdMobilenetv1 loaded, isLoaded:', faceapi.nets.ssdMobilenetv1.isLoaded)
         await faceapi.nets.faceLandmark68Net.loadFromUri(uri)
-        console.log('[face-api] faceLandmark68 loaded')
+        console.log('[face-api] faceLandmark68 loaded, isLoaded:', faceapi.nets.faceLandmark68Net.isLoaded)
         await faceapi.nets.faceRecognitionNet.loadFromUri(uri)
-        console.log('[face-api] faceRecognition loaded')
+        console.log('[face-api] faceRecognition loaded, isLoaded:', faceapi.nets.faceRecognitionNet.isLoaded)
         setLoaded(true)
+        console.log('[face-api] All models loaded successfully')
       } catch (err) {
         console.error('[face-api] Failed to load models:', err)
+        setError(String(err))
       } finally {
         setLoading(false)
       }
@@ -46,19 +49,27 @@ export function useFaceApi() {
   const detectFace = async (
     input: HTMLVideoElement | HTMLCanvasElement | HTMLImageElement
   ): Promise<DetectionResult | null> => {
-    if (!loaded) return null
+    if (!loaded) {
+      console.warn('[face-api] detectFace called but models not loaded')
+      return null
+    }
     try {
       const result = await faceapi
-        .detectSingleFace(input, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
+        .detectSingleFace(input, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.2 }))
         .withFaceLandmarks()
         .withFaceDescriptor()
-      if (!result) return null
+      if (!result) {
+        console.warn('[face-api] No face detected in frame, input dims:', (input as HTMLVideoElement).videoWidth, 'x', (input as HTMLVideoElement).videoHeight)
+        return null
+      }
+      console.log('[face-api] Face detected!', result.detection.box)
       return {
         descriptor: result.descriptor,
         box: result.detection.box,
       }
     } catch (err) {
       console.error('[face-api] detectFace error:', err)
+      setError(String(err))
       return null
     }
   }
@@ -82,5 +93,5 @@ export function useFaceApi() {
     return null
   }
 
-  return { loaded, loading, detectFace, matchFace }
+  return { loaded, loading, error, detectFace, matchFace }
 }

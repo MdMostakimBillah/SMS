@@ -35,13 +35,14 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions, buildSectionsMap, extractClassNumber } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
-import { sectionCls, sectionTitleCls, inputCls, selectCls } from '@/lib/styles'
+import { sectionCls, sectionTitleCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
 import { downloadHTML } from '@/lib/pdf'
 import { TabulationPDFOptionsModal } from '@/components/shared/TabulationPDFOptionsModal'
 import type { TabulationPdfOptions } from '@/pages/exams/step4/tabulationPdfTemplate'
 import { generateTabulationPDF } from '@/pages/exams/step4/tabulationPdfTemplate'
+import { MarkAdjustmentTab } from '@/pages/exams/step4/MarkAdjustmentTab'
 
-type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position'
+type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position' | 'mark-adjustment'
 
 export default function Step4Results() {
   const navigate = useNavigate()
@@ -59,13 +60,16 @@ export default function Step4Results() {
   const extraMarkTypes = useExamStore((s) => s.extraMarkTypes)
   const updateExtraMarkType = useExamStore((s) => s.updateExtraMarkType)
   const deleteExtraMarkType = useExamStore((s) => s.deleteExtraMarkType)
+  const setMarkAdjustments = useExamStore((s) => s.setMarkAdjustments)
+  const clearMarkAdjustments = useExamStore((s) => s.clearMarkAdjustments)
+  const attendances = useExamStore((s) => s.attendances)
 
   const sessionExamIds = useMemo(() => new Set(examConfigs.map((e) => e.id)), [examConfigs])
   const sessionStudentMarks = useMemo(() => studentMarks.filter((m) => sessionExamIds.has(m.examId)), [studentMarks, sessionExamIds])
   const sessionSubjectMarkConfigs = useMemo(() => subjectMarkConfigs.filter((s) => sessionExamIds.has(s.examId)), [subjectMarkConfigs, sessionExamIds])
   const sessionExtraMarks = useMemo(() => extraMarks.filter((e) => sessionExamIds.has(e.examId)), [extraMarks, sessionExamIds])
   const addExtraMark = useExamStore((s) => s.addExtraMark)
-  const deleteExtraMark = useExamStore((s) => s.deleteExtraMark)
+  const bulkAddExtraMarks = useExamStore((s) => s.bulkAddExtraMarks)
 
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('tabulation')
   const [selectedExamId, setSelectedExamId] = useState(examConfigs.find((e) => e.isActive)?.id || '')
@@ -120,6 +124,14 @@ export default function Step4Results() {
     note: '',
   })
 
+  // Extra marks filter & multi-select
+  const [extraSelectedStudents, setExtraSelectedStudents] = useState<Set<string>>(new Set())
+  const [extraSelectAll, setExtraSelectAll] = useState(false)
+  const [extraBulkType, setExtraBulkType] = useState('')
+  const [extraBulkMarks, setExtraBulkMarks] = useState('5')
+  const [extraBulkMaxMarks, setExtraBulkMaxMarks] = useState('10')
+  const [extraBulkNote, setExtraBulkNote] = useState('')
+
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
   const sectionOptions = useMemo(() => (selectedClassId ? sectionsMap[selectedClassId] || [] : []), [selectedClassId, sectionsMap])
@@ -128,6 +140,52 @@ export default function Step4Results() {
     if (!selectedClassId || !selectedSectionId) return []
     return students.filter((s) => s.status === 'approved' && s.class === selectedClassId && s.section === selectedSectionId)
   }, [students, selectedClassId, selectedSectionId])
+
+  // Extra marks filtered students (uses top-level class/section filters)
+  const extraFilteredStudents = useMemo(() => {
+    return students.filter((s) => {
+      if (s.status && s.status !== 'approved') return false
+      if (selectedClassId && s.class !== selectedClassId) return false
+      if (selectedSectionId && s.section !== selectedSectionId) return false
+      return true
+    })
+  }, [students, selectedClassId, selectedSectionId])
+
+  const handleExtraSelectAll = () => {
+    if (extraSelectAll) {
+      setExtraSelectedStudents(new Set())
+    } else {
+      setExtraSelectedStudents(new Set(extraFilteredStudents.map((s) => s.id)))
+    }
+    setExtraSelectAll(!extraSelectAll)
+  }
+
+  const handleExtraToggleStudent = (id: string) => {
+    setExtraSelectedStudents((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleExtraBulkApply = () => {
+    if (extraSelectedStudents.size === 0 || !extraBulkType || !selectedExamId) return
+    const entries = Array.from(extraSelectedStudents).map((studentId) => ({
+      examId: selectedExamId,
+      studentId,
+      classId: selectedClassId,
+      sectionId: selectedSectionId,
+      typeId: extraBulkType,
+      marks: Number(extraBulkMarks) || 0,
+      maxMarks: Number(extraBulkMaxMarks) || 10,
+      note: extraBulkNote,
+    }))
+    bulkAddExtraMarks(entries)
+    setExtraSelectedStudents(new Set())
+    setExtraSelectAll(false)
+    setExtraBulkNote('')
+  }
 
   // Get selected section's subjectIds from Classes store
   const sectionSubjectIds = useMemo(() => {
@@ -213,7 +271,7 @@ export default function Step4Results() {
 
   // Class rank, section rank, average per student
   const enrichedTabulationData = useMemo(() => {
-    // Class rank: rank among ALL students of this class (all sections)
+    // Class rank: rank among ALL students of this class (all sections) — raw marks only
     const allClassStudents = tabulationData.length > 0
       ? students
           .filter((s) => s.status === 'approved' && s.class === selectedClassId)
@@ -238,7 +296,7 @@ export default function Step4Results() {
       if (existing === undefined) allClassRankMap.set(d.studentId, i + 1)
     })
 
-    // Section rank: rank among this section only (by marks)
+    // Section rank: rank among this section only (by raw marks)
     const sectionRankMap = new Map<string, number>()
     ;[...tabulationData]
       .sort((a, b) => b.totalObtained - a.totalObtained)
@@ -248,16 +306,30 @@ export default function Step4Results() {
 
     return tabulationData.map((row) => {
       const totalFull = row.subjectMarks.reduce((a, b) => a + b.fullMarks, 0)
+      const percentage = totalFull > 0 ? Math.round((row.totalObtained / totalFull) * 100) : 0
       const avg = row.subjectMarks.length > 0 ? Math.round(row.totalObtained / row.subjectMarks.length) : 0
+      const gpa = row.passedAll
+        ? percentage >= 80 ? 5.0
+        : percentage >= 70 ? 4.0
+        : percentage >= 60 ? 3.5
+        : percentage >= 50 ? 3.0
+        : percentage >= 40 ? 2.0
+        : percentage >= 33 ? 1.0
+        : 0
+        : 0
       return {
         ...row,
+        adjustmentMarks: 0,
+        adjustedTotal: row.totalObtained,
+        adjustedPercentage: percentage,
+        adjustedGpa: gpa,
         classRank: allClassRankMap.get(row.student.id) || 0,
         sectionRank: sectionRankMap.get(row.student.id) || 0,
         avgMark: avg,
         totalFullMarks: totalFull,
       }
     }).sort((a, b) => {
-      if (sortMode === 'rank') return b.totalObtained - a.totalObtained
+      if (sortMode === 'rank') return b.adjustedTotal - a.adjustedTotal
       return (a.student.roll || '').localeCompare(b.student.roll || '')
     })
   }, [tabulationData, students, selectedClassId, selectedExamId, sessionSubjectMarkConfigs, sessionStudentMarks, sectionSubjectIds, sortMode])
@@ -292,10 +364,11 @@ export default function Step4Results() {
     const totalStudents = tabulationData.length
     const passedStudents = tabulationData.filter((d) => d.passedAll).length
     const passRate = totalStudents > 0 ? Math.round((passedStudents / totalStudents) * 100) : 0
-    const avgPercentage = totalStudents > 0 ? Math.round(tabulationData.reduce((a, d) => a + d.percentage, 0) / totalStudents) : 0
+    // Use enriched data for adjusted percentage if available
+    const avgPercentage = totalStudents > 0 ? Math.round(enrichedTabulationData.reduce((a, d) => a + (d.adjustedPercentage || d.percentage), 0) / totalStudents) : 0
 
     return { subjectStats, totalStudents, passedStudents, passRate, avgPercentage }
-  }, [selectedExamId, selectedClassId, selectedSectionId, tabulationData, sessionSubjectMarkConfigs, sessionStudentMarks, subjects, isBn])
+  }, [selectedExamId, selectedClassId, selectedSectionId, tabulationData, enrichedTabulationData, sessionSubjectMarkConfigs, sessionStudentMarks, subjects, isBn])
 
   const handleSaveExtra = () => {
     if (!selectedExamId || !extraForm.studentId || !extraForm.marks) return
@@ -413,6 +486,7 @@ export default function Step4Results() {
         {[
           { key: 'tabulation' as SubTab, label: isBn ? 'ট্যাবুলেশন' : 'Tabulation', icon: <FileSpreadsheet size={14} /> },
           { key: 'extra-marks' as SubTab, label: isBn ? 'এক্সট্রা মার্কস' : 'Extra Marks', icon: <Award size={14} /> },
+          { key: 'mark-adjustment' as SubTab, label: isBn ? 'মার্ক এডজাস্টমেন্ট' : 'Mark Adjustment', icon: <ClipboardCheck size={14} /> },
           { key: 'analysis' as SubTab, label: isBn ? 'বিশ্লেষণ' : 'Analysis', icon: <BarChart2 size={14} /> },
           { key: 'position' as SubTab, label: isBn ? 'পজিশন চেক' : 'Position Check', icon: <Target size={14} /> },
         ].map((t) => (
@@ -558,13 +632,20 @@ export default function Step4Results() {
                               </span>
                             </td>
                           ))}
-                          <td className="py-2 px-2 text-center text-[0.75rem] font-bold text-[var(--text-primary)]">{row.totalObtained}</td>
-                          <td className="py-2 px-2 text-center text-[0.6875rem] font-medium text-[var(--text-secondary)]">{row.percentage}%</td>
+                          <td className="py-2 px-2 text-center text-[0.75rem] font-bold text-[var(--text-primary)]">
+                            {row.adjustmentMarks !== 0 ? (
+                              <span title={`Raw: ${row.totalObtained} + Adj: ${row.adjustmentMarks}`}>
+                                {row.adjustedTotal}
+                                <span className="text-[0.5rem] text-[var(--brand)] ml-0.5">adj</span>
+                              </span>
+                            ) : row.totalObtained}
+                          </td>
+                          <td className="py-2 px-2 text-center text-[0.6875rem] font-medium text-[var(--text-secondary)]">{row.adjustedPercentage}%</td>
                           <td className="py-2 px-2 text-center">
                             <span
-                              className={`text-[0.625rem] font-bold px-1.5 py-0.5 rounded ${row.gpa >= 4 ? 'bg-[#dcfce7] text-[#15803d]' : row.gpa >= 2 ? 'bg-[#dbeafe] text-[#1d4ed8]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}
+                              className={`text-[0.625rem] font-bold px-1.5 py-0.5 rounded ${row.adjustedGpa >= 4 ? 'bg-[#dcfce7] text-[#15803d]' : row.adjustedGpa >= 2 ? 'bg-[#dbeafe] text-[#1d4ed8]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}
                             >
-                              {row.gpa.toFixed(1)}
+                              {row.adjustedGpa.toFixed(1)}
                             </span>
                           </td>
                           <td className="py-2 px-2 text-center">
@@ -630,21 +711,64 @@ export default function Step4Results() {
               </div>
             </div>
 
-            {/* Type summary - compact inline with Lucide icons */}
+            {/* Selected count */}
+            {extraSelectedStudents.size > 0 && (
+              <div className="mb-2 flex items-center gap-2">
+                <span className="text-[0.625rem] text-[var(--brand)] font-medium">
+                  {extraSelectedStudents.size} {isBn ? 'নির্বাচিত' : 'selected'}
+                </span>
+                <button onClick={() => { setExtraSelectedStudents(new Set()); setExtraSelectAll(false) }} className="text-[0.625rem] text-[var(--text-muted)] cursor-pointer bg-transparent border-none hover:text-[var(--text-primary)]">
+                  {isBn ? 'বাতিল' : 'Clear'}
+                </button>
+              </div>
+            )}
+
+            {/* Bulk Apply Panel */}
+            {extraSelectedStudents.size > 0 && (
+              <div className="mb-3 p-3 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)]/20">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Award size={14} className="text-[var(--brand)]" />
+                  <span className="text-[0.75rem] font-semibold text-[var(--brand)]">
+                    {isBn ? `${extraSelectedStudents.size} জনকে এক্সট্রা মার্ক দিন` : `Apply to ${extraSelectedStudents.size} students`}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                  <select value={extraBulkType} onChange={(e) => { setExtraBulkType(e.target.value); const t = extraMarkTypes.find((tt) => tt.id === e.target.value); if (t) setExtraBulkMaxMarks(String(t.defaultMaxMarks)) }} className={`${selectCls} text-[0.6875rem] py-1`}>
+                    <option value="">{isBn ? 'ধরন' : 'Type'}</option>
+                    {extraMarkTypes.filter((t) => t.isActive).map((t) => (<option key={t.id} value={t.id}>{isBn ? t.nameBn : t.name}</option>))}
+                  </select>
+                  <input type="number" value={extraBulkMarks} onChange={(e) => setExtraBulkMarks(e.target.value)} placeholder={isBn ? 'মার্কস' : 'Marks'} className={`${inputCls} text-[0.6875rem] py-1`} />
+                  <input type="number" value={extraBulkMaxMarks} onChange={(e) => setExtraBulkMaxMarks(e.target.value)} placeholder={isBn ? 'সর্বোচ্চ' : 'Max'} className={`${inputCls} text-[0.6875rem] py-1`} />
+                  <input value={extraBulkNote} onChange={(e) => setExtraBulkNote(e.target.value)} placeholder={isBn ? 'নোট' : 'Note'} className={`${inputCls} text-[0.6875rem] py-1`} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={handleExtraBulkApply} disabled={!extraBulkType} className={`${btnPrimary} text-[0.625rem] ${!extraBulkType ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <Save size={11} />{isBn ? 'প্রয়োগ' : 'Apply'}
+                  </button>
+                  <button onClick={() => { setExtraSelectedStudents(new Set()); setExtraSelectAll(false) }} className="text-[0.625rem] text-[var(--text-muted)] cursor-pointer bg-transparent border-none hover:text-[var(--text-primary)]">
+                    {isBn ? 'বাতিল' : 'Cancel'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Type summary with percentage */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-3">
               {extraMarkTypes.filter((t) => t.isActive).map((type) => {
                 const count = sessionExtraMarks.filter((e) => e.typeId === type.id && (selectedExamId ? e.examId === selectedExamId : true)).length
                 const IconComponent = getIcon(type.icon)
                 return (
-                  <div
-                    key={type.id}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]"
-                  >
+                  <div key={type.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
                     <div className="flex items-center justify-center w-9 h-9 rounded-lg shrink-0" style={{ background: `${type.color}15` }}>
                       <IconComponent size={17} style={{ color: type.color }} />
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-[1rem] font-bold text-[var(--text-primary)] leading-none">{count}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[1rem] font-bold text-[var(--text-primary)] leading-none">{count}</span>
+                        <span className="text-[0.5625rem] font-medium px-1.5 py-0.5 rounded" style={{ background: `${type.color}15`, color: type.color }}>
+                          {type.percentage}%
+                        </span>
+                      </div>
                       <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1 leading-none truncate">{isBn ? type.nameBn : type.name}</div>
                     </div>
                   </div>
@@ -652,57 +776,113 @@ export default function Step4Results() {
               })}
             </div>
 
-            {/* Entry list */}
-            <div className="space-y-1.5">
-              {sessionExtraMarks
-                .filter((e) => (selectedExamId ? e.examId === selectedExamId : true))
-                .map((entry) => {
-                  const student = students.find((s) => s.id === entry.studentId)
-                  const typeInfo = extraMarkTypes.find((t) => t.id === entry.typeId)
-                  const IconComponent = typeInfo ? getIcon(typeInfo.icon) : Award
-                  return (
-                    <div
-                      key={entry.id}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/20 transition-all group"
-                    >
-                      <div className="flex items-center justify-center w-8 h-8 rounded-lg" style={{ background: `${typeInfo?.color || '#6b7280'}15` }}>
-                        <IconComponent size={15} style={{ color: typeInfo?.color || '#6b7280' }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[0.75rem] font-medium text-[var(--text-primary)] truncate">
-                          {isBn ? student?.nameBn || student?.nameEn || entry.studentId : student?.nameEn || entry.studentId}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[0.5625rem] text-[var(--text-muted)]">
-                          <span>{entry.note}</span>
-                          {entry.note && <span>·</span>}
-                          <span>{entry.classId}</span>
-                          {entry.sectionId && <span>/ {entry.sectionId}</span>}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="text-right">
-                          <span className="text-[0.8125rem] font-bold text-[var(--text-primary)]">{entry.marks}</span>
-                          <span className="text-[0.625rem] text-[var(--text-muted)]">/{entry.maxMarks}</span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteExtraMark(entry.id)
-                          }}
-                          className="w-6 h-6 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)] hover:border-[var(--red)]/30 opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          <Trash2 size={10} />
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              {sessionExtraMarks.filter((e) => (selectedExamId ? e.examId === selectedExamId : true)).length === 0 && (
-                <div className="text-center py-8 text-[var(--text-muted)] text-[0.75rem]">
-                  <Award size={24} className="mx-auto mb-2 opacity-30" />
-                  {isBn ? 'কোনো এক্সট্রা মার্কস নেই' : 'No extra marks yet'}
-                </div>
-              )}
+            {/* Entry list with checkboxes */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-[0.6875rem]">
+                <thead>
+                  <tr className="bg-[var(--bg-secondary)] border-b-2 border-[var(--border)]">
+                    <th className="p-2 text-center w-8">
+                      <input type="checkbox" checked={extraSelectAll} onChange={handleExtraSelectAll} className="cursor-pointer accent-[var(--brand)]" />
+                    </th>
+                    <th className="p-2 text-left font-semibold text-[var(--text-primary)]">{isBn ? 'রোল' : 'Roll'}</th>
+                    <th className="p-2 text-left font-semibold text-[var(--text-primary)]">{isBn ? 'নাম' : 'Name'}</th>
+                    {extraMarkTypes.filter((t) => t.isActive).map((type) => (
+                      <th key={type.id} className="p-2 text-center font-semibold" style={{ color: type.color }}>
+                        <div>{isBn ? type.nameBn : type.name}</div>
+                        <div className="text-[0.5rem] font-normal opacity-70">{type.percentage}%</div>
+                      </th>
+                    ))}
+                    <th className="p-2 text-center font-semibold text-[var(--text-primary)]">{isBn ? 'মোট' : 'Total'}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {extraFilteredStudents.map((student) => {
+                    const marks = sessionExtraMarks.filter((e) => e.studentId === student.id && (selectedExamId ? e.examId === selectedExamId : true))
+                    const total = marks.reduce((a, b) => a + b.marks, 0)
+                    const isSelected = extraSelectedStudents.has(student.id)
+                    return (
+                      <tr key={student.id} className={`border-b border-[var(--border)] transition-colors ${isSelected ? 'bg-[var(--brand-light)]' : 'hover:bg-[var(--bg-secondary)]'}`}>
+                        <td className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
+                          <input type="checkbox" checked={isSelected} onChange={() => handleExtraToggleStudent(student.id)} className="cursor-pointer accent-[var(--brand)]" />
+                        </td>
+                        <td className="p-2 text-left font-medium text-[var(--text-primary)]">{student.roll || '-'}</td>
+                        <td className="p-2 text-left text-[var(--text-primary)]">{isBn ? student.nameBn || student.nameEn : student.nameEn}</td>
+                        {extraMarkTypes.filter((t) => t.isActive).map((type) => {
+                          const entry = marks.find((m) => m.typeId === type.id)
+                          return (
+                            <td key={type.id} className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
+                              {entry ? (
+                                <input
+                                  type="number"
+                                  value={entry.marks}
+                                  onChange={(e) => {
+                                    const newMarks = Number(e.target.value) || 0
+                                    useExamStore.getState().updateExtraMark(entry.id, { marks: newMarks })
+                                  }}
+                                  className="w-14 text-center text-[0.6875rem] font-bold py-0.5 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
+                                />
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    if (!selectedExamId) return
+                                    useExamStore.getState().addExtraMark({
+                                      examId: selectedExamId,
+                                      studentId: student.id,
+                                      classId: selectedClassId,
+                                      sectionId: selectedSectionId,
+                                      typeId: type.id,
+                                      marks: 0,
+                                      maxMarks: type.defaultMaxMarks,
+                                      note: '',
+                                    })
+                                  }}
+                                  className="w-14 text-center text-[0.6875rem] py-0.5 rounded border border-dashed border-[var(--border)] bg-transparent text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)]"
+                                >
+                                  +{type.percentage}%
+                                </button>
+                              )}
+                            </td>
+                          )
+                        })}
+                        <td className="p-2 text-center font-bold text-[var(--brand)]">{total}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
+
+            {extraFilteredStudents.length === 0 && (
+              <div className="text-center py-8 text-[var(--text-muted)] text-[0.75rem]">
+                <Award size={24} className="mx-auto mb-2 opacity-30" />
+                {selectedClassId ? (isBn ? 'এই শ্রেণীতে কোনো শিক্ষার্থী নেই' : 'No students in this class') : (isBn ? 'শ্রেণী নির্বাচন করুন' : 'Select a class')}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ═══ MARK ADJUSTMENT TAB ═══ */}
+        {activeSubTab === 'mark-adjustment' && (
+          <>
+            {selectedExamId && selectedClassId && selectedSectionId ? (
+              <MarkAdjustmentTab
+                examId={selectedExamId}
+                classId={selectedClassId}
+                sectionId={selectedSectionId}
+                students={classStudents}
+                attendances={attendances}
+                extraMarks={sessionExtraMarks}
+                extraMarkTypes={extraMarkTypes}
+                onSave={setMarkAdjustments}
+                onClear={clearMarkAdjustments}
+                isBn={isBn}
+                tabulationData={tabulationData}
+              />
+            ) : (
+              <div className="text-center py-12 text-[var(--text-muted)] text-[0.875rem]">
+                {isBn ? 'প্রথমে পরীক্ষা, শ্রেণী ও সেকশন নির্বাচন করুন' : 'Select exam, class & section first'}
+              </div>
+            )}
           </>
         )}
 
@@ -1023,7 +1203,7 @@ export default function Step4Results() {
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>{isBn ? type.nameBn : type.name}</div>
-                            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{type.icon} · Max: {type.defaultMaxMarks}</div>
+                            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{type.icon} · Max: {type.defaultMaxMarks} · <span style={{ color: type.color, fontWeight: 600 }}>{type.percentage}%</span></div>
                           </div>
                           <button onClick={() => updateExtraMarkType(type.id, { isActive: !type.isActive })} style={{ padding: '4px 10px', borderRadius: '0.375rem', fontSize: '0.6875rem', fontWeight: 500, cursor: 'pointer', border: `1px solid ${type.isActive ? 'var(--green)' : 'var(--border)'}`, background: type.isActive ? 'var(--green-light)' : 'var(--bg-secondary)', color: type.isActive ? 'var(--green)' : 'var(--text-muted)', fontFamily: 'inherit' }}>
                             {type.isActive ? (isBn ? 'সক্রিয়' : 'Active') : (isBn ? 'নিষ্ক্রিয়' : 'Inactive')}
@@ -1076,7 +1256,7 @@ export default function Step4Results() {
 }
 
 // ─── Edit Type Form Component ───
-function EditTypeForm({ type, onClose, onSaved }: { type: { id: string; name: string; nameBn: string; icon: string; color: string; defaultMaxMarks: number }; onClose: () => void; onSaved: () => void }) {
+function EditTypeForm({ type, onClose, onSaved }: { type: { id: string; name: string; nameBn: string; icon: string; color: string; defaultMaxMarks: number; percentage: number }; onClose: () => void; onSaved: () => void }) {
   const isBn = useBn()
   const updateExtraMarkType = useExamStore((s) => s.updateExtraMarkType)
   const [name, setName] = useState(type.name)
@@ -1084,6 +1264,7 @@ function EditTypeForm({ type, onClose, onSaved }: { type: { id: string; name: st
   const [icon, setIcon] = useState(type.icon)
   const [color, setColor] = useState(type.color)
   const [defaultMaxMarks, setDefaultMaxMarks] = useState(String(type.defaultMaxMarks))
+  const [percentage, setPercentage] = useState(String(type.percentage))
 
   const iconOptions = [
     'ClipboardCheck', 'Shield', 'BookOpen', 'Award', 'Users', 'CheckCircle',
@@ -1099,6 +1280,7 @@ function EditTypeForm({ type, onClose, onSaved }: { type: { id: string; name: st
       icon,
       color,
       defaultMaxMarks: Number(defaultMaxMarks) || 10,
+      percentage: Number(percentage) || 0,
     })
     onSaved()
   }
@@ -1115,7 +1297,7 @@ function EditTypeForm({ type, onClose, onSaved }: { type: { id: string; name: st
           <input value={nameBn} onChange={(e) => setNameBn(e.target.value)} className={`${inputCls} w-full`} />
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         <div>
           <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Icon</label>
           <select value={icon} onChange={(e) => setIcon(e.target.value)} className={`${selectCls} w-full`}>
@@ -1132,6 +1314,10 @@ function EditTypeForm({ type, onClose, onSaved }: { type: { id: string; name: st
         <div>
           <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Max</label>
           <input type="number" value={defaultMaxMarks} onChange={(e) => setDefaultMaxMarks(e.target.value)} className={`${inputCls} w-full`} />
+        </div>
+        <div>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">%</label>
+          <input type="number" value={percentage} onChange={(e) => setPercentage(e.target.value)} className={`${inputCls} w-full`} />
         </div>
       </div>
       <div className="flex gap-2 justify-end">
@@ -1156,6 +1342,7 @@ function AddTypeForm({ onClose, onAdded }: { onClose: () => void; onAdded?: () =
   const [icon, setIcon] = useState('Award')
   const [color, setColor] = useState('#3b82f6')
   const [defaultMaxMarks, setDefaultMaxMarks] = useState('10')
+  const [percentage, setPercentage] = useState('5')
 
   const iconOptions = [
     'ClipboardCheck', 'Shield', 'BookOpen', 'Award', 'Users', 'CheckCircle',
@@ -1171,6 +1358,7 @@ function AddTypeForm({ onClose, onAdded }: { onClose: () => void; onAdded?: () =
       icon,
       color,
       defaultMaxMarks: Number(defaultMaxMarks) || 10,
+      percentage: Number(percentage) || 0,
       isActive: true,
     })
     setName('')
@@ -1207,7 +1395,7 @@ function AddTypeForm({ onClose, onAdded }: { onClose: () => void; onAdded?: () =
           />
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         <div>
           <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Icon</label>
           <select
@@ -1238,6 +1426,15 @@ function AddTypeForm({ onClose, onAdded }: { onClose: () => void; onAdded?: () =
             type="number"
             value={defaultMaxMarks}
             onChange={(e) => setDefaultMaxMarks(e.target.value)}
+            className={`${inputCls} w-full`}
+          />
+        </div>
+        <div>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">%</label>
+          <input
+            type="number"
+            value={percentage}
+            onChange={(e) => setPercentage(e.target.value)}
             className={`${inputCls} w-full`}
           />
         </div>

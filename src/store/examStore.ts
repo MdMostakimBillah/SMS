@@ -155,7 +155,24 @@ export interface ExtraMarkType {
   icon: string
   color: string
   defaultMaxMarks: number
+  percentage: number
   isActive: boolean
+}
+
+// ─── Mark Adjustment (attendance-based) ───
+
+export interface MarkAdjustment {
+  id: string
+  examId: string
+  studentId: string
+  classId: string
+  sectionId: string
+  totalDays: number
+  presentDays: number
+  attendancePct: number
+  adjustmentMarks: number
+  note: string
+  createdAt: string
 }
 
 // ─── Step 9: Marksheet ───
@@ -643,9 +660,9 @@ const defaultExtraMarks: ExtraMarkEntry[] = [
 ]
 
 const defaultExtraMarkTypes: ExtraMarkType[] = [
-  { id: 'EMT-001', name: 'Attendance', nameBn: 'উপস্থিতি', icon: 'ClipboardCheck', color: '#10b981', defaultMaxMarks: 10, isActive: true },
-  { id: 'EMT-002', name: 'Discipline', nameBn: 'শৃঙ্খলা', icon: 'Shield', color: '#3b82f6', defaultMaxMarks: 10, isActive: true },
-  { id: 'EMT-003', name: 'Homework', nameBn: 'হোমওয়ার্ক', icon: 'BookOpen', color: '#f59e0b', defaultMaxMarks: 20, isActive: true },
+  { id: 'EMT-001', name: 'Attendance', nameBn: 'উপস্থিতি', icon: 'ClipboardCheck', color: '#10b981', defaultMaxMarks: 10, percentage: 5, isActive: true },
+  { id: 'EMT-002', name: 'Discipline', nameBn: 'শৃঙ্খলা', icon: 'Shield', color: '#3b82f6', defaultMaxMarks: 10, percentage: 3, isActive: true },
+  { id: 'EMT-003', name: 'Homework', nameBn: 'হোমওয়ার্ক', icon: 'BookOpen', color: '#f59e0b', defaultMaxMarks: 20, percentage: 2, isActive: true },
 ]
 
 const defaultMarksheetConfigs: MarksheetConfig[] = [
@@ -863,6 +880,7 @@ interface ExamState {
   marksEntryStatuses: MarksEntryStatus[]
   omrTemplates: OMRTemplate[]
   attendances: ExamAttendance[]
+  markAdjustments: MarkAdjustment[]
 
   addExamConfig: (config: Omit<ExamConfig, 'id' | 'createdAt'>) => void
   updateExamConfig: (id: string, data: Partial<ExamConfig>) => void
@@ -921,6 +939,9 @@ interface ExamState {
   updateExtraMarkType: (id: string, data: Partial<ExtraMarkType>) => void
   deleteExtraMarkType: (id: string) => void
 
+  setMarkAdjustments: (adjustments: Omit<MarkAdjustment, 'id' | 'createdAt'>[]) => void
+  clearMarkAdjustments: (examId: string, classId: string, sectionId: string) => void
+
   addMarksheetConfig: (config: Omit<MarksheetConfig, 'id' | 'createdAt'>) => void
   updateMarksheetConfig: (id: string, data: Partial<MarksheetConfig>) => void
   deleteMarksheetConfig: (id: string) => void
@@ -967,6 +988,7 @@ export const useExamStore = create<ExamState>()(
       seatPlans: defaultSeatPlans,
       invigilators: defaultInvigilators,
       attendances: [],
+      markAdjustments: [],
       omrConfigs: defaultOMRConfigs,
       extraMarks: defaultExtraMarks,
       extraMarkTypes: defaultExtraMarkTypes,
@@ -1347,7 +1369,26 @@ export const useExamStore = create<ExamState>()(
           extraMarkTypes: state.extraMarkTypes.filter((t) => t.id !== id),
         })),
 
-      // ─── Marksheet Config ───
+      // ─── Mark Adjustments ───
+      setMarkAdjustments: (adjustments) =>
+        set((state) => {
+          const newAdj = adjustments.map((a, i) => ({
+            ...a,
+            id: `MA-${Date.now()}-${i}`,
+            createdAt: new Date().toISOString(),
+          }))
+          const existing = state.markAdjustments.filter(
+            (e) => !newAdj.some((n) => n.examId === e.examId && n.studentId === e.studentId && n.classId === e.classId && n.sectionId === e.sectionId)
+          )
+          return { markAdjustments: [...existing, ...newAdj] }
+        }),
+      clearMarkAdjustments: (examId, classId, sectionId) =>
+        set((state) => ({
+          markAdjustments: state.markAdjustments.filter(
+            (a) => !(a.examId === examId && a.classId === classId && a.sectionId === sectionId)
+          ),
+        })),
+
       addMarksheetConfig: (config) =>
         set((state) => ({
           marksheetConfigs: [...state.marksheetConfigs, { ...config, id: `MS-${Date.now()}`, createdAt: new Date().toISOString() }],
