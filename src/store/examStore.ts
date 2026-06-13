@@ -660,9 +660,9 @@ const defaultExtraMarks: ExtraMarkEntry[] = [
 ]
 
 const defaultExtraMarkTypes: ExtraMarkType[] = [
-  { id: 'EMT-001', name: 'Attendance', nameBn: 'উপস্থিতি', icon: 'ClipboardCheck', color: '#10b981', defaultMaxMarks: 10, percentage: 5, isActive: true },
-  { id: 'EMT-002', name: 'Discipline', nameBn: 'শৃঙ্খলা', icon: 'Shield', color: '#3b82f6', defaultMaxMarks: 10, percentage: 3, isActive: true },
-  { id: 'EMT-003', name: 'Homework', nameBn: 'হোমওয়ার্ক', icon: 'BookOpen', color: '#f59e0b', defaultMaxMarks: 20, percentage: 2, isActive: true },
+  { id: 'EMT-001', name: 'Attendance', nameBn: 'উপস্থিতি', icon: 'ClipboardCheck', color: '#10b981', defaultMaxMarks: 10, percentage: 100, isActive: true },
+  { id: 'EMT-002', name: 'Discipline', nameBn: 'শৃঙ্খলা', icon: 'Shield', color: '#3b82f6', defaultMaxMarks: 10, percentage: 100, isActive: true },
+  { id: 'EMT-003', name: 'Homework', nameBn: 'হোমওয়ার্ক', icon: 'BookOpen', color: '#f59e0b', defaultMaxMarks: 20, percentage: 100, isActive: true },
 ]
 
 const defaultMarksheetConfigs: MarksheetConfig[] = [

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { ClipboardCheck, Save, Trash2, Settings, X, Award, BookOpen, Users } from 'lucide-react'
 import { sectionCls, sectionTitleCls, inputCls, btnPrimary } from '@/lib/styles'
-import type { ExamAttendance, MarkAdjustment, ExtraMarkEntry, ExtraMarkType } from '@/store/examStore'
+import type { MarkAdjustment, ExtraMarkEntry, ExtraMarkType } from '@/store/examStore'
 
 interface Student {
   id: string
@@ -26,22 +26,12 @@ interface Props {
   examId: string
   classId: string
   sectionId: string
-  students: Student[]
-  attendances: ExamAttendance[]
   extraMarks: ExtraMarkEntry[]
   extraMarkTypes: ExtraMarkType[]
   onSave: (adj: MarkAdjustment[]) => void
   onClear: (examId: string, classId: string, sectionId: string) => void
   isBn: boolean
   tabulationData: TabulationRow[]
-}
-
-interface AttendanceStats {
-  studentId: string
-  totalDays: number
-  presentDays: number
-  absentDays: number
-  attendancePct: number
 }
 
 interface StudentRow {
@@ -52,10 +42,8 @@ interface StudentRow {
   rawObtained: number
   academicObtained: number
   academicPct: number
-  attendancePct: number
-  attendanceMarks: number
   extraMarksTotal: number
-  extraMarksBreakdown: { type: string; marks: number; maxMarks: number }[]
+  extraMarksBreakdown: { type: string; marks: number; maxMarks: number; percentage: number }[]
   finalTotal: number
   finalPercentage: number
 }
@@ -64,8 +52,6 @@ export function MarkAdjustmentTab({
   examId,
   classId,
   sectionId,
-  students,
-  attendances,
   extraMarks,
   extraMarkTypes,
   onSave,
@@ -73,59 +59,56 @@ export function MarkAdjustmentTab({
   isBn,
   tabulationData,
 }: Props) {
-  // User-controlled mark distribution (always sums to 100)
+  // Calculate number of active extra mark types and max possible percentage
+  const activeExtraTypes = extraMarkTypes.filter((t) => t.isActive).length
+  const maxPossibleExtra = extraMarkTypes.filter((t) => t.isActive).reduce((sum, t) => sum + t.percentage, 0)
+
+  // User-controlled mark distribution (Academic + Extra = 100%)
   const [academicPct, setAcademicPct] = useState(90)
-  const [attPctSetting, setAttPctSetting] = useState(5)
-  const [extraPctSetting, setExtraPctSetting] = useState(5)
+  const [extraPctSetting, setExtraPctSetting] = useState(10)
   const [showSettings, setShowSettings] = useState(false)
   const [saved, setSaved] = useState(false)
-
-  const clamp = (v: number) => Math.min(100, Math.max(0, v))
+  const [pctWarning, setPctWarning] = useState('')
 
   const handleAcademicChange = (val: number) => {
-    const acad = clamp(val)
-    const remaining = 100 - acad
-    // Distribute remaining proportionally between att and extra
-    const oldTotal = attPctSetting + extraPctSetting
-    if (oldTotal > 0) {
-      setAttPctSetting(Math.round((attPctSetting / oldTotal) * remaining))
-      setExtraPctSetting(remaining - Math.round((attPctSetting / oldTotal) * remaining))
-    } else {
-      setAttPctSetting(Math.round(remaining / 2))
-      setExtraPctSetting(remaining - Math.round(remaining / 2))
+    if (val > 100) {
+      setPctWarning(isBn ? 'সর্বোচ্চ 100% হতে পারে' : 'Max 100% allowed')
+      setAcademicPct(100)
+      setExtraPctSetting(0)
+      setTimeout(() => setPctWarning(''), 2000)
+      return
     }
-    setAcademicPct(acad)
-  }
-
-  const handleAttChange = (val: number) => {
-    const att = clamp(val)
-    setAttPctSetting(att)
-    setExtraPctSetting(100 - academicPct - att)
+    if (val < 0) {
+      setPctWarning(isBn ? 'ন্যূনতম 0%' : 'Min 0%')
+      setAcademicPct(0)
+      setExtraPctSetting(100)
+      setTimeout(() => setPctWarning(''), 2000)
+      return
+    }
+    setPctWarning('')
+    setAcademicPct(val)
+    setExtraPctSetting(100 - val)
   }
 
   const handleExtraChange = (val: number) => {
-    const ext = clamp(val)
-    setExtraPctSetting(ext)
-    setAttPctSetting(100 - academicPct - ext)
+    if (val > 100) {
+      setPctWarning(isBn ? 'সর্বোচ্চ 100% হতে পারে' : 'Max 100% allowed')
+      setExtraPctSetting(100)
+      setAcademicPct(0)
+      setTimeout(() => setPctWarning(''), 2000)
+      return
+    }
+    if (val < 0) {
+      setPctWarning(isBn ? 'ন্যূনতম 0%' : 'Min 0%')
+      setExtraPctSetting(0)
+      setAcademicPct(100)
+      setTimeout(() => setPctWarning(''), 2000)
+      return
+    }
+    setPctWarning('')
+    setExtraPctSetting(val)
+    setAcademicPct(100 - val)
   }
-
-  const totalPct = academicPct + attPctSetting + extraPctSetting
-  const isPctValid = totalPct === 100
-
-  // Calculate attendance stats per student
-  const attendanceStats = useMemo<AttendanceStats[]>(() => {
-    const examAttendances = attendances.filter(
-      (a) => a.examId === examId && a.classId === classId && a.sectionId === sectionId
-    )
-    return students.map((student) => {
-      const studentAtts = examAttendances.filter((a) => a.studentId === student.id)
-      const totalDays = studentAtts.length
-      const presentDays = studentAtts.filter((a) => a.status === 'present' || a.status === 'late').length
-      const absentDays = totalDays - presentDays
-      const attendancePct = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0
-      return { studentId: student.id, totalDays, presentDays, absentDays, attendancePct }
-    })
-  }, [attendances, examId, classId, sectionId, students])
 
   // Get extra marks per student for this exam/class/section
   const extraMarksByStudent = useMemo(() => {
@@ -144,34 +127,38 @@ export function MarkAdjustmentTab({
   const studentRows = useMemo<StudentRow[]>(() => {
     return tabulationData.map((row) => {
       const studentId = row.student.id
-      const att = attendanceStats.find((a) => a.studentId === studentId)
-      const attPct = att?.attendancePct || 0
+      const totalFull = row.totalFull
 
-      // Attendance marks = (attendance% / 100) * attendance allocation% * fullMarks
-      const attendanceMarks = Math.round((attPct / 100) * (attPctSetting / 100) * row.totalFull)
-
-      // Extra marks — student's extra mark entries
+      // Extra marks — sum each type's percentage, then normalize to 100%
       const studentExtras = extraMarksByStudent.get(studentId) || []
-      const rawExtraTotal = studentExtras.reduce((sum, e) => sum + e.marks, 0)
-      const rawExtraMax = studentExtras.reduce((sum, e) => sum + e.maxMarks, 0)
-
-      // Extra marks = (student's extra obtained / max possible extra) * extra allocation% * fullMarks
-      // If no max entries, use raw marks directly
-      const extraMarksTotal = rawExtraMax > 0
-        ? Math.round((rawExtraTotal / rawExtraMax) * (extraPctSetting / 100) * row.totalFull)
-        : Math.round((extraPctSetting / 100) * row.totalFull)
-
-      const extraMarksBreakdown = studentExtras.map((e) => {
-        const type = extraMarkTypes.find((t) => t.id === e.typeId)
-        return { type: type?.name || type?.nameBn || 'Extra', marks: e.marks, maxMarks: e.maxMarks }
+      
+      let sumOfTypePcts = 0
+      const extraMarksBreakdown: { type: string; marks: number; maxMarks: number; percentage: number }[] = []
+      
+      extraMarkTypes.filter((t) => t.isActive).forEach((type) => {
+        const entries = studentExtras.filter((e) => e.typeId === type.id)
+        const obtained = entries.reduce((sum, e) => sum + e.marks, 0)
+        const max = type.defaultMaxMarks
+        const pct = max > 0 ? Math.min(100, Math.round((obtained / max) * 100)) : 0
+        sumOfTypePcts += pct
+        extraMarksBreakdown.push({ 
+          type: isBn ? type.nameBn : type.name, 
+          marks: obtained, 
+          maxMarks: max,
+          percentage: pct
+        })
       })
+      
+      // Normalize: student's extra % = (sumOfPcts / maxPossible) × 100
+      const normalizedExtraPct = maxPossibleExtra > 0 ? (sumOfTypePcts / maxPossibleExtra) * 100 : 0
+      // Apply allocation: extraMarks = (normalizedExtraPct / 100) × extraPctSetting% × totalFull
+      const extraMarksTotal = Math.round((normalizedExtraPct / 100) * (extraPctSetting / 100) * totalFull)
 
       // Academic marks from tabulation — reduced by academic percentage
       const academicObtained = Math.round(row.totalObtained * (academicPct / 100))
-      const totalFull = row.totalFull
 
-      // Final total = academic (reduced) + attendance marks + extra marks
-      const finalTotal = academicObtained + attendanceMarks + extraMarksTotal
+      // Final total = academic (reduced) + extra marks
+      const finalTotal = academicObtained + extraMarksTotal
       const finalPercentage = totalFull > 0 ? Math.round((finalTotal / totalFull) * 100) : 0
 
       return {
@@ -182,23 +169,19 @@ export function MarkAdjustmentTab({
         rawObtained: row.totalObtained,
         academicObtained,
         academicPct: totalFull > 0 ? Math.round((academicObtained / totalFull) * 100) : 0,
-        attendancePct: attPct,
-        attendanceMarks,
         extraMarksTotal,
         extraMarksBreakdown,
         finalTotal,
         finalPercentage,
       }
     })
-  }, [tabulationData, attendanceStats, attPctSetting, extraPctSetting, extraMarksByStudent, extraMarkTypes, isBn])
+  }, [tabulationData, extraMarksByStudent, extraMarkTypes, isBn, academicPct, extraPctSetting, activeExtraTypes])
 
   // Summary
   const summary = useMemo(() => {
     const total = studentRows.length
-    const totalAttendance = studentRows.reduce((a, b) => a + b.attendanceMarks, 0)
     const totalExtra = studentRows.reduce((a, b) => a + b.extraMarksTotal, 0)
-    const avgAttendance = total > 0 ? Math.round(studentRows.reduce((a, b) => a + b.attendancePct, 0) / total) : 0
-    return { total, totalAttendance, totalExtra, avgAttendance }
+    return { total, totalExtra }
   }, [studentRows])
 
   const handleSave = () => {
@@ -209,11 +192,11 @@ export function MarkAdjustmentTab({
       studentId: row.studentId,
       classId,
       sectionId,
-      totalDays: attendanceStats.find((a) => a.studentId === row.studentId)?.totalDays || 0,
-      presentDays: attendanceStats.find((a) => a.studentId === row.studentId)?.presentDays || 0,
-      attendancePct: row.attendancePct,
-      adjustmentMarks: row.attendanceMarks + row.extraMarksTotal,
-      note: `acad:${row.academicObtained}+att:${row.attendanceMarks}+ext:${row.extraMarksTotal}`,
+      totalDays: 0,
+      presentDays: 0,
+      attendancePct: 0,
+      adjustmentMarks: row.extraMarksTotal,
+      note: `acad:${row.academicObtained}+ext:${row.extraMarksTotal}`,
       createdAt: now,
     }))
     onSave(marks)
@@ -272,8 +255,8 @@ export function MarkAdjustmentTab({
             </button>
           </div>
 
-          {/* Three percentage fields */}
-          <div className="grid grid-cols-3 gap-3 mb-2">
+          {/* Two percentage fields — must sum to 100% */}
+          <div className="grid grid-cols-2 gap-3 mb-2">
             <div>
               <label className="text-[0.6875rem] text-[var(--text-muted)] block mb-1">
                 {isBn ? 'একাডেমিক %' : 'Academic %'}
@@ -289,19 +272,6 @@ export function MarkAdjustmentTab({
             </div>
             <div>
               <label className="text-[0.6875rem] text-[var(--text-muted)] block mb-1">
-                {isBn ? 'উপস্থিতি %' : 'Attendance %'}
-              </label>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={attPctSetting}
-                onChange={(e) => handleAttChange(Number(e.target.value))}
-                className={`${inputCls} w-full text-[0.6875rem] py-1`}
-              />
-            </div>
-            <div>
-              <label className="text-[0.6875rem] text-[var(--text-muted)] block mb-1">
                 {isBn ? 'এক্সট্রা মার্ক %' : 'Extra Mark %'}
               </label>
               <input
@@ -312,15 +282,25 @@ export function MarkAdjustmentTab({
                 onChange={(e) => handleExtraChange(Number(e.target.value))}
                 className={`${inputCls} w-full text-[0.6875rem] py-1`}
               />
+              <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1">
+                {isBn ? `সর্বোচ্চ: ${maxPossibleExtra}% → 100% (${activeExtraTypes} ধরন)` : `Max: ${maxPossibleExtra}% → 100% (${activeExtraTypes} types)`}
+              </div>
             </div>
           </div>
 
-          {/* Total indicator */}
-          <div className={`flex items-center gap-2 mb-2 text-[0.6875rem] ${isPctValid ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
+          {/* Warning message */}
+          {pctWarning && (
+            <div className="mb-2 px-2 py-1 rounded bg-[var(--red-light)] text-[var(--red)] text-[0.625rem] font-medium">
+              {pctWarning}
+            </div>
+          )}
+
+          {/* Total indicator — always 100% */}
+          <div className={`flex items-center gap-2 mb-2 text-[0.6875rem] ${(academicPct + extraPctSetting) === 100 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
             <span className="font-semibold">
-              {isBn ? 'মোট' : 'Total'}: {totalPct}%
+              {isBn ? 'মোট' : 'Total'}: {academicPct + extraPctSetting}%
             </span>
-            {!isPctValid && (
+            {(academicPct + extraPctSetting) !== 100 && (
               <span>({isBn ? '১০০% হতে হবে' : 'must equal 100%'})</span>
             )}
           </div>
@@ -328,24 +308,21 @@ export function MarkAdjustmentTab({
           {/* Visual bar */}
           <div className="h-2.5 rounded-full bg-[var(--border)] overflow-hidden flex">
             <div className="h-full bg-[var(--brand)] transition-all duration-300" style={{ width: `${academicPct}%` }} />
-            <div className="h-full bg-[var(--green)] transition-all duration-300" style={{ width: `${attPctSetting}%` }} />
             <div className="h-full bg-[var(--amber)] transition-all duration-300" style={{ width: `${extraPctSetting}%` }} />
           </div>
           <div className="flex justify-between mt-1">
             <span className="text-[0.5625rem] text-[var(--brand)]">{isBn ? 'একাডেমিক' : 'Academic'}: {academicPct}%</span>
-            <span className="text-[0.5625rem] text-[var(--green)]">{isBn ? 'উপস্থিতি' : 'Attendance'}: {attPctSetting}%</span>
             <span className="text-[0.5625rem] text-[var(--amber)]">{isBn ? 'এক্সট্রা' : 'Extra'}: {extraPctSetting}%</span>
           </div>
         </div>
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
         {[
           { label: isBn ? 'মোট শিক্ষার্থী' : 'Students', value: summary.total, icon: <Users size={12} />, color: 'text-[var(--brand)]' },
-          { label: isBn ? 'গড় উপস্থিতি' : 'Avg Attendance', value: `${summary.avgAttendance}%`, icon: <ClipboardCheck size={12} />, color: 'text-[var(--green)]' },
-          { label: isBn ? 'মোট উপস্থিতি মার্ক' : 'Total Att Marks', value: summary.totalAttendance, icon: <Award size={12} />, color: 'text-[var(--teal)]' },
           { label: isBn ? 'মোট এক্সট্রা মার্ক' : 'Total Extra Marks', value: summary.totalExtra, icon: <Award size={12} />, color: 'text-[var(--amber)]' },
+          { label: isBn ? 'গড় ফাইনাল মার্ক' : 'Avg Final Marks', value: studentRows.length > 0 ? Math.round(studentRows.reduce((a, b) => a + b.finalTotal, 0) / studentRows.length) : 0, icon: <Award size={12} />, color: 'text-[var(--brand)]' },
         ].map((s, i) => (
           <div key={i} className="p-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
             <div className="flex items-center gap-1 mb-1">
@@ -372,19 +349,6 @@ export function MarkAdjustmentTab({
                     {isBn ? 'একাডেমিক' : 'Academic'}
                   </div>
                   <div className="text-[0.5rem] font-normal opacity-70">({academicPct}%)</div>
-                </th>
-                <th className="p-2 text-center font-semibold bg-[var(--green-light)] text-[var(--green)]">
-                  <div className="flex items-center justify-center gap-1">
-                    <ClipboardCheck size={11} />
-                    {isBn ? 'উপস্থিতি %' : 'Att %'}
-                  </div>
-                </th>
-                <th className="p-2 text-center font-semibold bg-[var(--green-light)] text-[var(--green)]">
-                  <div className="flex items-center justify-center gap-1">
-                    <Award size={11} />
-                    {isBn ? 'উপস্থিতি মার্ক' : 'Att Marks'}
-                  </div>
-                  <div className="text-[0.5rem] font-normal opacity-70">({attPctSetting}%)</div>
                 </th>
                 <th className="p-2 text-center font-semibold bg-[var(--amber-light)] text-[var(--amber)]">
                   <div className="flex items-center justify-center gap-1">
@@ -416,27 +380,13 @@ export function MarkAdjustmentTab({
                     <span className="font-bold text-[var(--brand)]">{row.academicObtained}</span>
                     <span className="text-[0.5rem] text-[var(--text-muted)] ml-0.5">/{row.totalFullMarks}</span>
                   </td>
-                  {/* Attendance % */}
-                  <td className="p-2 text-center bg-[var(--green-light)]">
-                    <span className={`px-1.5 py-0.5 rounded text-[0.625rem] font-medium ${
-                      row.attendancePct >= 75 ? 'bg-[var(--green)] text-white' :
-                      row.attendancePct >= 50 ? 'bg-[var(--amber)] text-white' :
-                      'bg-[var(--red)] text-white'
-                    }`}>
-                      {row.attendancePct}%
-                    </span>
-                  </td>
-                  {/* Attendance Marks */}
-                  <td className="p-2 text-center bg-[var(--green-light)]">
-                    <span className="font-bold text-[var(--green)]">+{row.attendanceMarks}</span>
-                  </td>
                   {/* Extra Marks */}
                   <td className="p-2 text-center bg-[var(--amber-light)]">
                     {row.extraMarksBreakdown.length > 0 ? (
                       <div className="flex flex-col items-center gap-0.5">
                         {row.extraMarksBreakdown.map((e, i) => (
                           <span key={i} className="text-[0.5625rem] text-[var(--amber)]">
-                            {e.type}: {e.marks}/{e.maxMarks}
+                            {e.type}: {e.marks}/{e.maxMarks} ({e.percentage}%)
                           </span>
                         ))}
                         <span className="font-bold text-[var(--amber)]">+{row.extraMarksTotal}</span>

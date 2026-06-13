@@ -29,6 +29,8 @@ import {
   Settings,
   Search,
   Edit,
+  Edit3,
+  GraduationCap,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -41,8 +43,9 @@ import { TabulationPDFOptionsModal } from '@/components/shared/TabulationPDFOpti
 import type { TabulationPdfOptions } from '@/pages/exams/step4/tabulationPdfTemplate'
 import { generateTabulationPDF } from '@/pages/exams/step4/tabulationPdfTemplate'
 import { MarkAdjustmentTab } from '@/pages/exams/step4/MarkAdjustmentTab'
+import { MarksheetTab } from '@/pages/exams/step4/MarksheetTab'
 
-type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position' | 'mark-adjustment'
+type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position' | 'mark-adjustment' | 'marksheet'
 
 export default function Step4Results() {
   const navigate = useNavigate()
@@ -131,6 +134,9 @@ export default function Step4Results() {
   const [extraBulkMarks, setExtraBulkMarks] = useState('5')
   const [extraBulkMaxMarks, setExtraBulkMaxMarks] = useState('10')
   const [extraBulkNote, setExtraBulkNote] = useState('')
+  
+  // Attendance mode for Extra Marks tab (auto from attendance data or manual)
+  const [extraAttMode, setExtraAttMode] = useState<'auto' | 'manual'>('auto')
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
@@ -150,6 +156,32 @@ export default function Step4Results() {
       return true
     })
   }, [students, selectedClassId, selectedSectionId])
+
+  // Auto-calculated attendance marks per student for Extra Marks tab
+  const autoAttMarksMap = useMemo(() => {
+    const map = new Map<string, number>()
+    if (!selectedExamId || !selectedClassId || !selectedSectionId) return map
+    
+    // Find the Attendance extra mark type
+    const attType = extraMarkTypes.find((t) => t.isActive && (t.name === 'Attendance' || t.nameBn === 'উপস্থিতি'))
+    if (!attType) return map
+    
+    // Get attendance records for this exam/class/section
+    const examAttendances = attendances.filter(
+      (a) => a.examId === selectedExamId && a.classId === selectedClassId && a.sectionId === selectedSectionId
+    )
+    
+    extraFilteredStudents.forEach((student) => {
+      const studentAtts = examAttendances.filter((a) => a.studentId === student.id)
+      const totalDays = studentAtts.length
+      const presentDays = studentAtts.filter((a) => a.status === 'present' || a.status === 'late').length
+      // Attendance marks = (present / total) * maxMarks
+      const marks = totalDays > 0 ? Math.round((presentDays / totalDays) * attType.defaultMaxMarks) : 0
+      map.set(student.id, marks)
+    })
+    
+    return map
+  }, [attendances, selectedExamId, selectedClassId, selectedSectionId, extraFilteredStudents, extraMarkTypes])
 
   const handleExtraSelectAll = () => {
     if (extraSelectAll) {
@@ -487,6 +519,7 @@ export default function Step4Results() {
           { key: 'tabulation' as SubTab, label: isBn ? 'ট্যাবুলেশন' : 'Tabulation', icon: <FileSpreadsheet size={14} /> },
           { key: 'extra-marks' as SubTab, label: isBn ? 'এক্সট্রা মার্কস' : 'Extra Marks', icon: <Award size={14} /> },
           { key: 'mark-adjustment' as SubTab, label: isBn ? 'মার্ক এডজাস্টমেন্ট' : 'Mark Adjustment', icon: <ClipboardCheck size={14} /> },
+          { key: 'marksheet' as SubTab, label: isBn ? 'মার্কশিট' : 'Marksheet', icon: <GraduationCap size={14} /> },
           { key: 'analysis' as SubTab, label: isBn ? 'বিশ্লেষণ' : 'Analysis', icon: <BarChart2 size={14} /> },
           { key: 'position' as SubTab, label: isBn ? 'পজিশন চেক' : 'Position Check', icon: <Target size={14} /> },
         ].map((t) => (
@@ -697,6 +730,31 @@ export default function Step4Results() {
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
+                {/* Attendance Auto/Manual Toggle */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setExtraAttMode('auto')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium cursor-pointer border transition-all ${
+                      extraAttMode === 'auto'
+                        ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]'
+                        : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--green)] hover:text-[var(--green)]'
+                    }`}
+                  >
+                    <ClipboardCheck size={13} />
+                    {isBn ? 'অটো' : 'Auto'}
+                  </button>
+                  <button
+                    onClick={() => setExtraAttMode('manual')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium cursor-pointer border transition-all ${
+                      extraAttMode === 'manual'
+                        ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]'
+                        : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:text-[var(--brand)]'
+                    }`}
+                  >
+                    <Edit3 size={13} />
+                    {isBn ? 'ম্যানুয়াল' : 'Manual'}
+                  </button>
+                </div>
                 <button
                   onClick={() => { setShowTypeManager(true); setShowAddTypeForm(true) }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
@@ -752,7 +810,7 @@ export default function Step4Results() {
               </div>
             )}
 
-            {/* Type summary with percentage */}
+            {/* Type summary — each type has its own max % */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-3">
               {extraMarkTypes.filter((t) => t.isActive).map((type) => {
                 const count = sessionExtraMarks.filter((e) => e.typeId === type.id && (selectedExamId ? e.examId === selectedExamId : true)).length
@@ -786,19 +844,29 @@ export default function Step4Results() {
                     </th>
                     <th className="p-2 text-left font-semibold text-[var(--text-primary)]">{isBn ? 'রোল' : 'Roll'}</th>
                     <th className="p-2 text-left font-semibold text-[var(--text-primary)]">{isBn ? 'নাম' : 'Name'}</th>
-                    {extraMarkTypes.filter((t) => t.isActive).map((type) => (
-                      <th key={type.id} className="p-2 text-center font-semibold" style={{ color: type.color }}>
-                        <div>{isBn ? type.nameBn : type.name}</div>
-                        <div className="text-[0.5rem] font-normal opacity-70">{type.percentage}%</div>
-                      </th>
-                    ))}
+                    {extraMarkTypes.filter((t) => t.isActive).map((type) => {
+                      const isAttType = type.name === 'Attendance' || type.nameBn === 'উপস্থিতি'
+                      return (
+                        <th key={type.id} className="p-2 text-center font-semibold" style={{ color: type.color }}>
+                          <div>{isBn ? type.nameBn : type.name}</div>
+                          <div className="text-[0.5rem] font-normal opacity-70">
+                            {isAttType ? (extraAttMode === 'auto' ? '(Auto)' : `(Manual ${type.percentage}%)`) : `${type.percentage}%`}
+                          </div>
+                        </th>
+                      )
+                    })}
                     <th className="p-2 text-center font-semibold text-[var(--text-primary)]">{isBn ? 'মোট' : 'Total'}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {extraFilteredStudents.map((student) => {
                     const marks = sessionExtraMarks.filter((e) => e.studentId === student.id && (selectedExamId ? e.examId === selectedExamId : true))
-                    const total = marks.reduce((a, b) => a + b.marks, 0)
+                    const manualTotal = marks.reduce((a, b) => a + b.marks, 0)
+                    // Add auto attendance marks if in auto mode
+                    const autoAttMarks = extraAttMode === 'auto' ? (autoAttMarksMap.get(student.id) || 0) : 0
+                    // Cap total at sum of all types' percentages
+                    const maxTotal = extraMarkTypes.filter((t) => t.isActive).reduce((sum, t) => sum + t.percentage, 0)
+                    const total = Math.min(manualTotal + autoAttMarks, maxTotal)
                     const isSelected = extraSelectedStudents.has(student.id)
                     return (
                       <tr key={student.id} className={`border-b border-[var(--border)] transition-colors ${isSelected ? 'bg-[var(--brand-light)]' : 'hover:bg-[var(--bg-secondary)]'}`}>
@@ -809,14 +877,29 @@ export default function Step4Results() {
                         <td className="p-2 text-left text-[var(--text-primary)]">{isBn ? student.nameBn || student.nameEn : student.nameEn}</td>
                         {extraMarkTypes.filter((t) => t.isActive).map((type) => {
                           const entry = marks.find((m) => m.typeId === type.id)
+                          const isAttType = type.name === 'Attendance' || type.nameBn === 'উপস্থিতি'
+                          const isAutoAtt = isAttType && extraAttMode === 'auto'
+                          const autoMarks = isAutoAtt ? (autoAttMarksMap.get(student.id) || 0) : 0
+                          const maxPct = type.percentage
+                          
                           return (
                             <td key={type.id} className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
-                              {entry ? (
+                              {isAutoAtt ? (
+                                // Auto mode: show read-only calculated marks
+                                <span className="inline-block w-14 text-center text-[0.6875rem] font-bold py-0.5 rounded bg-[var(--green-light)] text-[var(--green)]">
+                                  {autoMarks}
+                                </span>
+                              ) : entry ? (
                                 <input
                                   type="number"
+                                  min={0}
+                                  max={maxPct}
                                   value={entry.marks}
                                   onChange={(e) => {
-                                    const newMarks = Number(e.target.value) || 0
+                                    let newMarks = Number(e.target.value) || 0
+                                    // Limit to type's max percentage
+                                    if (newMarks > maxPct) newMarks = maxPct
+                                    if (newMarks < 0) newMarks = 0
                                     useExamStore.getState().updateExtraMark(entry.id, { marks: newMarks })
                                   }}
                                   className="w-14 text-center text-[0.6875rem] font-bold py-0.5 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
@@ -838,7 +921,7 @@ export default function Step4Results() {
                                   }}
                                   className="w-14 text-center text-[0.6875rem] py-0.5 rounded border border-dashed border-[var(--border)] bg-transparent text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)]"
                                 >
-                                  +{type.percentage}%
+                                  +{maxPct}%
                                 </button>
                               )}
                             </td>
@@ -869,8 +952,6 @@ export default function Step4Results() {
                 examId={selectedExamId}
                 classId={selectedClassId}
                 sectionId={selectedSectionId}
-                students={classStudents}
-                attendances={attendances}
                 extraMarks={sessionExtraMarks}
                 extraMarkTypes={extraMarkTypes}
                 onSave={setMarkAdjustments}
@@ -881,6 +962,33 @@ export default function Step4Results() {
             ) : (
               <div className="text-center py-12 text-[var(--text-muted)] text-[0.875rem]">
                 {isBn ? 'প্রথমে পরীক্ষা, শ্রেণী ও সেকশন নির্বাচন করুন' : 'Select exam, class & section first'}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ═══ MARKSHEET TAB ═══ */}
+        {activeSubTab === 'marksheet' && (
+          <>
+            {selectedExamId && selectedClassId && selectedSectionId && enrichedTabulationData.length > 0 ? (
+              <MarksheetTab
+                enrichedData={enrichedTabulationData}
+                extraMarks={sessionExtraMarks}
+                extraMarkTypes={extraMarkTypes}
+                markAdjustments={useExamStore.getState().markAdjustments.filter(
+                  (a) => a.examId === selectedExamId && a.classId === selectedClassId && a.sectionId === selectedSectionId
+                )}
+                examName={examConfigs.find((e) => e.id === selectedExamId)?.name || selectedExamId}
+                className={selectedClassId}
+                sectionName={selectedSectionId}
+                institutionName={useClassStore.getState().institution.name}
+                institutionNameBn={useClassStore.getState().institution.nameBn}
+                institutionAddress={useClassStore.getState().institution.address}
+                isBn={isBn}
+              />
+            ) : (
+              <div className="text-center py-12 text-[var(--text-muted)] text-[0.875rem]">
+                {isBn ? 'প্রথমে পরীক্ষা, শ্রেণি ও সেকশন নির্বাচন করুন' : 'Select exam, class & section first'}
               </div>
             )}
           </>
@@ -1263,7 +1371,6 @@ function EditTypeForm({ type, onClose, onSaved }: { type: { id: string; name: st
   const [nameBn, setNameBn] = useState(type.nameBn)
   const [icon, setIcon] = useState(type.icon)
   const [color, setColor] = useState(type.color)
-  const [defaultMaxMarks, setDefaultMaxMarks] = useState(String(type.defaultMaxMarks))
   const [percentage, setPercentage] = useState(String(type.percentage))
 
   const iconOptions = [
@@ -1279,53 +1386,48 @@ function EditTypeForm({ type, onClose, onSaved }: { type: { id: string; name: st
       nameBn: nameBn.trim() || name.trim(),
       icon,
       color,
-      defaultMaxMarks: Number(defaultMaxMarks) || 10,
-      percentage: Number(percentage) || 0,
+      percentage: Math.min(100, Math.max(0, Number(percentage) || 100)),
     })
     onSaved()
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Name</label>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">{isBn ? 'নাম' : 'Name'}</label>
           <input value={name} onChange={(e) => setName(e.target.value)} className={`${inputCls} w-full`} />
         </div>
         <div>
-          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Name (Bn)</label>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">{isBn ? 'নাম (বাংলা)' : 'Name (Bn)'}</label>
           <input value={nameBn} onChange={(e) => setNameBn(e.target.value)} className={`${inputCls} w-full`} />
         </div>
       </div>
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <div>
-          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Icon</label>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">{isBn ? 'আইকন' : 'Icon'}</label>
           <select value={icon} onChange={(e) => setIcon(e.target.value)} className={`${selectCls} w-full`}>
             {iconOptions.map((i) => (<option key={i} value={i}>{i}</option>))}
           </select>
         </div>
         <div>
-          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Color</label>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">{isBn ? 'রং' : 'Color'}</label>
           <div className="flex items-center gap-2">
             <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 rounded-md border border-[var(--border)] cursor-pointer" />
             <span className="text-[0.625rem] text-[var(--text-muted)]">{color}</span>
           </div>
         </div>
         <div>
-          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Max</label>
-          <input type="number" value={defaultMaxMarks} onChange={(e) => setDefaultMaxMarks(e.target.value)} className={`${inputCls} w-full`} />
-        </div>
-        <div>
-          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">%</label>
-          <input type="number" value={percentage} onChange={(e) => setPercentage(e.target.value)} className={`${inputCls} w-full`} />
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">{isBn ? 'সর্বোচ্চ %' : 'Max %'}</label>
+          <input type="number" min={0} max={100} value={percentage} onChange={(e) => setPercentage(e.target.value)} className={`${inputCls} w-full`} />
         </div>
       </div>
       <div className="flex gap-2 justify-end">
-        <button onClick={onClose} className="px-3 py-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer">
+        <button onClick={onClose} className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer hover:border-[var(--text-muted)] transition-all">
           {isBn ? 'বাতিল' : 'Cancel'}
         </button>
-        <button onClick={handleSave} disabled={!name.trim()} className="flex items-center gap-1 px-3 py-1 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none disabled:opacity-50">
-          <Save size={11} />
+        <button onClick={handleSave} disabled={!name.trim()} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+          <Save size={12} />
           {isBn ? 'সংরক্ষণ' : 'Save'}
         </button>
       </div>
@@ -1341,8 +1443,7 @@ function AddTypeForm({ onClose, onAdded }: { onClose: () => void; onAdded?: () =
   const [nameBn, setNameBn] = useState('')
   const [icon, setIcon] = useState('Award')
   const [color, setColor] = useState('#3b82f6')
-  const [defaultMaxMarks, setDefaultMaxMarks] = useState('10')
-  const [percentage, setPercentage] = useState('5')
+  const [percentage, setPercentage] = useState('100')
 
   const iconOptions = [
     'ClipboardCheck', 'Shield', 'BookOpen', 'Award', 'Users', 'CheckCircle',
@@ -1357,15 +1458,15 @@ function AddTypeForm({ onClose, onAdded }: { onClose: () => void; onAdded?: () =
       nameBn: nameBn.trim() || name.trim(),
       icon,
       color,
-      defaultMaxMarks: Number(defaultMaxMarks) || 10,
-      percentage: Number(percentage) || 0,
+      defaultMaxMarks: 0,
+      percentage: Math.min(100, Math.max(0, Number(percentage) || 100)),
       isActive: true,
     })
     setName('')
     setNameBn('')
     setIcon('Award')
     setColor('#3b82f6')
-    setDefaultMaxMarks('10')
+    setPercentage('100')
     if (onAdded) onAdded()
     else onClose()
   }
@@ -1377,27 +1478,27 @@ function AddTypeForm({ onClose, onAdded }: { onClose: () => void; onAdded?: () =
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Name</label>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">{isBn ? 'নাম' : 'Name'}</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             className={`${inputCls} w-full`}
-            placeholder="e.g. Participation"
+            placeholder={isBn ? 'যেমন: অংশগ্রহণ' : 'e.g. Participation'}
           />
         </div>
         <div>
-          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Name (Bn)</label>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">{isBn ? 'নাম (বাংলা)' : 'Name (Bn)'}</label>
           <input
             value={nameBn}
             onChange={(e) => setNameBn(e.target.value)}
             className={`${inputCls} w-full`}
-            placeholder="e.g. অংশগ্রহণ"
+            placeholder={isBn ? 'যেমন: অংশগ্রহণ' : 'e.g. অংশগ্রহণ'}
           />
         </div>
       </div>
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Icon</label>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">{isBn ? 'আইকন' : 'Icon'}</label>
           <select
             value={icon}
             onChange={(e) => setIcon(e.target.value)}
@@ -1409,7 +1510,7 @@ function AddTypeForm({ onClose, onAdded }: { onClose: () => void; onAdded?: () =
           </select>
         </div>
         <div>
-          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Color</label>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">{isBn ? 'রং' : 'Color'}</label>
           <div className="flex items-center gap-2">
             <input
               type="color"
@@ -1421,18 +1522,11 @@ function AddTypeForm({ onClose, onAdded }: { onClose: () => void; onAdded?: () =
           </div>
         </div>
         <div>
-          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">Max Marks</label>
+          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">{isBn ? 'সর্বোচ্চ %' : 'Max %'}</label>
           <input
             type="number"
-            value={defaultMaxMarks}
-            onChange={(e) => setDefaultMaxMarks(e.target.value)}
-            className={`${inputCls} w-full`}
-          />
-        </div>
-        <div>
-          <label className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1 block">%</label>
-          <input
-            type="number"
+            min={0}
+            max={100}
             value={percentage}
             onChange={(e) => setPercentage(e.target.value)}
             className={`${inputCls} w-full`}
