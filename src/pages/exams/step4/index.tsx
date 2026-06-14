@@ -43,7 +43,7 @@ import { TabulationPDFOptionsModal } from '@/components/shared/TabulationPDFOpti
 import type { TabulationPdfOptions } from '@/pages/exams/step4/tabulationPdfTemplate'
 import { generateTabulationPDF } from '@/pages/exams/step4/tabulationPdfTemplate'
 import { MarkAdjustmentTab } from '@/pages/exams/step4/MarkAdjustmentTab'
-import { MarksheetTab } from '@/pages/exams/step4/MarksheetTab'
+import MarksheetTab from '@/pages/exams/step4/MarksheetTab'
 
 type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position' | 'mark-adjustment' | 'marksheet'
 
@@ -144,13 +144,14 @@ export default function Step4Results() {
 
   const classStudents = useMemo(() => {
     if (!selectedClassId || !selectedSectionId) return []
-    return students.filter((s) => s.status === 'approved' && s.class === selectedClassId && s.section === selectedSectionId)
+    return students.filter((s) => s.status === 'approved' && s.active !== false && s.class === selectedClassId && s.section === selectedSectionId)
   }, [students, selectedClassId, selectedSectionId])
 
   // Extra marks filtered students (uses top-level class/section filters)
   const extraFilteredStudents = useMemo(() => {
     return students.filter((s) => {
       if (s.status && s.status !== 'approved') return false
+      if (s.active === false) return false
       if (selectedClassId && s.class !== selectedClassId) return false
       if (selectedSectionId && s.section !== selectedSectionId) return false
       return true
@@ -257,6 +258,8 @@ export default function Step4Results() {
             obtained: mark?.totalMarks || 0,
             grade: mark?.grade || '-',
             passed: (mark?.totalMarks || 0) >= sc.passMarks,
+            subExams: sc.subExams || [],
+            subExamMarks: mark?.subExamMarks || {},
           }
         })
         const totalObtained = subjectMarks.reduce((a, b) => a + b.obtained, 0)
@@ -306,7 +309,7 @@ export default function Step4Results() {
     // Class rank: rank among ALL students of this class (all sections) — raw marks only
     const allClassStudents = tabulationData.length > 0
       ? students
-          .filter((s) => s.status === 'approved' && s.class === selectedClassId)
+          .filter((s) => s.status === 'approved' && s.active !== false && s.class === selectedClassId)
           .map((student) => {
             const subjectMarks = (sessionSubjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === selectedClassId))
               .filter((sc) => !sectionSubjectIds || sectionSubjectIds.includes(sc.subjectId))
@@ -973,16 +976,11 @@ export default function Step4Results() {
             {selectedExamId && selectedClassId && selectedSectionId && enrichedTabulationData.length > 0 ? (
               <MarksheetTab
                 enrichedData={enrichedTabulationData}
-                extraMarks={sessionExtraMarks}
-                extraMarkTypes={extraMarkTypes}
-                markAdjustments={useExamStore.getState().markAdjustments.filter(
-                  (a) => a.examId === selectedExamId && a.classId === selectedClassId && a.sectionId === selectedSectionId
-                )}
                 examName={examConfigs.find((e) => e.id === selectedExamId)?.name || selectedExamId}
+                examSession={examConfigs.find((e) => e.id === selectedExamId)?.session || ''}
                 className={selectedClassId}
                 sectionName={selectedSectionId}
                 institutionName={useClassStore.getState().institution.name}
-                institutionNameBn={useClassStore.getState().institution.nameBn}
                 institutionAddress={useClassStore.getState().institution.address}
                 isBn={isBn}
               />
@@ -1351,6 +1349,12 @@ export default function Step4Results() {
           count={selectedStudents.size}
           isBn={isBn}
           rows={enrichedTabulationData.filter((d) => selectedStudents.has(d.student.id))}
+          subjects={
+            enrichedTabulationData[0]?.subjectMarks.map((sm) => ({
+              name: sm.subjectName || '',
+              fullMarks: sm.fullMarks,
+            })) || []
+          }
           rotateHeaders={rotateHeaders}
           examName={examConfigs.find((e) => e.id === selectedExamId)?.name}
           className={selectedClassId}

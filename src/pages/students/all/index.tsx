@@ -28,6 +28,7 @@ import { useScrollLock } from '@/hooks/useScrollLock'
 import { useSessionStudents, useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
+import { InactivationModal } from '@/components/shared/InactivationModal'
 import { generateListPDF } from '@/pages/students/admission/listPdfTemplate'
 import { generateA4HTML } from '@/pages/students/admission/a4Template'
 import type { ListPDFOptions } from '@/pages/students/admission/listPdfTemplate'
@@ -40,7 +41,8 @@ export default function AllStudentsPage() {
   const navigate = useNavigate()
   const { isMobile } = useWindowSize()
   const students = useSessionStudents()
-  const toggleStudentActive = useAdmissionStore((s) => s.toggleStudentActive)
+  const deactivateStudent = useAdmissionStore((s) => s.deactivateStudent)
+  const reactivateStudent = useAdmissionStore((s) => s.reactivateStudent)
   const { classes, institution } = useClassStore()
   const currentSession = institution.currentSession
   const isBn = useBn()
@@ -79,6 +81,7 @@ export default function AllStudentsPage() {
   const [showPDF, setShowPDF] = useState(false)
   const [viewSt, setViewSt] = useState<StudentAdmission | null>(null)
   const [showActionMenu, setShowActionMenu] = useState(false)
+  const [inactiveTarget, setInactiveTarget] = useState<StudentAdmission | null>(null)
   const actionMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -93,7 +96,7 @@ export default function AllStudentsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showActionMenu])
 
-  useScrollLock(showPDF || viewSt !== null)
+  useScrollLock(showPDF || viewSt !== null || inactiveTarget !== null)
 
   const filtered = useMemo(
     () =>
@@ -802,7 +805,7 @@ export default function AllStudentsPage() {
                           <Edit2 size={12} />
                         </button>
                         <button
-                          onClick={() => toggleStudentActive(s.id)}
+                          onClick={() => s.active === false ? reactivateStudent(s.id) : setInactiveTarget(s)}
                           title={s.active === false ? 'Reactivate' : 'Inactive'}
                           className={`w-[1.625rem] h-[1.625rem] rounded-[0.375rem] border-0 cursor-pointer flex items-center justify-center ${
                             s.active === false
@@ -871,6 +874,18 @@ export default function AllStudentsPage() {
           </div>
         </div>
       </div>
+      {/* Inactivation Modal */}
+      {inactiveTarget && (
+        <InactivationModal
+          studentName={inactiveTarget.nameEn}
+          isBn={isBn}
+          onConfirm={(date, reason) => {
+            deactivateStudent(inactiveTarget.id, date, reason)
+            setInactiveTarget(null)
+          }}
+          onCancel={() => setInactiveTarget(null)}
+        />
+      )}
     </div>
   )
 }

@@ -20,6 +20,8 @@ interface AdmissionState {
   updateStudent: (id: string, data: Partial<StudentAdmission>) => void
   approveStudent: (id: string) => void
   rejectStudent: (id: string) => void
+  deactivateStudent: (id: string, inactiveAt: string, inactiveReason: string) => void
+  reactivateStudent: (id: string) => void
   toggleStudentActive: (id: string) => void
   getNextId: () => string
 }
@@ -62,6 +64,24 @@ export const useAdmissionStore = create<AdmissionState>()(
         set((state) => ({
           students: state.students.map((s) =>
             s.id === id ? { ...s, active: s.active === false ? true : false, updatedAt: new Date().toISOString().split('T')[0] } : s
+          ),
+        })),
+
+      deactivateStudent: (id, inactiveAt, inactiveReason) =>
+        set((state) => ({
+          students: state.students.map((s) =>
+            s.id === id
+              ? { ...s, active: false, inactiveAt, inactiveReason, updatedAt: new Date().toISOString().split('T')[0] }
+              : s
+          ),
+        })),
+
+      reactivateStudent: (id) =>
+        set((state) => ({
+          students: state.students.map((s) =>
+            s.id === id
+              ? { ...s, active: true, inactiveAt: undefined, inactiveReason: undefined, updatedAt: new Date().toISOString().split('T')[0] }
+              : s
           ),
         })),
 

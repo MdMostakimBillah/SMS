@@ -66,7 +66,7 @@ export default function Step5Marksheet() {
 
   const promoStudents = useMemo(() => {
     if (!promoClassId || !promoSectionId) return []
-    return students.filter((s) => s.status === 'approved' && s.class === promoClassId && s.section === promoSectionId)
+    return students.filter((s) => s.status === 'approved' && s.active !== false && s.class === promoClassId && s.section === promoSectionId)
   }, [students, promoClassId, promoSectionId])
 
   // Promotion eligibility

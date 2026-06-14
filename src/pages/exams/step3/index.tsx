@@ -118,7 +118,7 @@ export default function Step3Evaluation() {
 
   const classStudents = useMemo(() => {
     if (!entryClassId || !entrySectionId) return []
-    return students.filter((s) => s.status === 'approved' && s.class === entryClassId && s.section === entrySectionId)
+    return students.filter((s) => s.status === 'approved' && s.active !== false && s.class === entryClassId && s.section === entrySectionId)
   }, [students, entryClassId, entrySectionId])
 
   const filteredStudents = useMemo(() => {
@@ -1135,7 +1135,7 @@ export default function Step3Evaluation() {
                   return publishRows.map((row) => {
                     const totalStudents = publishClassData
                       ? students.filter(
-                          (s) => s.status === 'approved' && s.class === publishClassData.name && (!publishSectionId || s.section === publishSectionId)
+                          (s) => s.status === 'approved' && s.active !== false && s.class === publishClassData.name && (!publishSectionId || s.section === publishSectionId)
                         ).length
                       : 0
                     const enteredCount = sessionStudentMarks.filter(

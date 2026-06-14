@@ -254,7 +254,7 @@ export default function ExamDashboard() {
     [sessionMarksEntryStatuses, subjectMap]
   )
 
-  const approvedStudentCount = useMemo(() => students.filter((s) => s.status === 'approved').length, [students])
+  const approvedStudentCount = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false).length, [students])
 
   // ── Handlers ──
   const navPlanning = useCallback(() => navigate('/exams/planning'), [navigate])

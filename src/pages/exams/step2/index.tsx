@@ -152,7 +152,7 @@ export default function Step2Schedule() {
   const routineStudentCount = useMemo(() => {
     if (!routineForm.classId) return 0
     return students.filter(
-      (s) => s.status === 'approved' && s.class === routineForm.classId && (!routineForm.sectionId || s.section === routineForm.sectionId)
+      (s) => s.status === 'approved' && s.active !== false && s.class === routineForm.classId && (!routineForm.sectionId || s.section === routineForm.sectionId)
     ).length
   }, [students, routineForm.classId, routineForm.sectionId])
 
@@ -245,7 +245,7 @@ export default function Step2Schedule() {
   // Students for selected seat class/section
   const sectionStudents = useMemo(() => {
     if (!seatClassId || !seatSectionId) return []
-    return students.filter((s) => s.status === 'approved' && s.class === seatClassId && s.section === seatSectionId)
+    return students.filter((s) => s.status === 'approved' && s.active !== false && s.class === seatClassId && s.section === seatSectionId)
   }, [students, seatClassId, seatSectionId])
 
   // Map studentId to seat plan for quick lookup
@@ -366,7 +366,7 @@ export default function Step2Schedule() {
   const handleAutoSeat = () => {
     if (!selectedExamId || !seatClassId || !seatSectionId) return
     const sectionStu = students
-      .filter((s) => s.status === 'approved' && s.class === seatClassId && s.section === seatSectionId)
+      .filter((s) => s.status === 'approved' && s.active !== false && s.class === seatClassId && s.section === seatSectionId)
     if (sectionStu.length === 0) return
     // Remove existing seat plans for this class/section
     const existing = filteredSeatPlans.filter(
@@ -763,7 +763,7 @@ export default function Step2Schedule() {
           const [cls, sec] = inv.classSection.split('-')
           const dayRoutine = filteredRoutines.find((r) => r.date === date && r.classId === cls && r.sectionId === sec)
           const subject = dayRoutine ? subjectMap.get(dayRoutine.subjectId) : null
-          const studentCount = students.filter((s) => s.status === 'approved' && s.class === cls && s.section === sec).length
+          const studentCount = students.filter((s) => s.status === 'approved' && s.active !== false && s.class === cls && s.section === sec).length
           return {
             classSection: inv.classSection,
             teacher: teacher?.nameEn || inv.teacherId,
@@ -1782,7 +1782,7 @@ export default function Step2Schedule() {
                                   const dayRoutines = filteredRoutines.filter((r) => r.date === dateStr && r.roomNo === room.roomNo)
                                   const hasExam = dayRoutines.length > 0
                                   const studentCount = dayRoutines.reduce((sum, r) => {
-                                    return sum + students.filter((s) => s.status === 'approved' && s.class === r.classId && s.section === r.sectionId).length
+                                    return sum + students.filter((s) => s.status === 'approved' && s.active !== false && s.class === r.classId && s.section === r.sectionId).length
                                   }, 0)
                                   const subjectNames = [...new Set(dayRoutines.map((r) => {
                                     const subj = subjectMap.get(r.subjectId)
@@ -1871,7 +1871,7 @@ export default function Step2Schedule() {
                           </thead>
                           <tbody>
                             {classSections.map((cs) => {
-                              const studentCount = students.filter((s) => s.status === 'approved' && s.class === cs.classId && s.section === cs.sectionId).length
+                              const studentCount = students.filter((s) => s.status === 'approved' && s.active !== false && s.class === cs.classId && s.section === cs.sectionId).length
                               return (
                                 <tr key={cs.label}>
                                   <td className="text-[0.6875rem] font-medium text-[var(--text-primary)] p-2 border-b border-[var(--border)] sticky left-0 bg-[var(--bg-primary)] z-10">
@@ -2110,7 +2110,7 @@ export default function Step2Schedule() {
 
             {/* Attendance Summary */}
             {attClassId && attSectionId && attDate && (() => {
-              const classStudents = students.filter((s) => s.status === 'approved' && s.class === attClassId && s.section === attSectionId)
+              const classStudents = students.filter((s) => s.status === 'approved' && s.active !== false && s.class === attClassId && s.section === attSectionId)
               const presentIds = new Set(
                 filteredAttendances
                   .filter((a) => a.classId === attClassId && a.sectionId === attSectionId && a.date === attDate)
@@ -2286,7 +2286,7 @@ export default function Step2Schedule() {
                     value={routineForm.classId}
                     onChange={(e) => {
                       const classId = e.target.value
-                      const count = students.filter((s) => s.status === 'approved' && s.class === classId).length
+                      const count = students.filter((s) => s.status === 'approved' && s.active !== false && s.class === classId).length
                       const room = rooms.find((r) => r.isActive && r.capacity >= count)
                       setRoutineForm((p) => ({ ...p, classId, sectionId: '', subjectId: '', roomNo: room?.roomNo || '' }))
                     }}
@@ -2306,7 +2306,7 @@ export default function Step2Schedule() {
                     value={routineForm.sectionId}
                     onChange={(e) => {
                       const sectionId = e.target.value
-                      const count = students.filter((s) => s.status === 'approved' && s.class === routineForm.classId && s.section === sectionId).length
+                      const count = students.filter((s) => s.status === 'approved' && s.active !== false && s.class === routineForm.classId && s.section === sectionId).length
                       const room = rooms.find((r) => r.isActive && r.capacity >= count)
                       setRoutineForm((p) => ({ ...p, sectionId, subjectId: '', roomNo: room?.roomNo || '' }))
                     }}

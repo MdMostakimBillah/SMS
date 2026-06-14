@@ -19,6 +19,7 @@ export interface TabulationStudentRow {
 
 export interface TabulationPdfOptions {
   selectedCols: string[]
+  selectedSubjects?: number[]
   orientation: 'portrait' | 'landscape'
   isBn: boolean
   rotateHeaders?: boolean
@@ -69,14 +70,22 @@ export function generateTabulationPDF(
   const darkBg = '#1e293b'
   const isBn = opts.isBn
   const cols = opts.selectedCols || []
+  const selectedSubjects = opts.selectedSubjects
   const orientation = opts.orientation || 'landscape'
   const rotate = opts.rotateHeaders ?? false
+
+  // Filter subjects based on selection
+  const filterSubjects = (marks: { subjectName?: string; fullMarks: number; obtained: number; passed: boolean }[]) => {
+    if (!selectedSubjects || selectedSubjects.length === 0) return marks
+    return marks.filter((_, idx) => selectedSubjects.includes(idx))
+  }
 
   const tdBase = `border:1.5px solid #cbd5e1;padding:5px 6px;font-size:10px;text-align:center;white-space:nowrap`
   const tdName = `border:1.5px solid #cbd5e1;border-left:2.5px solid ${brand};padding:5px 6px;font-size:10px;white-space:nowrap;text-align:left`
 
-  const subjectHeaders = rows[0].subjectMarks.map((s) => s.subjectName || '')
-  const fullMarksList = rows[0].subjectMarks.map((s) => s.fullMarks)
+  const filteredFirstRow = filterSubjects(rows[0].subjectMarks)
+  const subjectHeaders = filteredFirstRow.map((s) => s.subjectName || '')
+  const fullMarksList = filteredFirstRow.map((s) => s.fullMarks)
 
   interface ColDef { key: string; width: string; th: string }
   const allCols: ColDef[] = []
@@ -119,7 +128,7 @@ export function generateTabulationPDF(
       cells.push(`<td style="${tdBase};font-weight:600;color:#64748b">${i + 1}</td>`)
       cells.push(`<td style="${tdName};font-weight:500">${isBn ? row.student.nameBn : row.student.nameEn}</td>`)
       if (cols.includes('roll')) cells.push(`<td style="${tdBase};color:#64748b">${row.student.roll || ''}</td>`)
-      row.subjectMarks.forEach((s) => {
+      filterSubjects(row.subjectMarks).forEach((s) => {
         const failStyle = !s.passed ? 'color:#ef4444;font-weight:700;background:#fef2f2;' : ''
         cells.push(`<td style="${tdBase};${failStyle}">${s.obtained}</td>`)
       })
