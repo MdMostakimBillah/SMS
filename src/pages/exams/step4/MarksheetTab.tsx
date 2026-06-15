@@ -197,6 +197,7 @@ export default function MarksheetTab({
                     <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Roll No.</span><span className="text-[var(--text-primary)]">{student.student.roll}</span></div>
                     <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Class</span><span className="text-[var(--text-primary)]">{className}</span></div>
                     <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Section</span><span className="text-[var(--text-primary)]">{sectionName}</span></div>
+                    <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Student ID</span><span className="text-[var(--text-primary)]">{student.student.id}</span></div>
                     <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Exam</span><span className="text-[var(--text-primary)]">{examName}</span></div>
                     <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Session</span><span className="text-[var(--text-primary)]">{examSession}</span></div>
                   </div>

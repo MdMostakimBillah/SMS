@@ -162,6 +162,7 @@ export function generateMarksheetPDF(
               <div style="display:flex;gap:8px;"><span style="font-weight:600;color:#1e293b;width:56px;">Roll No.</span><span style="color:#1e293b;">${student.student.roll}</span></div>
               <div style="display:flex;gap:8px;"><span style="font-weight:600;color:#1e293b;width:56px;">Class</span><span style="color:#1e293b;">${className}</span></div>
               <div style="display:flex;gap:8px;"><span style="font-weight:600;color:#1e293b;width:56px;">Section</span><span style="color:#1e293b;">${sectionName}</span></div>
+              <div style="display:flex;gap:8px;"><span style="font-weight:600;color:#1e293b;width:68px;">Student ID</span><span style="color:#1e293b;">${student.student.id}</span></div>
               <div style="display:flex;gap:8px;"><span style="font-weight:600;color:#1e293b;width:56px;">Exam</span><span style="color:#1e293b;">${examName}</span></div>
               <div style="display:flex;gap:8px;"><span style="font-weight:600;color:#1e293b;width:56px;">Session</span><span style="color:#1e293b;">${examSession}</span></div>
             </div>
