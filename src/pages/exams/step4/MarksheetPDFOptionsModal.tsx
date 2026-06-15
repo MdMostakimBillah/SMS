@@ -132,7 +132,7 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
       <div
         className="modal-box modal-content"
         style={{
-          maxWidth: showPreview ? '70rem' : '30rem',
+          maxWidth: '90%',
           transition: 'max-width 0.2s ease',
         }}
       >

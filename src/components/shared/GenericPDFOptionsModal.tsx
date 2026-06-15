@@ -89,7 +89,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
       <div
         className="modal-box modal-content"
         style={{
-          maxWidth: showPreviewPanel ? '70rem' : showColumns ? '40rem' : '30rem',
+          maxWidth: '90%',
           transition: 'max-width 0.2s ease',
         }}
       >
