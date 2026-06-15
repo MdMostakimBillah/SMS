@@ -167,7 +167,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
           }}
         >
           {/* Left: Options */}
-          <div style={{ flex: showPreviewPanel ? '0 0 33.333%' : 1, overflowY: 'auto', padding: '18px 20px', borderRight: showPreviewPanel ? '1px solid var(--border)' : 'none' }}>
+          <div style={{ flex: showPreviewPanel ? '0 0 33.333%' : 1, overflowY: 'auto', padding: '18px 20px', borderRight: showPreviewPanel ? '1px solid var(--border)' : 'none', minWidth: 0 }}>
             {/* Title */}
             <div style={{ marginBottom: '1.25rem' }}>
               <div
@@ -294,7 +294,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
                       </button>
                     </div>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.3125rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '0.3125rem' }}>
                     {columns.map((c) => (
                       <label
                         key={c.key}

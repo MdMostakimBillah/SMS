@@ -205,7 +205,7 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
           }}
         >
           {/* Left: Options */}
-          <div style={{ flex: showPreview ? '0 0 33.333%' : 1, overflowY: 'auto', padding: '18px 20px', borderRight: showPreview ? '1px solid var(--border)' : 'none' }}>
+          <div style={{ flex: showPreview ? '0 0 33.333%' : 1, overflowY: 'auto', padding: '18px 20px', borderRight: showPreview ? '1px solid var(--border)' : 'none', minWidth: 0 }}>
             {/* ① Orientation */}
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={sectionLabel}>① {isBn ? 'কাগজের দিক' : 'Page Orientation'}</div>
@@ -241,7 +241,7 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
             {/* ② Display Options */}
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={sectionLabel}>② {isBn ? 'প্রদর্শন বিকল্প' : 'Display Options'}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.3125rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.3125rem' }}>
                 {displayOptions.map(([key, label, labelBn]) => {
                   const active = options[key]
                   return (
