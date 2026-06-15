@@ -83,6 +83,17 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const asideRef = useRef<HTMLElement>(null)
   const [hoveredItem, setHoveredItem] = useState<{ label: string; rect: DOMRect } | null>(null)
+  const [textVisible, setTextVisible] = useState(!collapsed)
+
+  // Sync textVisible with collapsed, but delay when expanding
+  useEffect(() => {
+    if (collapsed) {
+      setTextVisible(false)
+    } else {
+      const timer = setTimeout(() => setTextVisible(true), 150)
+      return () => clearTimeout(timer)
+    }
+  }, [collapsed])
 
   const students = useMemo(
     () => allStudents.filter((s) => s.academicYear === institution.currentSession && s.status === 'approved' && s.active !== false),
@@ -251,8 +262,8 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
             <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
               <GraduationCap size={17} color="#fff" />
             </div>
-            {!collapsed && (
-              <div>
+            {textVisible && (
+              <div style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.2s ease 0.05s' }}>
                 <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">EduTech</div>
                 <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">School Management</div>
               </div>
@@ -269,8 +280,8 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         </div>
 
         {/* Session Switcher */}
-        {!collapsed && (
-          <div ref={dropdownRef} className="relative px-2 pt-2 pb-1 z-50">
+        {textVisible && (
+          <div ref={dropdownRef} className="relative px-2 pt-2 pb-1 z-50" style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.2s ease 0.05s' }}>
             <div
               onClick={() => setShowSessionDropdown(!showSessionDropdown)}
               className="flex items-center gap-2 rounded-lg px-2.5 py-2 cursor-pointer transition-all duration-150 bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--surface-2)] hover:border-[var(--brand)]"
@@ -344,8 +355,8 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         <nav className={`flex-1 overflow-y-auto overflow-x-auto ${collapsed ? 'px-1 py-2.5' : 'px-2 py-2.5'}`}>
           {navGroups.map((group) => (
             <div key={group.key} className={collapsed ? 'mb-2' : 'mb-4'}>
-              {!collapsed && (
-                <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider px-2 mb-1">
+              {textVisible && (
+                <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider px-2 mb-1" style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.2s ease 0.05s' }}>
                   {t(group.key as TranslationKey, language)}
                 </div>
               )}
@@ -374,9 +385,9 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                     onMouseLeave={() => setHoveredItem(null)}
                   >
                     <IconComp size={navIconSize} className={`shrink-0 ${isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`} />
-                    {!collapsed && (
+                    {textVisible && (
                       <>
-                        <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                        <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap" style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.2s ease 0.05s' }}>
                           {t(item.key as TranslationKey, language)}
                         </span>
                         {item.badge && (
@@ -400,8 +411,8 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         </nav>
 
         {/* Bottom */}
-        {!collapsed && (
-          <div className="p-2 border-t border-[var(--border)]">
+        {textVisible && (
+          <div className="p-2 border-t border-[var(--border)]" style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.2s ease 0.05s' }}>
             <div className="bg-[var(--brand-light)] rounded-lg p-2.5 border border-[var(--border)]">
               <div className="flex justify-between items-center mb-1.5">
                 <span className="text-[0.625rem] font-semibold text-[var(--text-primary)]">Enterprise Plan</span>
