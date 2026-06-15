@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { gsap } from 'gsap'
 import {
   GraduationCap,
   LayoutDashboard,
@@ -80,7 +81,19 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const [showSessionDropdown, setShowSessionDropdown] = useState(false)
   const [newSession, setNewSession] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const asideRef = useRef<HTMLElement>(null)
   const [hoveredItem, setHoveredItem] = useState<{ label: string; rect: DOMRect } | null>(null)
+  const [textVisible, setTextVisible] = useState(!collapsed)
+
+  // Sync textVisible with collapsed, but delay when expanding
+  useEffect(() => {
+    if (collapsed) {
+      setTextVisible(false)
+    } else {
+      const timer = setTimeout(() => setTextVisible(true), 150)
+      return () => clearTimeout(timer)
+    }
+  }, [collapsed])
 
   const students = useMemo(
     () => allStudents.filter((s) => s.academicYear === institution.currentSession && s.status === 'approved' && s.active !== false),
@@ -94,6 +107,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const teacherCount = teachers.length
   const activeTeacherCount = teachers.filter((t) => t.status === 'active').length
 
+  // Responsive collapsed width and icon size
   const collapsedWidth = width >= 1280 ? '4.25rem' : width >= 1024 ? '3.75rem' : '3.25rem'
   const expandedWidth = '13.75rem'
   const navIconSize = collapsed ? (width >= 1280 ? 19 : width >= 1024 ? 17 : 16) : 15
@@ -107,6 +121,22 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    if (asideRef.current) {
+      gsap.set(asideRef.current, { width: collapsed ? collapsedWidth : expandedWidth })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (asideRef.current) {
+      gsap.to(asideRef.current, {
+        width: collapsed ? collapsedWidth : expandedWidth,
+        duration: 0.3,
+        ease: 'power2.inOut',
+      })
+    }
+  }, [collapsed, collapsedWidth])
 
   const handleSwitchSession = (session: string) => {
     switchSession(session)
@@ -206,15 +236,12 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     setHoveredItem(null)
   }, [location.pathname])
 
-  const sidebarWidth = collapsed ? collapsedWidth : expandedWidth
-
   return (
     <>
       <aside
+        ref={asideRef}
         className="h-full flex flex-col overflow-hidden shrink-0"
         style={{
-          width: sidebarWidth,
-          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           background: 'var(--glass)',
           backdropFilter: 'blur(16px) saturate(180%)',
           WebkitBackdropFilter: 'blur(16px) saturate(180%)',
@@ -223,35 +250,24 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       >
         {/* Logo */}
         <div
-          className="flex items-center border-b border-[var(--border)]"
-          style={{
-            padding: collapsed ? '0.75rem 0' : '0.75rem 1rem',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            transition: 'padding 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
+          className={`flex items-center border-b border-[var(--border)] ${
+            collapsed ? 'flex-col px-0 py-3' : 'flex-row px-3.5 py-3'
+          }`}
         >
           <div
-            className="flex items-center gap-2.5"
-            style={{
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              width: '100%',
-              transition: 'justify-content 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
+            className={`flex items-center gap-2.5 ${
+              collapsed ? 'w-full justify-center' : 'flex-1'
+            }`}
           >
             <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
               <GraduationCap size={17} color="#fff" />
             </div>
-            <div
-              className="overflow-hidden whitespace-nowrap"
-              style={{
-                maxWidth: collapsed ? 0 : '10rem',
-                opacity: collapsed ? 0 : 1,
-                transition: 'max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease 0.05s',
-              }}
-            >
-              <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">EduTech</div>
-              <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">School Management</div>
-            </div>
+            {textVisible && (
+              <div style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.2s ease 0.05s' }}>
+                <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">EduTech</div>
+                <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">School Management</div>
+              </div>
+            )}
           </div>
           {isMobile && !collapsed && (
             <button
@@ -264,110 +280,86 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         </div>
 
         {/* Session Switcher */}
-        <div
-          ref={dropdownRef}
-          className="relative px-2 pt-2 pb-1 z-50 overflow-hidden"
-          style={{
-            maxHeight: collapsed ? 0 : '6rem',
-            opacity: collapsed ? 0 : 1,
-            paddingBottom: collapsed ? 0 : '0.25rem',
-            transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease 0.05s, padding 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        >
-          <div
-            onClick={() => setShowSessionDropdown(!showSessionDropdown)}
-            className="flex items-center gap-2 rounded-lg px-2.5 py-2 cursor-pointer transition-all duration-150 bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--surface-2)] hover:border-[var(--brand)]"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[var(--teal)] flex items-center justify-center text-[0.625rem] font-bold text-white shrink-0">
-              SA
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
-                Sunrise Academy
+        {textVisible && (
+          <div ref={dropdownRef} className="relative px-2 pt-2 pb-1 z-50" style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.2s ease 0.05s' }}>
+            <div
+              onClick={() => setShowSessionDropdown(!showSessionDropdown)}
+              className="flex items-center gap-2 rounded-lg px-2.5 py-2 cursor-pointer transition-all duration-150 bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--surface-2)] hover:border-[var(--brand)]"
+            >
+              <div className="w-8 h-8 rounded-lg bg-[var(--teal)] flex items-center justify-center text-[0.625rem] font-bold text-white shrink-0">
+                SA
               </div>
-              <div className="text-[0.5625rem] text-[var(--brand)] font-semibold">
-                {institution.currentSession || 'No Session'}
+              <div className="min-w-0 flex-1">
+                <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
+                  Sunrise Academy
+                </div>
+                <div className="text-[0.5625rem] text-[var(--brand)] font-semibold">
+                  {institution.currentSession || 'No Session'}
+                </div>
               </div>
+              <ChevronsUpDown
+                size={11}
+                className="text-[var(--text-muted)] shrink-0 transition-transform duration-200"
+                style={{ transform: showSessionDropdown ? 'rotate(180deg)' : 'rotate(0)' }}
+              />
             </div>
-            <ChevronsUpDown
-              size={11}
-              className="text-[var(--text-muted)] shrink-0 transition-transform duration-200"
-              style={{ transform: showSessionDropdown ? 'rotate(180deg)' : 'rotate(0)' }}
-            />
-          </div>
 
-          {showSessionDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-[0.625rem] shadow-lg z-[60] overflow-hidden">
-              <div className="px-2.5 py-2 border-b border-[var(--border)]">
-                <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1">
-                  {isBn ? 'সেশন পরিবর্তন' : 'Switch Session'}
-                </div>
-                {institution.sessions.map((s) => (
-                  <div
-                    key={s}
-                    onClick={() => handleSwitchSession(s)}
-                    className={`flex items-center justify-between px-2 py-1.5 rounded-[0.375rem] cursor-pointer text-[0.6875rem] ${
-                      s === institution.currentSession
-                        ? 'bg-[var(--brand-light)] text-[var(--brand)] font-semibold'
-                        : 'text-[var(--text-secondary)]'
-                    }`}
-                  >
-                    {s}
-                    {s === institution.currentSession && <Check size={12} />}
+            {showSessionDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-[0.625rem] shadow-lg z-[60] overflow-hidden">
+                <div className="px-2.5 py-2 border-b border-[var(--border)]">
+                  <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1">
+                    {isBn ? 'সেশন পরিবর্তন' : 'Switch Session'}
                   </div>
-                ))}
-              </div>
-              <div className="px-2.5 py-2">
-                <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1">
-                  {isBn ? 'নতুন সেশন' : 'New Session'}
+                  {institution.sessions.map((s) => (
+                    <div
+                      key={s}
+                      onClick={() => handleSwitchSession(s)}
+                      className={`flex items-center justify-between px-2 py-1.5 rounded-[0.375rem] cursor-pointer text-[0.6875rem] ${
+                        s === institution.currentSession
+                          ? 'bg-[var(--brand-light)] text-[var(--brand)] font-semibold'
+                          : 'text-[var(--text-secondary)]'
+                      }`}
+                    >
+                      {s}
+                      {s === institution.currentSession && <Check size={12} />}
+                    </div>
+                  ))}
                 </div>
-                <div className="flex gap-1">
-                  <input
-                    value={newSession}
-                    onChange={(e) => setNewSession(e.target.value)}
-                    placeholder="e.g. 2026-27"
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddSession()}
-                    className="flex-1 px-2 py-1 rounded-[0.375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
-                  />
-                  <button
-                    onClick={handleAddSession}
-                    disabled={!newSession.trim() || institution.sessions.includes(newSession.trim())}
-                    className="px-2.5 py-1 rounded-[0.375rem] border-none bg-[var(--brand)] text-white text-[0.625rem] font-semibold cursor-pointer disabled:opacity-50"
-                  >
-                    {isBn ? 'যোগ' : 'Add'}
-                  </button>
+                <div className="px-2.5 py-2">
+                  <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1">
+                    {isBn ? 'নতুন সেশন' : 'New Session'}
+                  </div>
+                  <div className="flex gap-1">
+                    <input
+                      value={newSession}
+                      onChange={(e) => setNewSession(e.target.value)}
+                      placeholder="e.g. 2026-27"
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddSession()}
+                      className="flex-1 px-2 py-1 rounded-[0.375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
+                    />
+                    <button
+                      onClick={handleAddSession}
+                      disabled={!newSession.trim() || institution.sessions.includes(newSession.trim())}
+                      className="px-2.5 py-1 rounded-[0.375rem] border-none bg-[var(--brand)] text-white text-[0.625rem] font-semibold cursor-pointer disabled:opacity-50"
+                    >
+                      {isBn ? 'যোগ' : 'Add'}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* Nav */}
-        <nav
-          className="flex-1 overflow-y-auto overflow-x-auto"
-          style={{
-            padding: collapsed ? '0.625rem 0.25rem' : '0.625rem 0.5rem',
-            transition: 'padding 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        >
+        <nav className={`flex-1 overflow-y-auto overflow-x-auto ${collapsed ? 'px-1 py-2.5' : 'px-2 py-2.5'}`}>
           {navGroups.map((group) => (
-            <div
-              key={group.key}
-              style={{
-                marginBottom: collapsed ? '0.5rem' : '1rem',
-                transition: 'margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            >
-              <div
-                className="text-[0.5625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider px-2 mb-1 whitespace-nowrap overflow-hidden"
-                style={{
-                  maxHeight: collapsed ? 0 : '1.5rem',
-                  opacity: collapsed ? 0 : 1,
-                  transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease 0.05s',
-                }}
-              >
-                {t(group.key as TranslationKey, language)}
-              </div>
+            <div key={group.key} className={collapsed ? 'mb-2' : 'mb-4'}>
+              {textVisible && (
+                <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider px-2 mb-1" style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.2s ease 0.05s' }}>
+                  {t(group.key as TranslationKey, language)}
+                </div>
+              )}
 
               {group.items.map((item) => {
                 const isActive = location.pathname === item.page || location.pathname.startsWith(item.page + '/')
@@ -377,14 +369,13 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                     key={item.page}
                     to={item.page}
                     onClick={() => { if (isMobile) toggleSidebar() }}
-                    className="flex items-center gap-2 rounded-lg mb-0.5 text-xs no-underline transition-all duration-150 relative"
-                    style={{
-                      padding: collapsed ? '0.5rem 0' : '0.5rem 0.625rem',
-                      justifyContent: collapsed ? 'center' : 'flex-start',
-                      backgroundColor: isActive ? 'var(--brand-light)' : undefined,
-                      color: isActive ? 'var(--brand)' : 'var(--text-secondary)',
-                      fontWeight: isActive ? 500 : undefined,
-                    }}
+                    className={`flex items-center gap-2 rounded-lg mb-0.5 text-xs no-underline transition-all duration-150 relative ${
+                      collapsed ? 'px-0 py-2 justify-center' : 'px-2.5 py-2'
+                    } ${
+                      isActive
+                        ? 'bg-[var(--brand-light)] text-[var(--brand)] font-medium'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]'
+                    }`}
                     onMouseEnter={(e) => {
                       if (collapsed) {
                         const rect = e.currentTarget.getBoundingClientRect()
@@ -394,32 +385,23 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                     onMouseLeave={() => setHoveredItem(null)}
                   >
                     <IconComp size={navIconSize} className={`shrink-0 ${isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`} />
-                    <span
-                      className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
-                      style={{
-                        maxWidth: collapsed ? 0 : '10rem',
-                        opacity: collapsed ? 0 : 1,
-                        transition: 'max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease 0.05s',
-                      }}
-                    >
-                      {t(item.key as TranslationKey, language)}
-                    </span>
-                    {item.badge && (
-                      <span
-                        className={`text-[0.5625rem] font-semibold px-1.5 py-px rounded-full shrink-0 ${
-                          item.badgeColor === 'red'
-                            ? 'bg-[var(--red-light)] text-[var(--red)]'
-                            : 'bg-[var(--brand-light)] text-[var(--brand)]'
-                        }`}
-                        style={{
-                          maxWidth: collapsed ? 0 : '3rem',
-                          opacity: collapsed ? 0 : 1,
-                          padding: collapsed ? 0 : undefined,
-                          transition: 'max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease 0.05s',
-                        }}
-                      >
-                        {item.badge}
-                      </span>
+                    {textVisible && (
+                      <>
+                        <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap" style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.2s ease 0.05s' }}>
+                          {t(item.key as TranslationKey, language)}
+                        </span>
+                        {item.badge && (
+                          <span
+                            className={`text-[0.5625rem] font-semibold px-1.5 py-px rounded-full shrink-0 ${
+                              item.badgeColor === 'red'
+                                ? 'bg-[var(--red-light)] text-[var(--red)]'
+                                : 'bg-[var(--brand-light)] text-[var(--brand)]'
+                            }`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </>
                     )}
                   </NavLink>
                 )
@@ -429,27 +411,22 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         </nav>
 
         {/* Bottom */}
-        <div
-          className="p-2 border-t border-[var(--border)] overflow-hidden"
-          style={{
-            maxHeight: collapsed ? 0 : '8rem',
-            opacity: collapsed ? 0 : 1,
-            transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease 0.05s',
-          }}
-        >
-          <div className="bg-[var(--brand-light)] rounded-lg p-2.5 border border-[var(--border)]">
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-[0.625rem] font-semibold text-[var(--text-primary)]">Enterprise Plan</span>
-              <span className="text-[0.5rem] font-semibold text-[var(--green)] bg-[var(--green-light)] px-1.5 py-px rounded">
-                Active
-              </span>
+        {textVisible && (
+          <div className="p-2 border-t border-[var(--border)]" style={{ opacity: textVisible ? 1 : 0, transition: 'opacity 0.2s ease 0.05s' }}>
+            <div className="bg-[var(--brand-light)] rounded-lg p-2.5 border border-[var(--border)]">
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-[0.625rem] font-semibold text-[var(--text-primary)]">Enterprise Plan</span>
+                <span className="text-[0.5rem] font-semibold text-[var(--green)] bg-[var(--green-light)] px-1.5 py-px rounded">
+                  Active
+                </span>
+              </div>
+              <div className="h-1 bg-[var(--border)] rounded-full">
+                <div className="h-full w-[67%] bg-[var(--brand)] rounded-full" />
+              </div>
+              <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1">67% storage used</div>
             </div>
-            <div className="h-1 bg-[var(--border)] rounded-full">
-              <div className="h-full w-[67%] bg-[var(--brand)] rounded-full" />
-            </div>
-            <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1">67% storage used</div>
           </div>
-        </div>
+        )}
       </aside>
 
       {/* Tooltip */}
