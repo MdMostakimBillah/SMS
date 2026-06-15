@@ -58,7 +58,7 @@ export const TabulationPDFOptionsModal = React.memo(function TabulationPDFOption
       {/* Step 1: Subject Selection */}
       {step === 'subjects' && createPortal(
         <div className="modal-overlay">
-          <div className="modal-box modal-content" style={{ maxWidth: '90%' }}>
+          <div className="modal-box modal-content" style={{ maxWidth: '30rem' }}>
             {/* Header */}
             <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>

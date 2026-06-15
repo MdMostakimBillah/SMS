@@ -89,7 +89,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
       <div
         className="modal-box modal-content"
         style={{
-          maxWidth: '90%',
+          maxWidth: showPreviewPanel ? '90%' : showColumns ? '40rem' : '30rem',
           transition: 'max-width 0.2s ease',
         }}
       >
@@ -167,7 +167,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
           }}
         >
           {/* Left: Options */}
-          <div style={{ flex: showPreviewPanel ? '0 0 45%' : 1, overflowY: 'auto', padding: '18px 20px', borderRight: showPreviewPanel ? '1px solid var(--border)' : 'none' }}>
+          <div style={{ flex: showPreviewPanel ? '0 0 33.333%' : 1, overflowY: 'auto', padding: '18px 20px', borderRight: showPreviewPanel ? '1px solid var(--border)' : 'none' }}>
             {/* Title */}
             <div style={{ marginBottom: '1.25rem' }}>
               <div
@@ -513,7 +513,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
 
           {/* Right: Preview Panel */}
           {showPreviewPanel && (
-            <div style={{ flex: '0 0 55%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ flex: '0 0 66.666%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <div
                 style={{
                   padding: '10px 16px',

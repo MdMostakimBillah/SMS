@@ -132,7 +132,7 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
       <div
         className="modal-box modal-content"
         style={{
-          maxWidth: '90%',
+          maxWidth: showPreview ? '90%' : '30rem',
           transition: 'max-width 0.2s ease',
         }}
       >
@@ -205,7 +205,7 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
           }}
         >
           {/* Left: Options */}
-          <div style={{ flex: showPreview ? '0 0 45%' : 1, overflowY: 'auto', padding: '18px 20px', borderRight: showPreview ? '1px solid var(--border)' : 'none' }}>
+          <div style={{ flex: showPreview ? '0 0 33.333%' : 1, overflowY: 'auto', padding: '18px 20px', borderRight: showPreview ? '1px solid var(--border)' : 'none' }}>
             {/* ① Orientation */}
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={sectionLabel}>① {isBn ? 'কাগজের দিক' : 'Page Orientation'}</div>
@@ -361,7 +361,7 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
 
           {/* Right: Preview Panel */}
           {showPreview && (
-            <div style={{ flex: '0 0 55%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ flex: '0 0 66.666%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <div
                 style={{
                   padding: '10px 16px',
