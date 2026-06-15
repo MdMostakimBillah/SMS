@@ -156,10 +156,10 @@ export function generateTabulationPDF(
   const sectionLabel = opts.sectionName || ''
   const academicYear = rows[0]?.student?.academicYear || ''
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Tabulation</title><style>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Tabulation</title><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>
     @page{size:${orientation};margin:5mm}
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#1e293b;background:#fff;font-size:10px}
+    body{font-family:'Segoe UI','Noto Serif Bengali',Tahoma,Geneva,Verdana,sans-serif;color:#1e293b;background:#fff;font-size:10px}
     .header{text-align:center;margin-bottom:12px;padding-bottom:8px;border-bottom:3px solid ${brand}}
     .header h1{font-size:18px;color:${darkBg};letter-spacing:1.5px;text-transform:uppercase;font-weight:800}
     .header .subtitle{font-size:11px;color:#64748b;margin-top:3px;font-weight:500}

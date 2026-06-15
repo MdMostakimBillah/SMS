@@ -10,13 +10,13 @@ export function openPrintWindow(
   const defaultCss = `
     @page { size: A4 portrait; margin: 0; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; background: #fff; font-size: 12px; padding: 10mm; }
+    body { font-family: 'Segoe UI', 'Noto Serif Bengali', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; background: #fff; font-size: 12px; padding: 10mm; }
     @media print {
       body { print-color-adjust: exact; -webkit-print-color-adjust: exact; color-adjust: exact; padding: 10mm; }
     }
   `
 
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title><style>${opts?.css || defaultCss}</style></head><body>${bodyHTML}<script>setTimeout(()=>window.print(),${opts?.delay || 600})</script></body></html>`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>${opts?.css || defaultCss}</style></head><body>${bodyHTML}<script>setTimeout(()=>window.print(),${opts?.delay || 600})</script></body></html>`
 
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
   const url = URL.createObjectURL(blob)

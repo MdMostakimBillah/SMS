@@ -75,10 +75,11 @@ export function generateSyllabusPDF(
 <head>
 <meta charset="UTF-8"/>
 <title>${isBn ? 'সিলেবাস' : 'Syllabus'} - ${syllabus.className} - ${syllabus.subjectName}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   @page { size: A4; margin: 15mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; font-size: 12px; }
+  body { font-family: 'Segoe UI', 'Noto Serif Bengali', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; font-size: 12px; }
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style>
 </head>

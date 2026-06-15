@@ -17,10 +17,11 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, qrDataUrl?: st
 <head>
 <meta charset="UTF-8">
 <title>Admission Form - ${s.id}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   @page { size: A4; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Arial', sans-serif; background: white; color: #1a1a1a; font-size: 12px; }
+  body { font-family: 'Arial', 'Noto Serif Bengali', sans-serif; background: white; color: #1a1a1a; font-size: 12px; }
   .page { width: 210mm; min-height: 297mm; padding: 15mm; position: relative; }
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 2px solid #6366f1; }
   .logo-area { display: flex; align-items: center; gap: 12px; }

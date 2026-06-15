@@ -402,9 +402,10 @@ export async function generateMarksheetPDF(
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap');
     @page { size: A4 ${orientation}; margin: ${f.pageMargin}; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-family: 'Inter', 'Noto Serif Bengali', system-ui, sans-serif; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .marksheet-page { page-break-after: always; }
     .marksheet-page:last-child { page-break-after: auto; }
     @media print { body { margin: 0; } .marksheet-page { page-break-after: always; } .marksheet-page:last-child { page-break-after: auto; } }

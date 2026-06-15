@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -169,7 +169,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', 'Hind Siliguri', sans-serif;
+  font-family: 'Inter', 'Noto Serif Bengali', 'Hind Siliguri', sans-serif;
   background: var(--bg-tertiary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;

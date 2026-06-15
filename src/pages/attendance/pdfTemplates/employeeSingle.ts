@@ -81,10 +81,11 @@ export function genSinglePDF(params: GenSinglePDFParams): string {
     ? `<img src="${photo}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #6366f1" />`
     : `<div style="width:48px;height:48px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#6366f1;border:2px solid #6366f1">${name.charAt(0)}</div>`
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${name} — Attendance</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 @page{size:A4 landscape;margin:8mm}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a;background:#fff}
+body{font-family:Arial,'Noto Serif Bengali',sans-serif;font-size:9px;color:#1a1a1a;background:#fff}
 .page{padding:0}
 .hdr{display:flex;align-items:center;gap:14px;padding-bottom:8px;border-bottom:2.5px solid #6366f1;margin-bottom:10px}
 .logo{width:36px;height:36px;background:#6366f1;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700}
