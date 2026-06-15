@@ -102,7 +102,12 @@ export default function AllStudentsPage() {
     () =>
       students.filter((s) => {
         if (s.academicYear !== currentSession) return false
-        if (fStatus && s.status !== fStatus) return false
+        // Default: show approved + inactive students; exclude rejected
+        if (!fStatus) {
+          if (s.status !== 'approved' && s.active !== false) return false
+        } else {
+          if (s.status !== fStatus) return false
+        }
         if (search) {
           const q = search.toLowerCase()
           if (
@@ -433,7 +438,7 @@ export default function AllStudentsPage() {
         </div>
 
         {/* Sticky Filters + Toolbar */}
-        <div className="sticky top-0 z-50 bg-[var(--bg-primary)] pt-0.5 pb-1">
+        <div className="sticky top-0 z-50 pt-0.5 pb-1" style={{ background: 'transparent' }}>
           {/* Filters */}
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[0.875rem] mb-2.5">
             <div
@@ -684,7 +689,7 @@ export default function AllStudentsPage() {
       <div className="flex-1 overflow-hidden flex flex-col bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] mt-1">
         <div className={`flex-1 overflow-y-auto ${isMobile ? 'max-h-[50vh]' : ''}`}>
           <table className="w-full border-collapse text-xs">
-            <thead>
+            <thead className="sticky top-0 z-10">
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 <th className="p-2.5 w-[2.25rem]" style={sc('0')}>
                   <input

@@ -179,7 +179,7 @@ export default function DesignationsPage() {
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
         <div className={`overflow-x-auto ${isMobile ? 'max-h-[60vh] overflow-y-auto' : ''}`}>
           <table className="w-full border-collapse text-xs min-w-[31.25rem]">
-            <thead>
+            <thead className="sticky top-0 z-10">
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 {[
                   { l: '#', w: '3.125rem', align: 'center' as const },

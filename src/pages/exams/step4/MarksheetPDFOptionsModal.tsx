@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react'
+import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X, File, LayoutTemplate, Download, Eye, EyeOff, CheckSquare, Square, Search } from 'lucide-react'
 import { generateMarksheetPDF } from './marksheetPdfTemplate'
@@ -47,6 +47,7 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
     showSubExams: true,
     showGradeScale: true,
     showSignature: true,
+    fontSize: 'default',
   })
 
   const filteredStudents = useMemo(() => {
@@ -67,10 +68,19 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
     setSelectedIds((prev) => prev.length === students.length ? [] : students.map((s) => s.student.id))
   }, [students])
 
-  const previewHtml = useMemo(() => {
-    const selected = students.filter((s) => selectedIds.includes(s.student.id))
-    if (selected.length === 0) return ''
-    return generateMarksheetPDF(selected, subjectStats, {
+  const [previewHtml, setPreviewHtml] = useState<string>('')
+  const previewCancelledRef = useRef(false)
+
+  const selectedStudents = useMemo(() => students.filter((s) => selectedIds.includes(s.student.id)), [students, selectedIds])
+
+  // Generate preview asynchronously
+  useEffect(() => {
+    if (selectedStudents.length === 0) {
+      setPreviewHtml('')
+      return
+    }
+    previewCancelledRef.current = false
+    generateMarksheetPDF(selectedStudents, subjectStats, {
       orientation,
       isBn,
       examName,
@@ -80,15 +90,18 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
       institutionName,
       institutionAddress,
       options,
+    }).then((html) => {
+      if (!previewCancelledRef.current) setPreviewHtml(html)
     })
-  }, [students, selectedIds, subjectStats, orientation, isBn, examName, examSession, className, sectionName, institutionName, institutionAddress, options])
+    return () => { previewCancelledRef.current = true }
+  }, [selectedStudents, subjectStats, orientation, isBn, examName, examSession, className, sectionName, institutionName, institutionAddress, options])
 
   const handleDownload = async () => {
     if (selectedIds.length === 0) return
     setPdfLoading(true)
     try {
       const selected = students.filter((s) => selectedIds.includes(s.student.id))
-      const html = generateMarksheetPDF(selected, subjectStats, {
+      const html = await generateMarksheetPDF(selected, subjectStats, {
         orientation,
         isBn,
         examName,
@@ -114,7 +127,7 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
     marginBottom: '0.5rem',
   }
 
-  const displayOptions: [keyof MarksheetOptions, string, string][] = [
+  const displayOptions: [Exclude<keyof MarksheetOptions, 'fontSize'>, string, string][] = [
     ['showFather', 'Father', 'বাবা'],
     ['showMother', 'Mother', 'মা'],
     ['showGpa', 'GPA', 'জিপিএ'],
@@ -238,9 +251,40 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
               </div>
             </div>
 
-            {/* ② Display Options */}
+            {/* ② Font Size */}
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={sectionLabel}>② {isBn ? 'প্রদর্শন বিকল্প' : 'Display Options'}</div>
+              <div style={sectionLabel}>② {isBn ? 'ফন্ট সাইজ' : 'Font Size'}</div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {(['default', 'compact'] as const).map((fs) => (
+                  <button
+                    key={fs}
+                    onClick={() => setOptions((prev) => ({ ...prev, fontSize: fs }))}
+                    style={{
+                      flex: 1,
+                      padding: '0.625rem',
+                      borderRadius: '0.625rem',
+                      border: `2px solid ${options.fontSize === fs ? 'var(--brand)' : 'var(--border)'}`,
+                      background: options.fontSize === fs ? 'var(--brand-light)' : 'var(--bg-secondary)',
+                      color: options.fontSize === fs ? 'var(--brand)' : 'var(--text-secondary)',
+                      fontSize: '0.8125rem',
+                      fontWeight: options.fontSize === fs ? 600 : 400,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.375rem',
+                    }}
+                  >
+                    {fs === 'default' ? (isBn ? 'ডিফল্ট (বড়)' : 'Default (Large)') : (isBn ? 'কমপ্যাক্ট (ছোট)' : 'Compact (Small)')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ③ Display Options */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={sectionLabel}>③ {isBn ? 'প্রদর্শন বিকল্প' : 'Display Options'}</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.3125rem' }}>
                 {displayOptions.map(([key, label, labelBn]) => {
                   const active = options[key]
@@ -286,7 +330,7 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
             {/* ③ Students */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <div style={sectionLabel}>③ {isBn ? 'শিক্ষার্থী নির্বাচন' : 'Select Students'} ({selectedIds.length}/{students.length})</div>
+                <div style={sectionLabel}>④ {isBn ? 'শিক্ষার্থী নির্বাচন' : 'Select Students'} ({selectedIds.length}/{students.length})</div>
                 <div style={{ display: 'flex', gap: '0.3125rem' }}>
                   <button
                     onClick={toggleSelectAll}

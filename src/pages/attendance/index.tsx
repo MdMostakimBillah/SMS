@@ -1468,7 +1468,7 @@ export default function AttendancePage() {
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
             <div className="overflow-auto max-h-[65vh]">
               <table className="w-full border-collapse text-[0.6875rem]">
-                <thead>
+                <thead className="sticky top-0 z-10">
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                     <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]">
                       <input
@@ -1774,7 +1774,7 @@ export default function AttendancePage() {
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
             <div className="overflow-auto max-h-[65vh]">
               <table className="w-full border-collapse text-[0.6875rem]">
-                <thead>
+                <thead className="sticky top-0 z-10">
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                     <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]">
                       <input
@@ -2115,7 +2115,7 @@ export default function AttendancePage() {
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
             <div className="overflow-auto max-h-[65vh]">
               <table className="w-full border-collapse text-[0.6875rem]">
-                <thead>
+                <thead className="sticky top-0 z-10">
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                     <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]">
                       <input
@@ -2400,7 +2400,7 @@ export default function AttendancePage() {
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
             <div className="overflow-auto max-h-[65vh]">
               <table className="w-full border-collapse text-[0.6875rem]">
-                <thead>
+                <thead className="sticky top-0 z-10">
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                     <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]">
                       <input

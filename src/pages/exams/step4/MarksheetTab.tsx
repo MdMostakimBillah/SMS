@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Download } from 'lucide-react'
+import QRCode from 'qrcode'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { getBrandColor } from '@/lib/pdf'
 import { MarksheetPDFOptionsModal } from './MarksheetPDFOptionsModal'
@@ -64,6 +65,7 @@ export interface MarksheetOptions {
   showSubExams: boolean
   showGradeScale: boolean
   showSignature: boolean
+  fontSize: 'default' | 'compact'
 }
 
 const gradeScale = [
@@ -117,6 +119,7 @@ export default function MarksheetTab({
     showSubExams: true,
     showGradeScale: true,
     showSignature: true,
+    fontSize: 'default',
   })
 
   const hasSubExams = useMemo(() => {
@@ -154,6 +157,48 @@ export default function MarksheetTab({
     return stats
   }, [enrichedData])
 
+  const [qrMap, setQrMap] = useState<Record<string, string>>({})
+  const qrCancelledRef = useRef(false)
+
+  useEffect(() => {
+    qrCancelledRef.current = false
+    Promise.all(
+      enrichedData.map(async (s) => {
+        const admission = allStudents.find((a) => a.id === s.student.id)
+        const subjects = s.subjectMarks.map((sm) => `${sm.subjectName}:${sm.obtained}/${sm.fullMarks}`).join(', ')
+        const payload = [
+          `Student: ${s.student.nameEn}`,
+          `Student ID: ${s.student.id}`,
+          `Roll: ${s.student.roll}`,
+          `Class: ${className}`,
+          `Section: ${sectionName}`,
+          `Exam: ${examName}`,
+          `Session: ${examSession}`,
+          `Father: ${admission ? (isBn ? admission.fatherNameBn : admission.fatherNameEn || '-') : '-'}`,
+          `Mother: ${admission ? (isBn ? admission.motherNameBn : admission.motherNameEn || '-') : '-'}`,
+          `Total: ${s.totalObtained}/${s.totalFull}`,
+          `Percentage: ${s.percentage.toFixed(1)}%`,
+          `GPA: ${s.gpa.toFixed(1)}`,
+          `Grade: ${s.passedAll ? getGradeLetter(s.percentage) : 'F'}`,
+          `Rank: ${s.classRank ? `#${s.classRank}` : '-'}`,
+          `Subjects: ${subjects}`,
+        ].join('\n')
+        try {
+          return { id: s.student.id, url: await QRCode.toDataURL(payload, { width: 120, margin: 1, color: { dark: '#1e293b', light: '#ffffff' } }) }
+        } catch {
+          return { id: s.student.id, url: '' }
+        }
+      })
+    ).then((results) => {
+      if (!qrCancelledRef.current) {
+        const map: Record<string, string> = {}
+        results.forEach((r) => { map[r.id] = r.url })
+        setQrMap(map)
+      }
+    })
+    return () => { qrCancelledRef.current = true }
+  }, [enrichedData, allStudents, isBn, className, sectionName, examName, examSession])
+
   const handlePdfDownload = (html: string, filename: string) => {
     downloadHTML(filename, html)
     setShowPdfModal(false)
@@ -178,47 +223,47 @@ export default function MarksheetTab({
         return (
           <div key={student.student.id} className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border)] overflow-hidden mb-6 shadow-sm">
             {/* ── MARKSHEET HEADING ── */}
-            <div className="text-center pt-5 pb-3 px-6 border-b border-[var(--border)]">
-              <h2 className="text-base font-bold" style={{ color: brand }}>{institution.name}</h2>
-              {institution.nameBn && <p className="text-[0.65rem] text-[var(--text-secondary)] mt-0.5">{institution.nameBn}</p>}
-              <p className="text-[0.65rem] text-[var(--text-secondary)] mt-0.5">{institution.address}</p>
-              <div className="mt-2">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)] border-b-2 inline-block pb-0.5" style={{ borderColor: brand }}>Marksheet</h3>
+            <div className="text-center pt-3 pb-2 px-5 border-b border-[var(--border)]">
+              <h2 className="text-sm font-bold" style={{ color: brand }}>{institution.name}</h2>
+              {institution.nameBn && <p className="text-[0.6rem] text-[var(--text-secondary)] mt-0.5">{institution.nameBn}</p>}
+              <p className="text-[0.6rem] text-[var(--text-secondary)] mt-0.5">{institution.address}</p>
+              <div className="mt-1">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] border-b-2 inline-block pb-0.5" style={{ borderColor: brand }}>Marksheet</h3>
               </div>
-              <p className="text-[0.65rem] text-[var(--text-secondary)] mt-1">Exam: {examName}</p>
+              <p className="text-[0.6rem] text-[var(--text-secondary)] mt-0.5">Exam: {examName}</p>
             </div>
 
             {/* ── STUDENT INFO ── */}
-            <div className="mx-5 mb-3 p-3 bg-[var(--bg-secondary)]/50 rounded-lg border border-[var(--border)]">
-              <div className="flex items-start justify-between gap-4">
+            <div className="mx-4 mb-2 p-2.5 bg-[var(--bg-secondary)]/50 rounded-lg border border-[var(--border)]">
+              <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
-                    <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Name</span><span className="text-[var(--text-primary)]">{student.student.nameEn}</span></div>
-                    <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Roll No.</span><span className="text-[var(--text-primary)]">{student.student.roll}</span></div>
-                    <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Class</span><span className="text-[var(--text-primary)]">{className}</span></div>
-                    <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Section</span><span className="text-[var(--text-primary)]">{sectionName}</span></div>
-                    <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Student ID</span><span className="text-[var(--text-primary)]">{student.student.id}</span></div>
-                    <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Exam</span><span className="text-[var(--text-primary)]">{examName}</span></div>
-                    <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Session</span><span className="text-[var(--text-primary)]">{examSession}</span></div>
+                  <div className="grid grid-cols-2 gap-x-5 gap-y-1 text-[0.65rem]">
+                    <div className="flex gap-1.5"><span className="font-semibold text-[var(--text-primary)] w-20 shrink-0">Name</span><span className="text-[var(--text-primary)] truncate">{student.student.nameEn}</span></div>
+                    <div className="flex gap-1.5"><span className="font-semibold text-[var(--text-primary)] w-20 shrink-0">Roll</span><span className="text-[var(--text-primary)]">{student.student.roll}</span></div>
+                    <div className="flex gap-1.5"><span className="font-semibold text-[var(--text-primary)] w-20 shrink-0">Class</span><span className="text-[var(--text-primary)]">{className}</span></div>
+                    <div className="flex gap-1.5"><span className="font-semibold text-[var(--text-primary)] w-20 shrink-0">Section</span><span className="text-[var(--text-primary)]">{sectionName}</span></div>
+                    <div className="flex gap-1.5"><span className="font-semibold text-[var(--text-primary)] w-20 shrink-0">Student ID</span><span className="text-[var(--text-primary)]">{student.student.id}</span></div>
+                    <div className="flex gap-1.5"><span className="font-semibold text-[var(--text-primary)] w-20 shrink-0">Exam</span><span className="text-[var(--text-primary)]">{examName}</span></div>
+                    <div className="flex gap-1.5"><span className="font-semibold text-[var(--text-primary)] w-20 shrink-0">Session</span><span className="text-[var(--text-primary)]">{examSession}</span></div>
                   </div>
                   {(options.showFather || options.showMother) && admission && (
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-1 mt-2 pt-2 border-t border-[var(--border)] text-xs">
-                      <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Father</span><span className="text-[var(--text-primary)]">{options.showFather ? (isBn ? admission.fatherNameBn : admission.fatherNameEn || '-') : ''}</span></div>
-                      <div className="flex gap-2"><span className="font-semibold text-[var(--text-primary)] w-16">Mother</span><span className="text-[var(--text-primary)]">{options.showMother ? (isBn ? admission.motherNameBn : admission.motherNameEn || '-') : ''}</span></div>
+                    <div className="grid grid-cols-2 gap-x-5 gap-y-0.5 mt-1.5 pt-1.5 border-t border-[var(--border)] text-[0.65rem]">
+                      <div className="flex gap-1.5"><span className="font-semibold text-[var(--text-primary)] w-20 shrink-0">Father</span><span className="text-[var(--text-primary)]">{options.showFather ? (isBn ? admission.fatherNameBn : admission.fatherNameEn || '-') : ''}</span></div>
+                      <div className="flex gap-1.5"><span className="font-semibold text-[var(--text-primary)] w-20 shrink-0">Mother</span><span className="text-[var(--text-primary)]">{options.showMother ? (isBn ? admission.motherNameBn : admission.motherNameEn || '-') : ''}</span></div>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[var(--border)]">
-                    {options.showClassRank && student.classRank && <span className="text-[0.65rem] font-semibold px-2 py-0.5 rounded whitespace-nowrap" style={{ background: `${brand}12`, color: brand }}>Class Rank: #{student.classRank}</span>}
-                    {options.showSectionRank && student.sectionRank && <span className="text-[0.65rem] font-semibold px-2 py-0.5 rounded whitespace-nowrap" style={{ background: `${brand}12`, color: brand }}>Section Rank: #{student.sectionRank}</span>}
-                    {options.showGpa && <span className="text-[0.65rem] font-semibold px-2 py-0.5 rounded whitespace-nowrap" style={{ background: `${sGradeColor}18`, color: sGradeColor }}>GPA: {student.gpa.toFixed(1)} ({sGrade})</span>}
+                  <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-[var(--border)]">
+                    {options.showClassRank && student.classRank && <span className="text-[0.6rem] font-semibold px-1.5 py-0.5 rounded whitespace-nowrap" style={{ background: `${brand}12`, color: brand }}>Class Rank: #{student.classRank}</span>}
+                    {options.showSectionRank && student.sectionRank && <span className="text-[0.6rem] font-semibold px-1.5 py-0.5 rounded whitespace-nowrap" style={{ background: `${brand}12`, color: brand }}>Section Rank: #{student.sectionRank}</span>}
+                    {options.showGpa && <span className="text-[0.6rem] font-semibold px-1.5 py-0.5 rounded whitespace-nowrap" style={{ background: `${sGradeColor}18`, color: sGradeColor }}>GPA: {student.gpa.toFixed(1)} ({sGrade})</span>}
                   </div>
                 </div>
                 {options.showPhoto && (
-                  <div className="w-20 h-24 rounded-lg flex items-center justify-center flex-shrink-0 border border-dashed" style={{ borderColor: `${brand}30`, background: `${brand}06` }}>
+                  <div className="w-14 h-[4.5rem] rounded flex items-center justify-center flex-shrink-0 border border-dashed" style={{ borderColor: `${brand}30`, background: `${brand}06` }}>
                     {admission?.photo ? (
-                      <img src={admission.photo} alt={student.student.nameEn} className="w-20 h-24 rounded-lg object-cover" />
+                      <img src={admission.photo} alt={student.student.nameEn} className="w-14 h-[4.5rem] rounded object-cover" />
                     ) : (
-                      <span className="text-[0.6rem] text-[var(--text-muted)] text-center">Photo</span>
+                      <span className="text-[0.55rem] text-[var(--text-muted)] text-center">Photo</span>
                     )}
                   </div>
                 )}
@@ -226,24 +271,24 @@ export default function MarksheetTab({
             </div>
 
             {/* ── CLASS/SECTION LABEL ── */}
-            <div className="mx-5 mb-2 px-3 py-1.5 bg-[var(--bg-primary)] rounded border-l-3" style={{ borderColor: brand }}>
-              <span className="text-xs font-semibold text-[var(--text-primary)]">Class: {className} — Section: {sectionName}</span>
+            <div className="mx-4 mb-1.5 px-2.5 py-1 bg-[var(--bg-primary)] rounded border-l-3" style={{ borderColor: brand }}>
+              <span className="text-[0.65rem] font-semibold text-[var(--text-primary)]">Class: {className} — Section: {sectionName}</span>
             </div>
 
             {/* ── MARKS TABLE ── */}
-            <div className="mx-5 mb-3 overflow-x-auto">
-              <table className="w-full text-xs border border-[var(--border)] rounded-lg overflow-hidden">
+            <div className="mx-4 mb-2 overflow-x-auto">
+              <table className="w-full text-[0.65rem] border border-[var(--border)] rounded-lg overflow-hidden">
                 <thead>
-                  <tr className="text-[0.65rem] uppercase tracking-wide text-white" style={{ background: brand }}>
-                    <th className="text-left px-3 py-2 font-semibold">#</th>
-                    <th className="text-left px-3 py-2 font-semibold">Subject Name</th>
-                    {showSub && <th className="text-center px-2 py-2 font-semibold">Sub Exam</th>}
-                    {showSub && <th className="text-center px-2 py-2 font-semibold">Full Mark</th>}
-                    {showSub && <th className="text-center px-2 py-2 font-semibold">Obtain</th>}
-                    <th className="text-center px-3 py-2 font-semibold">Total Obtain</th>
-                    {options.showSubjectHighest && <th className="text-center px-3 py-2 font-semibold">Highest</th>}
-                    {options.showSubjectHighest && <th className="text-center px-3 py-2 font-semibold">Position</th>}
-                    <th className="text-center px-3 py-2 font-semibold">Status</th>
+                  <tr className="text-[0.6rem] uppercase tracking-wide text-white" style={{ background: brand }}>
+                    <th className="text-left px-2 py-1.5 font-semibold">#</th>
+                    <th className="text-left px-2 py-1.5 font-semibold">Subject</th>
+                    {showSub && <th className="text-center px-1.5 py-1.5 font-semibold">Sub</th>}
+                    {showSub && <th className="text-center px-1.5 py-1.5 font-semibold">Full</th>}
+                    {showSub && <th className="text-center px-1.5 py-1.5 font-semibold">Obt</th>}
+                    <th className="text-center px-2 py-1.5 font-semibold">Total</th>
+                    {options.showSubjectHighest && <th className="text-center px-2 py-1.5 font-semibold">High</th>}
+                    {options.showSubjectHighest && <th className="text-center px-2 py-1.5 font-semibold">Pos</th>}
+                    <th className="text-center px-2 py-1.5 font-semibold">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -260,15 +305,15 @@ export default function MarksheetTab({
                         const seObtained = sm.subExamMarks?.[se.id] || 0
                         return (
                           <tr key={`${sm.subjectId}-${se.id}`} style={{ background: bg }}>
-                            {si === 0 && <td rowSpan={subExams.length} className="text-center px-3 py-2 font-semibold text-[var(--text-secondary)] border-b border-[var(--border)] align-middle">{idx + 1}</td>}
-                            {si === 0 && <td rowSpan={subExams.length} className="text-left px-3 py-2 font-semibold text-[var(--text-primary)] border-b border-[var(--border)] align-middle">{sm.subjectName}</td>}
-                            <td className="text-center px-2 py-1 text-[var(--text-secondary)] border-b border-[var(--border)]/50">{seName}</td>
-                            <td className="text-center px-2 py-1 text-[var(--text-secondary)] border-b border-[var(--border)]/50">{se.fullMarks}</td>
-                            <td className="text-center px-2 py-1 font-medium text-[var(--text-primary)] border-b border-[var(--border)]/50">{seObtained}</td>
-                            {si === 0 && <td rowSpan={subExams.length} className="text-center px-3 py-2 font-bold border-b border-[var(--border)] align-middle" style={{ color: brand }}>{sm.obtained}</td>}
-                            {options.showSubjectHighest && si === 0 && <td rowSpan={subExams.length} className="text-center px-3 py-2 font-semibold border-b border-[var(--border)] align-middle" style={{ color: stat?.highest === sm.obtained && sm.obtained > 0 ? brand : 'var(--text-primary)' }}>{stat?.highest || 0}</td>}
-                            {options.showSubjectHighest && si === 0 && <td rowSpan={subExams.length} className="text-center px-3 py-2 font-semibold border-b border-[var(--border)] align-middle" style={{ color: rank <= 3 && rank > 0 ? '#f59e0b' : 'var(--text-primary)' }}>{rank > 0 ? `#${rank}` : '-'}</td>}
-                            {si === 0 && <td rowSpan={subExams.length} className="text-center px-3 py-2 font-semibold border-b border-[var(--border)] align-middle"><span className="px-1.5 py-0.5 rounded text-[0.6rem] font-bold" style={sm.passed ? { background: '#16a34a18', color: '#16a34a' } : { background: '#ef444418', color: '#ef4444' }}>{sm.passed ? 'Pass' : 'Fail'}</span></td>}
+                            {si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-semibold text-[var(--text-secondary)] border-b border-[var(--border)] align-middle">{idx + 1}</td>}
+                            {si === 0 && <td rowSpan={subExams.length} className="text-left px-2 py-1 font-semibold text-[var(--text-primary)] border-b border-[var(--border)] align-middle">{sm.subjectName}</td>}
+                            <td className="text-center px-1.5 py-0.5 text-[var(--text-secondary)] border-b border-[var(--border)]/50">{seName}</td>
+                            <td className="text-center px-1.5 py-0.5 text-[var(--text-secondary)] border-b border-[var(--border)]/50">{se.fullMarks}</td>
+                            <td className="text-center px-1.5 py-0.5 font-medium text-[var(--text-primary)] border-b border-[var(--border)]/50">{seObtained}</td>
+                            {si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-bold border-b border-[var(--border)] align-middle" style={{ color: brand }}>{sm.obtained}</td>}
+                            {options.showSubjectHighest && si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-semibold border-b border-[var(--border)] align-middle" style={{ color: stat?.highest === sm.obtained && sm.obtained > 0 ? brand : 'var(--text-primary)' }}>{stat?.highest || 0}</td>}
+                            {options.showSubjectHighest && si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-semibold border-b border-[var(--border)] align-middle" style={{ color: rank <= 3 && rank > 0 ? '#f59e0b' : 'var(--text-primary)' }}>{rank > 0 ? `#${rank}` : '-'}</td>}
+                            {si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-semibold border-b border-[var(--border)] align-middle"><span className="px-1 py-0.5 rounded text-[0.55rem] font-bold" style={sm.passed ? { background: '#16a34a18', color: '#16a34a' } : { background: '#ef444418', color: '#ef4444' }}>{sm.passed ? 'Pass' : 'Fail'}</span></td>}
                           </tr>
                         )
                       })
@@ -276,24 +321,24 @@ export default function MarksheetTab({
 
                     return (
                       <tr key={sm.subjectId} style={{ background: bg }}>
-                        <td className="text-center px-3 py-2 font-semibold text-[var(--text-secondary)] border-b border-[var(--border)]">{idx + 1}</td>
-                        <td className="text-left px-3 py-2 font-semibold text-[var(--text-primary)] border-b border-[var(--border)]">{sm.subjectName}</td>
-                        {showSub && <td className="text-center px-2 py-1 text-[var(--text-muted)] border-b border-[var(--border)]/50">—</td>}
-                        {showSub && <td className="text-center px-2 py-1 text-[var(--text-muted)] border-b border-[var(--border)]/50">—</td>}
-                        {showSub && <td className="text-center px-2 py-1 text-[var(--text-muted)] border-b border-[var(--border)]/50">—</td>}
-                        <td className="text-center px-3 py-2 font-bold border-b border-[var(--border)]" style={{ color: brand }}>{sm.obtained}</td>
-                        {options.showSubjectHighest && <td className="text-center px-3 py-2 font-semibold border-b border-[var(--border)]" style={{ color: stat?.highest === sm.obtained && sm.obtained > 0 ? brand : 'var(--text-primary)' }}>{stat?.highest || 0}</td>}
-                        {options.showSubjectHighest && <td className="text-center px-3 py-2 font-semibold border-b border-[var(--border)]" style={{ color: rank <= 3 && rank > 0 ? '#f59e0b' : 'var(--text-primary)' }}>{rank > 0 ? `#${rank}` : '-'}</td>}
-                        <td className="text-center px-3 py-2 font-semibold border-b border-[var(--border)]"><span className="px-1.5 py-0.5 rounded text-[0.6rem] font-bold" style={sm.passed ? { background: '#16a34a18', color: '#16a34a' } : { background: '#ef444418', color: '#ef4444' }}>{sm.passed ? 'Pass' : 'Fail'}</span></td>
+                        <td className="text-center px-2 py-1 font-semibold text-[var(--text-secondary)] border-b border-[var(--border)]">{idx + 1}</td>
+                        <td className="text-left px-2 py-1 font-semibold text-[var(--text-primary)] border-b border-[var(--border)]">{sm.subjectName}</td>
+                        {showSub && <td className="text-center px-1.5 py-0.5 text-[var(--text-muted)] border-b border-[var(--border)]/50">—</td>}
+                        {showSub && <td className="text-center px-1.5 py-0.5 text-[var(--text-muted)] border-b border-[var(--border)]/50">—</td>}
+                        {showSub && <td className="text-center px-1.5 py-0.5 text-[var(--text-muted)] border-b border-[var(--border)]/50">—</td>}
+                        <td className="text-center px-2 py-1 font-bold border-b border-[var(--border)]" style={{ color: brand }}>{sm.obtained}</td>
+                        {options.showSubjectHighest && <td className="text-center px-2 py-1 font-semibold border-b border-[var(--border)]" style={{ color: stat?.highest === sm.obtained && sm.obtained > 0 ? brand : 'var(--text-primary)' }}>{stat?.highest || 0}</td>}
+                        {options.showSubjectHighest && <td className="text-center px-2 py-1 font-semibold border-b border-[var(--border)]" style={{ color: rank <= 3 && rank > 0 ? '#f59e0b' : 'var(--text-primary)' }}>{rank > 0 ? `#${rank}` : '-'}</td>}
+                        <td className="text-center px-2 py-1 font-semibold border-b border-[var(--border)]"><span className="px-1 py-0.5 rounded text-[0.55rem] font-bold" style={sm.passed ? { background: '#16a34a18', color: '#16a34a' } : { background: '#ef444418', color: '#ef4444' }}>{sm.passed ? 'Pass' : 'Fail'}</span></td>
                       </tr>
                     )
                   })}
                 </tbody>
                 <tfoot>
                   <tr className="font-bold" style={{ background: `${brand}08` }}>
-                    <td colSpan={2 + (showSub ? 3 : 0)} className="text-right px-3 py-2 text-[var(--text-primary)] border-t-2 text-xs" style={{ borderColor: `${brand}40` }}>Total Marks</td>
-                    <td className="text-center px-3 py-2 border-t-2 text-sm font-bold" style={{ borderColor: `${brand}40`, color: brand }}>{student.totalObtained}</td>
-                    <td className="text-center px-3 py-2 text-[var(--text-secondary)] border-t-2 text-xs" style={{ borderColor: `${brand}40` }}>{student.totalFull}</td>
+                    <td colSpan={2 + (showSub ? 3 : 0)} className="text-right px-2 py-1 text-[var(--text-primary)] border-t-2 text-[0.65rem]" style={{ borderColor: `${brand}40` }}>Total Marks</td>
+                    <td className="text-center px-2 py-1 border-t-2 text-xs font-bold" style={{ borderColor: `${brand}40`, color: brand }}>{student.totalObtained}</td>
+                    <td className="text-center px-2 py-1 text-[var(--text-secondary)] border-t-2 text-[0.65rem]" style={{ borderColor: `${brand}40` }}>{student.totalFull}</td>
                     {options.showSubjectHighest && <td className="border-t-2" style={{ borderColor: `${brand}40` }}></td>}
                     {options.showSubjectHighest && <td className="border-t-2" style={{ borderColor: `${brand}40` }}></td>}
                     <td className="border-t-2" style={{ borderColor: `${brand}40` }}></td>
@@ -302,25 +347,30 @@ export default function MarksheetTab({
               </table>
             </div>
 
-            {/* ── GRADE SCALE ── */}
-            {options.showGradeScale && (
-              <div className="mx-5 mb-3 p-2 bg-[var(--bg-secondary)]/50 rounded-lg border border-[var(--border)]">
-                <div className="flex flex-wrap gap-1.5">
-                  {gradeScale.map((g) => (
-                    <div key={g.letter} className="flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border)]">
-                      <span className="w-5 h-5 rounded flex items-center justify-center text-[0.6rem] font-bold" style={{ background: `${getGradeColor(g.letter)}18`, color: getGradeColor(g.letter) }}>{g.letter}</span>
-                      <span className="text-[0.6rem] text-[var(--text-secondary)]">{g.range}%</span>
-                    </div>
-                  ))}
-                </div>
+            {/* ── LEGEND + QR ── */}
+            {(options.showGradeScale || qrMap[student.student.id]) && (
+              <div className="mx-4 mb-2 p-2 bg-[var(--bg-secondary)]/50 rounded-lg border border-[var(--border)] flex items-center justify-between gap-3">
+                {options.showGradeScale && (
+                  <div className="flex flex-wrap gap-1">
+                    {gradeScale.map((g) => (
+                      <div key={g.letter} className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border)]">
+                        <span className="w-4 h-4 rounded flex items-center justify-center text-[0.5rem] font-bold" style={{ background: `${getGradeColor(g.letter)}18`, color: getGradeColor(g.letter) }}>{g.letter}</span>
+                        <span className="text-[0.5rem] text-[var(--text-secondary)]">{g.range}%</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {qrMap[student.student.id] && (
+                  <img src={qrMap[student.student.id]} alt="QR Code" className="w-14 h-14 flex-shrink-0" />
+                )}
               </div>
             )}
 
             {/* ── SIGNATURES ── */}
             {options.showSignature && (
-              <div className="flex justify-between px-6 py-4 border-t border-[var(--border)]">
-                <div className="text-center"><div className="w-28 border-b border-[var(--border)] mb-1"></div><span className="text-[0.65rem] text-[var(--text-secondary)]">Director</span></div>
-                <div className="text-center"><div className="w-28 border-b border-[var(--border)] mb-1"></div><span className="text-[0.65rem] text-[var(--text-secondary)]">Checked By</span></div>
+              <div className="flex justify-between px-5 py-2 border-t border-[var(--border)]">
+                <div className="text-center"><div className="w-24 border-b border-[var(--border)] mb-0.5"></div><span className="text-[0.6rem] text-[var(--text-secondary)]">Director</span></div>
+                <div className="text-center"><div className="w-24 border-b border-[var(--border)] mb-0.5"></div><span className="text-[0.6rem] text-[var(--text-secondary)]">Checked By</span></div>
               </div>
             )}
           </div>

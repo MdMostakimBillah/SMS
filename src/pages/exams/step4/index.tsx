@@ -44,8 +44,9 @@ import type { TabulationPdfOptions } from '@/pages/exams/step4/tabulationPdfTemp
 import { generateTabulationPDF } from '@/pages/exams/step4/tabulationPdfTemplate'
 import { MarkAdjustmentTab } from '@/pages/exams/step4/MarkAdjustmentTab'
 import MarksheetTab from '@/pages/exams/step4/MarksheetTab'
+import CumulativeMarkSheetTab from '@/pages/exams/step4/CumulativeMarkSheetTab'
 
-type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position' | 'mark-adjustment' | 'marksheet'
+type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position' | 'mark-adjustment' | 'marksheet' | 'cumulative-marksheet'
 
 export default function Step4Results() {
   const navigate = useNavigate()
@@ -523,6 +524,7 @@ export default function Step4Results() {
           { key: 'extra-marks' as SubTab, label: isBn ? 'এক্সট্রা মার্কস' : 'Extra Marks', icon: <Award size={14} /> },
           { key: 'mark-adjustment' as SubTab, label: isBn ? 'মার্ক এডজাস্টমেন্ট' : 'Mark Adjustment', icon: <ClipboardCheck size={14} /> },
           { key: 'marksheet' as SubTab, label: isBn ? 'মার্কশিট' : 'Marksheet', icon: <GraduationCap size={14} /> },
+          { key: 'cumulative-marksheet' as SubTab, label: isBn ? 'কামিউলেটিভ মার্কশিট' : 'Cumulative Marksheet', icon: <TrendingUp size={14} /> },
           { key: 'analysis' as SubTab, label: isBn ? 'বিশ্লেষণ' : 'Analysis', icon: <BarChart2 size={14} /> },
           { key: 'position' as SubTab, label: isBn ? 'পজিশন চেক' : 'Position Check', icon: <Target size={14} /> },
         ].map((t) => (
@@ -982,6 +984,25 @@ export default function Step4Results() {
                 sectionName={selectedSectionId}
                 institutionName={useClassStore.getState().institution.name}
                 institutionAddress={useClassStore.getState().institution.address}
+                isBn={isBn}
+              />
+            ) : (
+              <div className="text-center py-12 text-[var(--text-muted)] text-[0.875rem]">
+                {isBn ? 'প্রথমে পরীক্ষা, শ্রেণি ও সেকশন নির্বাচন করুন' : 'Select exam, class & section first'}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ═══ CUMULATIVE MARKSHEET TAB ═══ */}
+        {activeSubTab === 'cumulative-marksheet' && (
+          <>
+            {selectedExamId && selectedClassId && selectedSectionId && enrichedTabulationData.length > 0 ? (
+              <CumulativeMarkSheetTab
+                currentExamData={enrichedTabulationData}
+                currentExamId={selectedExamId}
+                className={selectedClassId}
+                sectionName={selectedSectionId}
                 isBn={isBn}
               />
             ) : (

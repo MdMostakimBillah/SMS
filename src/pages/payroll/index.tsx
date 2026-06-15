@@ -492,7 +492,7 @@ export default function PayrollPage() {
             )}
             <div className={`overflow-x-auto ${isMobile ? 'max-h-[60vh] overflow-y-auto' : ''}`}>
               <table className={`w-full border-collapse text-xs ${isMobile ? 'min-w-[37.5rem]' : ''}`}>
-                <thead>
+                <thead className="sticky top-0 z-10">
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                     <th className="py-[0.625rem] px-3 w-10">
                       <input

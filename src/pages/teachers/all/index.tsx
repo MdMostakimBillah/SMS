@@ -495,7 +495,7 @@ ${photoHtml}
           </button>
         </div>
 
-        <div className="sticky top-0 z-50 bg-[var(--bg-primary)] pt-0.5 pb-1">
+        <div className="sticky top-0 z-50 pt-0.5 pb-1 bg-transparent">
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[0.875rem] mb-2.5">
             <div
               className="grid gap-2"
@@ -710,7 +710,7 @@ ${photoHtml}
       <div className="flex-1 overflow-hidden flex flex-col bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] mt-1">
         <div className={`flex-1 overflow-y-auto ${isMobile ? 'max-h-[50vh]' : ''}`}>
           <table className="w-full border-collapse text-xs">
-            <thead>
+            <thead className="sticky top-0 z-10">
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 <th className="p-2.5 w-[2.25rem]" style={sc('0')}>
                   <input
