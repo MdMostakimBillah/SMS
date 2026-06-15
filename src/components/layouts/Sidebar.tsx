@@ -113,16 +113,10 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
 
   useEffect(() => {
     if (asideRef.current) {
-      gsap.set(asideRef.current, { width: collapsed ? collapsedWidth : expandedWidth })
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (asideRef.current) {
       gsap.to(asideRef.current, {
         width: collapsed ? collapsedWidth : expandedWidth,
-        duration: 0.3,
-        ease: 'power2.inOut',
+        duration: 0.25,
+        ease: 'power3.out',
       })
     }
   }, [collapsed, collapsedWidth])
@@ -231,6 +225,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         ref={asideRef}
         className="h-full flex flex-col overflow-hidden shrink-0"
         style={{
+          width: collapsed ? collapsedWidth : expandedWidth,
           background: 'var(--glass)',
           backdropFilter: 'blur(16px) saturate(180%)',
           WebkitBackdropFilter: 'blur(16px) saturate(180%)',
