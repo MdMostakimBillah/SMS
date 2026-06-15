@@ -416,14 +416,49 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       {/* Tooltip */}
       {collapsed && hoveredItem && (
         <div
-          className="fixed bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] whitespace-nowrap shadow-md z-[9000] pointer-events-none"
+          className="fixed z-[9000] pointer-events-none"
           style={{
-            left: hoveredItem.rect.right + 8,
+            left: hoveredItem.rect.right + 12,
             top: hoveredItem.rect.top + hoveredItem.rect.height / 2,
             transform: 'translateY(-50%)',
+            animation: 'tooltipIn 0.15s ease-out',
           }}
         >
-          {hoveredItem.label}
+          <div className="relative">
+            <div
+              className="px-3 py-1.5 rounded-lg text-[0.8125rem] font-semibold whitespace-nowrap"
+              style={{
+                background: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              {hoveredItem.label}
+            </div>
+            <div
+              className="absolute top-1/2 -translate-y-1/2"
+              style={{
+                left: '-5px',
+                width: 0,
+                height: 0,
+                borderTop: '5px solid transparent',
+                borderBottom: '5px solid transparent',
+                borderRight: '5px solid var(--border)',
+              }}
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2"
+              style={{
+                left: '-4px',
+                width: 0,
+                height: 0,
+                borderTop: '5px solid transparent',
+                borderBottom: '5px solid transparent',
+                borderRight: '5px solid var(--bg-primary)',
+              }}
+            />
+          </div>
         </div>
       )}
     </>
