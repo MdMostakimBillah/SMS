@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react'
-import { Plus, Trash2, Download } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import { useExamStore } from '@/store/examStore'
+import { useAdmissionStore } from '@/store/admissionStore'
+import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { getBrandColor, downloadHTML } from '@/lib/pdf'
 import type { TabulationStudent } from './MarksheetTab'
@@ -17,11 +19,31 @@ interface CumulativeMarkSheetProps {
   isBn?: boolean
 }
 
-interface SelectedExam {
+interface SubjectExamMark {
+  subjectId: string
+  subjectName: string
+  fullMarks: number
+  passMarks: number
+  exams: Record<string, { obtained: number; total: number; pc: number }>
+  cumulative: { obtained: number; full: number; pc: number; passed: boolean }
+}
+
+interface StudentMarkData {
+  studentId: string
+  nameEn: string
+  nameBn: string
+  roll: string
+  photo: string
+  studentIdCode: string
+  subjects: SubjectExamMark[]
+  examTotals: Record<string, { obtained: number; full: number; grade: string; gpa: number; pc: number }>
+  cumulative: { obtained: number; full: number; gpa: number; grade: string }
+}
+
+interface PrevExamData {
   examId: string
   examName: string
   weight: number
-  students: Record<string, { obtained: number; full: number; percentage: number }>
 }
 
 function getGradeLetter(pct: number): string {
@@ -51,13 +73,13 @@ function getGradeColor(letter: string): string {
 }
 
 const gradeScale = [
-  { letter: 'A+', range: '80–100' },
-  { letter: 'A', range: '70–79' },
-  { letter: 'A-', range: '60–69' },
-  { letter: 'B', range: '50–59' },
-  { letter: 'C', range: '40–49' },
-  { letter: 'D', range: '33–39' },
-  { letter: 'F', range: '0–32' },
+  { letter: 'A+', range: '80–100', gpa: '5.00' },
+  { letter: 'A', range: '70–79', gpa: '4.00' },
+  { letter: 'A-', range: '60–69', gpa: '3.50' },
+  { letter: 'B', range: '50–59', gpa: '3.00' },
+  { letter: 'C', range: '40–49', gpa: '2.00' },
+  { letter: 'D', range: '33–39', gpa: '1.00' },
+  { letter: 'F', range: '0–32', gpa: '0.00' },
 ]
 
 export default function CumulativeMarkSheetTab({
@@ -73,307 +95,407 @@ export default function CumulativeMarkSheetTab({
 }: CumulativeMarkSheetProps) {
   const brand = getBrandColor()
   const allExamConfigs = useExamStore((s) => s.examConfigs)
-  const studentMarks = useExamStore((s) => s.studentMarks)
-  const subjectMarkConfigs = useExamStore((s) => s.subjectMarkConfigs)
+  const allStudentMarks = useExamStore((s) => s.studentMarks)
+  const allSubjectMarkConfigs = useExamStore((s) => s.subjectMarkConfigs)
+  const allStudents = useAdmissionStore((s) => s.students)
+  const allSubjects = useTeacherStore((s) => s.subjects)
   const currentSession = useClassStore((s) => s.institution.currentSession)
 
-  // Published exams for same class (excluding current)
   const publishedExams = useMemo(() => {
     return allExamConfigs.filter(
-      (e) =>
-        e.id !== currentExamId &&
-        e.session === currentSession &&
-        e.isPublished &&
-        (e.publishedClasses || []).includes(className)
+      (e) => e.id !== currentExamId && e.session === currentSession && e.isPublished && (e.publishedClasses || []).includes(className)
     )
-  }, [allExamConfigs, currentExamId, currentSession, className])
+  }, [allExamConfigs, currentExamId, currentExamSession, className])
 
-  const [selectedExams, setSelectedExams] = useState<SelectedExam[]>([])
+  const [prevExams, setPrevExams] = useState<PrevExamData[]>([])
+  const [studentIdx, setStudentIdx] = useState(0)
 
-  // Add exam to selection
   const addExam = (examId: string) => {
     const exam = allExamConfigs.find((e) => e.id === examId)
-    if (!exam || selectedExams.some((s) => s.examId === examId)) return
-
-    const examSubjects = subjectMarkConfigs.filter((s) => s.examId === examId && s.classId === className)
-    const students: Record<string, { obtained: number; full: number; percentage: number }> = {}
-
-    currentExamData.forEach((student) => {
-      let totalObtained = 0
-      let totalFull = 0
-      examSubjects.forEach((sc) => {
-        const mark = studentMarks.find(
-          (m) => m.examId === examId && m.studentId === student.student.id && m.subjectId === sc.subjectId && m.classId === className && m.sectionId === sectionName
-        )
-        totalObtained += mark?.totalMarks || 0
-        totalFull += sc.fullMarks
-      })
-      students[student.student.id] = {
-        obtained: totalObtained,
-        full: totalFull,
-        percentage: totalFull > 0 ? Math.round((totalObtained / totalFull) * 100) : 0,
-      }
-    })
-
-    setSelectedExams((prev) => [
-      ...prev,
-      { examId: exam.id, examName: exam.name, weight: 0, students },
-    ])
+    if (!exam || prevExams.some((e) => e.examId === examId)) return
+    setPrevExams((p) => [...p, { examId: exam.id, examName: exam.name, weight: 0 }])
   }
 
   const removeExam = (examId: string) => {
-    setSelectedExams((prev) => prev.filter((e) => e.examId !== examId))
+    setPrevExams((p) => p.filter((e) => e.examId !== examId))
   }
 
-  const updateWeight = (examId: string, weight: number) => {
-    setSelectedExams((prev) => prev.map((e) => (e.examId === examId ? { ...e, weight } : e)))
+  const updateWeight = (examId: string, w: number) => {
+    setPrevExams((p) => p.map((e) => (e.examId === examId ? { ...e, weight: w } : e)))
   }
 
-  const redistributeWeights = () => {
-    if (selectedExams.length === 0) return
-    const perExam = Math.round(100 / (selectedExams.length + 1))
-    setSelectedExams((prev) => prev.map((e) => ({ ...e, weight: perExam })))
-  }
-
-  const totalPrevWeight = selectedExams.reduce((a, e) => a + e.weight, 0)
+  const totalPrevWeight = prevExams.reduce((a, e) => a + e.weight, 0)
   const currentWeight = Math.max(0, 100 - totalPrevWeight)
 
-  // Calculate cumulative data
-  const cumulativeData = useMemo(() => {
-    return currentExamData.map((student) => {
-      const currentPct = student.adjustedPercentage
+  const allExamIds = useMemo(() => [currentExamId, ...prevExams.map((e) => e.examId)], [currentExamId, prevExams])
 
-      let weightedTotal = currentPct * (currentWeight / 100)
-      selectedExams.forEach((exam) => {
-        const prevPct = exam.students[student.student.id]?.percentage || 0
-        weightedTotal += prevPct * (exam.weight / 100)
+  const marksheetData = useMemo<StudentMarkData[]>(() => {
+    if (currentExamData.length === 0) return []
+
+    const classStudents = allStudents.filter((s) => s.status === 'approved' && s.active !== false && s.class === className)
+
+    const examResultMap: Record<string, Record<string, Record<string, { obtained: number; full: number; passed: boolean }>>> = {}
+    const examSubjectsMap: Record<string, { subjectId: string; subjectName: string; fullMarks: number; passMarks: number }[]> = {}
+
+    for (const examId of allExamIds) {
+      const configs = allSubjectMarkConfigs.filter((c) => c.examId === examId && c.classId === className)
+      examSubjectsMap[examId] = configs.map((c) => {
+        const sub = allSubjects.find((s) => s.id === c.subjectId)
+        return { subjectId: c.subjectId, subjectName: sub?.name || c.subjectId, fullMarks: c.fullMarks, passMarks: c.passMarks }
+      })
+      examResultMap[examId] = {}
+      for (const stu of classStudents) {
+        examResultMap[examId][stu.id] = {}
+        for (const cfg of configs) {
+          const mark = allStudentMarks.find((m) => m.examId === examId && m.studentId === stu.id && m.subjectId === cfg.subjectId && m.classId === className)
+          examResultMap[examId][stu.id][cfg.subjectId] = {
+            obtained: mark?.totalMarks || 0,
+            full: cfg.fullMarks,
+            passed: (mark?.totalMarks || 0) >= cfg.passMarks,
+          }
+        }
+      }
+    }
+
+    // Build position maps
+    const pcMaps: Record<string, Record<string, Record<string, number>>> = {}
+    for (const examId of allExamIds) {
+      pcMaps[examId] = {}
+      for (const cfg of (examSubjectsMap[examId] || [])) {
+        const entries = classStudents.map((stu) => ({ id: stu.id, obtained: examResultMap[examId][stu.id]?.[cfg.subjectId]?.obtained || 0 }))
+        entries.sort((a, b) => b.obtained - a.obtained)
+        const rankMap: Record<string, number> = {}
+        entries.forEach((e, i) => { if (!rankMap[e.id]) rankMap[e.id] = i + 1 })
+        pcMaps[examId][cfg.subjectId] = rankMap
+      }
+      // Exam total ranks
+      const examEntries = classStudents.map((stu) => {
+        const total = Object.values(examResultMap[examId][stu.id] || {}).reduce((a, b) => a + b.obtained, 0)
+        return { id: stu.id, total }
+      })
+      examEntries.sort((a, b) => b.total - a.total)
+      const examRankMap: Record<string, number> = {}
+      examEntries.forEach((e, i) => { if (!examRankMap[e.id]) examRankMap[e.id] = i + 1 })
+      pcMaps[examId]['__total__'] = examRankMap
+    }
+
+    // Cumulative position maps (by weighted total)
+    const cumPcMaps: Record<string, Record<string, number>> = {}
+    for (const subjId of Object.keys(pcMaps[currentExamId] || {})) {
+      const entries = classStudents.map((stu) => {
+        let cum = 0
+        for (const examId of allExamIds) {
+          const obtained = examResultMap[examId][stu.id]?.[subjId]?.obtained || 0
+          const full = examResultMap[examId][stu.id]?.[subjId]?.full || 1
+          const pct = (obtained / full) * 100
+          const examObj = examId === currentExamId ? { weight: currentWeight } : prevExams.find((e) => e.examId === examId)
+          cum += pct * ((examObj?.weight || 0) / 100)
+        }
+        return { id: stu.id, cum }
+      })
+      entries.sort((a, b) => b.cum - a.cum)
+      const rankMap: Record<string, number> = {}
+      entries.forEach((e, i) => { if (!rankMap[e.id]) rankMap[e.id] = i + 1 })
+      cumPcMaps[subjId] = rankMap
+    }
+
+    return currentExamData.map((row) => {
+      const stu = row.student
+      const allSubjects = examSubjectsMap[currentExamId] || []
+
+      const subjects: SubjectExamMark[] = allSubjects.map((cfg) => {
+        const exams: Record<string, { obtained: number; total: number; pc: number }> = {}
+        for (const examId of allExamIds) {
+          const r = examResultMap[examId]?.[stu.id]?.[cfg.subjectId]
+          exams[examId] = {
+            obtained: r?.obtained || 0,
+            total: r?.full || cfg.fullMarks,
+            pc: pcMaps[examId]?.[cfg.subjectId]?.[stu.id] || 0,
+          }
+        }
+        // Cumulative: weighted percentage of obtained/full
+        let cumObtained = 0
+        let cumFull = 0
+        for (const examId of allExamIds) {
+          const r = examResultMap[examId]?.[stu.id]?.[cfg.subjectId]
+          const obtained = r?.obtained || 0
+          const full = r?.full || cfg.fullMarks
+          const examObj = examId === currentExamId ? { weight: currentWeight } : prevExams.find((e) => e.examId === examId)
+          const w = (examObj?.weight || 0) / 100
+          cumObtained += Math.round(obtained * w)
+          cumFull += Math.round(full * w)
+        }
+        return {
+          subjectId: cfg.subjectId,
+          subjectName: cfg.subjectName,
+          fullMarks: cfg.fullMarks,
+          passMarks: cfg.passMarks,
+          exams,
+          cumulative: {
+            obtained: cumObtained,
+            full: cumFull,
+            pc: cumPcMaps[cfg.subjectId]?.[stu.id] || 0,
+            passed: cumObtained >= cumFull * 0.33,
+          },
+        }
       })
 
-      const cumulativePct = Math.round(weightedTotal)
-      const passedAll = student.passedAll
-      const cumulativeGpa = getGpa(cumulativePct, passedAll)
-      const cumulativeGrade = passedAll ? getGradeLetter(cumulativePct) : 'F'
+      // Exam totals
+      const examTotals: Record<string, { obtained: number; full: number; grade: string; gpa: number; pc: number }> = {}
+      let totalObtained = 0
+      let totalFull = 0
+      for (const examId of allExamIds) {
+        const total = subjects.reduce((a, s) => a + (s.exams[examId]?.obtained || 0), 0)
+        const full = subjects.reduce((a, s) => a + (s.exams[examId]?.total || 0), 0)
+        const pct = full > 0 ? Math.round((total / full) * 100) : 0
+        const allPassed = subjects.every((s) => s.exams[examId]?.obtained >= (s.exams[examId]?.total || 0) * 0.33)
+        examTotals[examId] = {
+          obtained: total,
+          full,
+          grade: allPassed ? getGradeLetter(pct) : 'F',
+          gpa: getGpa(pct, allPassed),
+          pc: pcMaps[examId]?.['__total__']?.[stu.id] || 0,
+        }
+        totalObtained += total
+        totalFull += full
+      }
+
+      // Cumulative total
+      let cumObt = 0
+      let cumFull = 0
+      for (const examId of allExamIds) {
+        const t = examTotals[examId]
+        const examObj = examId === currentExamId ? { weight: currentWeight } : prevExams.find((e) => e.examId === examId)
+        const w = (examObj?.weight || 0) / 100
+        cumObt += Math.round(t.obtained * w)
+        cumFull += Math.round(t.full * w)
+      }
+      const cumPct = cumFull > 0 ? Math.round((cumObt / cumFull) * 100) : 0
+      const cumPassed = subjects.every((s) => s.cumulative.passed)
 
       return {
-        student: student.student,
-        currentObtained: student.totalObtained,
-        currentFull: student.totalFull || currentExamData[0]?.subjectMarks.reduce((a, b) => a + b.fullMarks, 0) || 0,
-        currentPct,
-        currentGpa: student.adjustedGpa,
-        currentGrade: student.passedAll ? getGradeLetter(currentPct) : 'F',
-        exams: selectedExams.map((exam) => ({
-          examId: exam.examId,
-          examName: exam.examName,
-          weight: exam.weight,
-          ...exam.students[student.student.id],
-        })),
-        cumulativePct,
-        cumulativeGpa,
-        cumulativeGrade,
-        passedAll,
-        classRank: student.classRank,
-        sectionRank: student.sectionRank,
+        studentId: stu.id,
+        nameEn: stu.nameEn,
+        nameBn: stu.nameBn,
+        roll: stu.roll,
+        photo: stu.photo,
+        studentIdCode: stu.id,
+        subjects,
+        examTotals,
+        cumulative: { obtained: cumObt, full: cumFull, gpa: getGpa(cumPct, cumPassed), grade: cumPassed ? getGradeLetter(cumPct) : 'F' },
       }
-    }).sort((a, b) => b.cumulativePct - a.cumulativePct)
-  }, [currentExamData, selectedExams, currentWeight])
+    }).sort((a, b) => (a.roll || '').localeCompare(b.roll || '', undefined, { numeric: true }))
+  }, [currentExamData, allExamIds, currentWeight, prevExams, allStudentMarks, allSubjectMarkConfigs, allStudents, allSubjects, className])
 
-  // Generate PDF
+  const currentStudent = marksheetData[studentIdx]
+
   const generatePDF = () => {
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Cumulative Marksheet - ${currentExamName}</title>
-<style>
-  @page { size: A4 landscape; margin: 12mm; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 9px; color: #1a1a2e; background: #fff; }
-  .header { text-align: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid ${brand}; }
-  .header h1 { font-size: 16px; font-weight: 700; color: ${brand}; margin-bottom: 2px; }
-  .header h2 { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 2px; }
-  .header p { font-size: 9px; color: #6b7280; }
-  .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 9px; color: #374151; }
-  .info-row span { font-weight: 600; }
-  table { width: 100%; border-collapse: collapse; font-size: 8px; }
-  th { background: ${brand}; color: #fff; padding: 5px 4px; font-weight: 600; text-align: center; font-size: 7.5px; white-space: nowrap; }
-  td { padding: 4px; text-align: center; border-bottom: 1px solid #e5e7eb; }
-  tr:nth-child(even) td { background: #f9fafb; }
-  .name-col { text-align: left; font-weight: 600; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
-  .roll-col { text-align: center; font-weight: 500; }
-  .current-col { color: ${brand}; font-weight: 600; }
-  .prev-col { color: #6b7280; }
-  .cumulative-col { font-weight: 700; color: ${brand}; background: ${brand}08; }
-  .gpa-col { font-weight: 700; }
-  .grade-badge { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 7.5px; font-weight: 700; }
-  .weight-info { font-size: 7px; color: #9ca3af; font-weight: 400; }
-  .legend { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; padding-top: 6px; border-top: 1px solid #e5e7eb; }
-  .legend-item { display: flex; align-items: center; gap: 3px; font-size: 7px; color: #6b7280; }
-  .legend-badge { display: inline-block; padding: 1px 4px; border-radius: 2px; font-size: 7px; font-weight: 700; }
-  .footer { margin-top: 10px; padding-top: 8px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 8px; color: #6b7280; }
-</style>
-</head>
-<body>
-  <div class="header">
-    <h1>${institutionName}</h1>
-    <h2>${isBn ? 'কামিউলেটিভ মার্কশিট' : 'Cumulative Marksheet'}</h2>
-    <p>${institutionAddress}</p>
-  </div>
-  <div class="info-row">
-    <div><span>${isBn ? 'শ্রেণি' : 'Class'}:</span> ${className} | <span>${isBn ? 'সেকশন' : 'Section'}:</span> ${sectionName}</div>
-    <div><span>${isBn ? 'সেশন' : 'Session'}:</span> ${currentExamSession} | <span>${isBn ? 'বর্তমান পরীক্ষা' : 'Current Exam'}:</span> ${currentExamName} (${currentWeight}%)</div>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th style="width:25px">#</th>
-        <th style="text-align:left;min-width:100px">${isBn ? 'নাম' : 'Name'}</th>
-        <th style="width:35px">${isBn ? 'রোল' : 'Roll'}</th>
-        ${selectedExams.map((exam) => `
-        <th colspan="2" style="background:${brand}cc">${exam.examName} <span class="weight-info">(${exam.weight}%)</span></th>
-        `).join('')}
-        <th colspan="2" style="background:${brand}">${isBn ? 'বর্তমান পরীক্ষা' : 'Current Exam'} <span class="weight-info">(${currentWeight}%)</span></th>
-        <th colspan="2" style="background:${brand}">${isBn ? 'কামিউলেটিভ' : 'Cumulative'}</th>
-        <th style="width:30px">GPA</th>
-        <th style="width:30px">${isBn ? 'গ্রেড' : 'Grade'}</th>
-      </tr>
-      <tr>
-        <th></th><th></th><th></th>
-        ${selectedExams.map(() => '<th style="font-size:6.5px;background:#4b5563">Obt</th><th style="font-size:6.5px;background:#4b5563">%</th>').join('')}
-        <th style="font-size:6.5px;background:#4b5563">Obt</th><th style="font-size:6.5px;background:#4b5563">%</th>
-        <th style="font-size:6.5px;background:#374151">${isBn ? '%' : '%'}</th><th style="font-size:6.5px;background:#374151">${isBn ? 'গ্রেড' : 'Grade'}</th>
-        <th></th><th></th>
-      </tr>
-    </thead>
-    <tbody>
-      ${cumulativeData.map((row, idx) => {
-        const gColor = getGradeColor(row.cumulativeGrade)
+
+    const studentPages = marksheetData.map((stu) => {
+      const subjectRows = stu.subjects.map((s) => {
+        const examCells = allExamIds.map((eid) => {
+          const ex = s.exams[eid]
+          return `<td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;">${ex.total}</td>
+            <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;">${ex.obtained}${ex.obtained === 0 ? '' : ` <span style="font-size:6px;color:#6b7280;">(${Math.round((ex.obtained / (ex.total || 1)) * 100)}%)</span>`}</td>
+            <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:7px;color:#6b7280;">${ex.pc > 0 ? `${ex.pc}${ordinalSuffix(ex.pc)}` : '-'}</td>`
+        }).join('')
+        const cumPct = s.cumulative.full > 0 ? Math.round((s.cumulative.obtained / s.cumulative.full) * 100) : 0
+        const gColor = getGradeColor(getGradeLetter(cumPct))
         return `<tr>
-          <td>${idx + 1}</td>
-          <td class="name-col">${row.student.nameEn}</td>
-          <td class="roll-col">${row.student.roll}</td>
-          ${row.exams.map((ex) => `
-          <td class="prev-col">${ex.obtained}/${ex.full}</td>
-          <td class="prev-col">${ex.percentage}%</td>
-          `).join('')}
-          <td class="current-col">${row.currentObtained}/${row.currentFull}</td>
-          <td class="current-col">${row.currentPct}%</td>
-          <td class="cumulative-col">${row.cumulativePct}%</td>
-          <td class="cumulative-col"><span class="grade-badge" style="background:${gColor}18;color:${gColor}">${row.cumulativeGrade}</span></td>
-          <td class="gpa-col" style="color:${gColor}">${row.cumulativeGpa.toFixed(1)}</td>
-          <td><span class="grade-badge" style="background:${gColor}18;color:${gColor}">${row.cumulativeGrade}</span></td>
+          <td style="text-align:left;border:1px solid #d1d5db;padding:3px 6px;font-size:8px;font-weight:500;white-space:nowrap;">${s.subjectName}</td>
+          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;">${s.fullMarks}</td>
+          ${examCells}
+          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:700;">${s.cumulative.obtained}</td>
+          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:7px;color:${gColor};font-weight:600;">${cumPct}%</td>
+          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:7px;color:#6b7280;">${s.cumulative.pc > 0 ? `${s.cumulative.pc}${ordinalSuffix(s.cumulative.pc)}` : '-'}</td>
         </tr>`
-      }).join('')}
-    </tbody>
-  </table>
-  <div class="legend">
-    ${gradeScale.map((g) => `<div class="legend-item"><span class="legend-badge" style="background:${getGradeColor(g.letter)}18;color:${getGradeColor(g.letter)}">${g.letter}</span> ${g.range}%</div>`).join('')}
-  </div>
-  <div class="footer">
-    <span>${isBn ? 'মোট শিক্ষার্থী' : 'Total Students'}: ${cumulativeData.length}</span>
-    <span>${isBn ? 'তৈরি করা হয়েছে' : 'Generated'}: ${new Date().toLocaleDateString()}</span>
-  </div>
-</body>
-</html>`
+      }).join('')
+
+      const summaryRows = allExamIds.map((eid) => {
+        const t = stu.examTotals[eid]
+        const eName = eid === currentExamId ? currentExamName : prevExams.find((e) => e.examId === eid)?.examName || eid
+        const gColor = getGradeColor(t.grade)
+        return `<tr>
+          <td style="border:1px solid #d1d5db;padding:3px 6px;font-size:8px;font-weight:500;">${eName}</td>
+          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;">${t.obtained}</td>
+          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;"><span style="color:${gColor};font-weight:700;">${t.grade}</span></td>
+          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;">${t.gpa.toFixed(1)}</td>
+          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:7px;color:#6b7280;">${t.pc > 0 ? `${t.pc}${ordinalSuffix(t.pc)}` : '-'}</td>
+          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:7px;color:#6b7280;">-</td>
+          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;">Fail</td>
+        </tr>`
+      }).join('')
+
+      const gColor = getGradeColor(stu.cumulative.grade)
+      const examHeaders = allExamIds.map((eid) => {
+        const eName = eid === currentExamId ? currentExamName : prevExams.find((e) => e.examId === eid)?.examName || eid
+        const w = eid === currentExamId ? currentWeight : prevExams.find((e) => e.examId === eid)?.weight || 0
+        return `<th colspan="3" style="background:${brand}cc;color:#fff;border:1px solid #fff;padding:4px 6px;font-size:8px;font-weight:600;text-align:center;">${eName} (${w}%)</th>`
+      }).join('')
+      const examSubHeaders = allExamIds.map(() =>
+        `<th style="background:#6b7280;color:#fff;border:1px solid #fff;padding:2px 4px;font-size:6.5px;">Total</th>
+         <th style="background:#6b7280;color:#fff;border:1px solid #fff;padding:2px 4px;font-size:6.5px;">Obt.</th>
+         <th style="background:#6b7280;color:#fff;border:1px solid #fff;padding:2px 4px;font-size:6.5px;">PC</th>`
+      ).join('')
+
+      const avgPct = stu.cumulative.full > 0 ? Math.round((stu.cumulative.obtained / stu.cumulative.full) * 100) : 0
+
+      return `
+      <div style="page-break-after:always;page-break-inside:avoid;padding:10mm;font-family:'Segoe UI',system-ui,sans-serif;color:#1a1a2e;background:#fff;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:700;color:${brand};">${institutionName}</div>
+            <div style="font-size:9px;color:#6b7280;">${institutionAddress}</div>
+            <div style="font-size:12px;font-weight:600;color:#374151;margin-top:2px;">${isBn ? 'কামিউলেটিভ মার্কশিট' : 'Cumulative Marksheet'}</div>
+          </div>
+          <div style="text-align:right;">
+            <table style="font-size:7px;border-collapse:collapse;">
+              <thead><tr style="background:${brand};color:#fff;"><th style="padding:2px 5px;">Marks (%)</th><th style="padding:2px 5px;">Grade</th><th style="padding:2px 5px;">GP</th></tr></thead>
+              <tbody>${gradeScale.map((g) => `<tr><td style="border:1px solid #d1d5db;padding:1px 4px;text-align:center;">${g.range}</td><td style="border:1px solid #d1d5db;padding:1px 4px;text-align:center;font-weight:600;color:${getGradeColor(g.letter)};">${g.letter}</td><td style="border:1px solid #d1d5db;padding:1px 4px;text-align:center;">${g.gpa}</td></tr>`).join('')}</tbody>
+            </table>
+          </div>
+        </div>
+        <div style="border-top:2px solid ${brand};margin-bottom:8px;"></div>
+        <div style="display:flex;gap:16px;margin-bottom:10px;font-size:9px;">
+          <div style="flex:1;">
+            <div style="display:grid;grid-template-columns:auto 1fr;gap:2px 8px;">
+              <span style="font-weight:600;">${isBn ? 'শিক্ষার্থী' : 'Student'}:</span><span>${stu.nameEn}</span>
+              <span style="font-weight:600;">${isBn ? 'আইডি' : 'Student ID'}:</span><span>${stu.studentIdCode}</span>
+              <span style="font-weight:600;">${isBn ? 'রোল' : 'Roll'}:</span><span>${stu.roll}</span>
+            </div>
+          </div>
+          <div style="flex:1;">
+            <div style="display:grid;grid-template-columns:auto 1fr;gap:2px 8px;">
+              <span style="font-weight:600;">${isBn ? 'সেশন' : 'Session'}:</span><span>${currentExamSession}</span>
+              <span style="font-weight:600;">${isBn ? 'শ্রেণি' : 'Class'}:</span><span>${className}</span>
+              <span style="font-weight:600;">${isBn ? 'সেকশন' : 'Section'}:</span><span>${sectionName}</span>
+            </div>
+          </div>
+          <div style="flex:1;">
+            <div style="display:grid;grid-template-columns:auto 1fr;gap:2px 8px;">
+              <span style="font-weight:600;">G.P.A:</span><span style="color:${gColor};font-weight:700;">${stu.cumulative.gpa.toFixed(1)}</span>
+              <span style="font-weight:600;">${isBn ? 'গড় গ্রেড' : 'Average Grade'}:</span><span style="font-weight:700;color:${gColor};">${stu.cumulative.grade}</span>
+              <span style="font-weight:600;">${isBn ? 'গড় প্রাপ্ত %' : 'Average Obt. %'}:</span><span>${avgPct}%</span>
+              <span style="font-weight:600;">${isBn ? 'গড় প্রাপ্ত নম্বর' : 'Avg Obt. Marks'}:</span><span>${stu.cumulative.obtained}</span>
+            </div>
+          </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+          <thead>
+            <tr>
+              <th style="background:${brand};color:#fff;border:1px solid #fff;padding:4px 6px;font-size:8px;font-weight:600;text-align:left;min-width:80px;">${isBn ? 'বিষয়' : 'Subject'}</th>
+              <th style="background:${brand};color:#fff;border:1px solid #fff;padding:4px 4px;font-size:8px;font-weight:600;text-align:center;width:30px;">Total</th>
+              ${examHeaders}
+              <th colspan="2" style="background:#1e293b;color:#fff;border:1px solid #fff;padding:4px 6px;font-size:8px;font-weight:700;text-align:center;">${isBn ? 'কামিউলেটিভ' : 'Cumulative'}</th>
+              <th style="background:${brand};color:#fff;border:1px solid #fff;padding:4px 4px;font-size:8px;font-weight:600;text-align:center;width:35px;">PC</th>
+            </tr>
+            <tr>
+              <th style="background:#9ca3af;color:#fff;border:1px solid #fff;padding:2px;font-size:6px;"></th>
+              <th style="background:#9ca3af;color:#fff;border:1px solid #fff;padding:2px;font-size:6px;"></th>
+              ${examSubHeaders}
+              <th style="background:#4b5563;color:#fff;border:1px solid #fff;padding:2px 4px;font-size:6.5px;">${isBn ? 'নির্ণিত' : 'Obt'}</th>
+              <th style="background:#4b5563;color:#fff;border:1px solid #fff;padding:2px 4px;font-size:6.5px;">%</th>
+              <th style="background:#9ca3af;color:#fff;border:1px solid #fff;padding:2px;font-size:6px;"></th>
+            </tr>
+          </thead>
+          <tbody>${subjectRows}</tbody>
+        </table>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+          <thead>
+            <tr style="background:${brand};color:#fff;">
+              <th style="border:1px solid #d1d5db;padding:3px 6px;font-size:8px;font-weight:600;text-align:left;">${isBn ? 'পরীক্ষার নাম' : 'Exam Name'}</th>
+              <th style="border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;text-align:center;">${isBn ? 'মোট প্রাপ্ত' : 'Total Obt.'}</th>
+              <th style="border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;text-align:center;">Grade</th>
+              <th style="border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;text-align:center;">G.P.A</th>
+              <th style="border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;text-align:center;">PC</th>
+              <th style="border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;text-align:center;">PS</th>
+              <th style="border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;text-align:center;">${isBn ? 'মন্তব্য' : 'Remark'}</th>
+            </tr>
+          </thead>
+          <tbody>${summaryRows}</tbody>
+        </table>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:9px;font-weight:700;">
+          <span>${isBn ? 'মোট নম্বর' : 'Total Marks'}: ${stu.cumulative.full}</span>
+          <span>${isBn ? 'মোট প্রাপ্ত নম্বর' : 'Total Obtain Marks'}: ${stu.cumulative.obtained}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-top:12px;border-top:1px solid #e5e7eb;margin-top:12px;font-size:7px;color:#6b7280;">
+          <div style="text-align:center;flex:1;">${isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher'}</div>
+          <div style="text-align:center;flex:1;">${isBn ? 'অধ্যক্ষের স্বাক্ষর' : "Principal's Signature"}</div>
+          <div style="text-align:center;flex:1;">${isBn ? 'অভিভাবকের স্বাক্ষর' : "Guardian's Signature"}</div>
+        </div>
+      </div>`
+    }).join('')
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cumulative Marksheet</title>
+    <style>@page{size:A4 landscape;margin:0;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;}</style>
+    </head><body>${studentPages}</body></html>`
     downloadHTML(`cumulative-marksheet-${currentExamName}.html`, html)
+  }
+
+  if (marksheetData.length === 0) {
+    return (
+      <div className="text-center py-12 text-[var(--text-muted)] text-[0.875rem]">
+        {isBn ? 'প্রথমে পরীক্ষা, শ্রেণি ও সেকশন নির্বাচন করুন' : 'Select exam, class & section first'}
+      </div>
+    )
   }
 
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-bold text-[var(--text-primary)]">
           {isBn ? 'কামিউলেটিভ মার্কশিট' : 'Cumulative Marksheet'}
         </h3>
-        <div className="flex items-center gap-2">
-          {selectedExams.length > 0 && (
-            <button onClick={redistributeWeights} className="h-7 px-3 rounded-lg text-[0.65rem] font-medium bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
-              {isBn ? 'সমান ভাগ' : 'Equalize'}
-            </button>
-          )}
-          {cumulativeData.length > 0 && (
-            <button
-              onClick={generatePDF}
-              className="h-7 px-3 rounded-lg text-[0.65rem] font-medium flex items-center gap-1.5"
-              style={{ background: brand, color: '#fff' }}
-            >
-              <Download size={12} />
-              {isBn ? 'PDF ডাউনলোড' : 'Download PDF'}
-            </button>
-          )}
-        </div>
+        <button
+          onClick={generatePDF}
+          className="h-7 px-3 rounded-lg text-[0.65rem] font-medium flex items-center gap-1.5"
+          style={{ background: brand, color: '#fff' }}
+        >
+          <Download size={12} />
+          {isBn ? 'PDF ডাউনলোড' : 'Download PDF'}
+        </button>
       </div>
 
       {/* Exam Selection */}
-      <div className="mb-4 p-3 rounded-lg border border-[var(--border)]" style={{ background: 'var(--bg-secondary)' }}>
+      <div className="mb-3 p-3 rounded-lg border border-[var(--border)]" style={{ background: 'var(--bg-secondary)' }}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-[var(--text-primary)]">
             {isBn ? 'পূর্ববর্তী পরীক্ষা যোগ করুন' : 'Add Previous Exams'}
           </span>
           <span className="text-[0.6rem] text-[var(--text-muted)]">
             {isBn ? `বর্তমান: ${currentWeight}%` : `Current: ${currentWeight}%`}
-            {selectedExams.length > 0 && ` · ${isBn ? 'মোট:' : 'Total:'} ${totalPrevWeight + currentWeight}%`}
+            {prevExams.length > 0 && ` · ${isBn ? 'মোট:' : 'Total:'} ${totalPrevWeight + currentWeight}%`}
           </span>
         </div>
-
-        {publishedExams.length === 0 ? (
-          <p className="text-[0.7rem] text-[var(--text-muted)]">
-            {isBn ? 'কোনো প্রকাশিত পরীক্ষা পাওয়া যায়নি' : 'No published exams found for this class'}
-          </p>
-        ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {publishedExams.map((exam) => {
-              const isSelected = selectedExams.some((s) => s.examId === exam.id)
-              return (
-                <button
-                  key={exam.id}
-                  onClick={() => (isSelected ? removeExam(exam.id) : addExam(exam.id))}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[0.65rem] font-medium border transition-all"
-                  style={{
-                    background: isSelected ? brand : 'var(--bg-primary)',
-                    color: isSelected ? '#fff' : 'var(--text-secondary)',
-                    borderColor: isSelected ? brand : 'var(--border)',
-                  }}
-                >
-                  {isSelected ? <Trash2 size={10} /> : <Plus size={10} />}
-                  {exam.name}
-                </button>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Weight controls */}
-        {selectedExams.length > 0 && (
-          <div className="mt-3 space-y-1.5">
-            {selectedExams.map((exam) => (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {publishedExams.map((exam) => {
+            const sel = prevExams.some((e) => e.examId === exam.id)
+            return (
+              <button
+                key={exam.id}
+                onClick={() => (sel ? removeExam(exam.id) : addExam(exam.id))}
+                className="px-2 py-1 rounded-lg text-[0.65rem] font-medium border transition-all"
+                style={{ background: sel ? brand : 'var(--bg-primary)', color: sel ? '#fff' : 'var(--text-secondary)', borderColor: sel ? brand : 'var(--border)' }}
+              >
+                {sel ? '✓ ' : '+ '}{exam.name}
+              </button>
+            )
+          })}
+        </div>
+        {prevExams.length > 0 && (
+          <div className="space-y-1 pt-2 border-t border-[var(--border)]">
+            {prevExams.map((exam) => (
               <div key={exam.examId} className="flex items-center gap-2">
                 <span className="text-[0.65rem] text-[var(--text-secondary)] w-28 truncate">{exam.examName}</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={exam.weight}
-                  onChange={(e) => updateWeight(exam.examId, Number(e.target.value))}
-                  className="flex-1 h-1 accent-[var(--brand)]"
-                />
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={exam.weight}
-                  onChange={(e) => updateWeight(exam.examId, Math.min(100, Math.max(0, Number(e.target.value))))}
-                  className="w-12 h-6 px-1 text-[0.65rem] text-center rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
-                />
+                <input type="range" min={0} max={100} value={exam.weight} onChange={(e) => updateWeight(exam.examId, Number(e.target.value))} className="flex-1 h-1 accent-[var(--brand)]" />
+                <input type="number" min={0} max={100} value={exam.weight} onChange={(e) => updateWeight(exam.examId, Math.min(100, Math.max(0, Number(e.target.value))))} className="w-12 h-6 px-1 text-[0.65rem] text-center rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" />
                 <span className="text-[0.6rem] text-[var(--text-muted)]">%</span>
-                <button onClick={() => removeExam(exam.examId)} className="text-[var(--text-muted)] hover:text-red-500">
-                  <Trash2 size={12} />
-                </button>
+                <button onClick={() => removeExam(exam.examId)} className="text-[var(--text-muted)] hover:text-red-500"><span className="text-xs">✕</span></button>
               </div>
             ))}
             <div className="flex items-center gap-2 pt-1 border-t border-[var(--border)]">
-              <span className="text-[0.65rem] text-[var(--text-secondary)] w-28 truncate font-semibold">
-                {isBn ? 'বর্তমান পরীক্ষা' : 'Current Exam'}
-              </span>
+              <span className="text-[0.65rem] text-[var(--text-secondary)] w-28 truncate font-semibold">{isBn ? 'বর্তমান পরীক্ষা' : 'Current Exam'}</span>
               <div className="flex-1 h-1 bg-[var(--border)] rounded" />
               <span className="text-[0.65rem] font-semibold w-12 text-center" style={{ color: currentWeight < 0 ? 'var(--red)' : brand }}>{currentWeight}%</span>
             </div>
@@ -381,99 +503,168 @@ export default function CumulativeMarkSheetTab({
         )}
       </div>
 
-      {/* Results Table */}
-      {cumulativeData.length > 0 ? (
-        <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
-          <table className="w-full text-xs" style={{ minWidth: `${300 + selectedExams.length * 140}px` }}>
-            <thead>
-              <tr>
-                <th className="text-center px-2 py-2 font-semibold text-white" style={{ background: brand, width: '25px' }}>#</th>
-                <th className="text-left px-2 py-2 font-semibold text-white" style={{ background: brand }}>{isBn ? 'নাম' : 'Name'}</th>
-                <th className="text-center px-2 py-2 font-semibold text-white" style={{ background: brand, width: '40px' }}>{isBn ? 'রোল' : 'Roll'}</th>
-                {selectedExams.map((exam) => (
-                  <th key={exam.examId} colSpan={2} className="text-center px-1 py-1 font-semibold text-white" style={{ background: `${brand}cc` }}>
-                    <div className="text-[0.6rem] leading-tight">{exam.examName}</div>
-                    <div className="text-[0.5rem] opacity-75 font-normal">({exam.weight}%)</div>
-                  </th>
-                ))}
-                <th colSpan={2} className="text-center px-1 py-1 font-semibold text-white" style={{ background: brand }}>
-                  <div className="text-[0.6rem] leading-tight">{isBn ? 'বর্তমান' : 'Current'}</div>
-                  <div className="text-[0.5rem] opacity-75 font-normal">({currentWeight}%)</div>
-                </th>
-                <th colSpan={2} className="text-center px-1 py-1 font-bold text-white" style={{ background: '#1e293b' }}>
-                  <div className="text-[0.6rem] leading-tight">{isBn ? 'কামিউলেটিভ' : 'Cumulative'}</div>
-                </th>
-                <th className="text-center px-1 py-1 font-semibold text-white" style={{ background: brand, width: '35px' }}>GPA</th>
-                <th className="text-center px-1 py-1 font-semibold text-white" style={{ background: brand, width: '35px' }}>{isBn ? 'গ্রেড' : 'Grd'}</th>
-              </tr>
-              <tr>
-                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}></th>
-                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}></th>
-                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}></th>
-                {selectedExams.map((exam) => (
-                  <React.Fragment key={exam.examId}>
-                    <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}>{isBn ? 'নির্ণিত' : 'Obt'}</th>
-                    <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}>%</th>
-                  </React.Fragment>
-                ))}
-                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}>{isBn ? 'নির্ণিত' : 'Obt'}</th>
-                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}>%</th>
-                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#374151', color: '#d1d5db' }}>%</th>
-                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#374151', color: '#d1d5db' }}>{isBn ? 'গ্রেড' : 'Grd'}</th>
-                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}></th>
-                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {cumulativeData.map((row, idx) => {
-                const gColor = getGradeColor(row.cumulativeGrade)
-                const bg = idx % 2 === 0 ? 'var(--bg-primary)' : 'var(--bg-secondary)'
-                return (
-                  <tr key={row.student.id} style={{ background: bg }}>
-                    <td className="text-center px-2 py-1.5 font-semibold text-[var(--text-secondary)]" style={{ borderBottom: '1px solid var(--border)' }}>{idx + 1}</td>
-                    <td className="text-left px-2 py-1.5 font-semibold text-[var(--text-primary)] whitespace-nowrap" style={{ borderBottom: '1px solid var(--border)' }}>{row.student.nameEn}</td>
-                    <td className="text-center px-2 py-1.5 text-[var(--text-secondary)]" style={{ borderBottom: '1px solid var(--border)' }}>{row.student.roll}</td>
-                    {row.exams.map((ex) => (
-                      <React.Fragment key={ex.examId}>
-                        <td className="text-center px-1 py-1.5 text-[0.7rem] text-[var(--text-secondary)]" style={{ borderBottom: '1px solid var(--border)' }}>{ex.obtained}/{ex.full}</td>
-                        <td className="text-center px-1 py-1.5 text-[0.7rem] font-medium text-[var(--text-secondary)]" style={{ borderBottom: '1px solid var(--border)' }}>{ex.percentage}%</td>
-                      </React.Fragment>
-                    ))}
-                    <td className="text-center px-1 py-1.5 text-[0.7rem] font-semibold" style={{ color: brand, borderBottom: '1px solid var(--border)' }}>{row.currentObtained}/{row.currentFull}</td>
-                    <td className="text-center px-1 py-1.5 text-[0.7rem] font-semibold" style={{ color: brand, borderBottom: '1px solid var(--border)' }}>{row.currentPct}%</td>
-                    <td className="text-center px-1 py-1.5 text-[0.7rem] font-bold" style={{ color: brand, background: `${brand}08`, borderBottom: '1px solid var(--border)' }}>{row.cumulativePct}%</td>
-                    <td className="text-center px-1 py-1.5" style={{ borderBottom: '1px solid var(--border)' }}>
-                      <span className="px-1 py-0.5 rounded text-[0.55rem] font-bold" style={{ background: `${gColor}18`, color: gColor }}>{row.cumulativeGrade}</span>
-                    </td>
-                    <td className="text-center px-1 py-1.5 text-[0.7rem] font-bold" style={{ color: gColor, borderBottom: '1px solid var(--border)' }}>{row.cumulativeGpa.toFixed(1)}</td>
-                    <td className="text-center px-1 py-1.5" style={{ borderBottom: '1px solid var(--border)' }}>
-                      <span className="px-1 py-0.5 rounded text-[0.55rem] font-bold" style={{ background: `${gColor}18`, color: gColor }}>{row.cumulativeGrade}</span>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+      {/* Student Navigation */}
+      <div className="flex items-center justify-between mb-3 p-2 rounded-lg border border-[var(--border)]" style={{ background: 'var(--bg-secondary)' }}>
+        <button onClick={() => setStudentIdx((i) => Math.max(0, i - 1))} disabled={studentIdx === 0} className="h-7 w-7 rounded-lg flex items-center justify-center border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] disabled:opacity-30 hover:bg-[var(--bg-secondary)]"><ChevronLeft size={14} /></button>
+        <div className="text-center">
+          <span className="text-xs font-semibold text-[var(--text-primary)]">{currentStudent?.nameEn}</span>
+          <span className="text-[0.65rem] text-[var(--text-muted)] ml-2">({isBn ? 'রোল' : 'Roll'}: {currentStudent?.roll})</span>
+          <span className="text-[0.65rem] text-[var(--text-muted)] ml-2">{studentIdx + 1} / {marksheetData.length}</span>
         </div>
-      ) : (
-        <div className="text-center py-12 text-[var(--text-muted)] text-[0.875rem]">
-          {isBn ? 'প্রথমে পরীক্ষা, শ্রেণি ও সেকশন নির্বাচন করুন' : 'Select exam, class & section first'}
+        <button onClick={() => setStudentIdx((i) => Math.min(marksheetData.length - 1, i + 1))} disabled={studentIdx >= marksheetData.length - 1} className="h-7 w-7 rounded-lg flex items-center justify-center border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] disabled:opacity-30 hover:bg-[var(--bg-secondary)]"><ChevronRight size={14} /></button>
+      </div>
+
+      {/* Student Card */}
+      {currentStudent && (
+        <div className="rounded-lg border border-[var(--border)] overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
+          {/* Student Info */}
+          <div className="p-3 border-b border-[var(--border)]" style={{ background: 'var(--bg-secondary)' }}>
+            <div className="flex items-start gap-4">
+              {currentStudent.photo && (
+                <img src={currentStudent.photo} alt="" className="w-14 h-16 rounded object-cover border border-[var(--border)]" />
+              )}
+              <div className="flex-1 grid grid-cols-3 gap-x-6 gap-y-1 text-[0.7rem]">
+                <div><span className="font-semibold text-[var(--text-secondary)]">{isBn ? 'নাম' : 'Name'}: </span><span className="font-medium text-[var(--text-primary)]">{currentStudent.nameEn}</span></div>
+                <div><span className="font-semibold text-[var(--text-secondary)]">{isBn ? 'সেশন' : 'Session'}: </span><span className="font-medium text-[var(--text-primary)]">{currentExamSession}</span></div>
+                <div><span className="font-semibold text-[var(--text-secondary)]">G.P.A: </span><span className="font-bold" style={{ color: getGradeColor(currentStudent.cumulative.grade) }}>{currentStudent.cumulative.gpa.toFixed(1)}</span></div>
+                <div><span className="font-semibold text-[var(--text-secondary)]">{isBn ? 'শিক্ষার্থী আইডি' : 'Student ID'}: </span><span className="font-medium text-[var(--text-primary)]">{currentStudent.studentIdCode}</span></div>
+                <div><span className="font-semibold text-[var(--text-secondary)]">{isBn ? 'শ্রেণি' : 'Class'}: </span><span className="font-medium text-[var(--text-primary)]">{className}</span></div>
+                <div><span className="font-semibold text-[var(--text-secondary)]">{isBn ? 'গড় গ্রেড' : 'Avg Grade'}: </span><span className="font-bold" style={{ color: getGradeColor(currentStudent.cumulative.grade) }}>{currentStudent.cumulative.grade}</span></div>
+                <div><span className="font-semibold text-[var(--text-secondary)]">{isBn ? 'রোল' : 'Roll'}: </span><span className="font-medium text-[var(--text-primary)]">{currentStudent.roll}</span></div>
+                <div><span className="font-semibold text-[var(--text-secondary)]">{isBn ? 'সেকশন' : 'Section'}: </span><span className="font-medium text-[var(--text-primary)]">{sectionName}</span></div>
+                <div><span className="font-semibold text-[var(--text-secondary)]">{isBn ? 'গড় %' : 'Avg %'}: </span><span className="font-medium text-[var(--text-primary)]">{currentStudent.cumulative.full > 0 ? Math.round((currentStudent.cumulative.obtained / currentStudent.cumulative.full) * 100) : 0}%</span></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Subject Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-[0.65rem]" style={{ minWidth: `${260 + allExamIds.length * 150}px` }}>
+              <thead>
+                <tr>
+                  <th className="text-left px-2 py-1.5 font-semibold text-white" style={{ background: brand, minWidth: '80px' }}>{isBn ? 'বিষয়' : 'Subject'}</th>
+                  <th className="text-center px-1 py-1.5 font-semibold text-white" style={{ background: brand, width: '30px' }}>Total</th>
+                  {allExamIds.map((eid) => {
+                    const eName = eid === currentExamId ? currentExamName : prevExams.find((e) => e.examId === eid)?.examName || ''
+                    const w = eid === currentExamId ? currentWeight : prevExams.find((e) => e.examId === eid)?.weight || 0
+                    return (
+                      <React.Fragment key={eid}>
+                        <th colSpan={3} className="text-center px-1 py-1 font-semibold text-white" style={{ background: `${brand}cc` }}>
+                          <div className="text-[0.55rem] leading-tight">{eName}</div>
+                          <div className="text-[0.45rem] opacity-75 font-normal">({w}%)</div>
+                        </th>
+                      </React.Fragment>
+                    )
+                  })}
+                  <th colSpan={2} className="text-center px-1 py-1 font-bold text-white" style={{ background: '#1e293b' }}>
+                    <div className="text-[0.55rem] leading-tight">{isBn ? 'কামিউলেটিভ' : 'Cumulative'}</div>
+                  </th>
+                  <th className="text-center px-1 py-1.5 font-semibold text-white" style={{ background: brand, width: '30px' }}>PC</th>
+                </tr>
+                <tr>
+                  <th className="px-1 py-0.5 text-[0.45rem] font-medium" style={{ background: '#9ca3af', color: '#fff' }}></th>
+                  <th className="px-1 py-0.5 text-[0.45rem] font-medium" style={{ background: '#9ca3af', color: '#fff' }}></th>
+                  {allExamIds.map((eid) => (
+                    <React.Fragment key={eid}>
+                      <th className="px-1 py-0.5 text-[0.45rem] font-medium" style={{ background: '#6b7280', color: '#d1d5db' }}>{isBn ? 'পূর্ণমান' : 'Total'}</th>
+                      <th className="px-1 py-0.5 text-[0.45rem] font-medium" style={{ background: '#6b7280', color: '#d1d5db' }}>{isBn ? 'প্রাপ্ত' : 'Obt'}</th>
+                      <th className="px-1 py-0.5 text-[0.45rem] font-medium" style={{ background: '#6b7280', color: '#d1d5db' }}>PC</th>
+                    </React.Fragment>
+                  ))}
+                  <th className="px-1 py-0.5 text-[0.45rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}>{isBn ? 'প্রাপ্ত' : 'Obt'}</th>
+                  <th className="px-1 py-0.5 text-[0.45rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}>%</th>
+                  <th className="px-1 py-0.5 text-[0.45rem] font-medium" style={{ background: '#9ca3af', color: '#fff' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentStudent.subjects.map((s, idx) => {
+                  const cumPct = s.cumulative.full > 0 ? Math.round((s.cumulative.obtained / s.cumulative.full) * 100) : 0
+                  const gColor = getGradeColor(getGradeLetter(cumPct))
+                  const bg = idx % 2 === 0 ? 'var(--bg-primary)' : 'var(--bg-secondary)'
+                  return (
+                    <tr key={s.subjectId} style={{ background: bg }}>
+                      <td className="text-left px-2 py-1 font-medium text-[var(--text-primary)]" style={{ borderBottom: '1px solid var(--border)' }}>{s.subjectName}</td>
+                      <td className="text-center px-1 py-1 text-[var(--text-secondary)]" style={{ borderBottom: '1px solid var(--border)' }}>{s.fullMarks}</td>
+                      {allExamIds.map((eid) => {
+                        const ex = s.exams[eid]
+                        return (
+                          <React.Fragment key={eid}>
+                            <td className="text-center px-1 py-1 text-[var(--text-secondary)]" style={{ borderBottom: '1px solid var(--border)' }}>{ex.total}</td>
+                            <td className="text-center px-1 py-1 font-semibold text-[var(--text-primary)]" style={{ borderBottom: '1px solid var(--border)' }}>{ex.obtained}</td>
+                            <td className="text-center px-1 py-1 text-[0.55rem] text-[var(--text-muted)]" style={{ borderBottom: '1px solid var(--border)' }}>{ex.pc > 0 ? `${ex.pc}${ordinalSuffix(ex.pc)}` : '-'}</td>
+                          </React.Fragment>
+                        )
+                      })}
+                      <td className="text-center px-1 py-1 font-bold" style={{ color: brand, borderBottom: '1px solid var(--border)' }}>{s.cumulative.obtained}</td>
+                      <td className="text-center px-1 py-1 font-semibold" style={{ color: gColor, borderBottom: '1px solid var(--border)' }}>{cumPct}%</td>
+                      <td className="text-center px-1 py-1 text-[0.55rem] text-[var(--text-muted)]" style={{ borderBottom: '1px solid var(--border)' }}>{s.cumulative.pc > 0 ? `${s.cumulative.pc}${ordinalSuffix(s.cumulative.pc)}` : '-'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Summary Table */}
+          <div className="border-t border-[var(--border)]">
+            <table className="w-full text-[0.65rem]">
+              <thead>
+                <tr style={{ background: brand, color: '#fff' }}>
+                  <th className="text-left px-2 py-1 font-semibold">{isBn ? 'পরীক্ষার নাম' : 'Exam Name'}</th>
+                  <th className="text-center px-1 py-1 font-semibold">{isBn ? 'মোট প্রাপ্ত' : 'Total Obt.'}</th>
+                  <th className="text-center px-1 py-1 font-semibold">Grade</th>
+                  <th className="text-center px-1 py-1 font-semibold">G.P.A</th>
+                  <th className="text-center px-1 py-1 font-semibold">PC</th>
+                  <th className="text-center px-1 py-1 font-semibold">PS</th>
+                  <th className="text-center px-1 py-1 font-semibold">{isBn ? 'মন্তব্য' : 'Remark'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allExamIds.map((eid) => {
+                  const t = currentStudent.examTotals[eid]
+                  const eName = eid === currentExamId ? currentExamName : prevExams.find((e) => e.examId === eid)?.examName || ''
+                  const gColor = getGradeColor(t.grade)
+                  const pct = t.full > 0 ? Math.round((t.obtained / t.full) * 100) : 0
+                  return (
+                    <tr key={eid} style={{ background: 'var(--bg-primary)' }}>
+                      <td className="text-left px-2 py-1 font-medium text-[var(--text-primary)]" style={{ borderBottom: '1px solid var(--border)' }}>{eName}</td>
+                      <td className="text-center px-1 py-1 font-semibold text-[var(--text-primary)]" style={{ borderBottom: '1px solid var(--border)' }}>{t.obtained}</td>
+                      <td className="text-center px-1 py-1 font-bold" style={{ color: gColor, borderBottom: '1px solid var(--border)' }}>{t.grade}</td>
+                      <td className="text-center px-1 py-1 text-[var(--text-secondary)]" style={{ borderBottom: '1px solid var(--border)' }}>{t.gpa.toFixed(1)}</td>
+                      <td className="text-center px-1 py-1 text-[0.55rem] text-[var(--text-muted)]" style={{ borderBottom: '1px solid var(--border)' }}>{t.pc > 0 ? `${t.pc}${ordinalSuffix(t.pc)}` : '-'}</td>
+                      <td className="text-center px-1 py-1 text-[0.55rem] text-[var(--text-muted)]" style={{ borderBottom: '1px solid var(--border)' }}>-</td>
+                      <td className="text-center px-1 py-1 text-[var(--text-muted)]" style={{ borderBottom: '1px solid var(--border)' }}>{pct >= 33 ? 'Pass' : 'Fail'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals */}
+          <div className="flex justify-between items-center px-3 py-2 border-t border-[var(--border)] text-[0.7rem] font-bold" style={{ background: 'var(--bg-secondary)' }}>
+            <span className="text-[var(--text-secondary)]">{isBn ? 'মোট নম্বর' : 'Total Marks'}: {currentStudent.cumulative.full}</span>
+            <span style={{ color: brand }}>{isBn ? 'মোট প্রাপ্ত নম্বর' : 'Total Obtain Marks'}: {currentStudent.cumulative.obtained}</span>
+          </div>
         </div>
       )}
 
       {/* Grade Scale */}
-      {cumulativeData.length > 0 && (
-        <div className="mt-3 p-2 rounded-lg border border-[var(--border)] flex items-center justify-between gap-3" style={{ background: 'var(--bg-secondary)' }}>
-          <div className="flex flex-wrap gap-1">
-            {gradeScale.map((g) => (
-              <div key={g.letter} className="flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-[var(--border)]" style={{ background: 'var(--bg-primary)' }}>
-                <span className="w-4 h-4 rounded flex items-center justify-center text-[0.5rem] font-bold" style={{ background: `${getGradeColor(g.letter)}18`, color: getGradeColor(g.letter) }}>{g.letter}</span>
-                <span className="text-[0.5rem] text-[var(--text-secondary)]">{g.range}%</span>
-              </div>
-            ))}
+      <div className="mt-3 p-2 rounded-lg border border-[var(--border)] flex flex-wrap gap-1" style={{ background: 'var(--bg-secondary)' }}>
+        {gradeScale.map((g) => (
+          <div key={g.letter} className="flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-[var(--border)]" style={{ background: 'var(--bg-primary)' }}>
+            <span className="w-4 h-4 rounded flex items-center justify-center text-[0.5rem] font-bold" style={{ background: `${getGradeColor(g.letter)}18`, color: getGradeColor(g.letter) }}>{g.letter}</span>
+            <span className="text-[0.5rem] text-[var(--text-secondary)]">{g.range}%</span>
+            <span className="text-[0.45rem] text-[var(--text-muted)]">GP:{g.gpa}</span>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   )
+}
+
+function ordinalSuffix(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd']
+  const v = n % 100
+  return s[(v - 20) % 10] || s[v] || s[0]
 }
