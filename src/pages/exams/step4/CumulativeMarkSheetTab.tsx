@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import { useExamStore } from '@/store/examStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
-import { getBrandColor, downloadHTML } from '@/lib/pdf'
+import { getBrandColor } from '@/lib/pdf'
+import { CumulativeMarksheetPDFOptionsModal } from './CumulativeMarksheetPDFOptionsModal'
 import type { TabulationStudent } from './MarksheetTab'
 
 interface CumulativeMarkSheetProps {
@@ -19,31 +20,11 @@ interface CumulativeMarkSheetProps {
   isBn?: boolean
 }
 
-interface SubjectExamMark {
-  subjectId: string
-  subjectName: string
-  fullMarks: number
-  passMarks: number
-  exams: Record<string, { obtained: number; total: number; pc: number }>
-  cumulative: { obtained: number; full: number; pc: number; passed: boolean }
-}
-
-interface StudentMarkData {
-  studentId: string
-  nameEn: string
-  nameBn: string
-  roll: string
-  photo: string
-  studentIdCode: string
-  subjects: SubjectExamMark[]
-  examTotals: Record<string, { obtained: number; full: number; grade: string; gpa: number; pc: number }>
-  cumulative: { obtained: number; full: number; gpa: number; grade: string }
-}
-
-interface PrevExamData {
+interface PrevExam {
   examId: string
   examName: string
   weight: number
+  students: Record<string, { obtained: number; full: number; percentage: number }>
 }
 
 function getGradeLetter(pct: number): string {
@@ -56,20 +37,15 @@ function getGradeLetter(pct: number): string {
   return 'F'
 }
 
-function getGpa(pct: number, passed: boolean): number {
-  if (!passed) return 0
-  if (pct >= 80) return 5.0
-  if (pct >= 70) return 4.0
-  if (pct >= 60) return 3.5
-  if (pct >= 50) return 3.0
-  if (pct >= 40) return 2.0
-  if (pct >= 33) return 1.0
-  return 0
-}
-
 function getGradeColor(letter: string): string {
   const colors: Record<string, string> = { 'A+': '#16a34a', A: '#22c55e', 'A-': '#4ade80', B: '#3b82f6', C: '#f59e0b', D: '#f97316', F: '#ef4444' }
   return colors[letter] || '#6b7280'
+}
+
+function ordinalSuffix(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd']
+  const v = n % 100
+  return s[(v - 20) % 10] || s[v] || s[0]
 }
 
 const gradeScale = [
@@ -105,31 +81,48 @@ export default function CumulativeMarkSheetTab({
     return allExamConfigs.filter(
       (e) => e.id !== currentExamId && e.session === currentSession && e.isPublished && (e.publishedClasses || []).includes(className)
     )
-  }, [allExamConfigs, currentExamId, currentExamSession, className])
+  }, [allExamConfigs, currentExamId, currentSession, className])
 
-  const [prevExams, setPrevExams] = useState<PrevExamData[]>([])
+  const [prevExams, setPrevExams] = useState<PrevExam[]>([])
   const [studentIdx, setStudentIdx] = useState(0)
+  const [showPdfModal, setShowPdfModal] = useState(false)
 
-  const addExam = (examId: string) => {
+  const addExam = useCallback((examId: string) => {
     const exam = allExamConfigs.find((e) => e.id === examId)
     if (!exam || prevExams.some((e) => e.examId === examId)) return
-    setPrevExams((p) => [...p, { examId: exam.id, examName: exam.name, weight: 0 }])
-  }
+    const examSubjects = allSubjectMarkConfigs.filter((c) => c.examId === examId && c.classId === className)
+    const students: Record<string, { obtained: number; full: number; percentage: number }> = {}
+    currentExamData.forEach((row) => {
+      let totalObtained = 0
+      let totalFull = 0
+      examSubjects.forEach((sc) => {
+        const mark = allStudentMarks.find((m) => m.examId === examId && m.studentId === row.student.id && m.subjectId === sc.subjectId && m.classId === className && m.sectionId === sectionName)
+        totalObtained += mark?.totalMarks || 0
+        totalFull += sc.fullMarks
+      })
+      students[row.student.id] = {
+        obtained: totalObtained,
+        full: totalFull,
+        percentage: totalFull > 0 ? Math.round((totalObtained / totalFull) * 100) : 0,
+      }
+    })
+    setPrevExams((p) => [...p, { examId: exam.id, examName: exam.name, weight: 0, students }])
+  }, [allExamConfigs, prevExams, currentExamData, allSubjectMarkConfigs, allStudentMarks, className, sectionName])
 
-  const removeExam = (examId: string) => {
+  const removeExam = useCallback((examId: string) => {
     setPrevExams((p) => p.filter((e) => e.examId !== examId))
-  }
+  }, [])
 
-  const updateWeight = (examId: string, w: number) => {
+  const updateWeight = useCallback((examId: string, w: number) => {
     setPrevExams((p) => p.map((e) => (e.examId === examId ? { ...e, weight: w } : e)))
-  }
+  }, [])
 
   const totalPrevWeight = prevExams.reduce((a, e) => a + e.weight, 0)
   const currentWeight = Math.max(0, 100 - totalPrevWeight)
 
   const allExamIds = useMemo(() => [currentExamId, ...prevExams.map((e) => e.examId)], [currentExamId, prevExams])
 
-  const marksheetData = useMemo<StudentMarkData[]>(() => {
+  const marksheetData = useMemo(() => {
     if (currentExamData.length === 0) return []
 
     const classStudents = allStudents.filter((s) => s.status === 'approved' && s.active !== false && s.class === className)
@@ -179,7 +172,7 @@ export default function CumulativeMarkSheetTab({
       pcMaps[examId]['__total__'] = examRankMap
     }
 
-    // Cumulative position maps (by weighted total)
+    // Cumulative position maps
     const cumPcMaps: Record<string, Record<string, number>> = {}
     for (const subjId of Object.keys(pcMaps[currentExamId] || {})) {
       const entries = classStudents.map((stu) => {
@@ -201,9 +194,9 @@ export default function CumulativeMarkSheetTab({
 
     return currentExamData.map((row) => {
       const stu = row.student
-      const allSubjects = examSubjectsMap[currentExamId] || []
+      const allSubjectsList = examSubjectsMap[currentExamId] || []
 
-      const subjects: SubjectExamMark[] = allSubjects.map((cfg) => {
+      const subjects = allSubjectsList.map((cfg) => {
         const exams: Record<string, { obtained: number; total: number; pc: number }> = {}
         for (const examId of allExamIds) {
           const r = examResultMap[examId]?.[stu.id]?.[cfg.subjectId]
@@ -213,7 +206,6 @@ export default function CumulativeMarkSheetTab({
             pc: pcMaps[examId]?.[cfg.subjectId]?.[stu.id] || 0,
           }
         }
-        // Cumulative: weighted percentage of obtained/full
         let cumObtained = 0
         let cumFull = 0
         for (const examId of allExamIds) {
@@ -231,19 +223,11 @@ export default function CumulativeMarkSheetTab({
           fullMarks: cfg.fullMarks,
           passMarks: cfg.passMarks,
           exams,
-          cumulative: {
-            obtained: cumObtained,
-            full: cumFull,
-            pc: cumPcMaps[cfg.subjectId]?.[stu.id] || 0,
-            passed: cumObtained >= cumFull * 0.33,
-          },
+          cumulative: { obtained: cumObtained, full: cumFull, pc: cumPcMaps[cfg.subjectId]?.[stu.id] || 0, passed: cumObtained >= cumFull * 0.33 },
         }
       })
 
-      // Exam totals
       const examTotals: Record<string, { obtained: number; full: number; grade: string; gpa: number; pc: number }> = {}
-      let totalObtained = 0
-      let totalFull = 0
       for (const examId of allExamIds) {
         const total = subjects.reduce((a, s) => a + (s.exams[examId]?.obtained || 0), 0)
         const full = subjects.reduce((a, s) => a + (s.exams[examId]?.total || 0), 0)
@@ -256,11 +240,8 @@ export default function CumulativeMarkSheetTab({
           gpa: getGpa(pct, allPassed),
           pc: pcMaps[examId]?.['__total__']?.[stu.id] || 0,
         }
-        totalObtained += total
-        totalFull += full
       }
 
-      // Cumulative total
       let cumObt = 0
       let cumFull = 0
       for (const examId of allExamIds) {
@@ -289,149 +270,6 @@ export default function CumulativeMarkSheetTab({
 
   const currentStudent = marksheetData[studentIdx]
 
-  const generatePDF = () => {
-
-    const studentPages = marksheetData.map((stu) => {
-      const subjectRows = stu.subjects.map((s) => {
-        const examCells = allExamIds.map((eid) => {
-          const ex = s.exams[eid]
-          return `<td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;">${ex.total}</td>
-            <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;">${ex.obtained}${ex.obtained === 0 ? '' : ` <span style="font-size:6px;color:#6b7280;">(${Math.round((ex.obtained / (ex.total || 1)) * 100)}%)</span>`}</td>
-            <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:7px;color:#6b7280;">${ex.pc > 0 ? `${ex.pc}${ordinalSuffix(ex.pc)}` : '-'}</td>`
-        }).join('')
-        const cumPct = s.cumulative.full > 0 ? Math.round((s.cumulative.obtained / s.cumulative.full) * 100) : 0
-        const gColor = getGradeColor(getGradeLetter(cumPct))
-        return `<tr>
-          <td style="text-align:left;border:1px solid #d1d5db;padding:3px 6px;font-size:8px;font-weight:500;white-space:nowrap;">${s.subjectName}</td>
-          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;">${s.fullMarks}</td>
-          ${examCells}
-          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:700;">${s.cumulative.obtained}</td>
-          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:7px;color:${gColor};font-weight:600;">${cumPct}%</td>
-          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:7px;color:#6b7280;">${s.cumulative.pc > 0 ? `${s.cumulative.pc}${ordinalSuffix(s.cumulative.pc)}` : '-'}</td>
-        </tr>`
-      }).join('')
-
-      const summaryRows = allExamIds.map((eid) => {
-        const t = stu.examTotals[eid]
-        const eName = eid === currentExamId ? currentExamName : prevExams.find((e) => e.examId === eid)?.examName || eid
-        const gColor = getGradeColor(t.grade)
-        return `<tr>
-          <td style="border:1px solid #d1d5db;padding:3px 6px;font-size:8px;font-weight:500;">${eName}</td>
-          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;">${t.obtained}</td>
-          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;"><span style="color:${gColor};font-weight:700;">${t.grade}</span></td>
-          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;">${t.gpa.toFixed(1)}</td>
-          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:7px;color:#6b7280;">${t.pc > 0 ? `${t.pc}${ordinalSuffix(t.pc)}` : '-'}</td>
-          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:7px;color:#6b7280;">-</td>
-          <td style="text-align:center;border:1px solid #d1d5db;padding:3px 4px;font-size:8px;">Fail</td>
-        </tr>`
-      }).join('')
-
-      const gColor = getGradeColor(stu.cumulative.grade)
-      const examHeaders = allExamIds.map((eid) => {
-        const eName = eid === currentExamId ? currentExamName : prevExams.find((e) => e.examId === eid)?.examName || eid
-        const w = eid === currentExamId ? currentWeight : prevExams.find((e) => e.examId === eid)?.weight || 0
-        return `<th colspan="3" style="background:${brand}cc;color:#fff;border:1px solid #fff;padding:4px 6px;font-size:8px;font-weight:600;text-align:center;">${eName} (${w}%)</th>`
-      }).join('')
-      const examSubHeaders = allExamIds.map(() =>
-        `<th style="background:#6b7280;color:#fff;border:1px solid #fff;padding:2px 4px;font-size:6.5px;">Total</th>
-         <th style="background:#6b7280;color:#fff;border:1px solid #fff;padding:2px 4px;font-size:6.5px;">Obt.</th>
-         <th style="background:#6b7280;color:#fff;border:1px solid #fff;padding:2px 4px;font-size:6.5px;">PC</th>`
-      ).join('')
-
-      const avgPct = stu.cumulative.full > 0 ? Math.round((stu.cumulative.obtained / stu.cumulative.full) * 100) : 0
-
-      return `
-      <div style="page-break-after:always;page-break-inside:avoid;padding:10mm;font-family:'Segoe UI',system-ui,sans-serif;color:#1a1a2e;background:#fff;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-          <div style="flex:1;">
-            <div style="font-size:15px;font-weight:700;color:${brand};">${institutionName}</div>
-            <div style="font-size:9px;color:#6b7280;">${institutionAddress}</div>
-            <div style="font-size:12px;font-weight:600;color:#374151;margin-top:2px;">${isBn ? 'কামিউলেটিভ মার্কশিট' : 'Cumulative Marksheet'}</div>
-          </div>
-          <div style="text-align:right;">
-            <table style="font-size:7px;border-collapse:collapse;">
-              <thead><tr style="background:${brand};color:#fff;"><th style="padding:2px 5px;">Marks (%)</th><th style="padding:2px 5px;">Grade</th><th style="padding:2px 5px;">GP</th></tr></thead>
-              <tbody>${gradeScale.map((g) => `<tr><td style="border:1px solid #d1d5db;padding:1px 4px;text-align:center;">${g.range}</td><td style="border:1px solid #d1d5db;padding:1px 4px;text-align:center;font-weight:600;color:${getGradeColor(g.letter)};">${g.letter}</td><td style="border:1px solid #d1d5db;padding:1px 4px;text-align:center;">${g.gpa}</td></tr>`).join('')}</tbody>
-            </table>
-          </div>
-        </div>
-        <div style="border-top:2px solid ${brand};margin-bottom:8px;"></div>
-        <div style="display:flex;gap:16px;margin-bottom:10px;font-size:9px;">
-          <div style="flex:1;">
-            <div style="display:grid;grid-template-columns:auto 1fr;gap:2px 8px;">
-              <span style="font-weight:600;">${isBn ? 'শিক্ষার্থী' : 'Student'}:</span><span>${stu.nameEn}</span>
-              <span style="font-weight:600;">${isBn ? 'আইডি' : 'Student ID'}:</span><span>${stu.studentIdCode}</span>
-              <span style="font-weight:600;">${isBn ? 'রোল' : 'Roll'}:</span><span>${stu.roll}</span>
-            </div>
-          </div>
-          <div style="flex:1;">
-            <div style="display:grid;grid-template-columns:auto 1fr;gap:2px 8px;">
-              <span style="font-weight:600;">${isBn ? 'সেশন' : 'Session'}:</span><span>${currentExamSession}</span>
-              <span style="font-weight:600;">${isBn ? 'শ্রেণি' : 'Class'}:</span><span>${className}</span>
-              <span style="font-weight:600;">${isBn ? 'সেকশন' : 'Section'}:</span><span>${sectionName}</span>
-            </div>
-          </div>
-          <div style="flex:1;">
-            <div style="display:grid;grid-template-columns:auto 1fr;gap:2px 8px;">
-              <span style="font-weight:600;">G.P.A:</span><span style="color:${gColor};font-weight:700;">${stu.cumulative.gpa.toFixed(1)}</span>
-              <span style="font-weight:600;">${isBn ? 'গড় গ্রেড' : 'Average Grade'}:</span><span style="font-weight:700;color:${gColor};">${stu.cumulative.grade}</span>
-              <span style="font-weight:600;">${isBn ? 'গড় প্রাপ্ত %' : 'Average Obt. %'}:</span><span>${avgPct}%</span>
-              <span style="font-weight:600;">${isBn ? 'গড় প্রাপ্ত নম্বর' : 'Avg Obt. Marks'}:</span><span>${stu.cumulative.obtained}</span>
-            </div>
-          </div>
-        </div>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
-          <thead>
-            <tr>
-              <th style="background:${brand};color:#fff;border:1px solid #fff;padding:4px 6px;font-size:8px;font-weight:600;text-align:left;min-width:80px;">${isBn ? 'বিষয়' : 'Subject'}</th>
-              <th style="background:${brand};color:#fff;border:1px solid #fff;padding:4px 4px;font-size:8px;font-weight:600;text-align:center;width:30px;">Total</th>
-              ${examHeaders}
-              <th colspan="2" style="background:#1e293b;color:#fff;border:1px solid #fff;padding:4px 6px;font-size:8px;font-weight:700;text-align:center;">${isBn ? 'কামিউলেটিভ' : 'Cumulative'}</th>
-              <th style="background:${brand};color:#fff;border:1px solid #fff;padding:4px 4px;font-size:8px;font-weight:600;text-align:center;width:35px;">PC</th>
-            </tr>
-            <tr>
-              <th style="background:#9ca3af;color:#fff;border:1px solid #fff;padding:2px;font-size:6px;"></th>
-              <th style="background:#9ca3af;color:#fff;border:1px solid #fff;padding:2px;font-size:6px;"></th>
-              ${examSubHeaders}
-              <th style="background:#4b5563;color:#fff;border:1px solid #fff;padding:2px 4px;font-size:6.5px;">${isBn ? 'নির্ণিত' : 'Obt'}</th>
-              <th style="background:#4b5563;color:#fff;border:1px solid #fff;padding:2px 4px;font-size:6.5px;">%</th>
-              <th style="background:#9ca3af;color:#fff;border:1px solid #fff;padding:2px;font-size:6px;"></th>
-            </tr>
-          </thead>
-          <tbody>${subjectRows}</tbody>
-        </table>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
-          <thead>
-            <tr style="background:${brand};color:#fff;">
-              <th style="border:1px solid #d1d5db;padding:3px 6px;font-size:8px;font-weight:600;text-align:left;">${isBn ? 'পরীক্ষার নাম' : 'Exam Name'}</th>
-              <th style="border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;text-align:center;">${isBn ? 'মোট প্রাপ্ত' : 'Total Obt.'}</th>
-              <th style="border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;text-align:center;">Grade</th>
-              <th style="border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;text-align:center;">G.P.A</th>
-              <th style="border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;text-align:center;">PC</th>
-              <th style="border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;text-align:center;">PS</th>
-              <th style="border:1px solid #d1d5db;padding:3px 4px;font-size:8px;font-weight:600;text-align:center;">${isBn ? 'মন্তব্য' : 'Remark'}</th>
-            </tr>
-          </thead>
-          <tbody>${summaryRows}</tbody>
-        </table>
-        <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:9px;font-weight:700;">
-          <span>${isBn ? 'মোট নম্বর' : 'Total Marks'}: ${stu.cumulative.full}</span>
-          <span>${isBn ? 'মোট প্রাপ্ত নম্বর' : 'Total Obtain Marks'}: ${stu.cumulative.obtained}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding-top:12px;border-top:1px solid #e5e7eb;margin-top:12px;font-size:7px;color:#6b7280;">
-          <div style="text-align:center;flex:1;">${isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher'}</div>
-          <div style="text-align:center;flex:1;">${isBn ? 'অধ্যক্ষের স্বাক্ষর' : "Principal's Signature"}</div>
-          <div style="text-align:center;flex:1;">${isBn ? 'অভিভাবকের স্বাক্ষর' : "Guardian's Signature"}</div>
-        </div>
-      </div>`
-    }).join('')
-
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cumulative Marksheet</title>
-    <style>@page{size:A4 landscape;margin:0;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;}</style>
-    </head><body>${studentPages}</body></html>`
-    downloadHTML(`cumulative-marksheet-${currentExamName}.html`, html)
-  }
-
   if (marksheetData.length === 0) {
     return (
       <div className="text-center py-12 text-[var(--text-muted)] text-[0.875rem]">
@@ -448,7 +286,7 @@ export default function CumulativeMarkSheetTab({
           {isBn ? 'কামিউলেটিভ মার্কশিট' : 'Cumulative Marksheet'}
         </h3>
         <button
-          onClick={generatePDF}
+          onClick={() => setShowPdfModal(true)}
           className="h-7 px-3 rounded-lg text-[0.65rem] font-medium flex items-center gap-1.5"
           style={{ background: brand, color: '#fff' }}
         >
@@ -549,7 +387,7 @@ export default function CumulativeMarkSheetTab({
                     const w = eid === currentExamId ? currentWeight : prevExams.find((e) => e.examId === eid)?.weight || 0
                     return (
                       <React.Fragment key={eid}>
-                        <th colSpan={3} className="text-center px-1 py-1 font-semibold text-white" style={{ background: `${brand}cc` }}>
+                        <th colSpan={2} className="text-center px-1 py-1 font-semibold text-white" style={{ background: `${brand}cc` }}>
                           <div className="text-[0.55rem] leading-tight">{eName}</div>
                           <div className="text-[0.45rem] opacity-75 font-normal">({w}%)</div>
                         </th>
@@ -568,7 +406,6 @@ export default function CumulativeMarkSheetTab({
                     <React.Fragment key={eid}>
                       <th className="px-1 py-0.5 text-[0.45rem] font-medium" style={{ background: '#6b7280', color: '#d1d5db' }}>{isBn ? 'পূর্ণমান' : 'Total'}</th>
                       <th className="px-1 py-0.5 text-[0.45rem] font-medium" style={{ background: '#6b7280', color: '#d1d5db' }}>{isBn ? 'প্রাপ্ত' : 'Obt'}</th>
-                      <th className="px-1 py-0.5 text-[0.45rem] font-medium" style={{ background: '#6b7280', color: '#d1d5db' }}>PC</th>
                     </React.Fragment>
                   ))}
                   <th className="px-1 py-0.5 text-[0.45rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}>{isBn ? 'প্রাপ্ত' : 'Obt'}</th>
@@ -591,7 +428,6 @@ export default function CumulativeMarkSheetTab({
                           <React.Fragment key={eid}>
                             <td className="text-center px-1 py-1 text-[var(--text-secondary)]" style={{ borderBottom: '1px solid var(--border)' }}>{ex.total}</td>
                             <td className="text-center px-1 py-1 font-semibold text-[var(--text-primary)]" style={{ borderBottom: '1px solid var(--border)' }}>{ex.obtained}</td>
-                            <td className="text-center px-1 py-1 text-[0.55rem] text-[var(--text-muted)]" style={{ borderBottom: '1px solid var(--border)' }}>{ex.pc > 0 ? `${ex.pc}${ordinalSuffix(ex.pc)}` : '-'}</td>
                           </React.Fragment>
                         )
                       })}
@@ -659,12 +495,38 @@ export default function CumulativeMarkSheetTab({
           </div>
         ))}
       </div>
+
+      {/* PDF Modal */}
+      {showPdfModal && (
+        <CumulativeMarksheetPDFOptionsModal
+          currentExamData={currentExamData}
+          currentExamId={currentExamId}
+          currentExamName={currentExamName}
+          currentExamSession={currentExamSession}
+          className={className}
+          sectionName={sectionName}
+          institutionName={institutionName}
+          institutionAddress={institutionAddress}
+          publishedExams={publishedExams.map((e) => ({ id: e.id, name: e.name }))}
+          prevExams={prevExams}
+          currentWeight={currentWeight}
+          isBn={isBn}
+          onClose={() => setShowPdfModal(false)}
+          onPrevExamsChange={setPrevExams}
+          onCurrentWeightChange={() => {}}
+        />
+      )}
     </div>
   )
 }
 
-function ordinalSuffix(n: number): string {
-  const s = ['th', 'st', 'nd', 'rd']
-  const v = n % 100
-  return s[(v - 20) % 10] || s[v] || s[0]
+function getGpa(pct: number, passed: boolean): number {
+  if (!passed) return 0
+  if (pct >= 80) return 5.0
+  if (pct >= 70) return 4.0
+  if (pct >= 60) return 3.5
+  if (pct >= 50) return 3.0
+  if (pct >= 40) return 2.0
+  if (pct >= 33) return 1.0
+  return 0
 }
