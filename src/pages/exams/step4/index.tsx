@@ -1001,8 +1001,12 @@ export default function Step4Results() {
               <CumulativeMarkSheetTab
                 currentExamData={enrichedTabulationData}
                 currentExamId={selectedExamId}
+                currentExamName={examConfigs.find((e) => e.id === selectedExamId)?.name || selectedExamId}
+                currentExamSession={examConfigs.find((e) => e.id === selectedExamId)?.session || ''}
                 className={selectedClassId}
                 sectionName={selectedSectionId}
+                institutionName={useClassStore.getState().institution.name}
+                institutionAddress={useClassStore.getState().institution.address}
                 isBn={isBn}
               />
             ) : (

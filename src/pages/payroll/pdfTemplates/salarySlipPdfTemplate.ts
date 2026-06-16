@@ -110,11 +110,10 @@ export function generateSingleSalarySlipPDF(
   const orientation = opts.orientation || 'portrait'
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Payslip - ${employee.id}</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   @page{size:${orientation};margin:10mm}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Arial','Noto Serif Bengali',sans-serif;color:#1a1a1a;font-size:11px;background:#fff;padding:10px}
+  body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:11px;background:#fff;padding:10px}
   .slip{border:1.5px solid #c7d2fe;border-radius:8px;padding:12px;max-width:190mm;margin:0 auto}
   .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid ${brand}}
   .logo-box{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
@@ -156,11 +155,10 @@ export function generateAllSalarySlipsPDF(
     .join('\n')
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Salary Slips - ${month}</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   @page{size:portrait;margin:10mm}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Arial','Noto Serif Bengali',sans-serif;color:#1a1a1a;font-size:11px;background:#fff;padding:10px}
+  body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:11px;background:#fff;padding:10px}
   .slip-wrap{margin-bottom:12px}
   .slip-wrap:last-child{margin-bottom:0}
   .slip{border:1.5px solid #c7d2fe;border-radius:8px;padding:12px;max-width:190mm;width:100%}
@@ -225,11 +223,10 @@ export function generatePayrollSummaryPDF(
   const thStyle = (align = 'left') => `padding:6px 8px;background:#1e293b;color:#fff;font-weight:700;font-size:9px;border:2px solid ${brand};text-align:${align};white-space:nowrap`
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Payroll - ${employees.length} employees</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   @page{size:${orientation};margin:6mm}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Arial','Noto Serif Bengali',sans-serif;color:#1e293b;background:#fff;font-size:10px;padding:10px}
+  body{font-family:'Arial',sans-serif;color:#1e293b;background:#fff;font-size:10px;padding:10px}
   .header{text-align:center;margin-bottom:12px;padding-bottom:8px;border-bottom:3px solid ${brand}}
   .header h1{font-size:18px;color:#1e293b;letter-spacing:1.5px;text-transform:uppercase;font-weight:800}
   .header .subtitle{font-size:11px;color:#64748b;margin-top:3px;font-weight:500}

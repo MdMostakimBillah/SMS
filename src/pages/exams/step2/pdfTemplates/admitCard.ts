@@ -62,7 +62,7 @@ export function generateAdmitCardHTML(
       </tr>`
     }).join('') : subjectRows
 
-    return `<div style="width:190mm;min-height:120mm;border:1.5px solid #e2e8f0;border-radius:12px;margin:10px auto;padding:0;overflow:hidden;font-family:'Segoe UI','Noto Serif Bengali',Tahoma,Geneva,Verdana,sans-serif;page-break-inside:avoid;background:#fff">
+    return `<div style="width:190mm;min-height:120mm;border:1.5px solid #e2e8f0;border-radius:12px;margin:10px auto;padding:0;overflow:hidden;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;page-break-inside:avoid;background:#fff">
       <div style="padding:12px 20px;text-align:center;border-bottom:2px solid ${brandColor}">
         <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px">
           <div style="width:36px;height:36px;border-radius:8px;background:${brandColor};display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0">ET</div>

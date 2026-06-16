@@ -112,11 +112,10 @@ export function generateExamRoutineGridPDF(
 <head>
 <meta charset="UTF-8">
 <title>${title} — EduTech</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   @page { size: A4 ${orientation}; margin: 8mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:Arial,'Noto Serif Bengali',sans-serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
+  body { font-family:Arial,sans-serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
   .hdr  { display:flex; align-items:center; justify-content:space-between; padding-bottom:7px; border-bottom:2px solid #6366f1; margin-bottom:7px; }
   .logo { width:32px; height:32px; background:#6366f1; border-radius:7px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:700; }
   .meta { text-align:right; font-size:8px; color:#666; line-height:1.7; }

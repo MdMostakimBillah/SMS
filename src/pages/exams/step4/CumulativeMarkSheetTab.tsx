@@ -1,15 +1,19 @@
-import { useState, useMemo } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import React, { useState, useMemo } from 'react'
+import { Plus, Trash2, Download } from 'lucide-react'
 import { useExamStore } from '@/store/examStore'
 import { useClassStore } from '@/store/classStore'
-import { getBrandColor } from '@/lib/pdf'
+import { getBrandColor, downloadHTML } from '@/lib/pdf'
 import type { TabulationStudent } from './MarksheetTab'
 
 interface CumulativeMarkSheetProps {
   currentExamData: (TabulationStudent & { adjustedPercentage: number; adjustedGpa: number })[]
   currentExamId: string
+  currentExamName: string
+  currentExamSession: string
   className: string
   sectionName: string
+  institutionName: string
+  institutionAddress: string
   isBn?: boolean
 }
 
@@ -17,7 +21,7 @@ interface SelectedExam {
   examId: string
   examName: string
   weight: number
-  percentageMap: Record<string, number> // studentId -> percentage
+  students: Record<string, { obtained: number; full: number; percentage: number }>
 }
 
 function getGradeLetter(pct: number): string {
@@ -28,6 +32,17 @@ function getGradeLetter(pct: number): string {
   if (pct >= 40) return 'C'
   if (pct >= 33) return 'D'
   return 'F'
+}
+
+function getGpa(pct: number, passed: boolean): number {
+  if (!passed) return 0
+  if (pct >= 80) return 5.0
+  if (pct >= 70) return 4.0
+  if (pct >= 60) return 3.5
+  if (pct >= 50) return 3.0
+  if (pct >= 40) return 2.0
+  if (pct >= 33) return 1.0
+  return 0
 }
 
 function getGradeColor(letter: string): string {
@@ -48,8 +63,12 @@ const gradeScale = [
 export default function CumulativeMarkSheetTab({
   currentExamData,
   currentExamId,
+  currentExamName,
+  currentExamSession,
   className,
   sectionName,
+  institutionName,
+  institutionAddress,
   isBn = false,
 }: CumulativeMarkSheetProps) {
   const brand = getBrandColor()
@@ -73,12 +92,11 @@ export default function CumulativeMarkSheetTab({
 
   // Add exam to selection
   const addExam = (examId: string) => {
-    const exam = publishedExams.find((e) => e.id === examId)
-    if (!exam || selectedExams.find((s) => s.examId === examId)) return
+    const exam = allExamConfigs.find((e) => e.id === examId)
+    if (!exam || selectedExams.some((s) => s.examId === examId)) return
 
-    // Calculate percentage for each student from this exam
     const examSubjects = subjectMarkConfigs.filter((s) => s.examId === examId && s.classId === className)
-    const percentageMap: Record<string, number> = {}
+    const students: Record<string, { obtained: number; full: number; percentage: number }> = {}
 
     currentExamData.forEach((student) => {
       let totalObtained = 0
@@ -90,76 +108,174 @@ export default function CumulativeMarkSheetTab({
         totalObtained += mark?.totalMarks || 0
         totalFull += sc.fullMarks
       })
-      percentageMap[student.student.id] = totalFull > 0 ? Math.round((totalObtained / totalFull) * 100) : 0
+      students[student.student.id] = {
+        obtained: totalObtained,
+        full: totalFull,
+        percentage: totalFull > 0 ? Math.round((totalObtained / totalFull) * 100) : 0,
+      }
     })
 
     setSelectedExams((prev) => [
       ...prev,
-      { examId: exam.id, examName: exam.name, weight: Math.round(100 / (prev.length + 2)), percentageMap },
+      { examId: exam.id, examName: exam.name, weight: 0, students },
     ])
   }
 
-  // Remove exam
   const removeExam = (examId: string) => {
     setSelectedExams((prev) => prev.filter((e) => e.examId !== examId))
   }
 
-  // Update weight
   const updateWeight = (examId: string, weight: number) => {
     setSelectedExams((prev) => prev.map((e) => (e.examId === examId ? { ...e, weight } : e)))
   }
 
-  // Auto-distribute remaining weight equally
   const redistributeWeights = () => {
     if (selectedExams.length === 0) return
-    const perExam = Math.round(100 / (selectedExams.length + 1)) // +1 for current exam
+    const perExam = Math.round(100 / (selectedExams.length + 1))
     setSelectedExams((prev) => prev.map((e) => ({ ...e, weight: perExam })))
   }
 
+  const totalPrevWeight = selectedExams.reduce((a, e) => a + e.weight, 0)
+  const currentWeight = Math.max(0, 100 - totalPrevWeight)
+
   // Calculate cumulative data
   const cumulativeData = useMemo(() => {
-    if (selectedExams.length === 0) {
-      return currentExamData.map((s) => ({
-        ...s,
-        cumulativeTotal: s.adjustedPercentage,
-        cumulativeGpa: s.adjustedGpa,
-        cumulativeGrade: s.passedAll ? getGradeLetter(s.adjustedPercentage) : 'F',
-      }))
-    }
-
-    const currentWeight = Math.max(0, 100 - selectedExams.reduce((a, e) => a + e.weight, 0))
-
     return currentExamData.map((student) => {
-      let weightedTotal = student.adjustedPercentage * (currentWeight / 100)
+      const currentPct = student.adjustedPercentage
+
+      let weightedTotal = currentPct * (currentWeight / 100)
       selectedExams.forEach((exam) => {
-        const prevPct = exam.percentageMap[student.student.id] || 0
+        const prevPct = exam.students[student.student.id]?.percentage || 0
         weightedTotal += prevPct * (exam.weight / 100)
       })
 
       const cumulativePct = Math.round(weightedTotal)
-      const passedAll = student.passedAll // current exam pass status
-      const cumulativeGpa = passedAll
-        ? cumulativePct >= 80 ? 5.0
-        : cumulativePct >= 70 ? 4.0
-        : cumulativePct >= 60 ? 3.5
-        : cumulativePct >= 50 ? 3.0
-        : cumulativePct >= 40 ? 2.0
-        : cumulativePct >= 33 ? 1.0
-        : 0
-        : 0
+      const passedAll = student.passedAll
+      const cumulativeGpa = getGpa(cumulativePct, passedAll)
+      const cumulativeGrade = passedAll ? getGradeLetter(cumulativePct) : 'F'
 
       return {
-        ...student,
-        cumulativeTotal: cumulativePct,
+        student: student.student,
+        currentObtained: student.totalObtained,
+        currentFull: student.totalFull || currentExamData[0]?.subjectMarks.reduce((a, b) => a + b.fullMarks, 0) || 0,
+        currentPct,
+        currentGpa: student.adjustedGpa,
+        currentGrade: student.passedAll ? getGradeLetter(currentPct) : 'F',
+        exams: selectedExams.map((exam) => ({
+          examId: exam.examId,
+          examName: exam.examName,
+          weight: exam.weight,
+          ...exam.students[student.student.id],
+        })),
+        cumulativePct,
         cumulativeGpa,
-        cumulativeGrade: passedAll ? getGradeLetter(cumulativePct) : 'F',
-        currentWeight,
+        cumulativeGrade,
+        passedAll,
+        classRank: student.classRank,
+        sectionRank: student.sectionRank,
       }
-    })
-  }, [currentExamData, selectedExams])
+    }).sort((a, b) => b.cumulativePct - a.cumulativePct)
+  }, [currentExamData, selectedExams, currentWeight])
 
-  const totalWeightUsed = selectedExams.reduce((a, e) => a + e.weight, 0)
-  const currentWeight = Math.max(0, 100 - totalWeightUsed)
+  // Generate PDF
+  const generatePDF = () => {
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Cumulative Marksheet - ${currentExamName}</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 9px; color: #1a1a2e; background: #fff; }
+  .header { text-align: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid ${brand}; }
+  .header h1 { font-size: 16px; font-weight: 700; color: ${brand}; margin-bottom: 2px; }
+  .header h2 { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 2px; }
+  .header p { font-size: 9px; color: #6b7280; }
+  .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 9px; color: #374151; }
+  .info-row span { font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 8px; }
+  th { background: ${brand}; color: #fff; padding: 5px 4px; font-weight: 600; text-align: center; font-size: 7.5px; white-space: nowrap; }
+  td { padding: 4px; text-align: center; border-bottom: 1px solid #e5e7eb; }
+  tr:nth-child(even) td { background: #f9fafb; }
+  .name-col { text-align: left; font-weight: 600; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+  .roll-col { text-align: center; font-weight: 500; }
+  .current-col { color: ${brand}; font-weight: 600; }
+  .prev-col { color: #6b7280; }
+  .cumulative-col { font-weight: 700; color: ${brand}; background: ${brand}08; }
+  .gpa-col { font-weight: 700; }
+  .grade-badge { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 7.5px; font-weight: 700; }
+  .weight-info { font-size: 7px; color: #9ca3af; font-weight: 400; }
+  .legend { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; padding-top: 6px; border-top: 1px solid #e5e7eb; }
+  .legend-item { display: flex; align-items: center; gap: 3px; font-size: 7px; color: #6b7280; }
+  .legend-badge { display: inline-block; padding: 1px 4px; border-radius: 2px; font-size: 7px; font-weight: 700; }
+  .footer { margin-top: 10px; padding-top: 8px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 8px; color: #6b7280; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>${institutionName}</h1>
+    <h2>${isBn ? 'কামিউলেটিভ মার্কশিট' : 'Cumulative Marksheet'}</h2>
+    <p>${institutionAddress}</p>
+  </div>
+  <div class="info-row">
+    <div><span>${isBn ? 'শ্রেণি' : 'Class'}:</span> ${className} | <span>${isBn ? 'সেকশন' : 'Section'}:</span> ${sectionName}</div>
+    <div><span>${isBn ? 'সেশন' : 'Session'}:</span> ${currentExamSession} | <span>${isBn ? 'বর্তমান পরীক্ষা' : 'Current Exam'}:</span> ${currentExamName} (${currentWeight}%)</div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:25px">#</th>
+        <th style="text-align:left;min-width:100px">${isBn ? 'নাম' : 'Name'}</th>
+        <th style="width:35px">${isBn ? 'রোল' : 'Roll'}</th>
+        ${selectedExams.map((exam) => `
+        <th colspan="2" style="background:${brand}cc">${exam.examName} <span class="weight-info">(${exam.weight}%)</span></th>
+        `).join('')}
+        <th colspan="2" style="background:${brand}">${isBn ? 'বর্তমান পরীক্ষা' : 'Current Exam'} <span class="weight-info">(${currentWeight}%)</span></th>
+        <th colspan="2" style="background:${brand}">${isBn ? 'কামিউলেটিভ' : 'Cumulative'}</th>
+        <th style="width:30px">GPA</th>
+        <th style="width:30px">${isBn ? 'গ্রেড' : 'Grade'}</th>
+      </tr>
+      <tr>
+        <th></th><th></th><th></th>
+        ${selectedExams.map(() => '<th style="font-size:6.5px;background:#4b5563">Obt</th><th style="font-size:6.5px;background:#4b5563">%</th>').join('')}
+        <th style="font-size:6.5px;background:#4b5563">Obt</th><th style="font-size:6.5px;background:#4b5563">%</th>
+        <th style="font-size:6.5px;background:#374151">${isBn ? '%' : '%'}</th><th style="font-size:6.5px;background:#374151">${isBn ? 'গ্রেড' : 'Grade'}</th>
+        <th></th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${cumulativeData.map((row, idx) => {
+        const gColor = getGradeColor(row.cumulativeGrade)
+        return `<tr>
+          <td>${idx + 1}</td>
+          <td class="name-col">${row.student.nameEn}</td>
+          <td class="roll-col">${row.student.roll}</td>
+          ${row.exams.map((ex) => `
+          <td class="prev-col">${ex.obtained}/${ex.full}</td>
+          <td class="prev-col">${ex.percentage}%</td>
+          `).join('')}
+          <td class="current-col">${row.currentObtained}/${row.currentFull}</td>
+          <td class="current-col">${row.currentPct}%</td>
+          <td class="cumulative-col">${row.cumulativePct}%</td>
+          <td class="cumulative-col"><span class="grade-badge" style="background:${gColor}18;color:${gColor}">${row.cumulativeGrade}</span></td>
+          <td class="gpa-col" style="color:${gColor}">${row.cumulativeGpa.toFixed(1)}</td>
+          <td><span class="grade-badge" style="background:${gColor}18;color:${gColor}">${row.cumulativeGrade}</span></td>
+        </tr>`
+      }).join('')}
+    </tbody>
+  </table>
+  <div class="legend">
+    ${gradeScale.map((g) => `<div class="legend-item"><span class="legend-badge" style="background:${getGradeColor(g.letter)}18;color:${getGradeColor(g.letter)}">${g.letter}</span> ${g.range}%</div>`).join('')}
+  </div>
+  <div class="footer">
+    <span>${isBn ? 'মোট শিক্ষার্থী' : 'Total Students'}: ${cumulativeData.length}</span>
+    <span>${isBn ? 'তৈরি করা হয়েছে' : 'Generated'}: ${new Date().toLocaleDateString()}</span>
+  </div>
+</body>
+</html>`
+    downloadHTML(`cumulative-marksheet-${currentExamName}.html`, html)
+  }
 
   return (
     <div>
@@ -174,18 +290,28 @@ export default function CumulativeMarkSheetTab({
               {isBn ? 'সমান ভাগ' : 'Equalize'}
             </button>
           )}
+          {cumulativeData.length > 0 && (
+            <button
+              onClick={generatePDF}
+              className="h-7 px-3 rounded-lg text-[0.65rem] font-medium flex items-center gap-1.5"
+              style={{ background: brand, color: '#fff' }}
+            >
+              <Download size={12} />
+              {isBn ? 'PDF ডাউনলোড' : 'Download PDF'}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Exam Selection */}
-      <div className="mb-4 p-3 bg-[var(--bg-secondary)]/50 rounded-lg border border-[var(--border)]">
+      <div className="mb-4 p-3 rounded-lg border border-[var(--border)]" style={{ background: 'var(--bg-secondary)' }}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-[var(--text-primary)]">
             {isBn ? 'পূর্ববর্তী পরীক্ষা যোগ করুন' : 'Add Previous Exams'}
           </span>
           <span className="text-[0.6rem] text-[var(--text-muted)]">
             {isBn ? `বর্তমান: ${currentWeight}%` : `Current: ${currentWeight}%`}
-            {selectedExams.length > 0 && ` · ${isBn ? 'মোট ওজন:' : 'Total Weight:'} ${totalWeightUsed + currentWeight}%`}
+            {selectedExams.length > 0 && ` · ${isBn ? 'মোট:' : 'Total:'} ${totalPrevWeight + currentWeight}%`}
           </span>
         </div>
 
@@ -201,11 +327,12 @@ export default function CumulativeMarkSheetTab({
                 <button
                   key={exam.id}
                   onClick={() => (isSelected ? removeExam(exam.id) : addExam(exam.id))}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[0.65rem] font-medium border transition-all ${
-                    isSelected
-                      ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
-                      : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]'
-                  }`}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[0.65rem] font-medium border transition-all"
+                  style={{
+                    background: isSelected ? brand : 'var(--bg-primary)',
+                    color: isSelected ? '#fff' : 'var(--text-secondary)',
+                    borderColor: isSelected ? brand : 'var(--border)',
+                  }}
                 >
                   {isSelected ? <Trash2 size={10} /> : <Plus size={10} />}
                   {exam.name}
@@ -215,9 +342,9 @@ export default function CumulativeMarkSheetTab({
           </div>
         )}
 
-        {/* Weight controls for selected exams */}
+        {/* Weight controls */}
         {selectedExams.length > 0 && (
-          <div className="mt-2 space-y-1.5">
+          <div className="mt-3 space-y-1.5">
             {selectedExams.map((exam) => (
               <div key={exam.examId} className="flex items-center gap-2">
                 <span className="text-[0.65rem] text-[var(--text-secondary)] w-28 truncate">{exam.examName}</span>
@@ -229,7 +356,15 @@ export default function CumulativeMarkSheetTab({
                   onChange={(e) => updateWeight(exam.examId, Number(e.target.value))}
                   className="flex-1 h-1 accent-[var(--brand)]"
                 />
-                <span className="text-[0.65rem] font-semibold text-[var(--text-primary)] w-8 text-right">{exam.weight}%</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={exam.weight}
+                  onChange={(e) => updateWeight(exam.examId, Math.min(100, Math.max(0, Number(e.target.value))))}
+                  className="w-12 h-6 px-1 text-[0.65rem] text-center rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
+                />
+                <span className="text-[0.6rem] text-[var(--text-muted)]">%</span>
                 <button onClick={() => removeExam(exam.examId)} className="text-[var(--text-muted)] hover:text-red-500">
                   <Trash2 size={12} />
                 </button>
@@ -240,59 +375,79 @@ export default function CumulativeMarkSheetTab({
                 {isBn ? 'বর্তমান পরীক্ষা' : 'Current Exam'}
               </span>
               <div className="flex-1 h-1 bg-[var(--border)] rounded" />
-              <span className="text-[0.65rem] font-semibold w-8 text-right" style={{ color: currentWeight < 0 ? 'var(--red)' : 'var(--brand)' }}>{currentWeight}%</span>
+              <span className="text-[0.65rem] font-semibold w-12 text-center" style={{ color: currentWeight < 0 ? 'var(--red)' : brand }}>{currentWeight}%</span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Cumulative Marks Table */}
+      {/* Results Table */}
       {cumulativeData.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs border border-[var(--border)] rounded-lg overflow-hidden">
+        <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
+          <table className="w-full text-xs" style={{ minWidth: `${300 + selectedExams.length * 140}px` }}>
             <thead>
-              <tr className="text-[0.65rem] uppercase tracking-wide text-white" style={{ background: brand }}>
-                <th className="text-left px-3 py-2 font-semibold">#</th>
-                <th className="text-left px-3 py-2 font-semibold">{isBn ? 'নাম' : 'Name'}</th>
-                <th className="text-center px-3 py-2 font-semibold">{isBn ? 'রোল' : 'Roll'}</th>
-                <th className="text-center px-3 py-2 font-semibold">{isBn ? 'বর্তমান %' : 'Current %'}</th>
+              <tr>
+                <th className="text-center px-2 py-2 font-semibold text-white" style={{ background: brand, width: '25px' }}>#</th>
+                <th className="text-left px-2 py-2 font-semibold text-white" style={{ background: brand }}>{isBn ? 'নাম' : 'Name'}</th>
+                <th className="text-center px-2 py-2 font-semibold text-white" style={{ background: brand, width: '40px' }}>{isBn ? 'রোল' : 'Roll'}</th>
                 {selectedExams.map((exam) => (
-                  <th key={exam.examId} className="text-center px-3 py-2 font-semibold" style={{ fontSize: '0.55rem' }}>
-                    {exam.examName}<br /><span className="font-normal opacity-75">({exam.weight}%)</span>
+                  <th key={exam.examId} colSpan={2} className="text-center px-1 py-1 font-semibold text-white" style={{ background: `${brand}cc` }}>
+                    <div className="text-[0.6rem] leading-tight">{exam.examName}</div>
+                    <div className="text-[0.5rem] opacity-75 font-normal">({exam.weight}%)</div>
                   </th>
                 ))}
-                <th className="text-center px-3 py-2 font-bold" style={{ background: `${brand}dd` }}>
-                  {isBn ? 'কামিউলেটিভ %' : 'Cumulative %'}
+                <th colSpan={2} className="text-center px-1 py-1 font-semibold text-white" style={{ background: brand }}>
+                  <div className="text-[0.6rem] leading-tight">{isBn ? 'বর্তমান' : 'Current'}</div>
+                  <div className="text-[0.5rem] opacity-75 font-normal">({currentWeight}%)</div>
                 </th>
-                <th className="text-center px-3 py-2 font-semibold">{isBn ? 'জিপিএ' : 'GPA'}</th>
-                <th className="text-center px-3 py-2 font-semibold">{isBn ? 'গ্রেড' : 'Grade'}</th>
+                <th colSpan={2} className="text-center px-1 py-1 font-bold text-white" style={{ background: '#1e293b' }}>
+                  <div className="text-[0.6rem] leading-tight">{isBn ? 'কামিউলেটিভ' : 'Cumulative'}</div>
+                </th>
+                <th className="text-center px-1 py-1 font-semibold text-white" style={{ background: brand, width: '35px' }}>GPA</th>
+                <th className="text-center px-1 py-1 font-semibold text-white" style={{ background: brand, width: '35px' }}>{isBn ? 'গ্রেড' : 'Grd'}</th>
+              </tr>
+              <tr>
+                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}></th>
+                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}></th>
+                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}></th>
+                {selectedExams.map((exam) => (
+                  <React.Fragment key={exam.examId}>
+                    <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}>{isBn ? 'নির্ণিত' : 'Obt'}</th>
+                    <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}>%</th>
+                  </React.Fragment>
+                ))}
+                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}>{isBn ? 'নির্ণিত' : 'Obt'}</th>
+                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}>%</th>
+                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#374151', color: '#d1d5db' }}>%</th>
+                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#374151', color: '#d1d5db' }}>{isBn ? 'গ্রেড' : 'Grd'}</th>
+                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}></th>
+                <th className="px-1 py-0.5 text-[0.5rem] font-medium" style={{ background: '#4b5563', color: '#d1d5db' }}></th>
               </tr>
             </thead>
             <tbody>
-              {cumulativeData.map((student, idx) => {
-                const gColor = getGradeColor(student.cumulativeGrade)
+              {cumulativeData.map((row, idx) => {
+                const gColor = getGradeColor(row.cumulativeGrade)
                 const bg = idx % 2 === 0 ? 'var(--bg-primary)' : 'var(--bg-secondary)'
                 return (
-                  <tr key={student.student.id} style={{ background: bg }}>
-                    <td className="text-center px-3 py-2 font-semibold text-[var(--text-secondary)] border-b border-[var(--border)]">{idx + 1}</td>
-                    <td className="text-left px-3 py-2 font-semibold text-[var(--text-primary)] border-b border-[var(--border)]">{student.student.nameEn}</td>
-                    <td className="text-center px-3 py-2 text-[var(--text-secondary)] border-b border-[var(--border)]">{student.student.roll}</td>
-                    <td className="text-center px-3 py-2 font-medium border-b border-[var(--border)]" style={{ color: brand }}>{student.adjustedPercentage}%</td>
-                    {selectedExams.map((exam) => (
-                      <td key={exam.examId} className="text-center px-3 py-2 text-[var(--text-secondary)] border-b border-[var(--border)]">
-                        {exam.percentageMap[student.student.id] || 0}%
-                      </td>
+                  <tr key={row.student.id} style={{ background: bg }}>
+                    <td className="text-center px-2 py-1.5 font-semibold text-[var(--text-secondary)]" style={{ borderBottom: '1px solid var(--border)' }}>{idx + 1}</td>
+                    <td className="text-left px-2 py-1.5 font-semibold text-[var(--text-primary)] whitespace-nowrap" style={{ borderBottom: '1px solid var(--border)' }}>{row.student.nameEn}</td>
+                    <td className="text-center px-2 py-1.5 text-[var(--text-secondary)]" style={{ borderBottom: '1px solid var(--border)' }}>{row.student.roll}</td>
+                    {row.exams.map((ex) => (
+                      <React.Fragment key={ex.examId}>
+                        <td className="text-center px-1 py-1.5 text-[0.7rem] text-[var(--text-secondary)]" style={{ borderBottom: '1px solid var(--border)' }}>{ex.obtained}/{ex.full}</td>
+                        <td className="text-center px-1 py-1.5 text-[0.7rem] font-medium text-[var(--text-secondary)]" style={{ borderBottom: '1px solid var(--border)' }}>{ex.percentage}%</td>
+                      </React.Fragment>
                     ))}
-                    <td className="text-center px-3 py-2 font-bold border-b border-[var(--border)]" style={{ color: brand, background: `${brand}08` }}>
-                      {student.cumulativeTotal}%
+                    <td className="text-center px-1 py-1.5 text-[0.7rem] font-semibold" style={{ color: brand, borderBottom: '1px solid var(--border)' }}>{row.currentObtained}/{row.currentFull}</td>
+                    <td className="text-center px-1 py-1.5 text-[0.7rem] font-semibold" style={{ color: brand, borderBottom: '1px solid var(--border)' }}>{row.currentPct}%</td>
+                    <td className="text-center px-1 py-1.5 text-[0.7rem] font-bold" style={{ color: brand, background: `${brand}08`, borderBottom: '1px solid var(--border)' }}>{row.cumulativePct}%</td>
+                    <td className="text-center px-1 py-1.5" style={{ borderBottom: '1px solid var(--border)' }}>
+                      <span className="px-1 py-0.5 rounded text-[0.55rem] font-bold" style={{ background: `${gColor}18`, color: gColor }}>{row.cumulativeGrade}</span>
                     </td>
-                    <td className="text-center px-3 py-2 font-bold border-b border-[var(--border)]" style={{ color: gColor }}>
-                      {student.cumulativeGpa.toFixed(1)}
-                    </td>
-                    <td className="text-center px-3 py-2 border-b border-[var(--border)]">
-                      <span className="px-1.5 py-0.5 rounded text-[0.6rem] font-bold" style={{ background: `${gColor}18`, color: gColor }}>
-                        {student.cumulativeGrade}
-                      </span>
+                    <td className="text-center px-1 py-1.5 text-[0.7rem] font-bold" style={{ color: gColor, borderBottom: '1px solid var(--border)' }}>{row.cumulativeGpa.toFixed(1)}</td>
+                    <td className="text-center px-1 py-1.5" style={{ borderBottom: '1px solid var(--border)' }}>
+                      <span className="px-1 py-0.5 rounded text-[0.55rem] font-bold" style={{ background: `${gColor}18`, color: gColor }}>{row.cumulativeGrade}</span>
                     </td>
                   </tr>
                 )
@@ -308,10 +463,10 @@ export default function CumulativeMarkSheetTab({
 
       {/* Grade Scale */}
       {cumulativeData.length > 0 && (
-        <div className="mt-3 p-2 bg-[var(--bg-secondary)]/50 rounded-lg border border-[var(--border)] flex items-center justify-between gap-3">
+        <div className="mt-3 p-2 rounded-lg border border-[var(--border)] flex items-center justify-between gap-3" style={{ background: 'var(--bg-secondary)' }}>
           <div className="flex flex-wrap gap-1">
             {gradeScale.map((g) => (
-              <div key={g.letter} className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border)]">
+              <div key={g.letter} className="flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-[var(--border)]" style={{ background: 'var(--bg-primary)' }}>
                 <span className="w-4 h-4 rounded flex items-center justify-center text-[0.5rem] font-bold" style={{ background: `${getGradeColor(g.letter)}18`, color: getGradeColor(g.letter) }}>{g.letter}</span>
                 <span className="text-[0.5rem] text-[var(--text-secondary)]">{g.range}%</span>
               </div>

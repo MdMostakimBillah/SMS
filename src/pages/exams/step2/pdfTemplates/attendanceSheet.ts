@@ -19,11 +19,10 @@ export function generateAttendanceSheetHTML(params: AttendanceParams): string {
   const attendanceRate = totalStudents > 0 ? Math.round((present.length / totalStudents) * 100) : 0
 
   return `<!DOCTYPE html><html><head><title>Attendance - ${classId} ${sectionId} ${date}</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   @page{size:A4 portrait;margin:15mm}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:Arial,'Noto Serif Bengali',sans-serif;font-size:12px;color:#1a1a1a;padding:0}
+  body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:0}
   .header{text-align:center;margin-bottom:16px;border-bottom:2px solid #6366f1;padding-bottom:10px}
   .school{font-size:18px;font-weight:700;color:#6366f1}
   .sub{font-size:11px;color:#666}

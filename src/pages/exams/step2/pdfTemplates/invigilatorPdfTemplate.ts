@@ -126,11 +126,10 @@ export function generateInvigilatorGuardListPDF(
 <head>
 <meta charset="UTF-8">
 <title>${title} — EduTech</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   @page { size: A4 ${orientation}; margin: 8mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:Arial,'Noto Serif Bengali',sans-serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
+  body { font-family:Arial,sans-serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
   .page { page-break-after:always; padding:10px; }
   .page:last-child { page-break-after:auto; }
   .hdr { display:flex; align-items:center; justify-content:space-between; padding-bottom:7px; border-bottom:2px solid #6366f1; margin-bottom:7px; }
