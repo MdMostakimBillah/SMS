@@ -16,6 +16,7 @@ import {
   ChevronUp,
   X,
   Signature,
+  Pencil,
 } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import type { ClassSection, ClassInfo, InstitutionSettings } from '@/store/classStore'
@@ -68,6 +69,10 @@ export default function ClassesTab({
   const [secForm, setSecForm] = useState({ name: '', seatQuantity: 40, classTeacherId: '' })
   const [showSubjectModal, setShowSubjectModal] = useState<{ classId: string; sectionId: string } | null>(null)
   const [tempSelectedSubjects, setTempSelectedSubjects] = useState<string[]>([])
+  const [editingClassName, setEditingClassName] = useState<string | null>(null)
+  const [classNameForm, setClassNameForm] = useState({ name: '', nameBn: '' })
+  const [copySectionModal, setCopySectionModal] = useState<{ fromClassId: string; fromSectionId: string } | null>(null)
+  const [copyTarget, setCopyTarget] = useState({ classId: '', sectionId: '' })
 
   const [bulkMode, setBulkMode] = useState(false)
   const [selectedClasses, setSelectedClasses] = useState<string[]>([])
@@ -79,7 +84,7 @@ export default function ClassesTab({
   const [bulkSectionCount, setBulkSectionCount] = useState(2)
   const [bulkSeatQuantity, setBulkSeatQuantity] = useState(40)
 
-  useScrollLock(showSubjectModal !== null || showBulkTime || showBulkSubject || showBulkSection)
+  useScrollLock(showSubjectModal !== null || showBulkTime || showBulkSubject || showBulkSection || copySectionModal !== null)
 
   const getTeacher = useCallback((id: string) => teachers.find((t) => t.id === id), [teachers])
 
@@ -136,6 +141,37 @@ export default function ClassesTab({
     const nextLetter = secLetters[cls.sections.length] || 'A'
     const secId = `SEC-${classId}-${nextLetter}`
     addSection(classId, { id: secId, name: nextLetter, seatQuantity: 40, classTeacherId: '', subjectIds: [] })
+  }
+
+  const handleSaveClassName = (classId: string) => {
+    if (!classNameForm.name.trim()) return
+    updateClass(classId, { name: classNameForm.name.trim(), nameBn: classNameForm.nameBn.trim() || classNameForm.name.trim() })
+    setEditingClassName(null)
+  }
+
+  const handleCopySection = () => {
+    if (!copySectionModal || !copyTarget.classId || !copyTarget.sectionId) return
+    const sourceClass = classes.find((c) => c.id === copySectionModal.fromClassId)
+    const sourceSection = sourceClass?.sections.find((s) => s.id === copySectionModal.fromSectionId)
+    if (!sourceClass || !sourceSection) return
+
+    const targetClass = classes.find((c) => c.id === copyTarget.classId)
+    if (!targetClass) return
+
+    const secLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    const nextLetter = secLetters[targetClass.sections.length] || 'A'
+    const newSecId = `SEC-${copyTarget.classId}-${nextLetter}`
+
+    addSection(copyTarget.classId, {
+      id: newSecId,
+      name: nextLetter,
+      seatQuantity: sourceSection.seatQuantity,
+      classTeacherId: '',
+      subjectIds: [...(sourceSection.subjectIds || [])],
+    })
+
+    setCopySectionModal(null)
+    setCopyTarget({ classId: '', sectionId: '' })
   }
 
   const handleSaveClassTime = (classId: string) => {
@@ -464,7 +500,55 @@ export default function ClassesTab({
                 <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--brand)' }}>{cls.id.replace('CLS-', '')}</span>
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>{isBn ? cls.nameBn : cls.name}</div>
+                {editingClassName === cls.id ? (
+                  <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                    <input
+                      value={classNameForm.name}
+                      onChange={(e) => setClassNameForm((p) => ({ ...p, name: e.target.value }))}
+                      className={inputClass}
+                      style={{ fontSize: '0.8125rem', padding: '4px 8px', flex: 1 }}
+                      placeholder="Class Name"
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSaveClassName(cls.id); if (e.key === 'Escape') setEditingClassName(null) }}
+                    />
+                    <input
+                      value={classNameForm.nameBn}
+                      onChange={(e) => setClassNameForm((p) => ({ ...p, nameBn: e.target.value }))}
+                      className={inputClass}
+                      style={{ fontSize: '0.8125rem', padding: '4px 8px', flex: 1 }}
+                      placeholder="নাম (বাং)"
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSaveClassName(cls.id); if (e.key === 'Escape') setEditingClassName(null) }}
+                    />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleSaveClassName(cls.id) }}
+                      style={{ padding: '4px 8px', borderRadius: '0.375rem', background: 'var(--brand)', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '0.625rem', fontFamily: 'inherit', flexShrink: 0 }}
+                    >
+                      <Save size={11} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingClassName(null) }}
+                      style={{ padding: '4px 8px', borderRadius: '0.375rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.625rem', fontFamily: 'inherit', flexShrink: 0 }}
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    {isBn ? cls.nameBn : cls.name}
+                    {!bulkMode && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditingClassName(cls.id)
+                          setClassNameForm({ name: cls.name, nameBn: cls.nameBn })
+                        }}
+                        style={{ padding: '2px', borderRadius: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}
+                        title={isBn ? 'নাম পরিবর্তন' : 'Rename'}
+                      >
+                        <Pencil size={11} />
+                      </button>
+                    )}
+                  </div>
+                )}
                 <div
                   style={{
                     fontSize: '0.6875rem',
@@ -787,6 +871,26 @@ export default function ClassesTab({
                               </div>
                             </div>
                             <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setCopySectionModal({ fromClassId: cls.id, fromSectionId: sec.id })
+                                  setCopyTarget({ classId: '', sectionId: '' })
+                                }}
+                                style={{
+                                  padding: '0.25rem',
+                                  borderRadius: '0.3125rem',
+                                  background: 'var(--brand-light)',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  color: 'var(--brand)',
+                                }}
+                                title={isBn ? 'সেকশন কপি করুন' : 'Copy Section'}
+                              >
+                                <Copy size={11} />
+                              </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
@@ -1566,6 +1670,119 @@ export default function ClassesTab({
               >
                 {isBn ? 'সেভ করুন' : 'Save'} ({tempSelectedSubjects.length})
               </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Copy Section Modal */}
+      {copySectionModal && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 600,
+            background: 'rgba(0,0,0,0.55)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => setCopySectionModal(null)}
+        >
+          <div
+            style={{
+              background: 'var(--bg-primary)',
+              borderRadius: '0.875rem',
+              width: '100%',
+              maxWidth: '28rem',
+              maxHeight: '90dvh',
+              overflow: 'auto',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+                  {isBn ? 'সেকশন কপি করুন' : 'Copy Section'}
+                </h3>
+                <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
+                  {isBn ? 'একটি সেকশন অন্য সেকশনে কপি করুন' : 'Copy a section to another class/section'}
+                </p>
+              </div>
+              <button
+                onClick={() => setCopySectionModal(null)}
+                style={{ width: '1.75rem', height: '1.75rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <X size={15} />
+              </button>
+            </div>
+            <div style={{ padding: '16px 20px' }}>
+              {/* Source info */}
+              <div style={{ padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--brand-light)', border: '1px solid var(--brand)', marginBottom: '1rem' }}>
+                <div style={{ fontSize: '0.625rem', color: 'var(--brand)', fontWeight: 600, marginBottom: '0.25rem' }}>
+                  {isBn ? 'উৎস' : 'Source'}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                  {classes.find((c) => c.id === copySectionModal.fromClassId)?.name} → Section {classes.find((c) => c.id === copySectionModal.fromClassId)?.sections.find((s) => s.id === copySectionModal.fromSectionId)?.name}
+                </div>
+              </div>
+
+              {/* Target class */}
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.3125rem', display: 'block' }}>
+                  {isBn ? 'টার্গেট শ্রেণি' : 'Target Class'}
+                </label>
+                <select
+                  value={copyTarget.classId}
+                  onChange={(e) => setCopyTarget({ classId: e.target.value, sectionId: '' })}
+                  className={inputClass}
+                  style={{ width: '100%' }}
+                >
+                  <option value="">{isBn ? '-- শ্রেণি নির্বাচন করুন --' : '-- Select class --'}</option>
+                  {classes.filter((c) => c.id !== copySectionModal.fromClassId).map((c) => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.nameBn}) — {c.sections.length} {isBn ? 'সেকশন' : 'sections'}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Target section */}
+              {copyTarget.classId && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.3125rem', display: 'block' }}>
+                    {isBn ? 'টার্গেট সেকশন' : 'Target Section'}
+                  </label>
+                  <select
+                    value={copyTarget.sectionId}
+                    onChange={(e) => setCopyTarget((p) => ({ ...p, sectionId: e.target.value }))}
+                    className={inputClass}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="">{isBn ? '-- সেকশন নির্বাচন করুন --' : '-- Select section --'}</option>
+                    {classes.find((c) => c.id === copyTarget.classId)?.sections.map((s) => (
+                      <option key={s.id} value={s.id}>{isBn ? 'সেকশন' : 'Section'} {s.name} — {s.seatQuantity} {isBn ? 'আসন' : 'seats'}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  onClick={() => setCopySectionModal(null)}
+                  style={{ flex: 1, padding: '0.5rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  {isBn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button
+                  onClick={handleCopySection}
+                  disabled={!copyTarget.classId || !copyTarget.sectionId}
+                  style={{ flex: 1, padding: '0.5rem', borderRadius: '0.5rem', background: copyTarget.classId && copyTarget.sectionId ? 'var(--brand)' : 'var(--border)', border: 'none', color: '#fff', fontSize: '0.75rem', fontWeight: 500, cursor: copyTarget.classId && copyTarget.sectionId ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}
+                >
+                  {isBn ? 'কপি করুন' : 'Copy Section'}
+                </button>
+              </div>
             </div>
           </div>
         </div>,
