@@ -28,8 +28,6 @@ import { useScrollLock } from '@/hooks/useScrollLock'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
-import { Select } from '@/components/ui/Select'
-import { DatePicker } from '@/components/ui/DatePicker'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { StudentAdmission } from './types'
 import { generateA4HTML } from './a4Template'
@@ -371,24 +369,41 @@ interface EFieldProps {
   opts?: string[]
 }
 const EField = React.memo(function EField({ label, value, onChange, type = 'text', opts }: EFieldProps) {
+  const inputClass = 'w-full h-[2.75rem] px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-sm)] transition-all duration-200'
+
   if (opts) {
     return (
-      <Select
-        value={value}
-        onChange={onChange}
-        options={opts.map((o) => ({ value: o, label: o }))}
-        label={label}
-      />
+      <div>
+        <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
+          {label}
+        </label>
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={inputClass}
+        >
+          <option value="">-- Select --</option>
+          {opts.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
+      </div>
     )
   }
 
   if (type === 'date') {
     return (
-      <DatePicker
-        value={value}
-        onChange={onChange}
-        label={label}
-      />
+      <div>
+        <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
+          {label}
+        </label>
+        <input
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={inputClass}
+        />
+      </div>
     )
   }
 
@@ -401,7 +416,7 @@ const EField = React.memo(function EField({ label, value, onChange, type = 'text
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full h-[2.75rem] px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-sm)] transition-all duration-200"
+        className={inputClass}
       />
     </div>
   )
