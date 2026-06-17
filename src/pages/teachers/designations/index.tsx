@@ -1,14 +1,12 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, AlertTriangle, Briefcase, Edit2, Trash2 } from 'lucide-react'
+import { Plus, AlertTriangle, Briefcase, Edit2, Trash2 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import type { Designation } from '@/pages/teachers/types'
 
 export default function DesignationsPage() {
-  const navigate = useNavigate()
   const isBn = useBn()
   const { designations, teachers, addDesignation, updateDesignation, deleteDesignation } = useTeacherStore()
 
@@ -147,13 +145,6 @@ export default function DesignationsPage() {
 
       {/* Header */}
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
-        <button
-          onClick={() => navigate('/teachers')}
-          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
-        >
-          <ArrowLeft size={14} />
-          {isBn ? 'ফিরে যান' : 'Back'}
-        </button>
         <div className="flex-1">
           <h1 className="text-[1.375rem] font-semibold text-[var(--text-primary)]">{isBn ? 'পদবি ব্যবস্থাপনা' : 'Designations'}</h1>
           <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">

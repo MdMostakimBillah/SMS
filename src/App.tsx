@@ -10,6 +10,7 @@ import BulkUpdatePage from '@/pages/students/bulk-update'
 import IDCardsPage from '@/pages/students/id-cards'
 import PromotionPage from '@/pages/students/promotion'
 import TeachersPage from '@/pages/teachers'
+import TeacherLayout from '@/pages/teachers/TeacherLayout'
 import AddTeacherPage from '@/pages/teachers/add'
 import AllTeachersPage from '@/pages/teachers/all'
 import TeacherDetailPage from '@/pages/teachers/all/[id]'
@@ -48,15 +49,17 @@ export default function App() {
         <Route path="/students/bulk-update" element={<ErrorBoundary><BulkUpdatePage /></ErrorBoundary>} />
         <Route path="/students/id-cards" element={<ErrorBoundary><IDCardsPage /></ErrorBoundary>} />
         <Route path="/students/promotion" element={<ErrorBoundary><PromotionPage /></ErrorBoundary>} />
-        <Route path="/teachers" element={<ErrorBoundary><TeachersPage /></ErrorBoundary>} />
-        <Route path="/teachers/add" element={<ErrorBoundary><AddTeacherPage /></ErrorBoundary>} />
-        <Route path="/teachers/all" element={<ErrorBoundary><AllTeachersPage /></ErrorBoundary>} />
-        <Route path="/teachers/all/:id" element={<ErrorBoundary><TeacherDetailPage /></ErrorBoundary>} />
-        <Route path="/teachers/edit/:id" element={<ErrorBoundary><EditTeacherPage /></ErrorBoundary>} />
-        <Route path="/teachers/bulk-update" element={<ErrorBoundary><TeacherBulkUpdatePage /></ErrorBoundary>} />
-        <Route path="/teachers/departments" element={<ErrorBoundary><DepartmentsPage /></ErrorBoundary>} />
-        <Route path="/teachers/subjects" element={<ErrorBoundary><SubjectsPage /></ErrorBoundary>} />
-        <Route path="/teachers/designations" element={<ErrorBoundary><DesignationsPage /></ErrorBoundary>} />
+        <Route path="/teachers" element={<ErrorBoundary><TeacherLayout /></ErrorBoundary>}>
+          <Route index element={<TeachersPage />} />
+          <Route path="add" element={<AddTeacherPage />} />
+          <Route path="all" element={<AllTeachersPage />} />
+          <Route path="all/:id" element={<TeacherDetailPage />} />
+          <Route path="edit/:id" element={<EditTeacherPage />} />
+          <Route path="bulk-update" element={<TeacherBulkUpdatePage />} />
+          <Route path="departments" element={<DepartmentsPage />} />
+          <Route path="subjects" element={<SubjectsPage />} />
+          <Route path="designations" element={<DesignationsPage />} />
+        </Route>
         <Route path="/classes" element={<ErrorBoundary><ClassesPage /></ErrorBoundary>} />
         <Route path="/hr" element={<ErrorBoundary><HRPage /></ErrorBoundary>} />
         <Route path="/attendance" element={<ErrorBoundary><AttendancePage /></ErrorBoundary>} />

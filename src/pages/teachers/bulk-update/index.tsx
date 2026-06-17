@@ -1,7 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft,
   Check,
   CheckCircle,
   Clock,
@@ -77,7 +75,6 @@ async function compressImage(file: File): Promise<string> {
 }
 
 export default function TeacherBulkUpdatePage() {
-  const navigate = useNavigate()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
   const { teachers, updateTeacher, departments, designations } = useTeacherStore()
@@ -181,13 +178,6 @@ export default function TeacherBulkUpdatePage() {
   return (
     <div>
       <div className="flex items-center gap-[0.625rem] mb-[1.125rem] flex-wrap">
-        <button
-          onClick={() => navigate('/teachers')}
-          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.75rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
-        >
-          <ArrowLeft size={14} />
-          {isBn ? 'ফিরে যান' : 'Back'}
-        </button>
         <div>
           <h1 className={`${isMobile ? 'text-[1.125rem]' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)]`}>
             {isBn ? 'বাল্ক আপডেট শিক্ষক' : 'Bulk Update Teachers'}

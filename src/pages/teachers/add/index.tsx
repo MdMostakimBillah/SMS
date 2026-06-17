@@ -307,13 +307,6 @@ export default function AddTeacherPage() {
     <form onSubmit={handleSubmit} autoComplete="off">
       {/* Header */}
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
-        <button
-          type="button"
-          onClick={() => navigate('/teachers')}
-          className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)]"
-        >
-          ← {isBn ? 'ফিরে যান' : 'Back'}
-        </button>
         <div>
           <h1 className={`${isMobile ? 'text-lg' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)]`}>
             {isBn ? 'নতুন শিক্ষক যোগ' : 'Add Teacher'}
