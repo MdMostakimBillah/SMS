@@ -4,8 +4,6 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
-import { Select } from '@/components/ui/Select'
-import { DatePicker } from '@/components/ui/DatePicker'
 import type { StudentAdmission } from './types'
 import { generateA4HTML } from './a4Template'
 import QRCode from 'qrcode'
@@ -77,30 +75,45 @@ interface FieldProps {
   isBn: boolean
 }
 function FormField({ labelEn, labelBn, value, onChange, type = 'text', required = false, options, isBn }: FieldProps) {
+  const inputClass = 'w-full h-[2.75rem] px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-sm)] transition-all duration-200'
+
   if (options) {
     return (
-      <Select
-        value={value}
-        onChange={onChange}
-        options={options.map((o) => ({ value: o, label: o }))}
-        label={labelEn}
-        labelBn={labelBn}
-        required={required}
-        isBn={isBn}
-      />
+      <div className="mb-[0.625rem]">
+        <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
+          {isBn ? labelBn : labelEn}
+          {required && <span className="text-[var(--red)] ml-0.5">*</span>}
+        </label>
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          required={required}
+          className={inputClass}
+        >
+          <option value="">{isBn ? '-- নির্বাচন করুন --' : '-- Select --'}</option>
+          {options.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
+      </div>
     )
   }
 
   if (type === 'date') {
     return (
-      <DatePicker
-        value={value}
-        onChange={onChange}
-        label={labelEn}
-        labelBn={labelBn}
-        required={required}
-        isBn={isBn}
-      />
+      <div className="mb-[0.625rem]">
+        <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
+          {isBn ? labelBn : labelEn}
+          {required && <span className="text-[var(--red)] ml-0.5">*</span>}
+        </label>
+        <input
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          required={required}
+          className={inputClass}
+        />
+      </div>
     )
   }
 
@@ -115,7 +128,7 @@ function FormField({ labelEn, labelBn, value, onChange, type = 'text', required 
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
-        className="w-full h-[2.75rem] px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-sm)] transition-all duration-200"
+        className={inputClass}
       />
     </div>
   )
