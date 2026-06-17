@@ -30,6 +30,7 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
 import { Select } from '@/components/ui/Select'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { useTeacherStore } from '@/store/teacherStore'
 import type { StudentAdmission } from './types'
 import { generateA4HTML } from './a4Template'
 import { generateListPDF } from './listPdfTemplate'
@@ -419,6 +420,11 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
+  const teachers = useTeacherStore((s) => s.teachers)
+  const teacherOptions = useMemo(
+    () => teachers.filter((t) => t.status === 'active').map((t) => `${t.id} - ${t.nameEn}`),
+    [teachers]
+  )
 
   return createPortal(
     <div
@@ -530,6 +536,12 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
               opts={f.class ? sectionsMap[f.class] || [] : []}
             />
             <EField label={isBn ? 'রোল' : 'Roll'} value={f.roll} onChange={(v) => s('roll', v)} />
+            <EField
+              label={isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher'}
+              value={f.teacherId}
+              onChange={(v) => s('teacherId', v)}
+              opts={teacherOptions}
+            />
           </div>
           <div
             style={{
@@ -625,9 +637,10 @@ const ViewModal = React.memo(function ViewModal({
 }) {
   const download = useCallback(async () => {
     const qrDataUrl = await QRCode.toDataURL(student.id, { width: 120, margin: 1 })
+    const tName = student.teacherId ? useTeacherStore.getState().teachers.find((t) => t.id === student.teacherId)?.nameEn : ''
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(generateA4HTML(student, isBn, qrDataUrl))
+    win.document.write(generateA4HTML(student, isBn, qrDataUrl, tName))
     win.document.close()
     setTimeout(() => win.print(), 800)
   }, [student, isBn])
@@ -799,6 +812,7 @@ const ViewModal = React.memo(function ViewModal({
               🎓 {isBn ? 'একাডেমিক' : 'Academic'}
             </div>
             {row(isBn ? 'শিক্ষাবর্ষ' : 'Academic Year', student.academicYear)}
+            {row(isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher', student.teacherId ? useTeacherStore.getState().teachers.find((t) => t.id === student.teacherId)?.nameEn || '—' : '—')}
             {row(isBn ? 'ভর্তির তারিখ' : 'Admission Date', student.admissionDate)}
             {row(isBn ? 'আগের স্কুল' : 'Prev School', student.previousSchool)}
           </div>
@@ -877,6 +891,7 @@ export default function AdmissionManage() {
   const rejectStudent = useAdmissionStore((s) => s.rejectStudent)
   const allStudents = useAdmissionStore((s) => s.students)
   const { classes, institution } = useClassStore()
+  const teachers = useTeacherStore((s) => s.teachers)
   const currentSession = institution.currentSession
 
   const students = useMemo(
@@ -1136,6 +1151,7 @@ export default function AdmissionManage() {
           count={selected.length > 0 ? selected.length : filtered.length}
           isBn={isBn}
           students={selected.length > 0 ? filtered.filter((s) => selected.includes(s.id)) : filtered}
+          teachers={teachers}
           onClose={() => setShowPDFModal(false)}
           onDownload={handleListPDF}
         />

@@ -1,6 +1,6 @@
 import type { StudentAdmission } from './types'
 
-export function generateA4HTML(s: StudentAdmission, isBn = false, qrDataUrl?: string): string {
+export function generateA4HTML(s: StudentAdmission, isBn = false, qrDataUrl?: string, teacherName?: string): string {
   const statusColor = s.status === 'approved' ? '#10b981' : s.status === 'rejected' ? '#ef4444' : '#f59e0b'
   const statusText = s.status === 'approved' ? 'APPROVED' : s.status === 'rejected' ? 'REJECTED' : 'PENDING'
   const statusBn = s.status === 'approved' ? 'অনুমোদিত' : s.status === 'rejected' ? 'প্রত্যাখ্যাত' : 'অপেক্ষমান'
@@ -122,6 +122,7 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, qrDataUrl?: st
       <div class="field"><div class="field-label">${isBn ? 'শ্রেণি' : 'Class'}</div><div class="field-value">${s.class ? `Class ${s.class}` : '—'}</div></div>
       <div class="field"><div class="field-label">${isBn ? 'সেকশন' : 'Section'}</div><div class="field-value">${s.section || '—'}</div></div>
       <div class="field"><div class="field-label">${isBn ? 'রোল' : 'Roll'}</div><div class="field-value">${s.roll || '—'}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher'}</div><div class="field-value">${teacherName || '—'}</div></div>
       <div class="field"><div class="field-label">${isBn ? 'আগের স্কুল' : 'Previous School'}</div><div class="field-value">${s.previousSchool || '—'}</div></div>
       <div class="field"><div class="field-label">${isBn ? 'জাতীয়তা' : 'Nationality'}</div><div class="field-value">${s.nationality || '—'}</div></div>
       <div class="field"><div class="field-label">${isBn ? 'জেলা' : 'District'}</div><div class="field-value">${s.district || '—'}</div></div>

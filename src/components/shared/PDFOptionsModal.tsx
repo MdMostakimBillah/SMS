@@ -2,6 +2,7 @@ import React, { useCallback } from 'react'
 import { ALL_PDF_COLUMNS, generateListPDF } from '@/pages/students/admission/listPdfTemplate'
 import type { ListPDFOptions } from '@/pages/students/admission/listPdfTemplate'
 import type { StudentAdmission } from '@/pages/students/admission/types'
+import type { Teacher } from '@/pages/teachers/types'
 import { GenericPDFOptionsModal } from './GenericPDFOptionsModal'
 import type { GenericPDFOptionsResult } from './GenericPDFOptionsModal'
 
@@ -9,14 +10,15 @@ interface Props {
   count: number
   isBn: boolean
   students: StudentAdmission[]
+  teachers?: Teacher[]
   onClose: () => void
   onDownload: (opts: ListPDFOptions) => void
 }
 
-export const PDFOptionsModal = React.memo(function PDFOptionsModal({ count, isBn, students, onClose, onDownload }: Props) {
+export const PDFOptionsModal = React.memo(function PDFOptionsModal({ count, isBn, students, teachers, onClose, onDownload }: Props) {
   const previewRenderer = useCallback(
-    (opts: GenericPDFOptionsResult) => generateListPDF(students, opts),
-    [students]
+    (opts: GenericPDFOptionsResult) => generateListPDF(students, { ...opts, teachers }),
+    [students, teachers]
   )
 
   return (
@@ -38,6 +40,7 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({ count, isBn
           emptyColumns: opts.emptyColumns,
           orientation: opts.orientation,
           isBn: opts.isBn,
+          teachers,
         })
       }
     />

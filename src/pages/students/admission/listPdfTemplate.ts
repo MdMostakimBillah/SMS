@@ -1,4 +1,5 @@
 import type { StudentAdmission } from './types'
+import type { Teacher } from '@/pages/teachers/types'
 
 export interface PDFColumn {
   key: string
@@ -15,6 +16,7 @@ export const ALL_PDF_COLUMNS: PDFColumn[] = [
   { key: 'class', label: 'Class', labelBn: 'শ্রেণি', default: true },
   { key: 'section', label: 'Section', labelBn: 'সেকশন', default: false },
   { key: 'roll', label: 'Roll', labelBn: 'রোল', default: false },
+  { key: 'teacherId', label: 'Class Teacher', labelBn: 'শ্রেণি শিক্ষক', default: false },
   { key: 'gender', label: 'Gender', labelBn: 'লিঙ্গ', default: true },
   { key: 'dob', label: 'Date of Birth', labelBn: 'জন্ম তারিখ', default: false },
   { key: 'bloodGroup', label: 'Blood Group', labelBn: 'রক্তের গ্রুপ', default: false },
@@ -36,13 +38,19 @@ export interface ListPDFOptions {
   emptyColumns: string[]
   orientation: 'portrait' | 'landscape'
   isBn: boolean
+  teachers?: Teacher[]
 }
 
-function getCellValue(s: StudentAdmission, key: string, idx: number): string {
+function getCellValue(s: StudentAdmission, key: string, idx: number, teachers?: Teacher[]): string {
   if (key === 'serial') return String(idx + 1)
   if (key === 'class') return s.class ? `Class ${s.class}` : '—'
   if (key === 'gender') return (s.gender || '').split(' / ')[0] || '—'
   if (key === 'religion') return (s.religion || '').split(' / ')[0] || '—'
+  if (key === 'teacherId') {
+    if (!s.teacherId || !teachers) return '—'
+    const t = teachers.find((t) => t.id === s.teacherId)
+    return t?.nameEn || '—'
+  }
   if (key === 'status') {
     const m: Record<string, string> = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' }
     return m[s.status] || s.status
@@ -94,12 +102,12 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
         .map((c) => {
           if (c.key === 'status') {
             const col = statusColor(s.status)
-            const lbl = isBn ? statusBn[s.status] || s.status : getCellValue(s, c.key, i)
+            const lbl = isBn ? statusBn[s.status] || s.status : getCellValue(s, c.key, i, opts.teachers)
             return `<td><b style="color:${col}">${lbl}</b></td>`
           }
           if (c.key === 'id') return `<td><span style="font-family:monospace;font-size:8px;color:#6366f1">${s.id}</span></td>`
           if (c.key === 'nameEn' && isBn) return `<td>${s.nameBn || s.nameEn}</td>`
-          return `<td>${getCellValue(s, c.key, i)}</td>`
+          return `<td>${getCellValue(s, c.key, i, opts.teachers)}</td>`
         })
         .join('')
       const extra = emptyColumns.map(() => '<td></td>').join('')

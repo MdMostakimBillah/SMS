@@ -4,6 +4,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
+import { useTeacherStore } from '@/store/teacherStore'
 import type { StudentAdmission } from './types'
 import { generateA4HTML } from './a4Template'
 import QRCode from 'qrcode'
@@ -43,6 +44,7 @@ const initForm = (currentSession: string): FormData => ({
   guardianName: '',
   guardianRelation: '',
   guardianPhone: '',
+  teacherId: '',
 })
 
 async function compressImage(file: File): Promise<string> {
@@ -139,12 +141,17 @@ export default function GeneralAdmission() {
   const { addStudent, getNextId } = useAdmissionStore()
   const students = useAdmissionStore((s) => s.students)
   const { classes, institution } = useClassStore()
+  const { teachers } = useTeacherStore()
   const isBn = useBn()
 
   const currentSession = institution.currentSession
   const sessions = institution.sessions
 
   const classOptions = useMemo(() => classes.map((cls) => cls.name), [classes])
+  const teacherOptions = useMemo(
+    () => teachers.filter((t) => t.status === 'active').map((t) => `${t.id} - ${t.nameEn}`),
+    [teachers]
+  )
   const sectionsMap = useMemo(() => {
     const map: Record<string, string[]> = {}
     classes.forEach((cls) => {
@@ -208,9 +215,10 @@ export default function GeneralAdmission() {
     const s = useAdmissionStore.getState().students.find((x) => x.id === doneId)
     if (!s) return
     const qrDataUrl = await QRCode.toDataURL(s.id, { width: 120, margin: 1 })
+    const tName = s.teacherId ? useTeacherStore.getState().teachers.find((t) => t.id === s.teacherId)?.nameEn : ''
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(generateA4HTML(s, isBn, qrDataUrl))
+    win.document.write(generateA4HTML(s, isBn, qrDataUrl, tName))
     win.document.close()
     setTimeout(() => win.print(), 800)
   }, [doneId, isBn])
@@ -468,6 +476,14 @@ export default function GeneralAdmission() {
             options={form.class ? sectionsMap[form.class] || [] : []}
           />
           <FormField labelEn="Roll" labelBn="রোল নম্বর" value={form.roll} onChange={(v) => set('roll', v)} required isBn={isBn} />
+          <FormField
+            labelEn="Class Teacher"
+            labelBn="শ্রেণি শিক্ষক"
+            value={form.teacherId}
+            onChange={(v) => set('teacherId', v)}
+            isBn={isBn}
+            options={teacherOptions}
+          />
         </div>
         <div className={g(3)}>
           <FormField

@@ -41,4 +41,5 @@ export interface StudentAdmission {
   guardianName: string
   guardianRelation: string
   guardianPhone: string
+  teacherId: string
 }
