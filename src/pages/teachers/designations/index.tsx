@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, AlertTriangle, Briefcase, Edit2, Trash2 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
-import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import type { Designation } from '@/pages/teachers/types'
 
@@ -12,7 +11,6 @@ export default function DesignationsPage() {
   const navigate = useNavigate()
   const isBn = useBn()
   const { designations, teachers, addDesignation, updateDesignation, deleteDesignation } = useTeacherStore()
-  const { isMobile } = useWindowSize()
 
   const [showAdd, setShowAdd] = useState(false)
   const [editD, setEditD] = useState<Designation | null>(null)
@@ -177,9 +175,9 @@ export default function DesignationsPage() {
 
       {/* Table */}
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
-        <div className={`overflow-x-auto ${isMobile ? 'max-h-[60vh] overflow-y-auto' : ''}`}>
+        <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
           <table className="w-full border-collapse text-xs min-w-[31.25rem]">
-            <thead className="sticky top-0 z-10">
+            <thead className="sticky top-0 z-10" style={{ background: 'var(--bg-secondary)' }}>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 {[
                   { l: '#', w: '3.125rem', align: 'center' as const },
