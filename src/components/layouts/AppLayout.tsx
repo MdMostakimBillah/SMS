@@ -79,7 +79,7 @@ export default function AppLayout() {
               <path d="M6 12v5c3 3 9 3 12 0v-5" />
             </svg>
           </div>
-          <div className="text-sm font-semibold text-[var(--text-primary)]">{institution.name || 'EduTech'}</div>
+          <div className="text-sm font-semibold text-[var(--text-primary)]">EduTech</div>
           <div className="w-[6.25rem] h-[0.1875rem] bg-[var(--border)] rounded-[0.125rem] overflow-hidden">
             <div
               className="h-full w-2/5 bg-[var(--brand)] rounded-[0.125rem]"
