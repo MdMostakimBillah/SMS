@@ -179,6 +179,11 @@ export default function ClassesPage() {
                 </div>
                 <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{institution.name}</div>
                 <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{institution.nameBn}</div>
+                {institution.brandName && (
+                  <div style={{ fontSize: '0.625rem', color: 'var(--brand)', fontWeight: 600, marginTop: '0.25rem' }}>
+                    {isBn ? 'ব্র্যান্ড' : 'Brand'}: {institution.brandName}
+                  </div>
+                )}
                 {institution.motto && (
                   <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '0.25rem' }}>
                     "{institution.motto}"{institution.mottoBn ? ` / "${institution.mottoBn}"` : ''}
@@ -393,6 +398,15 @@ export default function ClassesPage() {
                   value={instForm.nameBn}
                   onChange={(e) => setInstForm((p) => ({ ...p, nameBn: e.target.value }))}
                   className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>{isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'}</label>
+                <input
+                  value={instForm.brandName || ''}
+                  onChange={(e) => setInstForm((p) => ({ ...p, brandName: e.target.value }))}
+                  className={inputClass}
+                  placeholder="EduTech"
                 />
               </div>
               <div>

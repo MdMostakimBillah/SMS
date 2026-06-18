@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
+import { useClassStore } from '@/store/classStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { gsap } from 'gsap'
 import Sidebar from './Sidebar'
@@ -9,6 +10,7 @@ import CommandPalette from '@/components/shared/CommandPalette'
 
 export default function AppLayout() {
   const { theme, sidebarCollapsed, sidebarOpen, toggleSidebar } = useAppStore()
+  const { institution } = useClassStore()
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
   const [isLoading, setIsLoading] = useState(true)
@@ -69,7 +71,7 @@ export default function AppLayout() {
               <path d="M6 12v5c3 3 9 3 12 0v-5" />
             </svg>
           </div>
-          <div className="text-sm font-semibold text-[var(--text-primary)]">EduTech</div>
+          <div className="text-sm font-semibold text-[var(--text-primary)]">{institution.brandName || 'EduTech'}</div>
           <div className="w-[6.25rem] h-[0.1875rem] bg-[var(--border)] rounded-[0.125rem] overflow-hidden">
             <div
               className="h-full w-2/5 bg-[var(--brand)] rounded-[0.125rem]"

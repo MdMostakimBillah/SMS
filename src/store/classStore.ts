@@ -12,6 +12,7 @@ export interface InstitutionSettings {
   name: string
   nameBn: string
   logo: string
+  brandName: string
   motto: string
   mottoBn: string
   eiin: string
@@ -113,6 +114,7 @@ const defaultInstitution: InstitutionSettings = {
   name: 'Sunrise Academy',
   nameBn: 'সানরাইজ একাডেমি',
   logo: '',
+  brandName: 'EduTech',
   motto: 'Knowledge is Power',
   mottoBn: 'জ্ঞাই হলো শক্তি',
   eiin: '',
@@ -317,7 +319,7 @@ export const useClassStore = create<ClassState>()(
     }),
     {
       name: 'edutech-classes',
-      version: 5,
+      version: 6,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           const inst = persistedState?.institution
@@ -365,6 +367,10 @@ export const useClassStore = create<ClassState>()(
             if (!inst.eiin) inst.eiin = ''
             if (!inst.subjects) inst.subjects = []
           }
+        }
+        if (version < 6) {
+          const inst = persistedState?.institution
+          if (inst && !inst.brandName) inst.brandName = 'EduTech'
         }
         return persistedState
       },
