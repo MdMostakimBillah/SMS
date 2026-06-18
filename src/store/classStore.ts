@@ -8,6 +8,96 @@ export interface BreakTime {
   end: string
 }
 
+export interface ThemeColors {
+  brand: string
+  brand2: string
+  brandLight: string
+  teal: string
+  tealLight: string
+  green: string
+  greenLight: string
+  red: string
+  redLight: string
+  amber: string
+  amberLight: string
+  purple: string
+  purpleLight: string
+  bgPrimary: string
+  bgSecondary: string
+  bgTertiary: string
+  surface: string
+  surface2: string
+  textPrimary: string
+  textSecondary: string
+  textMuted: string
+  border: string
+  border2: string
+  cardBlue: string
+  cardYellow: string
+  cardGreen: string
+  cardPurple: string
+}
+
+export const defaultThemeColors: ThemeColors = {
+  brand: '#6366f1',
+  brand2: '#818cf8',
+  brandLight: '#eef2ff',
+  teal: '#14b8a6',
+  tealLight: '#e6faf7',
+  green: '#22c55e',
+  greenLight: '#eafbf1',
+  red: '#ef4444',
+  redLight: '#fef2f2',
+  amber: '#f59e0b',
+  amberLight: '#fef9ec',
+  purple: '#a855f7',
+  purpleLight: '#f5f0ff',
+  bgPrimary: '#ffffff',
+  bgSecondary: '#f8f9fc',
+  bgTertiary: '#f0f2f8',
+  surface: '#ffffff',
+  surface2: '#f8f9fc',
+  textPrimary: '#1a1d2e',
+  textSecondary: '#6b7280',
+  textMuted: '#9ca3af',
+  border: '#e8ecf4',
+  border2: '#d5dbe8',
+  cardBlue: '#e8f4ff',
+  cardYellow: '#fef6d9',
+  cardGreen: '#e0f9e8',
+  cardPurple: '#f3e8ff',
+}
+
+export const defaultThemeColorsDark: ThemeColors = {
+  brand: '#818cf8',
+  brand2: '#a5b4fc',
+  brandLight: 'rgba(129,140,248,0.1)',
+  teal: '#2dd4bf',
+  tealLight: 'rgba(45,212,191,0.1)',
+  green: '#4ade80',
+  greenLight: 'rgba(74,222,128,0.1)',
+  red: '#f87171',
+  redLight: 'rgba(248,113,113,0.1)',
+  amber: '#fbbf24',
+  amberLight: 'rgba(251,191,36,0.1)',
+  purple: '#c084fc',
+  purpleLight: 'rgba(192,132,252,0.1)',
+  bgPrimary: '#0f0f0f',
+  bgSecondary: '#1a1a1a',
+  bgTertiary: '#0a0a0a',
+  surface: '#1a1a1a',
+  surface2: '#242424',
+  textPrimary: '#f0f0f0',
+  textSecondary: '#a0a0a0',
+  textMuted: '#606060',
+  border: '#2a2a2a',
+  border2: '#3a3a3a',
+  cardBlue: 'rgba(129,140,248,0.08)',
+  cardYellow: 'rgba(251,191,36,0.08)',
+  cardGreen: 'rgba(74,222,128,0.08)',
+  cardPurple: 'rgba(192,132,252,0.08)',
+}
+
 export interface InstitutionSettings {
   name: string
   nameBn: string
@@ -26,6 +116,8 @@ export interface InstitutionSettings {
   breaks: BreakTime[]
   currentSession: string
   sessions: string[]
+  lightColors: ThemeColors
+  darkColors: ThemeColors
 }
 
 export interface RoutineSlot {
@@ -128,6 +220,8 @@ const defaultInstitution: InstitutionSettings = {
   breaks: [{ id: 'BRK-1', label: 'Tiffin', start: '11:00', end: '11:30' }],
   currentSession: '2025-26',
   sessions: ['2024-25', '2025-26'],
+  lightColors: { ...defaultThemeColors },
+  darkColors: { ...defaultThemeColorsDark },
 }
 
 const defaultClasses: ClassInfo[] = []
@@ -319,7 +413,7 @@ export const useClassStore = create<ClassState>()(
     }),
     {
       name: 'edutech-classes',
-      version: 6,
+      version: 7,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           const inst = persistedState?.institution
@@ -371,6 +465,13 @@ export const useClassStore = create<ClassState>()(
         if (version < 6) {
           const inst = persistedState?.institution
           if (inst && !inst.brandName) inst.brandName = 'EduTech'
+        }
+        if (version < 7) {
+          const inst = persistedState?.institution
+          if (inst) {
+            if (!inst.lightColors) inst.lightColors = { ...defaultThemeColors }
+            if (!inst.darkColors) inst.darkColors = { ...defaultThemeColorsDark }
+          }
         }
         return persistedState
       },

@@ -32,6 +32,8 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import ClassesTab from './ClassesTab'
 import { RoutinePDFOptionsModal } from '@/components/shared/RoutinePDFOptionsModal'
+import ColorSettings from '@/components/shared/ColorSettings'
+import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 import { generateRoutineGridPDF } from '@/pages/classes/routinePdfTemplate'
 import type { RoutineListPDFOptions, RoutineGridData } from '@/pages/classes/routinePdfTemplate'
 import { openPrintWindow } from '@/lib/pdf'
@@ -383,6 +385,7 @@ export default function ClassesPage() {
 
           {/* Edit mode */}
           {editingInst && (
+            <>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.625rem' }}>
               <div>
                 <label className={labelClass}>{isBn ? 'প্রতিষ্ঠানের নাম (ইং)' : 'Name (EN)'}</label>
@@ -734,6 +737,43 @@ export default function ClassesPage() {
                 )}
               </div>
             </div>
+
+            {/* Color Settings */}
+            <div className="mt-4 border border-[var(--border)] rounded-lg overflow-hidden">
+              <div className="px-3 py-2 bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                <div className="text-xs font-semibold text-[var(--text-primary)]">
+                  {isBn ? 'থিম রঙ' : 'Theme Colors'}
+                </div>
+                <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
+                  {isBn ? 'লাইট ও ডার্ক মোডের জন্য আলাদাভাবে রঙ সেট করুন' : 'Set colors separately for Light and Dark mode'}
+                </div>
+              </div>
+              <div className="p-3 space-y-4">
+                <div>
+                  <div className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] mb-2 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-yellow-400 border border-yellow-500"></span>
+                    {isBn ? 'লাইট মোড' : 'Light Mode'}
+                  </div>
+                  <ColorSettings
+                    colors={instForm.lightColors || defaultThemeColors}
+                    onChange={(c) => setInstForm((p) => ({ ...p, lightColors: c }))}
+                    isBn={isBn}
+                  />
+                </div>
+                <div className="border-t border-[var(--border)] pt-4">
+                  <div className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] mb-2 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-gray-800 border border-gray-600"></span>
+                    {isBn ? 'ডার্ক মোড' : 'Dark Mode'}
+                  </div>
+                  <ColorSettings
+                    colors={instForm.darkColors || defaultThemeColorsDark}
+                    onChange={(c) => setInstForm((p) => ({ ...p, darkColors: c }))}
+                    isBn={isBn}
+                  />
+                </div>
+              </div>
+            </div>
+          </>
           )}
         </div>
       )}

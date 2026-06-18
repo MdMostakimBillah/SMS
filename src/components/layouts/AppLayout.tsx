@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
 import { useClassStore } from '@/store/classStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useThemeColors } from '@/hooks/useThemeColors'
 import { gsap } from 'gsap'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
@@ -13,6 +14,8 @@ export default function AppLayout() {
   const { institution } = useClassStore()
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
+
+  useThemeColors()
   const [isLoading, setIsLoading] = useState(true)
   const backdropRef = useRef<HTMLDivElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
