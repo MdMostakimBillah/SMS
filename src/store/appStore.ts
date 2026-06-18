@@ -72,7 +72,13 @@ export const useAppStore = create<AppState>()(
       toggleBookmark: (path) =>
         set((state) => {
           const exists = state.bookmarks.includes(path)
-          return { bookmarks: exists ? state.bookmarks.filter((p) => p !== path) : [...state.bookmarks, path] }
+          // If removing, just remove
+          if (exists) {
+            return { bookmarks: state.bookmarks.filter((p) => p !== path) }
+          }
+          // If adding, max 5 bookmarks
+          if (state.bookmarks.length >= 5) return state
+          return { bookmarks: [...state.bookmarks, path] }
         }),
 
       removeBookmark: (path) =>

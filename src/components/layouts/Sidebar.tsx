@@ -235,17 +235,16 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     }
   }, [location.pathname, navItemsMap])
 
-  // Top 5 most visited pages (excluding current page) + manually bookmarked
+  // Top 5: manually bookmarked first, then most visited
   const quickAccess = useMemo(() => {
     const currentBase = '/' + (location.pathname.split('/')[1] || '')
-    // Bookmarked pages first
     const bookmarked = pageVisits.filter((v) => bookmarks.includes(v.path) && v.path !== currentBase)
-    // Fill remaining slots with most visited (not bookmarked, not current)
+    const remaining = 5 - bookmarked.length
     const visited = pageVisits
       .filter((v) => !bookmarks.includes(v.path) && v.path !== currentBase)
       .sort((a, b) => b.count - a.count)
-    const combined = [...bookmarked, ...visited]
-    return combined.slice(0, 5)
+      .slice(0, remaining)
+    return [...bookmarked, ...visited]
   }, [pageVisits, bookmarks, location.pathname])
 
   useEffect(() => {
@@ -390,6 +389,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                 const isActive = location.pathname === item.page || location.pathname.startsWith(item.page + '/')
                 const IconComp = iconMap[item.icon] || LayoutDashboard
                 const isBookmarked = bookmarks.includes(item.page)
+                const atMaxBookmarks = bookmarks.length >= 5 && !isBookmarked
                 return (
                   <NavLink
                     key={item.page}
@@ -435,12 +435,12 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                           }}
                           className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-[var(--bg-primary)] shrink-0 ${
                             isBookmarked ? '!opacity-100' : ''
-                          }`}
-                          title={isBn ? 'বুকমার্ক সরান' : 'Toggle bookmark'}
+                          } ${atMaxBookmarks ? 'cursor-not-allowed' : ''}`}
+                          title={isBookmarked ? (isBn ? 'বুকমার্ক সরান' : 'Remove bookmark') : atMaxBookmarks ? (isBn ? 'সর্বোচ্চ ৫টি বুকমার্ক যোগ করা যাবে' : 'Max 5 bookmarks allowed') : (isBn ? 'বুকমার্ক যোগ করুন' : 'Add bookmark')}
                         >
                           <Star
                             size={12}
-                            className={isBookmarked ? 'text-[var(--amber)] fill-[var(--amber)]' : 'text-[var(--text-muted)]'}
+                            className={isBookmarked ? 'text-[var(--amber)] fill-[var(--amber)]' : atMaxBookmarks ? 'text-[var(--text-muted)] opacity-40' : 'text-[var(--text-muted)]'}
                           />
                         </button>
                       </>
