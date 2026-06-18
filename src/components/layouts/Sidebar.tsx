@@ -235,17 +235,10 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     }
   }, [location.pathname, navItemsMap])
 
-  // Top 5: manually bookmarked first, then most visited
+  // Only manually bookmarked pages (max 5)
   const quickAccess = useMemo(() => {
-    const currentBase = '/' + (location.pathname.split('/')[1] || '')
-    const bookmarked = pageVisits.filter((v) => bookmarks.includes(v.path) && v.path !== currentBase)
-    const remaining = 5 - bookmarked.length
-    const visited = pageVisits
-      .filter((v) => !bookmarks.includes(v.path) && v.path !== currentBase)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, remaining)
-    return [...bookmarked, ...visited]
-  }, [pageVisits, bookmarks, location.pathname])
+    return pageVisits.filter((v) => bookmarks.includes(v.path)).slice(0, 5)
+  }, [pageVisits, bookmarks])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
