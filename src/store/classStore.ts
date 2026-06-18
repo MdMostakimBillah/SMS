@@ -11,10 +11,15 @@ export interface BreakTime {
 export interface InstitutionSettings {
   name: string
   nameBn: string
+  logo: string
+  motto: string
+  mottoBn: string
+  eiin: string
   phone: string
   email: string
   address: string
   website: string
+  subjects: string[]
   startTime: string
   endTime: string
   breaks: BreakTime[]
@@ -105,12 +110,17 @@ interface ClassState {
 }
 
 const defaultInstitution: InstitutionSettings = {
-  name: 'EduTech School Management',
-  nameBn: 'এডুটেক স্কুল ম্যানেজমেন্ট',
+  name: 'Sunrise Academy',
+  nameBn: 'সানরাইজ একাডেমি',
+  logo: '',
+  motto: 'Knowledge is Power',
+  mottoBn: 'জ্ঞাই হলো শক্তি',
+  eiin: '',
   phone: '+880-2-1234567',
-  email: 'info@edutech.edu.bd',
+  email: 'info@sunrise.edu.bd',
   address: 'Sunrise Academy, Dhaka, Bangladesh',
-  website: 'www.edutech.edu.bd',
+  website: 'www.sunrise.edu.bd',
+  subjects: ['Bangla', 'English', 'Mathematics'],
   startTime: '07:30',
   endTime: '14:30',
   breaks: [{ id: 'BRK-1', label: 'Tiffin', start: '11:00', end: '11:30' }],
@@ -307,7 +317,7 @@ export const useClassStore = create<ClassState>()(
     }),
     {
       name: 'edutech-classes',
-      version: 4,
+      version: 5,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           const inst = persistedState?.institution
@@ -344,6 +354,16 @@ export const useClassStore = create<ClassState>()(
             const classIds = new Set(sourceClasses.map((c: any) => c.id))
             const filteredRoutines = sourceRoutines.filter((r: any) => classIds.has(r.classId))
             persistedState.sessionRoutines[currentSession] = filteredRoutines
+          }
+        }
+        if (version < 5) {
+          const inst = persistedState?.institution
+          if (inst) {
+            if (!inst.logo) inst.logo = ''
+            if (!inst.motto) inst.motto = ''
+            if (!inst.mottoBn) inst.mottoBn = ''
+            if (!inst.eiin) inst.eiin = ''
+            if (!inst.subjects) inst.subjects = []
           }
         }
         return persistedState

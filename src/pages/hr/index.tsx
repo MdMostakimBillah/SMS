@@ -19,6 +19,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useClassStore } from '@/store/classStore'
 import { useHRStore } from '@/store/hrStore'
 import type { Tab, ModalType, FacModalType, PDFModalType, IncForm, BonForm, ProForm, FundForm, FacForm, AssignForm } from './types'
 import { getAvatarGradient, getInitials } from './utils'
@@ -52,6 +53,7 @@ export default function HRPage() {
   const isBn = useBn()
   const { isMobile, isTablet } = useWindowSize()
   const { teachers, departments, attendance } = useTeacherStore()
+  const { institution } = useClassStore()
   const {
     increments,
     bonuses,
@@ -736,19 +738,19 @@ export default function HRPage() {
       let html = ''
       if (type === 'increment') {
         const list = selectedInc.length > 0 ? increments.filter((i) => selectedInc.includes(i.id)) : increments
-        html = generateIncrementPDF(list, opts, getTeacherName)
+        html = generateIncrementPDF(list, { ...opts, institutionName: institution.name }, getTeacherName)
       } else if (type === 'bonus') {
         const list = selectedBon.length > 0 ? bonuses.filter((b) => selectedBon.includes(b.id)) : bonuses
-        html = generateBonusPDF(list, opts, getTeacherName)
+        html = generateBonusPDF(list, { ...opts, institutionName: institution.name }, getTeacherName)
       } else if (type === 'promotion') {
         const list = selectedPro.length > 0 ? filteredPromotions.filter((p) => selectedPro.includes(p.id)) : filteredPromotions
-        html = generatePromotionPDF(list, opts, getTeacherName)
+        html = generatePromotionPDF(list, { ...opts, institutionName: institution.name }, getTeacherName)
       } else if (type === 'fund') {
         const list = selectedFund.length > 0 ? funds.filter((f) => selectedFund.includes(f.id)) : funds
-        html = generateFundPDF(list, opts)
+        html = generateFundPDF(list, { ...opts, institutionName: institution.name })
       } else if (type === 'assignment') {
         const list = selectedAssign.length > 0 ? teacherFacilities.filter((tf) => selectedAssign.includes(tf.id)) : filteredAssignments
-        html = generateAssignmentPDF(list, opts, getTeacherName, (id) => facilities.find((f) => f.id === id)?.name || id)
+        html = generateAssignmentPDF(list, { ...opts, institutionName: institution.name }, getTeacherName, (id) => facilities.find((f) => f.id === id)?.name || id)
       } else if (type === 'salary') {
         const teachersToShow = selectedSalary.length > 0 ? salaryActiveTeachers.filter((t) => selectedSalary.includes(t.id)) : salaryActiveTeachers
         const salaryData = teachersToShow.map((t) => {
@@ -767,7 +769,7 @@ export default function HRPage() {
           const net = t.salary + totalBonus - deduction - fund
           return { ...t, basic: t.salary, perf, atten, special, festival, totalBonus, deduction, fundPercent, net }
         })
-        html = generateSalaryPDF(salaryData, opts)
+        html = generateSalaryPDF(salaryData, { ...opts, institutionName: institution.name })
       }
       win.document.write(html)
       win.document.close()

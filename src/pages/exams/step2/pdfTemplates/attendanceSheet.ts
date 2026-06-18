@@ -12,11 +12,13 @@ interface AttendanceParams {
   present: Student[]
   absent: Student[]
   totalStudents: number
+  institutionName?: string
 }
 
 export function generateAttendanceSheetHTML(params: AttendanceParams): string {
   const { classId, sectionId, date, shift, present, absent, totalStudents } = params
   const attendanceRate = totalStudents > 0 ? Math.round((present.length / totalStudents) * 100) : 0
+  const schoolName = params.institutionName || 'EduTech'
 
   return `<!DOCTYPE html><html><head><title>Attendance - ${classId} ${sectionId} ${date}</title>
 <style>
@@ -40,7 +42,7 @@ export function generateAttendanceSheetHTML(params: AttendanceParams): string {
   @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 </style></head><body>
 <div class="header">
-  <div class="school">EduTech School Management</div>
+  <div class="school">${schoolName}</div>
   <div class="sub">Sunrise Academy, Dhaka, Bangladesh</div>
 </div>
 <div class="title">Exam Attendance Report / পরীক্ষার উপস্থিতি রিপোর্ট</div>

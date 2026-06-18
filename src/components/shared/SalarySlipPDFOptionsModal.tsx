@@ -9,6 +9,7 @@ interface SingleSlipProps {
   employee: SalarySlipEmployee
   month: string
   isBn: boolean
+  institutionName?: string
   onClose: () => void
   onDownload: (html: string) => void
 }
@@ -18,6 +19,7 @@ interface BatchProps {
   employees: SalarySlipEmployee[]
   month: string
   isBn: boolean
+  institutionName?: string
   onClose: () => void
   onDownload: (html: string) => void
 }
@@ -25,29 +27,29 @@ interface BatchProps {
 type Props = SingleSlipProps | BatchProps
 
 export const SalarySlipPDFOptionsModal = React.memo(function SalarySlipPDFOptionsModal(props: Props) {
-  const { mode, month, isBn, onClose, onDownload } = props
+  const { mode, month, isBn, institutionName, onClose, onDownload } = props
 
   const previewRenderer = useCallback(
     (opts: GenericPDFOptionsResult) => {
-      const pdfOpts: SalarySlipPdfOptions = { orientation: opts.orientation, isBn: opts.isBn }
+      const pdfOpts: SalarySlipPdfOptions = { orientation: opts.orientation, isBn: opts.isBn, institutionName }
       if (mode === 'single') {
         return generateSingleSalarySlipPDF(props.employee, month, pdfOpts)
       }
       return generateAllSalarySlipsPDF(props.employees, month, pdfOpts)
     },
-    [mode, month, props]
+    [mode, month, props, institutionName]
   )
 
   const handleDownload = useCallback(
     (opts: GenericPDFOptionsResult) => {
-      const pdfOpts: SalarySlipPdfOptions = { orientation: opts.orientation, isBn: opts.isBn }
+      const pdfOpts: SalarySlipPdfOptions = { orientation: opts.orientation, isBn: opts.isBn, institutionName }
       if (mode === 'single') {
         onDownload(generateSingleSalarySlipPDF(props.employee, month, pdfOpts))
       } else {
         onDownload(generateAllSalarySlipsPDF(props.employees, month, pdfOpts))
       }
     },
-    [mode, month, props, onDownload]
+    [mode, month, props, onDownload, institutionName]
   )
 
   const count = mode === 'single' ? 1 : props.employees.length

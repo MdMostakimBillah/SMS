@@ -19,10 +19,12 @@ interface GenSinglePDFParams {
   outTime: string
   rows: AttendanceRow[]
   isBn: boolean
+  institutionName?: string
 }
 
 export function genSinglePDF(params: GenSinglePDFParams): string {
   const { name, id, photo, designation, deptName, inTime, outTime, rows, isBn } = params
+  const schoolName = params.institutionName || 'EduTech'
   const present = rows.filter((r) => r.status === 'present').length
   const absent = rows.filter((r) => r.status === 'absent').length
   const leave = rows.filter((r) => r.status === 'on-leave').length
@@ -138,7 +140,7 @@ tr.alt td{background:#f8fafc}
 </table>
 
 <div class="ftr">
-  <span>EduTech — Sunrise Academy · ${isBn ? 'শিক্ষক উপস্থিতি রিপোর্ট' : 'Staff Attendance Report'}</span>
+  <span style="font-size:7px;color:#999">${schoolName} · ${isBn ? 'শিক্ষক উপস্থিতি রিপোর্ট' : 'Staff Attendance Report'}</span>
   <span>${isBn ? 'মুদ্রণ' : 'Printed'}: ${new Date().toLocaleDateString()} · ${rows.length} ${isBn ? 'দিন' : 'days'} · ${isBn ? 'ইন সময়' : 'In Time'}: ${inTime} · ${isBn ? 'আউট সময়' : 'Out Time'}: ${outTime}</span>
 </div>
 </div></body></html>`

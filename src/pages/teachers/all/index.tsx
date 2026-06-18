@@ -23,6 +23,7 @@ import {
 import * as XLSX from 'xlsx'
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useClassStore } from '@/store/classStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { openPrintWindow } from '@/lib/pdf'
@@ -38,6 +39,7 @@ export default function AllTeachersPage() {
   const navigate = useNavigate()
   const isBn = useBn()
   const { teachers, departments, subjects, deleteTeacher } = useTeacherStore()
+  const { institution } = useClassStore()
 
   const [search, setSearch] = useState('')
   const [fDept, setFDept] = useState('')
@@ -216,7 +218,7 @@ export default function AllTeachersPage() {
   const handlePDF = useCallback(
     (opts: TeacherListPDFOptions) => {
       const list = selected.length > 0 ? filtered.filter((t) => selected.includes(t.id)) : filtered
-      const html = generateTeacherListPDF(list, opts, departments)
+      const html = generateTeacherListPDF(list, { ...opts, institutionName: institution.name }, departments)
       openPrintWindow(opts.title || 'Teacher List', html, {
         css: `@page{size:A4 ${opts.orientation || 'landscape'};margin:8mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10px;color:#1a1a1a;background:#fff;padding:0}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:5px;text-align:left;font-size:8px;font-weight:700;border:0.5px solid #5356d4}td{padding:4px 5px;border:0.5px solid #e5e7eb;vertical-align:middle}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`,
       })

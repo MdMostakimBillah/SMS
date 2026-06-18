@@ -23,6 +23,7 @@ import {
   MoreVertical,
   FileSpreadsheet,
   FileText,
+  Camera,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -178,7 +179,17 @@ export default function ClassesPage() {
                 </div>
                 <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{institution.name}</div>
                 <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{institution.nameBn}</div>
+                {institution.motto && (
+                  <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '0.25rem' }}>
+                    "{institution.motto}"{institution.mottoBn ? ` / "${institution.mottoBn}"` : ''}
+                  </div>
+                )}
               </div>
+              {institution.logo && (
+                <div style={{ padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img src={institution.logo} alt="Logo" className="w-20 h-20 rounded-lg object-cover" />
+                </div>
+              )}
               <div style={{ padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)' }}>
                 <div
                   style={{
@@ -194,6 +205,9 @@ export default function ClassesPage() {
                   {isBn ? 'ফোন' : 'Phone'}
                 </div>
                 <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{institution.phone}</div>
+                {institution.eiin && (
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>EIIN: {institution.eiin}</div>
+                )}
               </div>
               <div style={{ padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)' }}>
                 <div
@@ -228,6 +242,19 @@ export default function ClassesPage() {
                 </div>
                 <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>{institution.address}</div>
               </div>
+              {(institution.subjects || []).length > 0 && (
+                <div style={{ padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)' }}>
+                  <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <BookOpen size={11} />
+                    {isBn ? 'প্রধান বিষয়' : 'Main Subjects'}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {institution.subjects.map((s, i) => (
+                      <span key={i} className="text-[0.625rem] px-2 py-0.5 rounded-full bg-[var(--brand-light)] text-[var(--brand)] font-medium">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div
                 style={{
                   padding: '0.625rem',
@@ -391,6 +418,78 @@ export default function ClassesPage() {
                   onChange={(e) => setInstForm((p) => ({ ...p, website: e.target.value }))}
                   className={inputClass}
                 />
+              </div>
+              <div>
+                <label className={labelClass}>{isBn ? 'মোটো' : 'Motto'}</label>
+                <input
+                  value={instForm.motto}
+                  onChange={(e) => setInstForm((p) => ({ ...p, motto: e.target.value }))}
+                  className={inputClass}
+                  placeholder={isBn ? 'শিক্ষার আলো ছড়িয়ে দিন' : 'Light of Knowledge'}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>{isBn ? 'মোটো (বাং)' : 'Motto (BN)'}</label>
+                <input
+                  value={instForm.mottoBn}
+                  onChange={(e) => setInstForm((p) => ({ ...p, mottoBn: e.target.value }))}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>EIIN</label>
+                <input
+                  value={instForm.eiin}
+                  onChange={(e) => setInstForm((p) => ({ ...p, eiin: e.target.value }))}
+                  className={inputClass}
+                  placeholder="123456"
+                />
+              </div>
+              <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
+                <label className={labelClass}>{isBn ? 'প্রধান বিষয়সমূহ (কমা দিয়ে আলাদা করুন)' : 'Main Subjects (comma separated)'}</label>
+                <input
+                  value={(instForm.subjects || []).join(', ')}
+                  onChange={(e) => setInstForm((p) => ({ ...p, subjects: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) }))}
+                  className={inputClass}
+                  placeholder={isBn ? 'বাংলা, ইংরেজি, গণিত' : 'Bangla, English, Mathematics'}
+                />
+              </div>
+              <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
+                <label className={labelClass}>{isBn ? 'লোগো' : 'Logo'}</label>
+                <div className="flex items-center gap-3">
+                  {instForm.logo && (
+                    <img src={instForm.logo} alt="Logo" className="w-16 h-16 rounded-lg object-cover border border-[var(--border)]" />
+                  )}
+                  <label className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 border-dashed border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer hover:border-[var(--brand)] transition-colors">
+                    <Camera size={16} className="text-[var(--text-muted)]" />
+                    <span className="text-[0.75rem] text-[var(--text-muted)]">{instForm.logo ? (isBn ? 'লোগো পরিবর্তন করুন' : 'Change Logo') : (isBn ? 'লোগো আপলোড করুন' : 'Upload Logo')}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        if (file.size > 2 * 1024 * 1024) {
+                          alert(isBn ? 'লোগোর সাইজ সর্বোচ্চ ২ MB' : 'Logo must be under 2MB')
+                          return
+                        }
+                        const reader = new FileReader()
+                        reader.onload = (ev) => setInstForm((p) => ({ ...p, logo: ev.target?.result as string }))
+                        reader.readAsDataURL(file)
+                      }}
+                    />
+                  </label>
+                  {instForm.logo && (
+                    <button
+                      type="button"
+                      onClick={() => setInstForm((p) => ({ ...p, logo: '' }))}
+                      className="py-2 px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.75rem] font-medium cursor-pointer font-[inherit]"
+                    >
+                      {isBn ? 'মুছুন' : 'Remove'}
+                    </button>
+                  )}
+                </div>
               </div>
               <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
                 <label className={labelClass}>{isBn ? 'ঠিকানা' : 'Address'}</label>
@@ -944,7 +1043,7 @@ function RoutineTab({
 
   const handlePDF = useCallback(
     (opts: RoutineListPDFOptions) => {
-      const html = generateRoutineGridPDF(routineGridData, opts)
+      const html = generateRoutineGridPDF(routineGridData, { ...opts, institutionName: institution.name })
       openPrintWindow(opts.title || 'Routine', html)
       setShowPDF(false)
     },

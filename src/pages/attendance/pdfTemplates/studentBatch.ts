@@ -19,10 +19,12 @@ interface GenStudentBatchPDFParams {
   dateFrom: string
   dateTo: string
   isBn: boolean
+  institutionName?: string
 }
 
 export function genStudentBatchPDF(params: GenStudentBatchPDFParams): string {
   const { title, students, rangeDays, dateFrom, dateTo, isBn } = params
+  const schoolName = params.institutionName || 'EduTech'
 
   const generateRow = (s: StudentRow, idx: number, dayStatuses: string[]) => {
     const dayGrid = dayStatuses
@@ -69,7 +71,7 @@ export function genStudentBatchPDF(params: GenStudentBatchPDFParams): string {
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
 <style>@page{size:A4 landscape;margin:6mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:10px;padding-bottom:5px;border-bottom:2px solid #6366f1;margin-bottom:8px}.logo{width:28px;height:28px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}.ttl{text-align:center;font-size:11px;font-weight:700;margin-bottom:3px}.sub{text-align:center;font-size:8px;color:#666;margin-bottom:8px}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:3px;text-align:left;font-size:7px;font-weight:700;text-transform:uppercase;border:0.5px solid #5356d4}td{padding:3px;border:0.5px solid #e5e7eb}tr.alt td{background:#f9fafb}.ftr{margin-top:8px;padding-top:5px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:7px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
-<div class="hdr"><div class="logo">ET</div><div><div style="font-size:11px;font-weight:700;color:#6366f1">EduTech — Sunrise Academy</div><div style="font-size:7px;color:#888">Student Monthly Attendance</div></div></div>
+<div class="hdr"><div class="logo">ET</div><div><div style="font-size:11px;font-weight:700;color:#6366f1">${schoolName}</div><div style="font-size:7px;color:#888">Student Monthly Attendance</div></div></div>
 <div class="ttl">${title}</div>
 <div class="sub">${isBn ? 'মোট' : 'Total'}: ${students.length} ${isBn ? 'জন' : 'students'} · ${dateFrom} → ${dateTo} · ${rangeDays.length} ${isBn ? 'দিন' : 'days'}</div>
 <table><thead><tr>
@@ -84,6 +86,6 @@ export function genStudentBatchPDF(params: GenStudentBatchPDFParams): string {
   <th style="width:20px">W</th>
   ${dayHeaders}
 </tr></thead><tbody>${rowsHtml}</tbody></table>
-<div class="ftr"><span>EduTech School Management System</span><div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div></body></html>`
+<div class="ftr"><span style="font-size:7px;color:#999">Powered by EduTech</span><div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div></body></html>`
   return html
 }

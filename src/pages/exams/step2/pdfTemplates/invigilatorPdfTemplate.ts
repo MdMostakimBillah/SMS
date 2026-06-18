@@ -51,6 +51,7 @@ export interface InvigilatorPDFOptions {
   emptyColumns: string[]
   orientation: 'portrait' | 'landscape'
   isBn: boolean
+  institutionName?: string
 }
 
 export function generateInvigilatorGuardListPDF(
@@ -64,6 +65,7 @@ export function generateInvigilatorGuardListPDF(
   const orientation = opts.orientation || 'portrait'
   const isBn = opts.isBn ?? false
   const isClass = gridData.type === 'class'
+  const schoolName = opts.institutionName || 'EduTech'
 
   const columns = isClass ? INVIGILATOR_CLASS_COLUMNS : INVIGILATOR_ROOM_COLUMNS
   const visibleCols = columns.filter((c) => selectedCols.includes(c.key))
@@ -125,7 +127,7 @@ export function generateInvigilatorGuardListPDF(
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>${title} — EduTech</title>
+<title>${title} — ${schoolName}</title>
 <style>
   @page { size: A4 ${orientation}; margin: 8mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -153,7 +155,7 @@ export function generateInvigilatorGuardListPDF(
   <div style="display:flex;align-items:center;gap:10px">
     <div class="logo">ET</div>
     <div>
-      <div style="font-size:13px;font-weight:700;color:#6366f1">EduTech School Management</div>
+      <div style="font-size:13px;font-weight:700;color:#6366f1">${schoolName}</div>
       <div style="font-size:8px;color:#888">Dhaka, Bangladesh</div>
     </div>
   </div>
@@ -168,7 +170,7 @@ export function generateInvigilatorGuardListPDF(
 <div class="subttl">${headerLabel}</div>
 ${pagesHTML}
 <div class="ftr">
-  <span>EduTech School Management System</span>
+  <span style="font-size:7px;color:#999">Powered by EduTech</span>
   <div style="display:flex;gap:50px">
     <div style="text-align:center"><div style="width:110px;height:1px;background:#333;margin-bottom:3px"></div>${isBn ? 'প্রধান শিক্ষক' : 'Principal'}</div>
     <div style="text-align:center"><div style="width:110px;height:1px;background:#333;margin-bottom:3px"></div>${isBn ? 'অফিস সিল' : 'Office Seal'}</div>

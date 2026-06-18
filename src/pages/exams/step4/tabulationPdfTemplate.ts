@@ -23,6 +23,7 @@ export interface TabulationPdfOptions {
   orientation: 'portrait' | 'landscape'
   isBn: boolean
   rotateHeaders?: boolean
+  institutionName?: string
 }
 
 export const ALL_TABULATION_PDF_COLUMNS = [
@@ -186,6 +187,6 @@ export function generateTabulationPDF(
       </div>
     </div>
     <table><colgroup>${colGroup}</colgroup><thead><tr>${headerRow}</tr></thead><tbody>${tableRows}</tbody></table>
-    <div class="footer"><span class="brand">SMS EduTech</span><span>${isBn ? 'তৈরি করা হয়েছে' : 'Generated'}: ${new Date().toLocaleString()}</span></div>
+    <div class="footer"><span class="brand" style="font-size:7px;color:#999">Powered by EduTech</span><span>${isBn ? 'তৈরি করা হয়েছে' : 'Generated'}: ${new Date().toLocaleString()}</span></div>
   </body></html>`
 }

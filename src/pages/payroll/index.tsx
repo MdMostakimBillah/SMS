@@ -17,6 +17,7 @@ import {
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useClassStore } from '@/store/classStore'
 import { useHRStore } from '@/store/hrStore'
 import { SalarySlipPDFOptionsModal } from '@/components/shared/SalarySlipPDFOptionsModal'
 import type { SalarySlipEmployee } from '@/pages/payroll/pdfTemplates/salarySlipPdfTemplate'
@@ -29,6 +30,7 @@ export default function PayrollPage() {
   const isBn = useBn()
   const { isMobile } = useWindowSize()
   const { teachers, departments } = useTeacherStore()
+  const { institution } = useClassStore()
   const { monthlySalaryConfigs, facilities, teacherFacilities } = useHRStore()
 
   const [search, setSearch] = useState('')
@@ -682,6 +684,7 @@ export default function PayrollPage() {
           employee={pdfEmployee}
           month={month}
           isBn={isBn}
+          institutionName={institution.name}
           onClose={() => setShowPdfModal(false)}
           onDownload={(html) => {
             downloadHTML(`payroll_${month}.html`, html)
@@ -695,6 +698,7 @@ export default function PayrollPage() {
           employees={filtered.filter((t) => (selected.length > 0 ? selected.includes(t.id) : true)).map(buildSalarySlipEmployee)}
           month={month}
           isBn={isBn}
+          institutionName={institution.name}
           onClose={() => setShowPdfModal(false)}
           onDownload={(html) => {
             downloadHTML(`payroll_${month}.html`, html)

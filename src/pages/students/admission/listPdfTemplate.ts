@@ -39,6 +39,7 @@ export interface ListPDFOptions {
   orientation: 'portrait' | 'landscape'
   isBn: boolean
   teachers?: Teacher[]
+  institutionName?: string
 }
 
 function getCellValue(s: StudentAdmission, key: string, idx: number, teachers?: Teacher[]): string {
@@ -68,6 +69,7 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
   const emptyRows = opts.emptyRows || 0
   const emptyColumns = opts.emptyColumns || []
   const orientation = opts.orientation || 'landscape'
+  const schoolName = opts.institutionName || 'EduTech'
 
   const statusBn: Record<string, string> = {
     pending: 'অপেক্ষমান',
@@ -128,7 +130,7 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Student List — EduTech</title>
+<title>Student List — ${schoolName}</title>
 <style>
   @page { size: A4 ${orientation}; margin: 8mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -151,7 +153,7 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
   <div style="display:flex;align-items:center;gap:10px">
     <div class="logo">ET</div>
     <div>
-      <div style="font-size:13px;font-weight:700;color:#6366f1">EduTech — Sunrise Academy</div>
+      <div style="font-size:13px;font-weight:700;color:#6366f1">${schoolName}</div>
       <div style="font-size:8px;color:#888">Dhaka, Bangladesh</div>
     </div>
   </div>
@@ -169,7 +171,7 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
   <tbody>${dataRows}${blankRows}</tbody>
 </table>
 <div class="ftr">
-  <span>EduTech School Management System</span>
+  <span style="font-size:7px;color:#999">Powered by EduTech</span>
   <div style="display:flex;gap:50px">
     <div style="text-align:center"><div style="width:110px;height:1px;background:#333;margin-bottom:3px"></div>${isBn ? 'প্রধান শিক্ষক' : 'Principal'}</div>
     <div style="text-align:center"><div style="width:110px;height:1px;background:#333;margin-bottom:3px"></div>${isBn ? 'অফিস সিল' : 'Office Seal'}</div>

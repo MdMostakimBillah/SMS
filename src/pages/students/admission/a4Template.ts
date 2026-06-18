@@ -1,9 +1,10 @@
 import type { StudentAdmission } from './types'
 
-export function generateA4HTML(s: StudentAdmission, isBn = false, qrDataUrl?: string, teacherName?: string): string {
+export function generateA4HTML(s: StudentAdmission, isBn = false, qrDataUrl?: string, teacherName?: string, institutionName?: string): string {
   const statusColor = s.status === 'approved' ? '#10b981' : s.status === 'rejected' ? '#ef4444' : '#f59e0b'
   const statusText = s.status === 'approved' ? 'APPROVED' : s.status === 'rejected' ? 'REJECTED' : 'PENDING'
   const statusBn = s.status === 'approved' ? 'অনুমোদিত' : s.status === 'rejected' ? 'প্রত্যাখ্যাত' : 'অপেক্ষমান'
+  const schoolName = institutionName || 'EduTech'
 
   const qrSection = qrDataUrl ? `
   <!-- QR Code -->
@@ -65,7 +66,7 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, qrDataUrl?: st
     <div class="logo-area">
       <div class="logo-box">ET</div>
       <div class="school-info">
-        <h1>EduTech School Management</h1>
+        <h1>${schoolName}</h1>
         <p>Sunrise Academy, Dhaka, Bangladesh</p>
         <p>Phone: +880-2-1234567 | Email: info@sunrise.edu.bd</p>
       </div>
@@ -161,7 +162,7 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, qrDataUrl?: st
     </div>
     <div style="text-align:center;font-size:10px;color:#888">
       <div>${isBn ? 'মুদ্রণের তারিখ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div>
-      <div style="font-size:9px;margin-top:2px">EduTech School Management System</div>
+      <div style="font-size:7px;margin-top:2px;color:#999">Powered by EduTech</div>
     </div>
     <div class="sign-line">
       <div class="line"></div>

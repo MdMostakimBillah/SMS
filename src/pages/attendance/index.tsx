@@ -51,7 +51,7 @@ export default function AttendancePage() {
   const { isMobile } = useWindowSize()
   const { teachers, departments, attendance, markAllPresent } = useTeacherStore()
   const students = useSessionStudents()
-  const { classes } = useClassStore()
+  const { classes, institution } = useClassStore()
   setGlobalBn(isBn)
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
@@ -279,6 +279,7 @@ export default function AttendancePage() {
           outTime: teacher?.outTime || '16:00',
           rows: data,
           isBn,
+          institutionName: institution.name,
         })
       )
       win.document.close()
@@ -311,7 +312,7 @@ export default function AttendancePage() {
       const data = getStudentMonthData(studentId)
       const win = window.open('', '_blank')
       if (!win) return
-      win.document.write(genStudentSinglePDF({ name: studentName, id: studentId, className, section, rows: data, isBn }))
+      win.document.write(genStudentSinglePDF({ name: studentName, id: studentId, className, section, rows: data, isBn, institutionName: institution.name }))
       win.document.close()
       setTimeout(() => win.print(), 800)
     },

@@ -655,7 +655,7 @@ const ViewModal = React.memo(function ViewModal({
     const tName = student.teacherId ? useTeacherStore.getState().teachers.find((t) => t.id === student.teacherId)?.nameEn : ''
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(generateA4HTML(student, isBn, qrDataUrl, tName))
+    win.document.write(generateA4HTML(student, isBn, qrDataUrl, tName, useClassStore.getState().institution.name))
     win.document.close()
     setTimeout(() => win.print(), 800)
   }, [student, isBn])
@@ -1072,7 +1072,7 @@ export default function AdmissionManage() {
   const handleListPDF = useCallback(
     (opts: ListPDFOptions) => {
       const list = selected.length > 0 ? filtered.filter((s) => selected.includes(s.id)) : filtered
-      const html = generateListPDF(list, opts)
+      const html = generateListPDF(list, { ...opts, institutionName: institution.name })
       const win = window.open('', '_blank')
       if (!win) return
       win.document.write(html)

@@ -680,7 +680,7 @@ export default function Step2Schedule() {
 
   const handleExamRoutinePDF = useCallback(
     (opts: ExamRoutinePDFOptions) => {
-      const html = generateExamRoutineGridPDF(examRoutineGridData, opts)
+      const html = generateExamRoutineGridPDF(examRoutineGridData, { ...opts, institutionName: useClassStore.getState().institution.name })
       openPrintWindow(opts.title || examRoutineGridData.examName || 'Exam Routine', html)
       setShowExamRoutinePDF(false)
     },
@@ -796,7 +796,7 @@ export default function Step2Schedule() {
 
   const handleInvigPDF = useCallback(
     (opts: InvigilatorPDFOptions) => {
-      const html = generateInvigilatorGuardListPDF(invigilatorGridData, opts)
+      const html = generateInvigilatorGuardListPDF(invigilatorGridData, { ...opts, institutionName: useClassStore.getState().institution.name })
       openPrintWindow(opts.title || invigilatorGridData.examName || 'Guard List', html)
       setShowInvigPDF(false)
     },

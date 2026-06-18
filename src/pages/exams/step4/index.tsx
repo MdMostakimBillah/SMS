@@ -51,8 +51,8 @@ type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position' | 'mark-adj
 export default function Step4Results() {
   const navigate = useNavigate()
   const subjects = useTeacherStore((s) => s.subjects)
-  const { classes } = useClassStore()
-  const currentSession = useClassStore((s) => s.institution.currentSession)
+  const { classes, institution } = useClassStore()
+  const currentSession = institution.currentSession
   const students = useSessionStudents()
   const isBn = useBn()
 
@@ -439,6 +439,7 @@ export default function Step4Results() {
       examName,
       className: selectedClassId,
       sectionName: selectedSectionId,
+      institutionName: institution.name,
     })
     downloadHTML(`tabulation_${selectedExamId}_${selectedClassId}_${selectedSectionId}.html`, html)
     setShowPdfModal(false)

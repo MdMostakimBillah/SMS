@@ -218,7 +218,7 @@ export default function GeneralAdmission() {
     const tName = s.teacherId ? useTeacherStore.getState().teachers.find((t) => t.id === s.teacherId)?.nameEn : ''
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(generateA4HTML(s, isBn, qrDataUrl, tName))
+    win.document.write(generateA4HTML(s, isBn, qrDataUrl, tName, institution.name))
     win.document.close()
     setTimeout(() => win.print(), 800)
   }, [doneId, isBn])
