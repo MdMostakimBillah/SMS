@@ -73,7 +73,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const isBn = useBn()
-  const { language, toggleSidebar, trackVisit, pageVisits, removeBookmark } = useAppStore()
+  const { language, toggleSidebar, trackVisit, pageVisits, bookmarks, toggleBookmark } = useAppStore()
   const { isMobile, width } = useWindowSize()
   const allStudents = useAdmissionStore((s) => s.students)
   const { teachers } = useTeacherStore()
@@ -235,13 +235,18 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     }
   }, [location.pathname, navItemsMap])
 
-  // Top 5 most visited pages (excluding current page)
+  // Top 5 most visited pages (excluding current page) + manually bookmarked
   const quickAccess = useMemo(() => {
-    return pageVisits
-      .filter((v) => v.path !== location.pathname && v.path !== '/' + (location.pathname.split('/')[1] || ''))
+    const currentBase = '/' + (location.pathname.split('/')[1] || '')
+    // Bookmarked pages first
+    const bookmarked = pageVisits.filter((v) => bookmarks.includes(v.path) && v.path !== currentBase)
+    // Fill remaining slots with most visited (not bookmarked, not current)
+    const visited = pageVisits
+      .filter((v) => !bookmarks.includes(v.path) && v.path !== currentBase)
       .sort((a, b) => b.count - a.count)
-      .slice(0, 5)
-  }, [pageVisits, location.pathname])
+    const combined = [...bookmarked, ...visited]
+    return combined.slice(0, 5)
+  }, [pageVisits, bookmarks, location.pathname])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -384,12 +389,13 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
               {group.items.map((item) => {
                 const isActive = location.pathname === item.page || location.pathname.startsWith(item.page + '/')
                 const IconComp = iconMap[item.icon] || LayoutDashboard
+                const isBookmarked = bookmarks.includes(item.page)
                 return (
                   <NavLink
                     key={item.page}
                     to={item.page}
                     onClick={() => { if (isMobile) toggleSidebar() }}
-                    className={`flex items-center gap-2 rounded-lg mb-0.5 text-xs no-underline transition-all duration-150 relative ${
+                    className={`flex items-center gap-2 rounded-lg mb-0.5 text-xs no-underline transition-all duration-150 relative group ${
                       collapsed ? 'px-0 py-2 justify-center' : 'px-2.5 py-2'
                     } ${
                       isActive
@@ -419,8 +425,24 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                             }`}
                           >
                             {item.badge}
-                 </span>
+                          </span>
                         )}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            toggleBookmark(item.page)
+                          }}
+                          className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-[var(--bg-primary)] shrink-0 ${
+                            isBookmarked ? '!opacity-100' : ''
+                          }`}
+                          title={isBn ? 'বুকমার্ক সরান' : 'Toggle bookmark'}
+                        >
+                          <Star
+                            size={12}
+                            className={isBookmarked ? 'text-[var(--amber)] fill-[var(--amber)]' : 'text-[var(--text-muted)]'}
+                          />
+                        </button>
                       </>
                     )}
                   </NavLink>
@@ -455,7 +477,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                         onClick={(e) => {
                           e.preventDefault()
                           e.stopPropagation()
-                          removeBookmark(v.path)
+                          toggleBookmark(v.path)
                         }}
                         className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-[var(--bg-primary)]"
                       >

@@ -16,12 +16,14 @@ interface AppState {
   sidebarCollapsed: boolean
   commandPaletteOpen: boolean
   pageVisits: PageVisit[]
+  bookmarks: string[]
   setTheme: (theme: Theme) => void
   setLanguage: (language: Language) => void
   toggleSidebar: () => void
   setSidebarCollapsed: (collapsed: boolean) => void
   setCommandPaletteOpen: (open: boolean) => void
   trackVisit: (path: string, label: string, icon: string) => void
+  toggleBookmark: (path: string) => void
   removeBookmark: (path: string) => void
 }
 
@@ -34,6 +36,7 @@ export const useAppStore = create<AppState>()(
       sidebarCollapsed: false,
       commandPaletteOpen: false,
       pageVisits: [],
+      bookmarks: [],
 
       setTheme: (theme) => {
         set({ theme })
@@ -66,8 +69,15 @@ export const useAppStore = create<AppState>()(
           return { pageVisits: [...state.pageVisits, { path, label, icon, count: 1 }] }
         }),
 
+      toggleBookmark: (path) =>
+        set((state) => {
+          const exists = state.bookmarks.includes(path)
+          return { bookmarks: exists ? state.bookmarks.filter((p) => p !== path) : [...state.bookmarks, path] }
+        }),
+
       removeBookmark: (path) =>
         set((state) => ({
+          bookmarks: state.bookmarks.filter((p) => p !== path),
           pageVisits: state.pageVisits.filter((v) => v.path !== path),
         })),
     }),
@@ -77,6 +87,7 @@ export const useAppStore = create<AppState>()(
         theme: state.theme,
         language: state.language,
         pageVisits: state.pageVisits,
+        bookmarks: state.bookmarks,
       }),
     }
   )
