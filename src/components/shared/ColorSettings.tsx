@@ -206,9 +206,9 @@ export default function ColorSettings({ colors, onChange, isBn }: Props) {
           </button>
 
           {expandedGroup === group.label && (
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {group.colors.map((c) => (
-                <div key={c.key} className="flex items-center gap-3">
+                <div key={c.key} className="flex items-center gap-2.5">
                   <label className="relative cursor-pointer shrink-0 group/picker">
                     <input
                       type="color"
@@ -217,19 +217,19 @@ export default function ColorSettings({ colors, onChange, isBn }: Props) {
                       className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                     />
                     <div
-                      className="w-11 h-11 rounded-xl border-2 border-[var(--border)] group-hover/picker:border-[var(--brand)] transition-all shadow-sm cursor-pointer ring-2 ring-transparent group-hover/picker:ring-[var(--brand-light)]"
+                      className="w-9 h-9 rounded-lg border-2 border-[var(--border)] group-hover/picker:border-[var(--brand)] transition-all shadow-sm cursor-pointer"
                       style={{ background: colors[c.key] }}
                     />
                   </label>
                   <div className="flex-1 min-w-0">
-                    <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wider">
+                    <label className="block text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1">
                       {isBn ? c.labelBn : c.label}
                     </label>
                     <input
                       type="text"
                       value={colors[c.key] || ''}
                       onChange={(e) => handleChange(c.key, e.target.value)}
-                      className="w-full text-sm font-mono px-3.5 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand-light)] focus:outline-none transition-all"
+                      className="w-full text-xs font-mono px-2.5 py-1.5 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand-light)] focus:outline-none transition-all"
                     />
                   </div>
                 </div>
