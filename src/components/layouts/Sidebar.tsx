@@ -30,6 +30,7 @@ import {
   ChevronsUpDown,
   Check,
   X,
+  Star,
   type LucideIcon,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -72,7 +73,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const isBn = useBn()
-  const { language, toggleSidebar } = useAppStore()
+  const { language, toggleSidebar, trackVisit, pageVisits, removeBookmark } = useAppStore()
   const { isMobile, width } = useWindowSize()
   const allStudents = useAdmissionStore((s) => s.students)
   const { teachers } = useTeacherStore()
@@ -206,6 +207,34 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       ],
     },
   ]
+
+  // Flat map for looking up nav item info by path
+  const navItemsMap = useMemo(() => {
+    const map: Record<string, { label: string; icon: string }> = {}
+    navGroups.forEach((g) =>
+      g.items.forEach((item) => {
+        map[item.page] = { label: t(item.key as TranslationKey, language), icon: item.icon }
+      })
+    )
+    return map
+  }, [navGroups, isBn])
+
+  // Track page visits
+  useEffect(() => {
+    const base = '/' + (location.pathname.split('/')[1] || '')
+    const info = navItemsMap[base]
+    if (info) {
+      trackVisit(base, info.label, info.icon)
+    }
+  }, [location.pathname, navItemsMap, trackVisit])
+
+  // Top 5 most visited pages (excluding current page)
+  const quickAccess = useMemo(() => {
+    return pageVisits
+      .filter((v) => v.path !== location.pathname && v.path !== '/' + (location.pathname.split('/')[1] || ''))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+  }, [pageVisits, location.pathname])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -383,7 +412,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                             }`}
                           >
                             {item.badge}
-                          </span>
+                 </span>
                         )}
                       </>
                     )}
@@ -394,20 +423,41 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
           ))}
         </nav>
 
-        {/* Bottom */}
-        {!collapsed && (
+        {/* Bottom - Quick Access */}
+        {!collapsed && quickAccess.length > 0 && (
           <div className="p-2 border-t border-[var(--border)]">
-            <div className="bg-[var(--brand-light)] rounded-lg p-2.5 border border-[var(--border)]">
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-[0.625rem] font-semibold text-[var(--text-primary)]">Enterprise Plan</span>
-                <span className="text-[0.5rem] font-semibold text-[var(--green)] bg-[var(--green-light)] px-1.5 py-px rounded">
-                  Active
+            <div className="bg-[var(--bg-secondary)] rounded-lg p-2.5 border border-[var(--border)]">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Star size={12} className="text-[var(--amber)]" />
+                <span className="text-[0.625rem] font-semibold text-[var(--text-primary)]">
+                  {isBn ? 'দ্রুত অ্যাক্সেস' : 'Quick Access'}
                 </span>
               </div>
-              <div className="h-1 bg-[var(--border)] rounded-full">
-                <div className="h-full w-[67%] bg-[var(--brand)] rounded-full" />
+              <div className="space-y-0.5">
+                {quickAccess.map((v) => {
+                  const Icon = iconMap[v.icon]
+                  return (
+                    <NavLink
+                      key={v.path}
+                      to={v.path}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[var(--text-primary)] hover:bg-[var(--brand-light)] transition-colors group"
+                    >
+                      {Icon && <Icon size={13} className="text-[var(--brand)] shrink-0" />}
+                      <span className="text-[0.625rem] truncate flex-1">{v.label}</span>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          removeBookmark(v.path)
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-[var(--bg-primary)]"
+                      >
+                        <X size={10} className="text-[var(--text-muted)]" />
+                      </button>
+                    </NavLink>
+                  )
+                })}
               </div>
-              <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1">67% storage used</div>
             </div>
           </div>
         )}

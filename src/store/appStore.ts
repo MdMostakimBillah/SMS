@@ -2,17 +2,27 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Theme, Language } from '@/types'
 
+interface PageVisit {
+  path: string
+  label: string
+  icon: string
+  count: number
+}
+
 interface AppState {
   theme: Theme
   language: Language
   sidebarOpen: boolean
   sidebarCollapsed: boolean
   commandPaletteOpen: boolean
+  pageVisits: PageVisit[]
   setTheme: (theme: Theme) => void
   setLanguage: (language: Language) => void
   toggleSidebar: () => void
   setSidebarCollapsed: (collapsed: boolean) => void
   setCommandPaletteOpen: (open: boolean) => void
+  trackVisit: (path: string, label: string, icon: string) => void
+  removeBookmark: (path: string) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -23,6 +33,7 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: false,
       sidebarCollapsed: false,
       commandPaletteOpen: false,
+      pageVisits: [],
 
       setTheme: (theme) => {
         set({ theme })
@@ -41,12 +52,31 @@ export const useAppStore = create<AppState>()(
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
       setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
+
+      trackVisit: (path, label, icon) =>
+        set((state) => {
+          const existing = state.pageVisits.find((v) => v.path === path)
+          if (existing) {
+            return {
+              pageVisits: state.pageVisits.map((v) =>
+                v.path === path ? { ...v, count: v.count + 1, label, icon } : v
+              ),
+            }
+          }
+          return { pageVisits: [...state.pageVisits, { path, label, icon, count: 1 }] }
+        }),
+
+      removeBookmark: (path) =>
+        set((state) => ({
+          pageVisits: state.pageVisits.filter((v) => v.path !== path),
+        })),
     }),
     {
       name: 'edutech-settings',
       partialize: (state) => ({
         theme: state.theme,
         language: state.language,
+        pageVisits: state.pageVisits,
       }),
     }
   )
