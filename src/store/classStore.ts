@@ -15,6 +15,7 @@ export interface InstitutionSettings {
   motto: string
   mottoBn: string
   eiin: string
+  themeColor: string
   phone: string
   email: string
   address: string
@@ -116,6 +117,7 @@ const defaultInstitution: InstitutionSettings = {
   motto: 'Knowledge is Power',
   mottoBn: 'জ্ঞাই হলো শক্তি',
   eiin: '',
+  themeColor: '#6366f1',
   phone: '+880-2-1234567',
   email: 'info@sunrise.edu.bd',
   address: 'Sunrise Academy, Dhaka, Bangladesh',
@@ -317,7 +319,7 @@ export const useClassStore = create<ClassState>()(
     }),
     {
       name: 'edutech-classes',
-      version: 5,
+      version: 6,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           const inst = persistedState?.institution
@@ -364,6 +366,12 @@ export const useClassStore = create<ClassState>()(
             if (!inst.mottoBn) inst.mottoBn = ''
             if (!inst.eiin) inst.eiin = ''
             if (!inst.subjects) inst.subjects = []
+          }
+        }
+        if (version < 6) {
+          const inst = persistedState?.institution
+          if (inst) {
+            if (!inst.themeColor) inst.themeColor = '#6366f1'
           }
         }
         return persistedState

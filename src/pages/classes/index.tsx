@@ -208,6 +208,12 @@ export default function ClassesPage() {
                 {institution.eiin && (
                   <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>EIIN: {institution.eiin}</div>
                 )}
+                {institution.themeColor && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <div className="w-3 h-3 rounded-full border border-[var(--border)]" style={{ backgroundColor: institution.themeColor }} />
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{isBn ? 'থিম রং' : 'Theme'}</span>
+                  </div>
+                )}
               </div>
               <div style={{ padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)' }}>
                 <div
@@ -444,6 +450,23 @@ export default function ClassesPage() {
                   className={inputClass}
                   placeholder="123456"
                 />
+              </div>
+              <div>
+                <label className={labelClass}>{isBn ? 'থিম রং' : 'Theme Color'}</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={instForm.themeColor || '#6366f1'}
+                    onChange={(e) => setInstForm((p) => ({ ...p, themeColor: e.target.value }))}
+                    className="w-8 h-8 rounded-lg border border-[var(--border)] cursor-pointer p-0.5"
+                  />
+                  <input
+                    value={instForm.themeColor || '#6366f1'}
+                    onChange={(e) => setInstForm((p) => ({ ...p, themeColor: e.target.value }))}
+                    className={inputClass}
+                    placeholder="#6366f1"
+                  />
+                </div>
               </div>
               <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
                 <label className={labelClass}>{isBn ? 'প্রধান বিষয়সমূহ (কমা দিয়ে আলাদা করুন)' : 'Main Subjects (comma separated)'}</label>
