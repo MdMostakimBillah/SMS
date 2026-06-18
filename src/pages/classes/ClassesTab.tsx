@@ -1679,111 +1679,79 @@ export default function ClassesTab({
 
       {/* Copy Section Modal */}
       {copySectionModal && createPortal(
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 600,
-            background: 'rgba(0,0,0,0.55)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-          }}
-          onClick={() => setCopySectionModal(null)}
-        >
-          <div
-            style={{
-              background: 'var(--bg-primary)',
-              borderRadius: '0.875rem',
-              width: '100%',
-              maxWidth: '28rem',
-              maxHeight: '90dvh',
-              overflow: 'auto',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-                  {isBn ? 'সেকশন কপি করুন' : 'Copy Section'}
-                </h3>
-                <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                  {isBn ? 'একটি সেকশন অন্য সেকশনে কপি করুন' : 'Copy a section to another class/section'}
-                </p>
-              </div>
-              <button
-                onClick={() => setCopySectionModal(null)}
-                style={{ width: '1.75rem', height: '1.75rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)' }}
-              >
-                <X size={15} />
-              </button>
-            </div>
-            <div style={{ padding: '16px 20px' }}>
-              {/* Source info */}
-              <div style={{ padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--brand-light)', border: '1px solid var(--brand)', marginBottom: '1rem' }}>
-                <div style={{ fontSize: '0.625rem', color: 'var(--brand)', fontWeight: 600, marginBottom: '0.25rem' }}>
-                  {isBn ? 'উৎস' : 'Source'}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontWeight: 500 }}>
-                  {classes.find((c) => c.id === copySectionModal.fromClassId)?.name} → Section {classes.find((c) => c.id === copySectionModal.fromClassId)?.sections.find((s) => s.id === copySectionModal.fromSectionId)?.name}
-                </div>
-              </div>
+        <div className="modal-overlay">
+          <div className="modal-content modal-box" style={{ maxWidth: '25rem' }}>
+            <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-[0.875rem]">
+              {isBn ? 'সেকশন কপি করুন' : 'Copy Section'}
+            </h3>
+            <p className="text-[0.75rem] text-[var(--text-muted)] mb-4">
+              {isBn ? 'একটি সেকশন অন্য সেকশনে কপি করুন' : 'Copy a section to another class/section'}
+            </p>
 
-              {/* Target class */}
-              <div style={{ marginBottom: '0.75rem' }}>
-                <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.3125rem', display: 'block' }}>
-                  {isBn ? 'টার্গেট শ্রেণি' : 'Target Class'}
+            {/* Source info */}
+            <div className="p-2.5 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] mb-4">
+              <div className="text-[0.625rem] text-[var(--brand)] font-semibold mb-1">
+                {isBn ? 'উৎস' : 'Source'}
+              </div>
+              <div className="text-[0.75rem] text-[var(--text-primary)] font-medium">
+                {classes.find((c) => c.id === copySectionModal.fromClassId)?.name} → Section {classes.find((c) => c.id === copySectionModal.fromClassId)?.sections.find((s) => s.id === copySectionModal.fromSectionId)?.name}
+              </div>
+            </div>
+
+            {/* Target class */}
+            <div className="mb-3">
+              <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
+                {isBn ? 'টার্গেট শ্রেণি' : 'Target Class'}
+              </label>
+              <select
+                value={copyTarget.classId}
+                onChange={(e) => setCopyTarget({ classId: e.target.value, sectionId: '' })}
+                className="w-full h-[2.5rem] px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-[inherit]"
+              >
+                <option value="">{isBn ? '-- শ্রেণি নির্বাচন করুন --' : '-- Select class --'}</option>
+                {classes.filter((c) => c.id !== copySectionModal.fromClassId).map((c) => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.nameBn}) — {c.sections.length} {isBn ? 'সেকশন' : 'sections'}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Target section */}
+            {copyTarget.classId && (
+              <div className="mb-4">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
+                  {isBn ? 'টার্গেট সেকশন' : 'Target Section'}
                 </label>
                 <select
-                  value={copyTarget.classId}
-                  onChange={(e) => setCopyTarget({ classId: e.target.value, sectionId: '' })}
-                  className={inputClass}
-                  style={{ width: '100%' }}
+                  value={copyTarget.sectionId}
+                  onChange={(e) => setCopyTarget((p) => ({ ...p, sectionId: e.target.value }))}
+                  className="w-full h-[2.5rem] px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-[inherit]"
                 >
-                  <option value="">{isBn ? '-- শ্রেণি নির্বাচন করুন --' : '-- Select class --'}</option>
-                  {classes.filter((c) => c.id !== copySectionModal.fromClassId).map((c) => (
-                    <option key={c.id} value={c.id}>{c.name} ({c.nameBn}) — {c.sections.length} {isBn ? 'সেকশন' : 'sections'}</option>
+                  <option value="">{isBn ? '-- সেকশন নির্বাচন করুন --' : '-- Select section --'}</option>
+                  {classes.find((c) => c.id === copyTarget.classId)?.sections.map((s) => (
+                    <option key={s.id} value={s.id}>{isBn ? 'সেকশন' : 'Section'} {s.name} — {s.seatQuantity} {isBn ? 'আসন' : 'seats'}</option>
                   ))}
                 </select>
               </div>
+            )}
 
-              {/* Target section */}
-              {copyTarget.classId && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.3125rem', display: 'block' }}>
-                    {isBn ? 'টার্গেট সেকশন' : 'Target Section'}
-                  </label>
-                  <select
-                    value={copyTarget.sectionId}
-                    onChange={(e) => setCopyTarget((p) => ({ ...p, sectionId: e.target.value }))}
-                    className={inputClass}
-                    style={{ width: '100%' }}
-                  >
-                    <option value="">{isBn ? '-- সেকশন নির্বাচন করুন --' : '-- Select section --'}</option>
-                    {classes.find((c) => c.id === copyTarget.classId)?.sections.map((s) => (
-                      <option key={s.id} value={s.id}>{isBn ? 'সেকশন' : 'Section'} {s.name} — {s.seatQuantity} {isBn ? 'আসন' : 'seats'}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  onClick={() => setCopySectionModal(null)}
-                  style={{ flex: 1, padding: '0.5rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-                >
-                  {isBn ? 'বাতিল' : 'Cancel'}
-                </button>
-                <button
-                  onClick={() => setShowCopyConfirm(true)}
-                  disabled={!copyTarget.classId || !copyTarget.sectionId}
-                  style={{ flex: 1, padding: '0.5rem', borderRadius: '0.5rem', background: copyTarget.classId && copyTarget.sectionId ? 'var(--brand)' : 'var(--border)', border: 'none', color: '#fff', fontSize: '0.75rem', fontWeight: 500, cursor: copyTarget.classId && copyTarget.sectionId ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}
-                >
-                  {isBn ? 'কপি করুন' : 'Copy Section'}
-                </button>
-              </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setCopySectionModal(null)}
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]"
+              >
+                {isBn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => setShowCopyConfirm(true)}
+                disabled={!copyTarget.classId || !copyTarget.sectionId}
+                className="px-3.5 py-2 rounded-lg border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
+                style={{
+                  background: copyTarget.classId && copyTarget.sectionId ? 'var(--brand)' : 'var(--border)',
+                  cursor: copyTarget.classId && copyTarget.sectionId ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {isBn ? 'কপি করুন' : 'Copy Section'}
+              </button>
             </div>
           </div>
         </div>,

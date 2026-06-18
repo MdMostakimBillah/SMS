@@ -1,4 +1,5 @@
 import { useState, useMemo, Fragment, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -1709,241 +1710,107 @@ function RoutineTab({
       </div>
 
       {/* Copy Day Modal */}
-      {showCopyDay && (
-        <div
-          onClick={() => setShowCopyDay(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '100dvh',
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1.25rem',
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'var(--bg-primary)',
-              borderRadius: '0.875rem',
-              border: '1px solid var(--border)',
-              width: '100%',
-              maxWidth: '23.75rem',
-              boxShadow: 'var(--shadow-lg)',
-            }}
-          >
-            <div
-              style={{
-                padding: '16px 20px',
-                borderBottom: '1px solid var(--border)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                <div
-                  style={{
-                    width: '2rem',
-                    height: '2rem',
-                    borderRadius: '0.5rem',
-                    background: 'var(--brand-light)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Copy size={16} style={{ color: 'var(--brand)' }} />
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-                    {isBn ? 'দিন কপি করুন' : 'Copy Day Routine'}
-                  </h3>
-                  <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)', margin: '2px 0 0' }}>
-                    {isBn ? 'একটি দিনের রুটিন অন্য দিনে কপি করুন' : 'Copy one day routine to another'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowCopyDay(false)}
-                style={{
-                  width: '1.75rem',
-                  height: '1.75rem',
-                  borderRadius: '0.5rem',
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: 'var(--text-muted)',
-                }}
-              >
-                <X size={14} />
-              </button>
-            </div>
-            <div style={{ padding: '16px 20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.875rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}>
-                    {isBn ? 'কোন দিন থেকে' : 'From Day'}
-                  </label>
-                  <select
-                    value={copyFrom}
-                    onChange={(e) => setCopyFrom(Number(e.target.value))}
-                    style={{
-                      width: '100%',
-                      padding: '9px 11px',
-                      borderRadius: '0.5rem',
-                      border: '1px solid var(--border)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.75rem',
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    {DAYS.map((d, i) => (
-                      <option key={i} value={i}>
-                        {isBn ? DAYS_BN[i] : d}
-                        {!hasDayData(i) ? ` (${isBn ? 'খালি' : 'empty'})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div style={{ marginTop: '1.125rem', color: 'var(--text-muted)' }}>
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 12h14" />
-                    <path d="m12 5 7 7-7 7" />
-                  </svg>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}>
-                    {isBn ? 'কোন দিনে' : 'To Day'}
-                  </label>
-                  <select
-                    value={copyTo}
-                    onChange={(e) => setCopyTo(Number(e.target.value))}
-                    style={{
-                      width: '100%',
-                      padding: '9px 11px',
-                      borderRadius: '0.5rem',
-                      border: '1px solid var(--border)',
-                      background: 'var(--bg-secondary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.75rem',
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    {DAYS.map((d, i) => (
-                      <option key={i} value={i}>
-                        {isBn ? DAYS_BN[i] : d}
-                        {hasDayData(i) ? ` (${isBn ? 'আছে' : 'has data'})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+      {showCopyDay && createPortal(
+        <div className="modal-overlay">
+          <div className="modal-content modal-box" style={{ maxWidth: '25rem' }}>
+            <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-[0.875rem]">
+              {isBn ? 'দিন কপি করুন' : 'Copy Day Routine'}
+            </h3>
+            <p className="text-[0.75rem] text-[var(--text-muted)] mb-4">
+              {isBn ? 'একটি দিনের রুটিন অন্য দিনে কপি করুন' : 'Copy one day routine to another'}
+            </p>
 
-              {copyFrom === copyTo && (
-                <div
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: '0.375rem',
-                    background: 'var(--amber-light)',
-                    border: '1px solid var(--amber)',
-                    marginBottom: '0.875rem',
-                  }}
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="flex-1">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
+                  {isBn ? 'কোন দিন থেকে' : 'From Day'}
+                </label>
+                <select
+                  value={copyFrom}
+                  onChange={(e) => setCopyFrom(Number(e.target.value))}
+                  className="w-full h-[2.5rem] px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-[inherit]"
                 >
-                  <span style={{ fontSize: '0.6875rem', color: 'var(--amber)', fontWeight: 500 }}>
-                    {isBn ? 'উৎস এবং গন্তব্য একই দিন হতে হবে না' : 'Source and destination must be different days'}
+                  {DAYS.map((d, i) => (
+                    <option key={i} value={i}>
+                      {isBn ? DAYS_BN[i] : d}
+                      {!hasDayData(i) ? ` (${isBn ? 'খালি' : 'empty'})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="mt-5 text-[var(--text-muted)]">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
+                  {isBn ? 'কোন দিনে' : 'To Day'}
+                </label>
+                <select
+                  value={copyTo}
+                  onChange={(e) => setCopyTo(Number(e.target.value))}
+                  className="w-full h-[2.5rem] px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-[inherit]"
+                >
+                  {DAYS.map((d, i) => (
+                    <option key={i} value={i}>
+                      {isBn ? DAYS_BN[i] : d}
+                      {hasDayData(i) ? ` (${isBn ? 'আছে' : 'has data'})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {copyFrom === copyTo && (
+              <div className="p-2 rounded-md bg-[var(--amber-light)] border border-[var(--amber)] mb-3">
+                <span className="text-[0.6875rem] text-[var(--amber)] font-medium">
+                  {isBn ? 'উৎস এবং গন্তব্য একই দিন হতে হবে না' : 'Source and destination must be different days'}
+                </span>
+              </div>
+            )}
+
+            {copyFrom !== copyTo && hasDayData(copyFrom) && (
+              <div className="p-2.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] mb-3">
+                <div className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1.5">
+                  {isBn ? 'পূর্বরূপ' : 'Preview'}
+                </div>
+                <div className="flex items-center gap-2 text-[0.6875rem]">
+                  <span className="text-[var(--brand)] font-semibold">{isBn ? DAYS_BN[copyFrom] : DAYS[copyFrom]}</span>
+                  <span className="text-[var(--text-muted)]">→</span>
+                  <span className="text-[var(--teal)] font-semibold">{isBn ? DAYS_BN[copyTo] : DAYS[copyTo]}</span>
+                  <span className="text-[var(--text-muted)] ml-auto">
+                    {(resolvedPeriods[copyFrom] || []).filter((s: any) => s?.subjectId).length}{' '}
+                    {isBn ? 'টি পিরিয়ড কপি হবে' : 'periods will copy'}
                   </span>
                 </div>
-              )}
-
-              {copyFrom !== copyTo && hasDayData(copyFrom) && (
-                <div
-                  style={{
-                    padding: '0.625rem',
-                    borderRadius: '0.5rem',
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border)',
-                    marginBottom: '0.875rem',
-                  }}
-                >
-                  <div style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
-                    {isBn ? 'পূর্বরূপ' : 'Preview'}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.6875rem' }}>
-                    <span style={{ color: 'var(--brand)', fontWeight: 600 }}>{isBn ? DAYS_BN[copyFrom] : DAYS[copyFrom]}</span>
-                    <span style={{ color: 'var(--text-muted)' }}>→</span>
-                    <span style={{ color: 'var(--teal)', fontWeight: 600 }}>{isBn ? DAYS_BN[copyTo] : DAYS[copyTo]}</span>
-                    <span style={{ color: 'var(--text-muted)', marginLeft: 'auto' }}>
-                      {(resolvedPeriods[copyFrom] || []).filter((s: any) => s?.subjectId).length}{' '}
-                      {isBn ? 'টি পিরিয়ড কপি হবে' : 'periods will copy'}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  onClick={() => setShowCopyDay(false)}
-                  style={{
-                    flex: 1,
-                    padding: '0.5625rem',
-                    borderRadius: '0.5rem',
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  {isBn ? 'বাতিল' : 'Cancel'}
-                </button>
-                <button
-                  onClick={() => setShowCopyDayConfirm(true)}
-                  disabled={copyFrom === copyTo || !hasDayData(copyFrom)}
-                  style={{
-                    flex: 1,
-                    padding: '0.5625rem',
-                    borderRadius: '0.5rem',
-                    border: 'none',
-                    color: '#fff',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    cursor: copyFrom !== copyTo && hasDayData(copyFrom) ? 'pointer' : 'not-allowed',
-                    fontFamily: 'inherit',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.3125rem',
-                    background: copyFrom !== copyTo && hasDayData(copyFrom) ? 'var(--brand)' : 'var(--border)',
-                  }}
-                >
-                  <Copy size={13} />
-                  {isBn ? 'কপি করুন' : 'Copy'}
-                </button>
               </div>
+            )}
+
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowCopyDay(false)}
+                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]"
+              >
+                {isBn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => setShowCopyDayConfirm(true)}
+                disabled={copyFrom === copyTo || !hasDayData(copyFrom)}
+                className="px-3.5 py-2 rounded-lg border-none text-white text-xs font-semibold cursor-pointer font-[inherit] flex items-center gap-1.5"
+                style={{
+                  background: copyFrom !== copyTo && hasDayData(copyFrom) ? 'var(--brand)' : 'var(--border)',
+                  cursor: copyFrom !== copyTo && hasDayData(copyFrom) ? 'pointer' : 'not-allowed',
+                }}
+              >
+                <Copy size={13} />
+                {isBn ? 'কপি করুন' : 'Copy'}
+              </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Copy Day Confirm Alert */}
