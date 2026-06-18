@@ -73,6 +73,7 @@ export default function ClassesTab({
   const [classNameForm, setClassNameForm] = useState({ name: '', nameBn: '' })
   const [copySectionModal, setCopySectionModal] = useState<{ fromClassId: string; fromSectionId: string } | null>(null)
   const [copyTarget, setCopyTarget] = useState({ classId: '', sectionId: '' })
+  const [showCopyConfirm, setShowCopyConfirm] = useState(false)
 
   const [bulkMode, setBulkMode] = useState(false)
   const [selectedClasses, setSelectedClasses] = useState<string[]>([])
@@ -1776,13 +1777,69 @@ export default function ClassesTab({
                   {isBn ? 'বাতিল' : 'Cancel'}
                 </button>
                 <button
-                  onClick={handleCopySection}
+                  onClick={() => setShowCopyConfirm(true)}
                   disabled={!copyTarget.classId || !copyTarget.sectionId}
                   style={{ flex: 1, padding: '0.5rem', borderRadius: '0.5rem', background: copyTarget.classId && copyTarget.sectionId ? 'var(--brand)' : 'var(--border)', border: 'none', color: '#fff', fontSize: '0.75rem', fontWeight: 500, cursor: copyTarget.classId && copyTarget.sectionId ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}
                 >
                   {isBn ? 'কপি করুন' : 'Copy Section'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Copy Section Confirm Alert */}
+      {showCopyConfirm && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--bg-primary)',
+              borderRadius: '0.875rem',
+              width: '100%',
+              maxWidth: '22rem',
+              padding: '1.5rem',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', background: 'var(--amber-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+              <Copy size={20} style={{ color: 'var(--amber)' }} />
+            </div>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 0.5rem' }}>
+              {isBn ? 'সেকশন কপি করতে চান?' : 'Copy Section?'}
+            </h3>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0 0 1.25rem', lineHeight: 1.5 }}>
+              {isBn
+                ? `আপনি ${classes.find((c) => c.id === copySectionModal?.fromClassId)?.name} থেকে সেকশন কপি করতে চলেছেন। এই কাজটি একটি নতুন সেকশন তৈরি করবে।`
+                : `You are about to copy a section from ${classes.find((c) => c.id === copySectionModal?.fromClassId)?.name}. This will create a new section.`}
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => setShowCopyConfirm(false)}
+                style={{ flex: 1, padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                {isBn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => { setShowCopyConfirm(false); handleCopySection() }}
+                autoFocus
+                style={{ flex: 1, padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--amber)', border: 'none', color: '#fff', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                {isBn ? 'হ্যাঁ, কপি করুন' : 'Yes, Copy'}
+              </button>
             </div>
           </div>
         </div>,

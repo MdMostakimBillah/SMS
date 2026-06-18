@@ -741,6 +741,7 @@ function RoutineTab({
   const [editSlot, setEditSlot] = useState<{ day: number; period: number } | null>(null)
   const [slotForm, setSlotForm] = useState({ subjectId: '', teacherId: '' })
   const [showCopyDay, setShowCopyDay] = useState(false)
+  const [showCopyDayConfirm, setShowCopyDayConfirm] = useState(false)
   const [copyFrom, setCopyFrom] = useState(0)
   const [copyTo, setCopyTo] = useState(1)
   const [showCustomDuration, setShowCustomDuration] = useState(false)
@@ -1917,7 +1918,7 @@ function RoutineTab({
                   {isBn ? 'বাতিল' : 'Cancel'}
                 </button>
                 <button
-                  onClick={handleCopyDay}
+                  onClick={() => setShowCopyDayConfirm(true)}
                   disabled={copyFrom === copyTo || !hasDayData(copyFrom)}
                   style={{
                     flex: 1,
@@ -1940,6 +1941,61 @@ function RoutineTab({
                   {isBn ? 'কপি করুন' : 'Copy'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Copy Day Confirm Alert */}
+      {showCopyDayConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--bg-primary)',
+              borderRadius: '0.875rem',
+              width: '100%',
+              maxWidth: '22rem',
+              padding: '1.5rem',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', background: 'var(--amber-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+              <Copy size={20} style={{ color: 'var(--amber)' }} />
+            </div>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 0.5rem' }}>
+              {isBn ? 'দিন কপি করতে চান?' : 'Copy Day Routine?'}
+            </h3>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0 0 1.25rem', lineHeight: 1.5 }}>
+              {isBn
+                ? `আপনি ${DAYS_BN[copyFrom]} থেকে ${DAYS_BN[copyTo]} এ রুটিন কপি করতে চলেছেন। এটি লক্ষ্য দিনের বিদ্যমান ডেটা ওভাররাইট করতে পারে।`
+                : `You are about to copy ${DAYS[copyFrom]} routine to ${DAYS[copyTo]}. This may overwrite existing data on the target day.`}
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => setShowCopyDayConfirm(false)}
+                style={{ flex: 1, padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                {isBn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => { setShowCopyDayConfirm(false); handleCopyDay() }}
+                autoFocus
+                style={{ flex: 1, padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--amber)', border: 'none', color: '#fff', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                {isBn ? 'হ্যাঁ, কপি করুন' : 'Yes, Copy'}
+              </button>
             </div>
           </div>
         </div>
