@@ -7,6 +7,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+const CATEGORIES = ['Teacher', 'Staff', 'Employee', 'Admin', 'Librarian', 'Accountant']
 
 // ─── FormField (outside parent component — fixes input focus loss) ───────────
 interface FieldProps {
@@ -103,6 +104,7 @@ export default function AddTeacherPage() {
   const [departmentId, setDepartmentId] = useState('')
   const [subjectIds, setSubjectIds] = useState<string[]>([])
   const [designation, setDesignation] = useState('')
+  const [category, setCategory] = useState('Teacher')
   const [qualification, setQualification] = useState('')
   const [experience, setExperience] = useState('')
   const [joiningDate, setJoiningDate] = useState('')
@@ -195,6 +197,7 @@ export default function AddTeacherPage() {
         departmentId,
         subjectIds,
         designation,
+        category,
         qualification: qualification.trim(),
         experience: experience.trim(),
         joiningDate,
@@ -238,6 +241,7 @@ export default function AddTeacherPage() {
     setDepartmentId('')
     setSubjectIds([])
     setDesignation('')
+    setCategory('Teacher')
     setQualification('')
     setExperience('')
     setJoiningDate('')
@@ -486,6 +490,14 @@ export default function AddTeacherPage() {
             onChange={setDesignation}
             isBn={isBn}
             options={designations.map((d) => d.name)}
+          />
+          <FormField
+            labelEn="Category"
+            labelBn="ক্যাটাগরি"
+            value={category}
+            onChange={setCategory}
+            isBn={isBn}
+            options={CATEGORIES}
           />
           <FormField labelEn="Qualification" labelBn="যোগ্যতা" value={qualification} onChange={setQualification} isBn={isBn} />
         </div>

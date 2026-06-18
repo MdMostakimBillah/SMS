@@ -4,11 +4,10 @@ import { CheckCircle, Camera, Clock, Users, Save, Briefcase, X, IdCard } from 'l
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
-import { Select } from '@/components/ui/Select'
-import { DatePicker } from '@/components/ui/DatePicker'
 import type { TeacherStatus } from '@/pages/teachers/types'
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+const CATEGORIES = ['Teacher', 'Staff', 'Employee', 'Admin', 'Librarian', 'Accountant']
 
 // ─── FormField (outside parent component — fixes input focus loss) ───────────
 interface FieldProps {
@@ -22,30 +21,45 @@ interface FieldProps {
   isBn: boolean
 }
 function FormField({ labelEn, labelBn, value, onChange, type = 'text', required = false, options, isBn }: FieldProps) {
+  const inputClass = 'w-full h-[2.75rem] px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-sm)] transition-all duration-200'
+
   if (options) {
     return (
-      <Select
-        value={value}
-        onChange={onChange}
-        options={options.map((o) => ({ value: o, label: o }))}
-        label={labelEn}
-        labelBn={labelBn}
-        required={required}
-        isBn={isBn}
-      />
+      <div className="mb-[0.625rem]">
+        <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
+          {isBn ? labelBn : labelEn}
+          {required && <span className="text-[var(--red)] ml-0.5">*</span>}
+        </label>
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          required={required}
+          className={inputClass}
+        >
+          <option value="">{isBn ? '-- নির্বাচন করুন --' : '-- Select --'}</option>
+          {options.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
+      </div>
     )
   }
 
   if (type === 'date') {
     return (
-      <DatePicker
-        value={value}
-        onChange={onChange}
-        label={labelEn}
-        labelBn={labelBn}
-        required={required}
-        isBn={isBn}
-      />
+      <div className="mb-[0.625rem]">
+        <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
+          {isBn ? labelBn : labelEn}
+          {required && <span className="text-[var(--red)] ml-0.5">*</span>}
+        </label>
+        <input
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          required={required}
+          className={inputClass}
+        />
+      </div>
     )
   }
 
@@ -60,7 +74,7 @@ function FormField({ labelEn, labelBn, value, onChange, type = 'text', required 
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
-        className="w-full h-[2.75rem] px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-sm)] transition-all duration-200"
+        className={inputClass}
       />
     </div>
   )
@@ -93,6 +107,7 @@ export default function EditTeacherPage() {
   const [departmentId, setDepartmentId] = useState('')
   const [subjectIds, setSubjectIds] = useState<string[]>([])
   const [designation, setDesignation] = useState('')
+  const [category, setCategory] = useState('Teacher')
   const [qualification, setQualification] = useState('')
   const [experience, setExperience] = useState('')
   const [joiningDate, setJoiningDate] = useState('')
@@ -134,6 +149,7 @@ export default function EditTeacherPage() {
     setDepartmentId(teacher.departmentId)
     setSubjectIds([...teacher.subjectIds])
     setDesignation(teacher.designation)
+    setCategory(teacher.category || 'Teacher')
     setQualification(teacher.qualification)
     setExperience(teacher.experience)
     setJoiningDate(teacher.joiningDate || '')
@@ -214,6 +230,7 @@ export default function EditTeacherPage() {
         departmentId,
         subjectIds,
         designation,
+        category,
         qualification: qualification.trim(),
         experience: experience.trim(),
         joiningDate,
@@ -465,6 +482,14 @@ export default function EditTeacherPage() {
             onChange={setDesignation}
             isBn={isBn}
             options={designations.map((d) => d.name)}
+          />
+          <FormField
+            labelEn="Category"
+            labelBn="ক্যাটাগরি"
+            value={category}
+            onChange={setCategory}
+            isBn={isBn}
+            options={CATEGORIES}
           />
           <FormField labelEn="Qualification" labelBn="যোগ্যতা" value={qualification} onChange={setQualification} isBn={isBn} />
         </div>

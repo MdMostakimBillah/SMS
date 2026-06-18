@@ -32,6 +32,7 @@ export interface Teacher {
   createdAt: string
   updatedAt: string
   status: TeacherStatus
+  category: string
   photo: string
   nameEn: string
   nameBn: string
