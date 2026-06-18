@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
-import { useClassStore } from '@/store/classStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { applyThemeColor } from '@/lib/theme'
 import { gsap } from 'gsap'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
@@ -11,7 +9,6 @@ import CommandPalette from '@/components/shared/CommandPalette'
 
 export default function AppLayout() {
   const { theme, sidebarCollapsed, sidebarOpen, toggleSidebar } = useAppStore()
-  const { institution } = useClassStore()
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
   const [isLoading, setIsLoading] = useState(true)
@@ -26,13 +23,6 @@ export default function AppLayout() {
       document.documentElement.setAttribute('data-theme', theme)
     }
   }, [theme])
-
-  // Apply institution theme color
-  useEffect(() => {
-    if (institution.themeColor) {
-      applyThemeColor(institution.themeColor)
-    }
-  }, [institution.themeColor])
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 600)
