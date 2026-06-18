@@ -219,14 +219,21 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     return map
   }, [navGroups, isBn])
 
+  // Use refs to avoid infinite loop from trackVisit
+  const trackVisitRef = useRef(trackVisit)
+  trackVisitRef.current = trackVisit
+  const lastTrackedPath = useRef('')
+
   // Track page visits
   useEffect(() => {
     const base = '/' + (location.pathname.split('/')[1] || '')
+    if (base === lastTrackedPath.current) return
+    lastTrackedPath.current = base
     const info = navItemsMap[base]
     if (info) {
-      trackVisit(base, info.label, info.icon)
+      trackVisitRef.current(base, info.label, info.icon)
     }
-  }, [location.pathname, navItemsMap, trackVisit])
+  }, [location.pathname, navItemsMap])
 
   // Top 5 most visited pages (excluding current page)
   const quickAccess = useMemo(() => {
