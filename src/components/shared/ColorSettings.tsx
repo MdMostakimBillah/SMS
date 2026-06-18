@@ -3,6 +3,7 @@ import { RotateCcw, Palette } from 'lucide-react'
 import type { ThemeColors } from '@/store/classStore'
 import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
+import { applyThemeColors } from '@/hooks/useThemeColors'
 
 interface ColorGroup {
   label: string
@@ -125,7 +126,9 @@ export default function ColorSettings({ colors, onChange, isBn }: Props) {
   const defaults = isDark ? defaultThemeColorsDark : defaultThemeColors
 
   const handleChange = (key: keyof ThemeColors, value: string) => {
-    onChange({ ...colors, [key]: value })
+    const updated = { ...colors, [key]: value }
+    onChange(updated)
+    applyThemeColors(updated)
   }
 
   const handleResetGroup = (group: ColorGroup) => {
@@ -134,10 +137,13 @@ export default function ColorSettings({ colors, onChange, isBn }: Props) {
       ;(updated as any)[c.key] = defaults[c.key]
     })
     onChange(updated)
+    applyThemeColors(updated)
   }
 
   const handleResetAll = () => {
-    onChange({ ...defaults })
+    const reset = { ...defaults }
+    onChange(reset)
+    applyThemeColors(reset)
   }
 
   return (

@@ -30,10 +30,12 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useAppStore } from '@/store/appStore'
 import ClassesTab from './ClassesTab'
 import { RoutinePDFOptionsModal } from '@/components/shared/RoutinePDFOptionsModal'
 import ColorSettings from '@/components/shared/ColorSettings'
 import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
+import { applyThemeColors } from '@/hooks/useThemeColors'
 import { generateRoutineGridPDF } from '@/pages/classes/routinePdfTemplate'
 import type { RoutineListPDFOptions, RoutineGridData } from '@/pages/classes/routinePdfTemplate'
 import { openPrintWindow } from '@/lib/pdf'
@@ -146,7 +148,12 @@ export default function ClassesPage() {
             ) : (
               <div className="flex gap-[0.375rem]">
                 <button
-                  onClick={() => setEditingInst(false)}
+                  onClick={() => {
+                    setEditingInst(false)
+                    const theme = useAppStore.getState().theme
+                    const isDark = theme === 'dark'
+                    applyThemeColors(isDark ? institution.darkColors : institution.lightColors)
+                  }}
                   className="py-[0.375rem] px-3 rounded-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]"
                 >
                   {isBn ? 'বাতিল' : 'Cancel'}
