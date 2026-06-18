@@ -1760,51 +1760,30 @@ export default function ClassesTab({
 
       {/* Copy Section Confirm Alert */}
       {showCopyConfirm && createPortal(
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            background: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-          }}
-        >
-          <div
-            style={{
-              background: 'var(--bg-primary)',
-              borderRadius: '0.875rem',
-              width: '100%',
-              maxWidth: '22rem',
-              padding: '1.5rem',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-              textAlign: 'center',
-            }}
-          >
-            <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', background: 'var(--amber-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
-              <Copy size={20} style={{ color: 'var(--amber)' }} />
+        <div className="modal-overlay" style={{ zIndex: 9999 }}>
+          <div className="modal-content modal-box" style={{ maxWidth: '22rem', textAlign: 'center' }}>
+            <div className="w-12 h-12 rounded-full bg-[var(--amber-light)] flex items-center justify-center mx-auto mb-4">
+              <Copy size={22} className="text-[var(--amber)]" />
             </div>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 0.5rem' }}>
+            <h3 className="text-base font-semibold text-[var(--text-primary)] mb-2">
               {isBn ? 'সেকশন কপি করতে চান?' : 'Copy Section?'}
             </h3>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0 0 1.25rem', lineHeight: 1.5 }}>
+            <p className="text-[0.8125rem] text-[var(--text-secondary)] mb-5 leading-relaxed">
               {isBn
                 ? `আপনি ${classes.find((c) => c.id === copySectionModal?.fromClassId)?.name} থেকে সেকশন কপি করতে চলেছেন। এই কাজটি একটি নতুন সেকশন তৈরি করবে।`
                 : `You are about to copy a section from ${classes.find((c) => c.id === copySectionModal?.fromClassId)?.name}. This will create a new section.`}
             </p>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div className="flex gap-2">
               <button
                 onClick={() => setShowCopyConfirm(false)}
-                style={{ flex: 1, padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+                className="flex-1 px-3.5 py-2.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium cursor-pointer font-[inherit]"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
               <button
                 onClick={() => { setShowCopyConfirm(false); handleCopySection() }}
                 autoFocus
-                style={{ flex: 1, padding: '0.625rem', borderRadius: '0.5rem', background: 'var(--amber)', border: 'none', color: '#fff', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+                className="flex-1 px-3.5 py-2.5 rounded-lg bg-[var(--amber)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit]"
               >
                 {isBn ? 'হ্যাঁ, কপি করুন' : 'Yes, Copy'}
               </button>
