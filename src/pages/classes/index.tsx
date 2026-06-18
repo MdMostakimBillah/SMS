@@ -487,6 +487,13 @@ export default function ClassesPage() {
                     className={inputClass}
                     placeholder="#6366f1"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setInstForm((p) => ({ ...p, themeColor: '#6366f1' }))}
+                    className="py-1.5 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--red-light)] hover:text-[var(--red)] hover:border-[var(--red)] transition-colors shrink-0"
+                  >
+                    {isBn ? 'রিসেট' : 'Reset'}
+                  </button>
                 </div>
               </div>
               <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
