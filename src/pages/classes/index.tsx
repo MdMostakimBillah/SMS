@@ -73,6 +73,7 @@ export default function ClassesPage() {
     breaks: institution.breaks?.length > 0 ? institution.breaks : [{ id: 'BRK-1', label: 'Tiffin', start: '11:00', end: '11:30' }],
   }))
   const [saved, setSaved] = useState(false)
+  const [expandedMode, setExpandedMode] = useState<'light' | 'dark' | null>(null)
   const [newSessionInput, setNewSessionInput] = useState('')
 
   const handleSaveInstitution = () => {
@@ -755,28 +756,58 @@ export default function ClassesPage() {
                   {isBn ? 'লাইট ও ডার্ক মোডের জন্য আলাদাভাবে রঙ সেট করুন' : 'Set colors separately for Light and Dark mode'}
                 </div>
               </div>
-              <div className="p-3 space-y-4">
+              <div className="divide-y divide-[var(--border)]">
+                {/* Light Mode */}
                 <div>
-                  <div className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] mb-2 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-yellow-400 border border-yellow-500"></span>
-                    {isBn ? 'লাইট মোড' : 'Light Mode'}
-                  </div>
-                  <ColorSettings
-                    colors={instForm.lightColors || defaultThemeColors}
-                    onChange={(c) => setInstForm((p) => ({ ...p, lightColors: c }))}
-                    isBn={isBn}
-                  />
+                  <button
+                    onClick={() => setExpandedMode(expandedMode === 'light' ? null : 'light')}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-3 h-3 rounded-full bg-yellow-400 border border-yellow-500"></span>
+                      <span className="text-sm font-medium text-[var(--text-primary)]">
+                        {isBn ? 'লাইট মোড' : 'Light Mode'}
+                      </span>
+                    </div>
+                    <span className="text-[var(--text-muted)] text-xs">
+                      {expandedMode === 'light' ? '▾' : '▸'}
+                    </span>
+                  </button>
+                  {expandedMode === 'light' && (
+                    <div className="px-3 pb-3">
+                      <ColorSettings
+                        colors={instForm.lightColors || defaultThemeColors}
+                        onChange={(c) => setInstForm((p) => ({ ...p, lightColors: c }))}
+                        isBn={isBn}
+                      />
+                    </div>
+                  )}
                 </div>
-                <div className="border-t border-[var(--border)] pt-4">
-                  <div className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] mb-2 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-gray-800 border border-gray-600"></span>
-                    {isBn ? 'ডার্ক মোড' : 'Dark Mode'}
-                  </div>
-                  <ColorSettings
-                    colors={instForm.darkColors || defaultThemeColorsDark}
-                    onChange={(c) => setInstForm((p) => ({ ...p, darkColors: c }))}
-                    isBn={isBn}
-                  />
+                {/* Dark Mode */}
+                <div>
+                  <button
+                    onClick={() => setExpandedMode(expandedMode === 'dark' ? null : 'dark')}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-3 h-3 rounded-full bg-gray-800 border border-gray-600"></span>
+                      <span className="text-sm font-medium text-[var(--text-primary)]">
+                        {isBn ? 'ডার্ক মোড' : 'Dark Mode'}
+                      </span>
+                    </div>
+                    <span className="text-[var(--text-muted)] text-xs">
+                      {expandedMode === 'dark' ? '▾' : '▸'}
+                    </span>
+                  </button>
+                  {expandedMode === 'dark' && (
+                    <div className="px-3 pb-3">
+                      <ColorSettings
+                        colors={instForm.darkColors || defaultThemeColorsDark}
+                        onChange={(c) => setInstForm((p) => ({ ...p, darkColors: c }))}
+                        isBn={isBn}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
