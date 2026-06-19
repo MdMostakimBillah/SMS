@@ -507,39 +507,25 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
 
         {/* Bottom - Quick Access */}
         {!collapsed && quickAccess.length > 0 && (
-          <div className="p-2 border-t border-[var(--border)]">
-            <div className="bg-[var(--bg-secondary)] rounded-lg p-2.5 border border-[var(--border)]">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Star size={12} className="text-[var(--amber)]" />
-                <span className="text-[0.625rem] font-semibold text-[var(--text-primary)]">
-                  {isBn ? 'দ্রুত অ্যাক্সেস' : 'Quick Access'}
-                </span>
-              </div>
-              <div className="space-y-0.5">
-                {quickAccess.map((v) => {
-                  const Icon = iconMap[v.icon] || Star
-                  return (
-                    <NavLink
-                      key={v.path}
-                      to={v.path}
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[var(--text-primary)] hover:bg-[var(--brand-light)] transition-colors group"
-                    >
-                      <Icon size={13} className="text-[var(--brand)] shrink-0" />
-                      <span className="text-[0.625rem] truncate flex-1">{v.label}</span>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          toggleBookmark(v.path)
-                        }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-[var(--bg-primary)]"
-                      >
-                        <X size={10} className="text-[var(--text-muted)]" />
-                      </button>
-                    </NavLink>
-                  )
-                })}
-              </div>
+          <div className="px-3 py-2 border-t border-[var(--border)]">
+            <div className="flex items-center gap-1">
+              {quickAccess.map((v) => {
+                const Icon = iconMap[v.icon] || Star
+                return (
+                  <NavLink
+                    key={v.path}
+                    to={v.path}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--brand-light)] transition-colors relative group"
+                    onMouseEnter={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      setHoveredItem({ label: v.label, rect })
+                    }}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    <Icon size={15} className="text-[var(--brand)]" />
+                  </NavLink>
+                )
+              })}
             </div>
           </div>
         )}
