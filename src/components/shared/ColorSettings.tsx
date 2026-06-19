@@ -1,14 +1,37 @@
 import { useState } from 'react'
-import { RotateCcw, Palette } from 'lucide-react'
+import { RotateCcw, Palette, Check } from 'lucide-react'
 import type { ThemeColors } from '@/store/classStore'
 import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 
+interface Preset {
+  name: string
+  nameBn: string
+  brand: string
+  brand2: string
+  brandLight: string
+  brandLightDark: string
+}
+
+const presets: Preset[] = [
+  { name: 'Indigo', nameBn: 'ইন্ডিগো', brand: '#6366f1', brand2: '#818cf8', brandLight: '#eef2ff', brandLightDark: 'rgba(129,140,248,0.1)' },
+  { name: 'Blue', nameBn: 'নীল', brand: '#3b82f6', brand2: '#60a5fa', brandLight: '#eff6ff', brandLightDark: 'rgba(96,165,250,0.1)' },
+  { name: 'Cyan', nameBn: 'সায়ান', brand: '#06b6d4', brand2: '#22d3ee', brandLight: '#ecfeff', brandLightDark: 'rgba(34,211,238,0.1)' },
+  { name: 'Teal', nameBn: 'টিল', brand: '#14b8a6', brand2: '#2dd4bf', brandLight: '#f0fdfa', brandLightDark: 'rgba(45,212,191,0.1)' },
+  { name: 'Emerald', nameBn: 'পান্না', brand: '#10b981', brand2: '#34d399', brandLight: '#ecfdf5', brandLightDark: 'rgba(52,211,153,0.1)' },
+  { name: 'Green', nameBn: 'সবুজ', brand: '#22c55e', brand2: '#4ade80', brandLight: '#f0fdf4', brandLightDark: 'rgba(74,222,128,0.1)' },
+  { name: 'Amber', nameBn: 'অ্যাম্বার', brand: '#f59e0b', brand2: '#fbbf24', brandLight: '#fffbeb', brandLightDark: 'rgba(251,191,36,0.1)' },
+  { name: 'Orange', nameBn: 'কমলা', brand: '#f97316', brand2: '#fb923c', brandLight: '#fff7ed', brandLightDark: 'rgba(251,146,60,0.1)' },
+  { name: 'Rose', nameBn: 'গোলাপি', brand: '#f43f5e', brand2: '#fb7185', brandLight: '#fff1f2', brandLightDark: 'rgba(251,113,133,0.1)' },
+  { name: 'Pink', nameBn: 'গোলাপ', brand: '#ec4899', brand2: '#f472b6', brandLight: '#fdf2f8', brandLightDark: 'rgba(244,114,182,0.1)' },
+  { name: 'Purple', nameBn: 'বেগুনি', brand: '#a855f7', brand2: '#c084fc', brandLight: '#faf5ff', brandLightDark: 'rgba(192,132,252,0.1)' },
+  { name: 'Violet', nameBn: 'ভায়োলেট', brand: '#8b5cf6', brand2: '#a78bfa', brandLight: '#f5f3ff', brandLightDark: 'rgba(167,139,250,0.1)' },
+]
+
 interface ColorGroup {
   label: string
   labelBn: string
-  icon: string
   colors: { key: keyof ThemeColors; label: string; labelBn: string }[]
 }
 
@@ -16,7 +39,6 @@ const colorGroups: ColorGroup[] = [
   {
     label: 'Brand',
     labelBn: 'ব্র্যান্ড',
-    icon: '🎨',
     colors: [
       { key: 'brand', label: 'Primary', labelBn: 'প্রাথমিক' },
       { key: 'brand2', label: 'Secondary', labelBn: 'সেকেন্ডারি' },
@@ -26,7 +48,6 @@ const colorGroups: ColorGroup[] = [
   {
     label: 'Background',
     labelBn: 'ব্যাকগ্রাউন্ড',
-    icon: '🖥',
     colors: [
       { key: 'bgPrimary', label: 'Primary', labelBn: 'প্রাথমিক' },
       { key: 'bgSecondary', label: 'Secondary', labelBn: 'সেকেন্ডারি' },
@@ -38,7 +59,6 @@ const colorGroups: ColorGroup[] = [
   {
     label: 'Text',
     labelBn: 'টেক্সট',
-    icon: '✏',
     colors: [
       { key: 'textPrimary', label: 'Primary', labelBn: 'প্রাথমিক' },
       { key: 'textSecondary', label: 'Secondary', labelBn: 'সেকেন্ডারি' },
@@ -48,7 +68,6 @@ const colorGroups: ColorGroup[] = [
   {
     label: 'Border',
     labelBn: 'বর্ডার',
-    icon: '◻',
     colors: [
       { key: 'border', label: 'Default', labelBn: 'ডিফল্ট' },
       { key: 'border2', label: 'Strong', labelBn: 'শক্তিশালী' },
@@ -57,7 +76,6 @@ const colorGroups: ColorGroup[] = [
   {
     label: 'Teal',
     labelBn: 'টিল',
-    icon: '💧',
     colors: [
       { key: 'teal', label: 'Default', labelBn: 'ডিফল্ট' },
       { key: 'tealLight', label: 'Light', labelBn: 'হালকা' },
@@ -66,7 +84,6 @@ const colorGroups: ColorGroup[] = [
   {
     label: 'Green',
     labelBn: 'সবুজ',
-    icon: '✅',
     colors: [
       { key: 'green', label: 'Default', labelBn: 'ডিফল্ট' },
       { key: 'greenLight', label: 'Light', labelBn: 'হালকা' },
@@ -75,7 +92,6 @@ const colorGroups: ColorGroup[] = [
   {
     label: 'Red',
     labelBn: 'লাল',
-    icon: '🔴',
     colors: [
       { key: 'red', label: 'Default', labelBn: 'ডিফল্ট' },
       { key: 'redLight', label: 'Light', labelBn: 'হালকা' },
@@ -84,7 +100,6 @@ const colorGroups: ColorGroup[] = [
   {
     label: 'Amber',
     labelBn: 'অ্যাম্বার',
-    icon: '🟠',
     colors: [
       { key: 'amber', label: 'Default', labelBn: 'ডিফল্ট' },
       { key: 'amberLight', label: 'Light', labelBn: 'হালকা' },
@@ -93,7 +108,6 @@ const colorGroups: ColorGroup[] = [
   {
     label: 'Purple',
     labelBn: 'বেগুনি',
-    icon: '🟣',
     colors: [
       { key: 'purple', label: 'Default', labelBn: 'ডিফল্ট' },
       { key: 'purpleLight', label: 'Light', labelBn: 'হালকা' },
@@ -102,7 +116,6 @@ const colorGroups: ColorGroup[] = [
   {
     label: 'Cards',
     labelBn: 'কার্ড',
-    icon: '🃏',
     colors: [
       { key: 'cardBlue', label: 'Blue', labelBn: 'নীল' },
       { key: 'cardYellow', label: 'Yellow', labelBn: 'হলুদ' },
@@ -121,9 +134,20 @@ interface Props {
 export default function ColorSettings({ colors, onChange, isBn }: Props) {
   const theme = useAppStore((s) => s.theme)
   const isDark = theme === 'dark'
-  const [expandedGroup, setExpandedGroup] = useState<string | null>('Brand')
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
   const defaults = isDark ? defaultThemeColorsDark : defaultThemeColors
+
+  const activePreset = presets.find(
+    (p) => p.brand === colors.brand && p.brand2 === colors.brand2
+  )
+
+  const handlePresetClick = (preset: Preset) => {
+    const brandLight = isDark ? preset.brandLightDark : preset.brandLight
+    const updated = { ...colors, brand: preset.brand, brand2: preset.brand2, brandLight }
+    onChange(updated)
+    applyThemeColors(updated)
+  }
 
   const handleChange = (key: keyof ThemeColors, value: string) => {
     const updated = { ...colors, [key]: value }
@@ -158,7 +182,7 @@ export default function ColorSettings({ colors, onChange, isBn }: Props) {
               {isBn ? 'থিম রঙ কাস্টমাইজ' : 'Theme Color Customization'}
             </div>
             <div className="text-xs text-[var(--text-muted)] mt-0.5">
-              {isBn ? 'প্রতিটি রঙ পরিবর্তন করুন' : 'Change individual colors'}
+              {isBn ? 'প্রিসেট বেছে নিন বা আলাদাভাবে রঙ পরিবর্তন করুন' : 'Pick a preset or customize individually'}
             </div>
           </div>
         </div>
@@ -167,10 +191,53 @@ export default function ColorSettings({ colors, onChange, isBn }: Props) {
           className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--red)] transition-colors px-3 py-1.5 rounded-lg hover:bg-[var(--red-light)]"
         >
           <RotateCcw size={12} />
-          {isBn ? 'সব রিসেট' : 'Reset All'}
+          {isBn ? 'রিসেট' : 'Reset'}
         </button>
       </div>
 
+      {/* Presets */}
+      <div className="border border-[var(--border)] rounded-xl overflow-hidden">
+        <div className="px-4 py-2.5 bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+          <div className="text-xs font-semibold text-[var(--text-primary)]">
+            {isBn ? 'অ্যাকসেন্ট রঙ বাছাই করুন' : 'Pick Accent Color'}
+          </div>
+        </div>
+        <div className="p-3">
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            {presets.map((p) => {
+              const isActive = activePreset?.name === p.name
+              return (
+                <button
+                  key={p.name}
+                  onClick={() => handlePresetClick(p)}
+                  className={`relative flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all ${
+                    isActive
+                      ? 'border-[var(--brand)] bg-[var(--brand-light)]'
+                      : 'border-transparent hover:border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--surface-2)]'
+                  }`}
+                >
+                  <div className="relative">
+                    <div
+                      className="w-8 h-8 rounded-lg shadow-sm"
+                      style={{ background: p.brand }}
+                    />
+                    {isActive && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--brand)] flex items-center justify-center">
+                        <Check size={10} className="text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[0.625rem] font-medium text-[var(--text-secondary)]">
+                    {isBn ? p.nameBn : p.name}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Advanced color groups */}
       {colorGroups.map((group) => (
         <div key={group.label} className="border border-[var(--border)] rounded-xl overflow-hidden">
           <button
