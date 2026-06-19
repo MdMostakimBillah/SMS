@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useClassStore } from '@/store/classStore'
 import type { ThemeColors } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
@@ -43,6 +43,13 @@ export function applyThemeColors(colors: ThemeColors) {
     document.head.appendChild(styleEl)
   }
 
+  const theme = useAppStore.getState().theme
+  const isDark =
+    theme === 'dark' ||
+    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+
+  const selector = isDark ? "[data-theme='dark']" : ":root, [data-theme='light']"
+
   const cssVars = Object.entries(colors)
     .map(([key, value]) => {
       const cssVar = cssVarMap[key as keyof typeof cssVarMap]
@@ -54,7 +61,7 @@ export function applyThemeColors(colors: ThemeColors) {
     .filter(Boolean)
     .join('; ')
 
-  styleEl.textContent = `:root, [data-theme='light'], [data-theme='dark'] { ${cssVars} }`
+  styleEl.textContent = `${selector} { ${cssVars} }`
 }
 
 export function clearThemeColors() {
@@ -67,7 +74,6 @@ export function clearThemeColors() {
 export function useThemeColors() {
   const theme = useAppStore((s) => s.theme)
   const institution = useClassStore((s) => s.institution)
-  const appliedRef = useRef(false)
 
   useEffect(() => {
     const isDark =
@@ -77,7 +83,6 @@ export function useThemeColors() {
     const colors = isDark ? institution.darkColors : institution.lightColors
     if (colors) {
       applyThemeColors(colors)
-      appliedRef.current = true
     }
 
     if (theme === 'system') {

@@ -151,8 +151,8 @@ export default function ClassesPage() {
                 <button
                   onClick={() => {
                     setEditingInst(false)
-                    const theme = useAppStore.getState().theme
-                    const isDark = theme === 'dark'
+                    const currentTheme = useAppStore.getState().theme
+                    const isDark = currentTheme === 'dark' || (currentTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
                     applyThemeColors(isDark ? institution.darkColors : institution.lightColors)
                   }}
                   className="py-[0.375rem] px-3 rounded-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]"
