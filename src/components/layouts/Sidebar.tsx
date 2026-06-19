@@ -561,9 +561,9 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         <div
           className="fixed z-[9000] pointer-events-none"
           style={{
-            left: hoveredItem.rect.right + 12,
-            top: hoveredItem.rect.top + hoveredItem.rect.height / 2,
-            transform: 'translateY(-50%)',
+            left: hoveredItem.rect.left + hoveredItem.rect.width / 2,
+            top: hoveredItem.rect.top - 8,
+            transform: 'translate(-50%, -100%)',
             animation: 'tooltipIn 0.15s ease-out',
           }}
         >
@@ -580,25 +580,25 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
               {hoveredItem.label}
             </div>
             <div
-              className="absolute top-1/2 -translate-y-1/2"
+              className="absolute left-1/2 -translate-x-1/2"
               style={{
-                left: '-5px',
+                bottom: '-5px',
                 width: 0,
                 height: 0,
-                borderTop: '5px solid transparent',
-                borderBottom: '5px solid transparent',
-                borderRight: '5px solid var(--border)',
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+                borderTop: '5px solid var(--border)',
               }}
             />
             <div
-              className="absolute top-1/2 -translate-y-1/2"
+              className="absolute left-1/2 -translate-x-1/2"
               style={{
-                left: '-4px',
+                bottom: '-4px',
                 width: 0,
                 height: 0,
-                borderTop: '5px solid transparent',
-                borderBottom: '5px solid transparent',
-                borderRight: '5px solid var(--bg-primary)',
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+                borderTop: '5px solid var(--bg-primary)',
               }}
             />
           </div>
