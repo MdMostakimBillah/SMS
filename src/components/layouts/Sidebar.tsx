@@ -36,8 +36,6 @@ import {
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAppStore } from '@/store/appStore'
-import { useAdmissionStore } from '@/store/admissionStore'
-import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
@@ -75,8 +73,6 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const isBn = useBn()
   const { language, toggleSidebar, trackVisit, pageVisits, bookmarks, toggleBookmark, sidebarOrder, setSidebarOrder } = useAppStore()
   const { isMobile, width } = useWindowSize()
-  const allStudents = useAdmissionStore((s) => s.students)
-  const { teachers } = useTeacherStore()
   const location = useLocation()
   const { institution, switchSession, addSession } = useClassStore()
   const [showSessionDropdown, setShowSessionDropdown] = useState(false)
@@ -84,18 +80,6 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const asideRef = useRef<HTMLElement>(null)
   const [hoveredItem, setHoveredItem] = useState<{ label: string; rect: DOMRect } | null>(null)
-
-  const students = useMemo(
-    () => allStudents.filter((s) => s.academicYear === institution.currentSession && s.status === 'approved' && s.active !== false),
-    [allStudents, institution.currentSession]
-  )
-  const studentCount = students.length
-  const pendingCount = useMemo(
-    () => allStudents.filter((s) => s.academicYear === institution.currentSession && s.status === 'pending').length,
-    [allStudents, institution.currentSession]
-  )
-  const teacherCount = teachers.length
-  const activeTeacherCount = teachers.filter((t) => t.status === 'active').length
 
   // Responsive collapsed width and icon size
   const collapsedWidth = width >= 1280 ? '4.25rem' : width >= 1024 ? '3.75rem' : '3.25rem'
@@ -145,9 +129,9 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       key: 'grp_manage',
       items: [
         { key: 'nav_classes', page: '/classes', icon: 'school' },
-        { key: 'nav_teachers', page: '/teachers', icon: 'graduation-cap', badge: String(teacherCount), badgeColor: 'blue' as const },
-        { key: 'nav_students', page: '/students', icon: 'users', badge: String(studentCount), badgeColor: 'blue' as const },
-        { key: 'nav_hr', page: '/hr', icon: 'briefcase', badge: String(activeTeacherCount), badgeColor: 'blue' as const },
+        { key: 'nav_teachers', page: '/teachers', icon: 'graduation-cap' },
+        { key: 'nav_students', page: '/students', icon: 'users' },
+        { key: 'nav_hr', page: '/hr', icon: 'briefcase' },
       ],
     },
     {
@@ -180,7 +164,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     {
       key: 'grp_comm',
       items: [
-        { key: 'nav_messages', page: '/messages', icon: 'message-circle', badge: String(pendingCount), badgeColor: 'red' as const },
+        { key: 'nav_messages', page: '/messages', icon: 'message-circle' },
         { key: 'nav_notice', page: '/notice', icon: 'megaphone' },
         { key: 'nav_notifications', page: '/notifications', icon: 'bell' },
       ],
@@ -491,20 +475,9 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                     <IconComp size={navIconSize} className={`shrink-0 ${isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`} />
                     {!collapsed && (
                       <>
-                        <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                        <span className="flex-1">
                           {t(item.key as TranslationKey, language)}
                         </span>
-                        {item.badge && (
-                          <span
-                            className={`text-[0.5625rem] font-semibold px-1.5 py-px rounded-full shrink-0 ${
-                              item.badgeColor === 'red'
-                                ? 'bg-[var(--red-light)] text-[var(--red)]'
-                                : 'bg-[var(--brand-light)] text-[var(--brand)]'
-                            }`}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
                         <button
                           onClick={(e) => {
                             e.preventDefault()
