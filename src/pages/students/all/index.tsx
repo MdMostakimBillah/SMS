@@ -388,53 +388,53 @@ export default function AllStudentsPage() {
       {/* Top Section - fixed */}
       <div className="shrink-0">
         {/* Page header */}
-        <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
-          <button
-            onClick={() => navigate('/students')}
-            className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] shrink-0"
-          >
-            <ArrowLeft size={14} />
-            {isBn ? 'ফিরে যান' : 'Back'}
-          </button>
-          <div className="flex-1 min-w-0">
-            <h1 className={`${isMobile ? 'text-lg' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)]`}>
+        <div className="mb-4">
+          <div className="flex items-center gap-[0.625rem] mb-2">
+            <button
+              onClick={() => navigate('/students')}
+              className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] shrink-0"
+            >
+              <ArrowLeft size={14} />
+              {isBn ? 'ফিরে যান' : 'Back'}
+            </button>
+            <h1 className={`${isMobile ? 'text-lg' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)] flex-1 min-w-0`}>
               {isBn ? 'সকল ছাত্র' : 'All Students'}
             </h1>
-            <div className="flex items-center gap-1 mt-1.5 overflow-x-auto">
-              {[
-                { label: isBn ? 'মোট' : 'Total', value: stats.total, bg: 'var(--bg-secondary)', color: 'var(--text-secondary)' },
-                { label: isBn ? 'অনুমোদিত' : 'Approved', value: stats.approved, bg: 'var(--green-light)', color: 'var(--green)' },
-                { label: isBn ? 'অপেক্ষমান' : 'Pending', value: stats.pending, bg: 'var(--amber-light)', color: 'var(--amber)' },
-                { label: isBn ? 'প্রত্যাখ্যাত' : 'Rejected', value: stats.rejected, bg: 'var(--red-light)', color: 'var(--red)' },
-                { label: isBn ? 'ছেলে' : 'Male', value: stats.male, bg: 'var(--teal-light)', color: 'var(--teal)' },
-                { label: isBn ? 'মেয়ে' : 'Female', value: stats.female, bg: 'var(--purple-light)', color: 'var(--purple)' },
-              ].map((s) => (
-                <span
-                  key={s.label}
-                  className="inline-flex items-center gap-0.5 text-[0.625rem] font-medium px-1.5 py-0.5 rounded whitespace-nowrap"
-                  style={{ background: s.bg, color: s.color }}
-                >
-                  <span className="font-semibold">{s.value}</span>
-                  <span style={{ opacity: 0.8 }}>{s.label}</span>
-                </span>
-              ))}
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={() => navigate('/students/update')}
+                className="flex items-center gap-[0.3125rem] px-3 py-2 rounded-[0.5625rem] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.8125rem] cursor-pointer font-medium"
+              >
+                <Edit2 size={14} />
+                {!isMobile && (isBn ? 'আপডেট' : 'Update')}
+              </button>
+              <button
+                onClick={() => navigate('/students/bulk-update')}
+                className="flex items-center gap-[0.3125rem] px-3 py-2 rounded-[0.5625rem] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.8125rem] cursor-pointer font-medium"
+              >
+                <Layers size={14} />
+                {!isMobile && (isBn ? 'বাল্ক আপডেট' : 'Bulk Update')}
+              </button>
             </div>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => navigate('/students/update')}
-              className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-[0.5625rem] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.8125rem] cursor-pointer font-medium"
-            >
-              <Edit2 size={14} />
-              {isBn ? 'আপডেট' : 'Update'}
-            </button>
-            <button
-              onClick={() => navigate('/students/bulk-update')}
-              className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-[0.5625rem] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.8125rem] cursor-pointer font-medium"
-            >
-              <Layers size={14} />
-              {isBn ? 'বাল্ক আপডেট' : 'Bulk Update'}
-            </button>
+          <div className="flex items-center gap-1 overflow-x-auto">
+            {[
+              { label: isBn ? 'মোট' : 'Total', value: stats.total, bg: 'var(--bg-secondary)', color: 'var(--text-secondary)' },
+              { label: isBn ? 'অনুমোদিত' : 'Approved', value: stats.approved, bg: 'var(--green-light)', color: 'var(--green)' },
+              { label: isBn ? 'অপেক্ষমান' : 'Pending', value: stats.pending, bg: 'var(--amber-light)', color: 'var(--amber)' },
+              { label: isBn ? 'প্রত্যাখ্যাত' : 'Rejected', value: stats.rejected, bg: 'var(--red-light)', color: 'var(--red)' },
+              { label: isBn ? 'ছেলে' : 'Male', value: stats.male, bg: 'var(--teal-light)', color: 'var(--teal)' },
+              { label: isBn ? 'মেয়ে' : 'Female', value: stats.female, bg: 'var(--purple-light)', color: 'var(--purple)' },
+            ].map((s) => (
+              <span
+                key={s.label}
+                className="inline-flex items-center gap-0.5 text-[0.625rem] font-medium px-1.5 py-0.5 rounded whitespace-nowrap"
+                style={{ background: s.bg, color: s.color }}
+              >
+                <span className="font-semibold">{s.value}</span>
+                <span style={{ opacity: 0.8 }}>{s.label}</span>
+              </span>
+            ))}
           </div>
         </div>
 
