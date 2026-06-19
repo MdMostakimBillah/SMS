@@ -230,7 +230,7 @@ export default function AllStudentsPage() {
   const hasFilter = search || fClass || fSection || fGender || fStatus || fActive || fReligion || fBlood
 
   const sel =
-    'px-2 py-[0.4375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs outline-none cursor-pointer'
+    'w-full min-w-0 px-2 py-[0.4375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs outline-none cursor-pointer truncate'
 
   const statusBadge = (st: string, active?: boolean) => {
     const m: Record<string, { b: string; c: string; l: string; lb: string }> = {
@@ -417,7 +417,7 @@ export default function AllStudentsPage() {
               </button>
             </div>
           </div>
-          <div className="flex items-center gap-1 overflow-x-auto">
+          <div className="flex items-center gap-0.5 mt-1 overflow-x-auto">
             {[
               { label: isBn ? 'মোট' : 'Total', value: stats.total, bg: 'var(--bg-secondary)', color: 'var(--text-secondary)' },
               { label: isBn ? 'অনুমোদিত' : 'Approved', value: stats.approved, bg: 'var(--green-light)', color: 'var(--green)' },
@@ -428,11 +428,11 @@ export default function AllStudentsPage() {
             ].map((s) => (
               <span
                 key={s.label}
-                className="inline-flex items-center gap-0.5 text-[0.625rem] font-medium px-1.5 py-0.5 rounded whitespace-nowrap"
+                className="inline-flex items-center gap-0.5 text-[0.5625rem] font-medium px-1 py-0.5 rounded whitespace-nowrap"
                 style={{ background: s.bg, color: s.color }}
               >
                 <span className="font-semibold">{s.value}</span>
-                <span style={{ opacity: 0.8 }}>{s.label}</span>
+                <span>{s.label}</span>
               </span>
             ))}
           </div>
