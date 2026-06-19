@@ -10,7 +10,6 @@ import {
   ArrowRight,
   Layers,
   Briefcase,
-  GripVertical,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -425,28 +424,9 @@ export default function TeachersPage() {
                   justifyContent: 'center',
                   flexShrink: 0,
                   marginBottom: isMobile ? '0' : '0.625rem',
-                  position: 'relative',
                 }}
               >
                 <IconComp size={isMobile ? 21 : 19} style={{ color: opt.iconColor }} />
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: -4,
-                    right: -4,
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: 0.6,
-                  }}
-                >
-                  <GripVertical size={10} style={{ color: 'var(--text-muted)' }} />
-                </div>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
