@@ -31,6 +31,7 @@ import {
   Check,
   X,
   Star,
+  GripVertical,
   type LucideIcon,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -73,7 +74,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const isBn = useBn()
-  const { language, toggleSidebar, trackVisit, pageVisits, bookmarks, toggleBookmark } = useAppStore()
+  const { language, toggleSidebar, trackVisit, pageVisits, bookmarks, toggleBookmark, sidebarOrder, setSidebarOrder } = useAppStore()
   const { isMobile, width } = useWindowSize()
   const allStudents = useAdmissionStore((s) => s.students)
   const { teachers } = useTeacherStore()
@@ -207,6 +208,79 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       ],
     },
   ]
+
+  // Apply custom sidebar order
+  type NavItem = { key: string; page: string }
+  const orderedNavGroups = useMemo(() => {
+    if (sidebarOrder.length === 0) return navGroups
+
+    const orderMap = new Map(sidebarOrder.map((item, idx) => [item.page, idx]))
+
+    return navGroups.map((group) => ({
+      ...group,
+      items: [...group.items].sort((a, b) => {
+        const aIdx = orderMap.get(a.page) ?? 999
+        const bIdx = orderMap.get(b.page) ?? 999
+        return aIdx - bIdx
+      }),
+    }))
+  }, [navGroups, sidebarOrder])
+
+  // Drag and drop state
+  const [draggedItem, setDraggedItem] = useState<string | null>(null)
+  const [dragOverItem, setDragOverItem] = useState<string | null>(null)
+
+  const handleDragStart = (e: React.DragEvent, page: string) => {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', page)
+    setDraggedItem(page)
+  }
+
+  const handleDragOver = (e: React.DragEvent, page: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverItem(page)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverItem(null)
+  }
+
+  const handleDrop = (e: React.DragEvent, targetPage: string) => {
+    e.preventDefault()
+    const sourcePage = e.dataTransfer.getData('text/plain')
+    if (!sourcePage || sourcePage === targetPage) {
+      setDraggedItem(null)
+      setDragOverItem(null)
+      return
+    }
+
+    // Build flat list of all items in current order
+    const allItems: NavItem[] = []
+    orderedNavGroups.forEach((g) =>
+      g.items.forEach((item) => allItems.push({ key: item.key, page: item.page }))
+    )
+
+    const srcIdx = allItems.findIndex((i) => i.page === sourcePage)
+    const tgtIdx = allItems.findIndex((i) => i.page === targetPage)
+    if (srcIdx === -1 || tgtIdx === -1) {
+      setDraggedItem(null)
+      setDragOverItem(null)
+      return
+    }
+
+    const [moved] = allItems.splice(srcIdx, 1)
+    allItems.splice(tgtIdx, 0, moved)
+
+    setSidebarOrder(allItems)
+    setDraggedItem(null)
+    setDragOverItem(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedItem(null)
+    setDragOverItem(null)
+  }
 
   // Flat map for looking up nav item info by path
   const navItemsMap = useMemo(() => {
@@ -374,7 +448,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
 
         {/* Nav */}
         <nav className={`flex-1 overflow-y-auto overflow-x-auto ${collapsed ? 'px-1 py-2.5' : 'px-2 py-2.5'}`}>
-          {navGroups.map((group) => (
+          {orderedNavGroups.map((group) => (
             <div key={group.key} className={collapsed ? 'mb-2' : 'mb-4'}>
               {!collapsed && (
                 <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider px-2 mb-1">
@@ -387,10 +461,18 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                 const IconComp = iconMap[item.icon] || LayoutDashboard
                 const isBookmarked = bookmarks.includes(item.page)
                 const atMaxBookmarks = bookmarks.length >= 5 && !isBookmarked
+                const isDragging = draggedItem === item.page
+                const isDragOver = dragOverItem === item.page
                 return (
                   <NavLink
                     key={item.page}
                     to={item.page}
+                    draggable={!collapsed}
+                    onDragStart={(e) => handleDragStart(e, item.page)}
+                    onDragOver={(e) => handleDragOver(e, item.page)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, item.page)}
+                    onDragEnd={handleDragEnd}
                     onClick={() => { if (isMobile) toggleSidebar() }}
                     className={`flex items-center gap-2 rounded-lg mb-0.5 text-xs no-underline transition-all duration-150 relative group ${
                       collapsed ? 'px-0 py-2 justify-center' : 'px-2.5 py-2'
@@ -398,7 +480,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                       isActive
                         ? 'bg-[var(--brand-light)] text-[var(--brand)] font-medium'
                         : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]'
-                    }`}
+                    } ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'border-t-2 border-[var(--brand)]' : ''}`}
                     onMouseEnter={(e) => {
                       if (collapsed) {
                         const rect = e.currentTarget.getBoundingClientRect()
@@ -407,6 +489,11 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                     }}
                     onMouseLeave={() => setHoveredItem(null)}
                   >
+                    {!collapsed && (
+                      <span className="cursor-grab active:cursor-grabbing text-[var(--text-muted)] opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity shrink-0 -ml-1">
+                        <GripVertical size={12} />
+                      </span>
+                    )}
                     <IconComp size={navIconSize} className={`shrink-0 ${isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`} />
                     {!collapsed && (
                       <>

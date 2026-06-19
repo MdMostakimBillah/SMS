@@ -9,6 +9,11 @@ interface PageVisit {
   count: number
 }
 
+interface SidebarItem {
+  key: string
+  page: string
+}
+
 interface AppState {
   theme: Theme
   language: Language
@@ -17,6 +22,7 @@ interface AppState {
   commandPaletteOpen: boolean
   pageVisits: PageVisit[]
   bookmarks: string[]
+  sidebarOrder: SidebarItem[]
   setTheme: (theme: Theme) => void
   setLanguage: (language: Language) => void
   toggleSidebar: () => void
@@ -25,6 +31,7 @@ interface AppState {
   trackVisit: (path: string, label: string, icon: string) => void
   toggleBookmark: (path: string) => void
   removeBookmark: (path: string) => void
+  setSidebarOrder: (order: SidebarItem[]) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -37,6 +44,7 @@ export const useAppStore = create<AppState>()(
       commandPaletteOpen: false,
       pageVisits: [],
       bookmarks: [],
+      sidebarOrder: [],
 
       setTheme: (theme) => {
         set({ theme })
@@ -86,6 +94,8 @@ export const useAppStore = create<AppState>()(
           bookmarks: state.bookmarks.filter((p) => p !== path),
           pageVisits: state.pageVisits.filter((v) => v.path !== path),
         })),
+
+      setSidebarOrder: (order) => set({ sidebarOrder: order }),
     }),
     {
       name: 'edutech-settings',
@@ -94,6 +104,7 @@ export const useAppStore = create<AppState>()(
         language: state.language,
         pageVisits: state.pageVisits,
         bookmarks: state.bookmarks,
+        sidebarOrder: state.sidebarOrder,
       }),
     }
   )
