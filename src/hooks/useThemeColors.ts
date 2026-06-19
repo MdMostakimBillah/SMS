@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useClassStore } from '@/store/classStore'
 import type { ThemeColors } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
@@ -33,26 +33,41 @@ const cssVarMap: Record<keyof import('@/store/classStore').ThemeColors, string> 
   cardPurple: '--card-purple',
 }
 
+const STYLE_ID = 'edutech-custom-colors'
+
 export function applyThemeColors(colors: ThemeColors) {
-  const root = document.documentElement
-  Object.entries(colors).forEach(([key, value]) => {
-    const cssVar = cssVarMap[key as keyof typeof cssVarMap]
-    if (cssVar && value) {
-      root.style.setProperty(cssVar, value)
-    }
-  })
+  let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement
+  if (!styleEl) {
+    styleEl = document.createElement('style')
+    styleEl.id = STYLE_ID
+    document.head.appendChild(styleEl)
+  }
+
+  const cssVars = Object.entries(colors)
+    .map(([key, value]) => {
+      const cssVar = cssVarMap[key as keyof typeof cssVarMap]
+      if (cssVar && value) {
+        return `${cssVar}: ${value} !important`
+      }
+      return null
+    })
+    .filter(Boolean)
+    .join('; ')
+
+  styleEl.textContent = `:root, [data-theme='light'], [data-theme='dark'] { ${cssVars} }`
 }
 
 export function clearThemeColors() {
-  const root = document.documentElement
-  Object.values(cssVarMap).forEach((cssVar) => {
-    root.style.removeProperty(cssVar)
-  })
+  const styleEl = document.getElementById(STYLE_ID)
+  if (styleEl) {
+    styleEl.remove()
+  }
 }
 
 export function useThemeColors() {
   const theme = useAppStore((s) => s.theme)
   const institution = useClassStore((s) => s.institution)
+  const appliedRef = useRef(false)
 
   useEffect(() => {
     const isDark =
@@ -62,6 +77,7 @@ export function useThemeColors() {
     const colors = isDark ? institution.darkColors : institution.lightColors
     if (colors) {
       applyThemeColors(colors)
+      appliedRef.current = true
     }
 
     if (theme === 'system') {
