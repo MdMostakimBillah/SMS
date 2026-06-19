@@ -543,6 +543,31 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
             </div>
           </div>
         )}
+
+        {/* Collapsed Quick Access */}
+        {collapsed && quickAccess.length > 0 && (
+          <div className="px-1 pb-2 border-t border-[var(--border)] pt-2">
+            <div className="flex flex-col items-center gap-1">
+              {quickAccess.map((v) => {
+                const Icon = iconMap[v.icon]
+                return (
+                  <NavLink
+                    key={v.path}
+                    to={v.path}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--brand-light)] transition-colors relative group"
+                    onMouseEnter={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      setHoveredItem({ label: v.label, rect })
+                    }}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    {Icon && <Icon size={15} className="text-[var(--brand)]" />}
+                  </NavLink>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </aside>
 
       {/* Tooltip */}
