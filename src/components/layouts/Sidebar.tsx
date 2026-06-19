@@ -445,7 +445,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                 const isActive = location.pathname === item.page || location.pathname.startsWith(item.page + '/')
                 const IconComp = iconMap[item.icon] || LayoutDashboard
                 const isBookmarked = bookmarks.includes(item.page)
-                const atMaxBookmarks = bookmarks.length >= 5 && !isBookmarked
+                const atMaxBookmarks = bookmarks.length >= 6 && !isBookmarked
                 const isDragging = draggedItem === item.page
                 const isDragOver = dragOverItem === item.page
                 return (
