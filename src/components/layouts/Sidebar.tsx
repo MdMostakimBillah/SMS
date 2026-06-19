@@ -517,14 +517,14 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
               </div>
               <div className="space-y-0.5">
                 {quickAccess.map((v) => {
-                  const Icon = iconMap[v.icon]
+                  const Icon = iconMap[v.icon] || Star
                   return (
                     <NavLink
                       key={v.path}
                       to={v.path}
                       className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[var(--text-primary)] hover:bg-[var(--brand-light)] transition-colors group"
                     >
-                      {Icon && <Icon size={13} className="text-[var(--brand)] shrink-0" />}
+                      <Icon size={13} className="text-[var(--brand)] shrink-0" />
                       <span className="text-[0.625rem] truncate flex-1">{v.label}</span>
                       <button
                         onClick={(e) => {
@@ -549,7 +549,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
           <div className="px-1 pb-2 border-t border-[var(--border)] pt-2">
             <div className="flex flex-col items-center gap-1">
               {quickAccess.map((v) => {
-                const Icon = iconMap[v.icon]
+                const Icon = iconMap[v.icon] || Star
                 return (
                   <NavLink
                     key={v.path}
@@ -561,7 +561,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                     }}
                     onMouseLeave={() => setHoveredItem(null)}
                   >
-                    {Icon && <Icon size={15} className="text-[var(--brand)]" />}
+                    <Icon size={15} className="text-[var(--brand)]" />
                   </NavLink>
                 )
               })}
