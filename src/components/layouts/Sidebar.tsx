@@ -31,7 +31,6 @@ import {
   Check,
   X,
   Star,
-  GripVertical,
   type LucideIcon,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -489,11 +488,6 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                     }}
                     onMouseLeave={() => setHoveredItem(null)}
                   >
-                    {!collapsed && (
-                      <span className="cursor-grab active:cursor-grabbing text-[var(--text-muted)] opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity shrink-0 -ml-1">
-                        <GripVertical size={12} />
-                      </span>
-                    )}
                     <IconComp size={navIconSize} className={`shrink-0 ${isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`} />
                     {!collapsed && (
                       <>
