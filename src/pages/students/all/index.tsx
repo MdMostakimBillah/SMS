@@ -400,21 +400,22 @@ export default function AllStudentsPage() {
             <h1 className={`${isMobile ? 'text-lg' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)]`}>
               {isBn ? 'সকল ছাত্র' : 'All Students'}
             </h1>
-            <div className="flex flex-wrap gap-1 mt-1">
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
               {[
-                { label: isBn ? 'মোট' : 'Total', value: stats.total },
-                { label: isBn ? 'অনুমোদিত' : 'Approved', value: stats.approved, color: 'var(--green)' },
-                { label: isBn ? 'অপেক্ষমান' : 'Pending', value: stats.pending, color: 'var(--amber)' },
-                { label: isBn ? 'প্রত্যাখ্যাত' : 'Rejected', value: stats.rejected, color: 'var(--red)' },
-                { label: isBn ? 'ছেলে' : 'Male', value: stats.male, color: 'var(--teal)' },
-                { label: isBn ? 'মেয়ে' : 'Female', value: stats.female, color: 'var(--purple)' },
+                { label: isBn ? 'মোট' : 'Total', value: stats.total, bg: 'var(--bg-secondary)', color: 'var(--text-secondary)' },
+                { label: isBn ? 'অনুমোদিত' : 'Approved', value: stats.approved, bg: 'var(--green-light)', color: 'var(--green)' },
+                { label: isBn ? 'অপেক্ষমান' : 'Pending', value: stats.pending, bg: 'var(--amber-light)', color: 'var(--amber)' },
+                { label: isBn ? 'প্রত্যাখ্যাত' : 'Rejected', value: stats.rejected, bg: 'var(--red-light)', color: 'var(--red)' },
+                { label: isBn ? 'ছেলে' : 'Male', value: stats.male, bg: 'var(--teal-light)', color: 'var(--teal)' },
+                { label: isBn ? 'মেয়ে' : 'Female', value: stats.female, bg: 'var(--purple-light)', color: 'var(--purple)' },
               ].map((s) => (
                 <span
                   key={s.label}
-                  className={`text-xs whitespace-nowrap ${s.color ? 'font-semibold' : ''}`}
-                  style={{ color: s.color || 'var(--text-secondary)' }}
+                  className="inline-flex items-center gap-1 text-[0.6875rem] font-medium px-2 py-0.5 rounded-md"
+                  style={{ background: s.bg, color: s.color }}
                 >
-                  {s.label} {s.value}
+                  <span className="font-semibold">{s.value}</span>
+                  <span style={{ opacity: 0.8 }}>{s.label}</span>
                 </span>
               ))}
             </div>

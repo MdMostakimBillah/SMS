@@ -471,19 +471,20 @@ ${photoHtml}
             <h1 className={`${isMobile ? 'text-lg' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)]`}>
               {isBn ? 'সকল শিক্ষক' : 'All Teachers'}
             </h1>
-            <div className="flex flex-wrap gap-1 mt-1">
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
               {[
-                { label: isBn ? 'মোট' : 'Total', value: stats.total },
-                { label: isBn ? 'সক্রিয়' : 'Active', value: stats.active, color: 'var(--green)' },
-                { label: isBn ? 'নিষ্ক্রিয়' : 'Inactive', value: stats.inactive, color: 'var(--red)' },
-                { label: isBn ? 'ছুটিতে' : 'On Leave', value: stats.onLeave, color: 'var(--amber)' },
+                { label: isBn ? 'মোট' : 'Total', value: stats.total, bg: 'var(--bg-secondary)', color: 'var(--text-secondary)' },
+                { label: isBn ? 'সক্রিয়' : 'Active', value: stats.active, bg: 'var(--green-light)', color: 'var(--green)' },
+                { label: isBn ? 'নিষ্ক্রিয়' : 'Inactive', value: stats.inactive, bg: 'var(--red-light)', color: 'var(--red)' },
+                { label: isBn ? 'ছুটিতে' : 'On Leave', value: stats.onLeave, bg: 'var(--amber-light)', color: 'var(--amber)' },
               ].map((s) => (
                 <span
                   key={s.label}
-                  className={`text-xs whitespace-nowrap ${s.color ? 'font-semibold' : ''}`}
-                  style={{ color: s.color || 'var(--text-secondary)' }}
+                  className="inline-flex items-center gap-1 text-[0.6875rem] font-medium px-2 py-0.5 rounded-md"
+                  style={{ background: s.bg, color: s.color }}
                 >
-                  {s.label} {s.value}
+                  <span className="font-semibold">{s.value}</span>
+                  <span style={{ opacity: 0.8 }}>{s.label}</span>
                 </span>
               ))}
             </div>
