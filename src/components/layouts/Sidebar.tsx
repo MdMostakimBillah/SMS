@@ -557,7 +557,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       </aside>
 
       {/* Tooltip */}
-      {collapsed && hoveredItem && (
+      {hoveredItem && (
         <div
           className="fixed z-[9000] pointer-events-none"
           style={{
