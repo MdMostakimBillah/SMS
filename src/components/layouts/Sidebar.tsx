@@ -292,7 +292,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     }
   }, [location.pathname, navItemsMap])
 
-  // Only manually bookmarked pages (max 4)
+  // Only manually bookmarked pages (max 5)
   const quickAccess = useMemo(() => {
     return pageVisits.filter((v) => bookmarks.includes(v.path)).slice(0, 5)
   }, [pageVisits, bookmarks])
@@ -489,7 +489,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                           className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-[var(--bg-primary)] shrink-0 ${
                             isBookmarked ? '!opacity-100' : ''
                           } ${atMaxBookmarks ? 'cursor-not-allowed' : ''}`}
-                          title={isBookmarked ? (isBn ? 'বুকমার্ক সরান' : 'Remove bookmark') : atMaxBookmarks ? (isBn ? 'সর্বোচ্চ ৪টি বুকমার্ক যোগ করা যাবে' : 'Max 4 bookmarks allowed') : (isBn ? 'বুকমার্ক যোগ করুন' : 'Add bookmark')}
+                          title={isBookmarked ? (isBn ? 'বুকমার্ক সরান' : 'Remove bookmark') : atMaxBookmarks ? (isBn ? 'সর্বোচ্চ ৫টি বুকমার্ক যোগ করা যাবে' : 'Max 5 bookmarks allowed') : (isBn ? 'বুকমার্ক যোগ করুন' : 'Add bookmark')}
                         >
                           <Star
                             size={12}
@@ -508,7 +508,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         {/* Bottom - Quick Access */}
         {!collapsed && quickAccess.length > 0 && (
           <div className="px-3 py-2 border-t border-[var(--border)]">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center justify-center gap-1">
               {quickAccess.map((v) => {
                 const Icon = iconMap[v.icon] || Star
                 return (
