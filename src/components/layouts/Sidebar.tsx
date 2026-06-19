@@ -144,9 +144,9 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     {
       key: 'grp_manage',
       items: [
-        { key: 'nav_students', page: '/students', icon: 'users', badge: String(studentCount), badgeColor: 'blue' as const },
-        { key: 'nav_teachers', page: '/teachers', icon: 'graduation-cap', badge: String(teacherCount), badgeColor: 'blue' as const },
         { key: 'nav_classes', page: '/classes', icon: 'school' },
+        { key: 'nav_teachers', page: '/teachers', icon: 'graduation-cap', badge: String(teacherCount), badgeColor: 'blue' as const },
+        { key: 'nav_students', page: '/students', icon: 'users', badge: String(studentCount), badgeColor: 'blue' as const },
         { key: 'nav_hr', page: '/hr', icon: 'briefcase', badge: String(activeTeacherCount), badgeColor: 'blue' as const },
       ],
     },
