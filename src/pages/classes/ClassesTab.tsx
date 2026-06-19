@@ -507,7 +507,7 @@ export default function ClassesTab({
                       value={classNameForm.name}
                       onChange={(e) => setClassNameForm((p) => ({ ...p, name: e.target.value }))}
                       className={inputClass}
-                      style={{ fontSize: '0.8125rem', padding: '4px 8px', flex: 1 }}
+                      style={{ fontSize: '0.8125rem', padding: '0.4375rem 0.6875rem', flex: 1 }}
                       placeholder="Class Name"
                       onKeyDown={(e) => { if (e.key === 'Enter') handleSaveClassName(cls.id); if (e.key === 'Escape') setEditingClassName(null) }}
                     />
@@ -515,7 +515,7 @@ export default function ClassesTab({
                       value={classNameForm.nameBn}
                       onChange={(e) => setClassNameForm((p) => ({ ...p, nameBn: e.target.value }))}
                       className={inputClass}
-                      style={{ fontSize: '0.8125rem', padding: '4px 8px', flex: 1 }}
+                      style={{ fontSize: '0.8125rem', padding: '0.4375rem 0.6875rem', flex: 1 }}
                       placeholder="নাম (বাং)"
                       onKeyDown={(e) => { if (e.key === 'Enter') handleSaveClassName(cls.id); if (e.key === 'Escape') setEditingClassName(null) }}
                     />
