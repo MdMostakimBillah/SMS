@@ -385,40 +385,42 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
             {showSessionDropdown && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-[0.625rem] shadow-lg z-[60] overflow-hidden">
                 <div className="px-2.5 py-2 border-b border-[var(--border)]">
-                  <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1">
+                  <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1.5">
                     {isBn ? 'সেশন পরিবর্তন' : 'Switch Session'}
                   </div>
-                  {institution.sessions.map((s) => (
-                    <div
-                      key={s}
-                      onClick={() => handleSwitchSession(s)}
-                      className={`flex items-center justify-between px-2 py-1.5 rounded-[0.375rem] cursor-pointer text-[0.6875rem] ${
-                        s === institution.currentSession
-                          ? 'bg-[var(--brand-light)] text-[var(--brand)] font-semibold'
-                          : 'text-[var(--text-secondary)]'
-                      }`}
-                    >
-                      {s}
-                      {s === institution.currentSession && <Check size={12} />}
-                    </div>
-                  ))}
+                  <div className="flex flex-col gap-0.5">
+                    {institution.sessions.map((s) => (
+                      <div
+                        key={s}
+                        onClick={() => handleSwitchSession(s)}
+                        className={`flex items-center justify-between px-2 py-1.5 rounded-[0.375rem] cursor-pointer text-[0.6875rem] ${
+                          s === institution.currentSession
+                            ? 'bg-[var(--brand-light)] text-[var(--brand)] font-semibold'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
+                        }`}
+                      >
+                        {s}
+                        {s === institution.currentSession && <Check size={12} />}
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="px-2.5 py-2">
-                  <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1">
+                  <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1.5">
                     {isBn ? 'নতুন সেশন' : 'New Session'}
                   </div>
-                  <div className="flex gap-1 items-center">
+                  <div className="flex gap-1 items-stretch">
                     <input
                       value={newSession}
                       onChange={(e) => setNewSession(e.target.value)}
                       placeholder="e.g. 2026-27"
                       onKeyDown={(e) => e.key === 'Enter' && handleAddSession()}
-                      className="flex-1 min-w-0 px-2 py-1 rounded-[0.375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
+                      className="flex-1 min-w-0 px-2 py-1 rounded-l-[0.375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
                     />
                     <button
                       onClick={handleAddSession}
                       disabled={!newSession.trim() || institution.sessions.includes(newSession.trim())}
-                      className="shrink-0 px-2 py-1 rounded-[0.375rem] border-none bg-[var(--brand)] text-white text-[0.625rem] font-semibold cursor-pointer disabled:opacity-50"
+                      className="shrink-0 px-2.5 py-1 rounded-r-[0.375rem] border-none bg-[var(--brand)] text-white text-[0.625rem] font-semibold cursor-pointer disabled:opacity-50"
                     >
                       {isBn ? 'যোগ' : 'Add'}
                     </button>
