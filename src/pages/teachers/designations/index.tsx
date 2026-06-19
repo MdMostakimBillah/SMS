@@ -148,13 +148,35 @@ export default function DesignationsPage() {
       {/* Header */}
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
-          onClick={() => navigate('/teachers')}
+          onClick={() => {
+            const prev = localStorage.getItem('edutech_prevPath')
+            navigate(prev || '/teachers')
+            localStorage.removeItem('edutech_prevPath')
+          }}
           className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div className="flex-1">
+          {/* Breadcrumb */}
+          {localStorage.getItem('edutech_prevPath') && (
+            <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1">
+              <button
+                onClick={() => {
+                  navigate('/teachers/add')
+                  localStorage.removeItem('edutech_prevPath')
+                }}
+                className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
+              >
+                {isBn ? 'শিক্ষক যোগ' : 'Add Teacher'}
+              </button>
+              <span className="text-[var(--text-muted)]">›</span>
+              <span className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--brand)] text-white font-medium">
+                {isBn ? 'পদবি' : 'Designations'}
+              </span>
+            </div>
+          )}
           <h1 className="text-[1.375rem] font-semibold text-[var(--text-primary)]">{isBn ? 'পদবি ব্যবস্থাপনা' : 'Designations'}</h1>
           <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {isBn ? `মোট ${designations.length} টি পদবি` : `${designations.length} designations`}

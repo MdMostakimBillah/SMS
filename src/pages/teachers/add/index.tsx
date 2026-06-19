@@ -8,6 +8,7 @@ import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 const CATEGORIES = ['Teacher', 'Staff', 'Employee', 'Admin', 'Librarian', 'Accountant']
+const inputClass = 'w-full h-[2.75rem] px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-sm)] transition-all duration-200'
 
 // ─── FormField (outside parent component — fixes input focus loss) ───────────
 interface FieldProps {
@@ -470,27 +471,86 @@ export default function AddTeacherPage() {
       <div className={card}>
         {sHead(<Briefcase />, 'পেশাদার তথ্য', 'Professional Information', 'var(--amber)', 'var(--amber-light)')}
         <div className={g(3)}>
-          <FormField
-            labelEn="Department"
-            labelBn="বিভাগ"
-            value={departments.find((d) => d.id === departmentId)?.name || ''}
-            onChange={(v) => {
-              const dept = departments.find((d) => d.name === v)
-              setDepartmentId(dept?.id || '')
-              setSubjectIds([])
-            }}
-            required
-            isBn={isBn}
-            options={departments.map((d) => d.name)}
-          />
-          <FormField
-            labelEn="Designation"
-            labelBn="পদবি"
-            value={designation}
-            onChange={setDesignation}
-            isBn={isBn}
-            options={designations.map((d) => d.name)}
-          />
+          {/* Department Field */}
+          <div className="mb-[0.625rem]">
+            <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
+              {isBn ? 'বিভাগ' : 'Department'}
+              <span className="text-[var(--red)] ml-0.5">*</span>
+            </label>
+            {departments.length === 0 ? (
+              <div className="flex items-center gap-2">
+                <input
+                  value=""
+                  disabled
+                  placeholder={isBn ? 'কোনো বিভাগ নেই' : 'No departments'}
+                  className={inputClass}
+                  style={{ flex: 1, opacity: 0.6 }}
+                />
+                <button
+                  onClick={() => {
+                    localStorage.setItem('edutech_prevPath', '/teachers/add')
+                    navigate('/teachers/departments')
+                  }}
+                  className="py-[0.5rem] px-[0.75rem] rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none whitespace-nowrap"
+                >
+                  {isBn ? 'বিভাগ তৈরি করুন →' : 'Create Dept →'}
+                </button>
+              </div>
+            ) : (
+              <select
+                value={departmentId}
+                onChange={(e) => {
+                  setDepartmentId(e.target.value)
+                  setSubjectIds([])
+                }}
+                required
+                className={inputClass}
+              >
+                <option value="">{isBn ? '-- নির্বাচন করুন --' : '-- Select --'}</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>{isBn ? d.nameBn : d.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Designation Field */}
+          <div className="mb-[0.625rem]">
+            <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
+              {isBn ? 'পদবি' : 'Designation'}
+            </label>
+            {designations.length === 0 ? (
+              <div className="flex items-center gap-2">
+                <input
+                  value=""
+                  disabled
+                  placeholder={isBn ? 'কোনো পদবি নেই' : 'No designations'}
+                  className={inputClass}
+                  style={{ flex: 1, opacity: 0.6 }}
+                />
+                <button
+                  onClick={() => {
+                    localStorage.setItem('edutech_prevPath', '/teachers/add')
+                    navigate('/teachers/designations')
+                  }}
+                  className="py-[0.5rem] px-[0.75rem] rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none whitespace-nowrap"
+                >
+                  {isBn ? 'পদবি তৈরি করুন →' : 'Create Designation →'}
+                </button>
+              </div>
+            ) : (
+              <select
+                value={designation}
+                onChange={(e) => setDesignation(e.target.value)}
+                className={inputClass}
+              >
+                <option value="">{isBn ? '-- নির্বাচন করুন --' : '-- Select --'}</option>
+                {designations.map((d) => (
+                  <option key={d.id} value={d.name}>{isBn ? d.nameBn : d.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
           <FormField
             labelEn="Category"
             labelBn="ক্যাটাগরি"

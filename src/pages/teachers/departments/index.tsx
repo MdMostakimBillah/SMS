@@ -183,22 +183,15 @@ export default function DepartmentsPage() {
             <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1">
               <button
                 onClick={() => {
-                  navigate('/classes')
+                  const prev = localStorage.getItem('edutech_prevPath')
+                  navigate(prev || '/teachers')
                   localStorage.removeItem('edutech_prevPath')
                 }}
                 className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
               >
-                {isBn ? 'শ্রেণী ব্যবস্থাপনা' : 'Classes Management'}
-              </button>
-              <span className="text-[var(--text-muted)]">›</span>
-              <button
-                onClick={() => {
-                  localStorage.setItem('edutech_prevPath', '/classes')
-                  navigate('/teachers/subjects')
-                }}
-                className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
-              >
-                {isBn ? 'বিষয়' : 'Subjects'}
+                {localStorage.getItem('edutech_prevPath') === '/teachers/add'
+                  ? (isBn ? 'শিক্ষক যোগ' : 'Add Teacher')
+                  : (isBn ? 'বিষয়' : 'Subjects')}
               </button>
               <span className="text-[var(--text-muted)]">›</span>
               <span className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--brand)] text-white font-medium">
