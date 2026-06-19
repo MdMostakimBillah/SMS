@@ -199,7 +199,11 @@ export default function SubjectsPage() {
       {/* Header */}
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
-          onClick={() => navigate('/teachers')}
+          onClick={() => {
+            const prev = localStorage.getItem('edutech_prevPath')
+            navigate(prev || '/teachers')
+            localStorage.removeItem('edutech_prevPath')
+          }}
           className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
         >
           <ArrowLeft size={14} />
@@ -278,6 +282,22 @@ export default function SubjectsPage() {
                   <td colSpan={6} className="p-10 text-center text-[var(--text-muted)]">
                     <BookOpen size={28} className="block mx-auto mb-2 opacity-30" />
                     {isBn ? 'কোনো বিষয় পাওয়া যায়নি' : 'No subjects found'}
+                    {departments.length === 0 && (
+                      <div className="mt-3">
+                        <p className="text-[0.75rem] text-[var(--text-secondary)] mb-2">
+                          {isBn ? 'প্রথমে বিভাগ তৈরি করুন' : 'Create departments first'}
+                        </p>
+                        <button
+                          onClick={() => {
+                            localStorage.setItem('edutech_prevPath', '/teachers/subjects')
+                            navigate('/teachers/departments')
+                          }}
+                          className="py-2 px-4 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none"
+                        >
+                          {isBn ? 'বিভাগ তৈরি করুন →' : 'Create Departments →'}
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ) : (
