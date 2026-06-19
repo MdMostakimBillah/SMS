@@ -442,11 +442,8 @@ export default function AllStudentsPage() {
         <div className="sticky top-0 z-50 pt-0.5 pb-1" style={{ background: 'transparent' }}>
           {/* Filters */}
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[0.875rem] mb-2.5">
-            <div
-              className="grid gap-2"
-              style={{ gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(160px, 1fr))' }}
-            >
-              <div className="flex items-center gap-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-[0.625rem] py-[0.4375rem]">
+            <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+              <div className="col-span-2 flex items-center gap-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-[0.625rem] py-[0.4375rem]">
                 <Search size={14} className="text-[var(--text-muted)] shrink-0" />
                 <input
                   value={search}
@@ -455,7 +452,7 @@ export default function AllStudentsPage() {
                     setPage(1)
                   }}
                   placeholder={isBn ? 'নাম, আইডি, রোল, মোবাইল...' : 'Name, ID, roll, mobile...'}
-                  className="flex-1 border-none bg-transparent outline-none text-[0.8125rem] text-[var(--text-primary)]"
+                  className="flex-1 min-w-0 border-none bg-transparent outline-none text-[0.8125rem] text-[var(--text-primary)]"
                 />
                 {search && (
                   <button onClick={() => setSearch('')} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)] flex">
