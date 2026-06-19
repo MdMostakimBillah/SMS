@@ -521,15 +521,15 @@ export default function ClassesTab({
                     />
                     <button
                       onClick={(e) => { e.stopPropagation(); handleSaveClassName(cls.id) }}
-                      style={{ padding: '4px 8px', borderRadius: '0.375rem', background: 'var(--brand)', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '0.625rem', fontFamily: 'inherit', flexShrink: 0 }}
+                      style={{ padding: '0.4375rem 0.625rem', borderRadius: '0.5rem', background: 'var(--brand)', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'inherit', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                     >
-                      <Save size={11} />
+                      <Save size={13} />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditingClassName(null) }}
-                      style={{ padding: '4px 8px', borderRadius: '0.375rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.625rem', fontFamily: 'inherit', flexShrink: 0 }}
+                      style={{ padding: '0.4375rem 0.625rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'inherit', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                     >
-                      <X size={11} />
+                      <X size={13} />
                     </button>
                   </div>
                 ) : (
