@@ -400,7 +400,7 @@ export default function AllStudentsPage() {
             <h1 className={`${isMobile ? 'text-lg' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)]`}>
               {isBn ? 'সকল ছাত্র' : 'All Students'}
             </h1>
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
+            <div className="flex items-center gap-1 mt-1.5 overflow-x-auto">
               {[
                 { label: isBn ? 'মোট' : 'Total', value: stats.total, bg: 'var(--bg-secondary)', color: 'var(--text-secondary)' },
                 { label: isBn ? 'অনুমোদিত' : 'Approved', value: stats.approved, bg: 'var(--green-light)', color: 'var(--green)' },
@@ -411,7 +411,7 @@ export default function AllStudentsPage() {
               ].map((s) => (
                 <span
                   key={s.label}
-                  className="inline-flex items-center gap-1 text-[0.6875rem] font-medium px-2 py-0.5 rounded-md"
+                  className="inline-flex items-center gap-0.5 text-[0.625rem] font-medium px-1.5 py-0.5 rounded whitespace-nowrap"
                   style={{ background: s.bg, color: s.color }}
                 >
                   <span className="font-semibold">{s.value}</span>
