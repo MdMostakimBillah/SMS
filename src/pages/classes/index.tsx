@@ -112,14 +112,14 @@ export default function ClassesPage() {
       {/* Tabs */}
       <div className="flex gap-[0.375rem] mb-[0.875rem] flex-wrap">
         {[
-          { id: 'institution' as const, icon: Settings, label: isBn ? 'প্রতিষ্ঠান' : 'Institution', color: 'var(--brand)' },
-          { id: 'classes' as const, icon: Users, label: isBn ? 'শ্রেণি' : 'Classes', color: 'var(--teal)' },
-          { id: 'routine' as const, icon: CalendarDays, label: isBn ? 'রুটিন' : 'Routine', color: 'var(--purple)' },
+          { id: 'institution' as const, icon: Settings, label: isBn ? 'প্রতিষ্ঠান' : 'Institution' },
+          { id: 'classes' as const, icon: Users, label: isBn ? 'শ্রেণি' : 'Classes' },
+          { id: 'routine' as const, icon: CalendarDays, label: isBn ? 'রুটিন' : 'Routine' },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-[0.375rem] py-2 px-4 rounded-lg border text-[0.8125rem] cursor-pointer font-[inherit] transition-all duration-150 ${activeTab === tab.id ? (tab.id === 'institution' ? 'border-[var(--brand)] bg-[var(--brand)15] text-[var(--brand)] font-semibold' : tab.id === 'classes' ? 'border-[var(--teal)] bg-[var(--teal)15] text-[var(--teal)] font-semibold' : 'border-[var(--purple)] bg-[var(--purple)15] text-[var(--purple)] font-semibold') : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}`}
+            className={`flex items-center gap-[0.375rem] py-2 px-4 rounded-lg border text-[0.8125rem] cursor-pointer font-[inherit] transition-all duration-150 ${activeTab === tab.id ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)] font-semibold' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}`}
           >
             <tab.icon size={15} />
             {tab.label}
