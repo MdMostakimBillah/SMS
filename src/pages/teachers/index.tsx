@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   UserPlus,
@@ -10,10 +10,12 @@ import {
   ArrowRight,
   Layers,
   Briefcase,
+  GripVertical,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useAppStore } from '@/store/appStore'
 
 import gsap from 'gsap'
 
@@ -141,6 +143,42 @@ export default function TeachersPage() {
   const { isMobile, isTablet } = useWindowSize()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
+  const { teacherCardsOrder, setTeacherCardsOrder } = useAppStore()
+
+  const defaultCardIds = STATIC_OPTIONS.map((o) => o.id)
+
+  const orderedCardIds = teacherCardsOrder.length > 0
+    ? [...teacherCardsOrder.filter((id) => defaultCardIds.includes(id)), ...defaultCardIds.filter((id) => !teacherCardsOrder.includes(id))]
+    : defaultCardIds
+
+  const handleDragStart = useCallback((e: React.DragEvent, idx: number) => {
+    setDraggedIdx(idx)
+    e.dataTransfer.effectAllowed = 'move'
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent, idx: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverIdx(idx)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent, dropIdx: number) => {
+    e.preventDefault()
+    if (draggedIdx === null || draggedIdx === dropIdx) return
+    const newOrder = [...orderedCardIds]
+    const [removed] = newOrder.splice(draggedIdx, 1)
+    newOrder.splice(dropIdx, 0, removed)
+    setTeacherCardsOrder(newOrder)
+    setDraggedIdx(null)
+    setDragOverIdx(null)
+  }, [draggedIdx, orderedCardIds, setTeacherCardsOrder])
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedIdx(null)
+    setDragOverIdx(null)
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 600)
@@ -172,36 +210,20 @@ export default function TeachersPage() {
   const currentMonth = new Date().toISOString().slice(0, 7)
   const teachersThisMonth = teachers.filter((t) => t.createdAt.startsWith(currentMonth)).length
 
-  const options = STATIC_OPTIONS.map((opt) => {
-    let statBn = ''
-    let statEn = ''
-    if (opt.id === 'add') {
-      statBn = `${toBnNum(teachersThisMonth)} জন এই মাসে`
-      statEn = `${teachersThisMonth} this month`
-    } else if (opt.id === 'all') {
-      statBn = `${toBnNum(teachers.length)} জন মোট`
-      statEn = `${teachers.length} total`
-    } else if (opt.id === 'departments') {
-      statBn = `${toBnNum(departments.length)}টি বিভাগ`
-      statEn = `${departments.length} departments`
-    } else if (opt.id === 'subjects') {
-      statBn = `${toBnNum(subjects.length)}টি বিষয়`
-      statEn = `${subjects.length} subjects`
-    } else if (opt.id === 'designations') {
-      statBn = `${toBnNum(designations.length)}টি পদবি`
-      statEn = `${designations.length} designations`
-    } else if (opt.id === 'bulk-update') {
-      statBn = `${toBnNum(teachers.length)} জন+ একসাথে`
-      statEn = `${teachers.length}+ at once`
-    } else if (opt.id === 'attendance') {
-      statBn = 'শীঘ্রই'
-      statEn = 'Coming soon'
-    } else if (opt.id === 'payroll') {
-      statBn = 'শীঘ্রই'
-      statEn = 'Coming soon'
-    }
-    return { ...opt, statBn, statEn }
-  })
+  const getStatForOpt = (opt: typeof STATIC_OPTIONS[number]) => {
+    if (opt.id === 'add') return { statBn: `${toBnNum(teachersThisMonth)} জন এই মাসে`, statEn: `${teachersThisMonth} this month` }
+    if (opt.id === 'all') return { statBn: `${toBnNum(teachers.length)} জন মোট`, statEn: `${teachers.length} total` }
+    if (opt.id === 'departments') return { statBn: `${toBnNum(departments.length)}টি বিভাগ`, statEn: `${departments.length} departments` }
+    if (opt.id === 'subjects') return { statBn: `${toBnNum(subjects.length)}টি বিষয়`, statEn: `${subjects.length} subjects` }
+    if (opt.id === 'designations') return { statBn: `${toBnNum(designations.length)}টি পদবি`, statEn: `${designations.length} designations` }
+    if (opt.id === 'bulk-update') return { statBn: `${toBnNum(teachers.length)} জন+ একসাথে`, statEn: `${teachers.length}+ at once` }
+    return { statBn: '', statEn: '' }
+  }
+
+  const orderedOptions = orderedCardIds.map((id) => {
+    const opt = STATIC_OPTIONS.find((o) => o.id === id)!
+    return { ...opt, ...getStatForOpt(opt) }
+  }).filter(Boolean)
 
   const statsData = [
     {
@@ -348,31 +370,45 @@ export default function TeachersPage() {
           gap: isMobile ? '8px' : '0.75rem',
         }}
       >
-        {options.map((opt) => {
+        {orderedOptions.map((opt, idx) => {
           const IconComp = opt.icon
+          const isDragging = draggedIdx === idx
+          const isDragOver = dragOverIdx === idx
           return (
             <div
               key={opt.id}
-              onClick={() => navigate(opt.path)}
+              draggable
+              onDragStart={(e) => handleDragStart(e, idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDrop={(e) => handleDrop(e, idx)}
+              onDragEnd={handleDragEnd}
+              onClick={() => {
+                if (draggedIdx !== null) return
+                navigate(opt.path)
+              }}
               style={{
                 background: 'var(--surface)',
-                border: '1px solid var(--border)',
+                border: `1px solid ${isDragOver ? 'var(--brand)' : 'var(--border)'}`,
                 borderRadius: '0.625rem',
                 padding: isMobile ? '12px' : '1rem',
-                cursor: 'pointer',
+                cursor: 'grab',
                 transition: 'all 0.15s ease',
-                boxShadow: 'var(--shadow-xs)',
+                boxShadow: isDragOver ? 'var(--shadow-md)' : 'var(--shadow-xs)',
                 display: 'flex',
                 flexDirection: isMobile ? 'row' : 'column',
                 alignItems: isMobile ? 'center' : 'flex-start',
                 gap: isMobile ? '12px' : '0',
+                opacity: isDragging ? 0.5 : 1,
+                transform: isDragOver ? 'translateY(-2px)' : undefined,
               }}
               onMouseEnter={(e) => {
+                if (draggedIdx !== null) return
                 e.currentTarget.style.borderColor = opt.iconColor
                 e.currentTarget.style.transform = 'translateY(-2px)'
                 e.currentTarget.style.boxShadow = 'var(--shadow-md)'
               }}
               onMouseLeave={(e) => {
+                if (draggedIdx !== null) return
                 e.currentTarget.style.borderColor = 'var(--border)'
                 e.currentTarget.style.transform = 'translateY(0)'
                 e.currentTarget.style.boxShadow = 'var(--shadow-xs)'
@@ -389,9 +425,28 @@ export default function TeachersPage() {
                   justifyContent: 'center',
                   flexShrink: 0,
                   marginBottom: isMobile ? '0' : '0.625rem',
+                  position: 'relative',
                 }}
               >
                 <IconComp size={isMobile ? 21 : 19} style={{ color: opt.iconColor }} />
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -4,
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: 0.6,
+                  }}
+                >
+                  <GripVertical size={10} style={{ color: 'var(--text-muted)' }} />
+                </div>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
