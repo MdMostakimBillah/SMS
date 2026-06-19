@@ -523,15 +523,15 @@ export default function ClassesTab({
                     />
                     <button
                       onClick={(e) => { e.stopPropagation(); handleSaveClassName(cls.id) }}
-                      style={{ padding: '0.4375rem 0.625rem', borderRadius: '0.5rem', background: 'var(--brand)', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'inherit', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                      style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: 'var(--brand)', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '0.8125rem', fontFamily: 'inherit', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.375rem', fontWeight: 500 }}
                     >
-                      <Save size={13} />
+                      <Save size={14} />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditingClassName(null) }}
-                      style={{ padding: '0.4375rem 0.625rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'inherit', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                      style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8125rem', fontFamily: 'inherit', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.375rem' }}
                     >
-                      <X size={13} />
+                      <X size={14} />
                     </button>
                   </div>
                 ) : (
