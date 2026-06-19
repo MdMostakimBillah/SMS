@@ -91,7 +91,7 @@ export const useAppStore = create<AppState>()(
             return { bookmarks: state.bookmarks.filter((p) => p !== path) }
           }
           // If adding, max 5 bookmarks
-          if (state.bookmarks.length >= 5) return state
+          if (state.bookmarks.length >= 4) return state
           return { bookmarks: [...state.bookmarks, path] }
         }),
 
