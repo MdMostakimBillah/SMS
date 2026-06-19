@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { UserPlus, Users, User, UserPen, TableProperties, IdCard, ArrowUpCircle, ArrowRight } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useSessionStudents } from '@/store/admissionStore'
+import { useAppStore } from '@/store/appStore'
 import type { LucideIcon } from 'lucide-react'
 import gsap from 'gsap'
 
@@ -55,6 +56,9 @@ export default function StudentsPage() {
   const isBn = useBn()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
+  const { studentCardsOrder, setStudentCardsOrder } = useAppStore()
 
   const approvedStudents = students.filter((s) => s.status === 'approved' && s.active !== false)
   const totalStudents = approvedStudents.length
@@ -68,7 +72,7 @@ export default function StudentsPage() {
   const allStudentsCount = totalStudents
   const pendingStudents = students.filter((s) => s.status === 'pending').length
 
-  const options: {
+  const STATIC_OPTIONS: {
     id: string
     path: string
     icon: LucideIcon
@@ -78,8 +82,6 @@ export default function StudentsPage() {
     titleEn: string
     descBn: string
     descEn: string
-    statBn: string
-    statEn: string
     statColor: string
   }[] = [
     {
@@ -92,8 +94,6 @@ export default function StudentsPage() {
       titleEn: 'New Admission',
       descBn: 'নতুন ছাত্র ভর্তি করুন।',
       descEn: 'Admit a new student.',
-      statBn: `${toBnNum(admissionThisMonth)} জন এই মাসে`,
-      statEn: `${admissionThisMonth} this month`,
       statColor: 'var(--teal)',
     },
     {
@@ -106,8 +106,6 @@ export default function StudentsPage() {
       titleEn: 'All Students',
       descBn: 'সকল ছাত্রের তালিকা।',
       descEn: 'View all students.',
-      statBn: `${toBnNum(allStudentsCount)} জন`,
-      statEn: `${allStudentsCount} total`,
       statColor: 'var(--brand)',
     },
     {
@@ -120,8 +118,6 @@ export default function StudentsPage() {
       titleEn: 'Update Student',
       descBn: 'ছাত্রের তথ্য আপডেট করুন।',
       descEn: 'Update student info.',
-      statBn: `${toBnNum(pendingStudents)} টি অপেক্ষমান`,
-      statEn: `${pendingStudents} pending`,
       statColor: 'var(--amber)',
     },
     {
@@ -134,8 +130,6 @@ export default function StudentsPage() {
       titleEn: 'Bulk Update',
       descBn: 'একসাথে আপডেট করুন।',
       descEn: 'Update at once.',
-      statBn: 'CSV সাপোর্ট',
-      statEn: 'CSV supported',
       statColor: 'var(--green)',
     },
     {
@@ -148,8 +142,6 @@ export default function StudentsPage() {
       titleEn: 'ID Cards',
       descBn: 'ID কার্ড তৈরি করুন।',
       descEn: 'Generate ID cards.',
-      statBn: `${toBnNum(allStudentsCount)} জন`,
-      statEn: `${allStudentsCount} students`,
       statColor: 'var(--purple)',
     },
     {
@@ -162,11 +154,57 @@ export default function StudentsPage() {
       titleEn: 'Promotion',
       descBn: 'পরবর্তী ক্লাসে প্রমোট করুন।',
       descEn: 'Promote to next class.',
-      statBn: 'পরীক্ষার পরে',
-      statEn: 'After exams',
       statColor: 'var(--red)',
     },
   ]
+
+  const defaultCardIds = STATIC_OPTIONS.map((o) => o.id)
+
+  const orderedCardIds = studentCardsOrder.length > 0
+    ? [...studentCardsOrder.filter((id) => defaultCardIds.includes(id)), ...defaultCardIds.filter((id) => !studentCardsOrder.includes(id))]
+    : defaultCardIds
+
+  const getStatForOpt = (opt: typeof STATIC_OPTIONS[number]) => {
+    if (opt.id === 'admission') return { statBn: `${toBnNum(admissionThisMonth)} জন এই মাসে`, statEn: `${admissionThisMonth} this month` }
+    if (opt.id === 'all') return { statBn: `${toBnNum(allStudentsCount)} জন`, statEn: `${allStudentsCount} total` }
+    if (opt.id === 'update') return { statBn: `${toBnNum(pendingStudents)} টি অপেক্ষমান`, statEn: `${pendingStudents} pending` }
+    if (opt.id === 'bulk-update') return { statBn: 'CSV সাপোর্ট', statEn: 'CSV supported' }
+    if (opt.id === 'id-cards') return { statBn: `${toBnNum(allStudentsCount)} জন`, statEn: `${allStudentsCount} students` }
+    if (opt.id === 'promotion') return { statBn: 'পরীক্ষার পরে', statEn: 'After exams' }
+    return { statBn: '', statEn: '' }
+  }
+
+  const orderedOptions = orderedCardIds.map((id) => {
+    const opt = STATIC_OPTIONS.find((o) => o.id === id)!
+    return { ...opt, ...getStatForOpt(opt) }
+  }).filter(Boolean)
+
+  const handleDragStart = useCallback((e: React.DragEvent, idx: number) => {
+    setDraggedIdx(idx)
+    e.dataTransfer.effectAllowed = 'move'
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent, idx: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverIdx(idx)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent, dropIdx: number) => {
+    e.preventDefault()
+    if (draggedIdx === null || draggedIdx === dropIdx) return
+    const newOrder = [...orderedCardIds]
+    const [removed] = newOrder.splice(draggedIdx, 1)
+    newOrder.splice(dropIdx, 0, removed)
+    setStudentCardsOrder(newOrder)
+    setDraggedIdx(null)
+    setDragOverIdx(null)
+  }, [draggedIdx, orderedCardIds, setStudentCardsOrder])
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedIdx(null)
+    setDragOverIdx(null)
+  }, [])
 
   const statsData = [
     {
@@ -284,19 +322,32 @@ export default function StudentsPage() {
       <div
         className={`gsap-fade-up grid ${isMobile ? 'grid-cols-2' : isTablet ? 'grid-cols-2' : 'grid-cols-3'} ${isMobile ? 'gap-2' : 'gap-3'}`}
       >
-        {options.map((opt) => {
+        {orderedOptions.map((opt, idx) => {
           const IconComp = opt.icon
+          const isDragging = draggedIdx === idx
+          const isDragOver = dragOverIdx === idx
           return (
             <div
               key={opt.id}
-              onClick={() => navigate(opt.path)}
-              className={`bg-[var(--surface)] border border-[var(--border)] rounded-[0.625rem] cursor-pointer transition-all duration-150 shadow-[var(--shadow-xs)] flex ${isMobile ? 'flex-row items-center gap-3' : 'flex-col items-start gap-0'} ${isMobile ? 'p-3' : 'p-4'}`}
+              draggable
+              onDragStart={(e) => handleDragStart(e, idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDrop={(e) => handleDrop(e, idx)}
+              onDragEnd={handleDragEnd}
+              onClick={() => {
+                if (draggedIdx !== null) return
+                navigate(opt.path)
+              }}
+              className={`bg-[var(--surface)] border rounded-[0.625rem] cursor-grab transition-all duration-150 shadow-[var(--shadow-xs)] flex ${isMobile ? 'flex-row items-center gap-3' : 'flex-col items-start gap-0'} ${isMobile ? 'p-3' : 'p-4'} ${isDragOver ? 'border-[var(--brand)] shadow-[var(--shadow-md)]' : 'border-[var(--border)]'} ${isDragging ? 'opacity-50' : ''}`}
+              style={{ transform: isDragOver ? 'translateY(-2px)' : undefined }}
               onMouseEnter={(e) => {
+                if (draggedIdx !== null) return
                 e.currentTarget.style.borderColor = opt.iconColor
                 e.currentTarget.style.transform = 'translateY(-2px)'
                 e.currentTarget.style.boxShadow = 'var(--shadow-md)'
               }}
               onMouseLeave={(e) => {
+                if (draggedIdx !== null) return
                 e.currentTarget.style.borderColor = 'var(--border)'
                 e.currentTarget.style.transform = 'translateY(0)'
                 e.currentTarget.style.boxShadow = 'var(--shadow-xs)'
