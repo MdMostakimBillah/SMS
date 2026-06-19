@@ -62,7 +62,7 @@ export default function ClassesPage() {
     switchSession,
     importFromSession,
   } = useClassStore()
-  const { teachers, subjects } = useTeacherStore()
+  const { teachers, subjects, departments } = useTeacherStore()
   const { students } = useAdmissionStore()
   const isBn = useBn()
 
@@ -823,6 +823,7 @@ export default function ClassesPage() {
           classes={classes}
           teachers={teachers}
           subjects={subjects}
+          departments={departments}
           students={students}
           addClass={addClass}
           updateClass={updateClass}

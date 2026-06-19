@@ -29,6 +29,7 @@ interface ClassesTabProps {
   classes: ClassInfo[]
   teachers: Teacher[]
   subjects: Subject[]
+  departments: { id: string; name: string; nameBn: string }[]
   students: StudentAdmission[]
   addClass: (data: ClassInfo) => void
   updateClass: (id: string, data: Partial<ClassInfo>) => void
@@ -47,6 +48,7 @@ export default function ClassesTab({
   classes,
   teachers,
   subjects,
+  departments,
   students,
   addClass,
   updateClass,
@@ -1583,12 +1585,14 @@ export default function ClassesTab({
                     {isBn ? 'কোনো বিষয় পাওয়া যায়নি' : 'No subjects found'}
                   </p>
                   <p style={{ margin: '0 0 1rem', fontSize: '0.6875rem' }}>
-                    {isBn ? 'প্রথমে শিক্ষক ব্যবস্থাপনায় বিষয় যোগ করুন' : 'Add subjects in Teacher Management first'}
+                    {departments.length === 0
+                      ? (isBn ? 'প্রথমে বিভাগ তৈরি করুন, তারপর বিষয় যোগ করুন' : 'Create departments first, then add subjects')
+                      : (isBn ? 'শিক্ষক ব্যবস্থাপনায় বিষয় যোগ করুন' : 'Add subjects in Teacher Management')}
                   </p>
                   <button
                     onClick={() => {
                       setShowSubjectModal(null)
-                      navigate('/teachers/subjects')
+                      navigate(departments.length === 0 ? '/teachers/departments' : '/teachers/subjects')
                     }}
                     style={{
                       padding: '0.5rem 1rem',
@@ -1602,7 +1606,9 @@ export default function ClassesTab({
                       fontWeight: 500,
                     }}
                   >
-                    {isBn ? 'বিষয় যোগ করুন →' : 'Add Subjects →'}
+                    {departments.length === 0
+                      ? (isBn ? 'বিভাগ তৈরি করুন →' : 'Create Departments →')
+                      : (isBn ? 'বিষয় যোগ করুন →' : 'Add Subjects →')}
                   </button>
                 </div>
               ) : (
