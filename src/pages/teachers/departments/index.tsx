@@ -178,6 +178,31 @@ export default function DepartmentsPage() {
           {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div className="flex-1">
+          {/* Breadcrumb */}
+          {localStorage.getItem('edutech_prevPath') && (
+            <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1">
+              <button
+                onClick={() => {
+                  const prev = localStorage.getItem('edutech_prevPath')
+                  navigate(prev || '/teachers')
+                  localStorage.removeItem('edutech_prevPath')
+                }}
+                className="hover:text-[var(--brand)] cursor-pointer bg-transparent border-none text-[inherit] font-[inherit] p-0"
+              >
+                {isBn ? 'হোম' : 'Home'}
+              </button>
+              <span>/</span>
+              <span className="text-[var(--text-secondary)]">
+                {localStorage.getItem('edutech_prevPath') === '/teachers/subjects'
+                  ? (isBn ? 'বিষয়' : 'Subjects')
+                  : (isBn ? 'শিক্ষক' : 'Teachers')}
+              </span>
+              <span>/</span>
+              <span className="text-[var(--text-primary)] font-medium">
+                {isBn ? 'বিভাগ' : 'Departments'}
+              </span>
+            </div>
+          )}
           <h1 className="text-[1.375rem] font-semibold text-[var(--text-primary)]">{isBn ? 'বিভাগ ব্যবস্থাপনা' : 'Departments'}</h1>
           <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {isBn ? `মোট ${departments.length} টি বিভাগ` : `${departments.length} departments`}
