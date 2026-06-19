@@ -33,6 +33,7 @@ interface Employee {
   id: string
   nameEn: string
   nameBn?: string
+  photo?: string
   designation: string
   phone: string
   status: string
@@ -379,10 +380,14 @@ export default function HROverviewTab({
               >
                 <div className="flex items-center gap-[0.625rem] mb-[0.625rem]">
                   <div
-                    className="w-[2.125rem] h-[2.125rem] rounded-lg flex items-center justify-center text-[0.625rem] font-semibold text-white shrink-0"
-                    style={{ background: getAvatarGradient(t.id) }}
+                    className="w-[2.125rem] h-[2.125rem] rounded-lg flex items-center justify-center text-[0.625rem] font-semibold text-white shrink-0 overflow-hidden"
+                    style={{ background: t.photo ? 'transparent' : getAvatarGradient(t.id) }}
                   >
-                    {getInitials(t.nameEn)}
+                    {t.photo ? (
+                      <img src={t.photo} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      getInitials(t.nameEn)
+                    )}
                   </div>
                   <div className="flex-1 min-w-[0]">
                     <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
@@ -461,10 +466,14 @@ export default function HROverviewTab({
                     <td className="py-2 px-2">
                       <div className="flex items-center gap-[0.625rem]">
                         <div
-                          className="w-[1.875rem] h-[1.875rem] rounded-[0.4375rem] flex items-center justify-center text-[0.5625rem] font-semibold text-white shrink-0"
-                          style={{ background: getAvatarGradient(t.id) }}
+                          className="w-[1.875rem] h-[1.875rem] rounded-[0.4375rem] flex items-center justify-center text-[0.5625rem] font-semibold text-white shrink-0 overflow-hidden"
+                          style={{ background: t.photo ? 'transparent' : getAvatarGradient(t.id) }}
                         >
-                          {getInitials(t.nameEn)}
+                          {t.photo ? (
+                            <img src={t.photo} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            getInitials(t.nameEn)
+                          )}
                         </div>
                         <div>
                           <div className="text-xs font-medium text-[var(--text-primary)]">{t.nameEn}</div>
