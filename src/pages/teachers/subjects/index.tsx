@@ -215,22 +215,15 @@ export default function SubjectsPage() {
             <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1">
               <button
                 onClick={() => {
-                  const prev = localStorage.getItem('edutech_prevPath')
-                  navigate(prev || '/teachers')
+                  navigate('/classes')
                   localStorage.removeItem('edutech_prevPath')
                 }}
-                className="hover:text-[var(--brand)] cursor-pointer bg-transparent border-none text-[inherit] font-[inherit] p-0"
+                className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
               >
-                {isBn ? 'হোম' : 'Home'}
+                {isBn ? 'শ্রেণী ব্যবস্থাপনা' : 'Classes Management'}
               </button>
-              <span>/</span>
-              <span className="text-[var(--text-secondary)]">
-                {localStorage.getItem('edutech_prevPath') === '/classes'
-                  ? (isBn ? 'শ্রেণী' : 'Classes')
-                  : (isBn ? 'বিষয়' : 'Subjects')}
-              </span>
-              <span>/</span>
-              <span className="text-[var(--text-primary)] font-medium">
+              <span className="text-[var(--text-muted)]">›</span>
+              <span className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--brand)] text-white font-medium">
                 {isBn ? 'বিষয়' : 'Subjects'}
               </span>
             </div>
