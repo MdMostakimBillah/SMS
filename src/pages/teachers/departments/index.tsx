@@ -168,9 +168,14 @@ export default function DepartmentsPage() {
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
           onClick={() => {
-            const prev = localStorage.getItem('edutech_prevPath')
-            navigate(prev || '/teachers')
-            localStorage.removeItem('edutech_prevPath')
+            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+            if (chain.length > 0) {
+              const prev = chain[chain.length - 1]
+              localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, -1)))
+              navigate(prev.path)
+            } else {
+              navigate('/teachers')
+            }
           }}
           className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
         >
@@ -179,26 +184,32 @@ export default function DepartmentsPage() {
         </button>
         <div className="flex-1">
           {/* Breadcrumb */}
-          {localStorage.getItem('edutech_prevPath') && (
-            <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1">
-              <button
-                onClick={() => {
-                  const prev = localStorage.getItem('edutech_prevPath')
-                  navigate(prev || '/teachers')
-                  localStorage.removeItem('edutech_prevPath')
-                }}
-                className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
-              >
-                {localStorage.getItem('edutech_prevPath') === '/teachers/add'
-                  ? (isBn ? 'শিক্ষক যোগ' : 'Add Teacher')
-                  : (isBn ? 'বিষয়' : 'Subjects')}
-              </button>
-              <span className="text-[var(--text-muted)]">›</span>
-              <span className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--brand)] text-white font-medium">
-                {isBn ? 'বিভাগ' : 'Departments'}
-              </span>
-            </div>
-          )}
+          {(() => {
+            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+            if (chain.length === 0) return null
+            return (
+              <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1 flex-wrap">
+                {chain.map((item: { path: string; label: string }, idx: number) => (
+                  <span key={idx} className="flex items-center gap-1">
+                    {idx > 0 && <span className="text-[var(--text-muted)]">›</span>}
+                    <button
+                      onClick={() => {
+                        localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, idx + 1)))
+                        navigate(item.path)
+                      }}
+                      className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
+                    >
+                      {item.label}
+                    </button>
+                  </span>
+                ))}
+                <span className="text-[var(--text-muted)]">›</span>
+                <span className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--brand)] text-white font-medium">
+                  {isBn ? 'বিভাগ' : 'Departments'}
+                </span>
+              </div>
+            )
+          })()}
           <h1 className="text-[1.375rem] font-semibold text-[var(--text-primary)]">{isBn ? 'বিভাগ ব্যবস্থাপনা' : 'Departments'}</h1>
           <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {isBn ? `মোট ${departments.length} টি বিভাগ` : `${departments.length} departments`}

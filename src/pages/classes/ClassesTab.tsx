@@ -1588,7 +1588,7 @@ export default function ClassesTab({
                   <button
                     onClick={() => {
                       setShowSubjectModal(null)
-                      localStorage.setItem('edutech_prevPath', '/classes')
+                      localStorage.setItem('edutech_navChain', JSON.stringify([{ path: '/classes', label: isBn ? 'শ্রেণী ব্যবস্থাপনা' : 'Classes Management' }]))
                       navigate('/teachers/subjects')
                     }}
                     style={{

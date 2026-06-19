@@ -488,7 +488,7 @@ export default function AddTeacherPage() {
                 />
                 <button
                   onClick={() => {
-                    localStorage.setItem('edutech_prevPath', '/teachers/add')
+                    localStorage.setItem('edutech_navChain', JSON.stringify([{ path: '/teachers/add', label: isBn ? 'শিক্ষক যোগ' : 'Add Teacher' }]))
                     navigate('/teachers/departments')
                   }}
                   className="py-[0.5rem] px-[0.75rem] rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none whitespace-nowrap"
@@ -530,7 +530,7 @@ export default function AddTeacherPage() {
                 />
                 <button
                   onClick={() => {
-                    localStorage.setItem('edutech_prevPath', '/teachers/add')
+                    localStorage.setItem('edutech_navChain', JSON.stringify([{ path: '/teachers/add', label: isBn ? 'শিক্ষক যোগ' : 'Add Teacher' }]))
                     navigate('/teachers/designations')
                   }}
                   className="py-[0.5rem] px-[0.75rem] rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none whitespace-nowrap"

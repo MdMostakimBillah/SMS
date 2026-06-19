@@ -200,9 +200,14 @@ export default function SubjectsPage() {
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
           onClick={() => {
-            const prev = localStorage.getItem('edutech_prevPath')
-            navigate(prev || '/teachers')
-            localStorage.removeItem('edutech_prevPath')
+            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+            if (chain.length > 0) {
+              const prev = chain[chain.length - 1]
+              localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, -1)))
+              navigate(prev.path)
+            } else {
+              navigate('/teachers')
+            }
           }}
           className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
         >
@@ -211,23 +216,32 @@ export default function SubjectsPage() {
         </button>
         <div className="flex-1">
           {/* Breadcrumb */}
-          {localStorage.getItem('edutech_prevPath') && (
-            <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1">
-              <button
-                onClick={() => {
-                  navigate('/classes')
-                  localStorage.removeItem('edutech_prevPath')
-                }}
-                className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
-              >
-                {isBn ? 'শ্রেণী ব্যবস্থাপনা' : 'Classes Management'}
-              </button>
-              <span className="text-[var(--text-muted)]">›</span>
-              <span className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--brand)] text-white font-medium">
-                {isBn ? 'বিষয়' : 'Subjects'}
-              </span>
-            </div>
-          )}
+          {(() => {
+            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+            if (chain.length === 0) return null
+            return (
+              <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1 flex-wrap">
+                {chain.map((item: { path: string; label: string }, idx: number) => (
+                  <span key={idx} className="flex items-center gap-1">
+                    {idx > 0 && <span className="text-[var(--text-muted)]">›</span>}
+                    <button
+                      onClick={() => {
+                        localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, idx + 1)))
+                        navigate(item.path)
+                      }}
+                      className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
+                    >
+                      {item.label}
+                    </button>
+                  </span>
+                ))}
+                <span className="text-[var(--text-muted)]">›</span>
+                <span className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--brand)] text-white font-medium">
+                  {isBn ? 'বিষয়' : 'Subjects'}
+                </span>
+              </div>
+            )
+          })()}
           <h1 className="text-[1.375rem] font-semibold text-[var(--text-primary)]">{isBn ? 'বিষয় ব্যবস্থাপনা' : 'Subjects'}</h1>
           <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {isBn ? `মোট ${filtered.length} টি বিষয়` : `${filtered.length} subjects`}
@@ -307,7 +321,9 @@ export default function SubjectsPage() {
                         </p>
                         <button
                           onClick={() => {
-                            localStorage.setItem('edutech_prevPath', '/teachers/subjects')
+                            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+                            chain.push({ path: '/teachers/subjects', label: isBn ? 'বিষয়' : 'Subjects' })
+                            localStorage.setItem('edutech_navChain', JSON.stringify(chain))
                             navigate('/teachers/departments')
                           }}
                           className="py-2 px-4 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none"
