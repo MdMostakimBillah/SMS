@@ -294,7 +294,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
 
   // Only manually bookmarked pages (max 6)
   const quickAccess = useMemo(() => {
-    return pageVisits.filter((v) => bookmarks.includes(v.path)).slice(0, 5)
+    return pageVisits.filter((v) => bookmarks.includes(v.path)).slice(0, 6)
   }, [pageVisits, bookmarks])
 
   useEffect(() => {
