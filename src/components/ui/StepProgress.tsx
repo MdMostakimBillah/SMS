@@ -15,21 +15,6 @@ interface StepProgressProps {
   onStepClick?: (key: string) => void
 }
 
-const statusColors = {
-  completed: { bg: 'var(--green)', text: '#fff', border: 'var(--green)' },
-  current: { bg: 'var(--brand)', text: '#fff', border: 'var(--brand)' },
-  upcoming: { bg: 'var(--bg-secondary)', text: 'var(--text-muted)', border: 'var(--border)' },
-}
-
-const connectorBase: React.CSSProperties = {
-  flex: 1,
-  height: '0.125rem',
-  minWidth: '1.25rem',
-  maxWidth: '3.75rem',
-  borderRadius: '0.0625rem',
-  margin: '0 4px',
-}
-
 const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProgressProps) {
   const { isMobile } = useWindowSize()
 
@@ -37,9 +22,10 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
 
   if (isMobile) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {steps.map((step, i) => {
-          const colors = statusColors[step.status]
+          const isActive = step.status === 'current'
+          const isDone = step.status === 'completed'
           return (
             <div
               key={step.key}
@@ -47,51 +33,40 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.625rem',
-                padding: '10px 12px',
-                borderRadius: '0.625rem',
-                background: step.status === 'current' ? 'var(--brand-light)' : 'var(--surface)',
-                border: `1px solid ${step.status === 'current' ? 'rgba(99,102,241,0.2)' : 'var(--border)'}`,
+                gap: '0.75rem',
+                padding: '0.625rem 0.75rem',
+                borderRadius: '0.5rem',
+                background: isActive ? 'var(--brand-light)' : 'transparent',
+                border: `1px solid ${isActive ? 'var(--brand)' : 'transparent'}`,
                 cursor: onStepClick ? 'pointer' : 'default',
-                transition: 'all 0.15s',
               }}
             >
               <div
                 style={{
-                  width: '1.75rem',
-                  height: '1.75rem',
-                  borderRadius: '0.5rem',
-                  background: colors.bg,
-                  color: colors.text,
+                  width: '1.5rem',
+                  height: '1.5rem',
+                  borderRadius: '50%',
+                  background: isDone ? 'var(--green)' : isActive ? 'var(--brand)' : 'var(--bg-secondary)',
+                  color: isDone || isActive ? '#fff' : 'var(--text-muted)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  fontSize: '0.6875rem',
+                  fontSize: '0.625rem',
                   fontWeight: 600,
                 }}
               >
-                {step.status === 'completed' ? <Check size={13} /> : i + 1}
+                {isDone ? <Check size={11} /> : i + 1}
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: step.status === 'current' ? 600 : 500,
-                    color: step.status === 'upcoming' ? 'var(--text-muted)' : 'var(--text-primary)',
-                  }}
-                >
-                  {step.label}
-                </div>
-                <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
-                  {step.status === 'completed' ? 'Completed' : step.status === 'current' ? 'In Progress' : 'Pending'}
-                </div>
-              </div>
-              {step.status === 'current' && (
-                <div
-                  style={{ width: '0.375rem', height: '0.375rem', borderRadius: '50%', background: 'var(--brand)', animation: 'pulse 2s infinite' }}
-                />
-              )}
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: isActive ? 600 : 400,
+                  color: isDone ? 'var(--green)' : isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                }}
+              >
+                {step.label}
+              </span>
             </div>
           )
         })}
@@ -102,9 +77,9 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0' }}>
       {steps.map((step, i) => {
-        const Icon = step.icon
-        const colors = statusColors[step.status]
         const isLast = i === steps.length - 1
+        const isDone = step.status === 'completed'
+        const isActive = step.status === 'current'
         return (
           <div key={step.key} style={{ display: 'flex', alignItems: 'center', flex: isLast ? 0 : 1 }}>
             <div
@@ -113,59 +88,52 @@ const StepProgress = memo(function StepProgress({ steps, onStepClick }: StepProg
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                padding: '8px 14px',
-                borderRadius: '0.625rem',
-                background: step.status === 'current' ? 'var(--brand-light)' : 'transparent',
-                border: `1px solid ${step.status === 'current' ? 'rgba(99,102,241,0.2)' : 'transparent'}`,
+                padding: '0.375rem 0.75rem',
+                borderRadius: '0.5rem',
+                background: isActive ? 'var(--brand-light)' : 'transparent',
                 cursor: onStepClick ? 'pointer' : 'default',
-                transition: 'all 0.15s',
                 whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => {
-                if (step.status === 'upcoming' && onStepClick) e.currentTarget.style.background = 'var(--bg-secondary)'
-              }}
-              onMouseLeave={(e) => {
-                if (step.status !== 'current') e.currentTarget.style.background = 'transparent'
               }}
             >
               <div
                 style={{
-                  width: '1.625rem',
-                  height: '1.625rem',
+                  width: '1.25rem',
+                  height: '1.25rem',
                   borderRadius: '50%',
-                  background: colors.bg,
-                  color: colors.text,
+                  background: isDone ? 'var(--green)' : isActive ? 'var(--brand)' : 'var(--bg-secondary)',
+                  color: isDone || isActive ? '#fff' : 'var(--text-muted)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  fontSize: '0.625rem',
+                  fontSize: '0.5625rem',
                   fontWeight: 600,
-                  boxShadow:
-                    step.status !== 'upcoming'
-                      ? `0 0 0 3px ${step.status === 'completed' ? 'rgba(34,197,94,0.15)' : 'rgba(99,102,241,0.15)'}`
-                      : 'none',
                 }}
               >
-                {step.status === 'completed' ? <Check size={12} /> : <Icon size={12} />}
+                {isDone ? <Check size={10} /> : i + 1}
               </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: '0.6875rem',
-                    fontWeight: step.status === 'current' ? 600 : 500,
-                    color: step.status === 'upcoming' ? 'var(--text-muted)' : 'var(--text-primary)',
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {step.label}
-                </div>
-                <div style={{ fontSize: '0.5625rem', color: 'var(--text-muted)' }}>
-                  {step.status === 'completed' ? 'Done' : step.status === 'current' ? 'Active' : 'Pending'}
-                </div>
-              </div>
+              <span
+                style={{
+                  fontSize: '0.6875rem',
+                  fontWeight: isActive ? 600 : 400,
+                  color: isDone ? 'var(--green)' : isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                }}
+              >
+                {step.label}
+              </span>
             </div>
-            {!isLast && <div style={{ ...connectorBase, background: step.status === 'completed' ? 'var(--green)' : 'var(--border)' }} />}
+            {!isLast && (
+              <div
+                style={{
+                  flex: 1,
+                  height: '2px',
+                  minWidth: '1rem',
+                  maxWidth: '2.5rem',
+                  background: isDone ? 'var(--green)' : 'var(--border)',
+                  margin: '0 2px',
+                }}
+              />
+            )}
           </div>
         )
       })}

@@ -443,8 +443,7 @@ export default function ExamDashboard() {
 
       {/* Workflow Progress */}
       <div className="gsap-fade-up" style={card}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: isMobile ? '12px' : '0.875rem' }}>
-          <SectionHead color="var(--brand)" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isMobile ? '0.75rem' : '1rem' }}>
           <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
             {isBn ? 'পরীক্ষার ধাপসমূহ' : 'Examination Workflow'}
           </span>
@@ -456,10 +455,9 @@ export default function ExamDashboard() {
               background: 'var(--green-light)',
               padding: '2px 8px',
               borderRadius: '0.375rem',
-              marginLeft: 'auto',
             }}
           >
-            {completedCount}/{steps.length} {isBn ? 'সম্পন্ন' : 'Done'}
+            {completedCount}/{steps.length}
           </span>
         </div>
         <StepProgress steps={steps} onStepClick={handleStepClick} />
