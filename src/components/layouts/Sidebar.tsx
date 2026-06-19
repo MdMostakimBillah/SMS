@@ -407,18 +407,18 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                   <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1">
                     {isBn ? 'নতুন সেশন' : 'New Session'}
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 items-center">
                     <input
                       value={newSession}
                       onChange={(e) => setNewSession(e.target.value)}
                       placeholder="e.g. 2026-27"
                       onKeyDown={(e) => e.key === 'Enter' && handleAddSession()}
-                      className="flex-1 px-2 py-1 rounded-[0.375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
+                      className="flex-1 min-w-0 px-2 py-1 rounded-[0.375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
                     />
                     <button
                       onClick={handleAddSession}
                       disabled={!newSession.trim() || institution.sessions.includes(newSession.trim())}
-                      className="px-2.5 py-1 rounded-[0.375rem] border-none bg-[var(--brand)] text-white text-[0.625rem] font-semibold cursor-pointer disabled:opacity-50"
+                      className="shrink-0 px-2 py-1 rounded-[0.375rem] border-none bg-[var(--brand)] text-white text-[0.625rem] font-semibold cursor-pointer disabled:opacity-50"
                     >
                       {isBn ? 'যোগ' : 'Add'}
                     </button>
