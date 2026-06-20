@@ -214,18 +214,18 @@ export default function Topbar() {
 
   return (
     <header
+      className="glass"
       style={{
         height: isMobile ? '50px' : '3.375rem',
-        background: 'var(--glass)',
-        backdropFilter: 'blur(16px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-        borderBottom: '1px solid var(--glass-border)',
         display: 'flex',
         alignItems: 'center',
         padding: isMobile ? '0 10px' : '0 20px',
         gap: isMobile ? '6px' : '0.5rem',
         flexShrink: 0,
         zIndex: 100,
+        borderRadius: 0,
+        border: 'none',
+        borderBottom: '1px solid var(--glass-border)',
       }}
     >
       {/* Sidebar Toggle — desktop only */}

@@ -4,6 +4,122 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Remove focus outline on all input fields */
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: none;
+}
+
+/* ═══════════════════════════════════════════════════════
+   GLASS MORPHISM — Global Styles
+   ═══════════════════════════════════════════════════════ */
+
+/* Light theme glass */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg-hover: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-border-hover: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  --glass-shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --glass-blur: blur(12px);
+}
+
+/* Dark theme glass */
+[data-theme='dark'] {
+  --glass-bg: rgba(30, 30, 30, 0.6);
+  --glass-bg-hover: rgba(40, 40, 40, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-hover: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --glass-shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --glass-blur: blur(12px);
+}
+
+/* Light theme explicit */
+[data-theme='light'] {
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg-hover: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-border-hover: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  --glass-shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --glass-blur: blur(12px);
+}
+
+/* Glass base */
+.glass,
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.2s ease;
+}
+
+.glass:hover,
+.glass-card:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+/* Glass tab buttons */
+.glass-tab {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.glass-tab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.glass-tab:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.glass-tab.active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* ═══════════════════════════════════════════════════════
+   GLOBAL CARD GLASS EFFECT
+   ═══════════════════════════════════════════════════════ */
+
+/* All cards get glass by default */
+.card,
+.card--premium,
+.stat-card,
+.workflow-card {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+  transition: all 0.2s ease !important;
+}
+
+.card:hover,
+.card--premium:hover,
+.stat-card:hover,
+.workflow-card:hover {
+  background: var(--glass-bg-hover) !important;
+  border-color: var(--glass-border-hover) !important;
+  box-shadow: var(--glass-shadow-hover) !important;
+  transform: translateY(-1px);
+}
+
 :root {
   /* Clean Pastel Light Theme - Inspired by SchoolHub */
   --bg-primary: #ffffff;
@@ -443,8 +559,10 @@ button {
 }
 
 .modal-box {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: 0.875rem;
   width: 100%;
   max-width: 26.25rem;
@@ -452,6 +570,7 @@ button {
   max-height: 90dvh;
   overflow-y: auto;
   animation: modalPopIn 0.2s ease-out;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .modal-content {

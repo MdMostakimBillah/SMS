@@ -21,8 +21,8 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useExamStore } from '@/store/examStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
+import { useAppStore } from '@/store/appStore'
 import StepProgress from '@/components/ui/StepProgress'
-import WorkflowCard from '@/components/ui/WorkflowCard'
 import gsap from 'gsap'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
@@ -98,6 +98,9 @@ export default function ExamDashboard() {
   const isBn = useBn()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
+  const { quickAccessCardsOrder, setQuickAccessCardsOrder } = useAppStore()
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 700)
@@ -235,8 +238,6 @@ export default function ExamDashboard() {
     return Object.entries(gradeCount).map(([name, value]) => ({ name, value, color: gradeColors[name] || '#94a3b8' }))
   }, [sessionStudentMarks])
 
-  const completedCount = useMemo(() => steps.filter((s) => s.status === 'completed').length, [steps])
-
   // ── Subject map for O(n) lookups ──
   const subjectMap = useMemo(() => {
     const map = new Map<string, (typeof subjects)[0]>()
@@ -262,6 +263,43 @@ export default function ExamDashboard() {
   const navEvaluation = useCallback(() => navigate('/exams/evaluation'), [navigate])
   const navResults = useCallback(() => navigate('/exams/results'), [navigate])
   const navMarksheet = useCallback(() => navigate('/exams/marksheet'), [navigate])
+
+  // ── Quick Access Card IDs ──
+  const quickAccessCardIds = useMemo(() => ['create-exam', 'generate-routine', 'create-seat-plan', 'enter-marks', 'publish-result', 'promote-students'], [])
+
+  const orderedQuickAccessCardIds = useMemo(() => {
+    if (quickAccessCardsOrder.length > 0) {
+      return [...quickAccessCardsOrder.filter((id) => quickAccessCardIds.includes(id)), ...quickAccessCardIds.filter((id) => !quickAccessCardsOrder.includes(id))]
+    }
+    return quickAccessCardIds
+  }, [quickAccessCardsOrder, quickAccessCardIds])
+
+  const handleDragStart = useCallback((e: React.DragEvent, idx: number) => {
+    setDraggedIdx(idx)
+    e.dataTransfer.effectAllowed = 'move'
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent, idx: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverIdx(idx)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent, dropIdx: number) => {
+    e.preventDefault()
+    if (draggedIdx === null || draggedIdx === dropIdx) return
+    const newOrder = [...orderedQuickAccessCardIds]
+    const [removed] = newOrder.splice(draggedIdx, 1)
+    newOrder.splice(dropIdx, 0, removed)
+    setQuickAccessCardsOrder(newOrder)
+    setDraggedIdx(null)
+    setDragOverIdx(null)
+  }, [draggedIdx, orderedQuickAccessCardIds, setQuickAccessCardsOrder])
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedIdx(null)
+    setDragOverIdx(null)
+  }, [])
 
   // ── Static stat data ──
   const quickStats = useMemo(
@@ -441,28 +479,6 @@ export default function ExamDashboard() {
         </div>
       )}
 
-      {/* Workflow Progress */}
-      <div className="gsap-fade-up" style={card}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isMobile ? '0.75rem' : '1rem' }}>
-          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-            {isBn ? 'পরীক্ষার ধাপসমূহ' : 'Examination Workflow'}
-          </span>
-          <span
-            style={{
-              fontSize: '0.625rem',
-              fontWeight: 500,
-              color: 'var(--green)',
-              background: 'var(--green-light)',
-              padding: '2px 8px',
-              borderRadius: '0.375rem',
-            }}
-          >
-            {completedCount}/{steps.length}
-          </span>
-        </div>
-        <StepProgress steps={steps} onStepClick={handleStepClick} />
-      </div>
-
       {/* Quick Stats */}
       <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col4, gap }}>
         {quickStats.map((s) => (
@@ -510,6 +526,95 @@ export default function ExamDashboard() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Workflow Progress */}
+      <div className="gsap-fade-up" style={card}>
+        <StepProgress steps={steps} onStepClick={handleStepClick} />
+      </div>
+
+      {/* Quick Access Cards */}
+      <div className="gsap-fade-up">
+        <div
+          style={{
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.0313rem',
+            marginBottom: '0.625rem',
+          }}
+        >
+          {isBn ? 'দ্রুত কাজ' : 'Quick Actions'}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : isTablet ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)', gap: '0.625rem' }}>
+          {orderedQuickAccessCardIds.map((cardId, idx) => {
+            const isDragging = draggedIdx === idx
+            const isDragOver = dragOverIdx === idx
+            const configs: Record<string, { icon: typeof Plus; iconColor: string; iconBg: string; title: string; titleBn: string; description: string; descriptionBn: string; stat: string; statColor: string; onClick: () => void }> = {
+              'create-exam': { icon: Plus, iconColor: 'var(--brand)', iconBg: 'var(--brand-light)', title: isBn ? 'নতুন পরীক্ষা তৈরি' : 'Create Exam', titleBn: 'নতুন পরীক্ষা', description: isBn ? 'পরীক্ষা সেটআপ শুরু করুন' : 'Start exam setup', descriptionBn: 'পরীক্ষা সেটআপ', stat: `${examConfigs.length} ${isBn ? 'টি পরীক্ষা' : 'exams'}`, statColor: 'var(--brand)', onClick: navPlanning },
+              'generate-routine': { icon: Calendar, iconColor: 'var(--teal)', iconBg: 'var(--teal-light)', title: isBn ? 'রুটিন তৈরি' : 'Generate Routine', titleBn: 'রুটিন তৈরি', description: isBn ? 'পরীক্ষার সময়সূচী তৈরি' : 'Create exam timetable', descriptionBn: 'সময়সূচী তৈরি', stat: `${totalRoutines} ${isBn ? 'টি রুটিন' : 'routines'}`, statColor: 'var(--teal)', onClick: navScheduling },
+              'create-seat-plan': { icon: FileSpreadsheet, iconColor: 'var(--amber)', iconBg: 'var(--amber-light)', title: isBn ? 'আসন পরিকল্পনা' : 'Create Seat Plan', titleBn: 'আসন পরিকল্পনা', description: isBn ? 'কক্ষ ও আসন বরাদ্দ' : 'Room & seat assignment', descriptionBn: 'কক্ষ ও আসন বরাদ্দ', stat: `${activeExamSeats.length} ${isBn ? 'টি আসন' : 'seats'}`, statColor: 'var(--amber)', onClick: navScheduling },
+              'enter-marks': { icon: Edit2, iconColor: 'var(--green)', iconBg: 'var(--green-light)', title: isBn ? 'মার্কস এন্ট্রি' : 'Enter Marks', titleBn: 'মার্কস এন্ট্রি', description: isBn ? 'শিক্ষার্থীদের মার্কস প্রবেশ' : 'Enter student marks', descriptionBn: 'মার্কস প্রবেশ', stat: `${sessionStudentMarks.length} ${isBn ? 'টি এন্ট্রি' : 'entries'}`, statColor: 'var(--green)', onClick: navEvaluation },
+              'publish-result': { icon: FileText, iconColor: 'var(--purple)', iconBg: 'var(--purple-light)', title: isBn ? 'ফলাফল প্রকাশ' : 'Publish Result', titleBn: 'ফলাফল প্রকাশ', description: isBn ? 'ফলাফল প্রকাশ ও বিশ্লেষণ' : 'Publish & analyze results', descriptionBn: 'ফলাফল প্রকাশ', stat: `${publishedResults} ${isBn ? 'টি প্রকাশিত' : 'published'}`, statColor: 'var(--purple)', onClick: navResults },
+              'promote-students': { icon: GraduationCap, iconColor: 'var(--red)', iconBg: 'var(--red-light)', title: isBn ? 'শিক্ষার্থী প্রমোশন' : 'Promote Students', titleBn: 'প্রমোশন', description: isBn ? 'পরবর্তী ক্লাসে প্রমোট' : 'Promote to next class', descriptionBn: 'পরবর্তী ক্লাসে প্রমোট', stat: `${promotedCount} ${isBn ? 'জন প্রমোটেড' : 'promoted'}`, statColor: 'var(--red)', onClick: navMarksheet },
+            }
+            const c = configs[cardId]
+            if (!c) return null
+            const IconComp = c.icon
+            return (
+              <div
+                key={cardId}
+                draggable
+                onDragStart={(e) => handleDragStart(e, idx)}
+                onDragOver={(e) => handleDragOver(e, idx)}
+                onDrop={(e) => handleDrop(e, idx)}
+                onDragEnd={handleDragEnd}
+                onClick={() => {
+                  if (draggedIdx !== null) return
+                  c.onClick()
+                }}
+                className="glass"
+                style={{
+                  borderRadius: '0.75rem',
+                  cursor: 'grab',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  flexDirection: isMobile ? 'row' : 'column',
+                  alignItems: isMobile ? 'center' : 'flex-start',
+                  gap: isMobile ? '12px' : '0.75rem',
+                  padding: isMobile ? '12px' : '1rem',
+                  opacity: isDragging ? 0.5 : 1,
+                  transform: isDragOver ? 'translateY(-2px)' : undefined,
+                  boxShadow: isDragOver ? '0 8px 32px rgba(0,0,0,0.12)' : 'none',
+                  borderColor: isDragOver ? 'var(--brand)' : undefined,
+                }}
+                onMouseEnter={(e) => {
+                  if (draggedIdx !== null) return
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)'
+                }}
+                onMouseLeave={(e) => {
+                  if (draggedIdx !== null) return
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+              >
+                <div style={{ width: isMobile ? '40px' : '2.25rem', height: isMobile ? '40px' : '2.25rem', borderRadius: '0.625rem', background: c.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <IconComp size={isMobile ? 18 : 16} style={{ color: c.iconColor }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.125rem' }}>{c.title}</div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', lineHeight: 1.4, marginBottom: isMobile ? '0' : '0.5rem' }}>{c.description}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.625rem', fontWeight: 500, borderRadius: '0.25rem', padding: '2px 6px', color: c.statColor, background: `${c.statColor}15` }}>{c.stat}</span>
+                    <ArrowRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {/* Grade Distribution + Active Exam Progress */}
@@ -588,103 +693,6 @@ export default function ExamDashboard() {
               {isBn ? 'কোনো সক্রিয় পরীক্ষা নেই' : 'No active exam'}
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="gsap-fade-up">
-        <div
-          style={{
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            color: 'var(--text-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.0313rem',
-            marginBottom: '0.625rem',
-          }}
-        >
-          {isBn ? 'দ্রুত কাজ' : 'Quick Actions'}
-        </div>
-        <div
-          className="gsap-fade-up"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr 1fr' : isTablet ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)',
-            gap: '0.625rem',
-          }}
-        >
-          <WorkflowCard
-            icon={Plus}
-            iconColor="var(--brand)"
-            iconBg="var(--brand-light)"
-            title={isBn ? 'নতুন পরীক্ষা তৈরি' : 'Create Exam'}
-            titleBn="নতুন পরীক্ষা"
-            description={isBn ? 'পরীক্ষা সেটআপ শুরু করুন' : 'Start exam setup'}
-            descriptionBn="পরীক্ষা সেটআপ"
-            stat={`${examConfigs.length} ${isBn ? 'টি পরীক্ষা' : 'exams'}`}
-            statColor="var(--brand)"
-            onClick={navPlanning}
-          />
-          <WorkflowCard
-            icon={Calendar}
-            iconColor="var(--teal)"
-            iconBg="var(--teal-light)"
-            title={isBn ? 'রুটিন তৈরি' : 'Generate Routine'}
-            titleBn="রুটিন তৈরি"
-            description={isBn ? 'পরীক্ষার সময়সূচী তৈরি' : 'Create exam timetable'}
-            descriptionBn="সময়সূচী তৈরি"
-            stat={`${totalRoutines} ${isBn ? 'টি রুটিন' : 'routines'}`}
-            statColor="var(--teal)"
-            onClick={navScheduling}
-          />
-          <WorkflowCard
-            icon={FileSpreadsheet}
-            iconColor="var(--amber)"
-            iconBg="var(--amber-light)"
-            title={isBn ? 'আসন পরিকল্পনা' : 'Create Seat Plan'}
-            titleBn="আসন পরিকল্পনা"
-            description={isBn ? 'কক্ষ ও আসন বরাদ্দ' : 'Room & seat assignment'}
-            descriptionBn="কক্ষ ও আসন বরাদ্দ"
-            stat={`${activeExamSeats.length} ${isBn ? 'টি আসন' : 'seats'}`}
-            statColor="var(--amber)"
-            onClick={navScheduling}
-          />
-          <WorkflowCard
-            icon={Edit2}
-            iconColor="var(--green)"
-            iconBg="var(--green-light)"
-            title={isBn ? 'মার্কস এন্ট্রি' : 'Enter Marks'}
-            titleBn="মার্কস এন্ট্রি"
-            description={isBn ? 'শিক্ষার্থীদের মার্কস প্রবেশ' : 'Enter student marks'}
-            descriptionBn="মার্কস প্রবেশ"
-            stat={`${sessionStudentMarks.length} ${isBn ? 'টি এন্ট্রি' : 'entries'}`}
-            statColor="var(--green)"
-            onClick={navEvaluation}
-          />
-          <WorkflowCard
-            icon={FileText}
-            iconColor="var(--purple)"
-            iconBg="var(--purple-light)"
-            title={isBn ? 'ফলাফল প্রকাশ' : 'Publish Result'}
-            titleBn="ফলাফল প্রকাশ"
-            description={isBn ? 'ফলাফল প্রকাশ ও বিশ্লেষণ' : 'Publish & analyze results'}
-            descriptionBn="ফলাফল প্রকাশ"
-            stat={`${publishedResults} ${isBn ? 'টি প্রকাশিত' : 'published'}`}
-            statColor="var(--purple)"
-            onClick={navResults}
-          />
-          <WorkflowCard
-            icon={GraduationCap}
-            iconColor="var(--red)"
-            iconBg="var(--red-light)"
-            title={isBn ? 'শিক্ষার্থী প্রমোশন' : 'Promote Students'}
-            titleBn="প্রমোশন"
-            description={isBn ? 'পরবর্তী ক্লাসে প্রমোট' : 'Promote to next class'}
-            descriptionBn="পরবর্তী ক্লাসে প্রমোট"
-            stat={`${promotedCount} ${isBn ? 'জন প্রমোটেড' : 'promoted'}`}
-            statColor="var(--red)"
-            onClick={navMarksheet}
-          />
         </div>
       </div>
 

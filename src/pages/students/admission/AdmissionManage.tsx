@@ -1184,9 +1184,8 @@ export default function AdmissionManage() {
         ].map((x) => (
           <div
             key={x.l}
+            className="glass"
             style={{
-              background: 'var(--bg-primary)',
-              border: '1px solid var(--border)',
               borderRadius: '0.625rem',
               padding: '0.625rem',
               textAlign: 'center',

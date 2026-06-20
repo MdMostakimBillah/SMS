@@ -25,6 +25,7 @@ interface AppState {
   sidebarOrder: SidebarItem[]
   teacherCardsOrder: string[]
   studentCardsOrder: string[]
+  quickAccessCardsOrder: string[]
   setTheme: (theme: Theme) => void
   setLanguage: (language: Language) => void
   toggleSidebar: () => void
@@ -36,6 +37,7 @@ interface AppState {
   setSidebarOrder: (order: SidebarItem[]) => void
   setTeacherCardsOrder: (order: string[]) => void
   setStudentCardsOrder: (order: string[]) => void
+  setQuickAccessCardsOrder: (order: string[]) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -51,6 +53,7 @@ export const useAppStore = create<AppState>()(
       sidebarOrder: [],
       teacherCardsOrder: [],
       studentCardsOrder: [],
+      quickAccessCardsOrder: [],
 
       setTheme: (theme) => {
         set({ theme })
@@ -106,6 +109,8 @@ export const useAppStore = create<AppState>()(
       setTeacherCardsOrder: (order) => set({ teacherCardsOrder: order }),
 
       setStudentCardsOrder: (order) => set({ studentCardsOrder: order }),
+
+      setQuickAccessCardsOrder: (order) => set({ quickAccessCardsOrder: order }),
     }),
     {
       name: 'edutech-settings',
@@ -117,6 +122,7 @@ export const useAppStore = create<AppState>()(
         sidebarOrder: state.sidebarOrder,
         teacherCardsOrder: state.teacherCardsOrder,
         studentCardsOrder: state.studentCardsOrder,
+        quickAccessCardsOrder: state.quickAccessCardsOrder,
       }),
     }
   )

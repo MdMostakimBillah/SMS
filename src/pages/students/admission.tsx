@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, UserPlus, Users, ListChecks } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -18,13 +18,36 @@ export default function StudentAdmission() {
   const { isMobile } = useWindowSize()
   const [activeTab, setActiveTab] = useState('general')
   const isBn = useBn()
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+  const sliderRef = useRef<HTMLDivElement>(null)
+
+  const updateSlider = useCallback(() => {
+    const activeEl = tabRefs.current.get(activeTab)
+    const slider = sliderRef.current
+    if (!activeEl || !slider) return
+
+    const parent = activeEl.parentElement
+    if (!parent) return
+
+    const parentRect = parent.getBoundingClientRect()
+    const activeRect = activeEl.getBoundingClientRect()
+
+    slider.style.width = `${activeRect.width}px`
+    slider.style.transform = `translateX(${activeRect.left - parentRect.left}px)`
+  }, [activeTab])
+
+  useEffect(() => {
+    updateSlider()
+    window.addEventListener('resize', updateSlider)
+    return () => window.removeEventListener('resize', updateSlider)
+  }, [updateSlider])
 
   return (
     <div className="flex flex-col gap-[0.875rem]">
       <div className="flex items-center gap-[0.625rem] flex-wrap">
         <button
           onClick={() => navigate('/students')}
-          className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit]"
+          className="glass flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit]"
         >
           <ArrowLeft size={14} />
           {isBn ? 'ফিরে যান' : 'Back'}
@@ -40,13 +63,30 @@ export default function StudentAdmission() {
       </div>
 
       <div
-        className={`flex gap-[0.375rem] bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[0.3125rem] ${isMobile ? 'flex-wrap' : 'flex-nowrap'}`}
+        className={`relative flex gap-[0.375rem] glass rounded-xl p-[0.3125rem] w-full ${isMobile ? 'flex-wrap' : 'flex-nowrap'}`}
       >
+        {/* Sliding indicator */}
+        <div
+          ref={sliderRef}
+          className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out"
+          style={{
+            background: 'var(--brand)',
+            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+            zIndex: 0,
+          }}
+        />
+
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            ref={(el) => {
+              if (el) tabRefs.current.set(tab.id, el)
+            }}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-[0.4375rem] px-[0.875rem] py-[0.5625rem] rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-all duration-150 ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-[0_4px_12px_rgba(99,102,241,0.3)]' : 'bg-transparent text-[var(--text-secondary)] shadow-none'}`}
+            className={`relative z-10 flex-1 flex items-center justify-center gap-[0.4375rem] px-[0.875rem] py-[0.5625rem] rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 ${
+              activeTab === tab.id ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+            style={{ background: 'transparent' }}
           >
             {tab.icon}
             {isBn ? tab.bn : tab.en}

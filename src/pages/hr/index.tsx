@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -89,6 +89,30 @@ export default function HRPage() {
   const [modalType, setModalType] = useState<ModalType>(null)
   const [facModalType, setFacModalType] = useState<FacModalType>(null)
   const [showPDFModal, setShowPDFModal] = useState<PDFModalType>(null)
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+  const sliderRef = useRef<HTMLDivElement>(null)
+
+  const updateTabSlider = useCallback(() => {
+    const activeEl = tabRefs.current.get(activeTab)
+    const slider = sliderRef.current
+    if (!activeEl || !slider) return
+    const container = slider.parentElement
+    if (!container) return
+    const containerRect = container.getBoundingClientRect()
+    const activeRect = activeEl.getBoundingClientRect()
+    slider.style.width = `${activeRect.width}px`
+    slider.style.transform = `translateX(${activeRect.left - containerRect.left + container.scrollLeft}px)`
+  }, [activeTab])
+
+  useEffect(() => {
+    updateTabSlider()
+    const activeEl = tabRefs.current.get(activeTab)
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    }
+    window.addEventListener('resize', updateTabSlider)
+    return () => window.removeEventListener('resize', updateTabSlider)
+  }, [updateTabSlider])
 
   // ─── Form State ───
   const [incForm, setIncForm] = useState<IncForm>({ teacherId: '', type: 'annual', percentage: '', reason: '' })
@@ -874,23 +898,36 @@ export default function HRPage() {
       </div>
 
       {/* Tabs */}
-      <div
-        className="flex gap-1.5 bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[0.3125rem] mb-[0.875rem] overflow-x-auto flex-nowrap"
-      >
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => {
-              setActiveTab(tab.id)
-              setPage(1)
-              setPerPage(20)
+      <div className="relative glass rounded-xl mt-3 mb-3 w-full">
+        <div className={`relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] ${isMobile ? 'overflow-x-auto flex-nowrap' : 'flex-wrap'}`}>
+          {/* Sliding indicator */}
+          <div
+            ref={sliderRef}
+            className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out z-0"
+            style={{
+              background: tabs.find((t) => t.id === activeTab)?.color || 'var(--brand)',
+              boxShadow: `0 4px 12px ${activeTab === 'overview' ? 'rgba(99,102,241,0.3)' : activeTab === 'decisions' ? 'rgba(20,184,166,0.3)' : activeTab === 'increment' ? 'rgba(34,197,94,0.3)' : activeTab === 'bonus' ? 'rgba(245,158,11,0.3)' : activeTab === 'promotion' ? 'rgba(168,85,247,0.3)' : activeTab === 'facilities' ? 'rgba(168,85,247,0.3)' : activeTab === 'salary-setup' ? 'rgba(20,184,166,0.3)' : 'rgba(99,102,241,0.3)'}`,
             }}
-            className={`flex items-center justify-center gap-[0.4375rem] py-[0.5625rem] px-[0.875rem] rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-all whitespace-nowrap ${isMobile ? 'shrink-0' : 'flex-1'} ${activeTab === tab.id ? 'bg-[var(--brand)]' : 'bg-transparent'} ${activeTab === tab.id ? 'text-white' : 'text-[var(--text-secondary)]'} ${activeTab === tab.id ? 'shadow-[0_4px_12px_rgba(99,102,241,0.3)]' : 'shadow-none'}`}
-          >
-            <tab.icon size={15} />
-            {isBn ? tab.labelBn : tab.label}
-          </button>
-        ))}
+          />
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              ref={(el) => { if (el) tabRefs.current.set(tab.id, el) }}
+              onClick={() => {
+                setActiveTab(tab.id)
+                setPage(1)
+                setPerPage(20)
+              }}
+              className={`relative z-10 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${isMobile ? 'shrink-0' : 'flex-1'} ${
+                activeTab === tab.id ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+              style={{ background: 'transparent' }}
+            >
+              <tab.icon size={15} />
+              {isBn ? tab.labelBn : tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab Content */}

@@ -63,6 +63,30 @@ export default function AttendancePage() {
   }, [classes])
 
   const [activeTab, setActiveTab] = useState<Tab>('today')
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+  const sliderRef = useRef<HTMLDivElement>(null)
+
+  const updateTabSlider = useCallback(() => {
+    const activeEl = tabRefs.current.get(activeTab)
+    const slider = sliderRef.current
+    if (!activeEl || !slider) return
+    const container = slider.parentElement
+    if (!container) return
+    const containerRect = container.getBoundingClientRect()
+    const activeRect = activeEl.getBoundingClientRect()
+    slider.style.width = `${activeRect.width}px`
+    slider.style.transform = `translateX(${activeRect.left - containerRect.left + container.scrollLeft}px)`
+  }, [activeTab])
+
+  useEffect(() => {
+    updateTabSlider()
+    const activeEl = tabRefs.current.get(activeTab)
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    }
+    window.addEventListener('resize', updateTabSlider)
+    return () => window.removeEventListener('resize', updateTabSlider)
+  }, [updateTabSlider])
   const [date, setDate] = useState(today())
   const [dateFrom, setDateFrom] = useState(twentyDaysAgo())
   const [dateTo, setDateTo] = useState(today())
@@ -1106,30 +1130,32 @@ export default function AttendancePage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1.5 mb-3.5 flex-wrap">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-[0.625rem] text-[0.75rem] cursor-pointer transition-all ${
-              activeTab === tab.key
-                ? 'font-semibold'
-                : 'font-normal border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)]'
-            }`}
-            style={
-              activeTab === tab.key
-                ? {
-                    border: `1.5px solid ${tab.color}`,
-                    background: `${tab.color}15`,
-                    color: tab.color,
-                  }
-                : {}
-            }
-          >
-            <tab.Icon size={15} />
-            {isBn ? tab.labelBn : tab.labelEn}
-          </button>
-        ))}
+      <div className="relative glass rounded-xl mt-3 mb-3 w-full">
+        <div className={`relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] ${isMobile ? 'overflow-x-auto flex-nowrap' : 'flex-wrap'}`}>
+          {/* Sliding indicator */}
+          <div
+            ref={sliderRef}
+            className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out z-0"
+            style={{
+              background: tabs.find((t) => t.key === activeTab)?.color || 'var(--brand)',
+              boxShadow: `0 4px 12px ${tabs.find((t) => t.key === activeTab)?.color || 'var(--brand)'}40`,
+            }}
+          />
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              ref={(el) => { if (el) tabRefs.current.set(tab.key, el) }}
+              onClick={() => setActiveTab(tab.key)}
+              className={`relative z-10 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${isMobile ? 'shrink-0' : 'flex-1'} ${
+                activeTab === tab.key ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+              style={{ background: 'transparent' }}
+            >
+              <tab.Icon size={15} />
+              {isBn ? tab.labelBn : tab.labelEn}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Status Filter + Date Range (for teacher tabs) */}

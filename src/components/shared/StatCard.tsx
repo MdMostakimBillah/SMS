@@ -13,9 +13,8 @@ interface StatCardProps {
 export default function StatCard({ label, value, change, changeType = 'up', icon, iconBg = 'var(--brand-light)' }: StatCardProps) {
   return (
     <div
+      className="glass"
       style={{
-        background: 'var(--bg-primary)',
-        border: '0.5px solid var(--border)',
         borderRadius: '0.75rem',
         padding: '1rem',
         display: 'flex',

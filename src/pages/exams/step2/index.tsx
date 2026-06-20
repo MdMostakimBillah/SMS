@@ -29,6 +29,7 @@ import {
   FileText,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -87,6 +88,8 @@ export default function Step2Schedule() {
   const subjects = useTeacherStore((s) => s.subjects)
   const students = useSessionStudents()
   const isBn = useBn()
+  const { isMobile } = useWindowSize()
+
   const currentSession = useClassStore((s) => s.institution.currentSession)
 
   const allExamConfigs = useExamStore((s) => s.examConfigs)
@@ -117,6 +120,30 @@ export default function Step2Schedule() {
 
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('rooms')
   const [selectedExamId, setSelectedExamId] = useState(examConfigs.find((e) => e.isActive)?.id || '')
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+  const sliderRef = useRef<HTMLDivElement>(null)
+
+  const updateTabSlider = useCallback(() => {
+    const activeEl = tabRefs.current.get(activeSubTab)
+    const slider = sliderRef.current
+    if (!activeEl || !slider) return
+    const container = slider.parentElement
+    if (!container) return
+    const containerRect = container.getBoundingClientRect()
+    const activeRect = activeEl.getBoundingClientRect()
+    slider.style.width = `${activeRect.width}px`
+    slider.style.transform = `translateX(${activeRect.left - containerRect.left + container.scrollLeft}px)`
+  }, [activeSubTab])
+
+  useEffect(() => {
+    updateTabSlider()
+    const activeEl = tabRefs.current.get(activeSubTab)
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    }
+    window.addEventListener('resize', updateTabSlider)
+    return () => window.removeEventListener('resize', updateTabSlider)
+  }, [updateTabSlider])
 
   // Calendar state
   const [currentMonth, setCurrentMonth] = useState<Date>(() => {
@@ -842,26 +869,26 @@ export default function Step2Schedule() {
   return (
     <div className="flex flex-col h-[calc(100vh-60px)]">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate('/exams')}
-            className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] shrink-0"
           >
             <ArrowLeft size={16} />
           </button>
-          <div>
-            <h1 className="text-[1rem] font-bold text-[var(--text-primary)]">
+          <div className="min-w-0">
+            <h1 className="text-[1rem] font-bold text-[var(--text-primary)] truncate">
               {isBn ? 'ধাপ ২: সময়সূচী ও আসন পরিকল্পনা' : 'Step 2: Schedule & Seat Planning'}
             </h1>
-            <p className="text-[0.6875rem] text-[var(--text-muted)]">
+            <p className="text-[0.6875rem] text-[var(--text-muted)] truncate">
               {isBn ? 'রুটিন, কক্ষ, আসন ও ইনভিজিলেটর ব্যবস্থাপনা' : 'Routine, rooms, seating & invigilator management'}
             </p>
           </div>
         </div>
         <button
           onClick={handleDownloadReport}
-          className="flex items-center gap-1.5 py-2 px-3 rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] font-medium cursor-pointer font-[inherit] hover:bg-[var(--green)]/15 transition-all"
+          className="flex items-center gap-1.5 py-2 px-3 rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] font-medium cursor-pointer font-[inherit] hover:bg-[var(--green)]/15 transition-all shrink-0"
         >
           <Download size={14} />
           {isBn ? 'রিপোর্ট' : 'Report'}
@@ -886,35 +913,50 @@ export default function Step2Schedule() {
       </div>
 
       {/* Sub-tabs */}
-      <div className="px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-primary)] flex gap-2 overflow-x-auto">
-        {[
-          { key: 'rooms' as SubTab, label: isBn ? 'কক্ষ' : 'Rooms', icon: <Building size={14} />, count: rooms.length },
-          { key: 'routine' as SubTab, label: isBn ? 'রুটিন' : 'Routine', icon: <Calendar size={14} />, count: filteredRoutines.length },
-          {
-            key: 'seats' as SubTab,
-            label: isBn ? 'আসন পরিকল্পনা' : 'Seat Plan',
-            icon: <LayoutGrid size={14} />,
-            count: filteredSeatPlans.length,
-          },
-          {
-            key: 'invigilators' as SubTab,
-            label: isBn ? 'ইনভিজিলেটর' : 'Invigilators',
-            icon: <UserCheck size={14} />,
-            count: filteredInvigilators.length,
-          },
-          { key: 'admit-cards' as SubTab, label: isBn ? 'প্রবেশপত্র' : 'Admit Cards', icon: <IdCard size={14} /> },
-          { key: 'attendance' as SubTab, label: isBn ? 'পরীক্ষার উপস্থিতি' : 'Exam Attendance', icon: <Users size={14} /> },
-        ].map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setActiveSubTab(t.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeSubTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-          >
-            {t.icon}
-            {t.label}
-            {t.count !== undefined && <span className="text-[0.625rem] opacity-70">({t.count})</span>}
-          </button>
-        ))}
+      <div className={`relative glass rounded-xl mt-3 mb-3 w-full`}>
+        <div className={`relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] ${isMobile ? 'overflow-x-auto flex-nowrap' : 'flex-wrap'}`}>
+          {/* Sliding indicator */}
+          <div
+            ref={sliderRef}
+            className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out z-0"
+            style={{
+              background: activeSubTab === 'rooms' ? 'var(--brand)' : activeSubTab === 'routine' ? 'var(--teal)' : activeSubTab === 'seats' ? 'var(--purple)' : activeSubTab === 'invigilators' ? 'var(--amber)' : activeSubTab === 'admit-cards' ? 'var(--pink)' : 'var(--cyan)',
+              boxShadow: activeSubTab === 'rooms' ? '0 4px 12px rgba(99,102,241,0.3)' : activeSubTab === 'routine' ? '0 4px 12px rgba(20,184,166,0.3)' : activeSubTab === 'seats' ? '0 4px 12px rgba(168,85,247,0.3)' : activeSubTab === 'invigilators' ? '0 4px 12px rgba(245,158,11,0.3)' : activeSubTab === 'admit-cards' ? '0 4px 12px rgba(236,72,153,0.3)' : '0 4px 12px rgba(6,182,212,0.3)',
+            }}
+          />
+          {[
+            { key: 'rooms' as SubTab, label: isBn ? 'কক্ষ' : 'Rooms', icon: <Building size={14} />, count: rooms.length },
+            { key: 'routine' as SubTab, label: isBn ? 'রুটিন' : 'Routine', icon: <Calendar size={14} />, count: filteredRoutines.length },
+            {
+              key: 'seats' as SubTab,
+              label: isBn ? 'আসন পরিকল্পনা' : 'Seat Plan',
+              icon: <LayoutGrid size={14} />,
+              count: filteredSeatPlans.length,
+            },
+            {
+              key: 'invigilators' as SubTab,
+              label: isBn ? 'ইনভিজিলেটর' : 'Invigilators',
+              icon: <UserCheck size={14} />,
+              count: filteredInvigilators.length,
+            },
+            { key: 'admit-cards' as SubTab, label: isBn ? 'প্রবেশপত্র' : 'Admit Cards', icon: <IdCard size={14} /> },
+            { key: 'attendance' as SubTab, label: isBn ? 'পরীক্ষার উপস্থিতি' : 'Exam Attendance', icon: <Users size={14} /> },
+          ].map((t) => (
+            <button
+              key={t.key}
+              ref={(el) => { if (el) tabRefs.current.set(t.key, el) }}
+              onClick={() => setActiveSubTab(t.key)}
+              className={`relative z-10 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${isMobile ? 'shrink-0' : 'flex-1'} ${
+                activeSubTab === t.key ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+              style={{ background: 'transparent' }}
+            >
+              {t.icon}
+              {t.label}
+              {t.count !== undefined && <span className="text-[0.625rem] opacity-70">({t.count})</span>}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Content */}

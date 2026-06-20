@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -18,6 +18,7 @@ import {
   Download,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions } from '@/store/classStore'
 import { useExamStore } from '@/store/examStore'
@@ -44,6 +45,7 @@ export default function Step1Planning() {
   const currentSession = useClassStore((s) => s.institution.currentSession)
   const sessions = useClassStore((s) => s.institution.sessions)
   const isBn = useBn()
+  const { isMobile } = useWindowSize()
 
   const allExamConfigs = useExamStore((s) => s.examConfigs)
   const examConfigs = useMemo(() => allExamConfigs.filter((e) => e.session === currentSession), [allExamConfigs, currentSession])
@@ -66,6 +68,30 @@ export default function Step1Planning() {
   const toggleGradeScaleActive = useExamStore((s) => s.toggleGradeScaleActive)
 
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('exams')
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+  const sliderRef = useRef<HTMLDivElement>(null)
+
+  const updateTabSlider = useCallback(() => {
+    const activeEl = tabRefs.current.get(activeSubTab)
+    const slider = sliderRef.current
+    if (!activeEl || !slider) return
+    const container = slider.parentElement
+    if (!container) return
+    const containerRect = container.getBoundingClientRect()
+    const activeRect = activeEl.getBoundingClientRect()
+    slider.style.width = `${activeRect.width}px`
+    slider.style.transform = `translateX(${activeRect.left - containerRect.left + container.scrollLeft}px)`
+  }, [activeSubTab])
+
+  useEffect(() => {
+    updateTabSlider()
+    const activeEl = tabRefs.current.get(activeSubTab)
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    }
+    window.addEventListener('resize', updateTabSlider)
+    return () => window.removeEventListener('resize', updateTabSlider)
+  }, [updateTabSlider])
 
   // Exam Form
   const [showExamForm, setShowExamForm] = useState(false)
@@ -365,24 +391,24 @@ export default function Step1Planning() {
   return (
     <div className="flex flex-col h-[calc(100vh-60px)]">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate('/exams')}
-            className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] shrink-0"
           >
             <ArrowLeft size={16} />
           </button>
-          <div>
-            <h1 className="text-[1rem] font-bold text-[var(--text-primary)]">
+          <div className="min-w-0">
+            <h1 className="text-[1rem] font-bold text-[var(--text-primary)] truncate">
               {isBn ? 'ধাপ ১: পরিকল্পনা ও প্রস্তুতি' : 'Step 1: Planning & Preparation'}
             </h1>
-            <p className="text-[0.6875rem] text-[var(--text-muted)]">
+            <p className="text-[0.6875rem] text-[var(--text-muted)] truncate">
               {isBn ? 'পরীক্ষা সেটআপ, বিষয় ও মার্কস কনফিগারেশন ও গ্রেড স্কেল' : 'Exam setup, subject & mark configuration & grade scale'}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <div
             className="text-[0.6875rem] font-medium px-2 py-1 rounded-lg"
             style={{
@@ -415,22 +441,37 @@ export default function Step1Planning() {
       </div>
 
       {/* Sub-tabs */}
-      <div className="px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-primary)] flex gap-2 overflow-x-auto">
-        {[
-          { key: 'exams' as SubTab, label: isBn ? 'পরীক্ষা' : 'Exams', icon: <ClipboardList size={14} /> },
-          { key: 'subjects' as SubTab, label: isBn ? 'বিষয় ও মার্কস কনফিগ' : 'Subject & Mark Config', icon: <BookOpen size={14} /> },
-          { key: 'grade-scale' as SubTab, label: isBn ? 'গ্রেড স্কেল' : 'Grade Scale', icon: <Award size={14} /> },
-          { key: 'omr' as SubTab, label: isBn ? 'OMR' : 'OMR Setup', icon: <ScanLine size={14} /> },
-        ].map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setActiveSubTab(t.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium cursor-pointer border-none transition-all whitespace-nowrap ${activeSubTab === t.key ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-          >
-            {t.icon}
-            {t.label}
-          </button>
-        ))}
+      <div className={`relative glass rounded-xl mt-3 mb-3 w-full`}>
+        <div className={`relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] ${isMobile ? 'overflow-x-auto flex-nowrap' : 'flex-wrap'}`}>
+          {/* Sliding indicator */}
+          <div
+            ref={sliderRef}
+            className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out z-0"
+            style={{
+              background: activeSubTab === 'exams' ? 'var(--brand)' : activeSubTab === 'subjects' ? 'var(--teal)' : activeSubTab === 'grade-scale' ? 'var(--purple)' : 'var(--amber)',
+              boxShadow: activeSubTab === 'exams' ? '0 4px 12px rgba(99,102,241,0.3)' : activeSubTab === 'subjects' ? '0 4px 12px rgba(20,184,166,0.3)' : activeSubTab === 'grade-scale' ? '0 4px 12px rgba(168,85,247,0.3)' : '0 4px 12px rgba(245,158,11,0.3)',
+            }}
+          />
+          {[
+            { key: 'exams' as SubTab, label: isBn ? 'পরীক্ষা' : 'Exams', icon: <ClipboardList size={14} /> },
+            { key: 'subjects' as SubTab, label: isBn ? 'বিষয় ও মার্কস কনফিগ' : 'Subject & Mark Config', icon: <BookOpen size={14} /> },
+            { key: 'grade-scale' as SubTab, label: isBn ? 'গ্রেড স্কেল' : 'Grade Scale', icon: <Award size={14} /> },
+            { key: 'omr' as SubTab, label: isBn ? 'OMR' : 'OMR Setup', icon: <ScanLine size={14} /> },
+          ].map((t) => (
+            <button
+              key={t.key}
+              ref={(el) => { if (el) tabRefs.current.set(t.key, el) }}
+              onClick={() => setActiveSubTab(t.key)}
+              className={`relative z-10 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${isMobile ? 'shrink-0' : 'flex-1'} ${
+                activeSubTab === t.key ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+              style={{ background: 'transparent' }}
+            >
+              {t.icon}
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Content */}

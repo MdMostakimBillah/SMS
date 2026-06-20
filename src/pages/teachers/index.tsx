@@ -300,24 +300,23 @@ export default function TeachersPage() {
           return (
             <div
               key={s.labelEn}
+              className="glass"
               style={{
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
-                borderRadius: '0.625rem',
+                borderRadius: '0.75rem',
                 padding: isMobile ? '12px' : '0.875rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: isMobile ? '8px' : '0.625rem',
-                transition: 'all 0.15s ease',
-                boxShadow: 'var(--shadow-xs)',
+                transition: 'all 0.2s ease',
+                cursor: 'default',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = s.color
-                e.currentTarget.style.transform = 'translateY(-1px)'
+                e.currentTarget.style.transform = 'translateY(-2px)'
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border)'
                 e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = 'none'
               }}
             >
               <div
@@ -385,32 +384,30 @@ export default function TeachersPage() {
                 if (draggedIdx !== null) return
                 navigate(opt.path)
               }}
+              className="glass"
               style={{
-                background: 'var(--surface)',
-                border: `1px solid ${isDragOver ? 'var(--brand)' : 'var(--border)'}`,
-                borderRadius: '0.625rem',
+                borderRadius: '0.75rem',
                 padding: isMobile ? '12px' : '1rem',
                 cursor: 'grab',
-                transition: 'all 0.15s ease',
-                boxShadow: isDragOver ? 'var(--shadow-md)' : 'var(--shadow-xs)',
+                transition: 'all 0.2s ease',
                 display: 'flex',
                 flexDirection: isMobile ? 'row' : 'column',
                 alignItems: isMobile ? 'center' : 'flex-start',
                 gap: isMobile ? '12px' : '0',
                 opacity: isDragging ? 0.5 : 1,
                 transform: isDragOver ? 'translateY(-2px)' : undefined,
+                boxShadow: isDragOver ? '0 8px 32px rgba(0,0,0,0.12)' : 'none',
+                borderColor: isDragOver ? 'var(--brand)' : undefined,
               }}
               onMouseEnter={(e) => {
                 if (draggedIdx !== null) return
-                e.currentTarget.style.borderColor = opt.iconColor
                 e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = 'var(--shadow-md)'
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)'
               }}
               onMouseLeave={(e) => {
                 if (draggedIdx !== null) return
-                e.currentTarget.style.borderColor = 'var(--border)'
                 e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = 'var(--shadow-xs)'
+                e.currentTarget.style.boxShadow = 'none'
               }}
             >
               <div

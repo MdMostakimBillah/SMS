@@ -75,6 +75,26 @@ export default function ClassesPage() {
   const [saved, setSaved] = useState(false)
   const [expandedMode, setExpandedMode] = useState<'light' | 'dark' | null>(null)
   const [newSessionInput, setNewSessionInput] = useState('')
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+  const sliderRef = useRef<HTMLDivElement>(null)
+
+  const updateTabSlider = useCallback(() => {
+    const activeEl = tabRefs.current.get(activeTab)
+    const slider = sliderRef.current
+    if (!activeEl || !slider) return
+    const parent = activeEl.parentElement
+    if (!parent) return
+    const parentRect = parent.getBoundingClientRect()
+    const activeRect = activeEl.getBoundingClientRect()
+    slider.style.width = `${activeRect.width}px`
+    slider.style.transform = `translateX(${activeRect.left - parentRect.left}px)`
+  }, [activeTab])
+
+  useEffect(() => {
+    updateTabSlider()
+    window.addEventListener('resize', updateTabSlider)
+    return () => window.removeEventListener('resize', updateTabSlider)
+  }, [updateTabSlider])
 
   const handleSaveInstitution = () => {
     updateInstitution(instForm)
@@ -110,16 +130,30 @@ export default function ClassesPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-[0.375rem] mb-[0.875rem] flex-wrap">
+      <div className={`relative flex gap-[0.375rem] glass rounded-xl p-[0.3125rem] mb-[0.875rem] w-full ${isMobile ? 'flex-wrap' : 'flex-nowrap'}`}>
+        {/* Sliding indicator */}
+        <div
+          ref={sliderRef}
+          className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out"
+          style={{
+            background: activeTab === 'institution' ? 'var(--brand)' : activeTab === 'classes' ? 'var(--teal)' : 'var(--purple)',
+            boxShadow: activeTab === 'institution' ? '0 4px 12px rgba(99,102,241,0.3)' : activeTab === 'classes' ? '0 4px 12px rgba(20,184,166,0.3)' : '0 4px 12px rgba(168,85,247,0.3)',
+            zIndex: 0,
+          }}
+        />
         {[
-          { id: 'institution' as const, icon: Settings, label: isBn ? 'প্রতিষ্ঠান' : 'Institution', color: 'var(--brand)' },
-          { id: 'classes' as const, icon: Users, label: isBn ? 'শ্রেণি' : 'Classes', color: 'var(--teal)' },
-          { id: 'routine' as const, icon: CalendarDays, label: isBn ? 'রুটিন' : 'Routine', color: 'var(--purple)' },
+          { id: 'institution' as const, icon: Settings, label: isBn ? 'প্রতিষ্ঠান' : 'Institution' },
+          { id: 'classes' as const, icon: Users, label: isBn ? 'শ্রেণি' : 'Classes' },
+          { id: 'routine' as const, icon: CalendarDays, label: isBn ? 'রুটিন' : 'Routine' },
         ].map((tab) => (
           <button
             key={tab.id}
+            ref={(el) => { if (el) tabRefs.current.set(tab.id, el) }}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-[0.375rem] py-2 px-4 rounded-lg border text-[0.8125rem] cursor-pointer font-[inherit] transition-all duration-150 ${activeTab === tab.id ? (tab.id === 'institution' ? 'border-[var(--brand)] bg-[var(--brand)15] text-[var(--brand)] font-semibold' : tab.id === 'classes' ? 'border-[var(--teal)] bg-[var(--teal)15] text-[var(--teal)] font-semibold' : 'border-[var(--purple)] bg-[var(--purple)15] text-[var(--purple)] font-semibold') : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}`}
+            className={`relative z-10 flex-1 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 ${
+              activeTab === tab.id ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+            style={{ background: 'transparent' }}
           >
             <tab.icon size={15} />
             {tab.label}

@@ -313,13 +313,9 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     <>
       <aside
         ref={asideRef}
-        className="h-full flex flex-col overflow-hidden shrink-0"
+        className="glass h-full flex flex-col overflow-hidden shrink-0"
         style={{
           width: collapsed ? collapsedWidth : expandedWidth,
-          background: 'var(--glass)',
-          backdropFilter: 'blur(16px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-          borderRight: '1px solid var(--glass-border)',
         }}
       >
         {/* Logo */}

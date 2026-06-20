@@ -501,7 +501,8 @@ export default function CommandPalette() {
     >
       <div
         ref={dialogRef}
-        className="w-full max-w-[36rem] max-h-[70vh] flex flex-col bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl shadow-2xl overflow-hidden mx-4"
+        className="glass w-full max-w-[36rem] max-h-[70vh] flex flex-col rounded-xl overflow-hidden mx-4"
+        style={{ borderRadius: '1rem' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input */}
