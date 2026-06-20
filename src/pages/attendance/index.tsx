@@ -48,7 +48,7 @@ import type { Tab, StatusFilter } from './helpers'
 export default function AttendancePage() {
   const navigate = useNavigate()
   const isBn = useBn()
-  const { isMobile } = useWindowSize()
+  const { isMobile, isTablet } = useWindowSize()
   const { teachers, departments, attendance, markAllPresent } = useTeacherStore()
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
@@ -1131,7 +1131,7 @@ export default function AttendancePage() {
 
       {/* Tabs */}
       <div className="relative glass rounded-xl mt-3 mb-3 w-full">
-        <div className={`relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] ${isMobile ? 'overflow-x-auto flex-nowrap' : 'flex-wrap'}`}>
+        <div className={`relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] ${isMobile || isTablet ? 'overflow-x-auto flex-nowrap' : 'flex-wrap'}`}>
           {/* Sliding indicator */}
           <div
             ref={sliderRef}
@@ -1146,7 +1146,7 @@ export default function AttendancePage() {
               key={tab.key}
               ref={(el) => { if (el) tabRefs.current.set(tab.key, el) }}
               onClick={() => setActiveTab(tab.key)}
-              className={`relative z-10 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${isMobile ? 'shrink-0' : 'flex-1'} ${
+              className={`relative z-10 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${isMobile || isTablet ? 'shrink-0' : 'flex-1'} ${
                 activeTab === tab.key ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               style={{ background: 'transparent' }}

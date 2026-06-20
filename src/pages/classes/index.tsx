@@ -44,7 +44,7 @@ import * as XLSX from 'xlsx'
 
 export default function ClassesPage() {
   const navigate = useNavigate()
-  const { isMobile } = useWindowSize()
+  const { isMobile, isTablet } = useWindowSize()
   const {
     institution,
     classes,
@@ -130,7 +130,7 @@ export default function ClassesPage() {
       </div>
 
       {/* Tabs */}
-      <div className={`relative flex gap-[0.375rem] glass rounded-xl p-[0.3125rem] mb-[0.875rem] w-full ${isMobile ? 'flex-wrap' : 'flex-nowrap'}`}>
+      <div className={`relative flex gap-[0.375rem] glass rounded-xl p-[0.3125rem] mb-[0.875rem] w-full ${isMobile || isTablet ? 'overflow-x-auto flex-nowrap' : 'flex-wrap'}`}>
         {/* Sliding indicator */}
         <div
           ref={sliderRef}
@@ -150,7 +150,7 @@ export default function ClassesPage() {
             key={tab.id}
             ref={(el) => { if (el) tabRefs.current.set(tab.id, el) }}
             onClick={() => setActiveTab(tab.id)}
-            className={`relative z-10 flex-1 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 ${
+            className={`relative z-10 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${isMobile || isTablet ? 'shrink-0' : 'flex-1'} ${
               activeTab === tab.id ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
             style={{ background: 'transparent' }}
