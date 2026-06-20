@@ -896,20 +896,30 @@ export default function Step2Schedule() {
       </div>
 
       {/* Exam Selector */}
-      <div className="px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-primary)]">
-        <select value={selectedExamId} onChange={(e) => setSelectedExamId(e.target.value)} className={`${selectCls} max-w-[18.75rem]`}>
-          <option value="">{isBn ? 'সকল পরীক্ষা' : 'All Exams'}</option>
-          {examConfigs.map((e) => (
-            <option key={e.id} value={e.id}>
-              {isBn ? e.nameBn : e.name} {e.isActive ? '(Active)' : ''}
-            </option>
-          ))}
-        </select>
-        {selectedExam && (
-          <span className="ml-3 text-[0.6875rem] text-[var(--text-muted)]">
-            {selectedExam.startDate} — {selectedExam.endDate}
-          </span>
-        )}
+      <div className="px-4 py-2 border-b border-[var(--bg-primary)] bg-[var(--bg-secondary)]">
+        <div className="flex items-center gap-3 flex-wrap">
+          <select value={selectedExamId} onChange={(e) => setSelectedExamId(e.target.value)} className={`${selectCls} max-w-[18.75rem]`}>
+            <option value="">{isBn ? 'সকল পরীক্ষা' : 'All Exams'}</option>
+            {examConfigs.map((e) => (
+              <option key={e.id} value={e.id}>
+                {isBn ? e.nameBn : e.name} {e.isActive ? '(Active)' : ''}
+              </option>
+            ))}
+          </select>
+          {selectedExam && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]">
+                <Calendar size={12} className="text-[var(--brand)]" />
+                <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">
+                  {format(parseISO(selectedExam.startDate), 'MMM d')} — {format(parseISO(selectedExam.endDate), 'MMM d, yyyy')}
+                </span>
+              </div>
+              <span className="text-[0.625rem] text-[var(--text-muted)]">
+                ({examDayCount} {isBn ? 'দিন' : 'days'})
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Sub-tabs */}
@@ -964,6 +974,31 @@ export default function Step2Schedule() {
         {/* ═══ ROUTINE TAB – FULL-SCREEN CALENDAR ═══ */}
         {activeSubTab === 'routine' && (
           <div className="flex flex-col h-full">
+            {/* Exam Date Range Banner */}
+            {selectedExam && (
+              <div className="flex items-center gap-3 p-3 rounded-xl mb-3 border border-[var(--border)] bg-[var(--bg-secondary)]">
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={13} className="text-[var(--brand)]" />
+                  <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
+                    {format(parseISO(selectedExam.startDate), 'MMM d, yyyy')}
+                  </span>
+                  <span className="text-[0.625rem] text-[var(--text-muted)] mx-1">→</span>
+                  <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
+                    {format(parseISO(selectedExam.endDate), 'MMM d, yyyy')}
+                  </span>
+                </div>
+                <div className="h-3 w-px bg-[var(--border)]" />
+                <div className="flex gap-3 text-[0.6875rem]">
+                  <span className="text-[var(--text-muted)]">
+                    {isBn ? 'মোট' : 'Total'}: <strong className="text-[var(--text-primary)]">{examDayCount}</strong> {isBn ? 'দিন' : 'days'}
+                  </span>
+                  <span className="text-[var(--text-muted)]">
+                    {isBn ? 'রুটিন' : 'Routines'}: <strong className="text-[var(--text-primary)]">{filteredRoutines.length}</strong>
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Stats Row */}
             <div className="flex items-center gap-5 mb-4 flex-wrap">
               {[
@@ -1601,6 +1636,31 @@ export default function Step2Schedule() {
         {/* ═══ INVIGILATORS TAB ═══ */}
         {activeSubTab === 'invigilators' && (
           <>
+            {/* Exam Date Range Banner */}
+            {selectedExam && (
+              <div className="flex items-center gap-3 p-3 rounded-xl mb-3 border border-[var(--border)] bg-[var(--bg-secondary)]">
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={13} className="text-[var(--amber)]" />
+                  <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
+                    {format(parseISO(selectedExam.startDate), 'MMM d, yyyy')}
+                  </span>
+                  <span className="text-[0.625rem] text-[var(--text-muted)] mx-1">→</span>
+                  <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
+                    {format(parseISO(selectedExam.endDate), 'MMM d, yyyy')}
+                  </span>
+                </div>
+                <div className="h-3 w-px bg-[var(--border)]" />
+                <div className="flex gap-3 text-[0.6875rem]">
+                  <span className="text-[var(--text-muted)]">
+                    {isBn ? 'মোট' : 'Total'}: <strong className="text-[var(--text-primary)]">{examDayCount}</strong> {isBn ? 'দিন' : 'days'}
+                  </span>
+                  <span className="text-[var(--text-muted)]">
+                    {isBn ? 'শিক্ষক' : 'Teachers'}: <strong className="text-[var(--text-primary)]">{filteredInvigilators.length}</strong>
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Mode Toggle */}
             {(() => {
               const hasRoomAssign = filteredInvigilators.some((i) => i.assignType === 'room')
