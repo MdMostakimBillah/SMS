@@ -29,6 +29,7 @@ import { useSessionStudents, useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
 import { InactivationModal } from '@/components/shared/InactivationModal'
+import { ReactivationModal } from '@/components/shared/ReactivationModal'
 import { generateListPDF } from '@/pages/students/admission/listPdfTemplate'
 import { generateA4HTML } from '@/pages/students/admission/a4Template'
 import type { ListPDFOptions } from '@/pages/students/admission/listPdfTemplate'
@@ -82,6 +83,7 @@ export default function AllStudentsPage() {
   const [viewSt, setViewSt] = useState<StudentAdmission | null>(null)
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [inactiveTarget, setInactiveTarget] = useState<StudentAdmission | null>(null)
+  const [reactivateTarget, setReactivateTarget] = useState<StudentAdmission | null>(null)
   const actionMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -96,7 +98,7 @@ export default function AllStudentsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showActionMenu])
 
-  useScrollLock(showPDF || viewSt !== null || inactiveTarget !== null)
+  useScrollLock(showPDF || viewSt !== null || inactiveTarget !== null || reactivateTarget !== null)
 
   const filtered = useMemo(
     () =>
@@ -811,7 +813,7 @@ export default function AllStudentsPage() {
                           <Edit2 size={12} />
                         </button>
                         <button
-                          onClick={() => s.active === false ? reactivateStudent(s.id) : setInactiveTarget(s)}
+                          onClick={() => s.active === false ? setReactivateTarget(s) : setInactiveTarget(s)}
                           title={s.active === false ? 'Reactivate' : 'Inactive'}
                           className={`w-[1.625rem] h-[1.625rem] rounded-[0.375rem] border-0 cursor-pointer flex items-center justify-center ${
                             s.active === false
@@ -890,6 +892,19 @@ export default function AllStudentsPage() {
             setInactiveTarget(null)
           }}
           onCancel={() => setInactiveTarget(null)}
+        />
+      )}
+      {/* Reactivation Modal */}
+      {reactivateTarget && (
+        <ReactivationModal
+          studentName={reactivateTarget.nameEn}
+          currentBillingDate={reactivateTarget.billingDate}
+          isBn={isBn}
+          onConfirm={(billingDate) => {
+            reactivateStudent(reactivateTarget.id, billingDate)
+            setReactivateTarget(null)
+          }}
+          onCancel={() => setReactivateTarget(null)}
         />
       )}
     </div>

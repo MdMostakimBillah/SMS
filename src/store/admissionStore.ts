@@ -21,7 +21,7 @@ interface AdmissionState {
   approveStudent: (id: string, billingDate?: string) => void
   rejectStudent: (id: string) => void
   deactivateStudent: (id: string, inactiveAt: string, inactiveReason: string) => void
-  reactivateStudent: (id: string) => void
+  reactivateStudent: (id: string, billingDate?: string) => void
   toggleStudentActive: (id: string) => void
   getNextId: () => string
 }
@@ -77,11 +77,11 @@ export const useAdmissionStore = create<AdmissionState>()(
           ),
         })),
 
-      reactivateStudent: (id) =>
+      reactivateStudent: (id, billingDate) =>
         set((state) => ({
           students: state.students.map((s) =>
             s.id === id
-              ? { ...s, active: true, inactiveAt: undefined, inactiveReason: undefined, updatedAt: new Date().toISOString().split('T')[0] }
+              ? { ...s, active: true, inactiveAt: undefined, inactiveReason: undefined, billingDate: billingDate || s.billingDate, updatedAt: new Date().toISOString().split('T')[0] }
               : s
           ),
         })),
