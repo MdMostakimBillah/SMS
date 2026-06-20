@@ -10,7 +10,7 @@ import Topbar from './Topbar'
 import CommandPalette from '@/components/shared/CommandPalette'
 
 export default function AppLayout() {
-  const { theme, sidebarCollapsed, sidebarOpen, toggleSidebar } = useAppStore()
+  const { theme, language, sidebarCollapsed, sidebarOpen, toggleSidebar } = useAppStore()
   const { institution } = useClassStore()
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
@@ -28,6 +28,10 @@ export default function AppLayout() {
       document.documentElement.setAttribute('data-theme', theme)
     }
   }, [theme])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-lang', language)
+  }, [language])
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 600)
