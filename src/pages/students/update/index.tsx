@@ -422,6 +422,14 @@ export default function UpdateStudentPage() {
                   onChange={(v) => set('admissionDate', v)}
                   type="date"
                 />
+                <F
+                  l={isBn ? 'বিলিং তারিখ' : 'Billing Date'}
+                  v={form.billingDate || ''}
+                  onChange={(v) => set('billingDate', v)}
+                  type="date"
+                />
+              </div>
+              <div {...g(3)} className="grid gap-2.5 mt-2.5" style={{ gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)' }}>
                 <F l={isBn ? 'আগের স্কুল' : 'Previous School'} v={form.previousSchool} onChange={(v) => set('previousSchool', v)} />
               </div>
             </div>
