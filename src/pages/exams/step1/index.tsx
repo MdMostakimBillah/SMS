@@ -670,8 +670,8 @@ export default function Step1Planning() {
               )
             })}
             {examConfigs.length === 0 && (
-              <div className={`${sectionCls} text-center py-10`}>
-                <ClipboardList size={32} className="mx-auto mb-2 opacity-20 text-[var(--text-muted)]" />
+              <div className={`${sectionCls} flex flex-col items-center text-center py-10`}>
+                <ClipboardList size={32} className="mb-2 opacity-20 text-[var(--text-muted)]" />
                 <p className="text-[0.8125rem] text-[var(--text-muted)]">{isBn ? 'এখনো কোনো পরীক্ষা তৈরি হয়নি' : 'No exams created yet'}</p>
                 <button
                   onClick={() => {
