@@ -295,7 +295,7 @@ body {
 
 [data-lang="bn"] body {
   font-family: 'Noto Sans Bengali', 'Hind Siliguri', sans-serif;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 [data-lang="bn"] * {
