@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { gsap } from 'gsap'
+
 import {
   Search,
   LayoutDashboard,
@@ -308,7 +308,7 @@ export default function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
-  const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+
 
   const quickActions: QuickAction[] = useMemo(() => [
     {
@@ -372,39 +372,12 @@ export default function CommandPalette() {
     return groups
   }, [filteredItems, isBn])
 
-  // Staggered item animation on query change
-  useEffect(() => {
-    if (!commandPaletteOpen) return
-    const timer = setTimeout(() => {
-      itemRefs.current.forEach((el, idx) => {
-        if (el) {
-          gsap.fromTo(
-            el,
-            { opacity: 0, y: 8 },
-            { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out', delay: idx * 0.03 }
-          )
-        }
-      })
-    }, 20)
-    return () => clearTimeout(timer)
-  }, [query, commandPaletteOpen, allResults.length])
-
-  // Simple open/close animation
-  useEffect(() => {
-    if (commandPaletteOpen && dialogRef.current) {
-      gsap.fromTo(
-        dialogRef.current,
-        { opacity: 0, scale: 0.97, y: -10 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.25, ease: 'power3.out', onComplete: () => inputRef.current?.focus() }
-      )
-    }
-  }, [commandPaletteOpen])
-
   // Reset on open
   useEffect(() => {
     if (commandPaletteOpen) {
       setQuery('')
       setSelectedIndex(0)
+      inputRef.current?.focus()
     }
   }, [commandPaletteOpen])
 
@@ -421,18 +394,7 @@ export default function CommandPalette() {
   }, [selectedIndex])
 
   const handleClose = useCallback(() => {
-    if (dialogRef.current) {
-      gsap.to(dialogRef.current, {
-        opacity: 0,
-        scale: 0.97,
-        y: -10,
-        duration: 0.18,
-        ease: 'power2.in',
-        onComplete: () => setCommandPaletteOpen(false),
-      })
-    } else {
-      setCommandPaletteOpen(false)
-    }
+    setCommandPaletteOpen(false)
   }, [setCommandPaletteOpen])
 
   const handleSelect = useCallback((result: typeof allResults[number]) => {
@@ -489,11 +451,6 @@ export default function CommandPalette() {
 
   let runningIndex = -1
 
-  const registerItem = (idx: number, el: HTMLDivElement | null) => {
-    if (el) itemRefs.current.set(idx, el)
-    else itemRefs.current.delete(idx)
-  }
-
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex justify-center pt-[15vh] bg-black/60 backdrop-blur-sm"
@@ -545,7 +502,6 @@ export default function CommandPalette() {
                 return (
                   <div
                     key={action.id}
-                    ref={(el) => registerItem(idx, el)}
                     onClick={() => handleSelect({ type: 'action', item: action })}
                     onMouseEnter={() => setSelectedIndex(idx)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors duration-100 ${
@@ -582,7 +538,6 @@ export default function CommandPalette() {
                 return (
                   <div
                     key={item.id}
-                    ref={(el) => registerItem(idx, el)}
                     onClick={() => handleSelect({ type: 'nav', item })}
                     onMouseEnter={() => setSelectedIndex(idx)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors duration-100 ${
