@@ -2369,8 +2369,8 @@ export default function Step2Schedule() {
 
       {/* ═══ Routine Form Modal ═══ */}
       {showRoutineForm && (
-        <div className="modal-overlay">
-          <div className="modal-box modal-content" style={{ maxWidth: '26.25rem' }}>
+        <div className="modal-overlay" onClick={() => setShowRoutineForm(false)}>
+          <div className="modal-box modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '26.25rem' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'নতুন রুটিন' : 'New Routine'}</h3>
               <button
