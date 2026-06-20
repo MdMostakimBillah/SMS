@@ -1159,6 +1159,8 @@ export default function Step1Planning() {
             subjects={subjects}
             omrConfigs={omrConfigs}
             gradeScales={gradeScales}
+            classes={classes}
+            institution={useClassStore.getState().institution}
           />
         )}
       </div>

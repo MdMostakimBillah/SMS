@@ -1,9 +1,21 @@
 import { useState } from 'react'
-import { Plus, Trash2, Edit2, X, ScanLine } from 'lucide-react'
+import { Plus, Trash2, Edit2, X, ScanLine, Printer, Palette } from 'lucide-react'
 import { useExamStore, type OMRConfig as OMRExamConfig } from '@/store/examStore'
-import { generateOMRSheet, type OMRConfig } from '@/pages/exams/omrTemplate'
+import { generateOMRSheetMultiCopy, type OMRConfig } from '@/pages/exams/omrTemplate'
 import { sectionCls, inputCls, btnPrimary } from '@/lib/styles'
 import type { Subject } from '@/pages/teachers/types'
+
+const OMR_COLORS = [
+  { value: '#d81b60', label: 'Pink' },
+  { value: '#8e24aa', label: 'Purple' },
+  { value: '#1e88e5', label: 'Blue' },
+  { value: '#43a047', label: 'Green' },
+  { value: '#f4511e', label: 'Orange' },
+  { value: '#00897b', label: 'Teal' },
+  { value: '#6d4c41', label: 'Brown' },
+  { value: '#546e7a', label: 'Gray' },
+  { value: '#000000', label: 'Black' },
+]
 
 interface OMRTabProps {
   isBn: boolean
@@ -11,9 +23,11 @@ interface OMRTabProps {
   subjects: Subject[]
   omrConfigs: OMRExamConfig[]
   gradeScales: any[]
+  classes?: { id: string; name: string; nameBn: string }[]
+  institution?: { name: string; nameBn: string; address?: string }
 }
 
-export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs }: OMRTabProps) {
+export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs, classes = [], institution }: OMRTabProps) {
   const upsertOMRConfig = useExamStore((s) => s.upsertOMRConfig)
   const deleteOMRConfig = useExamStore((s) => s.deleteOMRConfig)
 
@@ -31,6 +45,11 @@ export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs }: OMRT
 
   const [showOMRDownload, setShowOMRDownload] = useState(false)
   const [omrDownloadConfig, setOmrDownloadConfig] = useState<OMRExamConfig | null>(null)
+  const [omrQuantity, setOmrQuantity] = useState(1)
+  const [omrColor, setOmrColor] = useState('#d81b60')
+  const [omrClass, setOmrClass] = useState('')
+  const [omrSection, setOmrSection] = useState('')
+  const [omrPrinting, setOmrPrinting] = useState(false)
   const [omrOpts, setOmrOpts] = useState<Partial<OMRConfig>>({
     totalQuestions: 50,
     optionCount: 4,
@@ -308,106 +327,187 @@ export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs }: OMRT
         </div>
       )}
 
-      {/* OMR Download Modal */}
-      {showOMRDownload &&
-        omrDownloadConfig &&
-        (() => {
-          const exam = examConfigs.find((e) => e.id === omrDownloadConfig.examId)
-          const subject = subjects.find((s) => s.id === omrDownloadConfig.subjectId)
-          return (
-            <div className="modal-overlay">
-              <div className="modal-box modal-content" style={{ maxWidth: '25rem' }}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
-                    {isBn ? 'OMR শিট ডাউনলোড' : 'Download OMR Sheet'}
-                  </h3>
-                  <button
-                    onClick={() => setShowOMRDownload(false)}
-                    className="w-7 h-7 rounded-md flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
+      {/* ═══ OMR SHEET CREATOR ═══ */}
+      {showOMRDownload && omrDownloadConfig && (() => {
+        const exam = examConfigs.find((e) => e.id === omrDownloadConfig.examId)
+        const subject = subjects.find((s) => s.id === omrDownloadConfig.subjectId)
+        const selectedClass = classes.find((c) => c.id === omrClass)
 
-                {/* Preview Info */}
-                <div className="mb-4 p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]">
-                  <div className="text-[0.6875rem] text-[var(--text-muted)] mb-1">
-                    <strong>{isBn ? 'পরীক্ষা' : 'Exam'}:</strong> {isBn ? exam?.nameBn : exam?.name}
+        return (
+          <div className="modal-overlay">
+            <div className="modal-box modal-content" style={{ maxWidth: '32rem' }}>
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--brand-light)' }}>
+                    <ScanLine size={16} style={{ color: 'var(--brand)' }} />
                   </div>
-                  <div className="text-[0.6875rem] text-[var(--text-muted)] mb-1">
-                    <strong>{isBn ? 'বিষয়' : 'Subject'}:</strong> {isBn ? subject?.nameBn : subject?.name}
-                  </div>
-                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
-                    <strong>{isBn ? 'মার্কিং' : 'Marking'}:</strong> +{omrDownloadConfig.correctMark} / -{omrDownloadConfig.negativeMark}
-                  </div>
-                </div>
-
-                {/* Options */}
-                <div className="space-y-3 mb-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">
-                        {isBn ? 'মোট প্রশ্ন' : 'Total Questions'}
-                      </label>
-                      <input
-                        type="number"
-                        min="10"
-                        max="200"
-                        value={omrOpts.totalQuestions}
-                        onChange={(e) => setOmrOpts((p) => ({ ...p, totalQuestions: Number(e.target.value) || 50 }))}
-                        className={`${inputCls} w-full`}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'অপশন' : 'Options'}</label>
-                      <select
-                        value={omrOpts.optionCount}
-                        onChange={(e) => setOmrOpts((p) => ({ ...p, optionCount: Number(e.target.value) }))}
-                        className={`${inputCls} w-full`}
-                      >
-                        <option value={4}>4 (ক,খ,গ,ঘ)</option>
-                        <option value={5}>5 (ক,খ,গ,ঘ,ঙ)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Include toggles */}
-                  <div className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1">{isBn ? 'অন্তর্ভুক্ত করুন' : 'Include'}:</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'showRollNo' as const, label: isBn ? 'রোল নম্বর' : 'Roll Number' },
-                      { key: 'showRegistrationNo' as const, label: isBn ? 'রেজিস্ট্রেশন নম্বর' : 'Registration No' },
-                      { key: 'showSetCode' as const, label: isBn ? 'সেট কোড' : 'Set Code' },
-                      { key: 'showSubjectCode' as const, label: isBn ? 'বিষয় কোড' : 'Subject Code' },
-                    ].map((t) => (
-                      <label
-                        key={t.key}
-                        className="flex items-center gap-2 p-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer hover:bg-[var(--bg-tertiary)]"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={omrOpts[t.key]}
-                          onChange={(e) => setOmrOpts((p) => ({ ...p, [t.key]: e.target.checked }))}
-                          className="w-3.5 h-3.5 rounded accent-[var(--brand)]"
-                        />
-                        <span className="text-[0.625rem] text-[var(--text-primary)]">{t.label}</span>
-                      </label>
-                    ))}
-                  </div>
-
-                  {/* Format */}
                   <div>
-                    <label className="text-[0.625rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'ফরম্যাট' : 'Format'}</label>
-                    <div className="flex gap-2">
+                    <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
+                      {isBn ? 'OMR শিট তৈরি করুন' : 'Create OMR Sheet'}
+                    </h3>
+                    <p className="text-[0.6875rem] text-[var(--text-muted)]">
+                      {isBn ? subject?.nameBn : subject?.name} · {omrDownloadConfig.totalQuestions} {isBn ? 'প্রশ্ন' : 'Q'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowOMRDownload(false)}
+                  className="w-7 h-7 rounded-md flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Visual Preview Card */}
+              <div
+                className="rounded-xl p-4 mb-4 border-2 relative overflow-hidden"
+                style={{ borderColor: omrColor, background: `${omrColor}08` }}
+              >
+                <div className="absolute top-0 left-0 w-full h-1" style={{ background: omrColor }} />
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-[0.875rem]" style={{ background: omrColor }}>
+                    OMR
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                      {institution?.name || 'Institution'}
+                    </div>
+                    <div className="text-[0.6875rem] text-[var(--text-secondary)]">
+                      {isBn ? subject?.nameBn : subject?.name} · {isBn ? exam?.nameBn : exam?.name}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3 text-[0.6875rem]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[var(--text-muted)]">{isBn ? 'প্রশ্ন' : 'Questions'}:</span>
+                    <span className="font-semibold text-[var(--text-primary)]">{omrOpts.totalQuestions}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[var(--text-muted)]">{isBn ? 'অপশন' : 'Options'}:</span>
+                    <span className="font-semibold text-[var(--text-primary)]">{omrOpts.optionCount}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[var(--text-muted)]">{isBn ? 'ফরম্যাট' : 'Format'}:</span>
+                    <span className="font-semibold text-[var(--text-primary)]">{omrOpts.sheetFormat}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[var(--text-muted)]">{isBn ? 'মার্ক' : 'Mark'}:</span>
+                    <span className="font-semibold" style={{ color: 'var(--green)' }}>+{omrDownloadConfig.correctMark}</span>
+                    <span className="font-semibold" style={{ color: 'var(--red)' }}>-{omrDownloadConfig.negativeMark}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Settings Grid */}
+              <div className="space-y-4 mb-4">
+                {/* Quantity + Class */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] block mb-1.5">
+                      {isBn ? 'পরিমাণ' : 'Quantity'}
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="500"
+                      value={omrQuantity}
+                      onChange={(e) => setOmrQuantity(Math.max(1, Math.min(500, Number(e.target.value) || 1)))}
+                      className={`${inputCls} w-full text-center text-[1.125rem] font-bold`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] block mb-1.5">
+                      {isBn ? 'শ্রেণি' : 'Class'}
+                    </label>
+                    <select
+                      value={omrClass}
+                      onChange={(e) => { setOmrClass(e.target.value); setOmrSection('') }}
+                      className={`${inputCls} w-full`}
+                    >
+                      <option value="">{isBn ? 'শ্রেণি নির্বাচন' : 'Select class'}</option>
+                      {classes.map((c) => (
+                        <option key={c.id} value={c.id}>{isBn ? c.nameBn : c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Color Picker */}
+                <div>
+                  <label className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] flex items-center gap-1.5 mb-2">
+                    <Palette size={12} />
+                    {isBn ? 'রঙ নির্বাচন' : 'Theme Color'}
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {OMR_COLORS.map((c) => (
+                      <button
+                        key={c.value}
+                        onClick={() => setOmrColor(c.value)}
+                        className="w-7 h-7 rounded-full border-2 cursor-pointer transition-all hover:scale-110"
+                        style={{
+                          background: c.value,
+                          borderColor: omrColor === c.value ? 'var(--text-primary)' : 'transparent',
+                          boxShadow: omrColor === c.value ? `0 0 0 2px var(--bg-primary), 0 0 0 4px ${c.value}` : 'none',
+                        }}
+                        title={c.label}
+                      />
+                    ))}
+                    <label className="w-7 h-7 rounded-full border-2 border-dashed border-[var(--border)] cursor-pointer flex items-center justify-center hover:border-[var(--text-muted)] transition-colors">
+                      <input
+                        type="color"
+                        value={omrColor}
+                        onChange={(e) => setOmrColor(e.target.value)}
+                        className="sr-only"
+                      />
+                      <span className="text-[0.5rem] text-[var(--text-muted)]">+</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Questions + Options + Format */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] block mb-1.5">
+                      {isBn ? 'প্রশ্ন' : 'Questions'}
+                    </label>
+                    <input
+                      type="number"
+                      min="10"
+                      max="200"
+                      value={omrOpts.totalQuestions}
+                      onChange={(e) => setOmrOpts((p) => ({ ...p, totalQuestions: Number(e.target.value) || 50 }))}
+                      className={`${inputCls} w-full`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] block mb-1.5">
+                      {isBn ? 'অপশন' : 'Options'}
+                    </label>
+                    <select
+                      value={omrOpts.optionCount}
+                      onChange={(e) => setOmrOpts((p) => ({ ...p, optionCount: Number(e.target.value) }))}
+                      className={`${inputCls} w-full`}
+                    >
+                      <option value={4}>4 (A,B,C,D)</option>
+                      <option value={5}>5 (A,B,C,D,E)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] block mb-1.5">
+                      {isBn ? 'ফরম্যাট' : 'Format'}
+                    </label>
+                    <div className="flex gap-1">
                       {(['A', 'B', 'C', 'D'] as const).map((f) => (
                         <button
                           key={f}
                           onClick={() => setOmrOpts((p) => ({ ...p, sheetFormat: f }))}
-                          className={`flex-1 py-1.5 rounded-lg text-[0.6875rem] font-semibold border cursor-pointer transition-all ${
+                          className={`flex-1 py-1.5 rounded-md text-[0.625rem] font-bold border cursor-pointer transition-all ${
                             omrOpts.sheetFormat === f
-                              ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
+                              ? 'text-white border-transparent'
                               : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--brand)]'
                           }`}
+                          style={omrOpts.sheetFormat === f ? { background: omrColor, borderColor: omrColor } : {}}
                         >
                           {f}
                         </button>
@@ -416,93 +516,141 @@ export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs }: OMRT
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-2 justify-end">
-                  <button
-                    onClick={() => setShowOMRDownload(false)}
-                    className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
-                  >
-                    {isBn ? 'বাতিল' : 'Cancel'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      generateOMRSheet(
-                        {
-                          examName: exam?.name || '',
-                          examNameBn: exam?.nameBn || '',
-                          subjectName: subject?.name || '',
-                          subjectNameBn: subject?.nameBn || '',
-                          className: '',
-                          classNameBn: '',
-                          groupName: '',
-                          groupNameBn: '',
-                          sectionName: '',
-                          sessionName: '',
-                          totalQuestions: omrOpts.totalQuestions || 50,
-                          optionCount: omrOpts.optionCount || 4,
-                          correctMark: omrDownloadConfig.correctMark,
-                          negativeMark: omrDownloadConfig.negativeMark,
-                          sheetFormat: (omrOpts.sheetFormat || 'A') as 'A' | 'B' | 'C' | 'D',
-                          themeColor: '#d81b60',
-                          serialNumber: '0001',
-                          institutionName: 'EduTech School',
-                          institutionNameBn: 'এডুটেক স্কুল',
-                          institutionAddress: '',
-                          showStudentName: true,
-                          showRollNo: true,
-                          showStudentId: true,
-                          showRegistrationNo: true,
-                          showClass: false,
-                          showSection: false,
-                          showGroup: false,
-                          showExamName: false,
-                          showSubjectName: false,
-                          showSubjectCode: false,
-                          showSetCode: true,
-                          showDate: true,
-                          showStudentSignature: true,
-                          showStudentPhoto: false,
-                          showQRCode: true,
-                          showBarcode: false,
-                          showSerialNumber: true,
-                          showSecurityCode: false,
-                          showTeacherCode: false,
-                          showRoomNumber: false,
-                          showSeatNumber: false,
-                          showAdditionalPaper: true,
-                          showPresentAbsent: false,
-                          showExaminerSection: true,
-                          marksEntryStyle: 'abcd' as const,
-                          customMarksValues: '',
-                          showExaminerSignature: true,
-                          showHeadExaminerSignature: false,
-                          showCheckedBy: true,
-                          showVerifiedBy: true,
-                          showTotalMarks: true,
-                          showPracticalMarks: false,
-                          showVivaMarks: false,
-                          showInstructions: true,
-                          subjects: [],
-                          paperSize: 'A4' as const,
-                          showVerificationCode: false,
-                          showInvigilatorCode: false,
-                          showExaminerRemarks: false,
-                          showVerificationSignature: false,
-                        },
-                        isBn
-                      )
-                      setShowOMRDownload(false)
-                    }}
-                    className="px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.75rem] font-semibold cursor-pointer hover:shadow-md transition-all"
-                  >
-                    <ScanLine size={13} className="inline mr-1 -mt-0.5" />
-                    {isBn ? 'ডাউনলোড PDF' : 'Download PDF'}
-                  </button>
+                {/* Include toggles */}
+                <div>
+                  <label className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] block mb-2">
+                    {isBn ? 'অন্তর্ভুক্ত করুন' : 'Include'}
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { key: 'showRollNo' as const, label: isBn ? 'রোল' : 'Roll' },
+                      { key: 'showRegistrationNo' as const, label: isBn ? 'রেজি' : 'Reg No' },
+                      { key: 'showSetCode' as const, label: isBn ? 'সেট' : 'Set' },
+                      { key: 'showSubjectCode' as const, label: isBn ? 'বিষয় কোড' : 'Subject' },
+                    ].map((t) => (
+                      <label
+                        key={t.key}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all text-[0.625rem]"
+                        style={{
+                          background: omrOpts[t.key] ? `${omrColor}15` : 'var(--bg-secondary)',
+                          borderColor: omrOpts[t.key] ? omrColor : 'var(--border)',
+                          color: omrOpts[t.key] ? omrColor : 'var(--text-secondary)',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={omrOpts[t.key]}
+                          onChange={(e) => setOmrOpts((p) => ({ ...p, [t.key]: e.target.checked }))}
+                          className="sr-only"
+                        />
+                        {t.label}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setShowOMRDownload(false)}
+                  className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer"
+                >
+                  {isBn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button
+                  onClick={async () => {
+                    setOmrPrinting(true)
+                    try {
+                      const cfg: OMRConfig = {
+                        examName: exam?.name || '',
+                        examNameBn: exam?.nameBn || '',
+                        subjectName: subject?.name || '',
+                        subjectNameBn: subject?.nameBn || '',
+                        className: selectedClass?.name || '',
+                        classNameBn: selectedClass?.nameBn || '',
+                        groupName: '',
+                        groupNameBn: '',
+                        sectionName: omrSection,
+                        sessionName: '',
+                        totalQuestions: omrOpts.totalQuestions || 50,
+                        optionCount: omrOpts.optionCount || 4,
+                        correctMark: omrDownloadConfig.correctMark,
+                        negativeMark: omrDownloadConfig.negativeMark,
+                        sheetFormat: (omrOpts.sheetFormat || 'A') as 'A' | 'B' | 'C' | 'D',
+                        themeColor: omrColor,
+                        serialNumber: '0001',
+                        institutionName: institution?.name || 'Institution',
+                        institutionNameBn: institution?.nameBn || '',
+                        institutionAddress: institution?.address || '',
+                        showStudentName: true,
+                        showRollNo: omrOpts.showRollNo ?? true,
+                        showStudentId: true,
+                        showRegistrationNo: omrOpts.showRegistrationNo ?? true,
+                        showClass: !!omrClass,
+                        showSection: false,
+                        showGroup: false,
+                        showExamName: false,
+                        showSubjectName: false,
+                        showSubjectCode: omrOpts.showSubjectCode ?? false,
+                        showSetCode: omrOpts.showSetCode ?? true,
+                        showDate: true,
+                        showStudentSignature: true,
+                        showStudentPhoto: false,
+                        showQRCode: true,
+                        showBarcode: false,
+                        showSerialNumber: true,
+                        showSecurityCode: false,
+                        showVerificationCode: false,
+                        showTeacherCode: false,
+                        showInvigilatorCode: false,
+                        showRoomNumber: false,
+                        showSeatNumber: false,
+                        showAdditionalPaper: true,
+                        showPresentAbsent: false,
+                        showExaminerRemarks: false,
+                        showExaminerSection: true,
+                        marksEntryStyle: 'abcd' as const,
+                        customMarksValues: '',
+                        showExaminerSignature: true,
+                        showHeadExaminerSignature: false,
+                        showVerificationSignature: false,
+                        showCheckedBy: true,
+                        showVerifiedBy: true,
+                        showTotalMarks: true,
+                        showPracticalMarks: false,
+                        showVivaMarks: false,
+                        showInstructions: true,
+                        subjects: [],
+                        paperSize: 'A4' as const,
+                      }
+                      const html = await generateOMRSheetMultiCopy(cfg, isBn, omrQuantity)
+                      const w = window.open('', '_blank')
+                      if (w) {
+                        w.document.write(html)
+                        w.document.close()
+                        setTimeout(() => w.print(), 600)
+                      }
+                      setShowOMRDownload(false)
+                    } finally {
+                      setOmrPrinting(false)
+                    }
+                  }}
+                  disabled={omrPrinting}
+                  className="px-4 py-2 rounded-lg text-white text-[0.75rem] font-semibold cursor-pointer hover:shadow-md transition-all flex items-center gap-1.5 disabled:opacity-60"
+                  style={{ background: omrColor }}
+                >
+                  <Printer size={13} />
+                  {omrPrinting
+                    ? (isBn ? 'তৈরি হচ্ছে...' : 'Generating...')
+                    : (isBn ? `${omrQuantity} কপি প্রিন্ট করুন` : `Print ${omrQuantity} Copy${omrQuantity > 1 ? 's' : ''}`)
+                  }
+                </button>
+              </div>
             </div>
-          )
-        })()}
+          </div>
+        )
+      })()}
     </>
   )
 }
