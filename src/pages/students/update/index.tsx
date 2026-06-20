@@ -5,8 +5,6 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
-import { Select } from '@/components/ui/Select'
-import { DatePicker } from '@/components/ui/DatePicker'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 
 interface FP {
@@ -20,24 +18,23 @@ interface FP {
 const F = React.memo(function F({ l, v, onChange, type = 'text', opts, req }: FP) {
   if (opts) {
     return (
-      <Select
-        value={v}
-        onChange={onChange}
-        options={opts.map((o) => ({ value: o, label: o }))}
-        label={l}
-        required={req}
-      />
-    )
-  }
-
-  if (type === 'date') {
-    return (
-      <DatePicker
-        value={v}
-        onChange={onChange}
-        label={l}
-        required={req}
-      />
+      <div>
+        <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
+          {l}
+          {req && <span className="text-[var(--red)] ml-0.5">*</span>}
+        </label>
+        <select
+          value={v}
+          onChange={(e) => onChange(e.target.value)}
+          required={req}
+          className="w-full h-[2.75rem] px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-sm)] transition-all duration-200 cursor-pointer"
+        >
+          <option value="">{l}</option>
+          {opts.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
+      </div>
     )
   }
 
