@@ -42,4 +42,5 @@ export interface StudentAdmission {
   guardianRelation: string
   guardianPhone: string
   teacherId: string
+  billingDate?: string
 }

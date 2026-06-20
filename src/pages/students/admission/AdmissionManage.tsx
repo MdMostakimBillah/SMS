@@ -45,10 +45,12 @@ interface ApproveModalProps {
   student: StudentAdmission
   isBn: boolean
   onClose: () => void
-  onApprove: (sms: boolean) => void
+  onApprove: (sms: boolean, billingDate: string) => void
 }
 const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, onApprove }: ApproveModalProps) {
   const [sendSMS, setSendSMS] = useState(true)
+  const [billingDate, setBillingDate] = useState(student.admissionDate || '')
+  const [error, setError] = useState('')
   return createPortal(
     <div
       className="modal-overlay"
@@ -150,6 +152,36 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
           </div>
         )}
 
+        {/* Billing Date */}
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.375rem' }}>
+            {isBn ? 'বিলিং তারিখ *' : 'Billing Date *'}
+          </label>
+          <input
+            type="date"
+            value={billingDate}
+            onChange={(e) => { setBillingDate(e.target.value); setError('') }}
+            style={{
+              width: '100%',
+              padding: '0.5rem 0.75rem',
+              borderRadius: '0.5rem',
+              border: `1px solid ${error ? 'var(--red)' : 'var(--border)'}`,
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+              fontSize: '0.8125rem',
+              fontFamily: 'inherit',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          {error && (
+            <p style={{ fontSize: '0.6875rem', color: 'var(--red)', marginTop: '0.25rem' }}>{error}</p>
+          )}
+          <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+            {isBn ? 'এই তারিখ থেকে বিল গণনা শুরু হবে' : 'Bills will be calculated starting from this date'}
+          </p>
+        </div>
+
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
             onClick={onClose}
@@ -169,7 +201,11 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
           </button>
           <button
             onClick={() => {
-              onApprove(sendSMS)
+              if (!billingDate) {
+                setError(isBn ? 'বিলিং তারিখ আবশ্যক' : 'Billing date is required')
+                return
+              }
+              onApprove(sendSMS, billingDate)
               onClose()
             }}
             style={{
@@ -184,6 +220,7 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
               cursor: 'pointer',
               fontFamily: 'inherit',
               boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
+              opacity: billingDate ? 1 : 0.6,
             }}
           >
             ✓ {isBn ? 'অনুমোদন করুন' : 'Approve'}
@@ -1010,8 +1047,8 @@ export default function AdmissionManage() {
   }, [])
 
   const handleApprove = useCallback(
-    (student: StudentAdmission, sms: boolean) => {
-      approveStudent(student.id)
+    (student: StudentAdmission, sms: boolean, billingDate: string) => {
+      approveStudent(student.id, billingDate)
       if (sms) console.log(`📱 SMS → ${student.phone}: আপনার ভর্তি অনুমোদিত হয়েছে! আইডি: ${student.id} — Sunrise Academy`)
     },
     [approveStudent]
@@ -1141,7 +1178,7 @@ export default function AdmissionManage() {
           student={approvingStudent}
           isBn={isBn}
           onClose={() => setApprovingStudent(null)}
-          onApprove={(sms) => handleApprove(approvingStudent, sms)}
+          onApprove={(sms, billingDate) => handleApprove(approvingStudent, sms, billingDate)}
         />
       )}
       {rejectingStudent && (

@@ -18,7 +18,7 @@ interface AdmissionState {
   students: StudentAdmission[]
   addStudent: (student: StudentAdmission) => void
   updateStudent: (id: string, data: Partial<StudentAdmission>) => void
-  approveStudent: (id: string) => void
+  approveStudent: (id: string, billingDate?: string) => void
   rejectStudent: (id: string) => void
   deactivateStudent: (id: string, inactiveAt: string, inactiveReason: string) => void
   reactivateStudent: (id: string) => void
@@ -38,7 +38,7 @@ export const useAdmissionStore = create<AdmissionState>()(
           students: state.students.map((s) => (s.id === id ? { ...s, ...data, updatedAt: new Date().toISOString().split('T')[0] } : s)),
         })),
 
-      approveStudent: (id) =>
+      approveStudent: (id, billingDate) =>
         set((state) => ({
           students: state.students.map((s) =>
             s.id === id
@@ -48,6 +48,7 @@ export const useAdmissionStore = create<AdmissionState>()(
                   active: true,
                   approvedAt: new Date().toISOString().split('T')[0],
                   updatedAt: new Date().toISOString().split('T')[0],
+                  billingDate: billingDate || s.billingDate,
                 }
               : s
           ),

@@ -16,8 +16,6 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAppStore } from '@/store/appStore'
 
-import QuickActionDrawer from '@/components/shared/QuickActionDrawer'
-
 import gsap from 'gsap'
 
 const STATIC_OPTIONS = [
@@ -461,19 +459,6 @@ export default function TeachersPage() {
           )
         })}
       </div>
-
-      <QuickActionDrawer
-        title={isBn ? 'শিক্ষক ব্যবস্থাপনা' : 'Teacher Management'}
-        items={STATIC_OPTIONS.map((o) => ({
-          id: o.id,
-          path: o.path,
-          icon: o.icon,
-          iconColor: o.iconColor,
-          iconBg: o.iconBg,
-          titleBn: o.titleBn,
-          titleEn: o.titleEn,
-        }))}
-      />
     </div>
   )
 }
