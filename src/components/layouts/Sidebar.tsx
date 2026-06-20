@@ -80,6 +80,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const asideRef = useRef<HTMLElement>(null)
   const [hoveredItem, setHoveredItem] = useState<{ label: string; rect: DOMRect } | null>(null)
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Responsive collapsed width and icon size
   const collapsedWidth = width >= 1280 ? '4.25rem' : width >= 1024 ? '3.75rem' : '3.25rem'
@@ -299,13 +300,17 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setHoveredItem(null)
+      if (e.key === 'Escape') {
+        if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+        setHoveredItem(null)
+      }
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [])
 
   useEffect(() => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
     setHoveredItem(null)
   }, [location.pathname])
 
@@ -464,11 +469,17 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                     } ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'border-t-2 border-[var(--brand)]' : ''}`}
                     onMouseEnter={(e) => {
                       if (collapsed) {
+                        if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
                         const rect = e.currentTarget.getBoundingClientRect()
-                        setHoveredItem({ label: t(item.key as TranslationKey, language), rect })
+                        hoverTimerRef.current = setTimeout(() => {
+                          setHoveredItem({ label: t(item.key as TranslationKey, language), rect })
+                        }, 300)
                       }
                     }}
-                    onMouseLeave={() => setHoveredItem(null)}
+                    onMouseLeave={() => {
+                      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+                      setHoveredItem(null)
+                    }}
                   >
                     <IconComp size={navIconSize} className={`shrink-0 ${isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`} />
                     {!collapsed && (
@@ -513,10 +524,16 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                     to={v.path}
                     className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--brand-light)] transition-colors relative group"
                     onMouseEnter={(e) => {
+                      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
                       const rect = e.currentTarget.getBoundingClientRect()
-                      setHoveredItem({ label: v.label, rect })
+                      hoverTimerRef.current = setTimeout(() => {
+                        setHoveredItem({ label: v.label, rect })
+                      }, 300)
                     }}
-                    onMouseLeave={() => setHoveredItem(null)}
+                    onMouseLeave={() => {
+                      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+                      setHoveredItem(null)
+                    }}
                   >
                     <Icon size={15} className="text-[var(--brand)]" />
                   </NavLink>
@@ -538,10 +555,16 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                     to={v.path}
                     className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--brand-light)] transition-colors relative group"
                     onMouseEnter={(e) => {
+                      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
                       const rect = e.currentTarget.getBoundingClientRect()
-                      setHoveredItem({ label: v.label, rect })
+                      hoverTimerRef.current = setTimeout(() => {
+                        setHoveredItem({ label: v.label, rect })
+                      }, 300)
                     }}
-                    onMouseLeave={() => setHoveredItem(null)}
+                    onMouseLeave={() => {
+                      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+                      setHoveredItem(null)
+                    }}
                   >
                     <Icon size={15} className="text-[var(--brand)]" />
                   </NavLink>
@@ -557,15 +580,15 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         <div
           className="fixed z-[9000] pointer-events-none"
           style={collapsed ? {
-            left: hoveredItem.rect.right + 8,
+            left: hoveredItem.rect.right + 10,
             top: hoveredItem.rect.top + hoveredItem.rect.height / 2,
             transform: 'translate(0, -50%)',
-            animation: 'tooltipIn 0.15s ease-out',
+            animation: 'tooltipInRight 0.2s ease-out',
           } : {
             left: hoveredItem.rect.left + hoveredItem.rect.width / 2,
             top: hoveredItem.rect.top - 8,
             transform: 'translate(-50%, -100%)',
-            animation: 'tooltipIn 0.15s ease-out',
+            animation: 'tooltipIn 0.2s ease-out',
           }}
         >
           <div className="relative">
