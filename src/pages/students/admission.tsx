@@ -71,7 +71,7 @@ export default function StudentAdmission() {
           className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out"
           style={{
             background: 'var(--brand)',
-            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+            boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
             zIndex: 0,
           }}
         />

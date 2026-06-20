@@ -1138,7 +1138,7 @@ export default function AttendancePage() {
             className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out z-0"
             style={{
               background: tabs.find((t) => t.key === activeTab)?.color || 'var(--brand)',
-              boxShadow: `0 4px 12px ${tabs.find((t) => t.key === activeTab)?.color || 'var(--brand)'}40`,
+              boxShadow: `0 2px 8px ${tabs.find((t) => t.key === activeTab)?.color || 'var(--brand)'}40`,
             }}
           />
           {tabs.map((tab) => (

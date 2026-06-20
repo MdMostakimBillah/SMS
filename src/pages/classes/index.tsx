@@ -137,7 +137,7 @@ export default function ClassesPage() {
           className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out"
           style={{
             background: activeTab === 'institution' ? 'var(--brand)' : activeTab === 'classes' ? 'var(--teal)' : 'var(--purple)',
-            boxShadow: activeTab === 'institution' ? '0 4px 12px rgba(99,102,241,0.3)' : activeTab === 'classes' ? '0 4px 12px rgba(20,184,166,0.3)' : '0 4px 12px rgba(168,85,247,0.3)',
+            boxShadow: activeTab === 'institution' ? '0 2px 8px rgba(99,102,241,0.3)' : activeTab === 'classes' ? '0 2px 8px rgba(20,184,166,0.3)' : '0 2px 8px rgba(168,85,247,0.3)',
             zIndex: 0,
           }}
         />

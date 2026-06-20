@@ -906,7 +906,7 @@ export default function HRPage() {
             className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out z-0"
             style={{
               background: tabs.find((t) => t.id === activeTab)?.color || 'var(--brand)',
-              boxShadow: `0 4px 12px ${activeTab === 'overview' ? 'rgba(99,102,241,0.3)' : activeTab === 'decisions' ? 'rgba(20,184,166,0.3)' : activeTab === 'increment' ? 'rgba(34,197,94,0.3)' : activeTab === 'bonus' ? 'rgba(245,158,11,0.3)' : activeTab === 'promotion' ? 'rgba(168,85,247,0.3)' : activeTab === 'facilities' ? 'rgba(168,85,247,0.3)' : activeTab === 'salary-setup' ? 'rgba(20,184,166,0.3)' : 'rgba(99,102,241,0.3)'}`,
+              boxShadow: `0 2px 8px ${activeTab === 'overview' ? 'rgba(99,102,241,0.3)' : activeTab === 'decisions' ? 'rgba(20,184,166,0.3)' : activeTab === 'increment' ? 'rgba(34,197,94,0.3)' : activeTab === 'bonus' ? 'rgba(245,158,11,0.3)' : activeTab === 'promotion' ? 'rgba(168,85,247,0.3)' : activeTab === 'facilities' ? 'rgba(168,85,247,0.3)' : activeTab === 'salary-setup' ? 'rgba(20,184,166,0.3)' : 'rgba(99,102,241,0.3)'}`,
             }}
           />
           {tabs.map((tab) => (

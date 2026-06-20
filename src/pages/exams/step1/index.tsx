@@ -449,7 +449,7 @@ export default function Step1Planning() {
             className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out z-0"
             style={{
               background: activeSubTab === 'exams' ? 'var(--brand)' : activeSubTab === 'subjects' ? 'var(--teal)' : activeSubTab === 'grade-scale' ? 'var(--purple)' : 'var(--amber)',
-              boxShadow: activeSubTab === 'exams' ? '0 4px 12px rgba(99,102,241,0.3)' : activeSubTab === 'subjects' ? '0 4px 12px rgba(20,184,166,0.3)' : activeSubTab === 'grade-scale' ? '0 4px 12px rgba(168,85,247,0.3)' : '0 4px 12px rgba(245,158,11,0.3)',
+              boxShadow: activeSubTab === 'exams' ? '0 2px 8px rgba(99,102,241,0.3)' : activeSubTab === 'subjects' ? '0 2px 8px rgba(20,184,166,0.3)' : activeSubTab === 'grade-scale' ? '0 2px 8px rgba(168,85,247,0.3)' : '0 2px 8px rgba(245,158,11,0.3)',
             }}
           />
           {[

@@ -232,7 +232,7 @@ export default function Step5Marksheet() {
             className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out z-0"
             style={{
               background: activeSubTab === 'marksheets' ? 'var(--brand)' : activeSubTab === 'cumulative' ? 'var(--teal)' : 'var(--purple)',
-              boxShadow: activeSubTab === 'marksheets' ? '0 4px 12px rgba(99,102,241,0.3)' : activeSubTab === 'cumulative' ? '0 4px 12px rgba(20,184,166,0.3)' : '0 4px 12px rgba(168,85,247,0.3)',
+              boxShadow: activeSubTab === 'marksheets' ? '0 2px 8px rgba(99,102,241,0.3)' : activeSubTab === 'cumulative' ? '0 2px 8px rgba(20,184,166,0.3)' : '0 2px 8px rgba(168,85,247,0.3)',
             }}
           />
           {[

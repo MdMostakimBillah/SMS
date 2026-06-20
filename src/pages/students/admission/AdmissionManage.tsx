@@ -183,7 +183,7 @@ const ApproveModal = React.memo(function ApproveModal({ student, isBn, onClose, 
               fontWeight: 600,
               cursor: 'pointer',
               fontFamily: 'inherit',
-              boxShadow: '0 4px 12px rgba(16,185,129,0.3)',
+              boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
             }}
           >
             ✓ {isBn ? 'অনুমোদন করুন' : 'Approve'}
@@ -340,7 +340,7 @@ const RejectModal = React.memo(function RejectModal({ student, isBn, onClose, on
               fontWeight: 600,
               cursor: 'pointer',
               fontFamily: 'inherit',
-              boxShadow: '0 4px 12px rgba(239,68,68,0.3)',
+              boxShadow: '0 2px 8px rgba(239,68,68,0.3)',
             }}
           >
             ✗ {isBn ? 'প্রত্যাখ্যান করুন' : 'Reject'}
