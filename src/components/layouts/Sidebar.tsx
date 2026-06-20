@@ -556,7 +556,12 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       {hoveredItem && (
         <div
           className="fixed z-[9000] pointer-events-none"
-          style={{
+          style={collapsed ? {
+            left: hoveredItem.rect.right + 8,
+            top: hoveredItem.rect.top + hoveredItem.rect.height / 2,
+            transform: 'translate(0, -50%)',
+            animation: 'tooltipIn 0.15s ease-out',
+          } : {
             left: hoveredItem.rect.left + hoveredItem.rect.width / 2,
             top: hoveredItem.rect.top - 8,
             transform: 'translate(-50%, -100%)',
@@ -575,28 +580,57 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
             >
               {hoveredItem.label}
             </div>
-            <div
-              className="absolute left-1/2 -translate-x-1/2"
-              style={{
-                bottom: '-5px',
-                width: 0,
-                height: 0,
-                borderLeft: '5px solid transparent',
-                borderRight: '5px solid transparent',
-                borderTop: '5px solid var(--border)',
-              }}
-            />
-            <div
-              className="absolute left-1/2 -translate-x-1/2"
-              style={{
-                bottom: '-4px',
-                width: 0,
-                height: 0,
-                borderLeft: '5px solid transparent',
-                borderRight: '5px solid transparent',
-                borderTop: '5px solid var(--bg-primary)',
-              }}
-            />
+            {collapsed ? (
+              <>
+                <div
+                  className="absolute top-1/2 -translate-y-1/2"
+                  style={{
+                    left: '-5px',
+                    width: 0,
+                    height: 0,
+                    borderTop: '5px solid transparent',
+                    borderBottom: '5px solid transparent',
+                    borderRight: '5px solid var(--border)',
+                  }}
+                />
+                <div
+                  className="absolute top-1/2 -translate-y-1/2"
+                  style={{
+                    left: '-4px',
+                    width: 0,
+                    height: 0,
+                    borderTop: '5px solid transparent',
+                    borderBottom: '5px solid transparent',
+                    borderRight: '5px solid var(--bg-primary)',
+                  }}
+                />
+              </>
+            ) : (
+              <>
+                <div
+                  className="absolute left-1/2 -translate-x-1/2"
+                  style={{
+                    bottom: '-5px',
+                    width: 0,
+                    height: 0,
+                    borderLeft: '5px solid transparent',
+                    borderRight: '5px solid transparent',
+                    borderTop: '5px solid var(--border)',
+                  }}
+                />
+                <div
+                  className="absolute left-1/2 -translate-x-1/2"
+                  style={{
+                    bottom: '-4px',
+                    width: 0,
+                    height: 0,
+                    borderLeft: '5px solid transparent',
+                    borderRight: '5px solid transparent',
+                    borderTop: '5px solid var(--bg-primary)',
+                  }}
+                />
+              </>
+            )}
           </div>
         </div>
       )}
