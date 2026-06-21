@@ -31,6 +31,7 @@ import { TeacherPDFOptionsModal } from '@/components/shared/TeacherPDFOptionsMod
 import { generateTeacherListPDF } from '@/pages/teachers/listPdfTemplate'
 import type { TeacherListPDFOptions } from '@/pages/teachers/listPdfTemplate'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 
 const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
@@ -174,8 +175,9 @@ export default function AllTeachersPage() {
   }
 
   const exportExcel = useCallback(() => {
-    const instName = 'EduTech — Sunrise Academy'
-    const instAddress = 'Dhaka, Bangladesh'
+    const brand = getPDFBranding()
+    const instName = brand.schoolName
+    const instAddress = brand.address
 
     const list = selected.length > 0 ? filtered.filter((t) => selected.includes(t.id)) : filtered
     const teachersData = list.map((t, i) => ({
@@ -218,9 +220,10 @@ export default function AllTeachersPage() {
   const handlePDF = useCallback(
     (opts: TeacherListPDFOptions) => {
       const list = selected.length > 0 ? filtered.filter((t) => selected.includes(t.id)) : filtered
+      const brand = getPDFBranding()
       const html = generateTeacherListPDF(list, { ...opts, institutionName: institution.name }, departments)
       openPrintWindow(opts.title || 'Teacher List', html, {
-        css: `@page{size:A4 ${opts.orientation || 'landscape'};margin:8mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10px;color:#1a1a1a;background:#fff;padding:0}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:5px;text-align:left;font-size:8px;font-weight:700;border:0.5px solid #5356d4}td{padding:4px 5px;border:0.5px solid #e5e7eb;vertical-align:middle}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`,
+        css: `@page{size:A4 ${opts.orientation || 'landscape'};margin:8mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10px;color:#1a1a1a;background:#fff;padding:0}table{width:100%;border-collapse:collapse}th{background:${brand.brandColor};color:#fff;padding:5px;text-align:left;font-size:8px;font-weight:700;border:0.5px solid ${brand.brandColor}}td{padding:4px 5px;border:0.5px solid #e5e7eb;vertical-align:middle}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`,
       })
       setShowPDF(false)
     },
@@ -229,10 +232,11 @@ export default function AllTeachersPage() {
 
   const downloadSinglePDF = useCallback(
     (t: Teacher) => {
+      const brand = getPDFBranding()
       const photoHtml = t.photo
-        ? `<div style="text-align:center;margin-bottom:10px"><img src="${t.photo}" alt="${t.nameEn}" style="width:100px;height:120px;border-radius:8px;border:2px solid #6366f1;object-fit:cover" /></div>`
+        ? `<div style="text-align:center;margin-bottom:10px"><img src="${t.photo}" alt="${t.nameEn}" style="width:100px;height:120px;border-radius:8px;border:2px solid ${brand.brandColor};object-fit:cover" /></div>`
         : ''
-      const html = `<div class="hdr"><div class="logo">ET</div><div><div style="font-size:14px;font-weight:700;color:#6366f1">EduTech — Sunrise Academy</div><div style="font-size:9px;color:#888">Employee Profile</div></div></div>
+      const html = `<div class="hdr">${pdfLogoHTML(brand, 36)}<div><div style="font-size:14px;font-weight:700;color:${brand.brandColor}">${brand.schoolName}</div><div style="font-size:9px;color:#888">Employee Profile</div></div></div>
 ${photoHtml}
 <div class="ttl">${t.nameEn}</div>
 <div class="sub">${t.nameBn} · ${t.id}</div>
@@ -265,9 +269,9 @@ ${photoHtml}
     <div><span class="lbl">${isBn ? 'মাতার মোবাইল' : 'Mother Phone'}</span><span class="val">${t.motherPhone}</span></div>
   </div>
 </div>
-<div class="ftr"><span>EduTech School Management System</span><div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div>`
+<div class="ftr"><span>${brand.schoolName}</span><div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div>`
       openPrintWindow(t.nameEn, html, {
-        css: '@page{size:A4 portrait;margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:12px;padding-bottom:7px;border-bottom:2px solid #6366f1;margin-bottom:12px}.logo{width:36px;height:36px;background:#6366f1;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700}.ttl{text-align:center;font-size:14px;font-weight:700;margin:10px 0 4px}.sub{text-align:center;font-size:10px;color:#666;margin-bottom:12px}.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:12px}.info div{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0}.info .lbl{font-size:10px;color:#888;width:100px;flex-shrink:0}.info .val{font-size:11px;font-weight:500;color:#1a1a1a}.ftr{margin-top:14px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}',
+        css: `@page{size:A4 portrait;margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:12px;padding-bottom:7px;border-bottom:2px solid ${brand.brandColor};margin-bottom:12px}.ttl{text-align:center;font-size:14px;font-weight:700;margin:10px 0 4px}.sub{text-align:center;font-size:10px;color:#666;margin-bottom:12px}.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:12px}.info div{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0}.info .lbl{font-size:10px;color:#888;width:100px;flex-shrink:0}.info .val{font-size:11px;font-weight:500;color:#1a1a1a}.ftr{margin-top:14px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`,
       })
     },
     [departments, isBn]

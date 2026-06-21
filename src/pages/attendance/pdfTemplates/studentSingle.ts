@@ -1,3 +1,5 @@
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+
 interface StudentDayRow {
   date: string
   status: string
@@ -17,7 +19,8 @@ interface GenStudentSinglePDFParams {
 
 export function genStudentSinglePDF(params: GenStudentSinglePDFParams): string {
   const { name, id, className, section, rows, isBn } = params
-  const schoolName = params.institutionName || 'EduTech'
+  const brand = getPDFBranding()
+  const schoolName = params.institutionName || brand.schoolName
   const trs = rows
     .map((r, i) => {
       let c: string, l: string
@@ -42,8 +45,8 @@ export function genStudentSinglePDF(params: GenStudentSinglePDFParams): string {
   const leave = rows.filter((r) => r.status === 'on-leave' && !r.isWeeklyHoliday).length
   const weeklyHoliday = rows.filter((r) => r.isWeeklyHoliday).length
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${name}</title>
-<style>@page{size:A4 portrait;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:12px;padding-bottom:7px;border-bottom:2px solid #6366f1;margin-bottom:10px}.logo{width:32px;height:32px;background:#6366f1;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700}.ttl{text-align:center;font-size:13px;font-weight:700;margin-bottom:4px}.sub{text-align:center;font-size:10px;color:#666;margin-bottom:10px}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:5px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;border:0.5px solid #5356d4}td{padding:4px 5px;border:0.5px solid #e5e7eb}tr.alt td{background:#f9fafb}.ftr{margin-top:12px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
-<div class="hdr"><div class="logo">ET</div><div><div style="font-size:13px;font-weight:700;color:#6366f1">${schoolName}</div><div style="font-size:8px;color:#888">Individual Student Attendance Report</div></div></div>
+<style>@page{size:A4 portrait;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:12px;padding-bottom:7px;border-bottom:2px solid ${brand.brandColor};margin-bottom:10px}.ttl{text-align:center;font-size:13px;font-weight:700;margin-bottom:4px}.sub{text-align:center;font-size:10px;color:#666;margin-bottom:10px}table{width:100%;border-collapse:collapse}th{background:${brand.brandColor};color:#fff;padding:5px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;border:0.5px solid ${brand.brandColor}}td{padding:4px 5px;border:0.5px solid #e5e7eb}tr.alt td{background:#f9fafb}.ftr{margin-top:12px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
+<div class="hdr">${pdfLogoHTML(brand)}<div><div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${schoolName}</div><div style="font-size:8px;color:#888">Individual Student Attendance Report</div></div></div>
 <div class="ttl">${name} (${id})</div>
 <div class="sub">${isBn ? 'শ্রেণি' : 'Class'}: ${className} · ${isBn ? 'সেকশন' : 'Section'}: ${section} · ${isBn ? 'মোট' : 'Total'}: ${rows.length} ${isBn ? 'দিন' : 'days'} · ✅ ${present} · ❌ ${absent} · ⏳ ${leave} · 📅 ${weeklyHoliday}</div>
 <table><thead><tr><th>#</th><th>${isBn ? 'তারিখ' : 'Date'}</th><th>${isBn ? 'অবস্থা' : 'Status'}</th></tr></thead><tbody>${trs}</tbody></table>

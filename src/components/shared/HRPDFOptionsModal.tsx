@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import {
   HR_INCREMENT_COLUMNS,
   HR_BONUS_COLUMNS,
@@ -6,9 +6,16 @@ import {
   HR_FUND_COLUMNS,
   HR_ASSIGNMENT_COLUMNS,
   HR_SALARY_COLUMNS,
+  generateIncrementPDF,
+  generateBonusPDF,
+  generatePromotionPDF,
+  generateFundPDF,
+  generateAssignmentPDF,
+  generateSalaryPDF,
 } from '@/pages/hr/listPdfTemplate'
 import type { HRPDFColumn, HRListPDFOptions } from '@/pages/hr/listPdfTemplate'
 import { GenericPDFOptionsModal } from './GenericPDFOptionsModal'
+import type { GenericPDFOptionsResult } from './GenericPDFOptionsModal'
 
 type HRType = 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary'
 
@@ -34,12 +41,63 @@ interface Props {
   type: HRType
   count: number
   isBn: boolean
+  institutionName?: string
+  increments?: unknown[]
+  filteredBonuses?: unknown[]
+  filteredPromotions?: unknown[]
+  filteredAssignments?: unknown[]
+  funds?: unknown[]
+  salaryData?: unknown[]
+  getTeacherName?: (id: string) => string
+  getFacilityName?: (id: string) => string
   onClose: () => void
   onDownload: (opts: HRListPDFOptions) => void
 }
 
-export const HRPDFOptionsModal = React.memo(function HRPDFOptionsModal({ type, count, isBn, onClose, onDownload }: Props) {
+export const HRPDFOptionsModal = React.memo(function HRPDFOptionsModal({
+  type,
+  count,
+  isBn,
+  institutionName,
+  increments,
+  filteredBonuses,
+  filteredPromotions,
+  filteredAssignments,
+  funds,
+  salaryData,
+  getTeacherName,
+  getFacilityName,
+  onClose,
+  onDownload,
+}: Props) {
   const title = TITLE_MAP[type]
+
+  const previewRenderer = useCallback(
+    (opts: GenericPDFOptionsResult) => {
+      const pdfOpts: HRListPDFOptions = { ...opts, institutionName }
+      const teacherNameFn = getTeacherName || ((id: string) => id)
+      const facilityNameFn = getFacilityName || ((id: string) => id)
+
+      switch (type) {
+        case 'increment':
+          return generateIncrementPDF((increments || []) as any[], pdfOpts, teacherNameFn)
+        case 'bonus':
+          return generateBonusPDF((filteredBonuses || []) as any[], pdfOpts, teacherNameFn)
+        case 'promotion':
+          return generatePromotionPDF((filteredPromotions || []) as any[], pdfOpts, teacherNameFn)
+        case 'fund':
+          return generateFundPDF((funds || []) as any[], pdfOpts)
+        case 'assignment':
+          return generateAssignmentPDF((filteredAssignments || []) as any[], pdfOpts, teacherNameFn, facilityNameFn)
+        case 'salary':
+          return generateSalaryPDF((salaryData || []) as any[], pdfOpts)
+        default:
+          return ''
+      }
+    },
+    [type, institutionName, increments, filteredBonuses, filteredPromotions, filteredAssignments, funds, salaryData, getTeacherName, getFacilityName]
+  )
+
   return (
     <GenericPDFOptionsModal
       columns={COLUMN_MAP[type]}
@@ -49,6 +107,7 @@ export const HRPDFOptionsModal = React.memo(function HRPDFOptionsModal({ type, c
       recordLabelBn="টি"
       count={count}
       isBn={isBn}
+      previewRenderer={previewRenderer}
       onClose={onClose}
       onDownload={(opts) =>
         onDownload({

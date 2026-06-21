@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions } from '@/store/classStore'
 import { useExamStore } from '@/store/examStore'
@@ -123,8 +125,6 @@ export default function Step1Planning() {
   const [copyExamPlanFromId, setCopyExamPlanFromId] = useState('')
   const [copyExamPlanToId, setCopyExamPlanToId] = useState('')
 
-
-
   // Grade Scale Form
   const [showGradeForm, setShowGradeForm] = useState(false)
   const [editGradeScaleId, setEditGradeScaleId] = useState<string | null>(null)
@@ -138,6 +138,8 @@ export default function Step1Planning() {
     { grade: 'D', minPct: '33', gpa: '1.0', color: '#f97316' },
     { grade: 'F', minPct: '0', gpa: '0.0', color: '#ef4444' },
   ])
+
+  useScrollLock(showExamForm || showCopyAllConfirm || showCopySubjectModal || showCopyExamPlanModal || showGradeForm || showSubExamForm)
 
   // Checklist
   const activeExam = useMemo(() => examConfigs.find((e) => e.isActive) || null, [examConfigs])
@@ -952,7 +954,7 @@ export default function Step1Planning() {
                     </div>
 
                     {/* Sub-exam Form Modal */}
-                    {showSubExamForm && editDistConfig && (
+                    {showSubExamForm && editDistConfig && createPortal(
                       <div
                         className="modal-overlay"
                         onClick={() => setShowSubExamForm(false)}
@@ -1064,7 +1066,8 @@ export default function Step1Planning() {
                               )
                             })()}
                         </div>
-                      </div>
+                      </div>,
+                      document.body
                     )}
                   </>
                 )}
@@ -1166,7 +1169,7 @@ export default function Step1Planning() {
       </div>
 
       {/* ═══ Exam Form Modal ═══ */}
-      {showExamForm && (
+      {showExamForm && createPortal(
         <div className="modal-overlay">
           <div className="modal-box modal-content" style={{ maxWidth: '26.25rem' }}>
             <div className="flex items-center justify-between mb-4">
@@ -1274,10 +1277,11 @@ export default function Step1Planning() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {showCopyAllConfirm && (
+      {showCopyAllConfirm && createPortal(
         <div className="modal-overlay">
           <div className="modal-box modal-content" style={{ maxWidth: '23.75rem' }}>
             <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-2">
@@ -1317,10 +1321,11 @@ export default function Step1Planning() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {showCopySubjectModal && (
+      {showCopySubjectModal && createPortal(
         <div className="modal-overlay">
           <div className="modal-box modal-content" style={{ maxWidth: '27.5rem' }}>
             <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-2">
@@ -1410,11 +1415,12 @@ export default function Step1Planning() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ═══ Copy Exam Plan Modal ═══ */}
-      {showCopyExamPlanModal && (
+      {showCopyExamPlanModal && createPortal(
         <div className="modal-overlay">
           <div className="modal-box modal-content" style={{ maxWidth: '25rem' }}>
             <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-2">
@@ -1493,11 +1499,12 @@ export default function Step1Planning() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ═══ Grade Scale Form Modal ═══ */}
-      {showGradeForm && (
+      {showGradeForm && createPortal(
         <div className="modal-overlay">
           <div className="modal-box modal-content" style={{ maxWidth: '31.25rem' }}>
             <div className="flex items-center justify-between mb-4">
@@ -1636,7 +1643,8 @@ export default function Step1Planning() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

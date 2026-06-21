@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react'
 import { GenericPDFOptionsModal } from './GenericPDFOptionsModal'
 import type { GenericPDFOptionsResult } from './GenericPDFOptionsModal'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 
 export interface AttendancePDFOptions {
   title: string
@@ -51,6 +52,7 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
   const generateAttendanceHTML = useCallback(
     (opts: GenericPDFOptionsResult): string => {
       const { title, orientation, isBn: optsIsBn } = opts
+      const brand = getPDFBranding()
 
       const generateRow = (record: AttendanceRecord, idx: number) => {
         const p = record.days.filter((d) => d.status === 'present').length
@@ -81,7 +83,7 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
 
         return `<tr class="${idx % 2 === 1 ? 'alt' : ''}">
         <td style="padding:4px;font-size:9px">${idx + 1}</td>
-        <td style="padding:4px;font-size:8px;font-family:monospace;color:#6366f1">${record.id}</td>
+        <td style="padding:4px;font-size:8px;font-family:monospace;color:${brand.brandColor}">${record.id}</td>
         ${nameCol}
         <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#059669">${p}</td>
         <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#dc2626">${a}</td>
@@ -115,8 +117,8 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
            <th style="width:60px">${optsIsBn ? 'পদবি' : 'Desig'}</th>`
 
       const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
-<style>@page{size:A4 ${orientation};margin:6mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:10px;padding-bottom:5px;border-bottom:2px solid #6366f1;margin-bottom:8px}.logo{width:28px;height:28px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}.ttl{text-align:center;font-size:11px;font-weight:700;margin-bottom:3px}.sub{text-align:center;font-size:8px;color:#666;margin-bottom:8px}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:3px;text-align:left;font-size:7px;font-weight:700;text-transform:uppercase;border:0.5px solid #5356d4}td{padding:3px;border:0.5px solid #e5e7eb}tr.alt td{background:#f9fafb}.ftr{margin-top:8px;padding-top:5px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:7px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
-<div class="hdr"><div class="logo">ET</div><div><div style="font-size:11px;font-weight:700;color:#6366f1">EduTech — Sunrise Academy</div><div style="font-size:7px;color:#888">${optsIsBn ? headerLabelBn : headerLabel}</div></div></div>
+<style>@page{size:A4 ${orientation};margin:6mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:10px;padding-bottom:5px;border-bottom:2px solid ${brand.brandColor};margin-bottom:8px}.ttl{text-align:center;font-size:11px;font-weight:700;margin-bottom:3px}.sub{text-align:center;font-size:8px;color:#666;margin-bottom:8px}table{width:100%;border-collapse:collapse}th{background:${brand.brandColor};color:#fff;padding:3px;text-align:left;font-size:7px;font-weight:700;text-transform:uppercase;border:0.5px solid ${brand.brandColor}}td{padding:3px;border:0.5px solid #e5e7eb}tr.alt td{background:#f9fafb}.ftr{margin-top:8px;padding-top:5px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:7px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
+<div class="hdr">${pdfLogoHTML(brand, 28)}<div><div style="font-size:11px;font-weight:700;color:${brand.brandColor}">${brand.schoolName}</div><div style="font-size:7px;color:#888">${optsIsBn ? headerLabelBn : headerLabel}</div></div></div>
 <div class="ttl">${title}</div>
 <div class="sub">${optsIsBn ? 'মোট' : 'Total'}: ${count} ${optsIsBn ? countLabelBn : countLabel} · ${dateFrom} → ${dateTo} · ${rangeDays.length} ${optsIsBn ? 'দিন' : 'days'}</div>
 <table><thead><tr>
@@ -129,7 +131,7 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
   <th style="width:20px">W</th>
   ${dayHeaders}
 </tr></thead><tbody>${rowsHtml}</tbody></table>
-<div class="ftr"><span>EduTech School Management System</span><div>${optsIsBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div></body></html>`
+<div class="ftr"><span>${brand.schoolName}</span><div>${optsIsBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div></body></html>`
       return html
     },
     [type, records, dateFrom, dateTo, rangeDays]

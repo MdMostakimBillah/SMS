@@ -1,5 +1,8 @@
+import { useClassStore } from '@/store/classStore'
+
 export function getBrandColor(): string {
-  return getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#4f46e5'
+  const { institution } = useClassStore.getState()
+  return institution.lightColors?.brand || '#6366f1'
 }
 
 export function openPrintWindow(

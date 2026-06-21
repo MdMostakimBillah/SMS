@@ -257,6 +257,15 @@ export default function Step4Results() {
     return section.subjectIds
   }, [classes, selectedClassId, selectedSectionId])
 
+  // Pre-build marks lookup map for O(1) access
+  const marksMap = useMemo(() => {
+    const map = new Map<string, (typeof sessionStudentMarks)[number]>()
+    for (const m of sessionStudentMarks) {
+      map.set(`${m.examId}|${m.studentId}|${m.subjectId}|${m.classId}|${m.sectionId}`, m)
+    }
+    return map
+  }, [sessionStudentMarks])
+
   // Tabulation data
   const tabulationData = useMemo(() => {
     if (!selectedExamId || !selectedClassId || !selectedSectionId) return []
@@ -268,14 +277,7 @@ export default function Step4Results() {
     return classStudents
       .map((student) => {
         const subjectMarks = examSubjects.map((sc) => {
-          const mark = sessionStudentMarks.find(
-            (m) =>
-              m.examId === selectedExamId &&
-              m.studentId === student.id &&
-              m.subjectId === sc.subjectId &&
-              m.classId === selectedClassId &&
-              m.sectionId === selectedSectionId
-          )
+          const mark = marksMap.get(`${selectedExamId}|${student.id}|${sc.subjectId}|${selectedClassId}|${selectedSectionId}`)
           const subject = subjects.find((s) => s.id === sc.subjectId)
           return {
             subjectId: sc.subjectId,
@@ -311,7 +313,7 @@ export default function Step4Results() {
         return { student, subjectMarks, totalObtained, totalFull, percentage, passedAll, gpa }
       })
       .sort((a, b) => (a.student.roll || '').localeCompare(b.student.roll || ''))
-  }, [selectedExamId, selectedClassId, selectedSectionId, sectionSubjectIds, classStudents, sessionSubjectMarkConfigs, sessionStudentMarks, subjects, isBn])
+  }, [selectedExamId, selectedClassId, selectedSectionId, sectionSubjectIds, classStudents, sessionSubjectMarkConfigs, marksMap, subjects, isBn])
 
   // Position check
   const positionCheck = useMemo(() => {
@@ -341,9 +343,7 @@ export default function Step4Results() {
             const subjectMarks = (sessionSubjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === selectedClassId))
               .filter((sc) => !sectionSubjectIds || sectionSubjectIds.includes(sc.subjectId))
               .map((sc) => {
-                const mark = sessionStudentMarks.find(
-                  (m) => m.examId === selectedExamId && m.studentId === student.id && m.subjectId === sc.subjectId && m.classId === selectedClassId && m.sectionId === student.section
-                )
+                const mark = marksMap.get(`${selectedExamId}|${student.id}|${sc.subjectId}|${selectedClassId}|${student.section}`)
                 return { obtained: mark?.totalMarks || 0, fullMarks: sc.fullMarks, passMarks: sc.passMarks, passed: (mark?.totalMarks || 0) >= sc.passMarks }
               })
             const totalObtained = subjectMarks.reduce((a, b) => a + b.obtained, 0)
@@ -394,7 +394,7 @@ export default function Step4Results() {
       if (sortMode === 'rank') return b.adjustedTotal - a.adjustedTotal
       return (a.student.roll || '').localeCompare(b.student.roll || '')
     })
-  }, [tabulationData, students, selectedClassId, selectedExamId, sessionSubjectMarkConfigs, sessionStudentMarks, sectionSubjectIds, sortMode])
+  }, [tabulationData, students, selectedClassId, selectedExamId, sessionSubjectMarkConfigs, marksMap, sectionSubjectIds, sortMode])
 
   // Analysis data
   const analysisData = useMemo(() => {

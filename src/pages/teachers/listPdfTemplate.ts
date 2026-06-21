@@ -1,4 +1,5 @@
 import type { Teacher } from './types'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 
 export interface TeacherPDFColumn {
   key: string
@@ -77,7 +78,8 @@ export function generateTeacherListPDF(
   const emptyColumns = opts.emptyColumns || []
   const orientation = opts.orientation || 'landscape'
   const isBn = opts.isBn ?? false
-  const schoolName = opts.institutionName || 'EduTech'
+  const brand = getPDFBranding()
+  const schoolName = opts.institutionName || brand.schoolName
 
   const cols = ALL_TEACHER_PDF_COLUMNS.filter((c) => selectedCols.includes(c.key))
   const totalCols = cols.length + emptyColumns.length
@@ -107,7 +109,7 @@ export function generateTeacherListPDF(
             const lbl = getCellValue(t, c.key, i, isBn, departments)
             return `<td><b style="color:${col}">${lbl}</b></td>`
           }
-          if (c.key === 'id') return `<td><span style="font-family:monospace;font-size:8px;color:#6366f1">${t.id}</span></td>`
+          if (c.key === 'id') return `<td><span style="font-family:monospace;font-size:8px;color:${brand.brandColor}">${t.id}</span></td>`
           if (c.key === 'nameEn' && isBn) return `<td>${t.nameBn || t.nameEn}</td>`
           return `<td>${getCellValue(t, c.key, i, isBn, departments)}</td>`
         })
@@ -125,6 +127,9 @@ export function generateTeacherListPDF(
     return `<tr class="er">${first}${rest}</tr>`
   }).join('')
 
+  const darken = (hex: string, amt: number) => { const n = parseInt(hex.replace('#',''),16); const r=Math.max(0,(n>>16)-amt), g=Math.max(0,((n>>8)&0xff)-amt), bv=Math.max(0,(n&0xff)-amt); return '#'+(r<<16|g<<8|bv).toString(16).padStart(6,'0') }
+  const darkerBrand = darken(brand.brandColor, 30)
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -134,12 +139,11 @@ export function generateTeacherListPDF(
   @page { size: A4 ${orientation}; margin: 8mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:Arial,sans-serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
-  .hdr  { display:flex; align-items:center; justify-content:space-between; padding-bottom:7px; border-bottom:2px solid #6366f1; margin-bottom:7px; }
-  .logo { width:32px; height:32px; background:#6366f1; border-radius:7px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:700; }
+  .hdr  { display:flex; align-items:center; justify-content:space-between; padding-bottom:7px; border-bottom:2px solid ${brand.brandColor}; margin-bottom:7px; }
   .meta { text-align:right; font-size:8px; color:#666; line-height:1.7; }
   .ttl  { text-align:center; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
   table { border-collapse:collapse; table-layout:auto; width:100%; }
-  th { background:#6366f1; color:#fff; padding:5px 8px; text-align:center; font-size:8px; font-weight:700; text-transform:uppercase; border:0.5px solid #5356d4; white-space:nowrap; }
+  th { background:${brand.brandColor}; color:#fff; padding:5px 8px; text-align:center; font-size:8px; font-weight:700; text-transform:uppercase; border:0.5px solid ${darkerBrand}; white-space:nowrap; }
   td { padding:4px 8px; border:0.5px solid #e5e7eb; vertical-align:middle; text-align:center; white-space:nowrap; }
   tr.alt td { background:#f9fafb; }
   tr.er td  { background:#fafafa; height:20px; }
@@ -150,10 +154,10 @@ export function generateTeacherListPDF(
 <body>
 <div class="hdr">
   <div style="display:flex;align-items:center;gap:10px">
-    <div class="logo">ET</div>
+    ${pdfLogoHTML(brand)}
     <div>
-      <div style="font-size:13px;font-weight:700;color:#6366f1">${schoolName}</div>
-      <div style="font-size:8px;color:#888">Dhaka, Bangladesh</div>
+      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${schoolName}</div>
+      ${brand.address ? `<div style="font-size:8px;color:#888">${brand.address}</div>` : ''}
     </div>
   </div>
   <div class="meta">

@@ -1,4 +1,5 @@
 import { getBrandColor } from '@/lib/pdf'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 
 export interface TabulationStudentRow {
   student: { id: string; nameEn: string; nameBn: string; roll?: string; academicYear?: string }
@@ -177,7 +178,10 @@ export function generateTabulationPDF(
     @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact}tr{page-break-inside:avoid}th,td{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;overflow:visible}}
   </style></head><body>
     <div class="header">
-      <h1>${isBn ? 'ট্যাবুলেশন শিট' : 'Tabulation Sheet'}</h1>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px">
+        ${pdfLogoHTML(getPDFBranding(), 36)}
+        <h1 style="font-size:18px;color:${darkBg};letter-spacing:1.5px;text-transform:uppercase;font-weight:800;margin:0">${isBn ? 'ট্যাবুলেশন শিট' : 'Tabulation Sheet'}</h1>
+      </div>
       <p class="subtitle">${isBn ? 'শিক্ষাবর্ষ' : 'Academic Year'}: ${academicYear}</p>
       <div class="info">
         ${examLabel ? `<span>${isBn ? 'পরীক্ষা' : 'Exam'}: ${examLabel}</span>` : ''}

@@ -1,4 +1,6 @@
 
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+
 export interface InvigilatorPDFColumn {
   key: string
   label: string
@@ -65,7 +67,8 @@ export function generateInvigilatorGuardListPDF(
   const orientation = opts.orientation || 'portrait'
   const isBn = opts.isBn ?? false
   const isClass = gridData.type === 'class'
-  const schoolName = opts.institutionName || 'EduTech'
+  const brand = getPDFBranding()
+  const schoolName = opts.institutionName || brand.schoolName
 
   const columns = isClass ? INVIGILATOR_CLASS_COLUMNS : INVIGILATOR_ROOM_COLUMNS
   const visibleCols = columns.filter((c) => selectedCols.includes(c.key))
@@ -123,6 +126,9 @@ export function generateInvigilatorGuardListPDF(
       </div>`
   }).join('')
 
+  const darken = (hex: string, amt: number) => { const n = parseInt(hex.replace('#',''),16); const r=Math.max(0,(n>>16)-amt), g=Math.max(0,((n>>8)&0xff)-amt), bv=Math.max(0,(n&0xff)-amt); return '#'+(r<<16|g<<8|bv).toString(16).padStart(6,'0') }
+  const darkerBrand = darken(brand.brandColor, 30)
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -134,14 +140,13 @@ export function generateInvigilatorGuardListPDF(
   body { font-family:Arial,sans-serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
   .page { page-break-after:always; padding:10px; }
   .page:last-child { page-break-after:auto; }
-  .hdr { display:flex; align-items:center; justify-content:space-between; padding-bottom:7px; border-bottom:2px solid #6366f1; margin-bottom:7px; }
-  .logo { width:32px; height:32px; background:#6366f1; border-radius:7px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:700; }
+  .hdr { display:flex; align-items:center; justify-content:space-between; padding-bottom:7px; border-bottom:2px solid ${brand.brandColor}; margin-bottom:7px; }
   .meta { text-align:right; font-size:8px; color:#666; line-height:1.7; }
   .ttl { text-align:center; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
   .subttl { text-align:center; font-size:9px; color:#666; margin-bottom:6px; }
-  .date-badge { display:inline-block; margin-bottom:8px; padding:4px 16px; border-radius:20px; background:#f0f0ff; color:#6366f1; font-size:10px; font-weight:600; }
+  .date-badge { display:inline-block; margin-bottom:8px; padding:4px 16px; border-radius:20px; background:#f0f0ff; color:${brand.brandColor}; font-size:10px; font-weight:600; }
   table { width:100%; border-collapse:collapse; table-layout:auto; }
-  th { background:#6366f1; color:#fff; padding:5px 8px; font-size:8px; font-weight:700; text-transform:uppercase; border:0.5px solid #5356d4; white-space:nowrap; }
+  th { background:${brand.brandColor}; color:#fff; padding:5px 8px; font-size:8px; font-weight:700; text-transform:uppercase; border:0.5px solid ${darkerBrand}; white-space:nowrap; }
   td { padding:5px 8px; border:0.5px solid #e5e7eb; vertical-align:middle; white-space:nowrap; }
   tr.alt td { background:#f9fafb; }
   tr.blank td { background:#fafafa; height:20px; }
@@ -153,10 +158,10 @@ export function generateInvigilatorGuardListPDF(
 <body>
 <div class="hdr">
   <div style="display:flex;align-items:center;gap:10px">
-    <div class="logo">ET</div>
+    ${pdfLogoHTML(brand)}
     <div>
-      <div style="font-size:13px;font-weight:700;color:#6366f1">${schoolName}</div>
-      <div style="font-size:8px;color:#888">Dhaka, Bangladesh</div>
+      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${schoolName}</div>
+      ${brand.address ? `<div style="font-size:8px;color:#888">${brand.address}</div>` : ''}
     </div>
   </div>
   <div class="meta">

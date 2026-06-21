@@ -1,4 +1,5 @@
 import { isFriday } from '../helpers'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 
 interface StudentRow {
   id: string
@@ -24,7 +25,8 @@ interface GenStudentBatchPDFParams {
 
 export function genStudentBatchPDF(params: GenStudentBatchPDFParams): string {
   const { title, students, rangeDays, dateFrom, dateTo, isBn } = params
-  const schoolName = params.institutionName || 'EduTech'
+  const brand = getPDFBranding()
+  const schoolName = params.institutionName || brand.schoolName
 
   const generateRow = (s: StudentRow, idx: number, dayStatuses: string[]) => {
     const dayGrid = dayStatuses
@@ -41,7 +43,7 @@ export function genStudentBatchPDF(params: GenStudentBatchPDFParams): string {
 
     return `<tr class="${idx % 2 === 1 ? 'alt' : ''}">
     <td style="padding:4px;font-size:9px">${idx + 1}</td>
-    <td style="padding:4px;font-size:8px;font-family:monospace;color:#6366f1">${s.id}</td>
+    <td style="padding:4px;font-size:8px;font-family:monospace;color:${brand.brandColor}">${s.id}</td>
     <td style="padding:4px;font-size:9px;font-weight:500">${isBn ? s.nameBn || s.nameEn : s.nameEn}</td>
     <td style="padding:4px;font-size:8px">${s.class}</td>
     <td style="padding:4px;font-size:8px">${s.section || '—'}</td>
@@ -70,8 +72,8 @@ export function genStudentBatchPDF(params: GenStudentBatchPDFParams): string {
   }).join('')
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
-<style>@page{size:A4 landscape;margin:6mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:10px;padding-bottom:5px;border-bottom:2px solid #6366f1;margin-bottom:8px}.logo{width:28px;height:28px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}.ttl{text-align:center;font-size:11px;font-weight:700;margin-bottom:3px}.sub{text-align:center;font-size:8px;color:#666;margin-bottom:8px}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:3px;text-align:left;font-size:7px;font-weight:700;text-transform:uppercase;border:0.5px solid #5356d4}td{padding:3px;border:0.5px solid #e5e7eb}tr.alt td{background:#f9fafb}.ftr{margin-top:8px;padding-top:5px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:7px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
-<div class="hdr"><div class="logo">ET</div><div><div style="font-size:11px;font-weight:700;color:#6366f1">${schoolName}</div><div style="font-size:7px;color:#888">Student Monthly Attendance</div></div></div>
+<style>@page{size:A4 landscape;margin:6mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:10px;padding-bottom:5px;border-bottom:2px solid ${brand.brandColor};margin-bottom:8px}.ttl{text-align:center;font-size:11px;font-weight:700;margin-bottom:3px}.sub{text-align:center;font-size:8px;color:#666;margin-bottom:8px}table{width:100%;border-collapse:collapse}th{background:${brand.brandColor};color:#fff;padding:3px;text-align:left;font-size:7px;font-weight:700;text-transform:uppercase;border:0.5px solid ${brand.brandColor}}td{padding:3px;border:0.5px solid #e5e7eb}tr.alt td{background:#f9fafb}.ftr{margin-top:8px;padding-top:5px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:7px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
+<div class="hdr">${pdfLogoHTML(brand, 28)}<div><div style="font-size:11px;font-weight:700;color:${brand.brandColor}">${schoolName}</div><div style="font-size:7px;color:#888">Student Monthly Attendance</div></div></div>
 <div class="ttl">${title}</div>
 <div class="sub">${isBn ? 'মোট' : 'Total'}: ${students.length} ${isBn ? 'জন' : 'students'} · ${dateFrom} → ${dateTo} · ${rangeDays.length} ${isBn ? 'দিন' : 'days'}</div>
 <table><thead><tr>

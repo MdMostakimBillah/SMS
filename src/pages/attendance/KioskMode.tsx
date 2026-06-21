@@ -43,6 +43,7 @@ function playSuccessSound() {
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4)
     osc.start(ctx.currentTime)
     osc.stop(ctx.currentTime + 0.4)
+    osc.onended = () => ctx.close()
   } catch {}
 }
 
@@ -320,13 +321,16 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   }
 
   useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | null = null
     if (camActive && kioskMode === 'attendance' && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current
       videoRef.current.onloadedmetadata = () => {
         videoRef.current?.play().catch(() => {})
-        const t = setTimeout(() => startDetectLoop(), 500)
-        return () => clearTimeout(t)
+        t = setTimeout(() => startDetectLoop(), 500)
       }
+    }
+    return () => {
+      if (t) clearTimeout(t)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camActive, kioskMode])

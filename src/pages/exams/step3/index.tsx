@@ -186,13 +186,15 @@ export default function Step3Evaluation() {
 
   useEffect(() => {
     if (!selectedExamId || !entryClassId || !entrySectionId || !entrySubjectId) {
-      if (Object.keys(prevInputsRef.current).length > 0) {
-        prevInputsRef.current = {}
-        setMarkInputs({})
-      }
+      prevContextRef.current = ''
+      prevInputsRef.current = {}
+      setMarkInputs({})
+      setMarkErrors({})
       return
     }
-    prevContextRef.current = `${selectedExamId}|${entryClassId}|${entrySectionId}|${entrySubjectId}`
+    const currentContext = `${selectedExamId}|${entryClassId}|${entrySectionId}|${entrySubjectId}`
+    if (prevContextRef.current === currentContext) return
+    prevContextRef.current = currentContext
     const inputs: Record<string, Record<string, number>> = {}
     classStudents.forEach((s) => {
       const existing = sessionStudentMarks.find(
@@ -205,10 +207,9 @@ export default function Step3Evaluation() {
       )
       inputs[s.id] = existing?.subExamMarks || {}
     })
-    if (JSON.stringify(inputs) !== JSON.stringify(prevInputsRef.current)) {
-      prevInputsRef.current = inputs
-      setMarkInputs(inputs)
-    }
+    prevInputsRef.current = inputs
+    setMarkInputs(inputs)
+    setMarkErrors({})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedExamId, entryClassId, entrySectionId, entrySubjectId])
 

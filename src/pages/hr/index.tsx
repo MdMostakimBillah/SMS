@@ -1206,6 +1206,15 @@ export default function HRPage() {
         filteredAssignments={filteredAssignments}
         funds={funds}
         handlePDFDownload={handlePDFDownload as any}
+        getTeacherName={getTeacherName}
+        getFacilityName={(id) => facilities.find((f) => f.id === id)?.name || id}
+        institutionName={institution.name}
+        bonuses={bonuses}
+        salaryActiveTeachers={salaryActiveTeachers}
+        salarySetupMonth={salarySetupMonth}
+        monthlySalaryConfigs={monthlySalaryConfigs}
+        salaryConfigs={salaryConfigs}
+        selectedSalary={selectedSalary}
         facModalType={facModalType}
         setFacModalType={setFacModalType}
         facForm={facForm}

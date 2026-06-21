@@ -67,23 +67,34 @@ export default function PayrollPage() {
     [departments]
   )
 
+  const facilityAmountMap = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const tf of teacherFacilities) {
+      map.set(tf.teacherId, (map.get(tf.teacherId) || 0) + tf.amount)
+    }
+    return map
+  }, [teacherFacilities])
+
+  const facilityDetailsMap = useMemo(() => {
+    const map = new Map<string, { name: string; nameBn: string; amount: number }[]>()
+    for (const tf of teacherFacilities) {
+      const fac = facilities.find((f) => f.id === tf.facilityId)
+      const entry = { name: fac?.name || 'Unknown', nameBn: fac?.nameBn || 'অজানা', amount: tf.amount }
+      const arr = map.get(tf.teacherId) || []
+      arr.push(entry)
+      map.set(tf.teacherId, arr)
+    }
+    return map
+  }, [teacherFacilities, facilities])
+
   const getTeacherFacilityAmount = useCallback(
-    (teacherId: string) => {
-      return teacherFacilities.filter((tf) => tf.teacherId === teacherId).reduce((sum, tf) => sum + tf.amount, 0)
-    },
-    [teacherFacilities]
+    (teacherId: string) => facilityAmountMap.get(teacherId) || 0,
+    [facilityAmountMap]
   )
 
   const getTeacherFacilityDetails = useCallback(
-    (teacherId: string) => {
-      return teacherFacilities
-        .filter((tf) => tf.teacherId === teacherId)
-        .map((tf) => {
-          const fac = facilities.find((f) => f.id === tf.facilityId)
-          return { name: fac?.name || 'Unknown', nameBn: fac?.nameBn || 'অজানা', amount: tf.amount }
-        })
-    },
-    [teacherFacilities, facilities]
+    (teacherId: string) => facilityDetailsMap.get(teacherId) || [],
+    [facilityDetailsMap]
   )
 
   const activeTeachers = useMemo(() => {

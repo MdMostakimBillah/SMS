@@ -1,3 +1,5 @@
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+
 interface Punch {
   time: string
   type: string
@@ -24,7 +26,8 @@ interface GenSinglePDFParams {
 
 export function genSinglePDF(params: GenSinglePDFParams): string {
   const { name, id, photo, designation, deptName, inTime, outTime, rows, isBn } = params
-  const schoolName = params.institutionName || 'EduTech'
+  const brand = getPDFBranding()
+  const schoolName = params.institutionName || brand.schoolName
   const present = rows.filter((r) => r.status === 'present').length
   const absent = rows.filter((r) => r.status === 'absent').length
   const leave = rows.filter((r) => r.status === 'on-leave').length
@@ -80,16 +83,15 @@ export function genSinglePDF(params: GenSinglePDFParams): string {
     })
     .join('')
   const photoTag = photo
-    ? `<img src="${photo}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #6366f1" />`
-    : `<div style="width:48px;height:48px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#6366f1;border:2px solid #6366f1">${name.charAt(0)}</div>`
+    ? `<img src="${photo}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid ${brand.brandColor}" />`
+    : `<div style="width:48px;height:48px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${brand.brandColor};border:2px solid ${brand.brandColor}">${name.charAt(0)}</div>`
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${name} — Attendance</title>
 <style>
 @page{size:A4 landscape;margin:8mm}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a;background:#fff}
 .page{padding:0}
-.hdr{display:flex;align-items:center;gap:14px;padding-bottom:8px;border-bottom:2.5px solid #6366f1;margin-bottom:10px}
-.logo{width:36px;height:36px;background:#6366f1;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700}
+.hdr{display:flex;align-items:center;gap:14px;padding-bottom:8px;border-bottom:2.5px solid ${brand.brandColor};margin-bottom:10px}
 .profile{display:flex;align-items:center;gap:12px;flex:1}
 .info h2{font-size:14px;font-weight:700;color:#1e1b4b;margin-bottom:1px}
 .info p{font-size:9px;color:#6b7280}
@@ -100,9 +102,9 @@ body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a;background:#fff}
 .stat.green .val{color:#059669}.stat.green{background:#ecfdf5}
 .stat.red .val{color:#dc2626}.stat.red{background:#fef2f2}
 .stat.amber .val{color:#d97706}.stat.amber{background:#fffbeb}
-.stat.blue .val{color:#6366f1}.stat.blue{background:#eef2ff}
+.stat.blue .val{color:${brand.brandColor}}.stat.blue{background:#eef2ff}
 table{width:100%;border-collapse:collapse}
-th{background:#6366f1;color:#fff;padding:5px 4px;text-align:left;font-size:8px;font-weight:700;text-transform:uppercase;border:0.5px solid #5356d4;letter-spacing:0.3px}
+th{background:${brand.brandColor};color:#fff;padding:5px 4px;text-align:left;font-size:8px;font-weight:700;text-transform:uppercase;border:0.5px solid ${brand.brandColor};letter-spacing:0.3px}
 td{padding:4px 5px;border:0.5px solid #e5e7eb;font-size:8px}
 tr.alt td{background:#f8fafc}
 .ftr{margin-top:8px;padding-top:6px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:7px;color:#9ca3af}
@@ -110,7 +112,7 @@ tr.alt td{background:#f8fafc}
 </style></head><body>
 <div class="page">
 <div class="hdr">
-  <div class="logo">ET</div>
+  ${pdfLogoHTML(brand, 36)}
   <div class="profile">
     ${photoTag}
     <div class="info">
@@ -125,7 +127,7 @@ tr.alt td{background:#f8fafc}
   <div class="stat red"><div class="val">${absent}</div><div class="lbl">${isBn ? 'অনুপস্থিত' : 'Absent'}</div></div>
   <div class="stat amber"><div class="val">${leave}</div><div class="lbl">${isBn ? 'ছুটিতে' : 'Leave'}</div></div>
   <div class="stat blue"><div class="val">${lateCount}</div><div class="lbl">${isBn ? 'বিলম্ব' : 'Late'}</div></div>
-  <div class="stat"><div class="val" style="color:#6366f1">${avgIn}</div><div class="lbl">${isBn ? 'গড় ইন' : 'Avg In'}</div></div>
+  <div class="stat"><div class="val" style="color:${brand.brandColor}">${avgIn}</div><div class="lbl">${isBn ? 'গড় ইন' : 'Avg In'}</div></div>
 </div>
 
 <table>

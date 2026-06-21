@@ -1,9 +1,12 @@
+import { createPortal } from 'react-dom'
 import { X, Save } from 'lucide-react'
 import { modalOverlayCls, modalStyleCls, inputCls, labelCls } from '@/pages/hr/utils'
 import { HRPDFOptionsModal } from '@/components/shared/HRPDFOptionsModal'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import type { Teacher } from '@/pages/teachers/types'
 import type { Facility } from '@/store/hrStore'
+
+import type { MonthlySalaryConfig } from '@/store/hrStore'
 
 interface HRModalsProps {
   modalType: 'increment' | 'bonus' | 'promotion' | 'fund' | null
@@ -31,6 +34,16 @@ interface HRModalsProps {
   filteredAssignments: unknown[]
   funds: unknown[]
   handlePDFDownload: (type: string, opts: unknown) => void
+
+  getTeacherName: (id: string) => string
+  getFacilityName: (id: string) => string
+  institutionName?: string
+  bonuses?: unknown[]
+  salaryActiveTeachers?: Teacher[]
+  salarySetupMonth?: string
+  monthlySalaryConfigs?: MonthlySalaryConfig[]
+  salaryConfigs?: Record<string, { applyDeductionRule?: boolean; fundContributionPercent?: number }>
+  selectedSalary?: string[]
 
   facModalType: 'add-facility' | 'edit-facility' | 'assign' | 'edit-assign' | null
   setFacModalType: (v: 'add-facility' | 'edit-facility' | 'assign' | 'edit-assign' | null) => void
@@ -86,6 +99,15 @@ export default function HRModals({
   filteredAssignments,
   funds,
   handlePDFDownload,
+  getTeacherName,
+  getFacilityName,
+  institutionName,
+  bonuses,
+  salaryActiveTeachers,
+  salarySetupMonth,
+  monthlySalaryConfigs,
+  salaryConfigs,
+  selectedSalary,
   facModalType,
   setFacModalType,
   facForm,
@@ -112,6 +134,7 @@ export default function HRModals({
 }: HRModalsProps) {
   return (
     <>
+      {createPortal(<>
       {/* ─── MODAL ─── */}
       {modalType && (
         <div className={modalOverlayCls} onClick={() => setModalType(null)}>
@@ -359,6 +382,7 @@ export default function HRModals({
           </div>
         </div>
       )}
+      </>, document.body)}
 
       {/* ─── PDF MODAL ─── */}
       {showPDFModal && (
@@ -374,15 +398,49 @@ export default function HRModals({
                   : showPDFModal === 'assignment'
                     ? filteredAssignments.length
                     : showPDFModal === 'salary'
-                      ? activeTeachers.length
+                      ? (salaryActiveTeachers || activeTeachers).length
                       : funds.length
           }
           isBn={isBn}
+          institutionName={institutionName}
+          increments={increments}
+          filteredBonuses={filteredBonuses}
+          filteredPromotions={filteredPromotions}
+          filteredAssignments={filteredAssignments}
+          funds={funds}
+          salaryData={
+            showPDFModal === 'salary'
+              ? (() => {
+                  const teachersToShow = (selectedSalary || []).length > 0
+                    ? (salaryActiveTeachers || activeTeachers).filter((t: any) => (selectedSalary || []).includes(t.id))
+                    : (salaryActiveTeachers || activeTeachers)
+                  return teachersToShow.map((t: any) => {
+                  const existing = (monthlySalaryConfigs || []).find((c) => c.teacherId === t.id && c.month === (salarySetupMonth || ''))
+                  const local = (salaryConfigs || {})[t.id] || {}
+                  const applyDeduction = local.applyDeductionRule ?? existing?.applyDeductionRule ?? false
+                  const fundPercent = local.fundContributionPercent ?? existing?.fundContributionPercent ?? 0
+                  const teacherBonuses = (bonuses || []).filter((b: any) => b.teacherId === t.id && b.month === (salarySetupMonth || ''))
+                  const perf = teacherBonuses.filter((b: any) => b.type === 'performance').reduce((sum: number, b: any) => sum + b.amount, 0)
+                  const atten = teacherBonuses.filter((b: any) => b.type === 'attendance').reduce((sum: number, b: any) => sum + b.amount, 0)
+                  const special = teacherBonuses.filter((b: any) => b.type === 'special').reduce((sum: number, b: any) => sum + b.amount, 0)
+                  const festival = teacherBonuses.filter((b: any) => b.type === 'festival').reduce((sum: number, b: any) => sum + b.amount, 0)
+                  const totalBonus = perf + atten + special + festival
+                  const deduction = applyDeduction ? Math.round(t.salary / 30) : 0
+                  const fund = Math.round((t.salary * fundPercent) / 100)
+                  const net = t.salary + totalBonus - deduction - fund
+                  return { ...t, basic: t.salary, perf, atten, special, festival, totalBonus, deduction, fundPercent, net }
+                })
+                })()
+              : undefined
+          }
+          getTeacherName={getTeacherName}
+          getFacilityName={getFacilityName}
           onClose={() => setShowPDFModal(null)}
           onDownload={(opts) => handlePDFDownload(showPDFModal, opts)}
         />
       )}
 
+      {createPortal(<>
       {/* ─── FACILITY ADD/EDIT MODAL ─── */}
       {(facModalType === 'add-facility' || facModalType === 'edit-facility') && (
         <div
@@ -586,6 +644,7 @@ export default function HRModals({
           isBn={isBn}
         />
       )}
+      </>, document.body)}
     </>
   )
 }

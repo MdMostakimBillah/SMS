@@ -139,8 +139,24 @@ export default function CumulativeMarkSheetTab({
     Promise.all(currentExamData.map(async (s) => {
       const admission = allStudents.find((a) => a.id === s.student.id)
       const subjects = s.subjectMarks.map((sm) => `${sm.subjectName}:${sm.obtained}/${sm.fullMarks}`).join(', ')
-      const payload = [`Student: ${s.student.nameEn}`, `Student ID: ${s.student.id}`, `Roll: ${s.student.roll}`, `Class: ${className}`, `Section: ${sectionName}`, `Exam: Cumulative`, `Session: ${currentExamSession}`, `Father: ${admission ? (isBn ? admission.fatherNameBn : admission.fatherNameEn || '-') : '-'}`, `Mother: ${admission ? (isBn ? admission.motherNameBn : admission.motherNameEn || '-') : '-'}`, `Subjects: ${subjects}`].join('\n')
-      try { return { id: s.student.id, url: await QRCode.toDataURL(payload, { width: 120, margin: 1, color: { dark: '#1e293b', light: '#ffffff' } }) } }
+      const grade = s.passedAll ? getGradeLetter(s.percentage) : 'F'
+      const payload = [
+        `Name: ${s.student.nameEn}`,
+        `ID: ${s.student.id}`,
+        `Roll: ${s.student.roll}`,
+        `Class: ${className}`,
+        `Section: ${sectionName}`,
+        `Exam: Cumulative`,
+        `Session: ${currentExamSession}`,
+        `Father: ${admission ? (isBn ? admission.fatherNameBn : admission.fatherNameEn || '-') : '-'}`,
+        `Mother: ${admission ? (isBn ? admission.motherNameBn : admission.motherNameEn || '-') : '-'}`,
+        `Total: ${s.totalObtained}/${s.totalFull}`,
+        `Pct: ${s.percentage.toFixed(1)}%`,
+        `GPA: ${s.gpa.toFixed(1)}`,
+        `Grade: ${grade}`,
+        `Subs: ${subjects}`,
+      ].join('\n')
+      try { return { id: s.student.id, url: await QRCode.toDataURL(payload, { width: 512, margin: 2, errorCorrectionLevel: 'H', color: { dark: '#000000', light: '#ffffff' } }) } }
       catch { return { id: s.student.id, url: '' } }
     })).then((results) => { if (!qrRef.current) { const map: Record<string, string> = {}; results.forEach((r) => { map[r.id] = r.url }); setQrMap(map) } })
     return () => { qrRef.current = true }

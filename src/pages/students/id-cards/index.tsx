@@ -7,6 +7,7 @@ import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import QRCode from 'qrcode'
+import { getPDFBranding } from '@/lib/pdfBranding'
 
 const TEMPLATES = [
   { id: 'classic', name: 'Classic', nameBn: 'ক্লাসিক', primary: '#6366f1', secondary: '#eef2ff', accent: '#4f46e5', radius: 12 },
@@ -203,7 +204,8 @@ export default function IDCardsPage() {
 
   const [template, setTemplate] = useState(TEMPLATES[0])
   const [fields, setFields] = useState<string[]>(FIELDS.filter((f) => f.default).map((f) => f.key))
-  const [institutionName, setInstitutionName] = useState('EduTech — Sunrise Academy')
+  const brand = getPDFBranding()
+  const [institutionName, setInstitutionName] = useState(brand.schoolName)
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
   const [search, setSearch] = useState('')

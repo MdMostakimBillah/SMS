@@ -4,6 +4,7 @@ import { ArrowLeft, User, FileText, AlertCircle } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
 import { openPrintWindow } from '@/lib/pdf'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 
 export default function TeacherDetailPage() {
   const navigate = useNavigate()
@@ -42,8 +43,9 @@ export default function TeacherDetailPage() {
 
   const downloadPDF = () => {
     if (!teacher) return
+    const brand = getPDFBranding()
     const photoHtml = teacher.photo ? `<div class="photo"><img src="${teacher.photo}" alt="${teacher.nameEn}" /></div>` : ''
-    const bodyHTML = `<div class="hdr"><div class="logo">ET</div><div><div style="font-size:14px;font-weight:700;color:#6366f1">EduTech — Sunrise Academy</div><div style="font-size:9px;color:#888">Employee Profile</div></div></div>
+    const bodyHTML = `<div class="hdr">${pdfLogoHTML(brand, 36)}<div><div style="font-size:14px;font-weight:700;color:${brand.brandColor}">${brand.schoolName}</div><div style="font-size:9px;color:#888">Employee Profile</div></div></div>
 ${photoHtml}
 <div class="ttl">${teacher.nameEn}</div>
 <div class="sub">${teacher.nameBn} · ${teacher.id}</div>
@@ -78,9 +80,9 @@ ${photoHtml}
     ${teacher.guardianPhone ? `<div><span class="lbl">${isBn ? 'অভিভাবক মোবাইল' : 'Guardian Phone'}</span><span class="val">${teacher.guardianPhone}</span></div>` : ''}
   </div>
 </div>
-<div class="ftr"><span>EduTech School Management System</span><div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div>`
+<div class="ftr"><span>${brand.schoolName}</span><div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div>`
     openPrintWindow(teacher.nameEn, bodyHTML, {
-      css: '@page{size:A4 portrait;margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:12px;padding-bottom:7px;border-bottom:2px solid #6366f1;margin-bottom:12px}.logo{width:36px;height:36px;background:#6366f1;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700}.ttl{text-align:center;font-size:14px;font-weight:700;margin:10px 0 4px}.sub{text-align:center;font-size:10px;color:#666;margin-bottom:12px}.photo{text-align:center;margin-bottom:12px}.photo img{width:100px;height:120px;border-radius:8px;border:2px solid #6366f1;object-fit:cover}.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:12px}.info div{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0}.info .lbl{font-size:10px;color:#888;width:100px;flex-shrink:0}.info .val{font-size:11px;font-weight:500;color:#1a1a1a}.ftr{margin-top:14px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}',
+      css: `@page{size:A4 portrait;margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:12px;padding-bottom:7px;border-bottom:2px solid ${brand.brandColor};margin-bottom:12px}.ttl{text-align:center;font-size:14px;font-weight:700;margin:10px 0 4px}.sub{text-align:center;font-size:10px;color:#666;margin-bottom:12px}.photo{text-align:center;margin-bottom:12px}.photo img{width:100px;height:120px;border-radius:8px;border:2px solid ${brand.brandColor};object-fit:cover}.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:12px}.info div{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0}.info .lbl{font-size:10px;color:#888;width:100px;flex-shrink:0}.info .val{font-size:11px;font-weight:500;color:#1a1a1a}.ftr{margin-top:14px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`,
     })
   }
 

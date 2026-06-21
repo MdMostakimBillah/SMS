@@ -2,6 +2,7 @@ import QRCode from 'qrcode'
 import type { TabulationStudent } from './MarksheetTab'
 import type { MarksheetOptions } from './MarksheetTab'
 import { getBrandColor } from '@/lib/pdf'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 
 function getGradeLetter(pct: number): string {
   if (pct >= 80) return 'A+'
@@ -194,15 +195,18 @@ export async function generateMarksheetPDF(
   const color = getBrandColor()
   const { orientation, isBn, examName, examSession, className, sectionName, institutionName, institutionAddress, options } = opts
   const f = fontSizes[options.fontSize || 'default']
+  const pdfBrand = getPDFBranding()
+  const logoHTML = pdfLogoHTML(pdfBrand, 36)
 
   // Generate QR codes for all students
   const qrMap: Record<string, string> = {}
   await Promise.all(
     students.map(async (s) => {
       const subjects = s.subjectMarks.map((sm) => `${sm.subjectName}:${sm.obtained}/${sm.fullMarks}`).join(', ')
+      const grade = s.passedAll ? getGradeLetter(s.percentage) : 'F'
       const payload = [
-        `Student: ${s.student.nameEn}`,
-        `Student ID: ${s.student.id}`,
+        `Name: ${s.student.nameEn}`,
+        `ID: ${s.student.id}`,
         `Roll: ${s.student.roll}`,
         `Class: ${className}`,
         `Section: ${sectionName}`,
@@ -211,14 +215,14 @@ export async function generateMarksheetPDF(
         `Father: ${isBn ? s.student.fatherNameBn : s.student.fatherNameEn || '-'}`,
         `Mother: ${isBn ? s.student.motherNameBn : s.student.motherNameEn || '-'}`,
         `Total: ${s.totalObtained}/${s.totalFull}`,
-        `Percentage: ${s.percentage.toFixed(1)}%`,
+        `Pct: ${s.percentage.toFixed(1)}%`,
         `GPA: ${s.gpa.toFixed(1)}`,
-        `Grade: ${s.passedAll ? getGradeLetter(s.percentage) : 'F'}`,
-        `Rank: ${s.classRank ? `#${s.classRank}` : '-'}`,
-        `Subjects: ${subjects}`,
+        `Grade: ${grade}`,
+        `Rank: ${s.classRank ? '#' + s.classRank : '-'}`,
+        `Subs: ${subjects}`,
       ].join('\n')
       try {
-        qrMap[s.student.id] = await QRCode.toDataURL(payload, { width: 120, margin: 1, color: { dark: '#1e293b', light: '#ffffff' } })
+        qrMap[s.student.id] = await QRCode.toDataURL(payload, { width: 512, margin: 2, errorCorrectionLevel: 'H', color: { dark: '#000000', light: '#ffffff' } })
       } catch {
         qrMap[s.student.id] = ''
       }
@@ -328,7 +332,10 @@ export async function generateMarksheetPDF(
       <div class="marksheet-page">
         <!-- Header -->
         <div style="text-align:center;margin-bottom:${f.headerMarginBottom};">
-          <h1 style="font-size:${f.headerName};font-weight:700;color:${color};margin:0;">${institutionName}</h1>
+          <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px">
+            ${logoHTML}
+            <h1 style="font-size:${f.headerName};font-weight:700;color:${color};margin:0;">${institutionName}</h1>
+          </div>
           <p style="font-size:${f.headerAddress};color:#6b7280;margin:1px 0 0 0;">${institutionAddress}</p>
           <div style="width:${f.dividerWidth};height:2px;background:${color};border-radius:2px;margin:${f.dividerMargin} auto;"></div>
           <h2 style="font-size:${f.headerTitle};font-weight:700;color:#1e293b;text-transform:uppercase;letter-spacing:1px;margin:0;">Marksheet</h2>

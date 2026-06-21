@@ -79,15 +79,33 @@ export default function DashboardPage() {
     gsap.fromTo(cards, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: 'power2.out' })
   }, [isLoading])
 
-  // Derived data
+  // Derived data — single-pass computation
+  const studentStats = useMemo(() => {
+    let approved = 0, pending = 0, rejected = 0, male = 0, female = 0
+    for (const s of students) {
+      if (s.status === 'approved') approved++
+      else if (s.status === 'pending') pending++
+      else if (s.status === 'rejected') rejected++
+      if (s.gender === 'Male') male++
+      else if (s.gender === 'Female') female++
+    }
+    return { approved, pending, rejected, male, female }
+  }, [students])
+
+  const teacherStats = useMemo(() => {
+    let active = 0, onLeave = 0, inactive = 0
+    for (const t of teachers) {
+      if (t.status === 'active') active++
+      else if (t.status === 'on-leave') onLeave++
+      else if (t.status === 'inactive') inactive++
+    }
+    return { active, onLeave, inactive }
+  }, [teachers])
+
   const totalStudents = students.length
   const totalTeachers = teachers.length
-  const approvedStudents = students.filter((s) => s.status === 'approved').length
-  const pendingStudents = students.filter((s) => s.status === 'pending').length
-  const rejectedStudents = students.filter((s) => s.status === 'rejected').length
-  const activeTeachers = teachers.filter((t) => t.status === 'active').length
-  const maleStudents = students.filter((s) => s.gender === 'Male').length
-  const femaleStudents = students.filter((s) => s.gender === 'Female').length
+  const { approved: approvedStudents, pending: pendingStudents, rejected: rejectedStudents, male: maleStudents, female: femaleStudents } = studentStats
+  const { active: activeTeachers } = teacherStats
 
   // Class distribution
   const classDist = useMemo(() => {
@@ -102,11 +120,11 @@ export default function DashboardPage() {
   }, [students])
 
   // Status distribution
-  const statusData = [
+  const statusData = useMemo(() => [
     { name: isBn ? 'অনুমোদিত' : 'Approved', value: approvedStudents, color: STATUS_COLORS.approved },
     { name: isBn ? 'বিচারাধীন' : 'Pending', value: pendingStudents, color: STATUS_COLORS.pending },
     { name: isBn ? 'বাতিল' : 'Rejected', value: rejectedStudents, color: STATUS_COLORS.rejected },
-  ]
+  ], [approvedStudents, pendingStudents, rejectedStudents, isBn])
 
   // Weekly enrollment trend (last 7 days of data, simulated from our dataset)
   const weeklyTrend = useMemo(() => {
@@ -125,28 +143,28 @@ export default function DashboardPage() {
   }, [students, teachers, isBn])
 
   // Recent students (latest 4)
-  const recentStudents = [...students].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4)
+  const recentStudents = useMemo(() => [...students].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4), [students])
 
   // Top students (approved, roll number sorted)
-  const topStudentsList = [...students]
-    .filter((s) => s.status === 'approved')
-    .slice(0, 5)
-    .map((s, i) => ({
-      name: s.nameEn,
-      cls: `Class ${s.class} ${s.section}`,
-      score: `${85 + Math.floor(Math.random() * 15)}%`,
-      initials: s.nameEn
-        .split(' ')
-        .map((n) => n[0])
-        .slice(0, 2)
-        .join(''),
-      color: COLORS[i % COLORS.length],
-    }))
+  const topStudentsList = useMemo(() =>
+    [...students]
+      .filter((s) => s.status === 'approved')
+      .slice(0, 5)
+      .map((s, i) => ({
+        name: s.nameEn,
+        cls: `Class ${s.class} ${s.section}`,
+        score: `${85 + Math.floor(Math.random() * 15)}%`,
+        initials: s.nameEn
+          .split(' ')
+          .map((n) => n[0])
+          .slice(0, 2)
+          .join(''),
+        color: COLORS[i % COLORS.length],
+      }))
+  , [students])
 
   // Teacher status distribution
-  const activeT = teachers.filter((t) => t.status === 'active').length
-  const onLeaveT = teachers.filter((t) => t.status === 'on-leave').length
-  const inactiveT = teachers.filter((t) => t.status === 'inactive').length
+  const { active: activeT, onLeave: onLeaveT, inactive: inactiveT } = teacherStats
 
   const col4 = isMobile ? '1fr 1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(4,1fr)'
   const col3 = isMobile ? '1fr' : isTablet ? '1fr 1fr' : 'repeat(3,1fr)'

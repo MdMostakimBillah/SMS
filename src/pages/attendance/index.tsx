@@ -180,10 +180,10 @@ export default function AttendancePage() {
     return l
   }, [activeTeachers, fDeptEmp, employeeSearch])
 
-  const getDeptName = (id: string) => {
+  const getDeptName = useCallback((id: string) => {
     const d = departments.find((x) => x.id === id)
     return d ? (isBn ? d.nameBn : d.name) : '—'
-  }
+  }, [departments, isBn])
 
   // Today's filtered employees + students with punch data
   const todayFiltered = useMemo(() => {

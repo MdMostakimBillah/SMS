@@ -1,3 +1,5 @@
+import { getPDFBranding } from '@/lib/pdfBranding'
+
 interface Student {
   id: string
   nameEn: string
@@ -18,20 +20,21 @@ interface AttendanceParams {
 export function generateAttendanceSheetHTML(params: AttendanceParams): string {
   const { classId, sectionId, date, shift, present, absent, totalStudents } = params
   const attendanceRate = totalStudents > 0 ? Math.round((present.length / totalStudents) * 100) : 0
-  const schoolName = params.institutionName || 'EduTech'
+  const brand = getPDFBranding()
+  const schoolName = params.institutionName || brand.schoolName
 
   return `<!DOCTYPE html><html><head><title>Attendance - ${classId} ${sectionId} ${date}</title>
 <style>
   @page{size:A4 portrait;margin:15mm}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:0}
-  .header{text-align:center;margin-bottom:16px;border-bottom:2px solid #6366f1;padding-bottom:10px}
-  .school{font-size:18px;font-weight:700;color:#6366f1}
+  .header{text-align:center;margin-bottom:16px;border-bottom:2px solid ${brand.brandColor};padding-bottom:10px}
+  .school{font-size:18px;font-weight:700;color:${brand.brandColor}}
   .sub{font-size:11px;color:#666}
-  .title{font-size:14px;font-weight:700;margin:10px 0;background:#6366f1;color:#fff;padding:6px;border-radius:4px}
+  .title{font-size:14px;font-weight:700;margin:10px 0;background:${brand.brandColor};color:#fff;padding:6px;border-radius:4px}
   .info{display:flex;justify-content:space-between;font-size:11px;margin-bottom:12px;color:#444}
   table{width:100%;border-collapse:collapse}
-  th{background:#eef2ff;color:#6366f1;font-size:10px;padding:6px 8px;text-align:left;border:1px solid #c7d2fe}
+  th{background:#eef2ff;color:${brand.brandColor};font-size:10px;padding:6px 8px;text-align:left;border:1px solid #c7d2fe}
   td{padding:5px 8px;border:1px solid #e5e7eb;font-size:11px}
   tr:nth-child(even){background:#f9fafb}
   .present{color:#10b981;font-weight:600}
@@ -43,7 +46,7 @@ export function generateAttendanceSheetHTML(params: AttendanceParams): string {
 </style></head><body>
 <div class="header">
   <div class="school">${schoolName}</div>
-  <div class="sub">Sunrise Academy, Dhaka, Bangladesh</div>
+  ${brand.address ? `<div class="sub">${brand.address}</div>` : ''}
 </div>
 <div class="title">Exam Attendance Report / পরীক্ষার উপস্থিতি রিপোর্ট</div>
 <div class="info">

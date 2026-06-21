@@ -1,4 +1,5 @@
 import { getBrandColor } from '@/lib/pdf'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 
 export interface SalarySlipEmployee {
   id: string
@@ -43,7 +44,7 @@ function calcSalary(t: SalarySlipEmployee) {
   return { basic, house, medical, conveyance, bonusVal, overtimeVal, festivalVal, facilityTotal, deductionAmount, fundAmount, gross, totalDeduction, net }
 }
 
-function singleSlipHTML(t: SalarySlipEmployee, month: string, isBn: boolean, brand: string, schoolName: string): string {
+function singleSlipHTML(t: SalarySlipEmployee, month: string, isBn: boolean, brand: string, schoolName: string, logoHTML: string): string {
   const s = calcSalary(t)
   const facilityRows = t.facilityDetails
     .map((f) => `<tr><td>${isBn ? f.nameBn : f.name}</td><td style="text-align:right">৳${f.amount.toLocaleString()}</td></tr>`)
@@ -52,8 +53,8 @@ function singleSlipHTML(t: SalarySlipEmployee, month: string, isBn: boolean, bra
   return `<div class="slip">
     <div class="header">
       <div style="display:flex;align-items:center;gap:6px">
-        <div class="logo-box" style="background:${brand}">ET</div>
-        <div class="school"><h1 style="color:${brand}">${schoolName}</h1><p>Sunrise Academy</p></div>
+        ${logoHTML}
+        <div class="school"><h1 style="color:${brand}">${schoolName}</h1><p>${schoolName}</p></div>
       </div>
       <div style="text-align:right"><div style="font-size:7px;color:#666">${isBn ? 'বেতন পর্চি' : 'Payslip For'}</div><div style="font-size:10px;font-weight:700;color:${brand}">${month}</div></div>
     </div>
@@ -109,7 +110,9 @@ export function generateSingleSalarySlipPDF(
   const brand = getBrandColor()
   const isBn = opts.isBn
   const orientation = opts.orientation || 'portrait'
-  const schoolName = opts.institutionName || 'EduTech'
+  const pdfBrand = getPDFBranding()
+  const schoolName = opts.institutionName || pdfBrand.schoolName
+  const logoHTML = pdfLogoHTML(pdfBrand, 32)
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Payslip - ${employee.id}</title>
 <style>
@@ -139,7 +142,7 @@ export function generateSingleSalarySlipPDF(
   .sign-label{font-size:7px;color:#555}
   @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 </style></head><body>
-${singleSlipHTML(employee, month, isBn, brand, schoolName)}
+${singleSlipHTML(employee, month, isBn, brand, schoolName, logoHTML)}
 </body></html>`
 }
 
@@ -151,10 +154,12 @@ export function generateAllSalarySlipsPDF(
   if (!employees || employees.length === 0) return '<p>No data</p>'
   const brand = getBrandColor()
   const isBn = opts.isBn
-  const schoolName = opts.institutionName || 'EduTech'
+  const pdfBrand = getPDFBranding()
+  const schoolName = opts.institutionName || pdfBrand.schoolName
+  const logoHTML = pdfLogoHTML(pdfBrand, 32)
 
   const slips = employees
-    .map((emp) => `<div class="slip-wrap">${singleSlipHTML(emp, month, isBn, brand, schoolName)}</div>`)
+    .map((emp) => `<div class="slip-wrap">${singleSlipHTML(emp, month, isBn, brand, schoolName, logoHTML)}</div>`)
     .join('\n')
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Salary Slips - ${month}</title>

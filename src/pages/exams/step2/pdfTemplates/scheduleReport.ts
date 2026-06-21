@@ -2,6 +2,7 @@ import type { ExamConfig, ExamRoutine, ExamRoom, ExamSeatPlan, InvigilatorAssign
 import type { Subject } from '@/pages/teachers/types'
 import type { Teacher } from '@/pages/teachers/types'
 import type { ClassInfo } from '@/store/classStore'
+import { getPDFBranding } from '@/lib/pdfBranding'
 
 interface ScheduleReportParams {
   exam: ExamConfig
@@ -18,27 +19,35 @@ interface ScheduleReportParams {
   schoolAddress: string
 }
 
-const BRAND = '#4f46e5'
-const BRAND_LIGHT = '#eef2ff'
+function getBrand() { return getPDFBranding().brandColor }
 
-const sectionHeading = (title: string) => `
-  <div style="display:flex;align-items:center;gap:8px;margin:0 0 10px 0;padding-bottom:6px;border-bottom:2px solid ${BRAND}">
-    <div style="width:4px;height:18px;background:${BRAND};border-radius:2px;flex-shrink:0"></div>
+const sectionHeading = (title: string) => {
+  const b = getBrand()
+  return `
+  <div style="display:flex;align-items:center;gap:8px;margin:0 0 10px 0;padding-bottom:6px;border-bottom:2px solid ${b}">
+    <div style="width:4px;height:18px;background:${b};border-radius:2px;flex-shrink:0"></div>
     <h3 style="font-size:13px;font-weight:700;margin:0;color:#1e293b">${title}</h3>
   </div>
 `
+}
 
-const tableHead = (cols: string) => `
+const tableHead = (cols: string) => {
+  const b = getBrand()
+  return `
   <thead>
-    <tr style="background:${BRAND}">
+    <tr style="background:${b}">
       ${cols}
     </tr>
   </thead>
 `
+}
 
-const th = (text: string, align = 'left', extra = '') => `
-  <th style="padding:7px 10px;text-align:${align};font-weight:600;font-size:10px;color:#fff;border-bottom:2px solid ${BRAND};${extra}">${text}</th>
+const th = (text: string, align = 'left', extra = '') => {
+  const b = getBrand()
+  return `
+  <th style="padding:7px 10px;text-align:${align};font-weight:600;font-size:10px;color:#fff;border-bottom:2px solid ${b};${extra}">${text}</th>
 `
+}
 
 const td = (content: string, align = 'left', extra = '') => `
   <td style="padding:6px 10px;text-align:${align};font-size:10px;border-bottom:1px solid #f1f5f9;${extra}">${content}</td>
@@ -66,6 +75,10 @@ export function generateScheduleReportHTML(params: ScheduleReportParams): string
     schoolNameBn,
     schoolAddress,
   } = params
+
+  const brand = getPDFBranding()
+  const BRAND = brand.brandColor
+  const BRAND_LIGHT = '#eef2ff'
 
   const subjectMap = new Map(subjects.map((s) => [s.id, s]))
   const classMap = new Map(classes.map((c) => [extractClassNumber(c.name), c]))

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Plus, Trash2, Edit2, X, ScanLine, Printer, Palette } from 'lucide-react'
 import { useExamStore, type OMRConfig as OMRExamConfig } from '@/store/examStore'
 import { generateOMRSheetMultiCopy, type OMRConfig } from '@/pages/exams/omrTemplate'
@@ -198,7 +199,7 @@ export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs, classe
       )}
 
       {/* OMR Form Modal */}
-      {showOMRForm && (
+      {showOMRForm && createPortal(
         <div className="modal-overlay">
           <div className="modal-box modal-content" style={{ maxWidth: '26.25rem' }}>
             <div className="flex items-center justify-between mb-4">
@@ -324,11 +325,13 @@ export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs, classe
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ═══ OMR SHEET CREATOR ═══ */}
-      {showOMRDownload && omrDownloadConfig && (() => {
+      {showOMRDownload && omrDownloadConfig && createPortal(
+        (() => {
         const exam = examConfigs.find((e) => e.id === omrDownloadConfig.examId)
         const subject = subjects.find((s) => s.id === omrDownloadConfig.subjectId)
         const selectedClass = classes.find((c) => c.id === omrClass)
@@ -650,7 +653,9 @@ export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs, classe
             </div>
           </div>
         )
-      })()}
+      })(),
+      document.body
+    )}
     </>
   )
 }

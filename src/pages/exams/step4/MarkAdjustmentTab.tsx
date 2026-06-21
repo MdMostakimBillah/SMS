@@ -59,9 +59,8 @@ export function MarkAdjustmentTab({
   isBn,
   tabulationData,
 }: Props) {
-  // Calculate number of active extra mark types and max possible percentage
+  // Calculate number of active extra mark types
   const activeExtraTypes = extraMarkTypes.filter((t) => t.isActive).length
-  const maxPossibleExtra = extraMarkTypes.filter((t) => t.isActive).reduce((sum, t) => sum + t.percentage, 0)
 
   // User-controlled mark distribution (Academic + Extra = 100%)
   const [academicPct, setAcademicPct] = useState(90)
@@ -149,16 +148,16 @@ export function MarkAdjustmentTab({
         })
       })
       
-      // Normalize: student's extra % = (sumOfPcts / maxPossible) × 100
-      const normalizedExtraPct = maxPossibleExtra > 0 ? (sumOfTypePcts / maxPossibleExtra) * 100 : 0
-      // Apply allocation: extraMarks = (normalizedExtraPct / 100) × extraPctSetting% × totalFull
-      const extraMarksTotal = Math.round((normalizedExtraPct / 100) * (extraPctSetting / 100) * totalFull)
+      // Average of category percentages (e.g., 50% + 100% + 100% → 83%)
+      const avgExtraPct = activeExtraTypes > 0 ? sumOfTypePcts / activeExtraTypes : 0
+      // Apply allocation: extraMarks = (avgPct / 100) × extraPctSetting% × totalFull
+      const extraMarksTotal = Math.round((avgExtraPct / 100) * (extraPctSetting / 100) * totalFull)
 
       // Academic marks from tabulation — reduced by academic percentage
       const academicObtained = Math.round(row.totalObtained * (academicPct / 100))
 
-      // Final total = academic (reduced) + extra marks
-      const finalTotal = academicObtained + extraMarksTotal
+      // Final total = academic (reduced) + extra marks, capped at totalFull (100%)
+      const finalTotal = Math.min(academicObtained + extraMarksTotal, totalFull)
       const finalPercentage = totalFull > 0 ? Math.round((finalTotal / totalFull) * 100) : 0
 
       return {
@@ -283,7 +282,7 @@ export function MarkAdjustmentTab({
                 className={`${inputCls} w-full text-[0.6875rem] py-1`}
               />
               <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1">
-                {isBn ? `সর্বোচ্চ: ${maxPossibleExtra}% → 100% (${activeExtraTypes} ধরন)` : `Max: ${maxPossibleExtra}% → 100% (${activeExtraTypes} types)`}
+                {isBn ? `প্রতি ক্যাটাগরির গড় (সর্বোচ্চ 100%) — ${activeExtraTypes} ধরন সক্রিয়` : `Average across categories (max 100% each) — ${activeExtraTypes} types active`}
               </div>
             </div>
           </div>

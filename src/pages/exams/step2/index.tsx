@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -30,6 +31,7 @@ import {
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useScrollLock } from '@/hooks/useScrollLock'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -264,6 +266,8 @@ export default function Step2Schedule() {
   const [attShift, setAttShift] = useState<'morning' | 'afternoon'>('morning')
   const [showQRScanner, setShowQRScanner] = useState(false)
   const [lastScanned, setLastScanned] = useState('')
+
+  useScrollLock(showRoutineForm || showRoomForm || showInvigForm || showQRScanner || showDayDetail || !!assignRoomStudentId)
 
   const { classes } = useClassStore()
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
@@ -602,12 +606,24 @@ export default function Step2Schedule() {
   }, [teachers])
 
   const roomCapacityMap = useMemo(() => {
-    const map = new Map<string, number>()
+    const map = new Map<string, { date: string; count: number }[]>()
+    const dateCountMap = new Map<string, Map<string, number>>()
     for (const r of filteredRoutines) {
-      map.set(r.roomNo, (map.get(r.roomNo) || 0) + 1)
+      const studentCount = students.filter(
+        (s) => s.status === 'approved' && s.active !== false && s.class === r.classId && (!r.sectionId || s.section === r.sectionId)
+      ).length
+      if (!dateCountMap.has(r.roomNo)) dateCountMap.set(r.roomNo, new Map())
+      const dayMap = dateCountMap.get(r.roomNo)!
+      dayMap.set(r.date, (dayMap.get(r.date) || 0) + studentCount)
+    }
+    for (const [roomNo, dayMap] of dateCountMap) {
+      const entries = Array.from(dayMap.entries())
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => a.date.localeCompare(b.date))
+      map.set(roomNo, entries)
     }
     return map
-  }, [filteredRoutines])
+  }, [filteredRoutines, students])
 
   // ── Calendar computations ──
   const calendarDays = useMemo(() => {
@@ -1350,8 +1366,7 @@ export default function Step2Schedule() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               {rooms.map((room) => {
-                const assignedSeats = roomCapacityMap.get(room.roomNo) || 0
-                const utilization = room.capacity > 0 ? Math.round((assignedSeats / room.capacity) * 100) : 0
+                const dailyEntries = roomCapacityMap.get(room.roomNo) || []
                 return (
                   <div key={room.id} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-[0.875rem] transition-all hover:shadow-sm">
                     <div className="flex items-start justify-between mb-2">
@@ -1388,25 +1403,41 @@ export default function Step2Schedule() {
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-[0.625rem] text-[var(--text-muted)]">
-                      <span>
-                        {assignedSeats}/{room.capacity} {isBn ? 'আসন' : 'seats'}
-                      </span>
-                      <span
-                        className="font-medium"
-                        style={{ color: utilization > 90 ? 'var(--red)' : utilization > 70 ? 'var(--amber)' : 'var(--green)' }}
-                      >
-                        {utilization}% {isBn ? 'ব্যবহৃত' : 'used'}
-                      </span>
-                    </div>
-                    <div className="mt-2 h-[0.3125rem] bg-[var(--border)] rounded-[0.1875rem]">
-                      <div
-                        className="h-full rounded-[0.1875rem] transition-all"
-                        style={{
-                          width: utilization > 0 ? `${Math.max(utilization, 5)}%` : '0%',
-                          background: utilization > 90 ? 'var(--red)' : utilization > 70 ? 'var(--amber)' : 'var(--green)',
-                        }}
-                      />
+                    <div className="flex flex-col gap-1">
+                      {dailyEntries.length > 0 ? (
+                        dailyEntries.map((entry) => {
+                          const dayUtil = room.capacity > 0 ? Math.round((entry.count / room.capacity) * 100) : 0
+                          const label = (() => {
+                            try {
+                              const d = new Date(entry.date)
+                              return `${d.getDate()}/${d.getMonth() + 1}`
+                            } catch {
+                              return entry.date
+                            }
+                          })()
+                          return (
+                            <div key={entry.date} className="flex items-center gap-2">
+                              <span className="text-[0.5625rem] text-[var(--text-muted)] w-7 shrink-0">{label}</span>
+                              <div className="flex-1 h-[0.25rem] bg-[var(--border)] rounded-[0.125rem]">
+                                <div
+                                  className="h-full rounded-[0.125rem] transition-all"
+                                  style={{
+                                    width: dayUtil > 0 ? `${Math.max(dayUtil, 3)}%` : '0%',
+                                    background: dayUtil > 90 ? 'var(--red)' : dayUtil > 70 ? 'var(--amber)' : 'var(--green)',
+                                  }}
+                                />
+                              </div>
+                              <span className="text-[0.5625rem] text-[var(--text-muted)] w-14 text-right shrink-0">
+                                {entry.count}/{room.capacity}
+                              </span>
+                            </div>
+                          )
+                        })
+                      ) : (
+                        <span className="text-[0.5625rem] text-[var(--text-muted)]">
+                          {isBn ? 'কোনো পরীক্ষা নির্ধারিত নেই' : 'No exams scheduled'}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )
@@ -1580,7 +1611,7 @@ export default function Step2Schedule() {
             )}
 
             {/* Assign Room Modal */}
-            {assignRoomStudentId && (
+            {assignRoomStudentId && createPortal(
               <div className="modal-overlay">
                 <div className="modal-box modal-content" style={{ maxWidth: '20rem' }}>
                   <div className="flex items-center justify-between mb-4">
@@ -1628,7 +1659,8 @@ export default function Step2Schedule() {
                     </button>
                   </div>
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
           </>
         )}
@@ -2176,7 +2208,7 @@ export default function Step2Schedule() {
             </div>
 
             {/* QR Scanner Modal */}
-            {showQRScanner && (
+            {showQRScanner && createPortal(
               <QRScannerModal
                 isBn={isBn}
                 examId={selectedExamId}
@@ -2207,7 +2239,8 @@ export default function Step2Schedule() {
                 }}
                 onClose={() => setShowQRScanner(false)}
                 lastScanned={lastScanned}
-              />
+              />,
+              document.body
             )}
 
             {/* Attendance Summary */}
@@ -2368,7 +2401,7 @@ export default function Step2Schedule() {
       </div>
 
       {/* ═══ Routine Form Modal ═══ */}
-      {showRoutineForm && (
+      {showRoutineForm && createPortal(
         <div className="modal-overlay" onClick={() => setShowRoutineForm(false)}>
           <div className="modal-box modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '26.25rem' }}>
             <div className="flex items-center justify-between mb-4">
@@ -2518,11 +2551,12 @@ export default function Step2Schedule() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ═══ Room Form Modal ═══ */}
-      {showRoomForm && (
+      {showRoomForm && createPortal(
         <div className="modal-overlay">
           <div className="modal-box modal-content" style={{ maxWidth: '23.75rem' }}>
             <div className="flex items-center justify-between mb-4">
@@ -2609,11 +2643,12 @@ export default function Step2Schedule() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ═══ Invigilator Form Modal ═══ */}
-      {showInvigForm && (
+      {showInvigForm && createPortal(
         <div className="modal-overlay">
           <div className="modal-box modal-content" style={{ maxWidth: '23.75rem' }}>
             <div className="flex items-center justify-between mb-4">
@@ -2782,7 +2817,8 @@ export default function Step2Schedule() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Exam Routine PDF Modal */}

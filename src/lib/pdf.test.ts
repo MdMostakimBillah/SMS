@@ -1,15 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getBrandColor, openPrintWindow, downloadHTML } from './pdf'
 
-describe('getBrandColor', () => {
-  it('returns CSS variable value when set', () => {
-    document.documentElement.style.setProperty('--brand', '#ff0000')
-    expect(getBrandColor()).toBe('#ff0000')
-  })
+vi.mock('@/store/classStore', () => ({
+  useClassStore: {
+    getState: () => ({
+      institution: {
+        lightColors: { brand: '#ff0000' },
+      },
+    }),
+  },
+}))
 
-  it('returns fallback when CSS variable not set', () => {
-    document.documentElement.style.removeProperty('--brand')
-    expect(getBrandColor()).toBe('#4f46e5')
+describe('getBrandColor', () => {
+  it('returns brand color from store', () => {
+    expect(getBrandColor()).toBe('#ff0000')
   })
 })
 

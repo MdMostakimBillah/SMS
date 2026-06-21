@@ -1,5 +1,7 @@
 
 
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+
 export interface RoutinePDFColumn {
   key: string
   label: string
@@ -50,7 +52,8 @@ export function generateRoutineGridPDF(
   const emptyColumns = opts.emptyColumns || []
   const orientation = opts.orientation || 'landscape'
   const isBn = opts.isBn ?? false
-  const schoolName = opts.institutionName || 'EduTech'
+  const brand = getPDFBranding()
+  const schoolName = opts.institutionName || brand.schoolName
 
   const showSubject = selectedCols.includes('subject')
   const showTeacher = selectedCols.includes('teacher')
@@ -114,6 +117,9 @@ export function generateRoutineGridPDF(
     return `<tr class="blank-row">${first}${blanks}${extra}</tr>`
   }).join('')
 
+  const darken = (hex: string, amt: number) => { const n = parseInt(hex.replace('#',''),16); const r=Math.max(0,(n>>16)-amt), g=Math.max(0,((n>>8)&0xff)-amt), bv=Math.max(0,(n&0xff)-amt); return '#'+(r<<16|g<<8|bv).toString(16).padStart(6,'0') }
+  const darkerBrand = darken(brand.brandColor, 30)
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -123,15 +129,14 @@ export function generateRoutineGridPDF(
   @page { size: A4 ${orientation}; margin: 8mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:Arial,sans-serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
-  .hdr  { display:flex; align-items:center; justify-content:space-between; padding-bottom:7px; border-bottom:2px solid #6366f1; margin-bottom:7px; }
-  .logo { width:32px; height:32px; background:#6366f1; border-radius:7px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:700; }
+  .hdr  { display:flex; align-items:center; justify-content:space-between; padding-bottom:7px; border-bottom:2px solid ${brand.brandColor}; margin-bottom:7px; }
   .meta { text-align:right; font-size:8px; color:#666; line-height:1.7; }
   .ttl  { text-align:center; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
   table { border-collapse:collapse; table-layout:fixed; width:100%; }
-  th { background:#6366f1; color:#fff; padding:5px 4px; text-align:center; font-size:8px; font-weight:700; text-transform:uppercase; border:0.5px solid #5356d4; white-space:nowrap; }
+  th { background:${brand.brandColor}; color:#fff; padding:5px 4px; text-align:center; font-size:8px; font-weight:700; text-transform:uppercase; border:0.5px solid ${darkerBrand}; white-space:nowrap; }
   th.period-hdr { line-height:1.4; }
   th .time { font-size:7px; font-weight:400; opacity:0.85; text-transform:none; letter-spacing:0; }
-  th.empty-hdr { background:#818cf8; }
+  th.empty-hdr { background:${brand.brandColor}; opacity:0.8; }
   td { padding:4px; border:0.5px solid #e5e7eb; vertical-align:middle; text-align:center; }
   td.day-cell { background:#f0f0ff; font-weight:700; text-align:left; padding:4px 8px; white-space:nowrap; min-width:4.5rem; }
   td.cell { min-width:3rem; }
@@ -148,10 +153,10 @@ export function generateRoutineGridPDF(
 <body>
 <div class="hdr">
   <div style="display:flex;align-items:center;gap:10px">
-    <div class="logo">ET</div>
+    ${pdfLogoHTML(brand)}
     <div>
-      <div style="font-size:13px;font-weight:700;color:#6366f1">${schoolName}</div>
-      <div style="font-size:8px;color:#888">Dhaka, Bangladesh</div>
+      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${schoolName}</div>
+      ${brand.address ? `<div style="font-size:8px;color:#888">${brand.address}</div>` : ''}
     </div>
   </div>
   <div class="meta">
