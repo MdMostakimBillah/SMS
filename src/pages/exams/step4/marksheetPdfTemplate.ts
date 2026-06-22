@@ -248,18 +248,16 @@ export async function generateMarksheetPDF(
         return subExams.map((se, si) => {
           const seName = isBn ? se.nameBn || se.name : se.name
           const seObtained = sm.subExamMarks?.[se.id] || 0
-          const isLast = si === subExams.length - 1
-          const bottomBorder = isLast ? '2px solid #94a3b8' : '1px solid #cbd5e1'
           return `<tr style="background:${bg};">
-            ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:${bottomBorder};color:#6b7280;vertical-align:middle;">${idx + 1}</td>` : ''}
-            ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};font-size:${f.tdFontSize};font-weight:600;border-bottom:${bottomBorder};color:#1e293b;vertical-align:middle;">${sm.subjectName || ''}</td>` : ''}
+            ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #cbd5e1;color:#6b7280;vertical-align:middle;">${idx + 1}</td>` : ''}
+            ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};font-size:${f.tdFontSize};font-weight:600;border-bottom:1px solid #cbd5e1;color:#1e293b;vertical-align:middle;">${sm.subjectName || ''}</td>` : ''}
             <td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #cbd5e1;color:#6b7280;">${seName}</td>
             <td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #cbd5e1;color:#6b7280;">${se.fullMarks}</td>
             <td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #cbd5e1;font-weight:500;color:#1e293b;">${seObtained}</td>
-            ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdObtainedFontSize};font-weight:700;border-bottom:${bottomBorder};color:${color};vertical-align:middle;">${sm.obtained}</td>` : ''}
-            ${options.showSubjectHighest && si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};font-weight:600;border-bottom:${bottomBorder};color:${stat?.highest === sm.obtained && sm.obtained > 0 ? color : '#374151'};vertical-align:middle;">${stat?.highest || 0}</td>` : ''}
-            ${options.showSubjectHighest && si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};font-weight:600;border-bottom:${bottomBorder};color:${rank <= 3 && rank > 0 ? '#f59e0b' : '#374151'};vertical-align:middle;">${rank > 0 ? `#${rank}` : '-'}</td>` : ''}
-            ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};font-weight:600;border-bottom:${bottomBorder};color:${statusColor};vertical-align:middle;">${status}</td>` : ''}
+            ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdObtainedFontSize};font-weight:700;border-bottom:1px solid #cbd5e1;color:${color};vertical-align:middle;">${sm.obtained}</td>` : ''}
+            ${options.showSubjectHighest && si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};font-weight:600;border-bottom:1px solid #cbd5e1;color:${stat?.highest === sm.obtained && sm.obtained > 0 ? color : '#374151'};vertical-align:middle;">${stat?.highest || 0}</td>` : ''}
+            ${options.showSubjectHighest && si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};font-weight:600;border-bottom:1px solid #cbd5e1;color:${rank <= 3 && rank > 0 ? '#f59e0b' : '#374151'};vertical-align:middle;">${rank > 0 ? `#${rank}` : '-'}</td>` : ''}
+            ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};font-weight:600;border-bottom:1px solid #cbd5e1;color:${statusColor};vertical-align:middle;">${status}</td>` : ''}
           </tr>`
         }).join('')
       }
