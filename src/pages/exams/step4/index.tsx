@@ -399,7 +399,10 @@ export default function Step4Results() {
   // Analysis data
   const analysisData = useMemo(() => {
     if (!selectedExamId) return null
-    const examSubjects = sessionSubjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === selectedClassId)
+    const allExamSubjects = sessionSubjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === selectedClassId)
+    const examSubjects = sectionSubjectIds
+      ? allExamSubjects.filter((s) => sectionSubjectIds.includes(s.subjectId))
+      : allExamSubjects
     const subjectStats = examSubjects.map((sc) => {
       const subject = subjects.find((s) => s.id === sc.subjectId)
       const marks = sessionStudentMarks.filter(
