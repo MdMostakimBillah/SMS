@@ -311,13 +311,17 @@ export const CumulativeMarksheetPDFOptionsModal = React.memo(function Cumulative
 
   const previewRef = useRef<HTMLIFrameElement>(null)
   useEffect(() => {
-    if (previewRef.current && previewHtml) {
-      const doc = previewRef.current.contentDocument
-      if (doc) {
-        doc.open()
-        doc.write(previewHtml)
-        doc.close()
-      }
+    const el = previewRef.current
+    if (!el || !previewHtml) return
+    const doc = el.contentDocument
+    if (!doc) return
+    try {
+      doc.open()
+      doc.write(previewHtml)
+      doc.close()
+    } catch {}
+    return () => {
+      try { doc.open(); doc.write(''); doc.close() } catch {}
     }
   }, [previewHtml])
 
