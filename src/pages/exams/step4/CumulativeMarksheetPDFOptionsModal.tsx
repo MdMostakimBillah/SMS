@@ -132,6 +132,16 @@ export function CumulativeMarksheetPDFOptionsModal({
     onPrevExamsChange(updated)
   }, [localPrevExams, onPrevExamsChange])
 
+  const sectionSubjectIds = useMemo(() => {
+    if (!className || !sectionName) return null
+    const classes = useClassStore.getState().classes
+    const cls = classes.find((c) => extractClassNumber(c.name) === className || c.name === className)
+    if (!cls) return null
+    const section = cls.sections.find((s) => s.name === sectionName)
+    if (!section || !section.subjectIds || section.subjectIds.length === 0) return null
+    return section.subjectIds
+  }, [className, sectionName])
+
   const previewHtml = useMemo(() => {
     const selected = currentExamData.filter((s) => selectedIds.includes(s.student.id))
     if (selected.length === 0) return ''
@@ -153,16 +163,6 @@ export function CumulativeMarksheetPDFOptionsModal({
 
     const subjectMarkConfigs = useExamStore.getState().subjectMarkConfigs
     const studentMarks = useExamStore.getState().studentMarks
-
-    const sectionSubjectIds = useMemo(() => {
-      if (!className || !sectionName) return null
-      const classes = useClassStore.getState().classes
-      const cls = classes.find((c) => extractClassNumber(c.name) === className || c.name === className)
-      if (!cls) return null
-      const section = cls.sections.find((s) => s.name === sectionName)
-      if (!section || !section.subjectIds || section.subjectIds.length === 0) return null
-      return section.subjectIds
-    }, [className, sectionName])
 
     const firstExamConfigs = subjectMarkConfigs.filter((c) => {
       if (c.examId !== currentExamId || c.classId !== className) return false
@@ -299,7 +299,7 @@ export function CumulativeMarksheetPDFOptionsModal({
     }).join('')
 
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cumulative Marksheet</title><style>@page{size:A4 ${orientation};margin:10mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;font-size:${fontSize === 'compact' ? '8px' : '10px'};color:#1a1a2e;background:#fff;padding:10mm;}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}</style></head><body>${studentPages}</body></html>`
-  }, [currentExamData, selectedIds, currentExamId, currentExamName, currentExamSession, className, sectionName, institutionName, institutionAddress, localPrevExams, calcCurrentWeight, brand, isBn, orientation, fontSize])
+  }, [currentExamData, selectedIds, currentExamId, currentExamName, currentExamSession, className, sectionName, institutionName, institutionAddress, localPrevExams, calcCurrentWeight, brand, isBn, orientation, fontSize, sectionSubjectIds])
 
   const handleDownload = useCallback(() => {
     try {
