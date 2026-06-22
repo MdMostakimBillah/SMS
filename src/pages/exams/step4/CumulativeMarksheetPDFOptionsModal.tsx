@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
+
 import { X, File, LayoutTemplate, Download, Eye, EyeOff, Search } from 'lucide-react'
 import { getBrandColor, downloadHTML } from '@/lib/pdf'
 import { useExamStore } from '@/store/examStore'
@@ -331,7 +331,7 @@ export function CumulativeMarksheetPDFOptionsModal({
     marginBottom: '0.5rem',
   }
 
-  return createPortal(
+  return (
     <div className="modal-overlay">
       <div
         className="modal-box modal-content"
@@ -485,7 +485,6 @@ export function CumulativeMarksheetPDFOptionsModal({
           )}
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   )
 }
