@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X, File, LayoutTemplate, Download, Eye, EyeOff, Search } from 'lucide-react'
-import { getBrandColor, openPrintWindow } from '@/lib/pdf'
+import { getBrandColor, downloadHTML } from '@/lib/pdf'
 import { useExamStore } from '@/store/examStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, extractClassNumber } from '@/store/classStore'
@@ -303,15 +303,8 @@ export function CumulativeMarksheetPDFOptionsModal({
 
   const handleDownload = useCallback(() => {
     if (!previewHtml) return
-    const win = openPrintWindow('Cumulative Marksheet', previewHtml, {
-      css: orientation === 'landscape'
-        ? `@page{size:A4 landscape;margin:0;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;font-size:${fontSize === 'compact' ? '8px' : '10px'};color:#1a1a2e;background:#fff;padding:8mm;}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}`
-        : `@page{size:A4 portrait;margin:0;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;font-size:${fontSize === 'compact' ? '8px' : '10px'};color:#1a1a2e;background:#fff;padding:8mm;}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}`,
-    })
-    if (!win) {
-      alert(isBn ? 'পপ-আপ ব্লক করা হয়েছে। ব্রাউজারে পপ-আপ অনুমতি দিন।' : 'Popup blocked. Please allow popups for this site.')
-    }
-  }, [previewHtml, orientation, fontSize, isBn])
+    downloadHTML(`cumulative-marksheet-${className}-${sectionName}.html`, previewHtml)
+  }, [previewHtml, className, sectionName])
 
   const previewRef = useRef<HTMLIFrameElement>(null)
   useEffect(() => {
