@@ -2,7 +2,7 @@ import QRCode from 'qrcode'
 import type { TabulationStudent } from './MarksheetTab'
 import type { MarksheetOptions } from './MarksheetTab'
 import { getBrandColor } from '@/lib/pdf'
-import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+
 
 function getGradeLetter(pct: number): string {
   if (pct >= 80) return 'A+'
@@ -195,34 +195,28 @@ export async function generateMarksheetPDF(
   const color = getBrandColor()
   const { orientation, isBn, examName, examSession, className, sectionName, institutionName, institutionAddress, options } = opts
   const f = fontSizes[options.fontSize || 'default']
-  const pdfBrand = getPDFBranding()
-  const logoHTML = pdfLogoHTML(pdfBrand, 36)
 
   // Generate QR codes for all students
   const qrMap: Record<string, string> = {}
   await Promise.all(
     students.map(async (s) => {
-      const subjects = s.subjectMarks.map((sm) => `${sm.subjectName}:${sm.obtained}/${sm.fullMarks}`).join(', ')
+      const subjects = s.subjectMarks.map((sm) => `${sm.subjectName}:${sm.obtained}/${sm.fullMarks}`).join('; ')
       const grade = s.passedAll ? getGradeLetter(s.percentage) : 'F'
       const payload = [
         `Name: ${s.student.nameEn}`,
         `ID: ${s.student.id}`,
         `Roll: ${s.student.roll}`,
-        `Class: ${className}`,
-        `Section: ${sectionName}`,
-        `Exam: ${examName}`,
-        `Session: ${examSession}`,
+        `Class: ${className}-${sectionName}`,
+        `Exam: ${examName} (${examSession})`,
         `Father: ${isBn ? s.student.fatherNameBn : s.student.fatherNameEn || '-'}`,
         `Mother: ${isBn ? s.student.motherNameBn : s.student.motherNameEn || '-'}`,
-        `Total: ${s.totalObtained}/${s.totalFull}`,
-        `Pct: ${s.percentage.toFixed(1)}%`,
-        `GPA: ${s.gpa.toFixed(1)}`,
-        `Grade: ${grade}`,
+        `Total: ${s.totalObtained}/${s.totalFull} (${s.percentage.toFixed(1)}%)`,
+        `GPA: ${s.gpa.toFixed(1)} [${grade}]`,
         `Rank: ${s.classRank ? '#' + s.classRank : '-'}`,
-        `Subs: ${subjects}`,
+        `Subjects: ${subjects}`,
       ].join('\n')
       try {
-        qrMap[s.student.id] = await QRCode.toDataURL(payload, { width: 512, margin: 2, errorCorrectionLevel: 'H', color: { dark: '#000000', light: '#ffffff' } })
+        qrMap[s.student.id] = await QRCode.toDataURL(payload, { width: 512, margin: 3, errorCorrectionLevel: 'H', color: { dark: '#000000', light: '#ffffff' } })
       } catch {
         qrMap[s.student.id] = ''
       }
@@ -246,8 +240,8 @@ export async function generateMarksheetPDF(
       const hasSub = showSub && subExams.length > 0
 
       const highestCells = options.showSubjectHighest
-        ? `<td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #e5e7eb;font-weight:600;color:${stat?.highest === sm.obtained && sm.obtained > 0 ? color : '#374151'};">${stat?.highest || 0}</td>
-           <td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #e5e7eb;font-weight:600;color:${rank <= 3 && rank > 0 ? '#f59e0b' : '#374151'};">${rank > 0 ? `#${rank}` : '-'}</td>`
+        ? `<td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #94a3b8;font-weight:600;color:${stat?.highest === sm.obtained && sm.obtained > 0 ? color : '#374151'};">${stat?.highest || 0}</td>
+           <td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #94a3b8;font-weight:600;color:${rank <= 3 && rank > 0 ? '#f59e0b' : '#374151'};">${rank > 0 ? `#${rank}` : '-'}</td>`
         : ''
 
       if (hasSub) {
@@ -255,13 +249,13 @@ export async function generateMarksheetPDF(
           const seName = isBn ? se.nameBn || se.name : se.name
           const seObtained = sm.subExamMarks?.[se.id] || 0
           const isLast = si === subExams.length - 1
-          const bottomBorder = isLast ? '2px solid #e5e7eb' : '1px solid #f0f0f0'
+          const bottomBorder = isLast ? '2px solid #94a3b8' : '1px solid #cbd5e1'
           return `<tr style="background:${bg};">
             ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:${bottomBorder};color:#6b7280;vertical-align:middle;">${idx + 1}</td>` : ''}
             ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};font-size:${f.tdFontSize};font-weight:600;border-bottom:${bottomBorder};color:#1e293b;vertical-align:middle;">${sm.subjectName || ''}</td>` : ''}
-            <td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #f0f0f0;color:#6b7280;">${seName}</td>
-            <td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #f0f0f0;color:#6b7280;">${se.fullMarks}</td>
-            <td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #f0f0f0;font-weight:500;color:#1e293b;">${seObtained}</td>
+            <td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #cbd5e1;color:#6b7280;">${seName}</td>
+            <td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #cbd5e1;color:#6b7280;">${se.fullMarks}</td>
+            <td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #cbd5e1;font-weight:500;color:#1e293b;">${seObtained}</td>
             ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdObtainedFontSize};font-weight:700;border-bottom:${bottomBorder};color:${color};vertical-align:middle;">${sm.obtained}</td>` : ''}
             ${options.showSubjectHighest && si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};font-weight:600;border-bottom:${bottomBorder};color:${stat?.highest === sm.obtained && sm.obtained > 0 ? color : '#374151'};vertical-align:middle;">${stat?.highest || 0}</td>` : ''}
             ${options.showSubjectHighest && si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};font-weight:600;border-bottom:${bottomBorder};color:${rank <= 3 && rank > 0 ? '#f59e0b' : '#374151'};vertical-align:middle;">${rank > 0 ? `#${rank}` : '-'}</td>` : ''}
@@ -271,20 +265,20 @@ export async function generateMarksheetPDF(
       }
 
       return `<tr style="background:${bg};">
-        <td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #e5e7eb;color:#6b7280;">${idx + 1}</td>
-        <td style="padding:${f.tdPadding};font-size:${f.tdFontSize};border-bottom:1px solid #e5e7eb;font-weight:600;color:#1e293b;">${sm.subjectName || ''}</td>
-        ${showSub ? `<td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #e5e7eb;color:#9ca3af;">—</td>` : ''}
-        ${showSub ? `<td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #e5e7eb;color:#9ca3af;">—</td>` : ''}
-        ${showSub ? `<td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #e5e7eb;color:#9ca3af;">—</td>` : ''}
-        <td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #e5e7eb;font-weight:700;color:${color};">${sm.obtained}</td>
+        <td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #94a3b8;color:#6b7280;">${idx + 1}</td>
+        <td style="padding:${f.tdPadding};font-size:${f.tdFontSize};border-bottom:1px solid #94a3b8;font-weight:600;color:#1e293b;">${sm.subjectName || ''}</td>
+        ${showSub ? `<td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #94a3b8;color:#9ca3af;">—</td>` : ''}
+        ${showSub ? `<td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #94a3b8;color:#9ca3af;">—</td>` : ''}
+        ${showSub ? `<td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #94a3b8;color:#9ca3af;">—</td>` : ''}
+        <td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #94a3b8;font-weight:700;color:${color};">${sm.obtained}</td>
         ${highestCells}
-        <td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #e5e7eb;font-weight:600;color:${statusColor};">${status}</td>
+        <td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #94a3b8;font-weight:600;color:${statusColor};">${status}</td>
       </tr>`
     }).join('')
 
     const photoHtml = options.showPhoto
       ? student.student.photo
-        ? `<img src="${student.student.photo}" style="width:${f.photoW};height:${f.photoH};border-radius:${f.photoRadius};object-fit:cover;border:1px solid #e5e7eb;flex-shrink:0;" />`
+        ? `<img src="${student.student.photo}" style="width:${f.photoW};height:${f.photoH};border-radius:${f.photoRadius};object-fit:cover;border:1px solid #94a3b8;flex-shrink:0;" />`
         : `<div style="width:${f.photoW};height:${f.photoH};border-radius:${f.photoRadius};border:1.5px dashed ${color}30;display:flex;align-items:center;justify-content:center;background:${color}06;flex-shrink:0;">
             <span style="font-size:${f.photoFont};color:#9ca3af;">Photo</span>
           </div>`
@@ -305,7 +299,7 @@ export async function generateMarksheetPDF(
     // Grade scale + QR side by side
     const gradeScaleHtml = options.showGradeScale
       ? `<div style="display:flex;flex-wrap:wrap;gap:${f.gradeItemGap};">
-            ${gradeScale.map((g) => `<span style="display:inline-flex;align-items:center;gap:2px;padding:${f.gradeItemPadding};background:white;border-radius:2px;border:1px solid #e5e7eb;font-size:${f.gradeItemFontSize};">
+            ${gradeScale.map((g) => `<span style="display:inline-flex;align-items:center;gap:2px;padding:${f.gradeItemPadding};background:white;border-radius:2px;border:1px solid #94a3b8;font-size:${f.gradeItemFontSize};">
               <span style="width:${f.gradeBadgeW};height:${f.gradeBadgeH};border-radius:2px;background:${getGradeColor(g.letter)}18;color:${getGradeColor(g.letter)};display:flex;align-items:center;justify-content:center;font-size:${f.gradeBadgeLetterFontSize};font-weight:700;">${g.letter}</span>
               <span style="color:#6b7280;">${g.range}%</span>
             </span>`).join('')}
@@ -322,7 +316,7 @@ export async function generateMarksheetPDF(
       : ''
 
     const signatureSection = options.showSignature
-      ? `<div style="display:flex;justify-content:space-between;margin-top:${f.bottomMargin};padding-top:${f.bottomMargin};border-top:1px solid #e5e7eb;">
+      ? `<div style="display:flex;justify-content:space-between;margin-top:${f.bottomMargin};padding-top:${f.bottomMargin};border-top:1px solid #94a3b8;">
           <div style="text-align:center;"><div style="width:${f.sigWidth};border-bottom:1px solid #94a3b8;margin-bottom:${f.sigMargin};"></div><span style="font-size:${f.sigFont};color:#6b7280;">Director</span></div>
           <div style="text-align:center;"><div style="width:${f.sigWidth};border-bottom:1px solid #94a3b8;margin-bottom:${f.sigMargin};"></div><span style="font-size:${f.sigFont};color:#6b7280;">Checked By</span></div>
         </div>`
@@ -332,13 +326,10 @@ export async function generateMarksheetPDF(
       <div class="marksheet-page">
         <!-- Header -->
         <div style="text-align:center;margin-bottom:${f.headerMarginBottom};">
-          <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px">
-            ${logoHTML}
-            <h1 style="font-size:${f.headerName};font-weight:700;color:${color};margin:0;">${institutionName}</h1>
-          </div>
+          <h1 style="font-size:${f.headerName};font-weight:700;color:${color};margin:0;">${institutionName}</h1>
           <p style="font-size:${f.headerAddress};color:#6b7280;margin:1px 0 0 0;">${institutionAddress}</p>
+          <h2 style="font-size:${f.headerTitle};font-weight:700;color:#1e293b;text-transform:uppercase;letter-spacing:1px;margin:4px 0 0 0;">Marksheet</h2>
           <div style="width:${f.dividerWidth};height:2px;background:${color};border-radius:2px;margin:${f.dividerMargin} auto;"></div>
-          <h2 style="font-size:${f.headerTitle};font-weight:700;color:#1e293b;text-transform:uppercase;letter-spacing:1px;margin:0;">Marksheet</h2>
           <p style="font-size:${f.headerExam};color:#6b7280;margin:2px 0 0 0;">Exam: ${examName}</p>
         </div>
 
@@ -355,11 +346,11 @@ export async function generateMarksheetPDF(
                 <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Exam</span><span style="color:#1e293b;">${examName}</span></div>
                 <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Session</span><span style="color:#1e293b;">${examSession}</span></div>
               </div>
-              ${(options.showFather || options.showMother) ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;font-size:${f.cardFontSize};margin-top:${f.cardFatherGap};padding-top:${f.cardFatherGap};border-top:1px solid #e5e7eb;">
+              ${(options.showFather || options.showMother) ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;font-size:${f.cardFontSize};margin-top:${f.cardFatherGap};padding-top:${f.cardFatherGap};border-top:1px solid #94a3b8;">
                 <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Father</span><span style="color:#1e293b;">${options.showFather ? (isBn ? student.student.fatherNameBn : student.student.fatherNameEn || '-') : ''}</span></div>
                 <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Mother</span><span style="color:#1e293b;">${options.showMother ? (isBn ? student.student.motherNameBn : student.student.motherNameEn || '-') : ''}</span></div>
               </div>` : ''}
-              <div style="display:flex;align-items:center;gap:6px;margin-top:${f.cardFatherGap};padding-top:${f.cardFatherGap};border-top:1px solid #e5e7eb;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:6px;margin-top:${f.cardFatherGap};padding-top:${f.cardFatherGap};border-top:1px solid #94a3b8;flex-wrap:wrap;">
                 ${options.showClassRank && student.classRank ? `<span style="font-size:${f.badgeFontSize};font-weight:600;padding:2px 6px;border-radius:3px;background:${color}12;color:${color};white-space:nowrap;">Class Rank: #${student.classRank}</span>` : ''}
                 ${options.showSectionRank && student.sectionRank ? `<span style="font-size:${f.badgeFontSize};font-weight:600;padding:2px 6px;border-radius:3px;background:${color}12;color:${color};white-space:nowrap;">Section Rank: #${student.sectionRank}</span>` : ''}
                 ${options.showGpa ? `<span style="font-size:${f.badgeFontSize};font-weight:600;padding:2px 6px;border-radius:3px;background:${sGradeColor}18;color:${sGradeColor};white-space:nowrap;">GPA: ${student.gpa.toFixed(1)} (${sGrade})</span>` : ''}
@@ -376,7 +367,7 @@ export async function generateMarksheetPDF(
 
         <!-- Marks Table -->
         <div style="overflow-x:auto;">
-          <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:4px;overflow:hidden;">
+          <table style="width:100%;border-collapse:collapse;border:1px solid #94a3b8;border-radius:4px;overflow:hidden;">
             <thead>
               <tr style="background:${color};">
                 <th style="padding:${f.thPadding};font-size:${f.thFontSize};font-weight:600;color:white;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid ${color};text-align:center;">#</th>

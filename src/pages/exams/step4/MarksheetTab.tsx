@@ -165,27 +165,23 @@ export default function MarksheetTab({
     Promise.all(
       enrichedData.map(async (s) => {
         const admission = allStudents.find((a) => a.id === s.student.id)
-        const subjects = s.subjectMarks.map((sm) => `${sm.subjectName}:${sm.obtained}/${sm.fullMarks}`).join(', ')
+        const subjects = s.subjectMarks.map((sm) => `${sm.subjectName}:${sm.obtained}/${sm.fullMarks}`).join('; ')
         const grade = s.passedAll ? getGradeLetter(s.percentage) : 'F'
         const payload = [
           `Name: ${s.student.nameEn}`,
           `ID: ${s.student.id}`,
           `Roll: ${s.student.roll}`,
-          `Class: ${className}`,
-          `Section: ${sectionName}`,
-          `Exam: ${examName}`,
-          `Session: ${examSession}`,
+          `Class: ${className}-${sectionName}`,
+          `Exam: ${examName} (${examSession})`,
           `Father: ${admission ? (isBn ? admission.fatherNameBn : admission.fatherNameEn || '-') : '-'}`,
           `Mother: ${admission ? (isBn ? admission.motherNameBn : admission.motherNameEn || '-') : '-'}`,
-          `Total: ${s.totalObtained}/${s.totalFull}`,
-          `Pct: ${s.percentage.toFixed(1)}%`,
-          `GPA: ${s.gpa.toFixed(1)}`,
-          `Grade: ${grade}`,
+          `Total: ${s.totalObtained}/${s.totalFull} (${s.percentage.toFixed(1)}%)`,
+          `GPA: ${s.gpa.toFixed(1)} [${grade}]`,
           `Rank: ${s.classRank ? '#' + s.classRank : '-'}`,
-          `Subs: ${subjects}`,
+          `Subjects: ${subjects}`,
         ].join('\n')
         try {
-          return { id: s.student.id, url: await QRCode.toDataURL(payload, { width: 512, margin: 2, errorCorrectionLevel: 'H', color: { dark: '#000000', light: '#ffffff' } }) }
+          return { id: s.student.id, url: await QRCode.toDataURL(payload, { width: 512, margin: 3, errorCorrectionLevel: 'H', color: { dark: '#000000', light: '#ffffff' } }) }
         } catch {
           return { id: s.student.id, url: '' }
         }
