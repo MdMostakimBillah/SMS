@@ -47,7 +47,7 @@ function getGradeColor(letter: string): string {
   return colors[letter] || '#6b7280'
 }
 
-export const CumulativeMarksheetPDFOptionsModal = React.memo(function CumulativeMarksheetPDFOptionsModal({
+export function CumulativeMarksheetPDFOptionsModal({
   currentExamData,
   currentExamId,
   currentExamName,
@@ -302,26 +302,30 @@ export const CumulativeMarksheetPDFOptionsModal = React.memo(function Cumulative
   }, [currentExamData, selectedIds, currentExamId, currentExamName, currentExamSession, className, sectionName, institutionName, institutionAddress, localPrevExams, calcCurrentWeight, brand, isBn, orientation, fontSize])
 
   const handleDownload = useCallback(() => {
-    openPrintWindow('Cumulative Marksheet', previewHtml, {
-      css: orientation === 'landscape'
-        ? `@page{size:A4 landscape;margin:0;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;font-size:${fontSize === 'compact' ? '8px' : '10px'};color:#1a1a2e;background:#fff;padding:8mm;}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}`
-        : `@page{size:A4 portrait;margin:0;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;font-size:${fontSize === 'compact' ? '8px' : '10px'};color:#1a1a2e;background:#fff;padding:8mm;}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}`,
-    })
+    try {
+      openPrintWindow('Cumulative Marksheet', previewHtml, {
+        css: orientation === 'landscape'
+          ? `@page{size:A4 landscape;margin:0;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;font-size:${fontSize === 'compact' ? '8px' : '10px'};color:#1a1a2e;background:#fff;padding:8mm;}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}`
+          : `@page{size:A4 portrait;margin:0;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;font-size:${fontSize === 'compact' ? '8px' : '10px'};color:#1a1a2e;background:#fff;padding:8mm;}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}`,
+      })
+    } catch (e) {
+      console.error('PDF download failed:', e)
+    }
   }, [previewHtml, orientation, fontSize])
 
   const previewRef = useRef<HTMLIFrameElement>(null)
   useEffect(() => {
     const el = previewRef.current
-    if (!el || !previewHtml) return
+    if (!el || !previewHtml) return undefined
     const doc = el.contentDocument
-    if (!doc) return
+    if (!doc) return undefined
     try {
       doc.open()
       doc.write(previewHtml)
       doc.close()
     } catch {}
     return () => {
-      try { doc.open(); doc.write(''); doc.close() } catch {}
+      try { el.contentDocument?.open(); el.contentDocument?.write(''); el.contentDocument?.close() } catch {}
     }
   }, [previewHtml])
 
@@ -491,4 +495,4 @@ export const CumulativeMarksheetPDFOptionsModal = React.memo(function Cumulative
     </div>,
     document.body
   )
-})
+}
