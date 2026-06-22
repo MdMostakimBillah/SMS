@@ -552,8 +552,8 @@ export default function Step4Results() {
             ref={sliderRef}
             className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out z-0"
             style={{
-              background: activeSubTab === 'tabulation' ? 'var(--brand)' : activeSubTab === 'extra-marks' ? 'var(--teal)' : activeSubTab === 'mark-adjustment' ? 'var(--purple)' : activeSubTab === 'marksheet' ? 'var(--amber)' : activeSubTab === 'cumulative-marksheet' ? 'var(--pink)' : activeSubTab === 'analysis' ? 'var(--cyan)' : 'var(--indigo)',
-              boxShadow: activeSubTab === 'tabulation' ? '0 2px 8px rgba(99,102,241,0.3)' : activeSubTab === 'extra-marks' ? '0 2px 8px rgba(20,184,166,0.3)' : activeSubTab === 'mark-adjustment' ? '0 2px 8px rgba(168,85,247,0.3)' : activeSubTab === 'marksheet' ? '0 2px 8px rgba(245,158,11,0.3)' : activeSubTab === 'cumulative-marksheet' ? '0 2px 8px rgba(236,72,153,0.3)' : activeSubTab === 'analysis' ? '0 2px 8px rgba(6,182,212,0.3)' : '0 2px 8px rgba(99,102,241,0.3)',
+              background: activeSubTab === 'tabulation' ? 'var(--brand)' : activeSubTab === 'extra-marks' ? 'var(--teal)' : activeSubTab === 'mark-adjustment' ? 'var(--purple)' : activeSubTab === 'marksheet' ? 'var(--amber)' : activeSubTab === 'cumulative-marksheet' ? 'var(--purple)' : activeSubTab === 'analysis' ? 'var(--teal)' : 'var(--brand)',
+              boxShadow: activeSubTab === 'tabulation' ? '0 2px 8px rgba(99,102,241,0.3)' : activeSubTab === 'extra-marks' ? '0 2px 8px rgba(20,184,166,0.3)' : activeSubTab === 'mark-adjustment' ? '0 2px 8px rgba(168,85,247,0.3)' : activeSubTab === 'marksheet' ? '0 2px 8px rgba(245,158,11,0.3)' : activeSubTab === 'cumulative-marksheet' ? '0 2px 8px rgba(168,85,247,0.3)' : activeSubTab === 'analysis' ? '0 2px 8px rgba(20,184,166,0.3)' : '0 2px 8px rgba(99,102,241,0.3)',
             }}
           />
           {[
