@@ -4,7 +4,7 @@ import QRCode from 'qrcode'
 import { useExamStore } from '@/store/examStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
-import { getBrandColor } from '@/lib/pdf'
+import { getBrandColor, downloadHTML } from '@/lib/pdf'
 import { CumulativeMarksheetPDFOptionsModal } from './CumulativeMarksheetPDFOptionsModal'
 import type { TabulationStudent } from './MarksheetTab'
 
@@ -157,6 +157,11 @@ export default function CumulativeMarkSheetTab({
     })).then((results) => { if (!qrRef.current) { const map: Record<string, string> = {}; results.forEach((r) => { map[r.id] = r.url }); setQrMap(map) } })
     return () => { qrRef.current = true }
   }, [currentExamData, allStudents, isBn, className, sectionName, currentExamSession])
+
+  const handlePdfDownload = (html: string, filename: string) => {
+    downloadHTML(filename, html)
+    setShowPdfModal(false)
+  }
 
   return (
     <div>
@@ -414,7 +419,7 @@ export default function CumulativeMarkSheetTab({
           institutionName={institutionName} institutionAddress={institutionAddress}
           publishedExams={publishedExams.map((e) => ({ id: e.id, name: e.name }))}
           prevExams={prevExams} currentWeight={currentWeight} isBn={isBn}
-          onClose={() => setShowPdfModal(false)} onPrevExamsChange={setPrevExams} onCurrentWeightChange={() => {}}
+          onClose={() => setShowPdfModal(false)} onDownload={handlePdfDownload} onPrevExamsChange={setPrevExams} onCurrentWeightChange={() => {}}
         />
       )}
     </div>

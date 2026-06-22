@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
-
+import { createPortal } from 'react-dom'
 import { X, File, LayoutTemplate, Download, Eye, EyeOff, Search } from 'lucide-react'
-import { getBrandColor, downloadHTML } from '@/lib/pdf'
+import { getBrandColor } from '@/lib/pdf'
 import { useExamStore } from '@/store/examStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, extractClassNumber } from '@/store/classStore'
@@ -28,6 +28,7 @@ interface Props {
   currentWeight: number
   isBn: boolean
   onClose: () => void
+  onDownload: (html: string, filename: string) => void
   onPrevExamsChange: (exams: PrevExam[]) => void
   onCurrentWeightChange: (w: number) => void
 }
@@ -47,7 +48,7 @@ function getGradeColor(letter: string): string {
   return colors[letter] || '#6b7280'
 }
 
-export function CumulativeMarksheetPDFOptionsModal({
+export const CumulativeMarksheetPDFOptionsModal = React.memo(function CumulativeMarksheetPDFOptionsModal({
   currentExamData,
   currentExamId,
   currentExamName,
@@ -61,6 +62,7 @@ export function CumulativeMarksheetPDFOptionsModal({
   currentWeight: _currentWeight,
   isBn,
   onClose,
+  onDownload,
   onPrevExamsChange,
 }: Props) {
   const brand = getBrandColor()
@@ -142,11 +144,18 @@ export function CumulativeMarksheetPDFOptionsModal({
     return section.subjectIds
   }, [className, sectionName])
 
-  const previewHtml = useMemo(() => {
-    const selected = currentExamData.filter((s) => selectedIds.includes(s.student.id))
-    if (selected.length === 0) return ''
+  const selectedStudents = useMemo(() => currentExamData.filter((s) => selectedIds.includes(s.student.id)), [currentExamData, selectedIds])
 
-    // Font size configuration
+  const [previewHtml, setPreviewHtml] = useState<string>('')
+  const previewCancelledRef = useRef(false)
+
+  useEffect(() => {
+    if (selectedStudents.length === 0) {
+      setPreviewHtml('')
+      return
+    }
+    previewCancelledRef.current = false
+
     const fs = fontSize === 'compact' ? {
       headerName: '11px', headerAddress: '6px', headerTitle: '9px', headerExam: '6px',
       studentInfo: '7px', tableHeader: '6px', tableCell: '6.5px', tableSubHeader: '5px',
@@ -170,7 +179,7 @@ export function CumulativeMarksheetPDFOptionsModal({
       return true
     })
 
-    const rows = selected.map((row) => {
+    const rows = selectedStudents.map((row) => {
       const stu = row.student
       const subjectRows = firstExamConfigs.map((cfg) => {
         const examCells = allExamIds.map((eid) => {
@@ -298,29 +307,17 @@ export function CumulativeMarksheetPDFOptionsModal({
       </div>`
     }).join('')
 
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cumulative Marksheet</title><style>@page{size:A4 ${orientation};margin:10mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;font-size:${fontSize === 'compact' ? '8px' : '10px'};color:#1a1a2e;background:#fff;padding:10mm;}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}</style></head><body>${studentPages}</body></html>`
-  }, [currentExamData, selectedIds, currentExamId, currentExamName, currentExamSession, className, sectionName, institutionName, institutionAddress, localPrevExams, calcCurrentWeight, brand, isBn, orientation, fontSize, sectionSubjectIds])
-
-  const handleDownload = useCallback(() => {
-    if (!previewHtml) return
-    downloadHTML(`cumulative-marksheet-${className}-${sectionName}.html`, previewHtml)
-  }, [previewHtml, className, sectionName])
-
-  const previewRef = useRef<HTMLIFrameElement>(null)
-  useEffect(() => {
-    const el = previewRef.current
-    if (!el || !previewHtml) return undefined
-    const doc = el.contentDocument
-    if (!doc) return undefined
-    try {
-      doc.open()
-      doc.write(previewHtml)
-      doc.close()
-    } catch {}
-    return () => {
-      try { el.contentDocument?.open(); el.contentDocument?.write(''); el.contentDocument?.close() } catch {}
+    if (!previewCancelledRef.current) {
+      setPreviewHtml(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cumulative Marksheet</title><style>@page{size:A4 ${orientation};margin:10mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;font-size:${fontSize === 'compact' ? '8px' : '10px'};color:#1a1a2e;background:#fff;padding:10mm;}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}</style></head><body>${studentPages}</body></html>`)
     }
-  }, [previewHtml])
+
+    return () => { previewCancelledRef.current = true }
+  }, [selectedStudents, currentExamId, currentExamName, currentExamSession, className, sectionName, institutionName, institutionAddress, localPrevExams, calcCurrentWeight, brand, isBn, orientation, fontSize, sectionSubjectIds])
+
+  const handleDownload = () => {
+    if (!previewHtml || selectedIds.length === 0) return
+    onDownload(previewHtml, `cumulative-marksheet-${className}-${sectionName}`)
+  }
 
   const sectionLabel: React.CSSProperties = {
     fontSize: '0.75rem',
@@ -331,7 +328,7 @@ export function CumulativeMarksheetPDFOptionsModal({
     marginBottom: '0.5rem',
   }
 
-  return (
+  return createPortal(
     <div className="modal-overlay">
       <div
         className="modal-box modal-content"
@@ -475,16 +472,56 @@ export function CumulativeMarksheetPDFOptionsModal({
 
           {/* Right: Preview */}
           {showPreview && (
-            <div style={{ flex: 1, background: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>
-              {previewHtml ? (
-                <iframe ref={previewRef} title="PDF Preview" style={{ width: '100%', height: '100%', border: 'none', background: '#fff' }} />
-              ) : (
-                <p style={{ color: '#d1d5db', fontSize: '0.875rem' }}>{isBn ? 'প্রিভিউ এখনো তৈরি হয়নি' : 'No preview yet'}</p>
-              )}
+            <div style={{ flex: 1, background: '#e5e7eb', padding: '12px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.0313rem' }}>
+                  {isBn ? 'প্রিভিউ' : 'Preview'}
+                </span>
+                <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+                  A4 · {orientation}
+                </span>
+              </div>
+              <div style={{ flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center', background: '#e5e7eb', borderRadius: '0.5rem' }}>
+                {previewHtml ? (
+                  <iframe
+                    srcDoc={previewHtml}
+                    title="Cumulative Marksheet Preview"
+                    style={{
+                      width: orientation === 'landscape' ? '100%' : '70%',
+                      height: '100%',
+                      minHeight: '28rem',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                      background: '#fff',
+                    }}
+                  />
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+                    {isBn ? 'প্রিভিউ লোড হচ্ছে...' : 'Loading preview...'}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
+
+        {/* Footer */}
+        <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', background: 'var(--bg-secondary)' }}>
+          <button onClick={onClose} style={{ padding: '9px 16px', borderRadius: '0.5625rem', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+            {isBn ? 'বাতিল' : 'Cancel'}
+          </button>
+          <button
+            onClick={handleDownload}
+            disabled={selectedIds.length === 0}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '9px 20px', borderRadius: '0.5625rem', background: selectedIds.length === 0 ? 'var(--border-2)' : brand, border: 'none', color: '#fff', fontSize: '0.8125rem', fontWeight: 600, cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+          >
+            <Download size={14} />
+            {isBn ? 'PDF ডাউনলোড' : 'Download PDF'} ({selectedIds.length})
+          </button>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
-}
+})
