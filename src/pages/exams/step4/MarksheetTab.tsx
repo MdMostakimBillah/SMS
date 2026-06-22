@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Download, MessageSquare, X, CheckSquare, Square, Search, Send } from 'lucide-react'
 import QRCode from 'qrcode'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -460,7 +461,7 @@ export default function MarksheetTab({
       )}
 
       {/* SMS Modal */}
-      {showSmsModal && (
+      {showSmsModal && createPortal(
         <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/50" onClick={() => setShowSmsModal(false)}>
           <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border)] shadow-2xl w-[90%] max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
@@ -553,7 +554,8 @@ export default function MarksheetTab({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
