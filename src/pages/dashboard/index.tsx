@@ -371,7 +371,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div style={{ width: '100%', height: isMobile ? 160 : 200 }}>
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={isMobile ? 160 : 200}>
               <LineChart data={weeklyTrend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
@@ -409,14 +409,14 @@ export default function DashboardPage() {
             </div>
           </div>
           <div style={{ width: '100%', height: isMobile ? 160 : 200 }}>
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={isMobile ? 160 : 200}>
               <BarChart data={classDist.length > 0 ? classDist : [{ name: 'No data', value: 0 }]}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} allowDecimals={false} />
                 <Tooltip contentStyle={chartTooltipStyle} />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                  {classDist.map((_, i) => (
+                <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="var(--brand)">
+                  {(classDist.length > 0 ? classDist : [{ name: 'No data', value: 0 }]).map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Bar>
@@ -443,7 +443,7 @@ export default function DashboardPage() {
             }}
           >
             <div style={{ width: isMobile ? 120 : 130, height: isMobile ? 120 : 130 }}>
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={statusData} cx="50%" cy="50%" innerRadius={28} outerRadius={42} dataKey="value" paddingAngle={3}>
                     {statusData.map((e, i) => (

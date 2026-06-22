@@ -629,7 +629,7 @@ export default function ExamDashboard() {
           {gradeDistribution.length > 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <div style={{ width: isMobile ? 100 : 120, height: isMobile ? 100 : 120 }}>
-                <ResponsiveContainer>
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={gradeDistribution} cx="50%" cy="50%" innerRadius={24} outerRadius={40} dataKey="value" paddingAngle={2}>
                       {gradeDistribution.map((e, i) => (
