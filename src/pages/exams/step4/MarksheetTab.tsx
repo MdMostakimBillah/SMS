@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
-import { Download } from 'lucide-react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { Download, MessageSquare, X, CheckSquare, Square, Search, Send } from 'lucide-react'
 import QRCode from 'qrcode'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { getBrandColor } from '@/lib/pdf'
@@ -108,6 +108,11 @@ export default function MarksheetTab({
   const institution = useClassStore((s) => s.institution)
 
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [showSmsModal, setShowSmsModal] = useState(false)
+  const [smsSelectedIds, setSmsSelectedIds] = useState<string[]>(enrichedData.map((s) => s.student.id))
+  const [smsSearch, setSmsSearch] = useState('')
+  const [smsTemplate, setSmsTemplate] = useState<'result' | 'pass' | 'fail' | 'custom'>('result')
+  const [customMessage, setCustomMessage] = useState('')
   const [options] = useState<MarksheetOptions>({
     showFather: true,
     showMother: true,
@@ -201,10 +206,73 @@ export default function MarksheetTab({
     setShowPdfModal(false)
   }
 
+  const toggleSmsStudent = useCallback((id: string) => {
+    setSmsSelectedIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id])
+  }, [])
+
+  const toggleAllSmsStudents = useCallback(() => {
+    setSmsSelectedIds((prev) => prev.length === enrichedData.length ? [] : enrichedData.map((s) => s.student.id))
+  }, [enrichedData])
+
+  const getSmsMessage = (student: TabulationStudent) => {
+    const grade = student.passedAll ? getGradeLetter(student.percentage) : 'F'
+    if (smsTemplate === 'pass' && !student.passedAll) return null
+    if (smsTemplate === 'fail' && student.passedAll) return null
+    if (smsTemplate === 'custom') return customMessage
+    return isBn
+      ? `প্রিয় অভিভাবক, ${student.student.nameEn} (${className}-${sectionName}, রোল: ${student.student.roll}) ${examName} পরীক্ষায় মোট ${student.totalObtained}/${student.totalFull} নম্বর অর্জন করেছেন (${student.percentage}%।) গ্রেড: ${grade}। - ${institutionName}`
+      : `Dear Guardian, ${student.student.nameEn} (${className}-${sectionName}, Roll: ${student.student.roll}) scored ${student.totalObtained}/${student.totalFull} (${student.percentage}%) in ${examName}. Grade: ${grade}. - ${institutionName}`
+  }
+
+  const filteredSmsStudents = useMemo(() => {
+    if (!smsSearch) return enrichedData
+    const q = smsSearch.toLowerCase()
+    return enrichedData.filter((s) => s.student.nameEn.toLowerCase().includes(q) || s.student.roll.includes(q))
+  }, [enrichedData, smsSearch])
+
+  const handleSendSms = () => {
+    const selected = enrichedData.filter((s) => smsSelectedIds.includes(s.student.id))
+    const studentsWithPhones = selected.map((s) => {
+      const admission = allStudents.find((a) => a.id === s.student.id)
+      return { ...s, phone: admission?.phone || admission?.fatherPhone || '' }
+    }).filter((s) => s.phone)
+
+    if (studentsWithPhones.length === 0) {
+      alert(isBn ? 'কোনো শিক্ষার্থীর ফোন নম্বর পাওয়া যায়নি' : 'No phone numbers found for selected students')
+      return
+    }
+
+    const messages = studentsWithPhones.map((s) => {
+      const msg = getSmsMessage(s)
+      if (!msg) return null
+      return { phone: s.phone, message: msg, name: s.student.nameEn }
+    }).filter(Boolean) as { phone: string; message: string; name: string }[]
+
+    if (messages.length === 0) {
+      alert(isBn ? 'কোনো বার্তা তৈরি হয়নি' : 'No messages generated')
+      return
+    }
+
+    messages.forEach((m, i) => {
+      setTimeout(() => {
+        const encoded = encodeURIComponent(m.message)
+        window.open(`sms:${m.phone}?body=${encoded}`, '_blank')
+      }, i * 500)
+    })
+
+    alert(isBn
+      ? `${messages.length} জন শিক্ষার্থীর কাছে SMS পাঠানো হচ্ছে`
+      : `Sending SMS to ${messages.length} student(s)`)
+    setShowSmsModal(false)
+  }
+
   return (
     <div>
       {/* Toolbar */}
       <div className="flex items-center justify-end gap-2 mb-4">
+        <button onClick={() => setShowSmsModal(true)} className="h-8 px-4 rounded-lg text-xs font-medium text-white transition-all inline-flex items-center gap-1.5" style={{ background: 'var(--green)' }}>
+          <MessageSquare size={13} />{isBn ? 'SMS পাঠান' : 'Send SMS'}
+        </button>
         <button onClick={() => setShowPdfModal(true)} className="h-8 px-4 rounded-lg text-xs font-medium text-white transition-all inline-flex items-center gap-1.5" style={{ background: brand }}>
           <Download size={13} />Download PDF
         </button>
@@ -389,6 +457,103 @@ export default function MarksheetTab({
           onClose={() => setShowPdfModal(false)}
           onDownload={handlePdfDownload}
         />
+      )}
+
+      {/* SMS Modal */}
+      {showSmsModal && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/50" onClick={() => setShowSmsModal(false)}>
+          <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border)] shadow-2xl w-[90%] max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
+              <div>
+                <h3 className="text-[0.875rem] font-bold text-[var(--text-primary)]">{isBn ? 'ফলাফল SMS পাঠান' : 'Send Result SMS'}</h3>
+                <p className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
+                  {smsSelectedIds.length} {isBn ? 'জন শিক্ষার্থী নির্বাচিত' : 'students selected'} · {examName} · {className}-{sectionName}
+                </p>
+              </div>
+              <button onClick={() => setShowSmsModal(false)} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-[var(--bg-secondary)]">
+                <X size={15} className="text-[var(--text-muted)]" />
+              </button>
+            </div>
+
+            {/* Template Selection */}
+            <div className="px-5 py-3 border-b border-[var(--border)]">
+              <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] mb-2">{isBn ? 'বার্তার ধরন' : 'Message Type'}</div>
+              <div className="flex gap-2">
+                {([
+                  { id: 'result' as const, label: isBn ? 'সব ফলাফল' : 'All Results', desc: isBn ? 'সব শিক্ষার্থী' : 'All students' },
+                  { id: 'pass' as const, label: isBn ? 'শুধু পাস' : 'Pass Only', desc: isBn ? 'শুধুমাত্র পাসকারী' : 'Passed students' },
+                  { id: 'fail' as const, label: isBn ? 'শুধু ফেল' : 'Fail Only', desc: isBn ? 'শুধুমাত্র ফেলকারী' : 'Failed students' },
+                  { id: 'custom' as const, label: isBn ? 'কাস্টম' : 'Custom', desc: isBn ? 'নিজের বার্তা' : 'Your message' },
+                ]).map((t) => (
+                  <button key={t.id} onClick={() => setSmsTemplate(t.id)} className="flex-1 p-2 rounded-lg border text-center transition-all" style={{ borderColor: smsTemplate === t.id ? 'var(--brand)' : 'var(--border)', background: smsTemplate === t.id ? 'var(--brand-light)' : 'var(--bg-secondary)', color: smsTemplate === t.id ? 'var(--brand)' : 'var(--text-secondary)' }}>
+                    <div className="text-[0.6875rem] font-semibold">{t.label}</div>
+                    <div className="text-[0.5625rem] opacity-70">{t.desc}</div>
+                  </button>
+                ))}
+              </div>
+              {smsTemplate === 'custom' && (
+                <textarea value={customMessage} onChange={(e) => setCustomMessage(e.target.value)} placeholder={isBn ? 'আপনার বার্তা লিখুন... (ব্যবহার করুন: {name}, {roll}, {class}, {section}, {exam}, {marks}, {percentage}, {grade})' : 'Type your message... (use: {name}, {roll}, {class}, {section}, {exam}, {marks}, {percentage}, {grade})'} className="mt-2 w-full p-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] resize-none h-20" />
+              )}
+            </div>
+
+            {/* Message Preview */}
+            <div className="px-5 py-3 border-b border-[var(--border)]">
+              <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] mb-1">{isBn ? 'বার্তার পূর্বরূপ' : 'Message Preview'}</div>
+              <div className="p-2 rounded-lg bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-secondary)] max-h-16 overflow-y-auto leading-relaxed">
+                {enrichedData.length > 0 ? getSmsMessage(enrichedData[0]) || (isBn ? 'এই ছাত্র/ছাত্রী জন্য কোনো বার্তা নেই' : 'No message for this student') : '—'}
+              </div>
+            </div>
+
+            {/* Student List */}
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <div className="px-5 pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'শিক্ষার্থী নির্বাচন' : 'Select Students'} ({smsSelectedIds.length}/{enrichedData.length})</span>
+                  <button onClick={toggleAllSmsStudents} className="text-[0.625rem] px-2 py-0.5 rounded border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand-light)]">
+                    {smsSelectedIds.length === enrichedData.length ? (isBn ? 'পরিষ্কার' : 'Deselect') : (isBn ? 'সব' : 'Select All')}
+                  </button>
+                </div>
+                <div className="relative mb-2">
+                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                  <input type="text" value={smsSearch} onChange={(e) => setSmsSearch(e.target.value)} placeholder={isBn ? 'শিক্ষার্থী খুঁজুন...' : 'Search students...'} className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)]" />
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 pb-3 space-y-1">
+                {filteredSmsStudents.map((s) => {
+                  const admission = allStudents.find((a) => a.id === s.student.id)
+                  const phone = admission?.phone || admission?.fatherPhone || ''
+                  const checked = smsSelectedIds.includes(s.student.id)
+                  const grade = s.passedAll ? getGradeLetter(s.percentage) : 'F'
+                  return (
+                    <label key={s.student.id} className="flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors" style={{ background: checked ? 'var(--brand-light)' : 'transparent', border: `1px solid ${checked ? 'var(--brand)' : 'var(--border)'}` }}>
+                      <button onClick={() => toggleSmsStudent(s.student.id)} className="flex-shrink-0">
+                        {checked ? <CheckSquare size={16} className="text-[var(--brand)]" /> : <Square size={16} className="text-[var(--text-muted)]" />}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[0.75rem] font-medium text-[var(--text-primary)] truncate">{s.student.nameEn}</div>
+                        <div className="text-[0.625rem] text-[var(--text-muted)]">Roll: {s.student.roll} · {s.totalObtained}/{s.totalFull} ({s.percentage}%) · {grade}</div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-[0.625rem] text-[var(--text-muted)]">{phone || (isBn ? 'ফোন নেই' : 'No phone')}</div>
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-3 border-t border-[var(--border)] flex justify-end gap-2">
+              <button onClick={() => setShowSmsModal(false)} className="px-4 py-2 rounded-lg text-[0.75rem] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]">
+                {isBn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button onClick={handleSendSms} disabled={smsSelectedIds.length === 0} className="px-4 py-2 rounded-lg text-[0.75rem] font-medium text-white inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'var(--green)' }}>
+                <Send size={13} />{isBn ? `SMS পাঠান (${smsSelectedIds.length})` : `Send SMS (${smsSelectedIds.length})`}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
