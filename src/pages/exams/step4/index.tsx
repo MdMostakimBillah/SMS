@@ -1136,51 +1136,13 @@ export default function Step4Results() {
                 <Award size={15} className="text-[var(--brand)]" />
                 {isBn ? 'গ্রেড বিতরণ' : 'Grade Distribution'}
               </div>
-              <div className="grid grid-cols-7 gap-2 mt-3">
+              <div className="flex gap-1.5 mt-3">
                 {analysisData.gradeDistribution.map((g) => (
-                  <div key={g.letter} className="text-center">
-                    <div className="text-[1.125rem] font-bold" style={{ color: g.color }}>{g.count}</div>
-                    <div className="text-[0.625rem] font-semibold rounded py-0.5 px-1.5 mt-0.5" style={{ background: `${g.color}15`, color: g.color }}>{g.letter}</div>
-                    <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">{g.pct}%</div>
-                    <div className="h-16 bg-[var(--border)] rounded-sm mt-1 flex flex-col justify-end overflow-hidden">
-                      <div className="rounded-sm" style={{ height: `${g.pct}%`, background: g.color, minHeight: g.count > 0 ? '4px' : '0' }} />
-                    </div>
+                  <div key={g.letter} className="flex-1 text-center py-2 px-1 rounded-lg" style={{ background: `${g.color}10`, border: `1px solid ${g.color}25` }}>
+                    <div className="text-[1rem] font-bold" style={{ color: g.color }}>{g.count}</div>
+                    <div className="text-[0.625rem] font-bold rounded py-0.5 px-1 mt-0.5" style={{ background: `${g.color}20`, color: g.color }}>{g.letter}</div>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Pass / Fail */}
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div className={sectionCls}>
-                <div className={sectionTitleCls}>
-                  <CheckCircle size={15} className="text-[var(--green)]" />
-                  {isBn ? `পাস (${analysisData.passedStudents})` : `Passed (${analysisData.passedStudents})`}
-                </div>
-                <div className="max-h-40 overflow-y-auto mt-2 space-y-1">
-                  {analysisData.passedList.length === 0 && <p className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'কোনো শিক্ষার্থী পাস করেনি' : 'No students passed'}</p>}
-                  {analysisData.passedList.map((s, i) => (
-                    <div key={i} className="flex items-center justify-between py-1 px-2 rounded bg-[var(--green-light)] text-[0.6875rem]">
-                      <span className="text-[var(--text-primary)]">{s.name}</span>
-                      <span className="text-[var(--text-muted)]">Roll: {s.roll} · {s.percentage}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className={sectionCls}>
-                <div className={sectionTitleCls}>
-                  <CheckCircle size={15} className="text-[var(--red)]" />
-                  {isBn ? `ফেল (${analysisData.failedStudents})` : `Failed (${analysisData.failedStudents})`}
-                </div>
-                <div className="max-h-40 overflow-y-auto mt-2 space-y-1">
-                  {analysisData.failedList.length === 0 && <p className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'কোনো শিক্ষার্থী ফেল করেনি' : 'No students failed'}</p>}
-                  {analysisData.failedList.map((s, i) => (
-                    <div key={i} className="flex items-center justify-between py-1 px-2 rounded bg-[var(--red-light)] text-[0.6875rem]">
-                      <span className="text-[var(--text-primary)]">{s.name}</span>
-                      <span className="text-[var(--text-muted)]">Roll: {s.roll} · {s.percentage}%</span>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
 
@@ -1227,6 +1189,40 @@ export default function Step4Results() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Pass / Fail */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className={sectionCls}>
+                <div className={sectionTitleCls}>
+                  <CheckCircle size={15} className="text-[var(--green)]" />
+                  {isBn ? `পাস (${analysisData.passedStudents})` : `Passed (${analysisData.passedStudents})`}
+                </div>
+                <div className="max-h-40 overflow-y-auto mt-2 space-y-1">
+                  {analysisData.passedList.length === 0 && <p className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'কোনো শিক্ষার্থী পাস করেনি' : 'No students passed'}</p>}
+                  {analysisData.passedList.map((s, i) => (
+                    <div key={i} className="flex items-center justify-between py-1 px-2 rounded bg-[var(--green-light)] text-[0.6875rem]">
+                      <span className="text-[var(--text-primary)]">{s.name}</span>
+                      <span className="text-[var(--text-muted)]">Roll: {s.roll} · {s.percentage}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className={sectionCls}>
+                <div className={sectionTitleCls}>
+                  <CheckCircle size={15} className="text-[var(--red)]" />
+                  {isBn ? `ফেল (${analysisData.failedStudents})` : `Failed (${analysisData.failedStudents})`}
+                </div>
+                <div className="max-h-40 overflow-y-auto mt-2 space-y-1">
+                  {analysisData.failedList.length === 0 && <p className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'কোনো শিক্ষার্থী ফেল করেনি' : 'No students failed'}</p>}
+                  {analysisData.failedList.map((s, i) => (
+                    <div key={i} className="flex items-center justify-between py-1 px-2 rounded bg-[var(--red-light)] text-[0.6875rem]">
+                      <span className="text-[var(--text-primary)]">{s.name}</span>
+                      <span className="text-[var(--text-muted)]">Roll: {s.roll} · {s.percentage}%</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </>
