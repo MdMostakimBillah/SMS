@@ -4,6 +4,7 @@ import { X, File, LayoutTemplate, Download, Eye, EyeOff, Search } from 'lucide-r
 import { getBrandColor, openPrintWindow } from '@/lib/pdf'
 import { useExamStore } from '@/store/examStore'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useClassStore, extractClassNumber } from '@/store/classStore'
 import type { TabulationStudent } from './MarksheetTab'
 
 interface PrevExam {
@@ -153,7 +154,21 @@ export const CumulativeMarksheetPDFOptionsModal = React.memo(function Cumulative
     const subjectMarkConfigs = useExamStore.getState().subjectMarkConfigs
     const studentMarks = useExamStore.getState().studentMarks
 
-    const firstExamConfigs = subjectMarkConfigs.filter((c) => c.examId === currentExamId && c.classId === className)
+    const sectionSubjectIds = useMemo(() => {
+      if (!className || !sectionName) return null
+      const classes = useClassStore.getState().classes
+      const cls = classes.find((c) => extractClassNumber(c.name) === className || c.name === className)
+      if (!cls) return null
+      const section = cls.sections.find((s) => s.name === sectionName)
+      if (!section || !section.subjectIds || section.subjectIds.length === 0) return null
+      return section.subjectIds
+    }, [className, sectionName])
+
+    const firstExamConfigs = subjectMarkConfigs.filter((c) => {
+      if (c.examId !== currentExamId || c.classId !== className) return false
+      if (sectionSubjectIds && !sectionSubjectIds.includes(c.subjectId)) return false
+      return true
+    })
 
     const rows = selected.map((row) => {
       const stu = row.student
