@@ -304,9 +304,9 @@ export default function MarksheetTab({
                           <tr key={`${sm.subjectId}-${se.id}`} style={{ background: bg }}>
                             {si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-semibold text-[var(--text-secondary)] border-b border-[var(--border)] align-middle">{idx + 1}</td>}
                             {si === 0 && <td rowSpan={subExams.length} className="text-left px-2 py-1 font-semibold text-[var(--text-primary)] border-b border-[var(--border)] align-middle">{sm.subjectName}</td>}
-                            <td className="text-center px-1.5 py-0.5 text-[var(--text-secondary)] border-b border-[var(--border)]/50">{seName}</td>
-                            <td className="text-center px-1.5 py-0.5 text-[var(--text-secondary)] border-b border-[var(--border)]/50">{se.fullMarks}</td>
-                            <td className="text-center px-1.5 py-0.5 font-medium text-[var(--text-primary)] border-b border-[var(--border)]/50">{seObtained}</td>
+                            <td className="text-center px-1.5 py-0.5 text-[var(--text-secondary)] border-b border-[var(--border)]">{seName}</td>
+                            <td className="text-center px-1.5 py-0.5 text-[var(--text-secondary)] border-b border-[var(--border)]">{se.fullMarks}</td>
+                            <td className="text-center px-1.5 py-0.5 font-medium text-[var(--text-primary)] border-b border-[var(--border)]">{seObtained}</td>
                             {si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-bold border-b border-[var(--border)] align-middle" style={{ color: brand }}>{sm.obtained}</td>}
                             {options.showSubjectHighest && si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-semibold border-b border-[var(--border)] align-middle" style={{ color: stat?.highest === sm.obtained && sm.obtained > 0 ? brand : 'var(--text-primary)' }}>{stat?.highest || 0}</td>}
                             {options.showSubjectHighest && si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-semibold border-b border-[var(--border)] align-middle" style={{ color: rank <= 3 && rank > 0 ? '#f59e0b' : 'var(--text-primary)' }}>{rank > 0 ? `#${rank}` : '-'}</td>}
@@ -320,9 +320,9 @@ export default function MarksheetTab({
                       <tr key={sm.subjectId} style={{ background: bg }}>
                         <td className="text-center px-2 py-1 font-semibold text-[var(--text-secondary)] border-b border-[var(--border)]">{idx + 1}</td>
                         <td className="text-left px-2 py-1 font-semibold text-[var(--text-primary)] border-b border-[var(--border)]">{sm.subjectName}</td>
-                        {showSub && <td className="text-center px-1.5 py-0.5 text-[var(--text-muted)] border-b border-[var(--border)]/50">—</td>}
-                        {showSub && <td className="text-center px-1.5 py-0.5 text-[var(--text-muted)] border-b border-[var(--border)]/50">—</td>}
-                        {showSub && <td className="text-center px-1.5 py-0.5 text-[var(--text-muted)] border-b border-[var(--border)]/50">—</td>}
+                        {showSub && <td className="text-center px-1.5 py-0.5 text-[var(--text-muted)] border-b border-[var(--border)]">—</td>}
+                        {showSub && <td className="text-center px-1.5 py-0.5 text-[var(--text-muted)] border-b border-[var(--border)]">—</td>}
+                        {showSub && <td className="text-center px-1.5 py-0.5 text-[var(--text-muted)] border-b border-[var(--border)]">—</td>}
                         <td className="text-center px-2 py-1 font-bold border-b border-[var(--border)]" style={{ color: brand }}>{sm.obtained}</td>
                         {options.showSubjectHighest && <td className="text-center px-2 py-1 font-semibold border-b border-[var(--border)]" style={{ color: stat?.highest === sm.obtained && sm.obtained > 0 ? brand : 'var(--text-primary)' }}>{stat?.highest || 0}</td>}
                         {options.showSubjectHighest && <td className="text-center px-2 py-1 font-semibold border-b border-[var(--border)]" style={{ color: rank <= 3 && rank > 0 ? '#f59e0b' : 'var(--text-primary)' }}>{rank > 0 ? `#${rank}` : '-'}</td>}

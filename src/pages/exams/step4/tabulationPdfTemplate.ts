@@ -82,8 +82,8 @@ export function generateTabulationPDF(
     return marks.filter((_, idx) => selectedSubjects.includes(idx))
   }
 
-  const tdBase = `border:1.5px solid #cbd5e1;padding:5px 6px;font-size:10px;text-align:center;white-space:nowrap`
-  const tdName = `border:1.5px solid #cbd5e1;border-left:2.5px solid ${brand};padding:5px 6px;font-size:10px;white-space:nowrap;text-align:left`
+  const tdBase = `border:1.5px solid #94a3b8;padding:5px 6px;font-size:10px;text-align:center;white-space:nowrap`
+  const tdName = `border:1.5px solid #94a3b8;border-left:2.5px solid ${brand};padding:5px 6px;font-size:10px;white-space:nowrap;text-align:left`
 
   const filteredFirstRow = filterSubjects(rows[0].subjectMarks)
   const subjectHeaders = filteredFirstRow.map((s) => s.subjectName || '')
