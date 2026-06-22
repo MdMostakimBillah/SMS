@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X, File, LayoutTemplate, Download, Eye, EyeOff, Search } from 'lucide-react'
+import QRCode from 'qrcode'
 import { getBrandColor } from '@/lib/pdf'
 import { useExamStore } from '@/store/examStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -156,6 +157,9 @@ export const CumulativeMarksheetPDFOptionsModal = React.memo(function Cumulative
     }
     previewCancelledRef.current = false
 
+    const cancelled = { current: false }
+
+    const build = async () => {
     const fs = fontSize === 'compact' ? {
       headerName: '11px', headerAddress: '6px', headerTitle: '9px', headerExam: '6px',
       studentInfo: '7px', tableHeader: '6px', tableCell: '6.5px', tableSubHeader: '5px',
@@ -165,6 +169,33 @@ export const CumulativeMarksheetPDFOptionsModal = React.memo(function Cumulative
       studentInfo: '8px', tableHeader: '7px', tableCell: '7px', tableSubHeader: '5px',
       summaryHeader: '7px', summaryCell: '7px', totalFont: '8px', sigFont: '6px',
     }
+
+    // Generate QR codes for all selected students
+    const qrMap: Record<string, string> = {}
+    await Promise.all(
+      selectedStudents.map(async (s) => {
+        const subjects = s.subjectMarks.map((sm) => `${sm.subjectName}:${sm.obtained}/${sm.fullMarks}`).join('; ')
+        const grade = s.passedAll ? getGradeLetter(s.percentage) : 'F'
+        const payload = [
+          `Name: ${s.student.nameEn}`,
+          `ID: ${s.student.id}`,
+          `Roll: ${s.student.roll}`,
+          `Class: ${className}-${sectionName}`,
+          `Session: ${currentExamSession}`,
+          `Father: ${isBn ? s.student.fatherNameBn : s.student.fatherNameEn || '-'}`,
+          `Mother: ${isBn ? s.student.motherNameBn : s.student.motherNameEn || '-'}`,
+          `Total: ${s.totalObtained}/${s.totalFull} (${s.percentage}%)`,
+          `GPA: ${s.gpa.toFixed(1)} [${grade}]`,
+          `Rank: ${s.classRank ? '#' + s.classRank : '-'}`,
+          `Subjects: ${subjects}`,
+        ].join('\n')
+        try {
+          qrMap[s.student.id] = await QRCode.toDataURL(payload, { width: 512, margin: 3, errorCorrectionLevel: 'H', color: { dark: '#000000', light: '#ffffff' } })
+        } catch {
+          qrMap[s.student.id] = ''
+        }
+      })
+    )
 
     const allExamIds = [currentExamId, ...localPrevExams.map((e) => e.examId)]
     const examNames = allExamIds.map((eid) => eid === currentExamId ? currentExamName : localPrevExams.find((e) => e.examId === eid)?.examName || '')
@@ -274,6 +305,7 @@ export const CumulativeMarksheetPDFOptionsModal = React.memo(function Cumulative
             <span style="font-weight:600;">Grade:</span><span style="font-weight:700;color:${gColor};">${r.cumGrade}</span>
             <span style="font-weight:600;">Avg %:</span><span>${avgPct}%</span>
           </div>
+          ${r.student.photo ? `<img src="${r.student.photo}" style="width:60px;height:72px;border-radius:4px;object-fit:cover;border:1px solid #94a3b8;flex-shrink:0;" />` : `<div style="width:60px;height:72px;border-radius:4px;border:1.5px dashed ${brand}30;display:flex;align-items:center;justify-content:center;background:${brand}06;flex-shrink:0;"><span style="font-size:0.5rem;color:#9ca3af;">Photo</span></div>`}
         </div>
         <table style="width:100%;border-collapse:collapse;margin-bottom:6px;table-layout:auto;">
           <thead>
@@ -299,6 +331,7 @@ export const CumulativeMarksheetPDFOptionsModal = React.memo(function Cumulative
           <span>Total Marks: ${r.cumFullTotal}</span>
           <span style="color:${brand};">Total Obtain: ${r.cumObtTotal}</span>
         </div>
+        ${qrMap[r.student.id] ? `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><img src="${qrMap[r.student.id]}" style="width:56px;height:56px;" /></div>` : ''}
         <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid #e5e7eb;font-size:${fs.sigFont};color:#6b7280;">
           <div style="text-align:center;flex:1;">Class Teacher</div>
           <div style="text-align:center;flex:1;">Principal's Signature</div>
@@ -307,11 +340,12 @@ export const CumulativeMarksheetPDFOptionsModal = React.memo(function Cumulative
       </div>`
     }).join('')
 
-    if (!previewCancelledRef.current) {
+    if (!cancelled.current) {
       setPreviewHtml(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cumulative Marksheet</title><style>@page{size:A4 ${orientation};margin:10mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;font-size:${fontSize === 'compact' ? '8px' : '10px'};color:#1a1a2e;background:#fff;padding:10mm;}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}</style></head><body>${studentPages}</body></html>`)
     }
-
-    return () => { previewCancelledRef.current = true }
+    }
+    build()
+    return () => { cancelled.current = true }
   }, [selectedStudents, currentExamId, currentExamName, currentExamSession, className, sectionName, institutionName, institutionAddress, localPrevExams, calcCurrentWeight, brand, isBn, orientation, fontSize, sectionSubjectIds])
 
   const handleDownload = () => {
