@@ -428,11 +428,40 @@ export default function Step4Results() {
 
     const totalStudents = tabulationData.length
     const passedStudents = tabulationData.filter((d) => d.passedAll).length
+    const failedStudents = totalStudents - passedStudents
     const passRate = totalStudents > 0 ? Math.round((passedStudents / totalStudents) * 100) : 0
-    // Use enriched data for adjusted percentage if available
     const avgPercentage = totalStudents > 0 ? Math.round(enrichedTabulationData.reduce((a, d) => a + (d.adjustedPercentage || d.percentage), 0) / totalStudents) : 0
 
-    return { subjectStats, totalStudents, passedStudents, passRate, avgPercentage }
+    // Grade distribution
+    const gradeBands = [
+      { letter: 'A+', min: 80, color: '#16a34a' },
+      { letter: 'A', min: 70, color: '#22c55e' },
+      { letter: 'A-', min: 60, color: '#4ade80' },
+      { letter: 'B', min: 50, color: '#3b82f6' },
+      { letter: 'C', min: 40, color: '#f59e0b' },
+      { letter: 'D', min: 33, color: '#f97316' },
+      { letter: 'F', min: 0, color: '#ef4444' },
+    ]
+    const gradeDistribution = gradeBands.map((band) => {
+      const students = tabulationData.filter((d) => {
+        if (!d.passedAll && band.letter !== 'F') return false
+        const pct = d.percentage
+        if (band.letter === 'A+') return pct >= 80
+        if (band.letter === 'A') return pct >= 70 && pct < 80
+        if (band.letter === 'A-') return pct >= 60 && pct < 70
+        if (band.letter === 'B') return pct >= 50 && pct < 60
+        if (band.letter === 'C') return pct >= 40 && pct < 50
+        if (band.letter === 'D') return pct >= 33 && pct < 40
+        return pct < 33 || !d.passedAll
+      })
+      return { letter: band.letter, count: students.length, color: band.color, pct: totalStudents > 0 ? Math.round((students.length / totalStudents) * 100) : 0 }
+    })
+
+    // Pass/Fail lists
+    const passedList = tabulationData.filter((d) => d.passedAll).map((d) => ({ name: isBn ? d.student.nameBn : d.student.nameEn, roll: d.student.roll, percentage: d.percentage }))
+    const failedList = tabulationData.filter((d) => !d.passedAll).map((d) => ({ name: isBn ? d.student.nameBn : d.student.nameEn, roll: d.student.roll, percentage: d.percentage }))
+
+    return { subjectStats, totalStudents, passedStudents, failedStudents, passRate, avgPercentage, gradeDistribution, passedList, failedList }
   }, [selectedExamId, selectedClassId, selectedSectionId, tabulationData, enrichedTabulationData, sessionSubjectMarkConfigs, sessionStudentMarks, subjects, isBn])
 
   const handleSaveExtra = () => {
@@ -1101,6 +1130,61 @@ export default function Step4Results() {
               ))}
             </div>
 
+            {/* Grade Distribution */}
+            <div className={sectionCls}>
+              <div className={sectionTitleCls}>
+                <Award size={15} className="text-[var(--brand)]" />
+                {isBn ? 'গ্রেড বিতরণ' : 'Grade Distribution'}
+              </div>
+              <div className="grid grid-cols-7 gap-2 mt-3">
+                {analysisData.gradeDistribution.map((g) => (
+                  <div key={g.letter} className="text-center">
+                    <div className="text-[1.125rem] font-bold" style={{ color: g.color }}>{g.count}</div>
+                    <div className="text-[0.625rem] font-semibold rounded py-0.5 px-1.5 mt-0.5" style={{ background: `${g.color}15`, color: g.color }}>{g.letter}</div>
+                    <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">{g.pct}%</div>
+                    <div className="h-16 bg-[var(--border)] rounded-sm mt-1 flex flex-col justify-end overflow-hidden">
+                      <div className="rounded-sm" style={{ height: `${g.pct}%`, background: g.color, minHeight: g.count > 0 ? '4px' : '0' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Pass / Fail */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className={sectionCls}>
+                <div className={sectionTitleCls}>
+                  <CheckCircle size={15} className="text-[var(--green)]" />
+                  {isBn ? `পাস (${analysisData.passedStudents})` : `Passed (${analysisData.passedStudents})`}
+                </div>
+                <div className="max-h-40 overflow-y-auto mt-2 space-y-1">
+                  {analysisData.passedList.length === 0 && <p className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'কোনো শিক্ষার্থী পাস করেনি' : 'No students passed'}</p>}
+                  {analysisData.passedList.map((s, i) => (
+                    <div key={i} className="flex items-center justify-between py-1 px-2 rounded bg-[var(--green-light)] text-[0.6875rem]">
+                      <span className="text-[var(--text-primary)]">{s.name}</span>
+                      <span className="text-[var(--text-muted)]">Roll: {s.roll} · {s.percentage}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className={sectionCls}>
+                <div className={sectionTitleCls}>
+                  <CheckCircle size={15} className="text-[var(--red)]" />
+                  {isBn ? `ফেল (${analysisData.failedStudents})` : `Failed (${analysisData.failedStudents})`}
+                </div>
+                <div className="max-h-40 overflow-y-auto mt-2 space-y-1">
+                  {analysisData.failedList.length === 0 && <p className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'কোনো শিক্ষার্থী ফেল করেনি' : 'No students failed'}</p>}
+                  {analysisData.failedList.map((s, i) => (
+                    <div key={i} className="flex items-center justify-between py-1 px-2 rounded bg-[var(--red-light)] text-[0.6875rem]">
+                      <span className="text-[var(--text-primary)]">{s.name}</span>
+                      <span className="text-[var(--text-muted)]">Roll: {s.roll} · {s.percentage}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Subject-wise Performance */}
             <div className={sectionCls}>
               <div className={sectionTitleCls}>
                 <BarChart2 size={15} className="text-[var(--brand)]" />
