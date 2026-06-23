@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   BookOpen,
   Plus,
@@ -11,9 +12,11 @@ import {
   AlertCircle,
   Download,
   ArrowLeft,
+  ArrowRight,
   X,
   Layers,
   GraduationCap,
+  Settings,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useClassStore, extractClassNumber } from '@/store/classStore'
@@ -33,6 +36,7 @@ type View = 'home' | 'sections' | 'subjects' | 'detail'
 
 export default function SyllabusPage() {
   const isBn = useBn()
+  const navigate = useNavigate()
   const classes = useClassStore((s) => s.classes)
   const currentSession = useClassStore((s) => s.institution.currentSession)
   const subjects = useTeacherStore((s) => s.subjects)
@@ -97,6 +101,16 @@ export default function SyllabusPage() {
     }
     return subjects
   }, [classes, selectedClass, subjects])
+
+  // Clear nav chain if user navigated directly (not via redirect button)
+  // Redirect buttons set sessionStorage timestamp; if absent or stale, clear chain
+  useEffect(() => {
+    const lastRedirect = sessionStorage.getItem('edutech_lastRedirect')
+    const now = Date.now()
+    if (!lastRedirect || now - Number(lastRedirect) > 30000) {
+      localStorage.removeItem('edutech_navChain')
+    }
+  }, [])
 
   // Get syllabus for current selection
   useEffect(() => {
@@ -374,15 +388,62 @@ export default function SyllabusPage() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
         <div className="flex items-center gap-3">
-          {view !== 'home' && (
-            <button
-              onClick={goBack}
-              className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            >
-              <ArrowLeft size={16} />
-            </button>
-          )}
+          {(() => {
+            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+            if (chain.length > 0) {
+              return (
+                <button
+                  onClick={() => {
+                    const prev = chain[chain.length - 1]
+                    localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, -1)))
+                    navigate(prev.path)
+                  }}
+                  className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+              )
+            }
+            if (view !== 'home') {
+              return (
+                <button
+                  onClick={goBack}
+                  className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+              )
+            }
+            return null
+          })()}
           <div>
+            {/* Breadcrumb — only when redirected */}
+            {(() => {
+              const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+              if (chain.length === 0) return null
+              return (
+                <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1 flex-wrap">
+                  {chain.map((item: { path: string; label: string }, idx: number) => (
+                    <span key={idx} className="flex items-center gap-1">
+                      {idx > 0 && <span className="text-[var(--text-muted)]">›</span>}
+                      <button
+                        onClick={() => {
+                          localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, idx + 1)))
+                          navigate(item.path)
+                        }}
+                        className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
+                      >
+                        {item.label}
+                      </button>
+                    </span>
+                  ))}
+                  <span className="text-[var(--text-muted)]">›</span>
+                  <span className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--brand)] text-white font-medium">
+                    {isBn ? 'পাঠ্যক্রম' : 'Syllabus'}
+                  </span>
+                </div>
+              )
+            })()}
             <h1 className="text-[1rem] font-bold text-[var(--text-primary)] flex items-center gap-2">
               <BookOpen size={18} className="text-[var(--brand)]" />
               {isBn ? 'পাঠ্যক্রম ব্যবস্থাপনা' : 'Syllabus Management'}
@@ -399,6 +460,21 @@ export default function SyllabusPage() {
           <button onClick={handleDownloadPDF} className={btnPri}>
             <Download size={14} />
             {isBn ? 'PDF' : 'PDF'}
+          </button>
+        )}
+        {view === 'home' && classNumbers.length === 0 && (
+          <button
+            onClick={() => {
+              const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+              chain.push({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+              localStorage.setItem('edutech_navChain', JSON.stringify(chain))
+              sessionStorage.setItem('edutech_lastRedirect', String(Date.now())); navigate('/classes')
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
+          >
+            <Settings size={14} />
+            {isBn ? 'শ্রেণি ব্যবস্থাপনা' : 'Class Management'}
+            <ArrowRight size={14} />
           </button>
         )}
       </div>
@@ -429,7 +505,31 @@ export default function SyllabusPage() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {classNumbers.map((classNum) => {
+              {classNumbers.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <GraduationCap size={36} className="mx-auto text-[var(--text-muted)] mb-3 opacity-40" />
+                  <p className="text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1">
+                    {isBn ? 'কোনো শ্রেণি তৈরি হয়নি' : 'No classes created yet'}
+                  </p>
+                  <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
+                    {isBn ? 'প্রথমে শ্রেণি ও সেকশন তৈরি করুন, তারপর সিলেবাস যোগ করুন।' : 'Create classes and sections first, then add syllabi.'}
+                  </p>
+                  <button
+                    onClick={() => {
+                      const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+                      chain.push({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+                      localStorage.setItem('edutech_navChain', JSON.stringify(chain))
+                      sessionStorage.setItem('edutech_lastRedirect', String(Date.now())); navigate('/classes')
+                      navigate('/classes')
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
+                  >
+                    <Settings size={14} />
+                    {isBn ? 'শ্রেণি ব্যবস্থাপনায় যান' : 'Go to Class Management'}
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+              ) : classNumbers.map((classNum) => {
                 const count = getSyllabusCount(classNum)
                 return (
                   <div
@@ -461,7 +561,31 @@ export default function SyllabusPage() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {classSections.map((section) => {
+              {classSections.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <Layers size={36} className="mx-auto text-[var(--text-muted)] mb-3 opacity-40" />
+                  <p className="text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1">
+                    {isBn ? 'এই শ্রেণিতে কোনো সেকশন নেই' : 'No sections in this class'}
+                  </p>
+                  <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
+                    {isBn ? 'শ্রেণি ব্যবস্থাপনা থেকে সেকশন যোগ করুন।' : 'Add sections from Class Management.'}
+                  </p>
+                  <button
+                    onClick={() => {
+                      const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+                      chain.push({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+                      localStorage.setItem('edutech_navChain', JSON.stringify(chain))
+                      sessionStorage.setItem('edutech_lastRedirect', String(Date.now())); navigate('/classes')
+                      navigate('/classes')
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
+                  >
+                    <Settings size={14} />
+                    {isBn ? 'শ্রেণি ব্যবস্থাপনায় যান' : 'Go to Class Management'}
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+              ) : classSections.map((section) => {
                 const count = getSectionSyllabusCount(selectedClass, section)
                 return (
                   <div
@@ -493,7 +617,31 @@ export default function SyllabusPage() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {classSubjects.map((subject) => {
+              {classSubjects.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <BookOpen size={36} className="mx-auto text-[var(--text-muted)] mb-3 opacity-40" />
+                  <p className="text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1">
+                    {isBn ? 'এই সেকশনে কোনো বিষয় নেই' : 'No subjects for this section'}
+                  </p>
+                  <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
+                    {isBn ? 'শ্রেণি ব্যবস্থাপনা থেকে সেকশনে বিষয় যোগ করুন।' : 'Add subjects to this section from Class Management.'}
+                  </p>
+                  <button
+                    onClick={() => {
+                      const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+                      chain.push({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+                      localStorage.setItem('edutech_navChain', JSON.stringify(chain))
+                      sessionStorage.setItem('edutech_lastRedirect', String(Date.now())); navigate('/classes')
+                      navigate('/classes')
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
+                  >
+                    <Settings size={14} />
+                    {isBn ? 'শ্রেণি ব্যবস্থাপনায় যান' : 'Go to Class Management'}
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+              ) : classSubjects.map((subject) => {
                 const existing = syllabi.find(
                   (s) => s.classId === selectedClass && s.sectionId === selectedSection && s.subjectId === subject.id
                 )

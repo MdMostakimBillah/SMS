@@ -31,6 +31,8 @@ import {
   Edit,
   Edit3,
   GraduationCap,
+  HelpCircle,
+  Lightbulb,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -317,17 +319,17 @@ export default function Step4Results() {
 
   // Position check
   const positionCheck = useMemo(() => {
-    const duplicates: { position: number; count: number; students: string[] }[] = []
-    const positionMap = new Map<number, string[]>()
+    const duplicates: { position: number; count: number; students: { name: string; marks: number; total: number }[]; totalMarks: number }[] = []
+    const positionMap = new Map<number, { name: string; marks: number; total: number }[]>()
     tabulationData.forEach((d, i) => {
       const pos = i + 1
       const existing = positionMap.get(pos) || []
-      existing.push(d.student.nameEn)
+      existing.push({ name: d.student.nameEn, marks: d.totalObtained, total: d.totalFull })
       positionMap.set(pos, existing)
     })
     positionMap.forEach((stuList, pos) => {
       if (stuList.length > 1) {
-        duplicates.push({ position: pos, count: stuList.length, students: stuList })
+        duplicates.push({ position: pos, count: stuList.length, students: stuList, totalMarks: stuList[0].marks })
       }
     })
     return duplicates
@@ -1240,28 +1242,88 @@ export default function Step4Results() {
           <>
             {positionCheck.length > 0 ? (
               <div className={sectionCls}>
+                {/* What is Position Duplication — explanation box */}
+                <div className="mb-4 p-3 rounded-lg bg-[rgba(245,158,11,0.06)] border border-[rgba(245,158,11,0.15)]">
+                  <div className="flex items-start gap-2 mb-2">
+                    <HelpCircle size={14} className="text-[var(--amber)] mt-0.5 shrink-0" />
+                    <div className="text-[0.75rem] font-semibold text-[var(--amber)]">
+                      {isBn ? 'পজিশন ডুপ্লিকেশন কি?' : 'What is Position Duplication?'}
+                    </div>
+                  </div>
+                  <p className="text-[0.6875rem] text-[var(--text-secondary)] leading-relaxed ml-5">
+                    {isBn
+                      ? 'যখন দুই বা ততোধিক শিক্ষার্থী একই মোট মার্কস পান, তখন তারা একই পজিশন ভাগ করে নেয়। যেমন: ৩ জন শিক্ষার্থী সবাই ৪৫০ মার্কস পেলে সবাই ১ম পজিশনে থাকবে। এটি সমস্যা নয় — এটি স্বাভাবিক।'
+                      : 'When two or more students score the exact same total marks, they share the same position. For example: if 3 students all score 450 marks, all 3 will be ranked 1st. This is normal — not an error.'}
+                  </p>
+                  <p className="text-[0.6875rem] text-[var(--text-secondary)] leading-relaxed ml-5 mt-1.5">
+                    {isBn
+                      ? 'নিচে দেখানো হয়েছে কোন পজিশনে কতজন শিক্ষার্থী একই মার্কস পেয়েছে।'
+                      : 'Below shows which positions have tied scores and the students sharing them.'}
+                  </p>
+                </div>
+
                 <div className={sectionTitleCls}>
                   <AlertTriangle size={15} className="text-[var(--amber)]" />
                   {isBn ? 'পজিশন ডুপ্লিকেশন' : 'Position Duplications'} ({positionCheck.length})
                 </div>
-                <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
-                  {isBn ? 'একই মার্কস পাওয়া শিক্ষার্থীদের পজিশন চেক করুন' : 'Students with same marks sharing positions'}
-                </p>
-                <div className="space-y-2">
+
+                {/* Visual: position-by-position breakdown */}
+                <div className="space-y-3 mt-3">
                   {positionCheck.map((dup) => (
-                    <div key={dup.position} className="p-3 rounded-lg bg-[var(--amber-light)] border border-[rgba(245,158,11,0.2)]">
-                      <div className="text-[0.75rem] font-semibold text-[var(--text-primary)] mb-1">
-                        {isBn ? `পজিশন ${dup.position}` : `Position ${dup.position}`} — {dup.count} {isBn ? 'জন শিক্ষার্থী' : 'students'}
+                    <div key={dup.position} className="rounded-lg border border-[rgba(245,158,11,0.2)] overflow-hidden">
+                      {/* Position header bar */}
+                      <div className="flex items-center justify-between px-3 py-2 bg-[var(--amber-light)]">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-[var(--amber)] text-white flex items-center justify-center text-[0.75rem] font-bold">
+                            {dup.position}
+                          </div>
+                          <div>
+                            <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
+                              {isBn ? `পজিশন ${dup.position}` : `Position ${dup.position}`}
+                            </span>
+                            <span className="text-[0.6875rem] text-[var(--text-muted)] ml-1.5">
+                              — {dup.count} {isBn ? 'জন শিক্ষার্থী একই মার্কস' : 'students, same score'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-[0.6875rem] text-[var(--text-secondary)]">{dup.students.join(', ')}</div>
+                      {/* Student list */}
+                      <div className="px-3 py-2 bg-[var(--bg-primary)]">
+                        <div className="flex flex-wrap gap-1.5">
+                          {dup.students.map((stu, idx) => (
+                            <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--bg-tertiary)] text-[0.6875rem] text-[var(--text-primary)] font-medium border border-[var(--border)]">
+                              <span className="w-4 h-4 rounded-full bg-[var(--amber-light)] text-[var(--amber)] flex items-center justify-center text-[0.5625rem] font-bold">{idx + 1}</span>
+                              {stu.name}
+                              <span className="text-[0.5625rem] text-[var(--text-muted)] ml-0.5">({stu.marks}/{stu.total})</span>
+                            </span>
+                          ))}
+                        </div>
+                        <div className="mt-1.5 text-[0.625rem] text-[var(--text-muted)]">
+                          {isBn ? `একই মোট মার্কস:` : 'Shared total:'} <span className="font-semibold text-[var(--amber)]">{dup.totalMarks}</span> / {dup.students[0].total}
+                        </div>
+                      </div>
                     </div>
                   ))}
+                </div>
+
+                {/* What to do hint */}
+                <div className="mt-4 p-3 rounded-lg bg-[rgba(34,197,94,0.06)] border border-[rgba(34,197,94,0.15)]">
+                  <div className="flex items-start gap-2">
+                    <Lightbulb size={14} className="text-[var(--green)] mt-0.5 shrink-0" />
+                    <div className="text-[0.6875rem] text-[var(--text-secondary)] leading-relaxed">
+                      <span className="font-semibold text-[var(--green)]">{isBn ? 'কী করবেন?' : 'What to do?'}</span>{' '}
+                      {isBn
+                        ? 'এটি স্বাভাবিক — কোনো সমস্যা নেই। পরীক্ষার ফলাফল প্রকাশে একই মার্কস পাওয়া শিক্ষার্থীদের একই পজিশন দেওয়া হয়। আপনি চাইলে টাই-ব্রেকিং নিয়ম প্রয়োগ করতে পারেন।'
+                        : 'This is normal — no action needed. Students with the same marks share the same rank in results. You may apply tie-breaking rules if your institution requires distinct positions.'}
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : tabulationData.length > 0 ? (
               <div className={`${sectionCls} text-center py-10`}>
                 <CheckCircle size={32} className="mx-auto mb-2 opacity-30 text-[var(--green)]" />
-                <p className="text-[0.8125rem] text-[var(--green)]">{isBn ? 'কোনো পজিশন ডুপ্লিকেশন নেই!' : 'No position duplications found!'}</p>
+                <p className="text-[0.8125rem] text-[var(--green)] font-medium">{isBn ? 'কোনো পজিশন ডুপ্লিকেশন নেই!' : 'No position duplications found!'}</p>
+                <p className="text-[0.6875rem] text-[var(--text-muted)] mt-1">{isBn ? 'সব শিক্ষার্থীর একই মার্কস নেই' : 'All students have unique scores'}</p>
               </div>
             ) : (
               <div className={`${sectionCls} text-center py-10`}>

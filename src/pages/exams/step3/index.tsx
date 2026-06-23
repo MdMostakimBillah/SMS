@@ -1026,55 +1026,6 @@ export default function Step3Evaluation() {
         {/* ═══ PUBLISH/LOCK TAB ═══ */}
         {activeSubTab === 'publish' && (
           <>
-            {/* Publish Result */}
-            {selectedExam && (
-              <div className={sectionCls}>
-                <div className={sectionTitleCls}>
-                  <CheckCircle size={15} className="text-[var(--brand)]" />
-                  {isBn ? 'ফলাফল প্রকাশ' : 'Publish Result'}
-                </div>
-                <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
-                  {isBn ? 'শ্রেণি অনুযায়ী ফলাফল প্রকাশ করুন' : 'Publish results class by class'}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                  {classOptions.map((c) => {
-                    const isClassPublished = (selectedExam.publishedClasses || []).includes(c)
-                    const classSubjects = sessionSubjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === c)
-                    return (
-                      <button
-                        key={c}
-                        onClick={() => toggleClassPublished(selectedExamId, c)}
-                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                          isClassPublished
-                            ? 'border-[var(--green)]/30 bg-[var(--green-light)]/30'
-                            : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/30'
-                        }`}
-                      >
-                        <div className={`flex items-center justify-center w-9 h-9 rounded-lg ${
-                          isClassPublished ? 'bg-[var(--green)]' : 'bg-[var(--bg-primary)] border border-[var(--border)]'
-                        }`}>
-                          <GraduationCap size={16} className={isClassPublished ? 'text-white' : 'text-[var(--text-muted)]'} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-                            {isBn ? classes.find((cl) => cl.name === c)?.nameBn || c : c}
-                          </div>
-                          <div className="text-[0.625rem] text-[var(--text-muted)]">
-                            {classSubjects.length} {isBn ? 'টি বিষয়' : 'subjects'}
-                          </div>
-                        </div>
-                        <div className={`px-2.5 py-1 rounded-md text-[0.625rem] font-semibold ${
-                          isClassPublished ? 'bg-[var(--green)] text-white' : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border)]'
-                        }`}>
-                          {isClassPublished ? (isBn ? 'প্রকাশিত' : 'Published') : (isBn ? 'প্রকাশ করুন' : 'Publish')}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
             {/* Lock/Unlock individual subjects */}
             <div className={sectionCls}>
               <div className={sectionTitleCls}>
@@ -1260,6 +1211,55 @@ export default function Step3Evaluation() {
                 })()}
               </div>
             </div>
+
+            {/* Publish Result */}
+            {selectedExam && (
+              <div className={sectionCls}>
+                <div className={sectionTitleCls}>
+                  <CheckCircle size={15} className="text-[var(--brand)]" />
+                  {isBn ? 'ফলাফল প্রকাশ' : 'Publish Result'}
+                </div>
+                <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
+                  {isBn ? 'শ্রেণি অনুযায়ী ফলাফল প্রকাশ করুন' : 'Publish results class by class'}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {classOptions.map((c) => {
+                    const isClassPublished = (selectedExam.publishedClasses || []).includes(c)
+                    const classSubjects = sessionSubjectMarkConfigs.filter((s) => s.examId === selectedExamId && s.classId === c)
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => toggleClassPublished(selectedExamId, c)}
+                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
+                          isClassPublished
+                            ? 'border-[var(--green)]/30 bg-[var(--green-light)]/30'
+                            : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/30'
+                        }`}
+                      >
+                        <div className={`flex items-center justify-center w-9 h-9 rounded-lg ${
+                          isClassPublished ? 'bg-[var(--green)]' : 'bg-[var(--bg-primary)] border border-[var(--border)]'
+                        }`}>
+                          <GraduationCap size={16} className={isClassPublished ? 'text-white' : 'text-[var(--text-muted)]'} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                            {isBn ? classes.find((cl) => cl.name === c)?.nameBn || c : c}
+                          </div>
+                          <div className="text-[0.625rem] text-[var(--text-muted)]">
+                            {classSubjects.length} {isBn ? 'টি বিষয়' : 'subjects'}
+                          </div>
+                        </div>
+                        <div className={`px-2.5 py-1 rounded-md text-[0.625rem] font-semibold ${
+                          isClassPublished ? 'bg-[var(--green)] text-white' : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border)]'
+                        }`}>
+                          {isClassPublished ? (isBn ? 'প্রকাশিত' : 'Published') : (isBn ? 'প্রকাশ করুন' : 'Publish')}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

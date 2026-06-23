@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, AlertTriangle, Building2, Crown, Edit2, Trash2 } from 'lucide-react'
@@ -21,6 +21,15 @@ export default function DepartmentsPage() {
   const [newNameBn, setNewNameBn] = useState('')
   const [newHead, setNewHead] = useState('')
   useScrollLock(showAdd || editD !== null || delConfirm !== null)
+
+  // Clear nav chain if user navigated directly (not via redirect button)
+  useEffect(() => {
+    const lastRedirect = sessionStorage.getItem('edutech_lastRedirect')
+    const now = Date.now()
+    if (!lastRedirect || now - Number(lastRedirect) > 30000) {
+      localStorage.removeItem('edutech_navChain')
+    }
+  }, [])
 
   const getDeptTeacherCount = (id: string) => teachers.filter((t) => t.departmentId === id).length
   const getDeptSubjectCount = (id: string) => subjects.filter((s) => s.departmentId === id).length

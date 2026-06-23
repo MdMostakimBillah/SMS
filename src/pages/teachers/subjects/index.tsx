@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, AlertTriangle, BookOpen, Filter, X, Edit2, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, AlertTriangle, BookOpen, Filter, X, Edit2, Trash2, Building2 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useScrollLock } from '@/hooks/useScrollLock'
@@ -23,6 +23,15 @@ export default function SubjectsPage() {
   const [newNameBn, setNewNameBn] = useState('')
   const [newDeptIds, setNewDeptIds] = useState<string[]>([])
   useScrollLock(showAdd || editS !== null || delConfirm !== null)
+
+  // Clear nav chain if user navigated directly (not via redirect button)
+  useEffect(() => {
+    const lastRedirect = sessionStorage.getItem('edutech_lastRedirect')
+    const now = Date.now()
+    if (!lastRedirect || now - Number(lastRedirect) > 30000) {
+      localStorage.removeItem('edutech_navChain')
+    }
+  }, [])
 
   const filtered = useMemo(
     () => (fDept ? subjects.filter((s) => s.departmentIds?.includes(fDept) || s.departmentId === fDept) : subjects),
@@ -259,6 +268,22 @@ export default function SubjectsPage() {
           <Plus size={14} />
           {isBn ? 'নতুন যোগ করুন' : 'Add Subject'}
         </button>
+        {departments.length === 0 && (
+          <button
+            onClick={() => {
+              const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+              chain.push({ path: '/teachers/subjects', label: isBn ? 'বিষয়' : 'Subjects' })
+              localStorage.setItem('edutech_navChain', JSON.stringify(chain))
+              sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
+              navigate('/teachers/departments')
+            }}
+            className="flex items-center gap-[0.3125rem] py-2 px-[0.875rem] rounded-[0.5625rem] bg-[var(--brand)] text-white text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
+          >
+            <Building2 size={14} />
+            {isBn ? 'বিভাগ তৈরি করুন' : 'Create Department'}
+            <ArrowRight size={14} />
+          </button>
+        )}
       </div>
 
       {/* Filter */}
@@ -324,6 +349,7 @@ export default function SubjectsPage() {
                             const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
                             chain.push({ path: '/teachers/subjects', label: isBn ? 'বিষয়' : 'Subjects' })
                             localStorage.setItem('edutech_navChain', JSON.stringify(chain))
+                            sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
                             navigate('/teachers/departments')
                           }}
                           className="py-2 px-4 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none"

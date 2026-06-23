@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
+  ArrowRight,
   Settings,
   Clock,
   Users,
@@ -112,14 +113,61 @@ export default function ClassesPage() {
     <div>
       {/* Header */}
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
-        >
-          <ArrowLeft size={14} />
-          {isBn ? 'ফিরে যান' : 'Back'}
-        </button>
+        {(() => {
+          const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+          if (chain.length > 0) {
+            return (
+              <button
+                onClick={() => {
+                  const prev = chain[chain.length - 1]
+                  localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, -1)))
+                  navigate(prev.path)
+                }}
+                className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
+              >
+                <ArrowLeft size={14} />
+                {isBn ? 'ফিরে যান' : 'Back'}
+              </button>
+            )
+          }
+          return (
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
+            >
+              <ArrowLeft size={14} />
+              {isBn ? 'ফিরে যান' : 'Back'}
+            </button>
+          )
+        })()}
         <div className="flex-1">
+          {/* Breadcrumb — only when redirected */}
+          {(() => {
+            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+            if (chain.length === 0) return null
+            return (
+              <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1 flex-wrap">
+                {chain.map((item: { path: string; label: string }, idx: number) => (
+                  <span key={idx} className="flex items-center gap-1">
+                    {idx > 0 && <span className="text-[var(--text-muted)]">›</span>}
+                    <button
+                      onClick={() => {
+                        localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, idx + 1)))
+                        navigate(item.path)
+                      }}
+                      className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
+                    >
+                      {item.label}
+                    </button>
+                  </span>
+                ))}
+                <span className="text-[var(--text-muted)]">›</span>
+                <span className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--brand)] text-white font-medium">
+                  {isBn ? 'শ্রেণি' : 'Classes'}
+                </span>
+              </div>
+            )
+          })()}
           <h1 className={`${isMobile ? 'text-[1.125rem]' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)]`}>
             {isBn ? 'শ্রেণি ব্যবস্থাপনা' : 'Classes Management'}
           </h1>
@@ -962,6 +1010,7 @@ function RoutineTab({
   isBn: boolean
   isMobile: boolean
 }) {
+  const navigate = useNavigate()
   const [selectedClass, setSelectedClass] = useState(classes[0]?.id || '')
   const [selectedSection, setSelectedSection] = useState('')
   const [editSlot, setEditSlot] = useState<{ day: number; period: number } | null>(null)
@@ -987,9 +1036,34 @@ function RoutineTab({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showActionMenu])
 
+  // Clear nav chain if user navigated directly (not via redirect button)
+  useEffect(() => {
+    const lastRedirect = sessionStorage.getItem('edutech_lastRedirect')
+    const now = Date.now()
+    if (!lastRedirect || now - Number(lastRedirect) > 30000) {
+      localStorage.removeItem('edutech_navChain')
+    }
+  }, [])
+
   const cls = classes.find((c) => c.id === selectedClass)
   const sections = cls?.sections || []
   const effectiveSection = selectedSection || sections[0]?.id || ''
+
+  // Filtered subjects for edit slot modal
+  const editSlotFilteredSubjects = useMemo(() => {
+    if (!editSlot || !cls) return subjects
+    const currentSection = cls.sections?.find((s: any) => s.id === effectiveSection)
+    const sectionSubjectIds = currentSection?.subjectIds || []
+    if (sectionSubjectIds.length > 0) {
+      return subjects.filter((s) => sectionSubjectIds.includes(s.id))
+    }
+    const classSubjectIds = [...new Set(cls.sections?.flatMap((s: any) => s.subjectIds || []) || [])]
+    if (classSubjectIds.length > 0) {
+      return subjects.filter((s) => classSubjectIds.includes(s.id))
+    }
+    return subjects
+  }, [editSlot, cls, effectiveSection, subjects])
+
   const routine = routines.find((r) => r.classId === selectedClass && r.sectionId === effectiveSection)
   const defaultDuration = routine?.periodDuration || 40
   const weekendDays = routine?.weekendDays || [5]
@@ -1516,51 +1590,68 @@ function RoutineTab({
                 <BookOpen size={12} style={{ color: 'var(--purple)' }} />
                 {isBn ? 'বিষয় নির্বাচন' : 'Select Subject'}
               </label>
-              <select
-                value={slotForm.subjectId}
-                onChange={(e) => setSlotForm((p) => ({ ...p, subjectId: e.target.value }))}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
+              {editSlotFilteredSubjects.length === 0 ? (
+                <div style={{
+                  padding: '0.75rem',
                   borderRadius: '0.5rem',
-                  border: '1px solid var(--border)',
+                  border: '1px dashed var(--border)',
                   background: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.75rem',
-                  fontFamily: 'inherit',
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="">{isBn ? 'বিষয় বাছুন' : 'Choose subject'}</option>
-                {(() => {
-                  const currentSection = cls?.sections?.find((s: any) => s.id === effectiveSection)
-                  const sectionSubjectIds = currentSection?.subjectIds || []
-                  if (sectionSubjectIds.length === 0) {
-                    const classSubjectIds = [...new Set(cls?.sections?.flatMap((s: any) => s.subjectIds || []) || [])]
-                    if (classSubjectIds.length === 0)
-                      return subjects.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {isBn ? s.nameBn : s.name}
-                        </option>
-                      ))
-                    return subjects
-                      .filter((s) => classSubjectIds.includes(s.id))
-                      .map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {isBn ? s.nameBn : s.name}
-                        </option>
-                      ))
-                  }
-                  return subjects
-                    .filter((s) => sectionSubjectIds.includes(s.id))
-                    .map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {isBn ? s.nameBn : s.name}
-                      </option>
-                    ))
-                })()}
-              </select>
+                  textAlign: 'center',
+                }}>
+                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                    {isBn ? 'কোনো বিষয় পাওয়া যায়নি' : 'No subjects found'}
+                  </p>
+                    <button
+                      onClick={() => {
+                        const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+                        chain.push({ path: '/classes', label: isBn ? 'শ্রেণি' : 'Classes' })
+                        localStorage.setItem('edutech_navChain', JSON.stringify(chain))
+                        sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
+                        navigate('/teachers/subjects')
+                      }}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.375rem',
+                        padding: '0.375rem 0.75rem',
+                        borderRadius: '0.375rem',
+                        fontSize: '0.6875rem',
+                        fontWeight: 600,
+                        background: 'var(--brand)',
+                        color: 'white',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                    {isBn ? 'বিষয় তৈরি করুন' : 'Create Subjects'}
+                    <ArrowRight size={12} />
+                  </button>
+                </div>
+              ) : (
+                <select
+                  value={slotForm.subjectId}
+                  onChange={(e) => setSlotForm((p) => ({ ...p, subjectId: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '0.5rem',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.75rem',
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="">{isBn ? 'বিষয় বাছুন' : 'Choose subject'}</option>
+                  {editSlotFilteredSubjects.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {isBn ? s.nameBn : s.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <div>
               <label
@@ -1836,7 +1927,8 @@ function RoutineTab({
                       {activeDays.map((d) => {
                       const slot = resolvedPeriods[d.index]?.[p]
                         const hasSubject = slot?.subjectId
-                        return (
+
+  return (
                           <td key={d.index} style={{ padding: '0.25rem', textAlign: 'center', verticalAlign: 'top' }}>
                             <button
                               onClick={() => {
