@@ -519,7 +519,7 @@ export default function SyllabusPage() {
                       const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
                       chain.push({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
                       localStorage.setItem('edutech_navChain', JSON.stringify(chain))
-                      sessionStorage.setItem('edutech_lastRedirect', String(Date.now())); navigate('/classes')
+                      sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
                       navigate('/classes')
                     }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
@@ -575,7 +575,7 @@ export default function SyllabusPage() {
                       const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
                       chain.push({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
                       localStorage.setItem('edutech_navChain', JSON.stringify(chain))
-                      sessionStorage.setItem('edutech_lastRedirect', String(Date.now())); navigate('/classes')
+                      sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
                       navigate('/classes')
                     }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
@@ -624,20 +624,20 @@ export default function SyllabusPage() {
                     {isBn ? 'এই সেকশনে কোনো বিষয় নেই' : 'No subjects for this section'}
                   </p>
                   <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
-                    {isBn ? 'শ্রেণি ব্যবস্থাপনা থেকে সেকশনে বিষয় যোগ করুন।' : 'Add subjects to this section from Class Management.'}
+                    {isBn ? 'প্রথমে বিষয় তৈরি করুন, তারপর সেকশনে যোগ করুন।' : 'Create subjects first, then add them to this section.'}
                   </p>
                   <button
                     onClick={() => {
                       const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
                       chain.push({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
                       localStorage.setItem('edutech_navChain', JSON.stringify(chain))
-                      sessionStorage.setItem('edutech_lastRedirect', String(Date.now())); navigate('/classes')
-                      navigate('/classes')
+                      sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
+                      navigate('/teachers/subjects')
                     }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
                   >
-                    <Settings size={14} />
-                    {isBn ? 'শ্রেণি ব্যবস্থাপনায় যান' : 'Go to Class Management'}
+                    <BookOpen size={14} />
+                    {isBn ? 'বিষয় তৈরি করুন' : 'Create Subjects'}
                     <ArrowRight size={14} />
                   </button>
                 </div>
