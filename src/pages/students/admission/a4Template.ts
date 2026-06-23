@@ -1,17 +1,10 @@
 import type { StudentAdmission } from './types'
 
-export function generateA4HTML(s: StudentAdmission, isBn = false, qrDataUrl?: string, teacherName?: string, institutionName?: string): string {
+export function generateA4HTML(s: StudentAdmission, isBn = false, _qrDataUrl?: string, teacherName?: string, institutionName?: string): string {
   const statusColor = s.status === 'approved' ? '#10b981' : s.status === 'rejected' ? '#ef4444' : '#f59e0b'
   const statusText = s.status === 'approved' ? 'APPROVED' : s.status === 'rejected' ? 'REJECTED' : 'PENDING'
   const statusBn = s.status === 'approved' ? 'অনুমোদিত' : s.status === 'rejected' ? 'প্রত্যাখ্যাত' : 'অপেক্ষমান'
   const schoolName = institutionName || 'EduTech'
-
-  const qrSection = qrDataUrl ? `
-  <!-- QR Code -->
-  <div style="position:absolute;top:15mm;right:15mm;text-align:center">
-    <img src="${qrDataUrl}" style="width:60px;height:60px" />
-    <div style="font-size:8px;color:#666;margin-top:2px">Scan for Details</div>
-  </div>` : ''
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -58,8 +51,6 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, qrDataUrl?: st
   <div class="status-stamp">
     <div class="status-text">${isBn ? statusBn : statusText}</div>
   </div>
-
-  ${qrSection}
 
   <!-- Header -->
   <div class="header">
