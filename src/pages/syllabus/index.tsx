@@ -29,8 +29,8 @@ import { generateSyllabusPDF } from './pdfTemplate'
 const btnPri =
   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all'
 const inputCls =
-  'px-2.5 py-1.5 rounded-lg text-[0.6875rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]'
-const selectCls = `${inputCls} cursor-pointer`
+  'px-3.5 py-2.5 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]'
+const selectCls = inputCls + ' cursor-pointer'
 
 type View = 'home' | 'sections' | 'subjects' | 'detail'
 
