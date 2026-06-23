@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   BookOpen,
+  FileText,
   Plus,
   Trash2,
   Edit2,
@@ -856,37 +857,37 @@ export default function SyllabusPage() {
 
       {/* ═══ Chapter Modal ═══ */}
       {showChapterModal && createPortal(
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4" onClick={() => setShowChapterModal(false)}>
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-3 sm:p-6" onClick={() => setShowChapterModal(false)}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div
-            className="relative bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl w-full max-w-lg shadow-2xl"
+            className="relative bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl w-full max-w-[40rem] shadow-2xl max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
+            <div className="flex items-center justify-between px-5 sm:px-8 py-5 border-b border-[var(--border)] shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[var(--brand-light)] flex items-center justify-center">
-                  <BookOpen size={18} className="text-[var(--brand)]" />
+                <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] flex items-center justify-center">
+                  <BookOpen size={20} className="text-[var(--brand)]" />
                 </div>
                 <div>
-                  <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
+                  <h3 className="text-[1rem] font-semibold text-[var(--text-primary)]">
                     {editChapter ? (isBn ? 'অধ্যায় এডিট' : 'Edit Chapter') : isBn ? 'নতুন অধ্যায়' : 'New Chapter'}
                   </h3>
-                  <p className="text-[0.6875rem] text-[var(--text-muted)]">
+                  <p className="text-[0.75rem] text-[var(--text-muted)]">
                     {editChapter ? (isBn ? 'অধ্যায়ের তথ্য আপডেট করুন' : 'Update chapter information') : isBn ? 'একটি নতুন অধ্যায় তৈরি করুন' : 'Create a new chapter'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowChapterModal(false)}
-                className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                className="w-9 h-9 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
-            <div className="px-6 py-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="px-5 sm:px-8 py-6 space-y-5 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
                     {isBn ? 'নাম (EN)' : 'Name (EN)'}
                   </label>
                   <input
@@ -897,7 +898,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
                     {isBn ? 'নাম (BN)' : 'Name (BN)'}
                   </label>
                   <input
@@ -908,9 +909,9 @@ export default function SyllabusPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
                     {isBn ? 'বিবরণ (EN)' : 'Description (EN)'}
                   </label>
                   <input
@@ -921,7 +922,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
                     {isBn ? 'বিবরণ (BN)' : 'Description (BN)'}
                   </label>
                   <input
@@ -933,20 +934,20 @@ export default function SyllabusPage() {
                 </div>
               </div>
               <div>
-                <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">{isBn ? 'ক্রম' : 'Order'}</label>
+                <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">{isBn ? 'ক্রম' : 'Order'}</label>
                 <input
                   type="number"
                   min="1"
                   value={chapterForm.order}
                   onChange={(e) => setChapterForm((p) => ({ ...p, order: e.target.value }))}
-                  className={`${inputCls} w-24`}
+                  className={`${inputCls} w-28`}
                 />
               </div>
             </div>
-            <div className="flex gap-3 justify-end px-6 py-4 border-t border-[var(--border)]">
+            <div className="flex gap-3 justify-end px-5 sm:px-8 py-5 border-t border-[var(--border)] shrink-0">
               <button
                 onClick={() => setShowChapterModal(false)}
-                className="px-4 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium cursor-pointer hover:bg-[var(--bg-primary)] transition-colors"
+                className="px-5 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.875rem] font-medium cursor-pointer hover:bg-[var(--bg-primary)] transition-colors"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
@@ -965,37 +966,37 @@ export default function SyllabusPage() {
 
       {/* ═══ Topic Modal ═══ */}
       {showTopicModal && createPortal(
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4" onClick={() => setShowTopicModal(false)}>
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-3 sm:p-6" onClick={() => setShowTopicModal(false)}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div
-            className="relative bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl w-full max-w-lg shadow-2xl max-h-[85vh] flex flex-col"
+            className="relative bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl w-full max-w-[40rem] shadow-2xl max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
+            <div className="flex items-center justify-between px-5 sm:px-8 py-5 border-b border-[var(--border)] shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[var(--brand-light)] flex items-center justify-center">
-                  <BookOpen size={18} className="text-[var(--brand)]" />
+                <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] flex items-center justify-center">
+                  <FileText size={20} className="text-[var(--brand)]" />
                 </div>
                 <div>
-                  <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
+                  <h3 className="text-[1rem] font-semibold text-[var(--text-primary)]">
                     {editTopic ? (isBn ? 'টপিক এডিট' : 'Edit Topic') : isBn ? 'নতুন টপিক' : 'New Topic'}
                   </h3>
-                  <p className="text-[0.6875rem] text-[var(--text-muted)]">
+                  <p className="text-[0.75rem] text-[var(--text-muted)]">
                     {editTopic ? (isBn ? 'টপিকের তথ্য আপডেট করুন' : 'Update topic information') : isBn ? 'একটি নতুন টপিক যোগ করুন' : 'Add a new topic'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowTopicModal(false)}
-                className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                className="w-9 h-9 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
-            <div className="px-6 py-5 space-y-4 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="px-5 sm:px-8 py-6 space-y-5 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
                     {isBn ? 'নাম (EN)' : 'Name (EN)'}
                   </label>
                   <input
@@ -1006,7 +1007,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
                     {isBn ? 'নাম (BN)' : 'Name (BN)'}
                   </label>
                   <input
@@ -1017,9 +1018,9 @@ export default function SyllabusPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
                     {isBn ? 'বিবরণ (EN)' : 'Description (EN)'}
                   </label>
                   <input
@@ -1030,7 +1031,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
                     {isBn ? 'বিবরণ (BN)' : 'Description (BN)'}
                   </label>
                   <input
@@ -1041,9 +1042,9 @@ export default function SyllabusPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">{isBn ? 'মার্কস' : 'Marks'}</label>
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">{isBn ? 'মার্কস' : 'Marks'}</label>
                   <input
                     type="number"
                     min="0"
@@ -1054,7 +1055,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">{isBn ? 'সপ্তাহ' : 'Week No'}</label>
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">{isBn ? 'সপ্তাহ' : 'Week No'}</label>
                   <input
                     type="number"
                     min="1"
@@ -1064,8 +1065,8 @@ export default function SyllabusPage() {
                     placeholder="1"
                   />
                 </div>
-                <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">{isBn ? 'অবস্থা' : 'Status'}</label>
+                <div className="sm:col-span-2">
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">{isBn ? 'অবস্থা' : 'Status'}</label>
                   <select
                     value={topicForm.status}
                     onChange={(e) => setTopicForm((p) => ({ ...p, status: e.target.value as SyllabusTopic['status'] }))}
@@ -1077,9 +1078,9 @@ export default function SyllabusPage() {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">{isBn ? 'শুরু' : 'Start Date'}</label>
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">{isBn ? 'শুরু' : 'Start Date'}</label>
                   <input
                     type="date"
                     value={topicForm.startDate}
@@ -1088,7 +1089,7 @@ export default function SyllabusPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">{isBn ? 'শেষ' : 'End Date'}</label>
+                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">{isBn ? 'শেষ' : 'End Date'}</label>
                   <input
                     type="date"
                     value={topicForm.endDate}
@@ -1098,10 +1099,10 @@ export default function SyllabusPage() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-3 justify-end px-6 py-4 border-t border-[var(--border)] shrink-0">
+            <div className="flex gap-3 justify-end px-5 sm:px-8 py-5 border-t border-[var(--border)] shrink-0">
               <button
                 onClick={() => setShowTopicModal(false)}
-                className="px-4 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium cursor-pointer hover:bg-[var(--bg-primary)] transition-colors"
+                className="px-5 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.875rem] font-medium cursor-pointer hover:bg-[var(--bg-primary)] transition-colors"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
