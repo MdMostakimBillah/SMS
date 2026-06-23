@@ -30,7 +30,6 @@ const btnPri =
 const inputCls =
   'px-2.5 py-1.5 rounded-lg text-[0.6875rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]'
 const selectCls = `${inputCls} cursor-pointer`
-const sectionCls = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-[0.875rem] mb-[0.875rem]'
 
 type View = 'home' | 'sections' | 'subjects' | 'detail'
 
@@ -361,9 +360,9 @@ export default function SyllabusPage() {
   }
 
   const statusIcon = (s: string) => {
-    if (s === 'completed') return <CheckCircle size={10} className="text-[var(--green)]" />
-    if (s === 'in-progress') return <Clock size={10} className="text-[var(--amber)]" />
-    return <AlertCircle size={10} className="text-[var(--text-muted)]" />
+    if (s === 'completed') return <CheckCircle size={14} className="text-[var(--green)]" />
+    if (s === 'in-progress') return <Clock size={14} className="text-[var(--amber)]" />
+    return <AlertCircle size={14} className="text-[var(--text-muted)]" />
   }
 
   const statusColor = (s: string) =>
@@ -733,79 +732,94 @@ export default function SyllabusPage() {
                   const isExpanded = expandedChapters.has(ch.id)
                   const chTotal = ch.topics.reduce((s, t) => s + t.marks, 0)
                   const chDone = ch.topics.filter((t) => t.status === 'completed').length
+                  const progress = ch.topics.length > 0 ? Math.round((chDone / ch.topics.length) * 100) : 0
                   return (
-                    <div key={ch.id} className={sectionCls}>
+                    <div key={ch.id} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
                       {/* Chapter Header */}
-                      <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleChapter(ch.id)}>
-                        <button className="text-[var(--text-muted)]">
-                          {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                        </button>
-                        <span className="text-[0.5625rem] font-bold text-white bg-[var(--brand)] rounded-md px-1.5 py-0.5">{ch.order}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[0.75rem] font-semibold text-[var(--text-primary)]">{isBn ? ch.titleBn : ch.title}</div>
-                          <div className="text-[0.5625rem] text-[var(--text-muted)] truncate">{isBn ? ch.descriptionBn : ch.description}</div>
+                      <div
+                        className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                        onClick={() => toggleChapter(ch.id)}
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-[0.6875rem] font-bold shrink-0">
+                          {ch.order}
                         </div>
-                        <span className="text-[0.5625rem] text-[var(--text-muted)]">
-                          {chDone}/{ch.topics.length} {isBn ? 'টপিক' : 'topics'}
-                        </span>
-                        <span className="text-[0.5625rem] font-semibold text-[var(--brand)]">
-                          {chTotal} {isBn ? 'মা.' : 'mk'}
-                        </span>
-                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={() => openEditChapter(ch)}
-                            className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
-                          >
-                            <Edit2 size={10} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteChapter(ch.id)}
-                            className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                          >
-                            <Trash2 size={10} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] truncate">{isBn ? ch.titleBn : ch.title}</div>
+                          {(ch.description || ch.descriptionBn) && (
+                            <div className="text-[0.625rem] text-[var(--text-muted)] truncate mt-0.5">{isBn ? ch.descriptionBn : ch.description}</div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right">
+                            <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">{chDone}/{ch.topics.length}</div>
+                            <div className="text-[0.5625rem] text-[var(--text-muted)]">{isBn ? 'টপিক' : 'topics'}</div>
+                          </div>
+                          {ch.topics.length > 0 && (
+                            <div className="w-12 h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
+                              <div className="h-full rounded-full bg-[var(--green)] transition-all" style={{ width: progress + '%' }} />
+                            </div>
+                          )}
+                          <div className="text-[0.6875rem] font-semibold text-[var(--brand)]">{chTotal} mk</div>
+                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => openEditChapter(ch)}
+                              className="w-7 h-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)] hover:border-[var(--brand)] transition-colors"
+                            >
+                              <Edit2 size={12} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteChapter(ch.id)}
+                              className="w-7 h-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)] hover:border-[var(--red)] transition-colors"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                          <button className="text-[var(--text-muted)]">
+                            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                           </button>
                         </div>
                       </div>
 
                       {/* Topics */}
                       {isExpanded && (
-                        <div className="mt-3 ml-6">
+                        <div className="border-t border-[var(--border)]">
                           {ch.topics.length === 0 ? (
-                            <div className="text-center py-6 text-[0.625rem] text-[var(--text-muted)] italic">
+                            <div className="text-center py-8 text-[0.75rem] text-[var(--text-muted)]">
                               {isBn ? 'এই অধ্যায়ে কোনো টপিক নেই' : 'No topics in this chapter'}
                             </div>
                           ) : (
                             <div className="divide-y divide-[var(--border)]">
                               {ch.topics.map((t) => (
-                                <div key={t.id} className="flex items-center gap-2 py-2 group">
+                                <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors group">
                                   <button
                                     onClick={() => handleStatusToggle(ch.id, t.id, t.status)}
-                                    className="cursor-pointer bg-transparent border-none p-0 flex items-center"
+                                    className="cursor-pointer bg-transparent border-none p-0 flex items-center shrink-0"
                                     title={isBn ? 'অবস্থা পরিবর্তন' : 'Toggle status'}
                                   >
                                     {statusIcon(t.status)}
                                   </button>
                                   <div className="flex-1 min-w-0">
-                                    <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">{isBn ? t.titleBn : t.title}</div>
-                                    <div className="text-[0.5625rem] text-[var(--text-muted)]">{isBn ? t.descriptionBn : t.description}</div>
-                                    <div className="flex items-center gap-2 mt-0.5">
+                                    <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">{isBn ? t.titleBn : t.title}</div>
+                                    {(t.description || t.descriptionBn) && (
+                                      <div className="text-[0.625rem] text-[var(--text-muted)] truncate mt-0.5">{isBn ? t.descriptionBn : t.description}</div>
+                                    )}
+                                    <div className="flex items-center gap-2 mt-1">
                                       {t.weekNo && (
-                                        <span className="text-[0.5rem] px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">
+                                        <span className="text-[0.5625rem] px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">
                                           {isBn ? 'সপ্তাহ' : 'Wk'} {t.weekNo}
                                         </span>
                                       )}
                                       {t.startDate && (
-                                        <span className="text-[0.5rem] text-[var(--text-muted)]">
-                                          {t.startDate}
-                                          {t.endDate ? ` – ${t.endDate}` : ''}
+                                        <span className="text-[0.5625rem] text-[var(--text-muted)]">
+                                          {t.startDate}{t.endDate ? ' – ' + t.endDate : ''}
                                         </span>
                                       )}
                                     </div>
                                   </div>
-                                  <span className="text-[0.625rem] font-semibold text-[var(--brand)] whitespace-nowrap">
-                                    {t.marks} {isBn ? 'মা.' : 'mk'}
+                                  <span className="text-[0.75rem] font-semibold text-[var(--brand)] whitespace-nowrap">
+                                    {t.marks} mk
                                   </span>
-                                  <span className={`text-[0.5rem] px-1.5 py-0.5 rounded-full font-medium ${statusColor(t.status)}`}>
+                                  <span className={'text-[0.625rem] px-2 py-0.5 rounded-full font-medium ' + statusColor(t.status)}>
                                     {t.status === 'completed'
                                       ? isBn ? 'সম্পন্ন' : 'Done'
                                       : t.status === 'in-progress'
@@ -815,28 +829,30 @@ export default function SyllabusPage() {
                                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
                                       onClick={() => openEditTopic(ch.id, t)}
-                                      className="w-5 h-5 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
+                                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)] hover:border-[var(--brand)]"
                                     >
-                                      <Edit2 size={8} />
+                                      <Edit2 size={10} />
                                     </button>
                                     <button
                                       onClick={() => handleDeleteTopic(ch.id, t.id)}
-                                      className="w-5 h-5 rounded border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)] hover:border-[var(--red)]"
                                     >
-                                      <Trash2 size={8} />
+                                      <Trash2 size={10} />
                                     </button>
                                   </div>
                                 </div>
                               ))}
                             </div>
                           )}
-                          <button
-                            onClick={() => openAddTopic(ch.id)}
-                            className="mt-2 flex items-center gap-1 text-[0.5625rem] px-2 py-1 rounded-md bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] cursor-pointer font-medium hover:shadow-sm"
-                          >
-                            <Plus size={9} />
-                            {isBn ? 'টপিক যোগ' : 'Add Topic'}
-                          </button>
+                          <div className="px-4 py-2.5 border-t border-[var(--border)]">
+                            <button
+                              onClick={() => openAddTopic(ch.id)}
+                              className="flex items-center gap-1.5 text-[0.6875rem] px-3 py-1.5 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] cursor-pointer font-medium hover:shadow-sm transition-all"
+                            >
+                              <Plus size={12} />
+                              {isBn ? 'টপিক যোগ' : 'Add Topic'}
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
