@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -21,6 +21,7 @@ import {
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
+import { useTabSlider } from '@/hooks/useTabSlider'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions } from '@/store/classStore'
 import { useExamStore } from '@/store/examStore'
@@ -73,27 +74,12 @@ export default function Step1Planning() {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
-  const updateTabSlider = useCallback(() => {
-    const activeEl = tabRefs.current.get(activeSubTab)
-    const slider = sliderRef.current
-    if (!activeEl || !slider) return
-    const container = slider.parentElement
-    if (!container) return
-    const containerRect = container.getBoundingClientRect()
-    const activeRect = activeEl.getBoundingClientRect()
-    slider.style.width = `${activeRect.width}px`
-    slider.style.transform = `translateX(${activeRect.left - containerRect.left + container.scrollLeft}px)`
-  }, [activeSubTab])
-
-  useEffect(() => {
-    updateTabSlider()
-    const activeEl = tabRefs.current.get(activeSubTab)
-    if (activeEl) {
-      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-    }
-    window.addEventListener('resize', updateTabSlider)
-    return () => window.removeEventListener('resize', updateTabSlider)
-  }, [updateTabSlider])
+  useTabSlider({
+    activeTab: activeSubTab,
+    tabRefs,
+    sliderRef,
+    scrollIntoView: true,
+  })
 
   // Exam Form
   const [showExamForm, setShowExamForm] = useState(false)

@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, UserPlus, Users, ListChecks } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useTabSlider } from '@/hooks/useTabSlider'
 import GeneralAdmission from './admission/GeneralAdmission'
 import BulkAdmission from './admission/BulkAdmission'
 import AdmissionManage from './admission/AdmissionManage'
@@ -21,26 +22,13 @@ export default function StudentAdmission() {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
-  const updateSlider = useCallback(() => {
-    const activeEl = tabRefs.current.get(activeTab)
-    const slider = sliderRef.current
-    if (!activeEl || !slider) return
-
-    const parent = activeEl.parentElement
-    if (!parent) return
-
-    const parentRect = parent.getBoundingClientRect()
-    const activeRect = activeEl.getBoundingClientRect()
-
-    slider.style.width = `${activeRect.width}px`
-    slider.style.transform = `translateX(${activeRect.left - parentRect.left}px)`
-  }, [activeTab])
-
-  useEffect(() => {
-    updateSlider()
-    window.addEventListener('resize', updateSlider)
-    return () => window.removeEventListener('resize', updateSlider)
-  }, [updateSlider])
+  useTabSlider({
+    activeTab,
+    tabRefs,
+    sliderRef,
+    getContainer: (slider) => slider.parentElement,
+    useScrollLeft: false,
+  })
 
   return (
     <div className="flex flex-col gap-[0.875rem]">

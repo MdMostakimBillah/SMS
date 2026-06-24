@@ -1,8 +1,9 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, Award, FileText, CheckCircle, Users, GraduationCap, Eye, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useTabSlider } from '@/hooks/useTabSlider'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
@@ -45,27 +46,12 @@ export default function Step5Marksheet() {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
-  const updateTabSlider = useCallback(() => {
-    const activeEl = tabRefs.current.get(activeSubTab)
-    const slider = sliderRef.current
-    if (!activeEl || !slider) return
-    const container = slider.parentElement
-    if (!container) return
-    const containerRect = container.getBoundingClientRect()
-    const activeRect = activeEl.getBoundingClientRect()
-    slider.style.width = `${activeRect.width}px`
-    slider.style.transform = `translateX(${activeRect.left - containerRect.left + container.scrollLeft}px)`
-  }, [activeSubTab])
-
-  useEffect(() => {
-    updateTabSlider()
-    const activeEl = tabRefs.current.get(activeSubTab)
-    if (activeEl) {
-      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-    }
-    window.addEventListener('resize', updateTabSlider)
-    return () => window.removeEventListener('resize', updateTabSlider)
-  }, [updateTabSlider])
+  useTabSlider({
+    activeTab: activeSubTab,
+    tabRefs,
+    sliderRef,
+    scrollIntoView: true,
+  })
 
   // Marksheet form
   const [showMarksheetForm, setShowMarksheetForm] = useState(false)

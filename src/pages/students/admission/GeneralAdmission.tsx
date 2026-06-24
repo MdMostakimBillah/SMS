@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { CheckCircle, User, GraduationCap, ShieldCheck, IdCard, Camera, X, Download, MessageSquare, Send, Users, FileText, ChevronRight, ChevronLeft, Clock } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useTabSlider } from '@/hooks/useTabSlider'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -177,23 +178,13 @@ export default function GeneralAdmission() {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
-  const updateSlider = useCallback(() => {
-    const activeEl = tabRefs.current.get(activeTab)
-    const slider = sliderRef.current
-    if (!activeEl || !slider) return
-    const parent = activeEl.parentElement
-    if (!parent) return
-    const parentRect = parent.getBoundingClientRect()
-    const activeRect = activeEl.getBoundingClientRect()
-    slider.style.width = `${activeRect.width}px`
-    slider.style.transform = `translateX(${activeRect.left - parentRect.left}px)`
-  }, [activeTab])
-
-  useEffect(() => {
-    updateSlider()
-    window.addEventListener('resize', updateSlider)
-    return () => window.removeEventListener('resize', updateSlider)
-  }, [updateSlider])
+  useTabSlider({
+    activeTab,
+    tabRefs,
+    sliderRef,
+    getContainer: (slider) => slider.parentElement,
+    useScrollLeft: false,
+  })
 
   const set = useCallback((key: keyof FormData, val: string) => {
     setForm((p) => ({ ...p, [key]: val }))

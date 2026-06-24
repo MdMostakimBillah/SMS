@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -21,6 +21,7 @@ import { useScrollLock } from '@/hooks/useScrollLock'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { useHRStore } from '@/store/hrStore'
+import { useTabSlider } from '@/hooks/useTabSlider'
 import type { Tab, ModalType, FacModalType, PDFModalType, IncForm, BonForm, ProForm, FundForm, FacForm, AssignForm } from './types'
 import { getAvatarGradient, getInitials } from './utils'
 import HROverviewTab from './tabs/HROverviewTab'
@@ -92,27 +93,12 @@ export default function HRPage() {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
-  const updateTabSlider = useCallback(() => {
-    const activeEl = tabRefs.current.get(activeTab)
-    const slider = sliderRef.current
-    if (!activeEl || !slider) return
-    const container = slider.parentElement
-    if (!container) return
-    const containerRect = container.getBoundingClientRect()
-    const activeRect = activeEl.getBoundingClientRect()
-    slider.style.width = `${activeRect.width}px`
-    slider.style.transform = `translateX(${activeRect.left - containerRect.left + container.scrollLeft}px)`
-  }, [activeTab])
-
-  useEffect(() => {
-    updateTabSlider()
-    const activeEl = tabRefs.current.get(activeTab)
-    if (activeEl) {
-      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-    }
-    window.addEventListener('resize', updateTabSlider)
-    return () => window.removeEventListener('resize', updateTabSlider)
-  }, [updateTabSlider])
+  useTabSlider({
+    activeTab,
+    tabRefs,
+    sliderRef,
+    scrollIntoView: true,
+  })
 
   // ─── Form State ───
   const [incForm, setIncForm] = useState<IncForm>({ teacherId: '', type: 'annual', percentage: '', reason: '' })

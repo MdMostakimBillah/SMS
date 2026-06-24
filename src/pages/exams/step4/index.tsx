@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -36,6 +36,7 @@ import {
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useTabSlider } from '@/hooks/useTabSlider'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions, buildSectionsMap, extractClassNumber } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -88,27 +89,12 @@ export default function Step4Results() {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
-  const updateTabSlider = useCallback(() => {
-    const activeEl = tabRefs.current.get(activeSubTab)
-    const slider = sliderRef.current
-    if (!activeEl || !slider) return
-    const container = slider.parentElement
-    if (!container) return
-    const containerRect = container.getBoundingClientRect()
-    const activeRect = activeEl.getBoundingClientRect()
-    slider.style.width = `${activeRect.width}px`
-    slider.style.transform = `translateX(${activeRect.left - containerRect.left + container.scrollLeft}px)`
-  }, [activeSubTab])
-
-  useEffect(() => {
-    updateTabSlider()
-    const activeEl = tabRefs.current.get(activeSubTab)
-    if (activeEl) {
-      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-    }
-    window.addEventListener('resize', updateTabSlider)
-    return () => window.removeEventListener('resize', updateTabSlider)
-  }, [updateTabSlider])
+  useTabSlider({
+    activeTab: activeSubTab,
+    tabRefs,
+    sliderRef,
+    scrollIntoView: true,
+  })
 
   // PDF download modal
   const [showPdfModal, setShowPdfModal] = useState(false)

@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useTabSlider } from '@/hooks/useTabSlider'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -79,23 +80,13 @@ export default function ClassesPage() {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
-  const updateTabSlider = useCallback(() => {
-    const activeEl = tabRefs.current.get(activeTab)
-    const slider = sliderRef.current
-    if (!activeEl || !slider) return
-    const parent = activeEl.parentElement
-    if (!parent) return
-    const parentRect = parent.getBoundingClientRect()
-    const activeRect = activeEl.getBoundingClientRect()
-    slider.style.width = `${activeRect.width}px`
-    slider.style.transform = `translateX(${activeRect.left - parentRect.left}px)`
-  }, [activeTab])
-
-  useEffect(() => {
-    updateTabSlider()
-    window.addEventListener('resize', updateTabSlider)
-    return () => window.removeEventListener('resize', updateTabSlider)
-  }, [updateTabSlider])
+  useTabSlider({
+    activeTab,
+    tabRefs,
+    sliderRef,
+    getContainer: (slider) => slider.parentElement,
+    useScrollLeft: false,
+  })
 
   const handleSaveInstitution = () => {
     updateInstitution(instForm)

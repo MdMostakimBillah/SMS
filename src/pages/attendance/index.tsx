@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -37,6 +37,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useScrollLock } from '@/hooks/useScrollLock'
+import { useTabSlider } from '@/hooks/useTabSlider'
 import { AttendancePDFOptionsModal } from '@/components/shared/AttendancePDFOptionsModal'
 import type { AttendancePDFOptions } from '@/components/shared/AttendancePDFOptionsModal'
 import type { AttendanceStatus, DayAttendance } from '@/store/teacherStore'
@@ -66,27 +67,13 @@ export default function AttendancePage() {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
-  const updateTabSlider = useCallback(() => {
-    const activeEl = tabRefs.current.get(activeTab)
-    const slider = sliderRef.current
-    if (!activeEl || !slider) return
-    const container = slider.parentElement
-    if (!container) return
-    const containerRect = container.getBoundingClientRect()
-    const activeRect = activeEl.getBoundingClientRect()
-    slider.style.width = `${activeRect.width}px`
-    slider.style.transform = `translateX(${activeRect.left - containerRect.left + container.scrollLeft}px)`
-  }, [activeTab])
+  useTabSlider({
+    activeTab,
+    tabRefs,
+    sliderRef,
+    scrollIntoView: true,
+  })
 
-  useEffect(() => {
-    updateTabSlider()
-    const activeEl = tabRefs.current.get(activeTab)
-    if (activeEl) {
-      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-    }
-    window.addEventListener('resize', updateTabSlider)
-    return () => window.removeEventListener('resize', updateTabSlider)
-  }, [updateTabSlider])
   const [date, setDate] = useState(today())
   const [dateFrom, setDateFrom] = useState(twentyDaysAgo())
   const [dateTo, setDateTo] = useState(today())
