@@ -96,3 +96,85 @@ if (chain.length === 0) return null // no breadcrumb
 4. **User stays on same page** → chain persists (no re-mount clears it)
 5. **Back button clicked** → pop last item from chain, navigate to previous page
 6. **Breadcrumb item clicked** → truncate chain to that point, navigate
+
+## Refactoring & Code Splitting
+
+When a file grows beyond ~300 lines, split it. Follow this proven approach:
+
+### Step 1: Identify Tabs/Sections
+
+Read the file and map out each tab/section with its line range. Group by:
+- **Tab content** (e.g., RoutineTab, RoomsTab)
+- **Modals** (e.g., PersonDetailModal)
+- **Shared helpers** (e.g., statusBadge, weeklyHolidayBadge)
+
+### Step 2: Extract Tab Components
+
+Create `tabs/` or `modals/` subdirectory next to the parent file.
+
+```
+pages/attendance/index.tsx
+pages/attendance/tabs/TodayTab.tsx
+pages/attendance/tabs/RangeTab.tsx
+pages/attendance/modals/PersonDetailModal.tsx
+```
+
+**Each extracted component needs:**
+1. A `Props` interface at the top
+2. Named export (not default) for tree-shaking
+3. All imports it uses (don't rely on parent scope)
+4. `React.memo` wrapping if it receives many props
+
+### Step 3: Rewrite Parent as Orchestrator
+
+The parent keeps:
+- Store hooks and shared state
+- Derived data (useMemo)
+- Header, tab bar, filter controls
+- Conditional rendering of tab components
+
+The parent does NOT keep:
+- Tab-specific state (move to the tab)
+- Tab-specific handlers (move to the tab)
+- Tab-specific modals (move to the tab or modals/)
+
+### Step 4: Performance
+
+**React.memo** — Add to any component that receives 5+ props or re-renders frequently:
+```tsx
+export const MyTab = React.memo(function MyTab({ ... }: Props) { ... })
+```
+
+**React.lazy** — Lazy-load heavy pages in `src/App.tsx`:
+```tsx
+const HeavyPage = React.lazy(() => import('./pages/heavy/Page'))
+// Wrap route with <Suspense fallback={<LoadingSpinner />}>
+```
+
+### Step 5: Verify
+
+1. `npm run build` — must pass with zero TS errors
+2. `npx vitest run` — pre-existing failures are OK, no new failures
+3. Check chunk sizes in build output — large chunks indicate further splitting needed
+
+### Common Pitfalls
+
+- **Unused imports** — After extracting, remove imports that moved to the child. TS6133 errors = unused imports.
+- **Type mismatches** — Parent passes `Dispatch<SetStateAction<number>>` but child expects `(val: string) => void`. Wrap: `setPerPage={(v) => setPerPage(Number(v))}`
+- **Props the child doesn't use** — Don't pass props the child removed from its interface.
+- **React UMD global error** — If using `React.Dispatch` in types, import React explicitly.
+
+### Shared Hooks Pattern
+
+When the same logic appears in 3+ files, extract to `src/hooks/`:
+
+```
+src/hooks/useTabSlider.ts     — tab slider animation (used in 12+ files)
+src/hooks/useNavChain.ts      — breadcrumb navigation chain (used in 8+ files)
+src/hooks/useFormValidation.ts — form validation (used in multi-step forms)
+```
+
+Each hook:
+- Returns a clean API (no raw state leakage)
+- Accepts an options interface
+- Has JSDoc on the hook and its parameters

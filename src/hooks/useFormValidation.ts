@@ -1,18 +1,32 @@
 import { useCallback, useState } from 'react'
 
+/** Tracks which fields have been touched and per-tab error sets. */
 export interface FormValidationState<T extends Record<string, any>> {
+  /** Set of field keys the user has interacted with. */
   touched: Set<keyof T>
+  /** Map of tab ID to the set of field keys with validation errors. */
   errors: Record<string, Set<keyof T>>
 }
 
+/** Validation actions returned by {@link useFormValidation}. */
 export interface FormValidationActions<T extends Record<string, any>> {
+  /** Marks a field as touched. */
   touch: (key: keyof T) => void
+  /** Validates required fields for a tab and returns the set of missing fields. */
   validate: (form: T, tab: string, requiredFields: (keyof T)[]) => Set<keyof T>
+  /** Returns true if the field is touched and has an error on the active tab. */
   hasError: (key: keyof T, activeTab: string) => boolean
+  /** Clears all errors for a given tab. */
   clearErrors: (tab: string) => void
+  /** Resets touched and errors to initial state. */
   reset: () => void
 }
 
+/**
+ * Generic form validation hook supporting multi-tab forms.
+ * @param initialTabs - Tab IDs to initialize error tracking for.
+ * @returns Tuple of [state, actions].
+ */
 export function useFormValidation<T extends Record<string, any>>(
   initialTabs: string[]
 ): [FormValidationState<T>, FormValidationActions<T>] {

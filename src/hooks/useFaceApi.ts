@@ -27,17 +27,11 @@ export function useFaceApi() {
     const load = async () => {
       try {
         const uri = '/models'
-        console.log('[face-api] Loading models from', uri)
-        await faceapi.nets.ssdMobilenetv1.loadFromUri(uri)
-        console.log('[face-api] ssdMobilenetv1 loaded, isLoaded:', faceapi.nets.ssdMobilenetv1.isLoaded)
+        await faceapi.nets.tinyFaceDetector.loadFromUri(uri)
         await faceapi.nets.faceLandmark68Net.loadFromUri(uri)
-        console.log('[face-api] faceLandmark68 loaded, isLoaded:', faceapi.nets.faceLandmark68Net.isLoaded)
         await faceapi.nets.faceRecognitionNet.loadFromUri(uri)
-        console.log('[face-api] faceRecognition loaded, isLoaded:', faceapi.nets.faceRecognitionNet.isLoaded)
         setLoaded(true)
-        console.log('[face-api] All models loaded successfully')
       } catch (err) {
-        console.error('[face-api] Failed to load models:', err)
         setError(String(err))
       } finally {
         setLoading(false)
@@ -47,28 +41,25 @@ export function useFaceApi() {
   }, [])
 
   const detectFace = async (
-    input: HTMLVideoElement | HTMLCanvasElement | HTMLImageElement
+    input: HTMLVideoElement | HTMLCanvasElement | HTMLImageElement,
+    fast = false
   ): Promise<DetectionResult | null> => {
-    if (!loaded) {
-      console.warn('[face-api] detectFace called but models not loaded')
-      return null
-    }
+    if (!loaded) return null
     try {
+      const options = new faceapi.TinyFaceDetectorOptions({
+        inputSize: fast ? 224 : 320,
+        scoreThreshold: fast ? 0.3 : 0.4,
+      })
       const result = await faceapi
-        .detectSingleFace(input, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.2 }))
+        .detectSingleFace(input, options)
         .withFaceLandmarks()
         .withFaceDescriptor()
-      if (!result) {
-        console.warn('[face-api] No face detected in frame, input dims:', (input as HTMLVideoElement).videoWidth, 'x', (input as HTMLVideoElement).videoHeight)
-        return null
-      }
-      console.log('[face-api] Face detected!', result.detection.box)
+      if (!result) return null
       return {
         descriptor: result.descriptor,
         box: result.detection.box,
       }
     } catch (err) {
-      console.error('[face-api] detectFace error:', err)
       setError(String(err))
       return null
     }

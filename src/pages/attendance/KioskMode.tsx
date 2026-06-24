@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import {
   CheckCircle,
   Clock,
@@ -11,11 +12,12 @@ import {
 import { useTeacherStore } from '@/store/teacherStore'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import { useFaceApi, type RegisteredFace } from '@/hooks/useFaceApi'
-import { logger } from '@/lib/logger'
+
 
 const STORAGE_KEY = 'kioskFaces'
-const COOLDOWN_MS = 10000
-const DETECT_INTERVAL_MS = 500
+const COOLDOWN_MS = 8000
+const DETECT_INTERVAL_MS = 200
+const STABLE_FRAMES = 2
 
 function loadFaces(): RegisteredFace[] {
   try {
@@ -48,6 +50,18 @@ function playSuccessSound() {
   } catch {}
 }
 
+interface Toast {
+  id: number
+  type: 'success' | 'error'
+  text: string
+  name?: string
+  photo?: string
+  punchType?: 'in' | 'out'
+  time?: string
+}
+
+let toastId = 0
+
 export default function KioskMode({ isBn, date }: { isBn: boolean; date: string }) {
   const { teachers, attendance } = useTeacherStore()
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
@@ -57,10 +71,10 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const [registeredFaces, setRegisteredFaces] = useState<RegisteredFace[]>(loadFaces)
   const [selectedStaff, setSelectedStaff] = useState('')
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null)
-  const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [search, setSearch] = useState('')
   const [camActive, setCamActive] = useState(false)
   const [faceDetected, setFaceDetected] = useState(false)
+  const [toasts, setToasts] = useState<Toast[]>([])
   const [, setDetecting] = useState(false)
   const [identified, setIdentified] = useState<{
     staffId: string; staffName: string; photo: string; punchType: 'in' | 'out'; time: string
@@ -75,6 +89,16 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const cooldownRef = useRef<Record<string, number>>({})
   const regDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const regStableCountRef = useRef(0)
+
+  const addToast = (toast: Omit<Toast, 'id'>) => {
+    const id = ++toastId
+    setToasts((prev) => [...prev, { ...toast, id }])
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000)
+  }
+
+  const removeToast = (id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id))
+  }
 
   const videoCallbackRef = useCallback((node: HTMLVideoElement | null) => {
     videoRef.current = node
@@ -98,11 +122,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       setCapturedPhoto(null)
       setCamActive(true)
     } catch {
-      setStatusMsg({
-        type: 'error',
-        text: isBn ? 'ক্যামেরা খুলতে ব্যর্থ। অনুমতি দিন।' : 'Failed to open camera. Allow permission.',
-      })
-      setTimeout(() => setStatusMsg(null), 3000)
+      addToast({ type: 'error', text: isBn ? 'ক্যামেরা খুলতে ব্যর্থ। অনুমতি দিন।' : 'Failed to open camera. Allow permission.' })
     }
   }
 
@@ -128,19 +148,14 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const startRegDetectLoop = () => {
     if (regDetectIntervalRef.current) clearInterval(regDetectIntervalRef.current)
     regStableCountRef.current = 0
-    logger.kiosk('Starting reg detect loop', { faceApiLoaded, selectedStaff })
     regDetectIntervalRef.current = setInterval(async () => {
       const v = videoRef.current
-      if (!v || !faceApiLoaded || !selectedStaff || !isVideoReady(v)) {
-        if (v) logger.kiosk('Skipping detect', { ready: v.readyState, w: v.videoWidth, loaded: faceApiLoaded, staff: selectedStaff })
-        return
-      }
-      const result = await detectFace(v)
+      if (!v || !faceApiLoaded || !selectedStaff || !isVideoReady(v)) return
+      const result = await detectFace(v, true)
       if (result) {
-        logger.kiosk('Face detected! Stable count', { count: regStableCountRef.current + 1 })
         setFaceDetected(true)
         regStableCountRef.current++
-        if (regStableCountRef.current >= 3) {
+        if (regStableCountRef.current >= STABLE_FRAMES) {
           if (regDetectIntervalRef.current) clearInterval(regDetectIntervalRef.current)
           regDetectIntervalRef.current = null
           regStableCountRef.current = 0
@@ -180,32 +195,18 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     const updated = [...registeredFaces.filter((f) => f.staffId !== teacher.id), entry]
     setRegisteredFaces(updated)
     saveFaces(updated)
-    setStatusMsg({
-      type: 'success',
-      text: isBn ? `${entry.staffName} নিবন্ধন সম্পন্ন!` : `${entry.staffName} registered!`,
-    })
+    addToast({ type: 'success', text: isBn ? `${entry.staffName} নিবন্ধন সম্পন্ন!` : `${entry.staffName} registered!` })
     setSelectedStaff('')
     setCapturedPhoto(null)
     stopCamera()
-    setTimeout(() => setStatusMsg(null), 3000)
   }
 
   const handleRegister = async () => {
     if (!selectedStaff || !videoRef.current) return
-    if (!faceApiLoaded) {
-      setStatusMsg({ type: 'error', text: isBn ? 'ML মডেল লোড হচ্ছে...' : 'ML models loading...' })
-      setTimeout(() => setStatusMsg(null), 3000)
-      return
-    }
-    if (!isVideoReady(videoRef.current)) {
-      setStatusMsg({ type: 'error', text: isBn ? 'ক্যামেরা প্রস্তুত হয়নি। অপেক্ষা করুন...' : 'Camera not ready. Wait...' })
-      setTimeout(() => setStatusMsg(null), 3000)
-      return
-    }
-    const result = await detectFace(videoRef.current)
+    if (!faceApiLoaded || !isVideoReady(videoRef.current)) return
+    const result = await detectFace(videoRef.current, true)
     if (!result) {
-      setStatusMsg({ type: 'error', text: isBn ? 'মুখ সনাক্ত হয়নি। আবার চেষ্টা করুন।' : 'No face detected. Try again.' })
-      setTimeout(() => setStatusMsg(null), 3000)
+      addToast({ type: 'error', text: isBn ? 'মুখ সনাক্ত হয়নি। আবার চেষ্টা করুন।' : 'No face detected. Try again.' })
       return
     }
     saveRegistration(result.descriptor)
@@ -215,8 +216,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     const updated = registeredFaces.filter((f) => f.staffId !== staffId)
     setRegisteredFaces(updated)
     saveFaces(updated)
-    setStatusMsg({ type: 'success', text: isBn ? 'নিবন্ধন মুছে ফেলা হয়েছে' : 'Registration deleted' })
-    setTimeout(() => setStatusMsg(null), 2000)
+    addToast({ type: 'success', text: isBn ? 'নিবন্ধন মুছে ফেলা হয়েছে' : 'Registration deleted' })
   }
 
   const handlePunch = (staffId: string, staffName: string, photo: string) => {
@@ -238,14 +238,17 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     useTeacherStore.setState({ attendance: updatedAttendance })
     setIdentified({ staffId, staffName, photo, punchType, time: timeStr })
     identifiedRef.current = true
-    setStatusMsg({
+    addToast({
       type: 'success',
       text: `${staffName} ${punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'} ${timeStr}`,
+      name: staffName,
+      photo,
+      punchType,
+      time: timeStr,
     })
     playSuccessSound()
     cooldownRef.current[staffId] = Date.now()
     setTimeout(() => {
-      setStatusMsg(null)
       setIdentified(null)
       identifiedRef.current = false
     }, 4000)
@@ -260,11 +263,11 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       if (identifiedRef.current) return
       const v = videoRef.current
       if (!v || !faceApiLoaded || !isVideoReady(v)) return
-      const result = await detectFace(v)
+      const result = await detectFace(v, true)
       if (result) {
         setFaceDetected(true)
         stableCountRef.current++
-        if (stableCountRef.current >= 3) {
+        if (stableCountRef.current >= STABLE_FRAMES) {
           if (detectIntervalRef.current) clearInterval(detectIntervalRef.current)
           setDetecting(false)
           setFaceDetected(false)
@@ -279,14 +282,8 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
             handlePunch(match.staffId, match.staffName, match.photo)
             setTimeout(() => startDetectLoop(), 500)
           } else {
-            setStatusMsg({
-              type: 'error',
-              text: isBn ? 'অপরিচিত মুখ' : 'Unrecognized face',
-            })
-            setTimeout(() => {
-              setStatusMsg(null)
-              startDetectLoop()
-            }, 2000)
+            addToast({ type: 'error', text: isBn ? 'অপরিচিত মুখ' : 'Unrecognized face' })
+            setTimeout(() => startDetectLoop(), 1500)
           }
         }
       } else {
@@ -308,7 +305,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const openAttendance = async () => {
     setKioskMode('attendance')
     setIdentified(null)
-    setStatusMsg(null)
     setCapturedPhoto(null)
     await startCamera()
   }
@@ -318,7 +314,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     stopCamera()
     setKioskMode('register')
     setIdentified(null)
-    setStatusMsg(null)
   }
 
   useEffect(() => {
@@ -327,7 +322,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       videoRef.current.srcObject = streamRef.current
       videoRef.current.onloadedmetadata = () => {
         videoRef.current?.play().catch(() => {})
-        t = setTimeout(() => startDetectLoop(), 500)
+        t = setTimeout(() => startDetectLoop(), 300)
       }
     }
     return () => {
@@ -338,7 +333,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
 
   useEffect(() => {
     if (camActive && kioskMode === 'register' && selectedStaff && faceApiLoaded) {
-      const t = setTimeout(() => startRegDetectLoop(), 800)
+      const t = setTimeout(() => startRegDetectLoop(), 500)
       return () => {
         clearTimeout(t)
         stopRegDetectLoop()
@@ -372,8 +367,140 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     )
   }, [registeredFaces, search])
 
+  const renderAttendancePopup = () => {
+    if (kioskMode !== 'attendance') return null
+    return createPortal(
+      <div className="fixed inset-0 z-[600] bg-black flex flex-col">
+        {/* Camera feed - takes most of screen */}
+        <div className="relative flex-1 bg-black">
+          <video ref={videoCallbackRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+          <canvas ref={canvasRef} className="hidden" />
+
+          {/* Close button */}
+          <button
+            onClick={closeAttendance}
+            className="absolute top-5 right-5 w-12 h-12 rounded-full bg-black/50 border border-white/20 flex items-center justify-center cursor-pointer text-white hover:bg-black/70 z-20 transition-colors"
+          >
+            <X size={24} />
+          </button>
+
+          {/* LIVE indicator */}
+          {camActive && !identified && (
+            <div className="absolute top-5 left-5 bg-black/60 rounded-lg px-3 py-1.5 text-white text-[0.75rem] font-medium flex items-center gap-2 z-10">
+              <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
+              {isBn ? 'লাইভ' : 'LIVE'}
+            </div>
+          )}
+
+          {/* Face guide overlay */}
+          {camActive && !identified && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="absolute inset-[12%] grid grid-cols-3 grid-rows-3 gap-0.5">
+                {[...Array(9)].map((_, i) => (
+                  <div key={i} className={`border ${faceDetected ? 'border-[var(--green)]/60' : 'border-white/15'} transition-colors duration-200`} />
+                ))}
+              </div>
+              <div className={`w-40 h-52 border-[3px] rounded-[50%] transition-all duration-200 ${faceDetected ? 'border-[var(--green)] shadow-[0_0_40px_rgba(34,197,94,0.5)]' : 'border-white/30'}`} />
+            </div>
+          )}
+
+          {/* Status text */}
+          {camActive && !identified && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
+              <div className={`px-5 py-2.5 rounded-full text-[0.875rem] font-bold transition-colors duration-200 ${faceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/50 text-white/80 backdrop-blur-sm'}`}>
+                {faceDetected
+                  ? isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...'
+                  : isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid'}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom bar - identified person */}
+        <div className="px-6 py-4" style={{ background: 'linear-gradient(to top, #000, #111827)' }}>
+          {identified && (
+            <div className="max-w-2xl mx-auto animate-[slideUp_0.3s_ease-out]">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex items-center gap-4 border border-white/10">
+                <div className="relative shrink-0">
+                  <img src={identified.photo} alt="" className="w-16 h-16 rounded-2xl object-cover border-2 border-[var(--green)]" />
+                  <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-[var(--green)] flex items-center justify-center border-2 border-gray-900">
+                    <CheckCircle size={14} className="text-white" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[1.125rem] font-bold text-white truncate">{identified.staffName}</div>
+                  <div className="text-[0.75rem] text-white/50 font-mono mt-0.5">{identified.staffId}</div>
+                  <span className={`inline-block mt-1.5 px-2.5 py-1 rounded-lg text-[0.6875rem] font-bold ${identified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
+                    {identified.punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'}
+                  </span>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-[1.75rem] font-bold text-white font-mono leading-none">{identified.time}</div>
+                  <div className="text-[0.625rem] text-white/40 mt-1">{isBn ? 'পাঞ্চ সময়' : 'Punch Time'}</div>
+                </div>
+              </div>
+            </div>
+          )}
+          {!identified && (
+            <div className="text-center">
+              <div className="text-white/30 text-[0.8125rem] font-medium">
+                {isBn ? 'অপেক্ষা করুন...' : 'Waiting for face...'}
+              </div>
+              <div className="text-white/15 text-[0.6875rem] mt-1">
+                {isBn ? 'বন্ধ করতে X চাপুন' : 'Press X to close'}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>,
+      document.body
+    )
+  }
+
   return (
     <>
+      {/* Toast notifications - top right corner */}
+      {createPortal(
+        <div className="fixed top-4 right-4 z-[700] flex flex-col gap-2 pointer-events-none">
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className={`pointer-events-auto max-w-[22rem] rounded-xl border shadow-lg backdrop-blur-md animate-[slideInRight_0.3s_ease-out] ${
+                toast.type === 'success'
+                  ? 'bg-[var(--green-light)]/95 border-[var(--green)]/30 text-[var(--green)]'
+                  : 'bg-[var(--red-light)]/95 border-[var(--red)]/30 text-[var(--red)]'
+              }`}
+            >
+              <div className="flex items-center gap-3 p-3">
+                {toast.photo && (
+                  <img src={toast.photo} alt="" className="w-10 h-10 rounded-lg object-cover border border-[var(--green)]/30 shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-[0.8125rem] font-bold flex items-center gap-1.5">
+                    {toast.type === 'success' ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                    {toast.type === 'success' ? (isBn ? 'সফল' : 'Success') : (isBn ? 'ত্রুটি' : 'Error')}
+                  </div>
+                  <div className="text-[0.75rem] mt-0.5 opacity-90">{toast.text}</div>
+                  {toast.time && (
+                    <div className="text-[0.6875rem] font-mono mt-0.5 opacity-70">{toast.time}</div>
+                  )}
+                </div>
+                <button
+                  onClick={() => removeToast(toast.id)}
+                  className="shrink-0 bg-transparent border-none cursor-pointer opacity-50 hover:opacity-100 transition-opacity"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>,
+        document.body
+      )}
+
+      {/* Attendance popup */}
+      {renderAttendancePopup()}
+
       {/* Info Banner */}
       <div className="bg-[var(--green-light)] border border-[var(--green)] rounded-xl p-3 mb-4">
         <div className="flex items-start gap-2">
@@ -429,37 +556,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
           </div>
         ))}
       </div>
-
-      {/* Status message */}
-      {statusMsg && (
-        <div className={`mb-3 py-2 px-3 rounded-lg text-[0.75rem] font-medium flex items-center gap-2 ${statusMsg.type === 'success' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
-          {statusMsg.type === 'success' ? <CheckCircle size={14} /> : <XCircle size={14} />}
-          {statusMsg.text}
-          <button onClick={() => setStatusMsg(null)} className="ml-auto bg-transparent border-none cursor-pointer text-[inherit]">
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
-      {/* Identified person display (register mode) */}
-      {identified && kioskMode === 'register' && (
-        <div className="mb-4 p-5 rounded-2xl bg-[var(--green-light)] border-2 border-[var(--green)] text-center">
-          <div className="relative w-20 h-20 mx-auto mb-3">
-            <img src={identified.photo} alt="" className="w-full h-full rounded-2xl object-cover border-2 border-[var(--green)]" />
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[var(--green)] flex items-center justify-center">
-              <CheckCircle size={14} className="text-white" />
-            </div>
-          </div>
-          <div className="text-[1.25rem] font-bold text-[var(--green)]">{identified.staffName}</div>
-          <div className="text-[0.75rem] text-[var(--text-secondary)] font-mono mt-1">{identified.staffId}</div>
-          <div className="mt-3 flex items-center justify-center gap-3">
-            <span className={`px-3 py-1.5 rounded-lg text-[0.8125rem] font-bold ${identified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
-              {identified.punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'}
-            </span>
-            <span className="text-[1.375rem] font-bold text-[var(--text-primary)] font-mono">{identified.time}</span>
-          </div>
-        </div>
-      )}
 
       {/* Mode tabs */}
       <div className="flex gap-2 mb-4">
@@ -541,7 +637,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                           <div key={i} className={`border ${faceDetected ? 'border-[var(--green)]/70' : 'border-white/30'} transition-colors duration-200`} />
                         ))}
                       </div>
-                      <div className={`w-24 h-32 border-2 rounded-[50%] transition-all duration-300 ${faceDetected ? 'border-[var(--green)] shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'border-white/50'}`} />
+                      <div className={`w-24 h-32 border-2 rounded-[50%] transition-all duration-200 ${faceDetected ? 'border-[var(--green)] shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'border-white/50'}`} />
                     </div>
                   )}
                 </div>
@@ -550,7 +646,8 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                 </div>
                 <button
                   onClick={handleRegister}
-                  className="w-full py-2 rounded-lg text-[0.75rem] bg-[var(--green)] text-white border-none font-semibold cursor-pointer"
+                  disabled={!faceApiLoaded}
+                  className="w-full py-2 rounded-lg text-[0.75rem] bg-[var(--green)] text-white border-none font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isBn ? 'নিবন্ধন করুন' : 'Register'}
                 </button>
@@ -575,105 +672,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                 ? 'নিবন্ধিত স্টাফরা কিওস্ক মোডে মুখ দেখিয়ে চেক ইন করতে পারবেন'
                 : 'Registered staff can check in by showing face in kiosk mode'}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Attendance Mode - Camera 2/3 + Details 1/3 */}
-      {kioskMode === 'attendance' && (
-        <div className="rounded-2xl overflow-hidden border border-[var(--border)] bg-black mb-4" style={{ height: '60vh', minHeight: '24rem' }}>
-          {/* Camera feed - 2/3 */}
-          <div className="relative" style={{ height: '66.67%' }}>
-            <video ref={videoCallbackRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-            <canvas ref={canvasRef} className="hidden" />
-
-            {/* Close button */}
-            <button
-              onClick={closeAttendance}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 border border-white/20 flex items-center justify-center cursor-pointer text-white hover:bg-black/70 z-20"
-            >
-              <X size={20} />
-            </button>
-
-            {/* LIVE indicator */}
-            {camActive && !identified && (
-              <div className="absolute top-4 left-4 bg-black/60 rounded-lg px-3 py-1.5 text-white text-[0.6875rem] font-medium flex items-center gap-2 z-10">
-                <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
-                {isBn ? 'লাইভ' : 'LIVE'}
-              </div>
-            )}
-
-            {/* Face guide overlay */}
-            {camActive && !identified && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <div className="absolute inset-[10%] grid grid-cols-3 grid-rows-3 gap-0.5">
-                  {[...Array(9)].map((_, i) => (
-                    <div key={i} className={`border ${faceDetected ? 'border-[var(--green)]/60' : 'border-white/15'} transition-colors duration-300`} />
-                  ))}
-                </div>
-                <div className={`w-36 h-44 border-[3px] rounded-[50%] transition-all duration-300 ${faceDetected ? 'border-[var(--green)] shadow-[0_0_40px_rgba(34,197,94,0.4)]' : 'border-white/30'}`} />
-              </div>
-            )}
-
-            {/* Status text */}
-            {camActive && !identified && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
-                <div className={`px-4 py-2 rounded-full text-[0.8125rem] font-bold transition-colors duration-200 ${faceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/50 text-white/80'}`}>
-                  {faceDetected
-                    ? isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...'
-                    : isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid'}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Details - 1/3 */}
-          <div className="flex flex-col items-center justify-center px-6 relative" style={{ height: '33.33%', background: 'linear-gradient(to top, black, #111827, #1f2937)' }}>
-            {/* Identified person card */}
-            {identified && (
-              <div className="w-full max-w-lg animate-[slideUp_0.3s_ease-out]">
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 flex items-center gap-5 border border-white/10">
-                  <div className="relative shrink-0">
-                    <img src={identified.photo} alt="" className="w-20 h-20 rounded-2xl object-cover border-2 border-[var(--green)]" />
-                    <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-[var(--green)] flex items-center justify-center border-2 border-gray-900">
-                      <CheckCircle size={16} className="text-white" />
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[1.25rem] font-bold text-white truncate">{identified.staffName}</div>
-                    <div className="text-[0.875rem] text-white/50 font-mono mt-1">{identified.staffId}</div>
-                    <div className="mt-2">
-                      <span className={`inline-block px-3 py-1 rounded-lg text-[0.75rem] font-bold ${identified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
-                        {identified.punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-[2rem] font-bold text-white font-mono leading-none">{identified.time}</div>
-                    <div className="text-[0.6875rem] text-white/40 mt-1">{isBn ? 'পাঞ্চ সময়' : 'Punch Time'}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Success/Error message */}
-            {statusMsg && !identified && (
-              <div className={`px-4 py-2 rounded-lg text-[0.8125rem] font-bold ${statusMsg.type === 'success' ? 'bg-[var(--green)] text-white' : 'bg-[var(--red)] text-white'}`}>
-                {statusMsg.text}
-              </div>
-            )}
-
-            {/* Waiting text */}
-            {!identified && !statusMsg && (
-              <div className="text-center">
-                <div className="text-white/30 text-[0.875rem] font-medium">
-                  {isBn ? 'অপেক্ষা করুন...' : 'Waiting for face...'}
-                </div>
-                <div className="text-white/15 text-[0.6875rem] mt-1">
-                  {isBn ? 'বন্ধ করতে X চাপুন' : 'Press X to close'}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
