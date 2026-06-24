@@ -465,15 +465,15 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
           {toasts.map((toast) => (
             <div
               key={toast.id}
-              className={`pointer-events-auto max-w-[22rem] rounded-xl border shadow-lg backdrop-blur-md animate-[slideInRight_0.3s_ease-out] ${
+              className={`pointer-events-auto max-w-[22rem] rounded-2xl border shadow-2xl backdrop-blur-xl animate-[slideInRight_0.3s_ease-out] ${
                 toast.type === 'success'
-                  ? 'bg-[var(--green-light)]/95 border-[var(--green)]/30 text-[var(--green)]'
-                  : 'bg-[var(--red-light)]/95 border-[var(--red)]/30 text-[var(--red)]'
+                  ? 'bg-[var(--green-light)]/80 border-[var(--green)]/40 text-[var(--green)] shadow-[var(--green)]/10'
+                  : 'bg-[var(--red-light)]/80 border-[var(--red)]/40 text-[var(--red)] shadow-[var(--red)]/10'
               }`}
             >
-              <div className="flex items-center gap-3 p-3">
+              <div className="flex items-center gap-3 p-3.5">
                 {toast.photo && (
-                  <img src={toast.photo} alt="" className="w-10 h-10 rounded-lg object-cover border border-[var(--green)]/30 shrink-0" />
+                  <img src={toast.photo} alt="" className="w-11 h-11 rounded-xl object-cover border-2 border-[var(--green)]/40 shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="text-[0.8125rem] font-bold flex items-center gap-1.5">
@@ -487,9 +487,9 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                 </div>
                 <button
                   onClick={() => removeToast(toast.id)}
-                  className="shrink-0 bg-transparent border-none cursor-pointer opacity-50 hover:opacity-100 transition-opacity"
+                  className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center bg-white/20 border-none cursor-pointer opacity-60 hover:opacity-100 hover:bg-white/30 transition-all"
                 >
-                  <X size={14} />
+                  <X size={12} />
                 </button>
               </div>
             </div>
