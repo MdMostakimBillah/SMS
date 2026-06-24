@@ -50,18 +50,6 @@ function playSuccessSound() {
   } catch {}
 }
 
-interface Toast {
-  id: number
-  type: 'success' | 'error'
-  text: string
-  name?: string
-  photo?: string
-  punchType?: 'in' | 'out'
-  time?: string
-}
-
-let toastId = 0
-
 export default function KioskMode({ isBn, date }: { isBn: boolean; date: string }) {
   const { teachers, attendance } = useTeacherStore()
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
@@ -74,7 +62,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const [search, setSearch] = useState('')
   const [camActive, setCamActive] = useState(false)
   const [faceDetected, setFaceDetected] = useState(false)
-  const [toasts, setToasts] = useState<Toast[]>([])
   const [, setDetecting] = useState(false)
   const [identified, setIdentified] = useState<{
     staffId: string; staffName: string; photo: string; punchType: 'in' | 'out'; time: string
@@ -89,16 +76,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const cooldownRef = useRef<Record<string, number>>({})
   const regDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const regStableCountRef = useRef(0)
-
-  const addToast = (toast: Omit<Toast, 'id'>) => {
-    const id = ++toastId
-    setToasts((prev) => [...prev, { ...toast, id }])
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000)
-  }
-
-  const removeToast = (id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id))
-  }
 
   const videoCallbackRef = useCallback((node: HTMLVideoElement | null) => {
     videoRef.current = node
@@ -121,9 +98,8 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       streamRef.current = stream
       setCapturedPhoto(null)
       setCamActive(true)
-    } catch {
-      addToast({ type: 'error', text: isBn ? 'ক্যামেরা খুলতে ব্যর্থ। অনুমতি দিন।' : 'Failed to open camera. Allow permission.' })
-    }
+    } catch {}
+
   }
 
   const stopCamera = () => {
@@ -195,7 +171,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     const updated = [...registeredFaces.filter((f) => f.staffId !== teacher.id), entry]
     setRegisteredFaces(updated)
     saveFaces(updated)
-    addToast({ type: 'success', text: isBn ? `${entry.staffName} নিবন্ধন সম্পন্ন!` : `${entry.staffName} registered!` })
     setSelectedStaff('')
     setCapturedPhoto(null)
     stopCamera()
@@ -205,10 +180,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     if (!selectedStaff || !videoRef.current) return
     if (!faceApiLoaded || !isVideoReady(videoRef.current)) return
     const result = await detectFace(videoRef.current, true)
-    if (!result) {
-      addToast({ type: 'error', text: isBn ? 'মুখ সনাক্ত হয়নি। আবার চেষ্টা করুন।' : 'No face detected. Try again.' })
-      return
-    }
+    if (!result) return
     saveRegistration(result.descriptor)
   }
 
@@ -216,7 +188,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     const updated = registeredFaces.filter((f) => f.staffId !== staffId)
     setRegisteredFaces(updated)
     saveFaces(updated)
-    addToast({ type: 'success', text: isBn ? 'নিবন্ধন মুছে ফেলা হয়েছে' : 'Registration deleted' })
   }
 
   const handlePunch = (staffId: string, staffName: string, photo: string) => {
@@ -238,14 +209,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     useTeacherStore.setState({ attendance: updatedAttendance })
     setIdentified({ staffId, staffName, photo, punchType, time: timeStr })
     identifiedRef.current = true
-    addToast({
-      type: 'success',
-      text: `${staffName} ${punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'} ${timeStr}`,
-      name: staffName,
-      photo,
-      punchType,
-      time: timeStr,
-    })
     playSuccessSound()
     cooldownRef.current[staffId] = Date.now()
     setTimeout(() => {
@@ -282,7 +245,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
             handlePunch(match.staffId, match.staffName, match.photo)
             setTimeout(() => startDetectLoop(), 500)
           } else {
-            addToast({ type: 'error', text: isBn ? 'অপরিচিত মুখ' : 'Unrecognized face' })
             setTimeout(() => startDetectLoop(), 1500)
           }
         }
@@ -457,43 +419,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
 
   return (
     <>
-      {/* Toast notifications - top right corner */}
-      {createPortal(
-        <div className="fixed top-3 right-3 z-[700] flex flex-col gap-1.5 pointer-events-none">
-          {toasts.map((toast) => (
-            <div
-              key={toast.id}
-              className={`pointer-events-auto max-w-[16rem] rounded-xl border shadow-xl backdrop-blur-xl animate-[slideInRight_0.3s_ease-out] ${
-                toast.type === 'success'
-                  ? 'bg-[var(--green-light)]/85 border-[var(--green)]/30 text-[var(--green)]'
-                  : 'bg-[var(--red-light)]/85 border-[var(--red)]/30 text-[var(--red)]'
-              }`}
-            >
-              <div className="flex items-center gap-2 px-3 py-2">
-                {toast.photo && (
-                  <img src={toast.photo} alt="" className="w-8 h-8 rounded-lg object-cover border border-[var(--green)]/40 shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="text-[0.6875rem] font-semibold flex items-center gap-1">
-                    {toast.type === 'success' ? <CheckCircle size={11} /> : <XCircle size={11} />}
-                    {toast.text}
-                  </div>
-                  {toast.time && (
-                    <div className="text-[0.5625rem] font-mono mt-0.5 opacity-60">{toast.time}</div>
-                  )}
-                </div>
-                <button
-                  onClick={() => removeToast(toast.id)}
-                  className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center bg-white/20 border-none cursor-pointer opacity-50 hover:opacity-100 transition-all"
-                >
-                  <X size={10} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>,
-        document.body
-      )}
 
       {/* Attendance popup */}
       {renderAttendancePopup()}
