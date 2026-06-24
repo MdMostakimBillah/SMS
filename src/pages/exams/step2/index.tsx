@@ -17,7 +17,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, eachDayOfInterval, isBefore, isSameDay, startOfDay } from 'date-fns'
 import { selectCls } from '@/lib/styles'
 import { generateScheduleReportHTML } from './pdfTemplates/scheduleReport'
 import AdmitCardsTab from './AdmitCardsTab'
@@ -161,23 +161,20 @@ export default function Step2Schedule() {
 
   const examDayCount = useMemo(() => {
     if (!calendarRange) return 0
-    const { eachDayOfInterval } = require('date-fns')
     return eachDayOfInterval({ start: calendarRange.start, end: calendarRange.end }).length
   }, [calendarRange])
 
   const completedDays = useMemo(() => {
-    const { isBefore, startOfDay, parseISO: p } = require('date-fns')
     return filteredRoutines.filter((r) => {
-      const examDate = startOfDay(p(r.date))
+      const examDate = startOfDay(parseISO(r.date))
       const today = startOfDay(new Date())
       return isBefore(examDate, today)
     }).length
   }, [filteredRoutines])
 
   const upcomingDays = useMemo(() => {
-    const { isBefore, isSameDay, startOfDay, parseISO: p } = require('date-fns')
     return filteredRoutines.filter((r) => {
-      const examDate = startOfDay(p(r.date))
+      const examDate = startOfDay(parseISO(r.date))
       const today = startOfDay(new Date())
       return !isBefore(examDate, today) && !isSameDay(examDate, today)
     }).length
