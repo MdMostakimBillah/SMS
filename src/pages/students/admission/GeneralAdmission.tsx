@@ -9,6 +9,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import type { StudentAdmission } from './types'
 import { generateA4HTML } from './a4Template'
 import QRCode from 'qrcode'
+import { RELIGION_OPTIONS, DISTRICT_OPTIONS } from '@/lib/constants'
 
 type FormData = Omit<StudentAdmission, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'approvedAt'>
 
@@ -489,13 +490,13 @@ export default function GeneralAdmission() {
           </div>
           <div className={`${g(3)} mb-[0.625rem]`}>
             <FormField labelEn="Blood Group" labelBn="রক্তের গ্রুপ" value={form.bloodGroup} onChange={(v) => set('bloodGroup', v)} required isBn={isBn} options={['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']} error={hasError('bloodGroup')} onBlur={() => touch('bloodGroup')} />
-            <FormField labelEn="Religion" labelBn="ধর্ম" value={form.religion} onChange={(v) => set('religion', v)} required isBn={isBn} options={['Islam / ইসলাম', 'Hinduism / হিন্দু', 'Christianity / খ্রিস্টান', 'Buddhism / বৌদ্ধ', 'Other / অন্যান্য']} error={hasError('religion')} onBlur={() => touch('religion')} />
+            <FormField labelEn="Religion" labelBn="ধর্ম" value={form.religion} onChange={(v) => set('religion', v)} required isBn={isBn} options={RELIGION_OPTIONS.map(o => o.value)} error={hasError('religion')} onBlur={() => touch('religion')} />
             <FormField labelEn="Nationality" labelBn="জাতীয়তা" value={form.nationality} onChange={(v) => set('nationality', v)} required isBn={isBn} />
           </div>
           <div className={`${g(3)} mb-[0.625rem]`}>
             <FormField labelEn="Mobile (SMS)" labelBn="মোবাইল (SMS)" value={form.phone} onChange={(v) => set('phone', v)} type="tel" required isBn={isBn} error={hasError('phone')} onBlur={() => touch('phone')} />
             <FormField labelEn="Email" labelBn="ইমেইল" value={form.email} onChange={(v) => set('email', v)} type="email" isBn={isBn} />
-            <FormField labelEn="District" labelBn="জেলা" value={form.district} onChange={(v) => set('district', v)} required isBn={isBn} options={['Dhaka', 'Chittagong', 'Sylhet', 'Rajshahi', 'Khulna', 'Barisal', 'Rangpur', 'Mymensingh', 'Other']} error={hasError('district')} onBlur={() => touch('district')} />
+            <FormField labelEn="District" labelBn="জেলা" value={form.district} onChange={(v) => set('district', v)} required isBn={isBn} options={DISTRICT_OPTIONS} error={hasError('district')} onBlur={() => touch('district')} />
           </div>
           <div className={g(2)}>
             <FormField labelEn="Present Address" labelBn="বর্তমান ঠিকানা" value={form.presentAddress} onChange={(v) => set('presentAddress', v)} required isBn={isBn} error={hasError('presentAddress')} onBlur={() => touch('presentAddress')} />

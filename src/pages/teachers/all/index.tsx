@@ -32,9 +32,9 @@ import { generateTeacherListPDF } from '@/pages/teachers/listPdfTemplate'
 import type { TeacherListPDFOptions } from '@/pages/teachers/listPdfTemplate'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { BLOOD_GROUPS } from '@/lib/constants'
 
 const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
-const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
 export default function AllTeachersPage() {
   const navigate = useNavigate()

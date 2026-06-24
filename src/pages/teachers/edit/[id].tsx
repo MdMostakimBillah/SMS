@@ -5,9 +5,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { TeacherStatus } from '@/pages/teachers/types'
-
-const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-const CATEGORIES = ['Teacher', 'Staff', 'Employee', 'Admin', 'Librarian', 'Accountant']
+import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
 
 // ─── FormField (outside parent component — fixes input focus loss) ───────────
 interface FieldProps {
@@ -489,7 +487,7 @@ export default function EditTeacherPage() {
             value={category}
             onChange={setCategory}
             isBn={isBn}
-            options={CATEGORIES}
+            options={TEACHER_CATEGORIES}
           />
           <FormField labelEn="Qualification" labelBn="যোগ্যতা" value={qualification} onChange={setQualification} isBn={isBn} />
         </div>

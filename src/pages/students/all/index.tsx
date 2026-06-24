@@ -34,9 +34,9 @@ import { generateListPDF } from '@/pages/students/admission/listPdfTemplate'
 import { generateA4HTML } from '@/pages/students/admission/a4Template'
 import type { ListPDFOptions } from '@/pages/students/admission/listPdfTemplate'
 import type { StudentAdmission } from '@/pages/students/admission/types'
+import { BLOOD_GROUPS } from '@/lib/constants'
 
 const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
-const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
 export default function AllStudentsPage() {
   const navigate = useNavigate()

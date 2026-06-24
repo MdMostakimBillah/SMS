@@ -7,9 +7,7 @@ import { useTabSlider } from '@/hooks/useTabSlider'
 import { useNavChain } from '@/hooks/useNavChain'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
-
-const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-const CATEGORIES = ['Teacher', 'Staff', 'Employee', 'Admin', 'Librarian', 'Accountant']
+import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
 
 const inputBase = 'w-full py-[0.625rem] px-3 rounded-[0.5rem] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none transition-colors duration-200 box-border'
 const inputNormal = inputBase + ' border border-[var(--border)] focus:border-[var(--brand)]'
@@ -539,7 +537,7 @@ export default function AddTeacherPage() {
                   </select>
                 )}
               </div>
-              <FormField labelEn="Category" labelBn="ক্যাটাগরি" value={form.category} onChange={(v) => setField('category', v)} isBn={isBn} options={CATEGORIES} />
+              <FormField labelEn="Category" labelBn="ক্যাটাগরি" value={form.category} onChange={(v) => setField('category', v)} isBn={isBn} options={TEACHER_CATEGORIES} />
               <FormField labelEn="Qualification" labelBn="যোগ্যতা" value={form.qualification} onChange={(v) => setField('qualification', v)} isBn={isBn} />
             </div>
             <div className={g(3)}>
