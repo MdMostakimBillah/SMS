@@ -20,6 +20,7 @@ import {
   Pencil,
 } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
+import { useNavChain } from '@/hooks/useNavChain'
 import type { ClassSection, ClassInfo, InstitutionSettings } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
 import type { StudentAdmission } from '@/pages/students/admission/types'
@@ -60,6 +61,7 @@ export default function ClassesTab({
   isMobile,
 }: ClassesTabProps) {
   const navigate = useNavigate()
+  const { pushToChain, setRedirectTimestamp } = useNavChain()
   const [expandedClass, setExpandedClass] = useState<string | null>(null)
   const [showAddClass, setShowAddClass] = useState(false)
   const [newClassName, setNewClassName] = useState('')
@@ -1588,7 +1590,8 @@ export default function ClassesTab({
                   <button
                     onClick={() => {
                       setShowSubjectModal(null)
-                      localStorage.setItem('edutech_navChain', JSON.stringify([{ path: '/classes', label: isBn ? 'শ্রেণী ব্যবস্থাপনা' : 'Classes Management' }]))
+                      pushToChain({ path: '/classes', label: isBn ? 'শ্রেণী ব্যবস্থাপনা' : 'Classes Management' })
+                      setRedirectTimestamp()
                       navigate('/teachers/subjects')
                     }}
                     style={{

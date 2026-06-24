@@ -5,12 +5,16 @@ import { ArrowLeft, Plus, AlertTriangle, Briefcase, Edit2, Trash2 } from 'lucide
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useScrollLock } from '@/hooks/useScrollLock'
+import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import type { Designation } from '@/pages/teachers/types'
 
 export default function DesignationsPage() {
   const navigate = useNavigate()
   const isBn = useBn()
   const { designations, teachers, addDesignation, updateDesignation, deleteDesignation } = useTeacherStore()
+
+  const { popFromChain, getChain } = useNavChain()
+  useNavChainClearOnMount()
 
   const [showAdd, setShowAdd] = useState(false)
   const [editD, setEditD] = useState<Designation | null>(null)
@@ -149,10 +153,8 @@ export default function DesignationsPage() {
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
           onClick={() => {
-            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
-            if (chain.length > 0) {
-              const prev = chain[chain.length - 1]
-              localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, -1)))
+            const prev = popFromChain()
+            if (prev) {
               navigate(prev.path)
             } else {
               navigate('/teachers')
@@ -166,7 +168,7 @@ export default function DesignationsPage() {
         <div className="flex-1">
           {/* Breadcrumb */}
           {(() => {
-            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+            const chain = getChain()
             if (chain.length === 0) return null
             return (
               <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1 flex-wrap">
@@ -175,7 +177,6 @@ export default function DesignationsPage() {
                     {idx > 0 && <span className="text-[var(--text-muted)]">›</span>}
                     <button
                       onClick={() => {
-                        localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, idx + 1)))
                         navigate(item.path)
                       }}
                       className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"

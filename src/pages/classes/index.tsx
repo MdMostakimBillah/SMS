@@ -29,6 +29,7 @@ import {
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -95,6 +96,9 @@ export default function ClassesPage() {
     setTimeout(() => setSaved(false), 2000)
   }
 
+  const { popFromChain, getChain } = useNavChain()
+  useNavChainClearOnMount()
+
   const inputClass =
     'w-full py-[0.5625rem] px-[0.6875rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none'
   const labelClass = 'text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem] block'
@@ -104,37 +108,24 @@ export default function ClassesPage() {
     <div>
       {/* Header */}
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
-        {(() => {
-          const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
-          if (chain.length > 0) {
-            return (
-              <button
-                onClick={() => {
-                  const prev = chain[chain.length - 1]
-                  localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, -1)))
-                  navigate(prev.path)
-                }}
-                className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
-              >
-                <ArrowLeft size={14} />
-                {isBn ? 'ফিরে যান' : 'Back'}
-              </button>
-            )
-          }
-          return (
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
-            >
-              <ArrowLeft size={14} />
-              {isBn ? 'ফিরে যান' : 'Back'}
-            </button>
-          )
-        })()}
+        <button
+          onClick={() => {
+            const prev = popFromChain()
+            if (prev) {
+              navigate(prev.path)
+            } else {
+              navigate('/')
+            }
+          }}
+          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
+        >
+          <ArrowLeft size={14} />
+          {isBn ? 'ফিরে যান' : 'Back'}
+        </button>
         <div className="flex-1">
           {/* Breadcrumb — only when redirected */}
           {(() => {
-            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+            const chain = getChain()
             if (chain.length === 0) return null
             return (
               <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1 flex-wrap">
@@ -143,7 +134,6 @@ export default function ClassesPage() {
                     {idx > 0 && <span className="text-[var(--text-muted)]">›</span>}
                     <button
                       onClick={() => {
-                        localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, idx + 1)))
                         navigate(item.path)
                       }}
                       className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"

@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Plus, AlertTriangle, BookOpen, Filter, X, Edit2, Trash2, Building2 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTeacherStore } from '@/store/teacherStore'
-import { useScrollLock } from '@/hooks/useScrollLock'
+import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import type { Subject } from '@/pages/teachers/types'
 
 const sel =
@@ -15,6 +15,9 @@ export default function SubjectsPage() {
   const isBn = useBn()
   const { subjects, departments, teachers, addSubject, updateSubject, deleteSubject } = useTeacherStore()
 
+  const { pushToChain, popFromChain, getChain, setRedirectTimestamp } = useNavChain()
+  useNavChainClearOnMount()
+
   const [fDept, setFDept] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [editS, setEditS] = useState<Subject | null>(null)
@@ -22,17 +25,6 @@ export default function SubjectsPage() {
   const [newName, setNewName] = useState('')
   const [newNameBn, setNewNameBn] = useState('')
   const [newDeptIds, setNewDeptIds] = useState<string[]>([])
-  useScrollLock(showAdd || editS !== null || delConfirm !== null)
-
-  // Clear nav chain if user navigated directly (not via redirect button)
-  useEffect(() => {
-    const lastRedirect = sessionStorage.getItem('edutech_lastRedirect')
-    const now = Date.now()
-    if (!lastRedirect || now - Number(lastRedirect) > 30000) {
-      localStorage.removeItem('edutech_navChain')
-    }
-  }, [])
-
   const filtered = useMemo(
     () => (fDept ? subjects.filter((s) => s.departmentIds?.includes(fDept) || s.departmentId === fDept) : subjects),
     [subjects, fDept]
@@ -209,10 +201,8 @@ export default function SubjectsPage() {
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
           onClick={() => {
-            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
-            if (chain.length > 0) {
-              const prev = chain[chain.length - 1]
-              localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, -1)))
+            const prev = popFromChain()
+            if (prev) {
               navigate(prev.path)
             } else {
               navigate('/teachers')
@@ -226,7 +216,7 @@ export default function SubjectsPage() {
         <div className="flex-1">
           {/* Breadcrumb */}
           {(() => {
-            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+            const chain = getChain()
             if (chain.length === 0) return null
             return (
               <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1 flex-wrap">
@@ -235,7 +225,6 @@ export default function SubjectsPage() {
                     {idx > 0 && <span className="text-[var(--text-muted)]">›</span>}
                     <button
                       onClick={() => {
-                        localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, idx + 1)))
                         navigate(item.path)
                       }}
                       className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
@@ -271,10 +260,8 @@ export default function SubjectsPage() {
         {departments.length === 0 && (
           <button
             onClick={() => {
-              const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
-              chain.push({ path: '/teachers/subjects', label: isBn ? 'বিষয়' : 'Subjects' })
-              localStorage.setItem('edutech_navChain', JSON.stringify(chain))
-              sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
+              pushToChain({ path: '/teachers/subjects', label: isBn ? 'বিষয়' : 'Subjects' })
+              setRedirectTimestamp()
               navigate('/teachers/departments')
             }}
             className="flex items-center gap-[0.3125rem] py-2 px-[0.875rem] rounded-[0.5625rem] bg-[var(--brand)] text-white text-[0.8125rem] cursor-pointer font-[inherit] font-medium"

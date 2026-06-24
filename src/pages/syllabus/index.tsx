@@ -26,6 +26,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useSyllabusStore } from '@/store/syllabusStore'
 import type { SyllabusEntry, SyllabusChapter, SyllabusTopic } from '@/store/syllabusStore'
 import { generateSyllabusPDF } from './pdfTemplate'
+import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 
 const btnPri =
   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all'
@@ -147,6 +148,9 @@ export default function SyllabusPage() {
       return next
     })
   }
+
+  const { popFromChain, getChain, pushToChain, setRedirectTimestamp } = useNavChain()
+  useNavChainClearOnMount()
 
   // Navigation handlers
   const selectClass = (classNum: string) => {
@@ -390,37 +394,33 @@ export default function SyllabusPage() {
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
         <div className="flex items-center gap-3">
           {(() => {
-            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
-            if (chain.length > 0) {
-              return (
-                <button
-                  onClick={() => {
-                    const prev = chain[chain.length - 1]
-                    localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, -1)))
-                    navigate(prev.path)
-                  }}
-                  className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                >
-                  <ArrowLeft size={16} />
-                </button>
-              )
+            if (view === 'home') {
+              const prev = popFromChain()
+              if (prev) {
+                return (
+                  <button
+                    onClick={() => navigate(prev.path)}
+                    className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  >
+                    <ArrowLeft size={16} />
+                  </button>
+                )
+              }
+              return null
             }
-            if (view !== 'home') {
-              return (
-                <button
-                  onClick={goBack}
-                  className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                >
-                  <ArrowLeft size={16} />
-                </button>
-              )
-            }
-            return null
+            return (
+              <button
+                onClick={goBack}
+                className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              >
+                <ArrowLeft size={16} />
+              </button>
+            )
           })()}
           <div>
             {/* Breadcrumb — only when redirected */}
             {(() => {
-              const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+              const chain = getChain()
               if (chain.length === 0) return null
               return (
                 <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1 flex-wrap">
@@ -429,7 +429,6 @@ export default function SyllabusPage() {
                       {idx > 0 && <span className="text-[var(--text-muted)]">›</span>}
                       <button
                         onClick={() => {
-                          localStorage.setItem('edutech_navChain', JSON.stringify(chain.slice(0, idx + 1)))
                           navigate(item.path)
                         }}
                         className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
@@ -466,10 +465,9 @@ export default function SyllabusPage() {
         {view === 'home' && classNumbers.length === 0 && (
           <button
             onClick={() => {
-              const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
-              chain.push({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
-              localStorage.setItem('edutech_navChain', JSON.stringify(chain))
-              sessionStorage.setItem('edutech_lastRedirect', String(Date.now())); navigate('/classes')
+              pushToChain({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+              setRedirectTimestamp()
+              navigate('/classes')
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
           >
@@ -517,10 +515,8 @@ export default function SyllabusPage() {
                   </p>
                   <button
                     onClick={() => {
-                      const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
-                      chain.push({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
-                      localStorage.setItem('edutech_navChain', JSON.stringify(chain))
-                      sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
+                      pushToChain({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+                      setRedirectTimestamp()
                       navigate('/classes')
                     }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
@@ -573,10 +569,8 @@ export default function SyllabusPage() {
                   </p>
                   <button
                     onClick={() => {
-                      const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
-                      chain.push({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
-                      localStorage.setItem('edutech_navChain', JSON.stringify(chain))
-                      sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
+                      pushToChain({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+                      setRedirectTimestamp()
                       navigate('/classes')
                     }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
@@ -629,16 +623,14 @@ export default function SyllabusPage() {
                   </p>
                   <button
                     onClick={() => {
-                      const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
-                      chain.push({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
-                      localStorage.setItem('edutech_navChain', JSON.stringify(chain))
-                      sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
-                      navigate('/teachers/subjects')
+                      pushToChain({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+                      setRedirectTimestamp()
+                      navigate('/classes')
                     }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
                   >
-                    <BookOpen size={14} />
-                    {isBn ? 'বিষয় তৈরি করুন' : 'Create Subjects'}
+                    <Settings size={14} />
+                    {isBn ? 'শ্রেণি ব্যবস্থাপনায় যান' : 'Go to Class Management'}
                     <ArrowRight size={14} />
                   </button>
                 </div>

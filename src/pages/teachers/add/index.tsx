@@ -4,6 +4,7 @@ import { CheckCircle, Camera, Clock, Users, Send, Briefcase, X, IdCard, MessageS
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { useNavChain } from '@/hooks/useNavChain'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 
@@ -148,6 +149,8 @@ export default function AddTeacherPage() {
     getContainer: (slider) => slider.parentElement,
     useScrollLeft: false,
   })
+
+  const { pushToChain, setRedirectTimestamp } = useNavChain()
 
   const toggleSubject = (id: string) => {
     setArr('subjectIds', form.subjectIds.includes(id) ? form.subjectIds.filter((x) => x !== id) : [...form.subjectIds, id])
@@ -506,7 +509,7 @@ export default function AddTeacherPage() {
                 {departments.length === 0 ? (
                   <div className="flex items-center gap-2">
                     <input value="" disabled placeholder={isBn ? 'কোনো বিভাগ নেই' : 'No departments'} className={inputNormal + ' opacity-60'} style={{ flex: 1 }} />
-                    <button onClick={() => { localStorage.setItem('edutech_navChain', JSON.stringify([{ path: '/teachers/add', label: isBn ? 'শিক্ষক যোগ' : 'Add Teacher' }])); navigate('/teachers/departments') }}
+                    <button onClick={() => { pushToChain({ path: '/teachers/add', label: isBn ? 'শিক্ষক যোগ' : 'Add Teacher' }); setRedirectTimestamp(); navigate('/teachers/departments') }}
                       className="py-[0.5rem] px-[0.75rem] rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none whitespace-nowrap">
                       {isBn ? 'বিভাগ তৈরি করুন \u2192' : 'Create Dept \u2192'}
                     </button>
@@ -524,7 +527,7 @@ export default function AddTeacherPage() {
                 {designations.length === 0 ? (
                   <div className="flex items-center gap-2">
                     <input value="" disabled placeholder={isBn ? 'কোনো পদবি নেই' : 'No designations'} className={inputNormal + ' opacity-60'} style={{ flex: 1 }} />
-                    <button onClick={() => { localStorage.setItem('edutech_navChain', JSON.stringify([{ path: '/teachers/add', label: isBn ? 'শিক্ষক যোগ' : 'Add Teacher' }])); navigate('/teachers/designations') }}
+                    <button onClick={() => { pushToChain({ path: '/teachers/add', label: isBn ? 'শিক্ষক যোগ' : 'Add Teacher' }); setRedirectTimestamp(); navigate('/teachers/designations') }}
                       className="py-[0.5rem] px-[0.75rem] rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none whitespace-nowrap">
                       {isBn ? 'পদবি তৈরি করুন \u2192' : 'Create Designation \u2192'}
                     </button>
