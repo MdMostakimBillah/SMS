@@ -8,47 +8,11 @@ import { useNavChain } from '@/hooks/useNavChain'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
+import { FormField } from '@/components/ui/FormField'
 
-const inputBase = 'w-full py-[0.625rem] px-3 rounded-[0.5rem] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none transition-colors duration-200 box-border'
-const inputNormal = inputBase + ' border border-[var(--border)] focus:border-[var(--brand)]'
-const inputError = inputBase + ' border border-[var(--red)] focus:border-[var(--red)]'
-
-function FormField({ labelEn, labelBn, value, onChange, type = 'text', required = false, isBn, options, error, onBlur }: {
-  labelEn: string; labelBn: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean; isBn: boolean; options?: string[]; error?: boolean; onBlur?: () => void
-}) {
-  const cls = error ? inputError : inputNormal
-  if (options) {
-    return (
-      <div className="mb-[0.625rem]">
-        <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
-          {isBn ? labelBn : labelEn}{required && <span className="text-[var(--red)] ml-0.5">*</span>}
-        </label>
-        <select value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} required={required} className={cls}>
-          <option value="">{isBn ? '-- নির্বাচন করুন --' : '-- Select --'}</option>
-          {options.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
-      </div>
-    )
-  }
-  if (type === 'date') {
-    return (
-      <div className="mb-[0.625rem]">
-        <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
-          {isBn ? labelBn : labelEn}{required && <span className="text-[var(--red)] ml-0.5">*</span>}
-        </label>
-        <input type="date" value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} required={required} className={cls} />
-      </div>
-    )
-  }
-  return (
-    <div className="mb-[0.625rem]">
-      <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
-        {isBn ? labelBn : labelEn}{required && <span className="text-[var(--red)] ml-0.5">*</span>}
-      </label>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} required={required} className={cls} />
-    </div>
-  )
-}
+const INPUT_BASE = 'w-full py-[0.625rem] px-3 rounded-[0.5rem] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none transition-colors duration-200 box-border'
+const inputNormal = `${INPUT_BASE} border border-[var(--border)] focus:border-[var(--brand)]`
+const inputError = `${INPUT_BASE} border border-[var(--red)] focus:border-[var(--red)]`
 
 const tabs = [
   { key: 'personal', icon: Users, labelBn: 'ব্যক্তিগত', labelEn: 'Personal' },

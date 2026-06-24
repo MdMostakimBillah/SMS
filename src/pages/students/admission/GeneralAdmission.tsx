@@ -11,6 +11,7 @@ import type { StudentAdmission } from './types'
 import { generateA4HTML } from './a4Template'
 import QRCode from 'qrcode'
 import { RELIGION_OPTIONS, DISTRICT_OPTIONS } from '@/lib/constants'
+import { FormField } from '@/components/ui/FormField'
 
 type FormData = Omit<StudentAdmission, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'approvedAt'>
 
@@ -67,47 +68,6 @@ async function compressImage(file: File): Promise<string> {
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')) }
     img.src = url
   })
-}
-
-const inputBase = 'w-full py-[0.625rem] px-3 rounded-[0.5rem] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none transition-colors duration-200 box-border'
-const inputNormal = `${inputBase} border border-[var(--border)] focus:border-[var(--brand)]`
-const inputError = `${inputBase} border border-[var(--red)] focus:border-[var(--red)]`
-
-function FormField({ labelEn, labelBn, value, onChange, type = 'text', required = false, isBn, options, error, onBlur }: {
-  labelEn: string; labelBn: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean; isBn: boolean; options?: string[]; error?: boolean; onBlur?: () => void
-}) {
-  const cls = error ? inputError : inputNormal
-  if (options && options.length > 0) {
-    return (
-      <div className="mb-[0.625rem]">
-        <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
-          {isBn ? labelBn : labelEn}{required && <span className="text-[var(--red)] ml-0.5">*</span>}
-        </label>
-        <select value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} required={required} className={cls}>
-          <option value="">{isBn ? '-- নির্বাচন করুন --' : '-- Select --'}</option>
-          {options.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
-      </div>
-    )
-  }
-  if (type === 'date') {
-    return (
-      <div className="mb-[0.625rem]">
-        <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
-          {isBn ? labelBn : labelEn}{required && <span className="text-[var(--red)] ml-0.5">*</span>}
-        </label>
-        <input type="date" value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} required={required} className={cls} />
-      </div>
-    )
-  }
-  return (
-    <div className="mb-[0.625rem]">
-      <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
-        {isBn ? labelBn : labelEn}{required && <span className="text-[var(--red)] ml-0.5">*</span>}
-      </label>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} required={required} className={cls} />
-    </div>
-  )
 }
 
 const tabs = [
