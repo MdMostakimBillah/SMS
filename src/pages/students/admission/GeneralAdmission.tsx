@@ -3,6 +3,7 @@ import { CheckCircle, User, GraduationCap, ShieldCheck, IdCard, Camera, X, Downl
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { useFormValidation } from '@/hooks/useFormValidation'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -116,27 +117,14 @@ const tabs = [
 ] as const
 type TabKey = (typeof tabs)[number]['key']
 
-function validateTab(form: FormData, tab: TabKey): Set<string> {
-  const e = new Set<string>()
-  if (tab === 'personal') {
-    if (!form.nameEn) e.add('nameEn'); if (!form.nameBn) e.add('nameBn')
-    if (!form.dob) e.add('dob'); if (!form.gender) e.add('gender')
-    if (!form.bloodGroup) e.add('bloodGroup'); if (!form.religion) e.add('religion')
-    if (!form.phone) e.add('phone'); if (!form.district) e.add('district')
-    if (!form.presentAddress) e.add('presentAddress'); if (!form.permanentAddress) e.add('permanentAddress')
-  }
-  if (tab === 'academic') {
-    if (!form.class) e.add('class'); if (!form.section) e.add('section')
-    if (!form.roll) e.add('roll'); if (!form.academicYear) e.add('academicYear')
-    if (!form.admissionDate) e.add('admissionDate')
-  }
-  if (tab === 'guardian') {
-    if (!form.fatherNameEn) e.add('fatherNameEn'); if (!form.fatherNameBn) e.add('fatherNameBn')
-    if (!form.fatherOccupation) e.add('fatherOccupation'); if (!form.fatherPhone) e.add('fatherPhone')
-    if (!form.motherNameEn) e.add('motherNameEn'); if (!form.motherNameBn) e.add('motherNameBn')
-    if (!form.motherOccupation) e.add('motherOccupation'); if (!form.motherPhone) e.add('motherPhone')
-  }
-  return e
+const PERSONAL_REQUIRED: (keyof FormData)[] = ['nameEn', 'nameBn', 'dob', 'gender', 'bloodGroup', 'religion', 'phone', 'district', 'presentAddress', 'permanentAddress']
+const ACADEMIC_REQUIRED: (keyof FormData)[] = ['class', 'section', 'roll', 'academicYear', 'admissionDate']
+const GUARDIAN_REQUIRED: (keyof FormData)[] = ['fatherNameEn', 'fatherNameBn', 'fatherOccupation', 'fatherPhone', 'motherNameEn', 'motherNameBn', 'motherOccupation', 'motherPhone']
+
+const REQUIRED_BY_TAB: Record<TabKey, (keyof FormData)[]> = {
+  personal: PERSONAL_REQUIRED,
+  academic: ACADEMIC_REQUIRED,
+  guardian: GUARDIAN_REQUIRED,
 }
 
 function SummaryRow({ labelBn, labelEn, value, isBn }: { labelBn: string; labelEn: string; value: string; isBn: boolean }) {
@@ -174,8 +162,9 @@ export default function GeneralAdmission() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [activeTab, setActiveTab] = useState<TabKey>('personal')
   const [showReview, setShowReview] = useState(false)
-  const [tabErrors, setTabErrors] = useState<Record<TabKey, Set<string>>>({ personal: new Set(), academic: new Set(), guardian: new Set() })
-  const [touched, setTouched] = useState<Set<string>>(new Set())
+
+  const [{}, { touch, validate, hasError, reset }] = useFormValidation<FormData>(['personal', 'academic', 'guardian'])
+
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
@@ -191,20 +180,19 @@ export default function GeneralAdmission() {
     setForm((p) => ({ ...p, [key]: val }))
   }, [])
 
-  const touch = useCallback((key: string) => {
-    setTouched((prev) => { const next = new Set(prev); next.add(key); return next })
-  }, [])
-
-  const hasError = useCallback((key: string) => {
-    return touched.has(key) && tabErrors[activeTab]?.has(key)
-  }, [touched, tabErrors, activeTab])
-
   useEffect(() => {
     if (!form.class || !form.section || !form.academicYear) return
     const sameGroup = students.filter((s) => s.class === form.class && s.section === form.section && s.academicYear === form.academicYear)
     const maxRoll = sameGroup.reduce((max, s) => { const r = parseInt(s.roll, 10); return !isNaN(r) && r > max ? r : max }, 0)
     set('roll', String(maxRoll + 1))
   }, [form.class, form.section, form.academicYear, students, set])
+
+  useEffect(() => {
+    const missing = validate(form, activeTab, REQUIRED_BY_TAB[activeTab])
+    if (missing.size > 0) {
+      // Errors are set by the hook
+    }
+  }, [form, activeTab, validate])
 
   const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -235,41 +223,35 @@ export default function GeneralAdmission() {
   const currentIdx = tabKeys.indexOf(activeTab)
 
   const goToTab = useCallback((tab: TabKey) => {
-    setTabErrors((prev) => ({ ...prev, [activeTab]: validateTab(form, activeTab) }))
+    validate(form, activeTab, REQUIRED_BY_TAB[activeTab])
     setActiveTab(tab)
-    setTouched(new Set())
-  }, [activeTab, form])
+    // Note: we don't clear touched here to maintain field-level validation state
+  }, [activeTab, form, validate])
 
   const nextTab = useCallback(() => {
     if (currentIdx < tabKeys.length - 1) {
-      const errors = validateTab(form, activeTab)
-      setTabErrors((prev) => ({ ...prev, [activeTab]: errors }))
+      const errors = validate(form, activeTab, REQUIRED_BY_TAB[activeTab])
       if (errors.size > 0) {
-        const allKeys = new Set<string>()
-        errors.forEach((k) => allKeys.add(k))
-        setTouched(allKeys)
+        // Mark all error fields as touched so they show red borders
+        errors.forEach((k) => touch(k))
         return
       }
       setActiveTab(tabKeys[currentIdx + 1])
-      setTouched(new Set())
     }
-  }, [currentIdx, tabKeys, form, activeTab])
+  }, [currentIdx, tabKeys, form, activeTab, validate, touch])
 
   const prevTab = useCallback(() => {
     if (currentIdx > 0) setActiveTab(tabKeys[currentIdx - 1])
   }, [currentIdx, tabKeys])
 
   const openReview = useCallback(() => {
-    const errors = validateTab(form, activeTab)
-    setTabErrors((prev) => ({ ...prev, [activeTab]: errors }))
+    const errors = validate(form, activeTab, REQUIRED_BY_TAB[activeTab])
     if (errors.size > 0) {
-      const allKeys = new Set<string>()
-      errors.forEach((k) => allKeys.add(k))
-      setTouched(allKeys)
+      errors.forEach((k) => touch(k))
       return
     }
     setShowReview(true)
-  }, [form, activeTab])
+  }, [form, activeTab, validate, touch])
 
   const g = (n: number) => isMobile ? 'grid grid-cols-1 gap-y-[0.375rem]' : `grid ${n === 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-x-4 gap-y-[0.375rem]`
   const card = `bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] mb-[0.875rem] ${isMobile ? 'p-[0.875rem]' : 'p-5'}`
@@ -415,7 +397,7 @@ export default function GeneralAdmission() {
           <button type="button" onClick={() => setShowReview(false)} className="flex items-center gap-1 py-[0.625rem] px-4 rounded-[0.5625rem] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]">
             <ChevronLeft size={14} />{isBn ? 'ফিরে যান' : 'Back'}
           </button>
-          <button type="button" onClick={() => { setActiveTab('personal'); setForm(initForm(currentSession)); setShowReview(false); setTabErrors({ personal: new Set(), academic: new Set(), guardian: new Set() }); setTouched(new Set()) }}
+          <button type="button" onClick={() => { setActiveTab('personal'); setForm(initForm(currentSession)); setShowReview(false); reset() }}
             className="py-[0.625rem] px-5 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]">
             {isBn ? 'রিসেট' : 'Reset'}
           </button>
@@ -479,28 +461,28 @@ export default function GeneralAdmission() {
             </div>
             <div className="flex-1 min-w-[12.5rem]">
               <div className={`${g(2)} mb-[0.625rem]`}>
-                <FormField labelEn="Name (English)" labelBn="নাম (ইংরেজি)" value={form.nameEn} onChange={(v) => set('nameEn', v)} required isBn={isBn} error={hasError('nameEn')} onBlur={() => touch('nameEn')} />
-                <FormField labelEn="Name (Bengali)" labelBn="নাম (বাংলা)" value={form.nameBn} onChange={(v) => set('nameBn', v)} required isBn={isBn} error={hasError('nameBn')} onBlur={() => touch('nameBn')} />
+                <FormField labelEn="Name (English)" labelBn="নাম (ইংরেজি)" value={form.nameEn} onChange={(v) => set('nameEn', v)} required isBn={isBn} error={hasError('nameEn', activeTab)} onBlur={() => touch('nameEn')} />
+                <FormField labelEn="Name (Bengali)" labelBn="নাম (বাংলা)" value={form.nameBn} onChange={(v) => set('nameBn', v)} required isBn={isBn} error={hasError('nameBn', activeTab)} onBlur={() => touch('nameBn')} />
               </div>
               <div className={g(2)}>
-                <FormField labelEn="Date of Birth" labelBn="জন্ম তারিখ" value={form.dob} onChange={(v) => set('dob', v)} type="date" required isBn={isBn} error={hasError('dob')} onBlur={() => touch('dob')} />
-                <FormField labelEn="Gender" labelBn="লিঙ্গ" value={form.gender} onChange={(v) => set('gender', v)} required isBn={isBn} options={['Male / পুরুষ', 'Female / মহিলা', 'Other / অন্যান্য']} error={hasError('gender')} onBlur={() => touch('gender')} />
+                <FormField labelEn="Date of Birth" labelBn="জন্ম তারিখ" value={form.dob} onChange={(v) => set('dob', v)} type="date" required isBn={isBn} error={hasError('dob', activeTab)} onBlur={() => touch('dob')} />
+                <FormField labelEn="Gender" labelBn="লিঙ্গ" value={form.gender} onChange={(v) => set('gender', v)} required isBn={isBn} options={['Male / পুরুষ', 'Female / মহিলা', 'Other / অন্যান্য']} error={hasError('gender', activeTab)} onBlur={() => touch('gender')} />
               </div>
             </div>
           </div>
           <div className={`${g(3)} mb-[0.625rem]`}>
-            <FormField labelEn="Blood Group" labelBn="রক্তের গ্রুপ" value={form.bloodGroup} onChange={(v) => set('bloodGroup', v)} required isBn={isBn} options={['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']} error={hasError('bloodGroup')} onBlur={() => touch('bloodGroup')} />
-            <FormField labelEn="Religion" labelBn="ধর্ম" value={form.religion} onChange={(v) => set('religion', v)} required isBn={isBn} options={RELIGION_OPTIONS.map(o => o.value)} error={hasError('religion')} onBlur={() => touch('religion')} />
+            <FormField labelEn="Blood Group" labelBn="রক্তের গ্রুপ" value={form.bloodGroup} onChange={(v) => set('bloodGroup', v)} required isBn={isBn} options={['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']} error={hasError('bloodGroup', activeTab)} onBlur={() => touch('bloodGroup')} />
+            <FormField labelEn="Religion" labelBn="ধর্ম" value={form.religion} onChange={(v) => set('religion', v)} required isBn={isBn} options={RELIGION_OPTIONS.map(o => o.value)} error={hasError('religion', activeTab)} onBlur={() => touch('religion')} />
             <FormField labelEn="Nationality" labelBn="জাতীয়তা" value={form.nationality} onChange={(v) => set('nationality', v)} required isBn={isBn} />
           </div>
           <div className={`${g(3)} mb-[0.625rem]`}>
-            <FormField labelEn="Mobile (SMS)" labelBn="মোবাইল (SMS)" value={form.phone} onChange={(v) => set('phone', v)} type="tel" required isBn={isBn} error={hasError('phone')} onBlur={() => touch('phone')} />
+            <FormField labelEn="Mobile (SMS)" labelBn="মোবাইল (SMS)" value={form.phone} onChange={(v) => set('phone', v)} type="tel" required isBn={isBn} error={hasError('phone', activeTab)} onBlur={() => touch('phone')} />
             <FormField labelEn="Email" labelBn="ইমেইল" value={form.email} onChange={(v) => set('email', v)} type="email" isBn={isBn} />
-            <FormField labelEn="District" labelBn="জেলা" value={form.district} onChange={(v) => set('district', v)} required isBn={isBn} options={DISTRICT_OPTIONS} error={hasError('district')} onBlur={() => touch('district')} />
+            <FormField labelEn="District" labelBn="জেলা" value={form.district} onChange={(v) => set('district', v)} required isBn={isBn} options={DISTRICT_OPTIONS} error={hasError('district', activeTab)} onBlur={() => touch('district')} />
           </div>
           <div className={g(2)}>
-            <FormField labelEn="Present Address" labelBn="বর্তমান ঠিকানা" value={form.presentAddress} onChange={(v) => set('presentAddress', v)} required isBn={isBn} error={hasError('presentAddress')} onBlur={() => touch('presentAddress')} />
-            <FormField labelEn="Permanent Address" labelBn="স্থায়ী ঠিকানা" value={form.permanentAddress} onChange={(v) => set('permanentAddress', v)} required isBn={isBn} error={hasError('permanentAddress')} onBlur={() => touch('permanentAddress')} />
+            <FormField labelEn="Present Address" labelBn="বর্তমান ঠিকানা" value={form.presentAddress} onChange={(v) => set('presentAddress', v)} required isBn={isBn} error={hasError('presentAddress', activeTab)} onBlur={() => touch('presentAddress')} />
+            <FormField labelEn="Permanent Address" labelBn="স্থায়ী ঠিকানা" value={form.permanentAddress} onChange={(v) => set('permanentAddress', v)} required isBn={isBn} error={hasError('permanentAddress', activeTab)} onBlur={() => touch('permanentAddress')} />
           </div>
         </div>
       )}
@@ -509,13 +491,13 @@ export default function GeneralAdmission() {
         <div className={card}>
           {sHead(<GraduationCap />, 'একাডেমিক তথ্য', 'Academic Info', 'var(--teal)', 'var(--teal-light)')}
           <div className={`${g(3)} mb-[0.625rem]`}>
-            <FormField labelEn="Class" labelBn="শ্রেণি" value={form.class} onChange={(v) => { set('class', v); set('section', '') }} required isBn={isBn} options={classOptions} error={hasError('class')} onBlur={() => touch('class')} />
-            <FormField labelEn="Section" labelBn="সেকশন" value={form.section} onChange={(v) => set('section', v)} required isBn={isBn} options={form.class ? sectionsMap[form.class] || [] : []} error={hasError('section')} onBlur={() => touch('section')} />
-            <FormField labelEn="Roll" labelBn="রোল নম্বর" value={form.roll} onChange={(v) => set('roll', v)} required isBn={isBn} error={hasError('roll')} onBlur={() => touch('roll')} />
+            <FormField labelEn="Class" labelBn="শ্রেণি" value={form.class} onChange={(v) => { set('class', v); set('section', '') }} required isBn={isBn} options={classOptions} error={hasError('class', activeTab)} onBlur={() => touch('class')} />
+            <FormField labelEn="Section" labelBn="সেকশন" value={form.section} onChange={(v) => set('section', v)} required isBn={isBn} options={form.class ? sectionsMap[form.class] || [] : []} error={hasError('section', activeTab)} onBlur={() => touch('section')} />
+            <FormField labelEn="Roll" labelBn="রোল নম্বর" value={form.roll} onChange={(v) => set('roll', v)} required isBn={isBn} error={hasError('roll', activeTab)} onBlur={() => touch('roll')} />
           </div>
           <div className={`${g(3)} mb-[0.625rem]`}>
-            <FormField labelEn="Academic Year" labelBn="শিক্ষাবর্ষ" value={form.academicYear} onChange={(v) => set('academicYear', v)} required isBn={isBn} options={sessions} error={hasError('academicYear')} onBlur={() => touch('academicYear')} />
-            <FormField labelEn="Admission Date" labelBn="ভর্তির তারিখ" value={form.admissionDate} onChange={(v) => set('admissionDate', v)} type="date" required isBn={isBn} error={hasError('admissionDate')} onBlur={() => touch('admissionDate')} />
+            <FormField labelEn="Academic Year" labelBn="শিক্ষাবর্ষ" value={form.academicYear} onChange={(v) => set('academicYear', v)} required isBn={isBn} options={sessions} error={hasError('academicYear', activeTab)} onBlur={() => touch('academicYear')} />
+            <FormField labelEn="Admission Date" labelBn="ভর্তির তারিখ" value={form.admissionDate} onChange={(v) => set('admissionDate', v)} type="date" required isBn={isBn} error={hasError('admissionDate', activeTab)} onBlur={() => touch('admissionDate')} />
             <FormField labelEn="Previous School" labelBn="আগের স্কুল" value={form.previousSchool} onChange={(v) => set('previousSchool', v)} isBn={isBn} />
           </div>
         </div>
@@ -525,24 +507,24 @@ export default function GeneralAdmission() {
         <div className={card}>
           {sHead(<User />, 'পিতার তথ্য', "Father's Info", 'var(--teal)', 'var(--teal-light)')}
           <div className={`${g(3)} mb-[0.625rem]`}>
-            <FormField labelEn="Name (EN)" labelBn="নাম (ইংরেজি)" value={form.fatherNameEn} onChange={(v) => set('fatherNameEn', v)} required isBn={isBn} error={hasError('fatherNameEn')} onBlur={() => touch('fatherNameEn')} />
-            <FormField labelEn="Name (BN)" labelBn="নাম (বাংলা)" value={form.fatherNameBn} onChange={(v) => set('fatherNameBn', v)} required isBn={isBn} error={hasError('fatherNameBn')} onBlur={() => touch('fatherNameBn')} />
-            <FormField labelEn="Occupation" labelBn="পেশা" value={form.fatherOccupation} onChange={(v) => set('fatherOccupation', v)} required isBn={isBn} error={hasError('fatherOccupation')} onBlur={() => touch('fatherOccupation')} />
+            <FormField labelEn="Name (EN)" labelBn="নাম (ইংরেজি)" value={form.fatherNameEn} onChange={(v) => set('fatherNameEn', v)} required isBn={isBn} error={hasError('fatherNameEn', activeTab)} onBlur={() => touch('fatherNameEn')} />
+            <FormField labelEn="Name (BN)" labelBn="নাম (বাংলা)" value={form.fatherNameBn} onChange={(v) => set('fatherNameBn', v)} required isBn={isBn} error={hasError('fatherNameBn', activeTab)} onBlur={() => touch('fatherNameBn')} />
+            <FormField labelEn="Occupation" labelBn="পেশা" value={form.fatherOccupation} onChange={(v) => set('fatherOccupation', v)} required isBn={isBn} error={hasError('fatherOccupation', activeTab)} onBlur={() => touch('fatherOccupation')} />
           </div>
           <div className={g(2)}>
-            <FormField labelEn="Mobile" labelBn="মোবাইল" value={form.fatherPhone} onChange={(v) => set('fatherPhone', v)} type="tel" required isBn={isBn} error={hasError('fatherPhone')} onBlur={() => touch('fatherPhone')} />
+            <FormField labelEn="Mobile" labelBn="মোবাইল" value={form.fatherPhone} onChange={(v) => set('fatherPhone', v)} type="tel" required isBn={isBn} error={hasError('fatherPhone', activeTab)} onBlur={() => touch('fatherPhone')} />
             <FormField labelEn="NID" labelBn="NID নম্বর" value={form.fatherNid} onChange={(v) => set('fatherNid', v)} isBn={isBn} />
           </div>
         </div>
         <div className={card}>
           {sHead(<User />, 'মাতার তথ্য', "Mother's Info", 'var(--purple)', 'var(--purple-light)')}
           <div className={`${g(3)} mb-[0.625rem]`}>
-            <FormField labelEn="Name (EN)" labelBn="নাম (ইংরেজি)" value={form.motherNameEn} onChange={(v) => set('motherNameEn', v)} required isBn={isBn} error={hasError('motherNameEn')} onBlur={() => touch('motherNameEn')} />
-            <FormField labelEn="Name (BN)" labelBn="নাম (বাংলা)" value={form.motherNameBn} onChange={(v) => set('motherNameBn', v)} required isBn={isBn} error={hasError('motherNameBn')} onBlur={() => touch('motherNameBn')} />
-            <FormField labelEn="Occupation" labelBn="পেশা" value={form.motherOccupation} onChange={(v) => set('motherOccupation', v)} required isBn={isBn} error={hasError('motherOccupation')} onBlur={() => touch('motherOccupation')} />
+            <FormField labelEn="Name (EN)" labelBn="নাম (ইংরেজি)" value={form.motherNameEn} onChange={(v) => set('motherNameEn', v)} required isBn={isBn} error={hasError('motherNameEn', activeTab)} onBlur={() => touch('motherNameEn')} />
+            <FormField labelEn="Name (BN)" labelBn="নাম (বাংলা)" value={form.motherNameBn} onChange={(v) => set('motherNameBn', v)} required isBn={isBn} error={hasError('motherNameBn', activeTab)} onBlur={() => touch('motherNameBn')} />
+            <FormField labelEn="Occupation" labelBn="পেশা" value={form.motherOccupation} onChange={(v) => set('motherOccupation', v)} required isBn={isBn} error={hasError('motherOccupation', activeTab)} onBlur={() => touch('motherOccupation')} />
           </div>
           <div className={g(2)}>
-            <FormField labelEn="Mobile" labelBn="মোবাইল" value={form.motherPhone} onChange={(v) => set('motherPhone', v)} type="tel" required isBn={isBn} error={hasError('motherPhone')} onBlur={() => touch('motherPhone')} />
+            <FormField labelEn="Mobile" labelBn="মোবাইল" value={form.motherPhone} onChange={(v) => set('motherPhone', v)} type="tel" required isBn={isBn} error={hasError('motherPhone', activeTab)} onBlur={() => touch('motherPhone')} />
             <FormField labelEn="NID" labelBn="NID নম্বর" value={form.motherNid} onChange={(v) => set('motherNid', v)} isBn={isBn} />
           </div>
         </div>
@@ -563,10 +545,10 @@ export default function GeneralAdmission() {
               <ChevronLeft size={14} />{isBn ? 'আগের' : 'Back'}
             </button>
           )}
-          <button type="button" onClick={() => { setActiveTab('personal'); setForm(initForm(currentSession)); setTabErrors({ personal: new Set(), academic: new Set(), guardian: new Set() }); setTouched(new Set()) }}
-            className="py-[0.625rem] px-5 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]">
-            {isBn ? 'রিসেট' : 'Reset'}
-          </button>
+            <button type="button" onClick={() => { setActiveTab('personal'); setForm(initForm(currentSession)); reset() }}
+              className="py-[0.625rem] px-5 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]">
+              {isBn ? 'রিসেট' : 'Reset'}
+            </button>
         </div>
         <div className="flex gap-[0.625rem]">
           {activeTab !== 'guardian' ? (
