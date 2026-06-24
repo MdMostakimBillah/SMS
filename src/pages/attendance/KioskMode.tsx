@@ -417,26 +417,26 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
         </div>
 
         {/* Bottom bar - identified person */}
-        <div className="px-6 py-4" style={{ background: 'linear-gradient(to top, #000, #111827)' }}>
+        <div className="px-4 py-3" style={{ background: 'linear-gradient(to top, #000, #111827)' }}>
           {identified && (
-            <div className="max-w-2xl mx-auto animate-[slideUp_0.3s_ease-out]">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex items-center gap-4 border border-white/10">
+            <div className="max-w-lg mx-auto animate-[slideUp_0.3s_ease-out]">
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-3 flex items-center gap-3 border border-white/15">
                 <div className="relative shrink-0">
-                  <img src={identified.photo} alt="" className="w-16 h-16 rounded-2xl object-cover border-2 border-[var(--green)]" />
-                  <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-[var(--green)] flex items-center justify-center border-2 border-gray-900">
-                    <CheckCircle size={14} className="text-white" />
+                  <img src={identified.photo} alt="" className="w-11 h-11 rounded-xl object-cover border-2 border-[var(--green)]" />
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[var(--green)] flex items-center justify-center border-2 border-gray-900">
+                    <CheckCircle size={11} className="text-white" />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[1.125rem] font-bold text-white truncate">{identified.staffName}</div>
-                  <div className="text-[0.75rem] text-white/50 font-mono mt-0.5">{identified.staffId}</div>
-                  <span className={`inline-block mt-1.5 px-2.5 py-1 rounded-lg text-[0.6875rem] font-bold ${identified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
+                  <div className="text-[0.875rem] font-bold text-white truncate">{identified.staffName}</div>
+                  <div className="text-[0.625rem] text-white/50 font-mono mt-0.5">{identified.staffId}</div>
+                  <span className={`inline-block mt-1 px-2 py-0.5 rounded-md text-[0.5625rem] font-bold ${identified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
                     {identified.punchType === 'in' ? (isBn ? 'চেক-ইন' : 'CHECKED IN') : isBn ? 'চেক-আউট' : 'CHECKED OUT'}
                   </span>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-[1.75rem] font-bold text-white font-mono leading-none">{identified.time}</div>
-                  <div className="text-[0.625rem] text-white/40 mt-1">{isBn ? 'পাঞ্চ সময়' : 'Punch Time'}</div>
+                  <div className="text-[1.25rem] font-bold text-white font-mono leading-none">{identified.time}</div>
+                  <div className="text-[0.5625rem] text-white/40 mt-0.5">{isBn ? 'পাঞ্চ সময়' : 'Punch Time'}</div>
                 </div>
               </div>
             </div>
