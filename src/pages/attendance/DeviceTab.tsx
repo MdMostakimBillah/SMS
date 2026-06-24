@@ -18,6 +18,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { useTeacherStore } from '@/store/teacherStore'
+import { logger } from '@/lib/logger'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import KioskMode from './KioskMode'
@@ -528,7 +529,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
         })
       }
     } catch (err: any) {
-      console.error('Device registration error:', err)
+      logger.error('Device registration error', { error: err.message, name: err.name })
       const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost'
       if (!isSecure) {
         setMobileAuthMsg({
@@ -623,7 +624,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
         })
       }
     } catch (err: any) {
-      console.error('Mobile auth error:', err)
+      logger.error('Mobile auth error', { error: err.message, name: err.name })
       const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost'
       if (!isSecure) {
         setMobileAuthMsg({

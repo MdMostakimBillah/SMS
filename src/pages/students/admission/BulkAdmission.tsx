@@ -4,6 +4,7 @@ import { useBn } from '@/hooks/useBn'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from './types'
+import { logger } from '@/lib/logger'
 
 interface Row {
   id: string
@@ -139,7 +140,7 @@ export default function BulkAdmission() {
         guardianRelation: '',
         guardianPhone: '',
       } as StudentAdmission)
-      console.log(`📱 SMS → ${r.phone}: আবেদন ID ${r.id}`)
+      logger.sms(r.phone, `আবেদন ID ${r.id}`)
     })
     setCount(valid.length)
     setDone(true)

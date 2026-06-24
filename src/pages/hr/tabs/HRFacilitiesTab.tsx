@@ -1,6 +1,8 @@
 import { Briefcase, Users, HandCoins, Plus, Edit2, Trash2, Save, FileText } from 'lucide-react'
 import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
 import { PaginationControls } from '@/components/shared/PaginationControls'
+import type { FacForm } from '@/pages/hr/types'
+import type { Facility } from '@/store/hrStore'
 
 interface HRFacilitiesTabProps {
   isBn: boolean
@@ -34,12 +36,12 @@ interface HRFacilitiesTabProps {
   setAssignDateFrom: (d: string) => void
   assignDateTo: string
   setAssignDateTo: (d: string) => void
-  setFacModalType: (type: string) => void
-  setFacForm: (form: any) => void
-  setEditFac: (fac: any) => void
+  setFacModalType: (type: 'add-facility' | 'edit-facility' | 'assign' | 'edit-assign' | null) => void
+  setFacForm: React.Dispatch<React.SetStateAction<FacForm>>
+  setEditFac: React.Dispatch<React.SetStateAction<Facility | null>>
   setFacDeleteConfirm: (id: string | null) => void
   setAssignDeleteConfirm: (id: string | null) => void
-  setShowPDFModal: (type: string) => void
+  setShowPDFModal: (type: 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary' | null) => void
   inputCls: string
 }
 

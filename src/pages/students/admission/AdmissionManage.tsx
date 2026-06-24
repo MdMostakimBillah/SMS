@@ -34,6 +34,7 @@ import { generateA4HTML } from './a4Template'
 import { generateListPDF } from './listPdfTemplate'
 import type { ListPDFOptions } from './listPdfTemplate'
 import QRCode from 'qrcode'
+import { logger } from '@/lib/logger'
 
 const PER_PAGE = [10, 20, 30, 50, 100, 200, 500, 1000]
 const RELIGIONS = ['Islam', 'Hinduism', 'Christianity', 'Buddhism']
@@ -1049,7 +1050,7 @@ export default function AdmissionManage() {
   const handleApprove = useCallback(
     (student: StudentAdmission, sms: boolean, billingDate: string) => {
       approveStudent(student.id, billingDate)
-      if (sms) console.log(`📱 SMS → ${student.phone}: আপনার ভর্তি অনুমোদিত হয়েছে! আইডি: ${student.id} — Sunrise Academy`)
+      if (sms) logger.sms(student.phone, `আপনার ভর্তি অনুমোদিত হয়েছে! আইডি: ${student.id} — Sunrise Academy`)
     },
     [approveStudent]
   )
@@ -1057,7 +1058,7 @@ export default function AdmissionManage() {
   const handleReject = useCallback(
     (student: StudentAdmission, sms: boolean) => {
       rejectStudent(student.id)
-      if (sms) console.log(`📱 SMS → ${student.phone}: আপনার ভর্তি আবেদন প্রত্যাখ্যাত হয়েছে। আইডি: ${student.id}`)
+      if (sms) logger.sms(student.phone, `আপনার ভর্তি আবেদন প্রত্যাখ্যাত হয়েছে। আইডি: ${student.id}`)
     },
     [rejectStudent]
   )

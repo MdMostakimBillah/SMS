@@ -11,6 +11,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { sectionCls, sectionTitleCls, inputCls } from '@/pages/hr/utils'
+import type { BonForm } from '@/pages/hr/types'
 
 interface HRBonusTabProps {
   isBn: boolean
@@ -29,10 +30,10 @@ interface HRBonusTabProps {
   setBonusDateFrom: (v: string) => void
   bonusDateTo: string
   setBonusDateTo: (v: string) => void
-  setModalType: (v: string) => void
-  setBonForm: (v: any) => void
+  setModalType: (v: 'increment' | 'bonus' | 'promotion' | 'fund' | null) => void
+  setBonForm: (v: BonForm) => void
   deleteBonus: (id: string) => void
-  setShowPDFModal: (v: string) => void
+  setShowPDFModal: (v: 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary' | null) => void
   getTeacherName: (id: string) => string
 }
 

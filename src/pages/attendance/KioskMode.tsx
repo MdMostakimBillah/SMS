@@ -11,6 +11,7 @@ import {
 import { useTeacherStore } from '@/store/teacherStore'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import { useFaceApi, type RegisteredFace } from '@/hooks/useFaceApi'
+import { logger } from '@/lib/logger'
 
 const STORAGE_KEY = 'kioskFaces'
 const COOLDOWN_MS = 10000
@@ -127,16 +128,16 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const startRegDetectLoop = () => {
     if (regDetectIntervalRef.current) clearInterval(regDetectIntervalRef.current)
     regStableCountRef.current = 0
-    console.log('[Kiosk] Starting reg detect loop, faceApiLoaded:', faceApiLoaded, 'selectedStaff:', selectedStaff)
+    logger.kiosk('Starting reg detect loop', { faceApiLoaded, selectedStaff })
     regDetectIntervalRef.current = setInterval(async () => {
       const v = videoRef.current
       if (!v || !faceApiLoaded || !selectedStaff || !isVideoReady(v)) {
-        if (v) console.log('[Kiosk] Skipping detect - ready:', v.readyState, 'w:', v.videoWidth, 'loaded:', faceApiLoaded, 'staff:', selectedStaff)
+        if (v) logger.kiosk('Skipping detect', { ready: v.readyState, w: v.videoWidth, loaded: faceApiLoaded, staff: selectedStaff })
         return
       }
       const result = await detectFace(v)
       if (result) {
-        console.log('[Kiosk] Face detected! Stable count:', regStableCountRef.current + 1)
+        logger.kiosk('Face detected! Stable count', { count: regStableCountRef.current + 1 })
         setFaceDetected(true)
         regStableCountRef.current++
         if (regStableCountRef.current >= 3) {

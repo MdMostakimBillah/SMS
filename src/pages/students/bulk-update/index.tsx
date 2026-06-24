@@ -24,6 +24,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
+import { logger } from '@/lib/logger'
 
 type Op = 'photo' | 'roll' | 'class' | 'section' | 'bloodGroup' | 'religion' | 'academicYear'
 
@@ -184,7 +185,7 @@ export default function BulkUpdatePage() {
         const base64 = await compressImage(file)
         setPhotoMap((prev) => ({ ...prev, [id]: base64 }))
       } catch (error) {
-        console.error('Image compression failed:', error)
+        logger.error('Image compression failed', { error: (error as Error).message })
         alert(isBn ? 'ছবি প্রসেস করতে সমস্যা হয়েছে' : 'Failed to process image')
       }
     },

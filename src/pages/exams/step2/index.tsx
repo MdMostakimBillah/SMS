@@ -65,6 +65,7 @@ import type { InvigilatorGridData, InvigilatorGridDay, InvigilatorGridRow, Invig
 import { ExamRoutinePDFOptionsModal } from '@/components/shared/ExamRoutinePDFOptionsModal'
 import { InvigilatorPDFOptionsModal } from '@/components/shared/InvigilatorPDFOptionsModal'
 import AdmitCardsTab from './AdmitCardsTab'
+import { logger } from '@/lib/logger'
 
 type SubTab = 'routine' | 'rooms' | 'seats' | 'invigilators' | 'attendance' | 'admit-cards'
 
@@ -2891,7 +2892,7 @@ function QRScannerModal({
         )
         if (mounted) setScannerReady(true)
       } catch (err) {
-        console.warn('QR Scanner error:', err)
+        logger.warn('QR Scanner error', { error: err instanceof Error ? err.message : String(err) })
         if (mounted) setScannerReady(false)
       }
     }

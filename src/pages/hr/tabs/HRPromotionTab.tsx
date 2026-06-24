@@ -2,6 +2,7 @@ import { Award, FileText, Plus, Edit2, Trash2 } from 'lucide-react'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { DateRangeFilter } from '@/components/shared/DateRangeFilter'
 import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
+import type { ProForm } from '@/pages/hr/types'
 
 interface HRPromotionTabProps {
   isBn: boolean
@@ -21,10 +22,10 @@ interface HRPromotionTabProps {
   setProDateFrom: (v: string) => void
   proDateTo: string
   setProDateTo: (v: string) => void
-  setModalType: (type: string) => void
-  setProForm: (form: any) => void
+  setModalType: (v: 'increment' | 'bonus' | 'promotion' | 'fund' | null) => void
+  setProForm: (form: ProForm) => void
   deletePromotion: (id: string) => void
-  setShowPDFModal: (type: string) => void
+  setShowPDFModal: (v: 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary' | null) => void
   getTeacherName: (id: string) => string
 }
 

@@ -30,8 +30,8 @@ interface HRFundTabProps {
   setFundDateFrom: (v: string) => void
   fundDateTo: string
   setFundDateTo: (v: string) => void
-  setModalType: (v: string) => void
-  setShowPDFModal: (v: string) => void
+  setModalType: (v: 'increment' | 'bonus' | 'promotion' | 'fund' | null) => void
+  setShowPDFModal: (v: 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary' | null) => void
   fundBalance: number
   monthlySalaryConfigs: any[]
 }

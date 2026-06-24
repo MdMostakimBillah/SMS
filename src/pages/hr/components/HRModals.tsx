@@ -175,7 +175,7 @@ export default function HRModals({
                   <label className={labelCls}>{isBn ? 'ধরন' : 'Type'}</label>
                   <select
                     value={incForm.type}
-                    onChange={(e) => setIncForm((p) => ({ ...p, type: e.target.value as any }))}
+                    onChange={(e) => setIncForm((p) => ({ ...p, type: e.target.value as 'annual' | 'performance' | 'special' }))}
                     className={inputCls}
                   >
                     <option value="annual">{isBn ? 'বার্ষিক' : 'Annual'}</option>
@@ -232,7 +232,7 @@ export default function HRModals({
                   <label className={labelCls}>{isBn ? 'ধরন' : 'Type'}</label>
                   <select
                     value={bonForm.type}
-                    onChange={(e) => setBonForm((p) => ({ ...p, type: e.target.value as any }))}
+                    onChange={(e) => setBonForm((p) => ({ ...p, type: e.target.value as 'festival' | 'performance' | 'attendance' | 'special' }))}
                     className={inputCls}
                   >
                     <option value="festival">{isBn ? 'উৎসব' : 'Festival'}</option>
@@ -343,7 +343,7 @@ export default function HRModals({
                   <label className={labelCls}>{isBn ? 'ধরন' : 'Type'}</label>
                   <select
                     value={fundForm.type}
-                    onChange={(e) => setFundForm((p) => ({ ...p, type: e.target.value as any }))}
+                    onChange={(e) => setFundForm((p) => ({ ...p, type: e.target.value as 'contribution' | 'bonus_pool' | 'increment_pool' | 'withdrawal' }))}
                     className={inputCls}
                   >
                     <option value="contribution">{isBn ? 'অনুদান' : 'Contribution'}</option>

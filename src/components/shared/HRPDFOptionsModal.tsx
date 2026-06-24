@@ -16,6 +16,7 @@ import {
 import type { HRPDFColumn, HRListPDFOptions } from '@/pages/hr/listPdfTemplate'
 import { GenericPDFOptionsModal } from './GenericPDFOptionsModal'
 import type { GenericPDFOptionsResult } from './GenericPDFOptionsModal'
+import type { IncrementRecord, BonusRecord, PromotionRecord, FundRecord, TeacherFacility, MonthlySalaryConfig } from '@/store/hrStore'
 
 type HRType = 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary'
 
@@ -80,17 +81,17 @@ export const HRPDFOptionsModal = React.memo(function HRPDFOptionsModal({
 
       switch (type) {
         case 'increment':
-          return generateIncrementPDF((increments || []) as any[], pdfOpts, teacherNameFn)
+          return generateIncrementPDF(increments as IncrementRecord[], pdfOpts, teacherNameFn)
         case 'bonus':
-          return generateBonusPDF((filteredBonuses || []) as any[], pdfOpts, teacherNameFn)
+          return generateBonusPDF(filteredBonuses as BonusRecord[], pdfOpts, teacherNameFn)
         case 'promotion':
-          return generatePromotionPDF((filteredPromotions || []) as any[], pdfOpts, teacherNameFn)
+          return generatePromotionPDF(filteredPromotions as PromotionRecord[], pdfOpts, teacherNameFn)
         case 'fund':
-          return generateFundPDF((funds || []) as any[], pdfOpts)
+          return generateFundPDF(funds as FundRecord[], pdfOpts)
         case 'assignment':
-          return generateAssignmentPDF((filteredAssignments || []) as any[], pdfOpts, teacherNameFn, facilityNameFn)
+          return generateAssignmentPDF(filteredAssignments as TeacherFacility[], pdfOpts, teacherNameFn, facilityNameFn)
         case 'salary':
-          return generateSalaryPDF((salaryData || []) as any[], pdfOpts)
+          return generateSalaryPDF(salaryData as MonthlySalaryConfig[], pdfOpts)
         default:
           return ''
       }

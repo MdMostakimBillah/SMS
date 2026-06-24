@@ -60,7 +60,7 @@ interface HRSalarySetupTabProps {
   setBulkFundPercent: (v: string) => void
   handleBulkApplyDeduction: () => void
   handleBulkApplyFund: () => void
-  setShowPDFModal: (v: string) => void
+  setShowPDFModal: (v: 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary' | null) => void
   upsertManyMonthlySalaryConfigs: (configs: MonthlySalaryConfig[]) => void
 }
 
