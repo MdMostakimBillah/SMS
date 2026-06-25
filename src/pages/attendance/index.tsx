@@ -167,8 +167,10 @@ export default function AttendancePage() {
       }
     })
     const stu = filteredStudents.map((s) => {
-      const rand = Math.random()
-      const status: AttendanceStatus = rand < 0.85 ? 'present' : rand < 0.95 ? 'absent' : 'on-leave'
+      const dayData = attendance[date]?.[s.id]
+      const status: AttendanceStatus = dayData?.status || 'absent'
+      const inPunch = dayData?.punches?.find((p: any) => p.type === 'in')
+      const outPunch = dayData?.punches?.filter((p: any) => p.type === 'out').pop()
       return {
         id: s.id,
         name: isBn ? s.nameBn || s.nameEn : s.nameEn,
@@ -179,8 +181,8 @@ export default function AttendancePage() {
         designation: `${s.class} · ${s.section || '—'}`,
         dept: isBn ? 'শিক্ষার্থী' : 'Student',
         attStatus: status,
-        inTime: status === 'present' ? '08:00' : '—',
-        outTime: status === 'present' ? '15:00' : '—',
+        inTime: inPunch?.time || '—',
+        outTime: outPunch?.time || '—',
         isLate: false,
       }
     })
