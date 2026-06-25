@@ -3,14 +3,17 @@ import { createPortal } from 'react-dom'
 import {
   CheckCircle,
   Clock,
+  GraduationCap,
   Layers,
   ScanFace,
   Search,
+  User,
   X,
   XCircle,
 } from 'lucide-react'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { AttendanceStatus } from '@/store/teacherStore'
+import { useSessionStudents } from '@/store/admissionStore'
 import { useFaceApi, type RegisteredFace } from '@/hooks/useFaceApi'
 
 
@@ -52,7 +55,9 @@ function playSuccessSound() {
 
 export default function KioskMode({ isBn, date }: { isBn: boolean; date: string }) {
   const { teachers, attendance } = useTeacherStore()
+  const students = useSessionStudents()
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
+  const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
   const { loaded: faceApiLoaded, loading: faceApiLoading, error: faceApiError, detectFace, matchFace } = useFaceApi()
 
   const [kioskMode, setKioskMode] = useState<'register' | 'attendance'>('register')
@@ -60,12 +65,47 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const [selectedStaff, setSelectedStaff] = useState('')
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [regSearch, setRegSearch] = useState('')
+  const [regFilter, setRegFilter] = useState<'all' | 'staff' | 'student'>('all')
   const [camActive, setCamActive] = useState(false)
   const [faceDetected, setFaceDetected] = useState(false)
   const [, setDetecting] = useState(false)
   const [identified, setIdentified] = useState<{
     staffId: string; staffName: string; photo: string; punchType: 'in' | 'out'; time: string
   } | null>(null)
+
+  const allPeople = useMemo(() => {
+    const staff = activeTeachers.map((t) => ({
+      id: t.id,
+      name: t.nameBn || t.nameEn,
+      nameEn: t.nameEn,
+      photo: t.photo || '',
+      type: 'staff' as const,
+      dept: '',
+      section: '',
+    }))
+    const stu = activeStudents.map((s) => ({
+      id: s.id,
+      name: s.nameBn || s.nameEn,
+      nameEn: s.nameEn,
+      photo: s.photo || '',
+      type: 'student' as const,
+      dept: s.class,
+      section: s.section,
+    }))
+    return [...staff, ...stu]
+  }, [activeTeachers, activeStudents])
+
+  const filteredPeople = useMemo(() => {
+    let list = allPeople
+    if (regFilter === 'staff') list = list.filter((p) => p.type === 'staff')
+    else if (regFilter === 'student') list = list.filter((p) => p.type === 'student')
+    if (regSearch) {
+      const q = regSearch.toLowerCase()
+      list = list.filter((p) => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.section?.toLowerCase().includes(q))
+    }
+    return list
+  }, [allPeople, regFilter, regSearch])
 
   const streamRef = useRef<MediaStream | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -520,17 +560,51 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                 </div>
               </div>
             </div>
+            {/* Filter tabs */}
+            <div className="flex gap-1 mb-2">
+              {(['all', 'staff', 'student'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setRegFilter(f)}
+                  className={`flex-1 py-1.5 rounded-lg text-[0.625rem] font-medium border cursor-pointer transition-all ${
+                    regFilter === f
+                      ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
+                      : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]/50'
+                  }`}
+                >
+                  {f === 'all' ? (isBn ? 'সব' : 'All') : f === 'staff' ? (isBn ? 'স্টাফ' : 'Staff') : (isBn ? 'শিক্ষার্থী' : 'Student')}
+                </button>
+              ))}
+            </div>
+            {/* Search */}
+            <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 mb-2">
+              <Search size={12} className="text-[var(--text-muted)]" />
+              <input
+                value={regSearch}
+                onChange={(e) => setRegSearch(e.target.value)}
+                placeholder={isBn ? 'নাম, আইডি বা সেকশন...' : 'Name, ID, or section...'}
+                className="flex-1 border-none bg-transparent outline-none text-[0.6875rem] text-[var(--text-primary)]"
+              />
+              {regSearch && (
+                <button onClick={() => setRegSearch('')} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)]">
+                  <X size={11} />
+                </button>
+              )}
+            </div>
             <select
               value={selectedStaff}
               onChange={(e) => { setSelectedStaff(e.target.value); setCapturedPhoto(null) }}
               className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] outline-none mb-2"
             >
-              <option value="">{isBn ? 'স্টাফ নির্বাচন করুন...' : 'Select staff...'}</option>
-              {activeTeachers.map((t) => {
-                const registered = registeredFaces.find((f) => f.staffId === t.id)
+              <option value="">{isBn ? `নির্বাচন করুন (${filteredPeople.length})...` : `Select... (${filteredPeople.length})`}</option>
+              {filteredPeople.map((p) => {
+                const registered = registeredFaces.find((f) => f.staffId === p.id)
+                const label = p.type === 'staff'
+                  ? `${p.name} (${p.id})`
+                  : `${p.name} (${p.id}) [${p.dept}-${p.section}]`
                 return (
-                  <option key={t.id} value={t.id}>
-                    {isBn ? t.nameBn || t.nameEn : t.nameEn} ({t.id}){registered ? ' ✓' : ''}
+                  <option key={p.id} value={p.id}>
+                    {registered ? '✓ ' : ''}{label}
                   </option>
                 )
               })}
@@ -588,22 +662,32 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
           <div className="border border-[var(--border)] rounded-xl p-4 bg-[var(--bg-primary)] flex flex-col justify-center items-center text-center min-h-[12rem]">
             <ScanFace size={48} className="text-[var(--text-muted)] mb-3 opacity-30" />
             <div className="text-[0.875rem] font-semibold text-[var(--text-secondary)] mb-1">
-              {isBn ? 'নিবন্ধন করতে স্টাফ নির্বাচন করুন' : 'Select staff to register'}
+              {isBn ? 'স্টাফ বা শিক্ষার্থী নির্বাচন করুন' : 'Select staff or student'}
             </div>
             <div className="text-[0.6875rem] text-[var(--text-muted)] max-w-[16rem]">
               {isBn
-                ? 'নিবন্ধিত স্টাফরা কিওস্ক মোডে মুখ দেখিয়ে চেক ইন করতে পারবেন'
-                : 'Registered staff can check in by showing face in kiosk mode'}
+                ? 'নিবন্ধিত সকলে কিওস্ক মোডে মুখ দেখিয়ে চেক ইন/আউট করতে পারবেন'
+                : 'Registered staff & students can check in/out by showing face in kiosk mode'}
+            </div>
+            <div className="flex items-center gap-3 mt-3">
+              <div className="flex items-center gap-1">
+                <User size={12} className="text-[var(--brand)]" />
+                <span className="text-[0.625rem] text-[var(--text-muted)]">{activeTeachers.length} {isBn ? 'স্টাফ' : 'Staff'}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <GraduationCap size={12} className="text-[var(--green)]" />
+                <span className="text-[0.625rem] text-[var(--text-muted)]">{activeStudents.length} {isBn ? 'শিক্ষার্থী' : 'Students'}</span>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Registered Staff Table */}
+      {/* Registered Staff & Students Table */}
       <div className="border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
           <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-            {isBn ? `নিবন্ধিত স্টাফ (${registeredFaces.length})` : `Registered Staff (${registeredFaces.length})`}
+            {isBn ? `নিবন্ধিত (${registeredFaces.length})` : `Registered (${registeredFaces.length})`}
           </div>
           <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-[0.3125rem]">
             <Search size={12} className="text-[var(--text-muted)]" />
@@ -623,34 +707,46 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                 <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.75rem]"></th>
                 <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
                 <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'আইডি' : 'ID'}</th>
+                <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'ধরন' : 'Type'}</th>
                 <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'অ্যাকশন' : 'Action'}</th>
               </tr>
             </thead>
             <tbody>
-              {filteredFaces.map((f, i) => (
-                <tr key={f.staffId} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)] transition-colors">
-                  <td className="p-2.5 text-center text-[var(--text-muted)]">{i + 1}</td>
-                  <td className="p-2.5 text-center">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-[var(--border)] mx-auto bg-[var(--bg-secondary)]">
-                      <img src={f.photo} alt="" className="w-full h-full object-cover" />
-                    </div>
-                  </td>
-                  <td className="p-2.5 text-left font-medium text-[var(--text-primary)]">{f.staffName}</td>
-                  <td className="p-2.5 text-left font-mono text-[var(--text-secondary)]">{f.staffId}</td>
-                  <td className="p-2.5 text-center">
-                    <button
-                      onClick={() => handleDeleteFace(f.staffId)}
-                      className="p-1.5 rounded-lg text-[var(--red)] hover:bg-[var(--red-light)] transition-colors cursor-pointer bg-transparent border-none"
-                    >
-                      <XCircle size={14} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filteredFaces.map((f, i) => {
+                const person = allPeople.find((p) => p.id === f.staffId)
+                const isStudent = person?.type === 'student'
+                return (
+                  <tr key={f.staffId} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)] transition-colors">
+                    <td className="p-2.5 text-center text-[var(--text-muted)]">{i + 1}</td>
+                    <td className="p-2.5 text-center">
+                      <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-[var(--border)] mx-auto bg-[var(--bg-secondary)]">
+                        <img src={f.photo} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-left font-medium text-[var(--text-primary)]">{f.staffName}</td>
+                    <td className="p-2.5 text-left font-mono text-[var(--text-secondary)]">{f.staffId}</td>
+                    <td className="p-2.5 text-center">
+                      <span className={`text-[0.5rem] px-1.5 py-0.5 rounded font-semibold ${
+                        isStudent ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--brand-light)] text-[var(--brand)]'
+                      }`}>
+                        {isStudent ? (isBn ? 'শিক্ষার্থী' : 'STU') : (isBn ? 'স্টাফ' : 'STAFF')}
+                      </span>
+                    </td>
+                    <td className="p-2.5 text-center">
+                      <button
+                        onClick={() => handleDeleteFace(f.staffId)}
+                        className="p-1.5 rounded-lg text-[var(--red)] hover:bg-[var(--red-light)] transition-colors cursor-pointer bg-transparent border-none"
+                      >
+                        <XCircle size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
               {filteredFaces.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-6 text-center text-[var(--text-muted)]">
-                    {isBn ? 'কোনো নিবন্ধিত স্টাফ নেই' : 'No registered staff'}
+                  <td colSpan={6} className="p-6 text-center text-[var(--text-muted)]">
+                    {isBn ? 'কোনো নিবন্ধিত ব্যক্তি নেই' : 'No registered people'}
                   </td>
                 </tr>
               )}
