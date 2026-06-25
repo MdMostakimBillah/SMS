@@ -32,7 +32,7 @@ import { today, twentyDaysAgo, getDaysBetween, isFriday, setGlobalBn } from './h
 import type { Tab, StatusFilter } from './helpers'
 
 import { TodayTab } from './tabs/TodayTab'
-import { RangeTab } from './tabs/RangeTab'
+
 import { EmployeeTab } from './tabs/EmployeeTab'
 import { StudentTab } from './tabs/StudentTab'
 import { PersonDetailModal } from './modals/PersonDetailModal'
@@ -528,13 +528,6 @@ export default function AttendancePage() {
       color: 'var(--green)',
     },
     {
-      key: 'range' as Tab,
-      labelBn: 'তারিখ পরিসীমা',
-      labelEn: 'Date Range',
-      Icon: CalendarRange,
-      color: 'var(--brand)',
-    },
-    {
       key: 'device' as Tab,
       labelBn: 'ডিভাইস',
       labelEn: 'Device',
@@ -775,7 +768,7 @@ export default function AttendancePage() {
       </div>
 
       {/* Status Filter + Date Range (for teacher tabs) */}
-      {(activeTab === 'today' || activeTab === 'range') && (
+      {activeTab === 'today' && (
         <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] mb-3.5 flex items-center gap-2 flex-wrap">
           <span className="text-[0.6875rem] font-medium text-[var(--text-muted)]">{isBn ? 'অবস্থা:' : 'Status:'}</span>
           {statusFilters.map((sf) => (
@@ -842,32 +835,6 @@ export default function AttendancePage() {
           setShowMarkAll={setShowMarkAll}
           statusFilters={statusFilters}
           statusBadge={statusBadge}
-        />
-      )}
-
-      {/* ==================== TAB: RANGE ==================== */}
-      {activeTab === 'range' && (
-        <RangeTab
-          isBn={isBn}
-          filteredEmployees={filteredEmployees}
-          paginatedEmployees={paginatedEmployees}
-          rangeDays={rangeDays}
-          empPage={empPage}
-          setEmpPage={setEmpPage}
-          empPerPage={empPerPage}
-          setEmpPerPage={setEmpPerPage}
-          empTotalPages={empTotalPages}
-          selectedEmployees={selectedEmployees}
-          setSelectedEmployees={setSelectedEmployees}
-          setViewPerson={setViewPerson}
-          attendance={attendance}
-          showEmployeePDF={showEmployeePDF}
-          setShowEmployeePDF={setShowEmployeePDF}
-          exportEmployeeExcel={exportEmployeeExcel}
-          statusBadge={statusBadge}
-          weeklyHolidayBadge={weeklyHolidayBadge}
-          getDeptName={getDeptName}
-          getStatus={getStatus}
         />
       )}
 

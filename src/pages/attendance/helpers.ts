@@ -40,5 +40,5 @@ export function setGlobalBn(val: boolean) {
   isBnGlobal = val
 }
 
-export type Tab = 'today' | 'range' | 'device' | 'employee' | 'student'
+export type Tab = 'today' | 'device' | 'employee' | 'student'
 export type StatusFilter = 'all' | 'present' | 'absent' | 'on-leave'
