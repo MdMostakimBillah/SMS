@@ -271,7 +271,7 @@ export default function AttendancePage() {
   )
 
   const getStudentMonthData = useCallback(
-    (_studentId: string) => {
+    (studentId: string) => {
       return rangeDays.map((ds) => {
         if (isFriday(ds)) {
           return {
@@ -281,12 +281,12 @@ export default function AttendancePage() {
             isWeeklyHoliday: true,
           }
         }
-        const rand = Math.random()
-        const status: AttendanceStatus = rand < 0.85 ? 'present' : rand < 0.95 ? 'absent' : 'on-leave'
-        return { date: ds, status, punches: [], isWeeklyHoliday: false }
+        const dayData = attendance[ds]?.[studentId]
+        const status: AttendanceStatus = dayData?.status || 'absent'
+        return { date: ds, status, punches: dayData?.punches || [], isWeeklyHoliday: false }
       })
     },
-    [rangeDays]
+    [rangeDays, attendance]
   )
 
   const downloadStudentSinglePDF = useCallback(
