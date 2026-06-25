@@ -565,7 +565,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
               {(['all', 'staff', 'student'] as const).map((f) => (
                 <button
                   key={f}
-                  onClick={() => setRegFilter(f)}
+                  onClick={() => { setRegFilter(f); setRegSearch(''); setSelectedStaff('') }}
                   className={`flex-1 py-1.5 rounded-lg text-[0.625rem] font-medium border cursor-pointer transition-all ${
                     regFilter === f
                       ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
@@ -576,39 +576,75 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                 </button>
               ))}
             </div>
-            {/* Search */}
-            <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 mb-2">
-              <Search size={12} className="text-[var(--text-muted)]" />
-              <input
-                value={regSearch}
-                onChange={(e) => setRegSearch(e.target.value)}
-                placeholder={isBn ? 'নাম, আইডি বা সেকশন...' : 'Name, ID, or section...'}
-                className="flex-1 border-none bg-transparent outline-none text-[0.6875rem] text-[var(--text-primary)]"
-              />
-              {regSearch && (
-                <button onClick={() => setRegSearch('')} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)]">
-                  <X size={11} />
-                </button>
+            {/* Autocomplete input */}
+            <div className="relative mb-2">
+              <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-2">
+                <Search size={13} className="text-[var(--text-muted)] shrink-0" />
+                <input
+                  value={regSearch}
+                  onChange={(e) => { setRegSearch(e.target.value); setSelectedStaff(''); setCapturedPhoto(null) }}
+                  onFocus={() => {}}
+                  placeholder={isBn ? 'নাম, আইডি বা সেকশন লিখুন...' : 'Type name, ID, or section...'}
+                  className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
+                />
+                {regSearch && (
+                  <button onClick={() => { setRegSearch(''); setSelectedStaff('') }} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)]">
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+              {/* Suggestions dropdown */}
+              {regSearch && !selectedStaff && filteredPeople.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 max-h-[14rem] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xl">
+                  {filteredPeople.slice(0, 20).map((p) => {
+                    const registered = registeredFaces.find((f) => f.staffId === p.id)
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => { setSelectedStaff(p.id); setRegSearch(p.name); setCapturedPhoto(null) }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none bg-transparent"
+                      >
+                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] shrink-0 flex items-center justify-center">
+                          {p.photo ? (
+                            <img src={p.photo} alt="" className="w-full h-full object-cover" />
+                          ) : p.type === 'staff' ? (
+                            <User size={12} className="text-[var(--text-muted)]" />
+                          ) : (
+                            <GraduationCap size={12} className="text-[var(--text-muted)]" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] truncate">
+                            {p.name}
+                            {registered && <span className="text-[var(--green)] ml-1">✓</span>}
+                          </div>
+                          <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono truncate">
+                            {p.id}{p.type === 'student' && p.dept ? ` · ${p.dept}-${p.section}` : ''}
+                          </div>
+                        </div>
+                        <span className={`text-[0.4375rem] px-1.5 py-0.5 rounded font-semibold shrink-0 ${
+                          p.type === 'student' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--brand-light)] text-[var(--brand)]'
+                        }`}>
+                          {p.type === 'student' ? 'STU' : 'STAFF'}
+                        </span>
+                      </button>
+                    )
+                  })}
+                  {filteredPeople.length > 20 && (
+                    <div className="px-3 py-1.5 text-center text-[0.5625rem] text-[var(--text-muted)] border-t border-[var(--border)]">
+                      +{filteredPeople.length - 20} {isBn ? 'আরও...' : 'more...'}
+                    </div>
+                  )}
+                </div>
+              )}
+              {regSearch && !selectedStaff && filteredPeople.length === 0 && (
+                <div className="absolute z-50 w-full mt-1 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xl p-4 text-center">
+                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                    {isBn ? 'কোনো ফলাফল পাওয়া যায়নি' : 'No results found'}
+                  </div>
+                </div>
               )}
             </div>
-            <select
-              value={selectedStaff}
-              onChange={(e) => { setSelectedStaff(e.target.value); setCapturedPhoto(null) }}
-              className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] outline-none mb-2"
-            >
-              <option value="">{isBn ? `নির্বাচন করুন (${filteredPeople.length})...` : `Select... (${filteredPeople.length})`}</option>
-              {filteredPeople.map((p) => {
-                const registered = registeredFaces.find((f) => f.staffId === p.id)
-                const label = p.type === 'staff'
-                  ? `${p.name} (${p.id})`
-                  : `${p.name} (${p.id}) [${p.dept}-${p.section}]`
-                return (
-                  <option key={p.id} value={p.id}>
-                    {registered ? '✓ ' : ''}{label}
-                  </option>
-                )
-              })}
-            </select>
             {selectedStaff && !camActive && (
               <button
                 onClick={startCamera}
