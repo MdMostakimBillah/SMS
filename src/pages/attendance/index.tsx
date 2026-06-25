@@ -903,6 +903,8 @@ export default function AttendancePage() {
           exportEmployeeExcel={exportEmployeeExcel}
           departments={departments}
           statusBadge={statusBadge}
+          weeklyHolidayBadge={weeklyHolidayBadge}
+          getStatus={getStatus}
           getDeptName={getDeptName}
         />
       )}

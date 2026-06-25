@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react'
 import type { AttendanceStatus } from '@/store/teacherStore'
-import { isFriday } from '../helpers'
+import { shortDate, dayName, isFriday } from '../helpers'
 
 interface EmployeeTabProps {
   isBn: boolean
@@ -47,6 +47,8 @@ interface EmployeeTabProps {
   exportEmployeeExcel: () => void
   departments: any[]
   statusBadge: (s: AttendanceStatus) => React.ReactNode
+  weeklyHolidayBadge: () => React.ReactNode
+  getStatus: (dayData?: any) => AttendanceStatus
   getDeptName: (id: string) => string
 }
 
@@ -76,6 +78,8 @@ export const EmployeeTab = React.memo(function EmployeeTab({
   exportEmployeeExcel,
   departments,
   statusBadge,
+  weeklyHolidayBadge,
+  getStatus,
   getDeptName,
 }: EmployeeTabProps) {
   const sel =
@@ -331,103 +335,77 @@ export const EmployeeTab = React.memo(function EmployeeTab({
                 <th className="p-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[5rem]">
                   {isBn ? 'পদবি' : 'Designation'}
                 </th>
-                <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[4.375rem]">
-                  {isBn ? 'ইন টাইম' : 'In-Time'}
-                </th>
-                <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[4.375rem]">
-                  {isBn ? 'আউট টাইম' : 'Out-Time'}
-                </th>
-                <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] min-w-[3.75rem]">
-                  {isBn ? 'অবস্থা' : 'Status'}
-                </th>
+                {rangeDays.map((ds) => (
+                  <th key={ds} className="p-[0.375rem] text-center text-[0.5625rem] font-semibold text-[var(--text-muted)] min-w-[2.25rem]">
+                    <div>{shortDate(ds)}</div>
+                    <div className="text-[0.5rem] font-normal">{dayName(ds)}</div>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {paginatedEmployees.map((t) => {
-                const da = attendance[Object.keys(attendance)[0]]?.[t.id]
-                const st: AttendanceStatus = da?.status || 'absent'
-                const inPunch = da?.punches?.find((p: any) => p.type === 'in')
-                const outPunch = [...(da?.punches || [])].reverse().find((p: any) => p.type === 'out')
-                const isLate = inPunch && t.inTime && inPunch.time > t.inTime
-                return (
-                  <tr
-                    key={t.id}
-                    className={`border-b border-[var(--border)] transition-colors ${
-                      selectedEmployees.includes(t.id) ? 'bg-[rgba(99,102,241,0.04)]' : 'hover:bg-[var(--bg-secondary)]'
-                    }`}
-                  >
-                    <td className="p-2 text-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedEmployees.includes(t.id)}
-                        onChange={() =>
-                          setSelectedEmployees((prev) => (prev.includes(t.id) ? prev.filter((id) => id !== t.id) : [...prev, t.id]))
-                        }
-                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
-                      />
-                    </td>
-                    <td className="p-[0.375rem] text-center">
-                      <div className="w-[1.875rem] h-[2.25rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
-                        {t.photo ? (
-                          <img src={t.photo} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <User size={13} className="text-[var(--text-muted)]" />
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-[0.375rem]">
-                      <div
-                        className="flex items-center gap-1.5 cursor-pointer"
-                        onClick={() =>
-                          setViewPerson({
-                            id: t.id,
-                            name: isBn ? t.nameBn || t.nameEn : t.nameEn,
-                            type: 'teacher',
-                          })
-                        }
-                      >
-                        <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">
-                          {isBn ? t.nameBn || t.nameEn : t.nameEn}
-                        </div>
-                        <ExternalLink size={10} className="text-[var(--text-muted)]" />
-                      </div>
-                      <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono">{t.id}</div>
-                    </td>
-                    <td className="p-[0.375rem] text-[0.625rem] text-[var(--text-secondary)]">{getDeptName(t.departmentId)}</td>
-                    <td className="p-[0.375rem] text-[0.625rem] text-[var(--text-secondary)]">{t.designation || '—'}</td>
-                    <td className="p-[0.375rem] text-center">
-                      {st === 'present' && inPunch ? (
-                        <span
-                          className={`text-[0.625rem] font-mono font-semibold px-2 py-[0.125rem] rounded ${isLate ? 'bg-[var(--amber-light)] text-[var(--amber)]' : 'bg-[var(--green-light)] text-[var(--green)]'}`}
-                        >
-                          {inPunch.time}
-                        </span>
-                      ) : (
-                        <span className="text-[0.625rem] text-[var(--text-muted)]">—</span>
-                      )}
-                    </td>
-                    <td className="p-[0.375rem] text-center">
-                      {st === 'present' && outPunch ? (
-                        <span className="text-[0.625rem] font-mono font-medium text-[var(--text-secondary)]">{outPunch.time}</span>
-                      ) : (
-                        <span className="text-[0.625rem] text-[var(--text-muted)]">—</span>
-                      )}
-                    </td>
-                    <td className="p-[0.375rem] text-center">
-                      {statusBadge(st)}
-                      {isLate && st === 'present' && <span className="text-[0.5rem] text-[var(--amber)] font-semibold ml-1">LATE</span>}
-                    </td>
-                  </tr>
-                )
-              })}
-              {filteredEmployees.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="p-10 text-center text-[var(--text-muted)]">
-                    <Users size={28} className="block mx-auto mb-2 opacity-30" />
-                    {isBn ? 'কোনো কর্মচারী পাওয়া যায়নি' : 'No employees found'}
+              {paginatedEmployees.map((t) => (
+                <tr
+                  key={t.id}
+                  className={`border-b border-[var(--border)] transition-colors ${
+                    selectedEmployees.includes(t.id) ? 'bg-[rgba(99,102,241,0.04)]' : 'hover:bg-[var(--bg-secondary)]'
+                  }`}
+                >
+                  <td className="p-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedEmployees.includes(t.id)}
+                      onChange={() =>
+                        setSelectedEmployees((prev) => (prev.includes(t.id) ? prev.filter((id) => id !== t.id) : [...prev, t.id]))
+                      }
+                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                    />
                   </td>
+                  <td className="p-[0.375rem] text-center">
+                    <div className="w-[1.875rem] h-[2.25rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
+                      {t.photo ? (
+                        <img src={t.photo} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <User size={13} className="text-[var(--text-muted)]" />
+                      )}
+                    </div>
+                  </td>
+                  <td className="p-[0.375rem]">
+                    <div
+                      className="flex items-center gap-1.5 cursor-pointer"
+                      onClick={() =>
+                        setViewPerson({
+                          id: t.id,
+                          name: isBn ? t.nameBn || t.nameEn : t.nameEn,
+                          type: 'teacher',
+                        })
+                      }
+                    >
+                      <div className="text-[0.6875rem] font-medium text-[var(--text-primary)]">
+                        {isBn ? t.nameBn || t.nameEn : t.nameEn}
+                      </div>
+                      <ExternalLink size={10} className="text-[var(--text-muted)]" />
+                    </div>
+                    <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono">{t.id}</div>
+                  </td>
+                  <td className="p-[0.375rem] text-[0.625rem] text-[var(--text-secondary)]">{getDeptName(t.departmentId)}</td>
+                  <td className="p-[0.375rem] text-[0.625rem] text-[var(--text-secondary)]">{t.designation || '—'}</td>
+                  {rangeDays.map((ds) => {
+                    if (isFriday(ds))
+                      return (
+                        <td key={ds} className="p-[0.25rem] text-center">
+                          {weeklyHolidayBadge()}
+                        </td>
+                      )
+                    const st = getStatus(attendance[ds]?.[t.id])
+                    return (
+                      <td key={ds} className="p-[0.25rem] text-center">
+                        {statusBadge(st)}
+                      </td>
+                    )
+                  })}
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>
