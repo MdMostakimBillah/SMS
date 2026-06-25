@@ -198,20 +198,21 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
 
   const saveRegistration = (descriptor: Float32Array) => {
     if (!selectedStaff) return
-    const teacher = activeTeachers.find((t) => t.id === selectedStaff)
-    if (!teacher) return
+    const person = allPeople.find((p) => p.id === selectedStaff)
+    if (!person) return
     const photo = capturePhoto()
     if (!photo) return
     const entry: RegisteredFace = {
-      staffId: teacher.id,
-      staffName: isBn ? teacher.nameBn || teacher.nameEn : teacher.nameEn,
+      staffId: person.id,
+      staffName: isBn ? person.name : person.nameEn,
       photo,
       descriptor: Array.from(descriptor),
     }
-    const updated = [...registeredFaces.filter((f) => f.staffId !== teacher.id), entry]
+    const updated = [...registeredFaces.filter((f) => f.staffId !== person.id), entry]
     setRegisteredFaces(updated)
     saveFaces(updated)
     setSelectedStaff('')
+    setRegSearch('')
     setCapturedPhoto(null)
     stopCamera()
   }
