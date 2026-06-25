@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   Briefcase,
   CalendarCheck,
-  CalendarRange,
   CalendarX,
   CheckCircle,
   Clock,
@@ -766,50 +765,6 @@ export default function AttendancePage() {
           ))}
         </div>
       </div>
-
-      {/* Status Filter + Date Range (for teacher tabs) */}
-      {activeTab === 'today' && (
-        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] mb-3.5 flex items-center gap-2 flex-wrap">
-          <span className="text-[0.6875rem] font-medium text-[var(--text-muted)]">{isBn ? 'অবস্থা:' : 'Status:'}</span>
-          {statusFilters.map((sf) => (
-            <button
-              key={sf.key}
-              onClick={() => setStatusFilter(sf.key)}
-              className={`px-3 py-1 rounded-lg text-[0.6875rem] cursor-pointer border ${
-                statusFilter === sf.key
-                  ? 'font-semibold'
-                  : 'font-normal border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
-              }`}
-              style={
-                statusFilter === sf.key
-                  ? {
-                      border: `1px solid ${sf.color}`,
-                      background: `${sf.color}18`,
-                      color: sf.color,
-                    }
-                  : {}
-              }
-            >
-              {isBn ? sf.labelBn : sf.labelEn}
-            </button>
-          ))}
-          <div className="flex-1" />
-          <CalendarRange size={14} className="text-[var(--text-muted)]" />
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="px-2 py-[0.3125rem] rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] outline-none"
-          />
-          <span className="text-[0.6875rem] text-[var(--text-muted)]">—</span>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="px-2 py-[0.3125rem] rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.6875rem] outline-none"
-          />
-        </div>
-      )}
 
       {/* ==================== TAB: TODAY ==================== */}
       {activeTab === 'today' && (
