@@ -8,9 +8,10 @@ import { gsap } from 'gsap'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import CommandPalette from '@/components/shared/CommandPalette'
+import QuickAccessFAB from '@/components/shared/QuickAccessFAB'
 
 export default function AppLayout() {
-  const { theme, language, sidebarCollapsed, sidebarOpen, toggleSidebar } = useAppStore()
+  const { theme, language, sidebarCollapsed, sidebarOpen, sidebarPosition, toggleSidebar } = useAppStore()
   const { institution } = useClassStore()
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
@@ -92,27 +93,8 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-tertiary)]">
-      {/* Desktop / Tablet Sidebar */}
-      {!isMobile && <Sidebar collapsed={isTablet ? true : sidebarCollapsed} />}
-
-      {/* Mobile Drawer Overlay */}
-      {isMobile && (
-        <>
-          <div
-            ref={backdropRef}
-            className="fixed inset-0 bg-black/50 z-40"
-            style={{ display: 'none' }}
-            onClick={toggleSidebar}
-          />
-          <div
-            ref={drawerRef}
-            className="fixed left-0 top-0 bottom-0 z-50 flex"
-            style={{ display: 'none' }}
-          >
-            <Sidebar collapsed={false} />
-          </div>
-        </>
-      )}
+      {/* Desktop / Tablet Sidebar — Left */}
+      {!isMobile && sidebarPosition === 'left' && <Sidebar collapsed={isTablet ? true : sidebarCollapsed} />}
 
       <div className="flex-1 flex flex-col min-w-0 relative">
         <Topbar />
@@ -126,6 +108,32 @@ export default function AppLayout() {
           </div>
         </main>
       </div>
+
+      {/* Desktop / Tablet Sidebar — Right */}
+      {!isMobile && sidebarPosition === 'right' && <Sidebar collapsed={isTablet ? true : sidebarCollapsed} />}
+
+      {/* Mobile Drawer Overlay */}
+      {isMobile && (
+        <>
+          <div
+            ref={backdropRef}
+            className="fixed inset-0 bg-black/50 z-40"
+            style={{ display: 'none' }}
+            onClick={toggleSidebar}
+          />
+          <div
+            ref={drawerRef}
+            className={`fixed top-0 bottom-0 z-50 flex ${sidebarPosition === 'right' ? 'right-0' : 'left-0'}`}
+            style={{ display: 'none' }}
+          >
+            <Sidebar collapsed={false} />
+          </div>
+        </>
+      )}
+
+      {/* Sidebar Position Toggle Button — moved to Sidebar */}
+
+      <QuickAccessFAB />
 
       <CommandPalette />
     </div>

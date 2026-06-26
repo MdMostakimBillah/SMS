@@ -25,7 +25,7 @@ import { useClassStore, extractClassNumber } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useSyllabusStore } from '@/store/syllabusStore'
 import type { SyllabusEntry, SyllabusChapter, SyllabusTopic } from '@/store/syllabusStore'
-import { generateSyllabusPDF } from './pdfTemplate'
+import { SyllabusPDFOptionsModal } from './SyllabusPDFOptionsModal'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 
 const btnPri =
@@ -67,6 +67,7 @@ export default function SyllabusPage() {
   const [editChapter, setEditChapter] = useState<SyllabusChapter | null>(null)
   const [editTopic, setEditTopic] = useState<SyllabusTopic | null>(null)
   const [activeChapterId, setActiveChapterId] = useState('')
+  const [showPDFModal, setShowPDFModal] = useState(false)
 
   const [chapterForm, setChapterForm] = useState({ title: '', titleBn: '', description: '', descriptionBn: '', order: '1' })
   const [chapterLangMode, setChapterLangMode] = useState<'both' | 'en' | 'bn'>('both')
@@ -380,33 +381,18 @@ export default function SyllabusPage() {
     if (updated) setSelectedSyllabus(updated)
   }
 
-  const handleDownloadPDF = () => {
+  const openPDFModal = () => {
     if (!selectedSyllabus) return
-    generateSyllabusPDF(
-      {
-        className: `${getClassName(selectedClass)} - ${selectedSection}`,
-        subjectName: getSubjectName(selectedSubject),
-        sessionId: selectedSyllabus.sessionId,
-        chapters: selectedSyllabus.chapters.map((ch) => ({
-          title: ch.title,
-          titleBn: ch.titleBn,
-          description: ch.description,
-          descriptionBn: ch.descriptionBn,
-          topics: ch.topics.map((t) => ({
-            title: t.title,
-            titleBn: t.titleBn,
-            description: t.description,
-            descriptionBn: t.descriptionBn,
-            marks: t.marks,
-            status: t.status,
-            weekNo: t.weekNo,
-            startDate: t.startDate,
-            endDate: t.endDate,
-          })),
-        })),
-      },
-      isBn
-    )
+    setShowPDFModal(true)
+  }
+
+  const handleDownloadPDF = (html: string, _filename: string) => {
+    const w = window.open('', '_blank')
+    if (w) {
+      w.document.write(html)
+      w.document.close()
+      setTimeout(() => w.print(), 500)
+    }
   }
 
   const statusIcon = (s: string) => {
@@ -501,7 +487,7 @@ export default function SyllabusPage() {
           </div>
         </div>
         {view === 'detail' && selectedSyllabus && (
-          <button onClick={handleDownloadPDF} className={btnPri}>
+          <button onClick={openPDFModal} className={btnPri}>
             <Download size={14} />
             {isBn ? 'PDF' : 'PDF'}
           </button>
@@ -1215,6 +1201,35 @@ export default function SyllabusPage() {
           </div>
         </div>,
         document.body
+      )}
+
+      {/* ═══ PDF Options Modal ═══ */}
+      {showPDFModal && selectedSyllabus && (
+        <SyllabusPDFOptionsModal
+          className={`${getClassName(selectedClass)} - ${selectedSection}`}
+          subjectName={getSubjectName(selectedSubject)}
+          sessionId={selectedSyllabus.sessionId}
+          chapters={selectedSyllabus.chapters.map((ch) => ({
+            title: ch.title,
+            titleBn: ch.titleBn,
+            description: ch.description,
+            descriptionBn: ch.descriptionBn,
+            topics: ch.topics.map((t) => ({
+              title: t.title,
+              titleBn: t.titleBn,
+              description: t.description,
+              descriptionBn: t.descriptionBn,
+              marks: t.marks,
+              status: t.status,
+              weekNo: t.weekNo,
+              startDate: t.startDate,
+              endDate: t.endDate,
+            })),
+          }))}
+          isBn={isBn}
+          onClose={() => setShowPDFModal(false)}
+          onDownload={handleDownloadPDF}
+        />
       )}
     </div>
   )

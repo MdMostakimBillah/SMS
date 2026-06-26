@@ -19,6 +19,7 @@ interface AppState {
   language: Language
   sidebarOpen: boolean
   sidebarCollapsed: boolean
+  sidebarPosition: 'left' | 'right'
   commandPaletteOpen: boolean
   pageVisits: PageVisit[]
   bookmarks: string[]
@@ -30,6 +31,7 @@ interface AppState {
   setLanguage: (language: Language) => void
   toggleSidebar: () => void
   setSidebarCollapsed: (collapsed: boolean) => void
+  toggleSidebarPosition: () => void
   setCommandPaletteOpen: (open: boolean) => void
   trackVisit: (path: string, label: string, icon: string) => void
   toggleBookmark: (path: string) => void
@@ -47,6 +49,7 @@ export const useAppStore = create<AppState>()(
       language: 'bn',
       sidebarOpen: false,
       sidebarCollapsed: false,
+      sidebarPosition: 'left',
       commandPaletteOpen: false,
       pageVisits: [],
       bookmarks: [],
@@ -71,6 +74,8 @@ export const useAppStore = create<AppState>()(
 
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
+      toggleSidebarPosition: () => set((state) => ({ sidebarPosition: state.sidebarPosition === 'left' ? 'right' : 'left' })),
+
       setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
 
       trackVisit: (path, label, icon) =>
@@ -94,7 +99,7 @@ export const useAppStore = create<AppState>()(
             return { bookmarks: state.bookmarks.filter((p) => p !== path) }
           }
           // If adding, max 5 bookmarks
-          if (state.bookmarks.length >= 6) return state
+          if (state.bookmarks.length >= 5) return state
           return { bookmarks: [...state.bookmarks, path] }
         }),
 
@@ -117,6 +122,7 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         theme: state.theme,
         language: state.language,
+        sidebarPosition: state.sidebarPosition,
         pageVisits: state.pageVisits,
         bookmarks: state.bookmarks,
         sidebarOrder: state.sidebarOrder,

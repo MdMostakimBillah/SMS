@@ -1,4 +1,12 @@
-export function generateSyllabusPDF(
+import { getPDFBranding, pdfFooterHTML } from '@/lib/pdfBranding'
+
+export interface SyllabusPDFOptions {
+  orientation: 'portrait' | 'landscape'
+  showChapterDesc: boolean
+  showTopicDesc: boolean
+}
+
+export function generateSyllabusPDFHTML(
   syllabus: {
     className: string
     subjectName: string
@@ -22,123 +30,101 @@ export function generateSyllabusPDF(
     }[]
   },
   isBn: boolean,
-  institutionName?: string
-) {
-  const schoolName = institutionName || (isBn ? 'এডুটেক স্কুল' : 'EduTech School')
+  options: SyllabusPDFOptions
+): string {
+  const b = getPDFBranding()
+  const brandColor = b.brandColor
 
   let topicRows = ''
   let sn = 0
-  let totalMarks = 0
-  let completedMarks = 0
 
   syllabus.chapters.forEach((ch, ci) => {
     ch.topics.forEach((t) => {
       sn++
-      totalMarks += t.marks
-      if (t.status === 'completed') completedMarks += t.marks
       const statusColor = t.status === 'completed' ? '#16a34a' : t.status === 'in-progress' ? '#d97706' : '#6b7280'
       const statusLabel =
         t.status === 'completed'
-          ? isBn
-            ? 'সম্পন্ন'
-            : 'Done'
+          ? isBn ? 'সম্পন্ন' : 'Done'
           : t.status === 'in-progress'
-            ? isBn
-              ? 'চলমান'
-              : 'Running'
-            : isBn
-              ? 'বাকি'
-              : 'Pending'
+            ? isBn ? 'চলমান' : 'Running'
+            : isBn ? 'বাকি' : 'Pending'
       topicRows += `
         <tr>
-          <td style="padding:6px 8px;border:1px solid #e5e7eb;font-size:11px;color:#6b7280;">${sn}</td>
-          <td style="padding:6px 8px;border:1px solid #e5e7eb;font-size:11px;color:#374151;">${ci + 1}</td>
-          <td style="padding:6px 8px;border:1px solid #e5e7eb;">
-            <div style="font-size:11px;font-weight:600;color:#111827;">${isBn ? t.titleBn : t.title}</div>
-            <div style="font-size:9px;color:#6b7280;margin-top:1px;">${isBn ? t.descriptionBn : t.description}</div>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;font-size:10px;color:#6b7280;">${sn}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;font-size:10px;color:#6b7280;">${ci + 1}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;">
+            <div style="font-size:10px;font-weight:600;color:#111827;">${isBn ? t.titleBn : t.title}</div>
+            ${options.showTopicDesc ? `<div style="font-size:8px;color:#6b7280;margin-top:1px;">${isBn ? t.descriptionBn : t.description}</div>` : ''}
           </td>
-          <td style="padding:6px 8px;border:1px solid #e5e7eb;text-align:center;font-size:11px;color:#374151;">${t.weekNo || '-'}</td>
-          <td style="padding:6px 8px;border:1px solid #e5e7eb;text-align:center;font-size:11px;color:#374151;">${t.startDate || '-'}<br/>${t.endDate || '-'}</td>
-          <td style="padding:6px 8px;border:1px solid #e5e7eb;text-align:center;font-size:11px;font-weight:600;color:#374151;">${t.marks}</td>
-          <td style="padding:6px 8px;border:1px solid #e5e7eb;text-align:center;">
-            <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600;color:white;background:${statusColor};">${statusLabel}</span>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;font-size:10px;color:#374151;">${t.weekNo || '-'}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;font-size:10px;color:#374151;">${t.startDate || '-'}<br/>${t.endDate || '-'}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;font-size:10px;font-weight:600;color:#374151;">${t.marks}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">
+            <span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:8px;font-weight:600;color:white;background:${statusColor};">${statusLabel}</span>
           </td>
         </tr>`
     })
   })
 
-  const pct = totalMarks > 0 ? Math.round((completedMarks / totalMarks) * 100) : 0
+  const isLandscape = options.orientation === 'landscape'
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8"/>
-<title>${isBn ? 'সিলেবাস' : 'Syllabus'} - ${syllabus.className} - ${syllabus.subjectName}</title>
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${isBn ? 'সিলেবাস' : 'Syllabus'}</title>
 <style>
-  @page { size: A4; margin: 15mm; }
+  @page { size: A4 ${isLandscape ? 'landscape' : 'portrait'}; margin: 12mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; font-size: 12px; }
-  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-</style>
-</head>
-<body>
-<div style="text-align:center;margin-bottom:20px;padding-bottom:15px;border-bottom:3px solid #2563eb;">
-  <h1 style="font-size:20px;font-weight:700;color:#111827;margin-bottom:4px;">${schoolName}</h1>
-  <div style="font-size:14px;font-weight:600;color:#2563eb;margin-bottom:8px;">${isBn ? 'পাঠ্যক্রম বিবরণী' : 'Syllabus Details'}</div>
-  <div style="display:inline-flex;gap:24px;font-size:11px;color:#6b7280;">
-    <span><strong>${isBn ? 'শ্রেণি' : 'Class'}:</strong> ${syllabus.className}</span>
-    <span><strong>${isBn ? 'বিষয়' : 'Subject'}:</strong> ${syllabus.subjectName}</span>
-    <span><strong>${isBn ? 'সেশন' : 'Session'}:</strong> ${syllabus.sessionId}</span>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; font-size: 11px; padding: 8mm; }
+  @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; padding: 8mm; } }
+</style></head><body>
+<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:7px;border-bottom:2px solid ${brandColor};margin-bottom:7px">
+  <div style="display:flex;align-items:center;gap:10px">
+    ${b.logo ? `<img src="${b.logo}" style="width:36px;height:36px;border-radius:7px;object-fit:contain" />` : `<div style="width:36px;height:36px;background:${brandColor};border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700">ET</div>`}
+    <div>
+      <div style="font-size:16px;font-weight:800;color:${brandColor};letter-spacing:0.3px;font-family:'Poppins','Nunito','Segoe UI',sans-serif;">${b.schoolNameBn && isBn ? b.schoolNameBn : b.schoolName}</div>
+      ${b.address ? `<div style="font-size:8px;color:#888;margin-top:1px;">${b.address}</div>` : ''}
+    </div>
+  </div>
+  <div style="text-align:right;font-size:8px;color:#666;line-height:1.7">
+    <div>Printed: ${new Date().toLocaleDateString()}</div>
+    <div style="font-size:9px;color:#6b7280;line-height:1.8">
+      <strong>${isBn ? 'শ্রেণি' : 'Class'}:</strong> ${syllabus.className} &nbsp;|&nbsp;
+      <strong>${isBn ? 'বিষয়' : 'Subject'}:</strong> ${syllabus.subjectName} &nbsp;|&nbsp;
+      <strong>${isBn ? 'সেশন' : 'Session'}:</strong> ${syllabus.sessionId}
+    </div>
   </div>
 </div>
 
-<div style="display:flex;gap:12px;margin-bottom:16px;">
-  <div style="flex:1;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;text-align:center;">
-    <div style="font-size:18px;font-weight:700;color:#16a34a;">${syllabus.chapters.length}</div>
-    <div style="font-size:10px;color:#15803d;">${isBn ? 'অধ্যায়' : 'Chapters'}</div>
-  </div>
-  <div style="flex:1;padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;text-align:center;">
-    <div style="font-size:18px;font-weight:700;color:#2563eb;">${sn}</div>
-    <div style="font-size:10px;color:#1d4ed8;">${isBn ? 'টপিক' : 'Topics'}</div>
-  </div>
-  <div style="flex:1;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;text-align:center;">
-    <div style="font-size:18px;font-weight:700;color:#d97706;">${pct}%</div>
-    <div style="font-size:10px;color:#b45309;">${isBn ? 'সম্পন্ন' : 'Completed'}</div>
-  </div>
-  <div style="flex:1;padding:10px 14px;background:#fdf2f8;border:1px solid #fbcfe8;border-radius:8px;text-align:center;">
-    <div style="font-size:18px;font-weight:700;color:#db2777;">${totalMarks}</div>
-    <div style="font-size:10px;color:#be185d;">${isBn ? 'মোট মার্কস' : 'Total Marks'}</div>
-  </div>
+<div style="text-align:center;margin-bottom:12px;">
+  <div style="font-size:13px;font-weight:700;color:${brandColor};text-transform:uppercase;letter-spacing:0.5px;">${isBn ? 'পাঠ্যক্রম বিবরণী' : 'Syllabus Details'}</div>
 </div>
 
-<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
-  <thead>
-    <tr style="background:#2563eb;color:white;">
-      <th style="padding:6px 8px;border:1px solid #1d4ed8;font-size:10px;width:30px;">#</th>
-      <th style="padding:6px 8px;border:1px solid #1d4ed8;font-size:10px;width:30px;">${isBn ? 'অধ্যা.' : 'Ch'}</th>
-      <th style="padding:6px 8px;border:1px solid #1d4ed8;font-size:10px;text-align:left;">${isBn ? 'টপিক' : 'Topic'}</th>
-      <th style="padding:6px 8px;border:1px solid #1d4ed8;font-size:10px;width:50px;">${isBn ? 'সপ্তাহ' : 'Week'}</th>
-      <th style="padding:6px 8px;border:1px solid #1d4ed8;font-size:10px;width:100px;">${isBn ? 'তারিখ' : 'Dates'}</th>
-      <th style="padding:6px 8px;border:1px solid #1d4ed8;font-size:10px;width:50px;">${isBn ? 'মার্কস' : 'Marks'}</th>
-      <th style="padding:6px 8px;border:1px solid #1d4ed8;font-size:10px;width:70px;">${isBn ? 'অবস্থা' : 'Status'}</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${topicRows}
-  </tbody>
-</table>
+${syllabus.chapters.map((ch, ci) => {
+  const chDesc = options.showChapterDesc ? `<div style="font-size:9px;color:#6b7280;margin-bottom:4px;">${isBn ? ch.descriptionBn : ch.description}</div>` : ''
+  return `
+  <div style="margin-bottom:10px;">
+    <div style="background:${brandColor}10;border-left:3px solid ${brandColor};padding:5px 8px;margin-bottom:4px;border-radius:0 4px 4px 0;">
+      <span style="font-size:11px;font-weight:700;color:${brandColor};">${isBn ? 'অধ্যায়' : 'Chapter'} ${ci + 1}:</span>
+      <span style="font-size:11px;font-weight:600;color:#111827;margin-left:4px;">${isBn ? ch.titleBn : ch.title}</span>
+    </div>
+    ${chDesc}
+    <table style="width:100%;border-collapse:collapse;font-size:9px;">
+      <thead>
+        <tr style="background:${brandColor};color:white;">
+          <th style="padding:4px 5px;border:1px solid ${brandColor};width:25px;">#</th>
+          <th style="padding:4px 5px;border:1px solid ${brandColor};width:25px;">${isBn ? 'অধ্যা.' : 'Ch'}</th>
+          <th style="padding:4px 5px;border:1px solid ${brandColor};text-align:left;">${isBn ? 'টপিক' : 'Topic'}</th>
+          <th style="padding:4px 5px;border:1px solid ${brandColor};width:40px;">${isBn ? 'সপ্তাহ' : 'Week'}</th>
+          <th style="padding:4px 5px;border:1px solid ${brandColor};width:80px;">${isBn ? 'তারিখ' : 'Dates'}</th>
+          <th style="padding:4px 5px;border:1px solid ${brandColor};width:40px;">${isBn ? 'মার্কস' : 'Marks'}</th>
+          <th style="padding:4px 5px;border:1px solid ${brandColor};width:55px;">${isBn ? 'অবস্থা' : 'Status'}</th>
+        </tr>
+      </thead>
+      <tbody>${topicRows}</tbody>
+    </table>
+  </div>`
+}).join('')}
 
-<div style="text-align:center;margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:9px;color:#9ca3af;">
-  ${isBn ? 'তৈরি করা হয়েছে' : 'Generated by'} ${schoolName} ${isBn ? 'ম্যানেজমেন্ট সিস্টেম' : 'Management System'} &bull; ${new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US')}
-</div>
-</body>
-</html>`
+${pdfFooterHTML(isBn)}
+</body></html>`
 
-  const w = window.open('', '_blank')
-  if (w) {
-    w.document.write(html)
-    w.document.close()
-    setTimeout(() => w.print(), 500)
-  }
+  return html
 }

@@ -31,6 +31,8 @@ import {
   Check,
   X,
   Star,
+  PanelLeftClose,
+  PanelRightClose,
   type LucideIcon,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -71,7 +73,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const isBn = useBn()
-  const { language, toggleSidebar, trackVisit, pageVisits, bookmarks, toggleBookmark, sidebarOrder, setSidebarOrder } = useAppStore()
+  const { language, toggleSidebar, trackVisit, pageVisits, bookmarks, toggleBookmark, sidebarOrder, setSidebarOrder, sidebarPosition, toggleSidebarPosition } = useAppStore()
   const { isMobile, width } = useWindowSize()
   const location = useLocation()
   const { institution, switchSession, addSession } = useClassStore()
@@ -496,7 +498,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                           className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-[var(--bg-primary)] shrink-0 ${
                             isBookmarked ? '!opacity-100' : ''
                           } ${atMaxBookmarks ? 'cursor-not-allowed' : ''}`}
-                          title={isBookmarked ? (isBn ? 'বুকমার্ক সরান' : 'Remove bookmark') : atMaxBookmarks ? (isBn ? 'সর্বোচ্চ ৬টি বুকমার্ক যোগ করা যাবে' : 'Max 6 bookmarks allowed') : (isBn ? 'বুকমার্ক যোগ করুন' : 'Add bookmark')}
+                          title={isBookmarked ? (isBn ? 'বুকমার্ক সরান' : 'Remove bookmark') : atMaxBookmarks ? (isBn ? 'সর্বোচ্চ ৫টি বুকমার্ক যোগ করা যাবে' : 'Max 5 bookmarks allowed') : (isBn ? 'বুকমার্ক যোগ করুন' : 'Add bookmark')}
                         >
                           <Star
                             size={12}
@@ -512,9 +514,9 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
           ))}
         </nav>
 
-        {/* Bottom - Quick Access */}
-        {!collapsed && quickAccess.length > 0 && (
-          <div className="px-3 py-2 border-t border-[var(--border)]">
+        {/* Bottom - Quick Access + Position Toggle */}
+        {!collapsed && (
+          <div className="px-3 py-2 border-t border-[var(--border)] mt-auto">
             <div className="flex items-center justify-center gap-1">
               {quickAccess.map((v) => {
                 const Icon = iconMap[v.icon] || Star
@@ -539,13 +541,21 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                   </NavLink>
                 )
               })}
+              {quickAccess.length > 0 && <div className="w-px h-5 bg-[var(--border)] mx-0.5" />}
+              <button
+                onClick={toggleSidebarPosition}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--brand-light)] transition-colors text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer"
+                title={isBn ? (sidebarPosition === 'left' ? 'সাইডবার ডানে সরান' : 'সাইডবার বামে সরান') : (sidebarPosition === 'left' ? 'Move sidebar to right' : 'Move sidebar to left')}
+              >
+                {sidebarPosition === 'left' ? <PanelRightClose size={15} /> : <PanelLeftClose size={15} />}
+              </button>
             </div>
           </div>
         )}
 
-        {/* Collapsed Quick Access */}
-        {collapsed && quickAccess.length > 0 && (
-          <div className="px-1 pb-2 border-t border-[var(--border)] pt-2">
+        {/* Collapsed Quick Access + Position Toggle */}
+        {collapsed && (
+          <div className="px-1 pb-2 border-t border-[var(--border)] pt-2 mt-auto">
             <div className="flex flex-col items-center gap-1">
               {quickAccess.map((v) => {
                 const Icon = iconMap[v.icon] || Star
@@ -570,6 +580,14 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                   </NavLink>
                 )
               })}
+              {quickAccess.length > 0 && <div className="w-5 h-px bg-[var(--border)]" />}
+              <button
+                onClick={toggleSidebarPosition}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--brand-light)] transition-colors text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer"
+                title={isBn ? (sidebarPosition === 'left' ? 'সাইডবার ডানে সরান' : 'সাইডবার বামে সরান') : (sidebarPosition === 'left' ? 'Move sidebar to right' : 'Move sidebar to left')}
+              >
+                {sidebarPosition === 'left' ? <PanelRightClose size={15} /> : <PanelLeftClose size={15} />}
+              </button>
             </div>
           </div>
         )}
