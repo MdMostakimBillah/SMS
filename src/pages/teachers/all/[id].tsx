@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, User, FileText, AlertCircle } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
@@ -10,12 +11,24 @@ export default function TeacherDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const isBn = useBn()
-  const { teachers, departments, subjects } = useTeacherStore()
+  const { teachers, departments, subjects } = useTeacherStore(
+    useShallow((s) => ({
+      teachers: s.teachers,
+      departments: s.departments,
+      subjects: s.subjects,
+    }))
+  )
 
   const teacher = useMemo(() => teachers.find((t) => t.id === id), [teachers, id])
 
+  const departmentMap = useMemo(() => {
+    const map = new Map<string, typeof departments[0]>()
+    for (const d of departments) map.set(d.id, d)
+    return map
+  }, [departments])
+
   const getDeptName = (deptId: string) => {
-    const d = departments.find((x) => x.id === deptId)
+    const d = departmentMap.get(deptId)
     return d ? (isBn ? d.nameBn : d.name) : '—'
   }
 

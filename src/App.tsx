@@ -3,23 +3,24 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layouts/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import DashboardPage from '@/pages/dashboard'
-import StudentsPage from '@/pages/students'
-import StudentAdmission from '@/pages/students/admission'
-import AllStudentsPage from '@/pages/students/all'
-import UpdateStudentPage from '@/pages/students/update'
-import BulkUpdatePage from '@/pages/students/bulk-update'
-import IDCardsPage from '@/pages/students/id-cards'
-import PromotionPage from '@/pages/students/promotion'
-import TeachersPage from '@/pages/teachers'
-import AddTeacherPage from '@/pages/teachers/add'
-import AllTeachersPage from '@/pages/teachers/all'
-import TeacherDetailPage from '@/pages/teachers/all/[id]'
-import EditTeacherPage from '@/pages/teachers/edit/[id]'
-import DepartmentsPage from '@/pages/teachers/departments'
-import SubjectsPage from '@/pages/teachers/subjects'
-import TeacherBulkUpdatePage from '@/pages/teachers/bulk-update'
-import DesignationsPage from '@/pages/teachers/designations'
+
+const DashboardPage = lazy(() => import('@/pages/dashboard'))
+const StudentsPage = lazy(() => import('@/pages/students'))
+const StudentAdmission = lazy(() => import('@/pages/students/admission'))
+const AllStudentsPage = lazy(() => import('@/pages/students/all'))
+const UpdateStudentPage = lazy(() => import('@/pages/students/update'))
+const BulkUpdatePage = lazy(() => import('@/pages/students/bulk-update'))
+const IDCardsPage = lazy(() => import('@/pages/students/id-cards'))
+const PromotionPage = lazy(() => import('@/pages/students/promotion'))
+const TeachersPage = lazy(() => import('@/pages/teachers'))
+const AddTeacherPage = lazy(() => import('@/pages/teachers/add'))
+const AllTeachersPage = lazy(() => import('@/pages/teachers/all'))
+const TeacherDetailPage = lazy(() => import('@/pages/teachers/all/[id]'))
+const EditTeacherPage = lazy(() => import('@/pages/teachers/edit/[id]'))
+const DepartmentsPage = lazy(() => import('@/pages/teachers/departments'))
+const SubjectsPage = lazy(() => import('@/pages/teachers/subjects'))
+const TeacherBulkUpdatePage = lazy(() => import('@/pages/teachers/bulk-update'))
+const DesignationsPage = lazy(() => import('@/pages/teachers/designations'))
 const PayrollPage = lazy(() => import('@/pages/payroll'))
 const ClassesPage = lazy(() => import('@/pages/classes'))
 const HRPage = lazy(() => import('@/pages/hr'))
@@ -37,43 +38,47 @@ function P({ name }: { name: string }) {
   return <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 500, padding: '1.25rem' }}>{name}</div>
 }
 
+const F = ({ children }: { children: React.ReactNode }) => (
+  <ErrorBoundary><Suspense fallback={<LoadingSpinner />}>{children}</Suspense></ErrorBoundary>
+)
+
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route element={<AppLayout />}>
-        <Route path="/dashboard" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
-        <Route path="/students" element={<ErrorBoundary><StudentsPage /></ErrorBoundary>} />
-        <Route path="/students/admission" element={<ErrorBoundary><StudentAdmission /></ErrorBoundary>} />
-        <Route path="/students/all" element={<ErrorBoundary><AllStudentsPage /></ErrorBoundary>} />
-        <Route path="/students/update" element={<ErrorBoundary><UpdateStudentPage /></ErrorBoundary>} />
-        <Route path="/students/bulk-update" element={<ErrorBoundary><BulkUpdatePage /></ErrorBoundary>} />
-        <Route path="/students/id-cards" element={<ErrorBoundary><IDCardsPage /></ErrorBoundary>} />
-        <Route path="/students/promotion" element={<ErrorBoundary><PromotionPage /></ErrorBoundary>} />
-        <Route path="/teachers" element={<ErrorBoundary><TeachersPage /></ErrorBoundary>} />
-        <Route path="/teachers/add" element={<ErrorBoundary><AddTeacherPage /></ErrorBoundary>} />
-        <Route path="/teachers/all" element={<ErrorBoundary><AllTeachersPage /></ErrorBoundary>} />
-        <Route path="/teachers/all/:id" element={<ErrorBoundary><TeacherDetailPage /></ErrorBoundary>} />
-        <Route path="/teachers/edit/:id" element={<ErrorBoundary><EditTeacherPage /></ErrorBoundary>} />
-        <Route path="/teachers/bulk-update" element={<ErrorBoundary><TeacherBulkUpdatePage /></ErrorBoundary>} />
-        <Route path="/teachers/departments" element={<ErrorBoundary><DepartmentsPage /></ErrorBoundary>} />
-        <Route path="/teachers/subjects" element={<ErrorBoundary><SubjectsPage /></ErrorBoundary>} />
-        <Route path="/teachers/designations" element={<ErrorBoundary><DesignationsPage /></ErrorBoundary>} />
-        <Route path="/classes" element={<ErrorBoundary><Suspense fallback={<LoadingSpinner />}><ClassesPage /></Suspense></ErrorBoundary>} />
-        <Route path="/hr" element={<ErrorBoundary><Suspense fallback={<LoadingSpinner />}><HRPage /></Suspense></ErrorBoundary>} />
-        <Route path="/attendance" element={<ErrorBoundary><Suspense fallback={<LoadingSpinner />}><AttendancePage /></Suspense></ErrorBoundary>} />
-        <Route path="/exams" element={<ErrorBoundary><Suspense fallback={<LoadingSpinner />}><ExamDashboard /></Suspense></ErrorBoundary>} />
-        <Route path="/exams/planning" element={<ErrorBoundary><Suspense fallback={<LoadingSpinner />}><Step1Planning /></Suspense></ErrorBoundary>} />
-        <Route path="/exams/scheduling" element={<ErrorBoundary><Suspense fallback={<LoadingSpinner />}><Step2Schedule /></Suspense></ErrorBoundary>} />
-        <Route path="/exams/evaluation" element={<ErrorBoundary><Suspense fallback={<LoadingSpinner />}><Step3Evaluation /></Suspense></ErrorBoundary>} />
-        <Route path="/exams/results" element={<ErrorBoundary><Suspense fallback={<LoadingSpinner />}><Step4Results /></Suspense></ErrorBoundary>} />
-        <Route path="/exams/marksheet" element={<ErrorBoundary><Suspense fallback={<LoadingSpinner />}><Step5Marksheet /></Suspense></ErrorBoundary>} />
-        <Route path="/exams/omr" element={<ErrorBoundary><Suspense fallback={<LoadingSpinner />}><OMRSheetPage /></Suspense></ErrorBoundary>} />
-        <Route path="/syllabus" element={<ErrorBoundary><Suspense fallback={<LoadingSpinner />}><SyllabusPage /></Suspense></ErrorBoundary>} />
+        <Route path="/dashboard" element={<F><DashboardPage /></F>} />
+        <Route path="/students" element={<F><StudentsPage /></F>} />
+        <Route path="/students/admission" element={<F><StudentAdmission /></F>} />
+        <Route path="/students/all" element={<F><AllStudentsPage /></F>} />
+        <Route path="/students/update" element={<F><UpdateStudentPage /></F>} />
+        <Route path="/students/bulk-update" element={<F><BulkUpdatePage /></F>} />
+        <Route path="/students/id-cards" element={<F><IDCardsPage /></F>} />
+        <Route path="/students/promotion" element={<F><PromotionPage /></F>} />
+        <Route path="/teachers" element={<F><TeachersPage /></F>} />
+        <Route path="/teachers/add" element={<F><AddTeacherPage /></F>} />
+        <Route path="/teachers/all" element={<F><AllTeachersPage /></F>} />
+        <Route path="/teachers/all/:id" element={<F><TeacherDetailPage /></F>} />
+        <Route path="/teachers/edit/:id" element={<F><EditTeacherPage /></F>} />
+        <Route path="/teachers/bulk-update" element={<F><TeacherBulkUpdatePage /></F>} />
+        <Route path="/teachers/departments" element={<F><DepartmentsPage /></F>} />
+        <Route path="/teachers/subjects" element={<F><SubjectsPage /></F>} />
+        <Route path="/teachers/designations" element={<F><DesignationsPage /></F>} />
+        <Route path="/classes" element={<F><ClassesPage /></F>} />
+        <Route path="/hr" element={<F><HRPage /></F>} />
+        <Route path="/attendance" element={<F><AttendancePage /></F>} />
+        <Route path="/exams" element={<F><ExamDashboard /></F>} />
+        <Route path="/exams/planning" element={<F><Step1Planning /></F>} />
+        <Route path="/exams/scheduling" element={<F><Step2Schedule /></F>} />
+        <Route path="/exams/evaluation" element={<F><Step3Evaluation /></F>} />
+        <Route path="/exams/results" element={<F><Step4Results /></F>} />
+        <Route path="/exams/marksheet" element={<F><Step5Marksheet /></F>} />
+        <Route path="/exams/omr" element={<F><OMRSheetPage /></F>} />
+        <Route path="/syllabus" element={<F><SyllabusPage /></F>} />
         <Route path="/assignments" element={<P name="Assignments" />} />
         <Route path="/online" element={<P name="Online Classes" />} />
         <Route path="/finance" element={<P name="Finance" />} />
-        <Route path="/payroll" element={<ErrorBoundary><Suspense fallback={<LoadingSpinner />}><PayrollPage /></Suspense></ErrorBoundary>} />
+        <Route path="/payroll" element={<F><PayrollPage /></F>} />
         <Route path="/store" element={<P name="School Store" />} />
         <Route path="/expenses" element={<P name="Expenses" />} />
         <Route path="/library" element={<P name="Library" />} />

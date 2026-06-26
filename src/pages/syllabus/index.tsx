@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -69,6 +69,7 @@ export default function SyllabusPage() {
   const [activeChapterId, setActiveChapterId] = useState('')
 
   const [chapterForm, setChapterForm] = useState({ title: '', titleBn: '', description: '', descriptionBn: '', order: '1' })
+  const [chapterLangMode, setChapterLangMode] = useState<'both' | 'en' | 'bn'>('both')
   const [topicForm, setTopicForm] = useState({
     title: '',
     titleBn: '',
@@ -80,6 +81,36 @@ export default function SyllabusPage() {
     startDate: '',
     endDate: '',
   })
+  const [topicLangMode, setTopicLangMode] = useState<'both' | 'en' | 'bn'>('both')
+
+  const chapterLangBtnRefs = useRef<Map<string, HTMLButtonElement | null>>(null)
+  const chapterLangSliderRef = useRef<HTMLDivElement | null>(null)
+  const topicLangBtnRefs = useRef<Map<string, HTMLButtonElement | null>>(null)
+  const topicLangSliderRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const slider = chapterLangSliderRef.current
+    const btn = chapterLangBtnRefs.current?.get(chapterLangMode)
+    if (!slider || !btn) return
+    const container = slider.parentElement
+    if (!container) return
+    const containerRect = container.getBoundingClientRect()
+    const btnRect = btn.getBoundingClientRect()
+    slider.style.width = `${btnRect.width}px`
+    slider.style.transform = `translateX(${btnRect.left - containerRect.left}px)`
+  }, [chapterLangMode])
+
+  useEffect(() => {
+    const slider = topicLangSliderRef.current
+    const btn = topicLangBtnRefs.current?.get(topicLangMode)
+    if (!slider || !btn) return
+    const container = slider.parentElement
+    if (!container) return
+    const containerRect = container.getBoundingClientRect()
+    const btnRect = btn.getBoundingClientRect()
+    slider.style.width = `${btnRect.width}px`
+    slider.style.transform = `translateX(${btnRect.left - containerRect.left}px)`
+  }, [topicLangMode])
 
   // Get class numbers
   const classNumbers = useMemo(() => {
@@ -208,6 +239,7 @@ export default function SyllabusPage() {
   // Chapter handlers
   const openAddChapter = () => {
     setEditChapter(null)
+    setChapterLangMode('both')
     setChapterForm({
       title: '',
       titleBn: '',
@@ -220,6 +252,7 @@ export default function SyllabusPage() {
 
   const openEditChapter = (ch: SyllabusChapter) => {
     setEditChapter(ch)
+    setChapterLangMode('both')
     setChapterForm({
       title: ch.title,
       titleBn: ch.titleBn,
@@ -231,22 +264,29 @@ export default function SyllabusPage() {
   }
 
   const handleSaveChapter = () => {
-    if (!chapterForm.title || !selectedSyllabus) return
+    const hasTitle = chapterLangMode === 'bn' ? !!chapterForm.titleBn : !!chapterForm.title
+    if (!hasTitle || !selectedSyllabus) return
+    const title = chapterForm.title || chapterForm.titleBn
+    const titleBn = chapterForm.titleBn || chapterForm.title
+    const description = chapterForm.description || chapterForm.descriptionBn
+    const descriptionBn = chapterForm.descriptionBn || chapterForm.description
     if (editChapter) {
       updateChapter(selectedSyllabus.id, editChapter.id, {
-        title: chapterForm.title,
-        titleBn: chapterForm.titleBn || chapterForm.title,
-        description: chapterForm.description,
-        descriptionBn: chapterForm.descriptionBn || chapterForm.description,
+        title,
+        titleBn,
+        description,
+        descriptionBn,
         order: Number(chapterForm.order) || 1,
+        langMode: chapterLangMode,
       })
     } else {
       addChapter(selectedSyllabus.id, {
-        title: chapterForm.title,
-        titleBn: chapterForm.titleBn || chapterForm.title,
-        description: chapterForm.description,
-        descriptionBn: chapterForm.descriptionBn || chapterForm.description,
+        title,
+        titleBn,
+        description,
+        descriptionBn,
         order: Number(chapterForm.order) || 1,
+        langMode: chapterLangMode,
       })
     }
     setShowChapterModal(false)
@@ -265,6 +305,8 @@ export default function SyllabusPage() {
   // Topic handlers
   const openAddTopic = (chapterId: string) => {
     setEditTopic(null)
+    const chapter = selectedSyllabus?.chapters.find((ch) => ch.id === chapterId)
+    setTopicLangMode(chapter?.langMode || 'both')
     setActiveChapterId(chapterId)
     setTopicForm({
       title: '',
@@ -282,6 +324,7 @@ export default function SyllabusPage() {
 
   const openEditTopic = (chapterId: string, t: SyllabusTopic) => {
     setEditTopic(t)
+    setTopicLangMode('both')
     setActiveChapterId(chapterId)
     setTopicForm({
       title: t.title,
@@ -298,11 +341,12 @@ export default function SyllabusPage() {
   }
 
   const handleSaveTopic = () => {
-    if (!topicForm.title || !selectedSyllabus) return
+    const hasTitle = topicLangMode === 'bn' ? !!topicForm.titleBn : !!topicForm.title
+    if (!hasTitle || !selectedSyllabus) return
     const data = {
-      title: topicForm.title,
+      title: topicForm.title || topicForm.titleBn,
       titleBn: topicForm.titleBn || topicForm.title,
-      description: topicForm.description,
+      description: topicForm.description || topicForm.descriptionBn,
       descriptionBn: topicForm.descriptionBn || topicForm.description,
       marks: Number(topicForm.marks) || 0,
       status: topicForm.status,
@@ -877,53 +921,84 @@ export default function SyllabusPage() {
               </button>
             </div>
             <div className="px-5 sm:px-8 py-6 space-y-5 overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
-                    {isBn ? 'নাম (EN)' : 'Name (EN)'}
-                  </label>
-                  <input
-                    value={chapterForm.title}
-                    onChange={(e) => setChapterForm((p) => ({ ...p, title: e.target.value }))}
-                    className={`${inputCls} w-full`}
-                    placeholder="e.g. Force & Motion"
-                  />
-                </div>
-                <div>
-                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
-                    {isBn ? 'নাম (BN)' : 'Name (BN)'}
-                  </label>
-                  <input
-                    value={chapterForm.titleBn}
-                    onChange={(e) => setChapterForm((p) => ({ ...p, titleBn: e.target.value }))}
-                    className={`${inputCls} w-full`}
-                    placeholder="e.g. বল ও গতি"
-                  />
-                </div>
+              <div className="relative flex items-center gap-2 p-1 bg-[var(--bg-secondary)] rounded-xl w-fit">
+                <div ref={chapterLangSliderRef} className="absolute top-1 bottom-1 bg-[var(--brand)] rounded-lg transition-all duration-300 ease-out shadow-sm" />
+                {(['both', 'en', 'bn'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    ref={(el) => { if (!chapterLangBtnRefs.current) chapterLangBtnRefs.current = new Map(); chapterLangBtnRefs.current.set(mode, el) }}
+                    type="button"
+                    onClick={() => {
+                      setChapterLangMode(mode)
+                      if (mode === 'en') {
+                        setChapterForm((p) => ({ ...p, titleBn: '', descriptionBn: '' }))
+                      } else if (mode === 'bn') {
+                        setChapterForm((p) => ({ ...p, title: '', description: '' }))
+                      }
+                    }}
+                    className={`relative z-10 px-4 py-1.5 rounded-lg text-[0.8125rem] font-medium transition-colors duration-200 cursor-pointer ${
+                      chapterLangMode === mode ? 'text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    {mode === 'both' ? (isBn ? 'উভয়' : 'Both') : mode === 'en' ? 'English' : 'বাংলা'}
+                  </button>
+                ))}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
-                    {isBn ? 'বিবরণ (EN)' : 'Description (EN)'}
-                  </label>
-                  <input
-                    value={chapterForm.description}
-                    onChange={(e) => setChapterForm((p) => ({ ...p, description: e.target.value }))}
-                    className={`${inputCls} w-full`}
-                    placeholder="Brief description"
-                  />
-                </div>
-                <div>
-                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
-                    {isBn ? 'বিবরণ (BN)' : 'Description (BN)'}
-                  </label>
-                  <input
-                    value={chapterForm.descriptionBn}
-                    onChange={(e) => setChapterForm((p) => ({ ...p, descriptionBn: e.target.value }))}
-                    className={`${inputCls} w-full`}
-                    placeholder="সংক্ষিপ্ত বিবরণ"
-                  />
-                </div>
+              <div className={`grid gap-5 ${chapterLangMode === 'both' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+                {chapterLangMode !== 'bn' && (
+                  <div>
+                    <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
+                      {isBn ? 'নাম (EN)' : 'Name (EN)'}
+                    </label>
+                    <input
+                      value={chapterForm.title}
+                      onChange={(e) => setChapterForm((p) => ({ ...p, title: e.target.value }))}
+                      className={`${inputCls} w-full`}
+                      placeholder="e.g. Force & Motion"
+                    />
+                  </div>
+                )}
+                {chapterLangMode !== 'en' && (
+                  <div>
+                    <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
+                      {isBn ? 'নাম (BN)' : 'Name (BN)'}
+                    </label>
+                    <input
+                      value={chapterForm.titleBn}
+                      onChange={(e) => setChapterForm((p) => ({ ...p, titleBn: e.target.value }))}
+                      className={`${inputCls} w-full`}
+                      placeholder="e.g. বল ও গতি"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className={`grid gap-5 ${chapterLangMode === 'both' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+                {chapterLangMode !== 'bn' && (
+                  <div>
+                    <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
+                      {isBn ? 'বিবরণ (EN)' : 'Description (EN)'}
+                    </label>
+                    <input
+                      value={chapterForm.description}
+                      onChange={(e) => setChapterForm((p) => ({ ...p, description: e.target.value }))}
+                      className={`${inputCls} w-full`}
+                      placeholder="Brief description"
+                    />
+                  </div>
+                )}
+                {chapterLangMode !== 'en' && (
+                  <div>
+                    <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
+                      {isBn ? 'বিবরণ (BN)' : 'Description (BN)'}
+                    </label>
+                    <input
+                      value={chapterForm.descriptionBn}
+                      onChange={(e) => setChapterForm((p) => ({ ...p, descriptionBn: e.target.value }))}
+                      className={`${inputCls} w-full`}
+                      placeholder="সংক্ষিপ্ত বিবরণ"
+                    />
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">{isBn ? 'ক্রম' : 'Order'}</label>
@@ -945,7 +1020,7 @@ export default function SyllabusPage() {
               </button>
               <button
                 onClick={handleSaveChapter}
-                disabled={!chapterForm.title}
+                disabled={chapterLangMode === 'bn' ? !chapterForm.titleBn : !chapterForm.title}
                 className={`${btnPri} disabled:opacity-40 disabled:cursor-not-allowed`}
               >
                 {isBn ? 'সংরক্ষণ' : 'Save'}
@@ -986,53 +1061,84 @@ export default function SyllabusPage() {
               </button>
             </div>
             <div className="px-5 sm:px-8 py-6 space-y-5 overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
-                    {isBn ? 'নাম (EN)' : 'Name (EN)'}
-                  </label>
-                  <input
-                    value={topicForm.title}
-                    onChange={(e) => setTopicForm((p) => ({ ...p, title: e.target.value }))}
-                    className={`${inputCls} w-full`}
-                    placeholder="e.g. Newton's Laws"
-                  />
-                </div>
-                <div>
-                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
-                    {isBn ? 'নাম (BN)' : 'Name (BN)'}
-                  </label>
-                  <input
-                    value={topicForm.titleBn}
-                    onChange={(e) => setTopicForm((p) => ({ ...p, titleBn: e.target.value }))}
-                    className={`${inputCls} w-full`}
-                    placeholder="e.g. নিউটনের সূত্র"
-                  />
-                </div>
+              <div className="relative flex items-center gap-2 p-1 bg-[var(--bg-secondary)] rounded-xl w-fit">
+                <div ref={topicLangSliderRef} className="absolute top-1 bottom-1 bg-[var(--brand)] rounded-lg transition-all duration-300 ease-out shadow-sm" />
+                {(['both', 'en', 'bn'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    ref={(el) => { if (!topicLangBtnRefs.current) topicLangBtnRefs.current = new Map(); topicLangBtnRefs.current.set(mode, el) }}
+                    type="button"
+                    onClick={() => {
+                      setTopicLangMode(mode)
+                      if (mode === 'en') {
+                        setTopicForm((p) => ({ ...p, titleBn: '', descriptionBn: '' }))
+                      } else if (mode === 'bn') {
+                        setTopicForm((p) => ({ ...p, title: '', description: '' }))
+                      }
+                    }}
+                    className={`relative z-10 px-4 py-1.5 rounded-lg text-[0.8125rem] font-medium transition-colors duration-200 cursor-pointer ${
+                      topicLangMode === mode ? 'text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    {mode === 'both' ? (isBn ? 'উভয়' : 'Both') : mode === 'en' ? 'English' : 'বাংলা'}
+                  </button>
+                ))}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
-                    {isBn ? 'বিবরণ (EN)' : 'Description (EN)'}
-                  </label>
-                  <input
-                    value={topicForm.description}
-                    onChange={(e) => setTopicForm((p) => ({ ...p, description: e.target.value }))}
-                    className={`${inputCls} w-full`}
-                    placeholder="Brief description"
-                  />
-                </div>
-                <div>
-                  <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
-                    {isBn ? 'বিবরণ (BN)' : 'Description (BN)'}
-                  </label>
-                  <input
-                    value={topicForm.descriptionBn}
-                    onChange={(e) => setTopicForm((p) => ({ ...p, descriptionBn: e.target.value }))}
-                    className={`${inputCls} w-full`}
-                    placeholder="সংক্ষিপ্ত বিবরণ"
-                  />
-                </div>
+              <div className={`grid gap-5 ${topicLangMode === 'both' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+                {topicLangMode !== 'bn' && (
+                  <div>
+                    <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
+                      {isBn ? 'নাম (EN)' : 'Name (EN)'}
+                    </label>
+                    <input
+                      value={topicForm.title}
+                      onChange={(e) => setTopicForm((p) => ({ ...p, title: e.target.value }))}
+                      className={`${inputCls} w-full`}
+                      placeholder="e.g. Newton's Laws"
+                    />
+                  </div>
+                )}
+                {topicLangMode !== 'en' && (
+                  <div>
+                    <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
+                      {isBn ? 'নাম (BN)' : 'Name (BN)'}
+                    </label>
+                    <input
+                      value={topicForm.titleBn}
+                      onChange={(e) => setTopicForm((p) => ({ ...p, titleBn: e.target.value }))}
+                      className={`${inputCls} w-full`}
+                      placeholder="e.g. নিউটনের সূত্র"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className={`grid gap-5 ${topicLangMode === 'both' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+                {topicLangMode !== 'bn' && (
+                  <div>
+                    <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
+                      {isBn ? 'বিবরণ (EN)' : 'Description (EN)'}
+                    </label>
+                    <input
+                      value={topicForm.description}
+                      onChange={(e) => setTopicForm((p) => ({ ...p, description: e.target.value }))}
+                      className={`${inputCls} w-full`}
+                      placeholder="Brief description"
+                    />
+                  </div>
+                )}
+                {topicLangMode !== 'en' && (
+                  <div>
+                    <label className="text-[0.8125rem] font-medium text-[var(--text-secondary)] mb-2 block">
+                      {isBn ? 'বিবরণ (BN)' : 'Description (BN)'}
+                    </label>
+                    <input
+                      value={topicForm.descriptionBn}
+                      onChange={(e) => setTopicForm((p) => ({ ...p, descriptionBn: e.target.value }))}
+                      className={`${inputCls} w-full`}
+                      placeholder="সংক্ষিপ্ত বিবরণ"
+                    />
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
                 <div>
@@ -1100,7 +1206,7 @@ export default function SyllabusPage() {
               </button>
               <button
                 onClick={handleSaveTopic}
-                disabled={!topicForm.title}
+                disabled={topicLangMode === 'bn' ? !topicForm.titleBn : !topicForm.title}
                 className={`${btnPri} disabled:opacity-40 disabled:cursor-not-allowed`}
               >
                 {isBn ? 'সংরক্ষণ' : 'Save'}

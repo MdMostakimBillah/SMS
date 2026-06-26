@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, AlertTriangle, Building2, Crown, Edit2, Trash2 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
@@ -12,7 +13,16 @@ import type { Department } from '@/pages/teachers/types'
 export default function DepartmentsPage() {
   const navigate = useNavigate()
   const isBn = useBn()
-  const { departments, subjects, teachers, addDepartment, updateDepartment, deleteDepartment } = useTeacherStore()
+  const { departments, subjects, teachers, addDepartment, updateDepartment, deleteDepartment } = useTeacherStore(
+    useShallow((s) => ({
+      departments: s.departments,
+      subjects: s.subjects,
+      teachers: s.teachers,
+      addDepartment: s.addDepartment,
+      updateDepartment: s.updateDepartment,
+      deleteDepartment: s.deleteDepartment,
+    }))
+  )
   const { isMobile } = useWindowSize()
 
   const { popFromChain, getChain } = useNavChain()

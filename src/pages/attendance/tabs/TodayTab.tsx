@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import {
   Briefcase,
   Calendar,
@@ -79,6 +79,25 @@ export const TodayTab = React.memo(function TodayTab({
   statusFilters,
   statusBadge,
 }: TodayTabProps) {
+  const filterTabsRef = useRef<HTMLDivElement>(null)
+  const filterTabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const [sliderStyle, setSliderStyle] = useState({ left: '0px', width: '0px', background: 'var(--brand)' })
+
+  useEffect(() => {
+    const el = filterTabRefs.current[statusFilter]
+    const container = filterTabsRef.current
+    if (el && container) {
+      const containerRect = container.getBoundingClientRect()
+      const elRect = el.getBoundingClientRect()
+      const activeFilter = statusFilters.find((f) => f.key === statusFilter)
+      setSliderStyle({
+        left: `${elRect.left - containerRect.left - 4}px`,
+        width: `${elRect.width + 8}px`,
+        background: activeFilter?.color || 'var(--brand)',
+      })
+    }
+  }, [statusFilter, statusFilters])
+
   return (
     <>
       {/* Stats cards */}
@@ -157,34 +176,35 @@ export const TodayTab = React.memo(function TodayTab({
           </button>
         </div>
         {/* Status filter buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[0.6875rem] font-medium text-[var(--text-muted)]">{isBn ? 'ফিল্টার:' : 'Filter:'}</span>
-          {statusFilters.map((sf) => (
-            <button
-              key={sf.key}
-              onClick={() => {
-                setStatusFilter(sf.key)
-                setEmpPage(1)
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+          <span className="text-[0.6875rem] font-medium text-[var(--text-muted)] shrink-0">{isBn ? 'ফিল্টার:' : 'Filter:'}</span>
+          <div ref={filterTabsRef} className="relative flex gap-1 bg-[var(--bg-secondary)] rounded-lg p-1 shrink-0">
+            {statusFilters.map((sf) => (
+              <button
+                key={sf.key}
+                ref={(el) => { filterTabRefs.current[sf.key] = el }}
+                onClick={() => {
+                  setStatusFilter(sf.key)
+                  setEmpPage(1)
+                  filterTabRefs.current[sf.key]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' })
+                }}
+                className="relative z-10 px-3 py-1 rounded-md text-[0.625rem] font-medium cursor-pointer transition-colors duration-200"
+                style={{ color: statusFilter === sf.key ? '#fff' : 'var(--text-muted)' }}
+              >
+                {isBn ? sf.labelBn : sf.labelEn}
+              </button>
+            ))}
+            <div
+              className="absolute top-1 bottom-1 rounded-md transition-all duration-300 ease-out"
+              style={{
+                left: sliderStyle.left,
+                width: sliderStyle.width,
+                background: sliderStyle.background,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
               }}
-              className={`px-3 py-[0.3125rem] rounded-lg text-[0.6875rem] cursor-pointer border transition-all ${
-                statusFilter === sf.key
-                  ? 'font-semibold'
-                  : 'font-normal border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
-              }`}
-              style={
-                statusFilter === sf.key
-                  ? {
-                      borderColor: sf.color,
-                      background: `${sf.color}18`,
-                      color: sf.color,
-                    }
-                  : {}
-              }
-            >
-              {isBn ? sf.labelBn : sf.labelEn}
-            </button>
-          ))}
-          <span className="text-[0.6875rem] text-[var(--text-muted)] ml-1">
+            />
+          </div>
+          <span className="text-[0.6875rem] text-[var(--text-muted)] ml-1 shrink-0">
             ({todayFiltered.length} {isBn ? 'জন' : 'staff'})
           </span>
         </div>

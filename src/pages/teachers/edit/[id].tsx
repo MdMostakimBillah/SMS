@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { CheckCircle, Camera, Clock, Users, Save, Briefcase, X, IdCard } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { TeacherStatus } from '@/pages/teachers/types'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
@@ -84,7 +85,15 @@ export default function EditTeacherPage() {
   const { id } = useParams<{ id: string }>()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
-  const { teachers, departments, subjects, designations, updateTeacher } = useTeacherStore()
+  const { teachers, departments, subjects, designations, updateTeacher } = useTeacherStore(
+    useShallow((s) => ({
+      teachers: s.teachers,
+      departments: s.departments,
+      subjects: s.subjects,
+      designations: s.designations,
+      updateTeacher: s.updateTeacher,
+    }))
+  )
   const fileRef = useRef<HTMLInputElement>(null)
   const signatureRef = useRef<HTMLInputElement>(null)
 

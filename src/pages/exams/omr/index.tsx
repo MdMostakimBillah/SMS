@@ -45,7 +45,6 @@ export default function OMRSheetPage() {
   const examConfigs = useExamStore((s) => s.examConfigs)
   const subjects = useTeacherStore((s) => s.subjects)
   const classes = useClassStore((s) => s.classes)
-  const subjectMarkConfigs = useExamStore((s) => s.subjectMarkConfigs)
   const institution = useClassStore((s) => s.institution)
   const omrTemplates = useExamStore((s) => s.omrTemplates)
   const saveOMRTemplate = useExamStore((s) => s.saveOMRTemplate)
@@ -57,7 +56,8 @@ export default function OMRSheetPage() {
 
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
 
-  const [selectedExamId, setSelectedExamId] = useState(examConfigs[0]?.id || '')
+  const activeExam = examConfigs.find((e) => e.isActive) || examConfigs[0]
+  const [selectedExamId, setSelectedExamId] = useState(activeExam?.id || '')
   const [selectedClassId, setSelectedClassId] = useState(classes[0]?.id || '')
   const [selectedSubjectId, setSelectedSubjectId] = useState('')
   const [selectedGroup, setSelectedGroup] = useState('')
@@ -65,8 +65,8 @@ export default function OMRSheetPage() {
   const [sessionName, setSessionName] = useState(institution.currentSession || '2025-26')
   const [className, setClassName] = useState(classes[0] ? (isBn ? classes[0].nameBn : classes[0].name) : '')
   const [classNameBn, setClassNameBn] = useState(classes[0]?.nameBn || '')
-  const [examName, setExamName] = useState(examConfigs[0] ? (isBn ? examConfigs[0].nameBn : examConfigs[0].name) : '')
-  const [examNameBn, setExamNameBn] = useState(examConfigs[0]?.nameBn || '')
+  const [examName, setExamName] = useState(activeExam ? (isBn ? activeExam.nameBn : activeExam.name) : '')
+  const [examNameBn, setExamNameBn] = useState(activeExam?.nameBn || '')
   const [themeColor, setThemeColor] = useState('#6366f1')
   const [totalCopy, setTotalCopy] = useState(1)
   const [serialNumber, setSerialNumber] = useState('5853')
@@ -133,15 +133,32 @@ export default function OMRSheetPage() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showPdfConfirm, setShowPdfConfirm] = useState(false)
   const [pdfCopyCount, setPdfCopyCount] = useState(1)
-  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   const selectedExam = examConfigs.find((e) => e.id === selectedExamId)
 
   const examSubjects = useMemo(() => {
-    if (!selectedExam || !selectedClassId) return []
-    const configs = subjectMarkConfigs.filter((c) => c.examId === selectedExamId && c.classId === selectedClassId)
-    return configs.map((c) => subjects.find((s) => s.id === c.subjectId)).filter(Boolean) as { id: string; name: string; nameBn: string }[]
-  }, [selectedExamId, selectedClassId, subjectMarkConfigs, subjects])
+    if (!selectedClassId) return []
+    const cls = classes.find((c) => c.id === selectedClassId)
+    if (!cls) return []
+    // If section is selected, use section's subjectIds; otherwise use class's
+    let subIds: string[] = []
+    if (selectedSection) {
+      const sec = cls.sections.find((s) => s.name === selectedSection)
+      subIds = sec?.subjectIds || []
+    }
+    if (subIds.length === 0) {
+      subIds = cls.subjectIds || []
+    }
+    return subIds
+      .map((sid) => subjects.find((s) => s.id === sid))
+      .filter(Boolean) as { id: string; name: string; nameBn: string }[]
+  }, [selectedClassId, selectedSection, classes, subjects])
+
+  const classSections = useMemo(() => {
+    if (!selectedClassId) return []
+    const cls = classes.find((c) => c.id === selectedClassId)
+    return cls?.sections || []
+  }, [selectedClassId, classes])
 
   const activeSubjects = useMemo(() => {
     if (selectedSubjectId) {
@@ -177,6 +194,7 @@ export default function OMRSheetPage() {
       institutionName: institution.name || 'EduTech School',
       institutionNameBn: institution.nameBn || 'এডুটেক স্কুল',
       institutionAddress: institution.address || '',
+      logo: institution.logo || '',
       showStudentName,
       showRollNo,
       showStudentId,
@@ -249,7 +267,7 @@ export default function OMRSheetPage() {
       const html = await generateOMRHtml(omrConfig, sheetIsBn)
       setPreviewHtml(html)
     } catch {
-      showNotify('error', isBn ? 'জেনারেট ব্যর্থ' : 'Generation failed')
+      console.error(isBn ? 'জেনারেট ব্যর্থ' : 'Generation failed')
     } finally {
       setIsGenerating(false)
     }
@@ -267,11 +285,6 @@ export default function OMRSheetPage() {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [omrConfig])
-
-  const showNotify = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 3000)
-  }
 
   const handleDownloadClick = () => {
     setPdfCopyCount(computeCopyCount)
@@ -291,7 +304,7 @@ export default function OMRSheetPage() {
         setTimeout(() => w.print(), 600)
       }
     }
-    showNotify('success', isBn ? `${pdfCopyCount} কপি জেনারেট হচ্ছে...` : `Generating ${pdfCopyCount} copies...`)
+    console.log(isBn ? `${pdfCopyCount} কপি জেনারেট হচ্ছে...` : `Generating ${pdfCopyCount} copies...`)
   }
 
   const handlePrint = () => {
@@ -307,7 +320,7 @@ export default function OMRSheetPage() {
     if (!templateName.trim()) return
     if (activeTemplateId) {
       updateOMRTemplate(activeTemplateId, { ...omrConfig, name: templateName, nameBn: templateName, modifiedBy: 'Admin' })
-      showNotify('success', isBn ? 'টেমপ্লেট আপডেট হয়েছে' : 'Template updated')
+      console.log(isBn ? 'টেমপ্লেট আপডেট হয়েছে' : 'Template updated')
     } else {
       saveOMRTemplate({
         ...omrConfig,
@@ -321,7 +334,7 @@ export default function OMRSheetPage() {
         isDefault: false,
         modifiedBy: 'Admin',
       })
-      showNotify('success', isBn ? 'টেমপ্লেট সংরক্ষিত হয়েছে' : 'Template saved')
+      console.log(isBn ? 'টেমপ্লেট সংরক্ষিত হয়েছে' : 'Template saved')
     }
     setShowSaveDialog(false)
     setTemplateName('')
@@ -380,7 +393,7 @@ export default function OMRSheetPage() {
     setShowPracticalMarks(tpl.showPracticalMarks)
     setShowVivaMarks(tpl.showVivaMarks)
     setShowInstructions(tpl.showInstructions)
-    showNotify('success', isBn ? 'টেমপ্লেট লোড হয়েছে' : 'Template loaded')
+    console.log(isBn ? 'টেমপ্লেট লোড হয়েছে' : 'Template loaded')
   }
 
   const handleReset = () => {
@@ -422,7 +435,7 @@ export default function OMRSheetPage() {
     setShowCheckedBy(true); setShowVerifiedBy(true); setShowTotalMarks(true)
     setShowPracticalMarks(false); setShowVivaMarks(false); setShowInstructions(true)
     setCurrentStep(1)
-    showNotify('success', isBn ? 'রিসেট সম্পন্ন' : 'Reset complete')
+    console.log(isBn ? 'রিসেট সম্পন্ন' : 'Reset complete')
   }
 
   const inputCls =
@@ -513,10 +526,19 @@ export default function OMRSheetPage() {
         </span>
       </div>
       <div className="px-4 pb-4 space-y-3 pt-3">
-        <div className="grid grid-cols-2 gap-2.5">
+        {/* Row 1: Session, Class, Section */}
+        <div className="grid grid-cols-3 gap-2.5">
           <div>
             <label className={labelCls}>{isBn ? 'একাডেমিক সেশন' : 'Academic Session'}</label>
-            <input value={sessionName} onChange={(e) => setSessionName(e.target.value)} className={inputCls} placeholder="2025-26" />
+            <select
+              value={sessionName}
+              onChange={(e) => setSessionName(e.target.value)}
+              className={selectCls}
+            >
+              {institution.sessions.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className={labelCls}>{isBn ? 'শ্রেণি' : 'Class'}</label>
@@ -536,13 +558,23 @@ export default function OMRSheetPage() {
             </select>
           </div>
           <div>
-            <label className={labelCls}>{isBn ? 'গ্রুপ' : 'Group'}</label>
-            <input value={selectedGroup} onChange={(e) => setSelectedGroup(e.target.value)} className={inputCls} placeholder={isBn ? 'বিজ্ঞান/মানবিক/ব্যবসায়' : 'Science/Arts/Commerce'} />
-          </div>
-          <div>
             <label className={labelCls}>{isBn ? 'শাখা' : 'Section'}</label>
-            <input value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} className={inputCls} placeholder="A / B / C" />
+            <select
+              value={selectedSection}
+              onChange={(e) => setSelectedSection(e.target.value)}
+              className={selectCls}
+              disabled={!selectedClassId}
+            >
+              <option value="">{isBn ? 'নির্বাচন করুন...' : 'Select...'}</option>
+              {classSections.map((s) => (
+                <option key={s.id} value={s.name}>{s.name}</option>
+              ))}
+            </select>
           </div>
+        </div>
+
+        {/* Row 2: Exam, Subject */}
+        <div className="grid grid-cols-2 gap-2.5">
           <div>
             <label className={labelCls}>{isBn ? 'পরীক্ষা' : 'Exam'}</label>
             <select
@@ -555,14 +587,15 @@ export default function OMRSheetPage() {
               className={selectCls}
             >
               <option value="">{isBn ? 'নির্বাচন করুন...' : 'Select...'}</option>
-              {examConfigs.map((e) => (
+              {examConfigs.filter((e) => e.isActive).map((e) => (
                 <option key={e.id} value={e.id}>{isBn ? e.nameBn : e.name}</option>
               ))}
             </select>
           </div>
           <div>
             <label className={labelCls}>{isBn ? 'বিষয়' : 'Subject'}</label>
-            <select value={selectedSubjectId} onChange={(e) => setSelectedSubjectId(e.target.value)} className={selectCls}>
+            <select value={selectedSubjectId} onChange={(e) => setSelectedSubjectId(e.target.value)} className={selectCls}
+              disabled={!selectedClassId}>
               <option value="">{isBn ? 'সকল বিষয়' : 'All Subjects'}</option>
               {examSubjects.map((s) => (
                 <option key={s.id} value={s.id}>{isBn ? s.nameBn : s.name}</option>
@@ -571,9 +604,10 @@ export default function OMRSheetPage() {
           </div>
         </div>
 
+        {/* Row 3: Theme, Language, Paper Size, Serial No */}
         <div className="grid grid-cols-4 gap-2.5">
           <div>
-            <label className={labelCls}>{isBn ? 'থিম রঙ' : 'Theme'}</label>
+            <label className={labelCls}>{isBn ? 'থিম' : 'Theme'}</label>
             <div className="flex items-center gap-1.5">
               <select value={themeColor} onChange={(e) => setThemeColor(e.target.value)} className={`${selectCls} flex-1`}>
                 {THEME_PRESETS.map((t) => (
@@ -585,14 +619,14 @@ export default function OMRSheetPage() {
             </div>
           </div>
           <div>
-            <label className={labelCls}>{isBn ? 'শিট ভাষা' : 'Language'}</label>
+            <label className={labelCls}>{isBn ? 'ভাষা' : 'Language'}</label>
             <select value={sheetLanguage} onChange={(e) => setSheetLanguage(e.target.value as 'bn' | 'en')} className={selectCls}>
-              <option value="bn">বাংলা (Bangla)</option>
+              <option value="bn">বাংলা</option>
               <option value="en">English</option>
             </select>
           </div>
           <div>
-            <label className={labelCls}>{isBn ? 'কাগজের আকার' : 'Paper Size'}</label>
+            <label className={labelCls}>{isBn ? 'কাগজ' : 'Paper'}</label>
             <select value={paperSize} onChange={(e) => setPaperSize(e.target.value as PaperSize)} className={selectCls}>
               <option value="A4">A4</option>
               <option value="Legal">Legal</option>
@@ -600,22 +634,12 @@ export default function OMRSheetPage() {
             </select>
           </div>
           <div>
-            <label className={labelCls}>{isBn ? 'সিরিয়াল নং' : 'Serial No'}</label>
+            <label className={labelCls}>{isBn ? 'সিরিয়াল' : 'Serial'}</label>
             <input value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} className={inputCls} />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5">
-          <div>
-            <label className={labelCls}>{isBn ? 'শ্রেণির নাম' : 'Class Name'}</label>
-            <input value={className} onChange={(e) => setClassName(e.target.value)} className={inputCls} />
-          </div>
-          <div>
-            <label className={labelCls}>{isBn ? 'পরীক্ষার নাম' : 'Exam Name'}</label>
-            <input value={examName} onChange={(e) => setExamName(e.target.value)} className={inputCls} />
-          </div>
-        </div>
-
+        {/* Output */}
         <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-[0.6875rem] text-[var(--text-secondary)]">
@@ -910,7 +934,7 @@ export default function OMRSheetPage() {
   )
 
   const renderStep4 = () => (
-    <>
+    <div className="flex flex-col gap-3">
       <div className={cardCls}>
         <div className={`${sectionHeaderCls} bg-[var(--green-light)]`}>
           <div className="w-7 h-7 rounded-lg bg-[var(--green)] flex items-center justify-center">
@@ -1048,7 +1072,7 @@ export default function OMRSheetPage() {
             <button onClick={() => {
               if (activeTemplateId) {
                 updateOMRTemplate(activeTemplateId, { ...omrConfig, name: templateName, nameBn: templateName, modifiedBy: 'Admin' })
-                showNotify('success', isBn ? 'টেমপ্লেট আপডেট হয়েছে' : 'Template updated')
+                console.log(isBn ? 'টেমপ্লেট আপডেট হয়েছে' : 'Template updated')
               } else {
                 setShowSaveDialog(true)
               }
@@ -1177,25 +1201,13 @@ export default function OMRSheetPage() {
           )}
         </div>
       </div>
-    </>
+    </div>
   )
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
-      {notification && (
-        <div className="fixed top-4 right-4 z-[100] animate-in slide-in-from-right">
-          <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-lg text-[0.75rem] font-medium backdrop-blur-sm ${
-            notification.type === 'success'
-              ? 'bg-[var(--green-light)] text-[var(--green)] border border-[var(--green)]/20'
-              : 'bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)]/20'
-          }`}>
-            {notification.type === 'success' ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />}
-            {notification.message}
-          </div>
-        </div>
-      )}
 
-      <div className="sticky top-0 z-40 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border)]">
+      <div className="bg-[var(--bg-primary)] border-b border-[var(--border)]">
         <div className="max-w-[112.5rem] mx-auto px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => nav('/exams')}
@@ -1207,7 +1219,7 @@ export default function OMRSheetPage() {
                 <ScanLine size={20} className="text-[var(--brand)]" />
                 {isBn ? 'OMR শিট ডিজাইনার' : 'OMR Sheet Designer'}
               </h1>
-              <p className="text-[0.625rem] text-[var(--text-muted)]">
+              <p className="text-[0.625rem] text-[var(--text-muted)] hidden sm:block">
                 {isBn ? 'প্রফেশনাল OMR শিট তৈরি, কাস্টমাইজ ও PDF জেনারেট করুন' : 'Design, customize & generate professional OMR sheets'}
               </p>
             </div>
@@ -1215,29 +1227,33 @@ export default function OMRSheetPage() {
           <div className="flex items-center gap-2">
             <button onClick={handleReset}
               className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem] font-medium cursor-pointer hover:text-[var(--text-primary)] hover:border-[var(--brand)]/30 transition-all flex items-center gap-1.5">
-              <RefreshCw size={13} /> {isBn ? 'রিসেট' : 'Reset'}
+              <RefreshCw size={13} /> <span className="hidden sm:inline">{isBn ? 'রিসেট' : 'Reset'}</span>
             </button>
             <button onClick={handlePrint}
               className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem] font-medium cursor-pointer hover:text-[var(--text-primary)] hover:border-[var(--brand)]/30 transition-all flex items-center gap-1.5">
-              <Printer size={13} /> {isBn ? 'প্রিন্ট' : 'Print'}
+              <Printer size={13} /> <span className="hidden sm:inline">{isBn ? 'প্রিন্ট' : 'Print'}</span>
             </button>
             <button onClick={handleDownloadClick}
               className="px-4 py-1.5 rounded-xl bg-[var(--brand)] text-white text-[0.6875rem] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center gap-1.5">
-              <Download size={13} /> {isBn ? 'PDF ডাউনলোড' : 'Download PDF'}
+              <Download size={13} /> <span className="hidden sm:inline">{isBn ? 'PDF ডাউনলোড' : 'Download PDF'}</span>
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-[112.5rem] mx-auto px-4 py-3">
+      <div className="max-w-[112.5rem] mx-auto px-2 sm:px-4 py-3">
         <div className={`grid gap-4 ${isFullscreen ? '' : 'lg:grid-cols-[400px_1fr]'}`}>
           {!isFullscreen && (
-            <div className="flex flex-col gap-3 max-h-[calc(100vh-85px)] overflow-y-auto pr-1.5 space-y-3">
-              {renderStepIndicator()}
-              {currentStep === 1 && renderStep1()}
-              {currentStep === 2 && renderStep2()}
-              {currentStep === 3 && renderStep3()}
-              {currentStep === 4 && renderStep4()}
+            <div className="flex flex-col gap-3 max-h-[calc(100vh-100px)] overflow-y-auto pr-1.5">
+              <div className="sticky top-0 z-10 bg-[var(--bg-primary)] pb-3">
+                {renderStepIndicator()}
+              </div>
+              <div className="flex flex-col gap-3">
+                {currentStep === 1 && renderStep1()}
+                {currentStep === 2 && renderStep2()}
+                {currentStep === 3 && renderStep3()}
+                {currentStep === 4 && renderStep4()}
+              </div>
             </div>
           )}
 
@@ -1314,7 +1330,7 @@ export default function OMRSheetPage() {
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <button onClick={() => { deleteOMRTemplate(showDeleteConfirm); setShowDeleteConfirm(null); showNotify('success', isBn ? 'মুছে ফেলা হয়েছে' : 'Deleted') }}
+              <button onClick={() => { deleteOMRTemplate(showDeleteConfirm); setShowDeleteConfirm(null); console.log(isBn ? 'মুছে ফেলা হয়েছে' : 'Deleted') }}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--red)] text-white text-[0.75rem] font-semibold cursor-pointer hover:brightness-110 transition-all">
                 {isBn ? 'মুছুন' : 'Delete'}
               </button>

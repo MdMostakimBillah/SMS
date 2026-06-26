@@ -21,6 +21,7 @@ export interface SyllabusChapter {
   description: string
   descriptionBn: string
   order: number
+  langMode?: 'both' | 'en' | 'bn'
   topics: SyllabusTopic[]
 }
 

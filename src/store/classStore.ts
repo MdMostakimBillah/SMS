@@ -102,6 +102,8 @@ export interface InstitutionSettings {
   name: string
   nameBn: string
   logo: string
+  banner: string
+  bannerPosition: { x: number; y: number }
   brandName: string
   motto: string
   mottoBn: string
@@ -206,6 +208,8 @@ const defaultInstitution: InstitutionSettings = {
   name: 'Sunrise Academy',
   nameBn: 'সানরাইজ একাডেমি',
   logo: '',
+  banner: '',
+  bannerPosition: { x: 0, y: 0 },
   brandName: 'EduTech',
   motto: 'Knowledge is Power',
   mottoBn: 'জ্ঞাই হলো শক্তি',

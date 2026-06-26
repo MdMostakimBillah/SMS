@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import CircularChart from '@/components/ui/CircularChart'
@@ -63,7 +64,7 @@ function DashboardSkeleton() {
 export default function DashboardPage() {
   const isBn = useBn()
   const students = useSessionStudents()
-  const { teachers } = useTeacherStore()
+  const teachers = useTeacherStore(useShallow((s) => s.teachers))
   const { isMobile, isTablet } = useWindowSize()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)

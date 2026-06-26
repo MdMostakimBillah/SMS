@@ -12,6 +12,7 @@ import {
   Briefcase,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAppStore } from '@/store/appStore'
@@ -138,7 +139,14 @@ function TeachersSkeleton() {
 export default function TeachersPage() {
   const navigate = useNavigate()
   const isBn = useBn()
-  const { teachers, departments, subjects, designations } = useTeacherStore()
+  const { teachers, departments, subjects, designations } = useTeacherStore(
+    useShallow((s) => ({
+      teachers: s.teachers,
+      departments: s.departments,
+      subjects: s.subjects,
+      designations: s.designations,
+    }))
+  )
   const { isMobile, isTablet } = useWindowSize()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)

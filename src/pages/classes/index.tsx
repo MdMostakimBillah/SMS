@@ -12,6 +12,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import { useClassStore } from '@/store/classStore'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import ClassesTab from './ClassesTab'
@@ -38,7 +39,12 @@ export default function ClassesPage() {
     switchSession,
     importFromSession,
   } = useClassStore()
-  const { teachers, subjects } = useTeacherStore()
+  const { teachers, subjects } = useTeacherStore(
+    useShallow((s) => ({
+      teachers: s.teachers,
+      subjects: s.subjects,
+    }))
+  )
   const { students } = useAdmissionStore()
   const isBn = useBn()
 
@@ -171,7 +177,6 @@ export default function ClassesPage() {
           setNewSessionInput={setNewSessionInput}
           handleSaveInstitution={handleSaveInstitution}
           isBn={isBn}
-          isMobile={isMobile}
         />
       )}
 

@@ -25,7 +25,7 @@ interface OMRTabProps {
   omrConfigs: OMRExamConfig[]
   gradeScales: any[]
   classes?: { id: string; name: string; nameBn: string }[]
-  institution?: { name: string; nameBn: string; address?: string }
+  institution?: { name: string; nameBn: string; address?: string; logo?: string }
 }
 
 export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs, classes = [], institution }: OMRTabProps) {
@@ -586,6 +586,7 @@ export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs, classe
                         institutionName: institution?.name || 'Institution',
                         institutionNameBn: institution?.nameBn || '',
                         institutionAddress: institution?.address || '',
+                        logo: institution?.logo || '',
                         showStudentName: true,
                         showRollNo: omrOpts.showRollNo ?? true,
                         showStudentId: true,

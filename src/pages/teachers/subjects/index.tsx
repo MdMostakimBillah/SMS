@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Plus, AlertTriangle, BookOpen, Filter, X, Edit2, Trash2, Building2 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import type { Subject } from '@/pages/teachers/types'
@@ -13,7 +14,16 @@ const sel =
 export default function SubjectsPage() {
   const navigate = useNavigate()
   const isBn = useBn()
-  const { subjects, departments, teachers, addSubject, updateSubject, deleteSubject } = useTeacherStore()
+  const { subjects, departments, teachers, addSubject, updateSubject, deleteSubject } = useTeacherStore(
+    useShallow((s) => ({
+      subjects: s.subjects,
+      departments: s.departments,
+      teachers: s.teachers,
+      addSubject: s.addSubject,
+      updateSubject: s.updateSubject,
+      deleteSubject: s.deleteSubject,
+    }))
+  )
 
   const { pushToChain, popFromChain, getChain, setRedirectTimestamp } = useNavChain()
   useNavChainClearOnMount()

@@ -18,6 +18,7 @@ import {
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { useHRStore } from '@/store/hrStore'
@@ -53,7 +54,13 @@ export default function HRPage() {
   const navigate = useNavigate()
   const isBn = useBn()
   const { isMobile, isTablet } = useWindowSize()
-  const { teachers, departments, attendance } = useTeacherStore()
+  const { teachers, departments, attendance } = useTeacherStore(
+    useShallow((s) => ({
+      teachers: s.teachers,
+      departments: s.departments,
+      attendance: s.attendance,
+    }))
+  )
   const { institution } = useClassStore()
   const {
     increments,
@@ -83,7 +90,37 @@ export default function HRPage() {
     updateTeacherFacility,
     removeTeacherFacility,
     upsertTeacherFacilities,
-  } = useHRStore()
+  } = useHRStore(
+    useShallow((s) => ({
+      increments: s.increments,
+      bonuses: s.bonuses,
+      promotions: s.promotions,
+      funds: s.funds,
+      homeworkRecords: s.homeworkRecords,
+      dailyReports: s.dailyReports,
+      recommendations: s.recommendations,
+      monthlySalaryConfigs: s.monthlySalaryConfigs,
+      facilities: s.facilities,
+      teacherFacilities: s.teacherFacilities,
+      addIncrement: s.addIncrement,
+      deleteIncrement: s.deleteIncrement,
+      addBonus: s.addBonus,
+      deleteBonus: s.deleteBonus,
+      addPromotion: s.addPromotion,
+      deletePromotion: s.deletePromotion,
+      addFund: s.addFund,
+      addRecommendation: s.addRecommendation,
+      updateRecommendation: s.updateRecommendation,
+      upsertManyMonthlySalaryConfigs: s.upsertManyMonthlySalaryConfigs,
+      addFacility: s.addFacility,
+      updateFacility: s.updateFacility,
+      deleteFacility: s.deleteFacility,
+      assignTeacherFacility: s.assignTeacherFacility,
+      updateTeacherFacility: s.updateTeacherFacility,
+      removeTeacherFacility: s.removeTeacherFacility,
+      upsertTeacherFacilities: s.upsertTeacherFacilities,
+    }))
+  )
 
   // ─── Tab & Modal State ───
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -204,30 +241,43 @@ export default function HRPage() {
     return Array.from(set).sort()
   }, [teachers])
 
-  const getTeacherName = useCallback((id: string) => teachers.find((t) => t.id === id)?.nameEn || id, [teachers])
+  const departmentMap = useMemo(() => {
+    const map = new Map<string, typeof departments[0]>()
+    for (const d of departments) map.set(d.id, d)
+    return map
+  }, [departments])
+
+  const teacherMap = useMemo(() => {
+    const map = new Map<string, typeof teachers[0]>()
+    for (const t of teachers) map.set(t.id, t)
+    return map
+  }, [teachers])
+
+  const getTeacherName = useCallback((id: string) => teacherMap.get(id)?.nameEn || id, [teacherMap])
   const getTeacherDept = useCallback(
     (id: string) => {
-      const t = teachers.find((t) => t.id === id)
+      const t = teacherMap.get(id)
       if (!t) return ''
-      const d = departments.find((d) => d.id === t.departmentId)
+      const d = departmentMap.get(t.departmentId)
       return d ? (isBn ? d.nameBn : d.name) : ''
     },
-    [teachers, departments, isBn]
+    [teacherMap, departmentMap, isBn]
   )
 
-  const getStatusBadge = (status: string) => {
-    const map: Record<string, { cls: string; label: string; labelBn: string }> = {
-      active: { cls: 'bg-[var(--green-light)] text-[var(--green)]', label: 'Active', labelBn: 'সক্রিয়' },
-      inactive: { cls: 'bg-[var(--red-light)] text-[var(--red)]', label: 'Inactive', labelBn: 'নিষ্ক্রিয়' },
-      'on-leave': { cls: 'bg-[var(--amber-light)] text-[var(--amber)]', label: 'On Leave', labelBn: 'ছুটিতে' },
-    }
-    const s = map[status] || map.active
+  const statusBadgeMap = useMemo(() => ({
+    active: { cls: 'bg-[var(--green-light)] text-[var(--green)]', label: 'Active', labelBn: 'সক্রিয়' },
+    inactive: { cls: 'bg-[var(--red-light)] text-[var(--red)]', label: 'Inactive', labelBn: 'নিষ্ক্রিয়' },
+    'on-leave': { cls: 'bg-[var(--amber-light)] text-[var(--amber)]', label: 'On Leave', labelBn: 'ছুটিতে' },
+  } as Record<string, { cls: string; label: string; labelBn: string }>), [])
+
+  const getStatusBadge = useCallback((status: string) => {
+    const s = statusBadgeMap[status] || statusBadgeMap.active
     return (
       <span className={`text-[0.6875rem] py-[0.1875rem] px-[0.625rem] rounded-full font-medium whitespace-nowrap ${s.cls}`}>
         {isBn ? s.labelBn : s.label}
       </span>
     )
-  }
+  }, [statusBadgeMap, isBn])
 
   // ─── Filtered Data ───
   const filteredIncrements = useMemo(() => {
@@ -295,9 +345,8 @@ export default function HRPage() {
     }
   }, [attendance, today])
 
-  // ─── Performance Metrics ───
-  const teacherAttendanceRate = useMemo(() => {
-    const rates: Record<string, number> = {}
+  // ─── Performance Metrics (single-pass) ───
+  const teacherMetrics = useMemo(() => {
     const from = new Date(dateFrom)
     const to = new Date(dateTo)
     let totalDays = 0
@@ -306,7 +355,10 @@ export default function HRPage() {
       if (d.getDay() !== 0) totalDays++
       d.setDate(d.getDate() + 1)
     }
-    activeTeachers.forEach((t) => {
+
+    const metricsMap = new Map<string, { attRate: number; hwRate: number; repRate: number; avgScore: number }>()
+
+    for (const t of activeTeachers) {
       let presentCount = 0
       const dd = new Date(from)
       while (dd <= to) {
@@ -316,83 +368,71 @@ export default function HRPage() {
         }
         dd.setDate(dd.getDate() + 1)
       }
-      rates[t.id] = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0
-    })
-    return rates
-  }, [attendance, activeTeachers, dateFrom, dateTo])
+      const attRate = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0
 
-  const teacherHomeworkRate = useMemo(() => {
-    const rates: Record<string, number> = {}
-    activeTeachers.forEach((t) => {
-      const records = homeworkRecords.filter((r) => r.teacherId === t.id && r.date >= dateFrom && r.date <= dateTo)
-      const submitted = records.filter((r) => r.submitted).length
-      rates[t.id] = records.length > 0 ? Math.round((submitted / records.length) * 100) : 0
-    })
-    return rates
-  }, [homeworkRecords, activeTeachers, dateFrom, dateTo])
+      const hwRecords = homeworkRecords.filter((r) => r.teacherId === t.id && r.date >= dateFrom && r.date <= dateTo)
+      const hwSubmitted = hwRecords.filter((r) => r.submitted).length
+      const hwRate = hwRecords.length > 0 ? Math.round((hwSubmitted / hwRecords.length) * 100) : 0
 
-  const teacherReportRate = useMemo(() => {
-    const rates: Record<string, { rate: number; avgScore: number }> = {}
-    activeTeachers.forEach((t) => {
       const reports = dailyReports.filter((r) => r.teacherId === t.id && r.date >= dateFrom && r.date <= dateTo)
-      const submitted = reports.filter((r) => r.submitted).length
-      const rate = reports.length > 0 ? Math.round((submitted / reports.length) * 100) : 0
+      const repSubmitted = reports.filter((r) => r.submitted).length
+      const repRate = reports.length > 0 ? Math.round((repSubmitted / reports.length) * 100) : 0
       const scored = reports.filter((r) => r.submitted && r.avgScore > 0)
       const avgScore = scored.length > 0 ? Math.round(scored.reduce((s, r) => s + r.avgScore, 0) / scored.length) : 0
-      rates[t.id] = { rate, avgScore }
-    })
-    return rates
-  }, [dailyReports, activeTeachers, dateFrom, dateTo])
+
+      metricsMap.set(t.id, { attRate, hwRate, repRate, avgScore })
+    }
+    return metricsMap
+  }, [attendance, activeTeachers, homeworkRecords, dailyReports, dateFrom, dateTo])
+
+  const getMetrics = useCallback((id: string) => teacherMetrics.get(id) || { attRate: 0, hwRate: 0, repRate: 0, avgScore: 0 }, [teacherMetrics])
 
   const attendanceRank = useMemo(
     () =>
       activeTeachers
-        .map((t) => ({ ...t, rate: teacherAttendanceRate[t.id] || 0 }))
+        .map((t) => ({ ...t, rate: getMetrics(t.id).attRate }))
         .sort((a, b) => b.rate - a.rate)
         .slice(0, 5),
-    [activeTeachers, teacherAttendanceRate]
+    [activeTeachers, getMetrics]
   )
 
   const homeworkRank = useMemo(
     () =>
       activeTeachers
-        .map((t) => ({ ...t, rate: teacherHomeworkRate[t.id] || 0 }))
+        .map((t) => ({ ...t, rate: getMetrics(t.id).hwRate }))
         .sort((a, b) => b.rate - a.rate)
         .slice(0, 5),
-    [activeTeachers, teacherHomeworkRate]
+    [activeTeachers, getMetrics]
   )
 
   const reportRank = useMemo(
     () =>
       activeTeachers
-        .map((t) => ({ ...t, rate: teacherReportRate[t.id]?.rate || 0 }))
+        .map((t) => ({ ...t, rate: getMetrics(t.id).repRate }))
         .sort((a, b) => b.rate - a.rate)
         .slice(0, 5),
-    [activeTeachers, teacherReportRate]
+    [activeTeachers, getMetrics]
   )
 
   const studentPerformanceRank = useMemo(
     () =>
       activeTeachers
-        .map((t) => ({ ...t, avgScore: teacherReportRate[t.id]?.avgScore || 0 }))
+        .map((t) => ({ ...t, avgScore: getMetrics(t.id).avgScore }))
         .sort((a, b) => b.avgScore - a.avgScore)
         .slice(0, 5),
-    [activeTeachers, teacherReportRate]
+    [activeTeachers, getMetrics]
   )
 
   const teacherCompositeScores = useMemo(
     () =>
       activeTeachers
         .map((t) => {
-          const attRate = teacherAttendanceRate[t.id] || 0
-          const hwRate = teacherHomeworkRate[t.id] || 0
-          const repRate = teacherReportRate[t.id]?.rate || 0
-          const avgScore = teacherReportRate[t.id]?.avgScore || 0
-          const totalScore = Math.round(attRate * 0.3 + hwRate * 0.3 + repRate * 0.2 + avgScore * 0.002 * 20)
-          return { ...t, attRate, hwRate, repRate, avgScore, totalScore: Math.min(100, Math.max(0, totalScore)) }
+          const m = getMetrics(t.id)
+          const totalScore = Math.round(m.attRate * 0.3 + m.hwRate * 0.3 + m.repRate * 0.2 + m.avgScore * 0.002 * 20)
+          return { ...t, attRate: m.attRate, hwRate: m.hwRate, repRate: m.repRate, avgScore: m.avgScore, totalScore: Math.min(100, Math.max(0, totalScore)) }
         })
         .sort((a, b) => b.totalScore - a.totalScore),
-    [activeTeachers, teacherAttendanceRate, teacherHomeworkRate, teacherReportRate]
+    [activeTeachers, getMetrics]
   )
 
   const salaryDeductions = useMemo(() => {
@@ -442,14 +482,17 @@ export default function HRPage() {
             (employeeStatusFilter === 'all' || t.status === employeeStatusFilter)
           )
         })
-        .map((t) => ({
-          ...t,
-          attRate: teacherAttendanceRate[t.id] || 0,
-          hwRate: teacherHomeworkRate[t.id] || 0,
-          reportRate: teacherReportRate[t.id]?.rate || 0,
-          compScore: teacherCompositeScores.find((s) => s.id === t.id)?.totalScore || 0,
-        })),
-    [teachers, employeeSearch, employeeStatusFilter, teacherAttendanceRate, teacherHomeworkRate, teacherReportRate, teacherCompositeScores]
+        .map((t) => {
+          const m = getMetrics(t.id)
+          return {
+            ...t,
+            attRate: m.attRate,
+            hwRate: m.hwRate,
+            reportRate: m.repRate,
+            compScore: teacherCompositeScores.find((s) => s.id === t.id)?.totalScore || 0,
+          }
+        }),
+    [teachers, employeeSearch, employeeStatusFilter, getMetrics, teacherCompositeScores]
   )
 
   // ─── Selection Handlers ───

@@ -4,13 +4,12 @@ import {
   CheckCircle,
   Clock,
   GraduationCap,
-  Layers,
   ScanFace,
   Search,
   User,
   X,
-  XCircle,
 } from 'lucide-react'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -54,7 +53,12 @@ function playSuccessSound() {
 }
 
 export default function KioskMode({ isBn, date }: { isBn: boolean; date: string }) {
-  const { teachers, attendance } = useTeacherStore()
+  const { teachers, attendance } = useTeacherStore(
+    useShallow((s) => ({
+      teachers: s.teachers,
+      attendance: s.attendance,
+    }))
+  )
   const students = useSessionStudents()
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
   const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
@@ -66,7 +70,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [regSearch, setRegSearch] = useState('')
-  const [regFilter, setRegFilter] = useState<'all' | 'staff' | 'student'>('all')
   const [camActive, setCamActive] = useState(false)
   const [faceDetected, setFaceDetected] = useState(false)
   const [, setDetecting] = useState(false)
@@ -98,14 +101,12 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
 
   const filteredPeople = useMemo(() => {
     let list = allPeople
-    if (regFilter === 'staff') list = list.filter((p) => p.type === 'staff')
-    else if (regFilter === 'student') list = list.filter((p) => p.type === 'student')
     if (regSearch) {
       const q = regSearch.toLowerCase()
       list = list.filter((p) => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.section?.toLowerCase().includes(q))
     }
     return list
-  }, [allPeople, regFilter, regSearch])
+  }, [allPeople, regSearch])
 
   const streamRef = useRef<MediaStream | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -465,23 +466,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       {/* Attendance popup */}
       {renderAttendancePopup()}
 
-      {/* Info Banner */}
-      <div className="bg-[var(--green-light)] border border-[var(--green)] rounded-xl p-3 mb-4">
-        <div className="flex items-start gap-2">
-          <Layers size={16} className="text-[var(--green)] mt-0.5 shrink-0" />
-          <div>
-            <div className="text-[0.75rem] font-semibold text-[var(--green)]">
-              {isBn ? 'কিওস্ক মোড' : 'Kiosk Mode'}
-            </div>
-            <div className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5">
-              {isBn
-                ? 'শেয়ার্ড ডিভাইস হিসেবে ব্যবহার করুন। সবাই একটি ফোনে মুখ দেখিয়ে চেক ইন করবে।'
-                : 'Use as shared device. All staff check in by showing face on one phone.'}
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* HTTPS warning */}
       {window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && (
         <div className="mb-4 py-3 px-4 rounded-xl bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.75rem] font-medium text-center">
@@ -501,25 +485,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
               : (isBn ? '🧠 ML মডেল লোড হয়েছে' : '🧠 ML models loaded')}
         </div>
       )}
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-2.5 mb-4">
-        {[
-          { label: isBn ? 'নিবন্ধিত' : 'Registered', value: stats.registered, icon: <Layers size={15} />, color: 'var(--green)' },
-          { label: isBn ? 'আজ চেক-ইন' : 'Today', value: stats.todayCheckin, icon: <CheckCircle size={15} />, color: 'var(--teal)' },
-          { label: isBn ? 'সক্রিয়' : 'Active', value: stats.active, icon: <Clock size={15} />, color: 'var(--brand)' },
-        ].map((s, i) => (
-          <div key={i} className="flex items-center gap-2.5 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${s.color}15`, color: s.color }}>
-              {s.icon}
-            </div>
-            <div>
-              <div className="text-[1rem] font-bold" style={{ color: s.color }}>{s.value}</div>
-              <div className="text-[0.625rem] text-[var(--text-muted)]">{s.label}</div>
-            </div>
-          </div>
-        ))}
-      </div>
 
       {/* Mode tabs */}
       <div className="flex gap-2 mb-4">
@@ -547,157 +512,138 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       {kioskMode === 'register' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           {/* Register Face */}
-          <div className="border border-[var(--border)] rounded-xl p-4 bg-[var(--bg-primary)]">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-[var(--green-light)] flex items-center justify-center">
-                <ScanFace size={15} className="text-[var(--green)]" />
+          <div className="border border-[var(--border)] rounded-xl bg-[var(--bg-primary)]">
+            <div className="px-4 py-3 border-b border-[var(--border)]">
+              <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                {isBn ? 'মুখ নিবন্ধন' : 'Register Face'}
               </div>
-              <div>
-                <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-                  {isBn ? 'মুখ নিবন্ধন' : 'Register Face'}
-                </div>
-                <div className="text-[0.625rem] text-[var(--text-muted)]">
-                  {isBn ? 'ক্যামেরায় মুখ তুলুন' : 'Capture face with camera'}
-                </div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
+                {isBn ? 'ক্যামেরায় মুখ তুলুন' : 'Capture face with camera'}
               </div>
             </div>
-            {/* Filter tabs */}
-            <div className="flex gap-1 mb-2">
-              {(['all', 'staff', 'student'] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => { setRegFilter(f); setRegSearch(''); setSelectedStaff('') }}
-                  className={`flex-1 py-1.5 rounded-lg text-[0.625rem] font-medium border cursor-pointer transition-all ${
-                    regFilter === f
-                      ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
-                      : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]/50'
-                  }`}
-                >
-                  {f === 'all' ? (isBn ? 'সব' : 'All') : f === 'staff' ? (isBn ? 'স্টাফ' : 'Staff') : (isBn ? 'শিক্ষার্থী' : 'Student')}
-                </button>
-              ))}
-            </div>
-            {/* Autocomplete input */}
-            <div className="relative mb-2">
-              <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-2">
-                <Search size={13} className="text-[var(--text-muted)] shrink-0" />
-                <input
-                  value={regSearch}
-                  onChange={(e) => { setRegSearch(e.target.value); setSelectedStaff(''); setCapturedPhoto(null) }}
-                  onFocus={() => {}}
-                  placeholder={isBn ? 'নাম, আইডি বা সেকশন লিখুন...' : 'Type name, ID, or section...'}
-                  className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
-                />
-                {regSearch && (
-                  <button onClick={() => { setRegSearch(''); setSelectedStaff('') }} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)]">
-                    <X size={12} />
-                  </button>
+            <div className="p-4 space-y-3">
+              {/* Autocomplete input */}
+              <div className="relative">
+                <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-2">
+                  <Search size={13} className="text-[var(--text-muted)] shrink-0" />
+                  <input
+                    value={regSearch}
+                    onChange={(e) => { setRegSearch(e.target.value); setSelectedStaff(''); setCapturedPhoto(null) }}
+                    onFocus={() => {}}
+                    placeholder={isBn ? 'নাম, আইডি বা সেকশন লিখুন...' : 'Type name, ID, or section...'}
+                    className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
+                  />
+                  {regSearch && (
+                    <button onClick={() => { setRegSearch(''); setSelectedStaff('') }} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)]">
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+                {/* Suggestions dropdown */}
+                {regSearch && !selectedStaff && filteredPeople.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 max-h-[14rem] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xl">
+                    {filteredPeople.slice(0, 20).map((p) => {
+                      const registered = registeredFaces.find((f) => f.staffId === p.id)
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => { setSelectedStaff(p.id); setRegSearch(p.name); setCapturedPhoto(null) }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none bg-transparent"
+                        >
+                          <div className="w-8 h-8 rounded-lg overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] shrink-0 flex items-center justify-center">
+                            {p.photo ? (
+                              <img src={p.photo} alt="" className="w-full h-full object-cover" />
+                            ) : p.type === 'staff' ? (
+                              <User size={12} className="text-[var(--text-muted)]" />
+                            ) : (
+                              <GraduationCap size={12} className="text-[var(--text-muted)]" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] truncate">
+                              {p.name}
+                              {registered && <span className="text-[var(--green)] ml-1">✓</span>}
+                            </div>
+                            <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono truncate">
+                              {p.id}{p.type === 'student' && p.dept ? ` · ${p.dept}-${p.section}` : ''}
+                            </div>
+                          </div>
+                          <span className={`text-[0.4375rem] px-1.5 py-0.5 rounded font-semibold shrink-0 ${
+                            p.type === 'student' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--brand-light)] text-[var(--brand)]'
+                          }`}>
+                            {p.type === 'student' ? 'STU' : 'STAFF'}
+                          </span>
+                        </button>
+                      )
+                    })}
+                    {filteredPeople.length > 20 && (
+                      <div className="px-3 py-1.5 text-center text-[0.5625rem] text-[var(--text-muted)] border-t border-[var(--border)]">
+                        +{filteredPeople.length - 20} {isBn ? 'আরও...' : 'more...'}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {regSearch && !selectedStaff && filteredPeople.length === 0 && (
+                  <div className="absolute z-50 w-full mt-1 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xl p-4 text-center">
+                    <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                      {isBn ? 'কোনো ফলাফল পাওয়া যায়নি' : 'No results found'}
+                    </div>
+                  </div>
                 )}
               </div>
-              {/* Suggestions dropdown */}
-              {regSearch && !selectedStaff && filteredPeople.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 max-h-[14rem] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xl">
-                  {filteredPeople.slice(0, 20).map((p) => {
-                    const registered = registeredFaces.find((f) => f.staffId === p.id)
-                    return (
-                      <button
-                        key={p.id}
-                        onClick={() => { setSelectedStaff(p.id); setRegSearch(p.name); setCapturedPhoto(null) }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none bg-transparent"
-                      >
-                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] shrink-0 flex items-center justify-center">
-                          {p.photo ? (
-                            <img src={p.photo} alt="" className="w-full h-full object-cover" />
-                          ) : p.type === 'staff' ? (
-                            <User size={12} className="text-[var(--text-muted)]" />
-                          ) : (
-                            <GraduationCap size={12} className="text-[var(--text-muted)]" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] truncate">
-                            {p.name}
-                            {registered && <span className="text-[var(--green)] ml-1">✓</span>}
-                          </div>
-                          <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono truncate">
-                            {p.id}{p.type === 'student' && p.dept ? ` · ${p.dept}-${p.section}` : ''}
-                          </div>
-                        </div>
-                        <span className={`text-[0.4375rem] px-1.5 py-0.5 rounded font-semibold shrink-0 ${
-                          p.type === 'student' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--brand-light)] text-[var(--brand)]'
-                        }`}>
-                          {p.type === 'student' ? 'STU' : 'STAFF'}
-                        </span>
-                      </button>
-                    )
-                  })}
-                  {filteredPeople.length > 20 && (
-                    <div className="px-3 py-1.5 text-center text-[0.5625rem] text-[var(--text-muted)] border-t border-[var(--border)]">
-                      +{filteredPeople.length - 20} {isBn ? 'আরও...' : 'more...'}
-                    </div>
-                  )}
-                </div>
+              {selectedStaff && !camActive && (
+                <button
+                  onClick={startCamera}
+                  className="w-full py-2.5 rounded-lg text-[0.75rem] font-semibold bg-[var(--green)] text-white border-none cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <ScanFace size={14} />
+                  {isBn ? 'ক্যামেরা খুলুন' : 'Open Camera'}
+                </button>
               )}
-              {regSearch && !selectedStaff && filteredPeople.length === 0 && (
-                <div className="absolute z-50 w-full mt-1 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xl p-4 text-center">
-                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
-                    {isBn ? 'কোনো ফলাফল পাওয়া যায়নি' : 'No results found'}
+              {selectedStaff && camActive && (
+                <div className="space-y-2">
+                  <div className="relative rounded-xl overflow-hidden bg-black w-full" style={{ aspectRatio: '4/3', maxHeight: '30vh' }}>
+                    <video ref={videoCallbackRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+                    <canvas ref={canvasRef} className="hidden" />
+                    <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[0.5625rem] flex items-center gap-1 z-10">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />
+                      LIVE
+                    </div>
+                    {!capturedPhoto && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                        <div className="absolute inset-[15%] grid grid-cols-3 grid-rows-3">
+                          {[...Array(9)].map((_, i) => (
+                            <div key={i} className={`border ${faceDetected ? 'border-[var(--green)]/70' : 'border-white/30'} transition-colors duration-200`} />
+                          ))}
+                        </div>
+                        <div className={`w-24 h-32 border-2 rounded-[50%] transition-all duration-200 ${faceDetected ? 'border-[var(--green)] shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'border-white/50'}`} />
+                      </div>
+                    )}
                   </div>
+                  <div className="w-full py-2 rounded-lg text-[0.75rem] font-bold bg-[var(--green-light)] text-[var(--green)] text-center">
+                    {faceDetected ? (isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...') : (isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid')}
+                  </div>
+                  <button
+                    onClick={handleRegister}
+                    disabled={!faceApiLoaded}
+                    className="w-full py-2.5 rounded-lg text-[0.75rem] bg-[var(--green)] text-white border-none font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {isBn ? 'নিবন্ধন করুন' : 'Register'}
+                  </button>
+                  <button
+                    onClick={() => { stopCamera(); setCapturedPhoto(null) }}
+                    className="w-full py-2 text-[0.75rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none underline"
+                  >
+                    {isBn ? 'বন্ধ করুন' : 'Cancel'}
+                  </button>
                 </div>
               )}
             </div>
-            {selectedStaff && !camActive && (
-              <button
-                onClick={startCamera}
-                className="w-full py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--green)] text-white border-none cursor-pointer flex items-center justify-center gap-2"
-              >
-                <ScanFace size={14} />
-                {isBn ? 'ক্যামেরা খুলুন' : 'Open Camera'}
-              </button>
-            )}
-            {selectedStaff && camActive && (
-              <div className="space-y-2">
-                <div className="relative rounded-xl overflow-hidden bg-black w-full" style={{ aspectRatio: '4/3', maxHeight: '30vh' }}>
-                  <video ref={videoCallbackRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-                  <canvas ref={canvasRef} className="hidden" />
-                  <div className="absolute top-2 left-2 bg-black/60 rounded-lg px-2 py-1 text-white text-[0.5625rem] flex items-center gap-1 z-10">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />
-                    LIVE
-                  </div>
-                  {!capturedPhoto && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <div className="absolute inset-[15%] grid grid-cols-3 grid-rows-3">
-                        {[...Array(9)].map((_, i) => (
-                          <div key={i} className={`border ${faceDetected ? 'border-[var(--green)]/70' : 'border-white/30'} transition-colors duration-200`} />
-                        ))}
-                      </div>
-                      <div className={`w-24 h-32 border-2 rounded-[50%] transition-all duration-200 ${faceDetected ? 'border-[var(--green)] shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'border-white/50'}`} />
-                    </div>
-                  )}
-                </div>
-                <div className="w-full py-2 rounded-lg text-[0.75rem] font-bold bg-[var(--green-light)] text-[var(--green)] text-center">
-                  {faceDetected ? (isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...') : (isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid')}
-                </div>
-                <button
-                  onClick={handleRegister}
-                  disabled={!faceApiLoaded}
-                  className="w-full py-2 rounded-lg text-[0.75rem] bg-[var(--green)] text-white border-none font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  {isBn ? 'নিবন্ধন করুন' : 'Register'}
-                </button>
-                <button
-                  onClick={() => { stopCamera(); setCapturedPhoto(null) }}
-                  className="w-full py-2 text-[0.75rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none underline"
-                >
-                  {isBn ? 'বন্ধ করুন' : 'Cancel'}
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Quick Info */}
-          <div className="border border-[var(--border)] rounded-xl p-4 bg-[var(--bg-primary)] flex flex-col justify-center items-center text-center min-h-[12rem]">
-            <ScanFace size={48} className="text-[var(--text-muted)] mb-3 opacity-30" />
+          <div className="border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] flex flex-col justify-center items-center text-center min-h-[12rem] p-6">
+            <ScanFace size={40} className="text-[var(--text-muted)] mb-3 opacity-30" />
             <div className="text-[0.875rem] font-semibold text-[var(--text-secondary)] mb-1">
               {isBn ? 'স্টাফ বা শিক্ষার্থী নির্বাচন করুন' : 'Select staff or student'}
             </div>
@@ -706,14 +652,14 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                 ? 'নিবন্ধিত সকলে কিওস্ক মোডে মুখ দেখিয়ে চেক ইন/আউট করতে পারবেন'
                 : 'Registered staff & students can check in/out by showing face in kiosk mode'}
             </div>
-            <div className="flex items-center gap-3 mt-3">
-              <div className="flex items-center gap-1">
-                <User size={12} className="text-[var(--brand)]" />
-                <span className="text-[0.625rem] text-[var(--text-muted)]">{activeTeachers.length} {isBn ? 'স্টাফ' : 'Staff'}</span>
+            <div className="flex items-center gap-4 mt-3">
+              <div className="flex items-center gap-1.5">
+                <User size={13} className="text-[var(--brand)]" />
+                <span className="text-[0.6875rem] text-[var(--text-muted)]">{activeTeachers.length} {isBn ? 'স্টাফ' : 'Staff'}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <GraduationCap size={12} className="text-[var(--green)]" />
-                <span className="text-[0.625rem] text-[var(--text-muted)]">{activeStudents.length} {isBn ? 'শিক্ষার্থী' : 'Students'}</span>
+              <div className="flex items-center gap-1.5">
+                <GraduationCap size={13} className="text-[var(--green)]" />
+                <span className="text-[0.6875rem] text-[var(--text-muted)]">{activeStudents.length} {isBn ? 'শিক্ষার্থী' : 'Students'}</span>
               </div>
             </div>
           </div>
@@ -723,8 +669,18 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       {/* Registered Staff & Students Table */}
       <div className="border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-          <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-            {isBn ? `নিবন্ধিত (${registeredFaces.length})` : `Registered (${registeredFaces.length})`}
+          <div className="flex items-center gap-4">
+            <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+              {isBn ? `নিবন্ধিত (${registeredFaces.length})` : `Registered (${registeredFaces.length})`}
+            </div>
+            <div className="flex items-center gap-1">
+              <CheckCircle size={11} className="text-[var(--teal)]" />
+              <span className="text-[0.625rem] text-[var(--text-muted)]">{stats.todayCheckin} {isBn ? 'আজ' : 'Today'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock size={11} className="text-[var(--brand)]" />
+              <span className="text-[0.625rem] text-[var(--text-muted)]">{stats.active} {isBn ? 'সক্রিয়' : 'Active'}</span>
+            </div>
           </div>
           <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-[0.3125rem]">
             <Search size={12} className="text-[var(--text-muted)]" />
@@ -737,44 +693,50 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
           </div>
         </div>
         <div className="overflow-auto max-h-[35vh]">
-          <table className="w-full border-collapse text-[0.6875rem]">
+          <table className="w-full border-collapse text-[0.8125rem]">
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.1875rem]">#</th>
-                <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.75rem]"></th>
-                <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
-                <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'আইডি' : 'ID'}</th>
-                <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'ধরন' : 'Type'}</th>
-                <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'অ্যাকশন' : 'Action'}</th>
+                <th className="px-4 py-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)] w-[2.5rem] uppercase tracking-wider">#</th>
+                <th className="px-4 py-3 text-left text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{isBn ? 'নাম' : 'Name'}</th>
+                <th className="px-4 py-3 text-left text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{isBn ? 'আইডি' : 'ID'}</th>
+                <th className="px-4 py-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{isBn ? 'স্ট্যাটাস' : 'Status'}</th>
+                <th className="px-4 py-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{isBn ? 'অ্যাকশন' : 'Action'}</th>
               </tr>
             </thead>
             <tbody>
               {filteredFaces.map((f, i) => {
-                const person = allPeople.find((p) => p.id === f.staffId)
-                const isStudent = person?.type === 'student'
+                const isCheckedIn = attendance[date]?.[f.staffId]?.status === 'present'
                 return (
-                  <tr key={f.staffId} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)] transition-colors">
-                    <td className="p-2.5 text-center text-[var(--text-muted)]">{i + 1}</td>
-                    <td className="p-2.5 text-center">
-                      <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-[var(--border)] mx-auto bg-[var(--bg-secondary)]">
-                        <img src={f.photo} alt="" className="w-full h-full object-cover" />
+                  <tr key={f.staffId} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)]/50 transition-colors">
+                    <td className="px-4 py-3 text-center text-[var(--text-muted)] font-medium">{i + 1}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-[var(--border)] shrink-0 bg-[var(--bg-secondary)]">
+                          <img src={f.photo} alt="" className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-[var(--text-primary)]">{f.staffName}</div>
+                          <div className="text-[0.625rem] text-[var(--text-muted)] font-mono">{f.staffId}</div>
+                        </div>
                       </div>
                     </td>
-                    <td className="p-2.5 text-left font-medium text-[var(--text-primary)]">{f.staffName}</td>
-                    <td className="p-2.5 text-left font-mono text-[var(--text-secondary)]">{f.staffId}</td>
-                    <td className="p-2.5 text-center">
-                      <span className={`text-[0.5rem] px-1.5 py-0.5 rounded font-semibold ${
-                        isStudent ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--brand-light)] text-[var(--brand)]'
+                    <td className="px-4 py-3 font-mono text-[0.75rem] text-[var(--text-secondary)]">{f.staffId}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-flex items-center gap-1 text-[0.625rem] px-2.5 py-1 rounded-full font-semibold ${
+                        isCheckedIn
+                          ? 'bg-[var(--green-light)] text-[var(--green)]'
+                          : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'
                       }`}>
-                        {isStudent ? (isBn ? 'শিক্ষার্থী' : 'STU') : (isBn ? 'স্টাফ' : 'STAFF')}
+                        <span className={`w-1.5 h-1.5 rounded-full ${isCheckedIn ? 'bg-[var(--green)]' : 'bg-[var(--text-muted)]'}`} />
+                        {isCheckedIn ? (isBn ? 'চেক-ইন' : 'Checked In') : (isBn ? 'নিবন্ধিত' : 'Registered')}
                       </span>
                     </td>
-                    <td className="p-2.5 text-center">
+                    <td className="px-4 py-3 text-center">
                       <button
                         onClick={() => handleDeleteFace(f.staffId)}
-                        className="p-1.5 rounded-lg text-[var(--red)] hover:bg-[var(--red-light)] transition-colors cursor-pointer bg-transparent border-none"
+                        className="px-3 py-1.5 rounded-lg text-[0.625rem] font-semibold bg-[var(--red-light)] text-[var(--red)] border border-transparent hover:bg-[var(--red)] hover:text-white cursor-pointer transition-all"
                       >
-                        <XCircle size={14} />
+                        {isBn ? 'মুছুন' : 'Delete'}
                       </button>
                     </td>
                   </tr>
@@ -782,7 +744,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
               })}
               {filteredFaces.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-6 text-center text-[var(--text-muted)]">
+                  <td colSpan={5} className="px-4 py-10 text-center text-[var(--text-muted)]">
                     {isBn ? 'কোনো নিবন্ধিত ব্যক্তি নেই' : 'No registered people'}
                   </td>
                 </tr>

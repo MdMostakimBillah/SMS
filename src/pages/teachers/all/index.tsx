@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useBn } from '@/hooks/useBn'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -39,7 +40,14 @@ const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
 export default function AllTeachersPage() {
   const navigate = useNavigate()
   const isBn = useBn()
-  const { teachers, departments, subjects, deleteTeacher } = useTeacherStore()
+  const { teachers, departments, subjects, deleteTeacher } = useTeacherStore(
+    useShallow((s) => ({
+      teachers: s.teachers,
+      departments: s.departments,
+      subjects: s.subjects,
+      deleteTeacher: s.deleteTeacher,
+    }))
+  )
   const { institution } = useClassStore()
 
   const [search, setSearch] = useState('')
@@ -135,8 +143,14 @@ export default function AllTeachersPage() {
   }, [])
   const hasFilter = search || fDept || fGender || fStatus || fBlood || fReligion
 
+  const departmentMap = useMemo(() => {
+    const map = new Map<string, typeof departments[0]>()
+    for (const d of departments) map.set(d.id, d)
+    return map
+  }, [departments])
+
   const getDeptName = (id: string) => {
-    const d = departments.find((x) => x.id === id)
+    const d = departmentMap.get(id)
     return d ? (isBn ? d.nameBn : d.name) : '—'
   }
   const getSubjectNames = (ids: string[]) => {

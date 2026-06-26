@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { useHRStore } from '@/store/hrStore'
@@ -29,9 +30,20 @@ export default function PayrollPage() {
   const navigate = useNavigate()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
-  const { teachers, departments } = useTeacherStore()
+  const { teachers, departments } = useTeacherStore(
+    useShallow((s) => ({
+      teachers: s.teachers,
+      departments: s.departments,
+    }))
+  )
   const { institution } = useClassStore()
-  const { monthlySalaryConfigs, facilities, teacherFacilities } = useHRStore()
+  const { monthlySalaryConfigs, facilities, teacherFacilities } = useHRStore(
+    useShallow((s) => ({
+      monthlySalaryConfigs: s.monthlySalaryConfigs,
+      facilities: s.facilities,
+      teacherFacilities: s.teacherFacilities,
+    }))
+  )
 
   const [search, setSearch] = useState('')
   const [fDept, setFDept] = useState('')
@@ -60,11 +72,17 @@ export default function PayrollPage() {
     { key: '12', bn: 'ডিসেম্বর', en: 'December' },
   ]
 
+  const departmentMap = useMemo(() => {
+    const map = new Map<string, typeof departments[0]>()
+    for (const d of departments) map.set(d.id, d)
+    return map
+  }, [departments])
+
   const getDeptName = useCallback(
     (id: string) => {
-      return departments.find((d) => d.id === id)?.name || id
+      return departmentMap.get(id)?.name || id
     },
-    [departments]
+    [departmentMap]
   )
 
   const facilityAmountMap = useMemo(() => {

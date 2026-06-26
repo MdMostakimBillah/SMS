@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, AlertTriangle, Briefcase, Edit2, Trash2 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
@@ -11,7 +12,15 @@ import type { Designation } from '@/pages/teachers/types'
 export default function DesignationsPage() {
   const navigate = useNavigate()
   const isBn = useBn()
-  const { designations, teachers, addDesignation, updateDesignation, deleteDesignation } = useTeacherStore()
+  const { designations, teachers, addDesignation, updateDesignation, deleteDesignation } = useTeacherStore(
+    useShallow((s) => ({
+      designations: s.designations,
+      teachers: s.teachers,
+      addDesignation: s.addDesignation,
+      updateDesignation: s.updateDesignation,
+      deleteDesignation: s.deleteDesignation,
+    }))
+  )
 
   const { popFromChain, getChain } = useNavChain()
   useNavChainClearOnMount()

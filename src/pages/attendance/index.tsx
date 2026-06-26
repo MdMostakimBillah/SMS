@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -17,6 +17,7 @@ import * as XLSX from 'xlsx'
 
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -26,7 +27,7 @@ import { AttendancePDFOptionsModal } from '@/components/shared/AttendancePDFOpti
 import type { AttendancePDFOptions } from '@/components/shared/AttendancePDFOptionsModal'
 import type { AttendanceStatus, DayAttendance } from '@/store/teacherStore'
 import { genSinglePDF, genStudentSinglePDF } from './pdfTemplates'
-import DeviceTab from './DeviceTab'
+const DeviceTab = lazy(() => import('./DeviceTab'))
 import { today, twentyDaysAgo, getDaysBetween, isFriday, setGlobalBn } from './helpers'
 import type { Tab, StatusFilter } from './helpers'
 
@@ -41,7 +42,14 @@ export default function AttendancePage() {
   const navigate = useNavigate()
   const isBn = useBn()
   const { isMobile, isTablet } = useWindowSize()
-  const { teachers, departments, attendance, markAllPresent } = useTeacherStore()
+  const { teachers, departments, attendance, markAllPresent } = useTeacherStore(
+    useShallow((s) => ({
+      teachers: s.teachers,
+      departments: s.departments,
+      attendance: s.attendance,
+      markAllPresent: s.markAllPresent,
+    }))
+  )
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
   setGlobalBn(isBn)
@@ -138,59 +146,69 @@ export default function AttendancePage() {
     return l
   }, [activeTeachers, fDeptEmp, employeeSearch])
 
+  const departmentMap = useMemo(() => {
+    const map = new Map<string, typeof departments[0]>()
+    for (const d of departments) map.set(d.id, d)
+    return map
+  }, [departments])
+
   const getDeptName = useCallback((id: string) => {
-    const d = departments.find((x) => x.id === id)
+    const d = departmentMap.get(id)
     return d ? (isBn ? d.nameBn : d.name) : '—'
-  }, [departments, isBn])
+  }, [departmentMap, isBn])
 
   const todayFiltered = useMemo(() => {
-    const staff = filteredEmployees.map((t) => {
+    const result: Array<{
+      id: string; name: string; nameBn: string; nameEn: string; photo: string;
+      type: 'staff' | 'student'; designation: string; dept: string;
+      attStatus: AttendanceStatus; inTime: string; outTime: string; isLate: boolean;
+    }> = []
+
+    for (const t of filteredEmployees) {
       const da = dayAtt[t.id]
       const status: AttendanceStatus = da?.status || 'absent'
+      if (statusFilter !== 'all' && status !== statusFilter) continue
       const inPunch = da?.punches?.find((p: any) => p.type === 'in')
       const outPunch = [...(da?.punches || [])].reverse().find((p: any) => p.type === 'out')
       const isLate = inPunch && t.inTime && inPunch.time > t.inTime
-      return {
+      result.push({
         id: t.id,
         name: isBn ? t.nameBn || t.nameEn : t.nameEn,
         nameBn: t.nameBn,
         nameEn: t.nameEn,
         photo: t.photo,
-        type: 'staff' as const,
+        type: 'staff',
         designation: t.designation || '',
         dept: getDeptName(t.departmentId),
         attStatus: status,
         inTime: inPunch?.time || '—',
         outTime: outPunch?.time || '—',
         isLate: !!isLate,
-      }
-    })
-    const stu = filteredStudents.map((s) => {
+      })
+    }
+    for (const s of filteredStudents) {
       const dayData = attendance[date]?.[s.id]
       const status: AttendanceStatus = dayData?.status || 'absent'
+      if (statusFilter !== 'all' && status !== statusFilter) continue
       const inPunch = dayData?.punches?.find((p: any) => p.type === 'in')
       const outPunch = dayData?.punches?.filter((p: any) => p.type === 'out').pop()
-      return {
+      result.push({
         id: s.id,
         name: isBn ? s.nameBn || s.nameEn : s.nameEn,
         nameBn: s.nameBn,
         nameEn: s.nameEn,
         photo: '',
-        type: 'student' as const,
+        type: 'student',
         designation: `${s.class} · ${s.section || '—'}`,
         dept: isBn ? 'শিক্ষার্থী' : 'Student',
         attStatus: status,
         inTime: inPunch?.time || '—',
         outTime: outPunch?.time || '—',
         isLate: false,
-      }
-    })
-    let l = [...staff, ...stu]
-    if (statusFilter === 'present') l = l.filter((t) => t.attStatus === 'present')
-    else if (statusFilter === 'absent') l = l.filter((t) => t.attStatus === 'absent')
-    else if (statusFilter === 'on-leave') l = l.filter((t) => t.attStatus === 'on-leave')
-    return l
-  }, [filteredEmployees, filteredStudents, dayAtt, statusFilter, isBn, getDeptName])
+      })
+    }
+    return result
+  }, [filteredEmployees, filteredStudents, dayAtt, statusFilter, isBn, getDeptName, attendance, date])
 
   const todayTotalPages = Math.max(1, Math.ceil(todayFiltered.length / empPerPage))
   const paginatedToday = useMemo(
@@ -527,11 +545,11 @@ export default function AttendancePage() {
       color: 'var(--green)',
     },
     {
-      key: 'device' as Tab,
-      labelBn: 'ডিভাইস',
-      labelEn: 'Device',
-      Icon: Fingerprint,
-      color: '#7C3AED',
+      key: 'student' as Tab,
+      labelBn: 'শিক্ষার্থী',
+      labelEn: 'Student',
+      Icon: GraduationCap,
+      color: 'var(--teal)',
     },
     {
       key: 'employee' as Tab,
@@ -541,11 +559,11 @@ export default function AttendancePage() {
       color: 'var(--amber)',
     },
     {
-      key: 'student' as Tab,
-      labelBn: 'শিক্ষার্থী',
-      labelEn: 'Student',
-      Icon: GraduationCap,
-      color: 'var(--teal)',
+      key: 'device' as Tab,
+      labelBn: 'ডিভাইস',
+      labelEn: 'Device',
+      Icon: Fingerprint,
+      color: '#7C3AED',
     },
   ]
 
@@ -794,7 +812,11 @@ export default function AttendancePage() {
       )}
 
       {/* ==================== TAB: DEVICE ==================== */}
-      {activeTab === 'device' && <DeviceTab isBn={isBn} date={date} />}
+      {activeTab === 'device' && (
+        <Suspense fallback={<div className="p-4 text-center text-[var(--text-muted)] text-[0.75rem]">{isBn ? 'লোড হচ্ছে...' : 'Loading...'}</div>}>
+          <DeviceTab isBn={isBn} date={date} />
+        </Suspense>
+      )}
 
       {/* ==================== TAB: EMPLOYEE ==================== */}
       {activeTab === 'employee' && (

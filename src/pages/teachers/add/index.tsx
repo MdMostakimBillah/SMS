@@ -5,6 +5,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useNavChain } from '@/hooks/useNavChain'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
@@ -72,7 +73,15 @@ export default function AddTeacherPage() {
   const navigate = useNavigate()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
-  const { departments, subjects, designations, addTeacher, getNextTeacherId } = useTeacherStore()
+  const { departments, subjects, designations, addTeacher, getNextTeacherId } = useTeacherStore(
+    useShallow((s) => ({
+      departments: s.departments,
+      subjects: s.subjects,
+      designations: s.designations,
+      addTeacher: s.addTeacher,
+      getNextTeacherId: s.getNextTeacherId,
+    }))
+  )
   const fileRef = useRef<HTMLInputElement>(null)
   const signatureRef = useRef<HTMLInputElement>(null)
 

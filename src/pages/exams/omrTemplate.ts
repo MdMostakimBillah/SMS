@@ -15,6 +15,7 @@ export interface OMRConfig {
   institutionName: string
   institutionNameBn: string
   institutionAddress: string
+  logo: string
   sessionName: string
   className: string
   classNameBn: string
@@ -103,18 +104,6 @@ function subjectCodeGrid(c: string): string {
     if ((i + 1) % 13 === 0 && i < 25) cells += '</tr><tr>'
   })
   return `<table style="border-collapse:separate;border-spacing:1px;"><tbody><tr>${cells}</tr></tbody></table>`
-}
-
-function subjectListTable(c: string, subjects: { name: string; nameBn: string }[], isBn: boolean): string {
-  if (subjects.length === 0) return ''
-  let rows = ''
-  subjects.forEach((sub) => {
-    rows += `<tr>
-      <td style="padding:2px 6px;font-size:8px;color:#374151;white-space:nowrap;">${isBn ? sub.nameBn : sub.name}</td>
-      <td style="padding:2px 4px;text-align:center;width:20px;"><div style="width:14px;height:14px;border:1.5px solid ${c};border-radius:50%;display:inline-block;"></div></td>
-    </tr>`
-  })
-  return `<table style="width:100%;border-collapse:collapse;">${rows}</table>`
 }
 
 function buildExaminerColumns(c: string, totalQ: number, options: string[], qPerCol: number, isBn: boolean): string {
@@ -251,8 +240,6 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
       ? `<div style="width:50px;height:50px;border:1px solid #d1d5db;display:flex;align-items:center;justify-content:center;font-size:6px;color:#9ca3af;">QR</div>`
       : ''
 
-  const subListHtml = subjectListTable(c, cfg.subjects, isBn)
-
   const infoParts: string[] = []
   if (cfg.showStudentName)
     infoParts.push(`<span style="flex:2;">${isBn ? 'শিক্ষার্থীর নাম' : 'Student Name'}: __________________________________________</span>`)
@@ -271,10 +258,6 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
   if (cfg.showInvigilatorCode) sbp.push(box(isBn ? 'পরিদর্শক কোড' : 'Invigilator Code', digitGrid(c, 6, 14)))
   if (cfg.showSetCode) sbp.push(box(isBn ? 'সেট কোড' : 'Set Code', optionGrid(c, ['A', 'B', 'C', 'D'], 20)))
   if (cfg.showSubjectCode) sbp.push(box(isBn ? 'বিষয় কোড' : 'Subject Code', subjectCodeGrid(c)))
-  if (cfg.showSubjectName && subListHtml)
-    sbp.push(
-      `<div style="flex:1;border:1.5px solid ${c};border-radius:4px;padding:4px;min-width:140px;"><div style="text-align:center;font-size:7px;font-weight:800;color:${c};margin-bottom:3px;border-bottom:1px solid ${c}33;padding-bottom:2px;">${isBn ? 'বিষয়' : 'Subject Name'}</div>${subListHtml}</div>`
-    )
   if (cfg.showAdditionalPaper)
     sbp.push(box(`${isBn ? 'অতিরিক্ত' : 'Extra'}<br/>${isBn ? 'উত্তর পত্র' : 'Papers'}`, digitGrid(c, 2, 12)))
   if (cfg.showRoomNumber) sbp.push(box(isBn ? 'কক্ষ নং' : 'Room No', digitGrid(c, 3, 12)))
@@ -391,7 +374,7 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
   <!-- HEADER -->
   <div style="text-align:center;margin-bottom:6px;padding-bottom:5px;border-bottom:2px solid ${c};">
     <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:4px;">
-      <div style="width:60px;height:60px;border-radius:50%;border:2px solid ${c};display:flex;align-items:center;justify-content:center;font-size:7px;color:${c};font-weight:700;overflow:hidden;">LOGO</div>
+      <div style="width:60px;height:60px;border-radius:50%;border:2px solid ${c};display:flex;align-items:center;justify-content:center;font-size:7px;color:${c};font-weight:700;overflow:hidden;">${cfg.logo ? `<img src="${cfg.logo}" style="width:100%;height:100%;object-fit:cover;" />` : schoolName.charAt(0)}</div>
       <div>
         <h1 style="font-size:18px;font-weight:800;color:${c};margin-bottom:1px;">${schoolName}</h1>
         <div style="font-size:9px;color:#6b7280;">${schoolAddr}</div>

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 
 type Op = 'salary' | 'phone' | 'photo' | 'department' | 'designation' | 'inTime' | 'outTime'
@@ -80,7 +81,14 @@ export default function TeacherBulkUpdatePage() {
   const navigate = useNavigate()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
-  const { teachers, updateTeacher, departments, designations } = useTeacherStore()
+  const { teachers, updateTeacher, departments, designations } = useTeacherStore(
+    useShallow((s) => ({
+      teachers: s.teachers,
+      updateTeacher: s.updateTeacher,
+      departments: s.departments,
+      designations: s.designations,
+    }))
+  )
 
   const [op, setOp] = useState<Op>('salary')
   const [search, setSearch] = useState('')

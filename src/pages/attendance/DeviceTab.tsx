@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import {
-  Camera,
   CheckCircle,
   Clock,
   CreditCard,
   Fingerprint,
+  GraduationCap,
   Layers,
   Plus,
   RefreshCw,
@@ -12,20 +13,135 @@ import {
   Search,
   Settings,
   Smartphone,
+  User,
   Wifi,
   WifiOff,
+  Trash2,
   X,
   XCircle,
 } from 'lucide-react'
+import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useAdmissionStore } from '@/store/admissionStore'
 import { logger } from '@/lib/logger'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import KioskMode from './KioskMode'
 
+type Person = { id: string; name: string; type: 'staff' | 'student'; photo: string; dept?: string; section?: string }
+
+function PersonSearchInput({ value, onChange, placeholder, isBn: lang, people }: { value: string; onChange: (id: string, name: string) => void; placeholder?: string; isBn: boolean; people: Person[] }) {
+  const [query, setQuery] = useState(value ? people.find((p) => p.id === value)?.name || '' : '')
+  const [open, setOpen] = useState(false)
+  const [selected, setSelected] = useState<Person | null>(value ? people.find((p) => p.id === value) || null : null)
+  const wrapRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return []
+    const q = query.toLowerCase()
+    return people.filter((p) => {
+      if (p.name.toLowerCase().includes(q)) return true
+      if (p.id.toLowerCase().includes(q)) return true
+      if (p.dept) {
+        const classSec = `${p.dept}-${p.section ?? ''}`
+        if (classSec.toLowerCase().includes(q)) return true
+      }
+      return false
+    })
+  }, [query, people])
+
+  const select = useCallback((p: Person) => {
+    setSelected(p)
+    setQuery(p.name)
+    setOpen(false)
+    onChange(p.id, p.name)
+  }, [onChange])
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-2">
+        <Search size={13} className="text-[var(--text-muted)] shrink-0" />
+        <input
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setSelected(null); setOpen(true); onChange('', '') }}
+          onFocus={() => setOpen(true)}
+          placeholder={placeholder || (lang ? 'নাম, আইডি বা সেকশন লিখুন...' : 'Type name, ID, or section...')}
+          className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
+        />
+        {query && (
+          <button onClick={() => { setQuery(''); setSelected(null); onChange('', '') }} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)]">
+            <X size={12} />
+          </button>
+        )}
+      </div>
+      {open && query.trim() && !selected && filtered.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 max-h-[12rem] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xl">
+          {filtered.slice(0, 15).map((p) => (
+            <button
+              key={p.id}
+              onClick={() => select(p)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none bg-transparent"
+            >
+              <div className="w-7 h-7 rounded-lg overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] shrink-0 flex items-center justify-center">
+                {p.photo ? (
+                  <img src={p.photo} alt="" className="w-full h-full object-cover" />
+                ) : p.type === 'staff' ? (
+                  <User size={11} className="text-[var(--text-muted)]" />
+                ) : (
+                  <GraduationCap size={11} className="text-[var(--text-muted)]" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] truncate">{p.name}</div>
+                <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono truncate">
+                  {p.id}{p.type === 'student' && p.dept ? ` · ${p.dept}-${p.section ?? ''}` : ''}
+                </div>
+              </div>
+              <span className={`text-[0.4375rem] px-1.5 py-0.5 rounded font-semibold shrink-0 ${p.type === 'student' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--brand-light)] text-[var(--brand)]'}`}>
+                {p.type === 'student' ? 'STU' : 'STAFF'}
+              </span>
+            </button>
+          ))}
+          {filtered.length > 15 && (
+            <div className="px-3 py-1.5 text-center text-[0.5625rem] text-[var(--text-muted)] border-t border-[var(--border)]">
+              +{filtered.length - 15} {lang ? 'আরও...' : 'more...'}
+            </div>
+          )}
+        </div>
+      )}
+      {open && query.trim() && !selected && filtered.length === 0 && (
+        <div className="absolute z-50 w-full mt-1 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xl p-3 text-center">
+          <div className="text-[0.6875rem] text-[var(--text-muted)]">{lang ? 'কোনো ফলাফল পাওয়া যায়নি' : 'No results found'}</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
-  const { teachers, attendance } = useTeacherStore()
+  const { teachers, attendance } = useTeacherStore(
+    useShallow((s) => ({
+      teachers: s.teachers,
+      attendance: s.attendance,
+    }))
+  )
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
+  const students = useAdmissionStore((s) => s.students)
+  const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
+
+  const allPeople = useMemo<Person[]>(() => {
+    const staff: Person[] = activeTeachers.map((t) => ({ id: t.id, name: isBn ? t.nameBn || t.nameEn : t.nameEn, type: 'staff' as const, photo: t.photo || '' }))
+    const stu: Person[] = activeStudents.map((s) => ({ id: s.id, name: isBn ? s.nameBn || s.nameEn : s.nameEn, type: 'student' as const, photo: s.photo || '', dept: s.class, section: s.section }))
+    return [...staff, ...stu]
+  }, [activeTeachers, activeStudents, isBn])
 
   const [devices, setDevices] = useState<
     {
@@ -88,6 +204,23 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     type: 'rfid' as 'rfid' | 'fingerprint' | 'face' | 'multi',
   })
   const [deviceTab, setDeviceTab] = useState<'devices' | 'rfid' | 'fingerprint' | 'face' | 'mobile'>('devices')
+  const sectionTabsRef = useRef<HTMLDivElement>(null)
+  const sectionTabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const tabColors: Record<string, string> = { devices: '#7C3AED', rfid: 'var(--brand)', fingerprint: 'var(--amber)', face: 'var(--green)', mobile: 'var(--teal)' }
+  const [sectionSliderStyle, setSectionSliderStyle] = useState({ left: '0px', width: '0px', background: '#7C3AED' })
+  useEffect(() => {
+    const el = sectionTabRefs.current[deviceTab]
+    const container = sectionTabsRef.current
+    if (el && container) {
+      const containerRect = container.getBoundingClientRect()
+      const elRect = el.getBoundingClientRect()
+      setSectionSliderStyle({
+        left: `${elRect.left - containerRect.left - 4}px`,
+        width: `${elRect.width + 8}px`,
+        background: tabColors[deviceTab] || '#7C3AED',
+      })
+    }
+  }, [deviceTab])
   const [rfidEntries, setRfidEntries] = useState<
     {
       staffId: string
@@ -654,70 +787,41 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
 
   return (
     <>
-          {/* Device sub-tabs — status filter style */}
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] mb-3.5 flex items-center gap-2 flex-wrap">
-            <span className="text-[0.6875rem] font-medium text-[var(--text-muted)]">{isBn ? 'সেকশন:' : 'Section:'}</span>
-            {[
-              {
-                key: 'devices' as const,
-                lBn: 'ডিভাইস',
-                lEn: 'Devices',
-                Icon: Fingerprint,
-                color: '#7C3AED',
-              },
-              {
-                key: 'rfid' as const,
-                lBn: 'RFID কার্ড',
-                lEn: 'RFID Cards',
-                Icon: CreditCard,
-                color: 'var(--brand)',
-              },
-              {
-                key: 'fingerprint' as const,
-                lBn: 'ফিঙ্গারপ্রিন্ট',
-                lEn: 'Fingerprint',
-                Icon: Fingerprint,
-                color: 'var(--amber)',
-              },
-              {
-                key: 'face' as const,
-                lBn: 'ফেস স্ক্যান',
-                lEn: 'Face Scan',
-                Icon: ScanFace,
-                color: 'var(--green)',
-              },
-              {
-                key: 'mobile' as const,
-                lBn: 'মোবাইল',
-                lEn: 'Mobile',
-                Icon: Wifi,
-                color: 'var(--teal)',
-              },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setDeviceTab(tab.key)}
-                className={`px-3 py-1 rounded-lg text-[0.6875rem] cursor-pointer border ${
-                  deviceTab === tab.key
-                    ? 'font-semibold'
-                    : 'font-normal border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
-                }`}
-                style={
-                  deviceTab === tab.key
-                    ? {
-                        border: `1px solid ${tab.color}`,
-                        background: `${tab.color}18`,
-                        color: tab.color,
-                      }
-                    : {}
-                }
-              >
-                <span className="flex items-center gap-1">
-                  <tab.Icon size={12} />
+          {/* Device sub-tabs */}
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] mb-3.5 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            <span className="text-[0.6875rem] font-medium text-[var(--text-muted)] shrink-0">{isBn ? 'সেকশন:' : 'Section:'}</span>
+            <div ref={sectionTabsRef} className="relative flex gap-1 bg-[var(--bg-secondary)] rounded-lg p-1 shrink-0">
+              {[
+                { key: 'devices' as const, lBn: 'ডিভাইস', lEn: 'Devices', Icon: Fingerprint, color: '#7C3AED' },
+                { key: 'rfid' as const, lBn: 'RFID কার্ড', lEn: 'RFID Cards', Icon: CreditCard, color: 'var(--brand)' },
+                { key: 'fingerprint' as const, lBn: 'ফিঙ্গারপ্রিন্ট', lEn: 'Fingerprint', Icon: Fingerprint, color: 'var(--amber)' },
+                { key: 'face' as const, lBn: 'ফেস স্ক্যান', lEn: 'Face Scan', Icon: ScanFace, color: 'var(--green)' },
+                { key: 'mobile' as const, lBn: 'মোবাইল', lEn: 'Mobile', Icon: Wifi, color: 'var(--teal)' },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  ref={(el) => { sectionTabRefs.current[tab.key] = el }}
+                  onClick={() => {
+                    setDeviceTab(tab.key)
+                    sectionTabRefs.current[tab.key]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' })
+                  }}
+                  className="relative z-10 px-3 py-1 rounded-md text-[0.625rem] font-medium cursor-pointer transition-colors duration-200 flex items-center gap-1"
+                  style={{ color: deviceTab === tab.key ? '#fff' : 'var(--text-muted)' }}
+                >
+                  <tab.Icon size={11} />
                   {isBn ? tab.lBn : tab.lEn}
-                </span>
-              </button>
-            ))}
+                </button>
+              ))}
+              <div
+                className="absolute top-1 bottom-1 rounded-md transition-all duration-300 ease-out"
+                style={{
+                  left: sectionSliderStyle.left,
+                  width: sectionSliderStyle.width,
+                  background: sectionSliderStyle.background,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }}
+              />
+            </div>
             <div className="flex-1" />
             {deviceTab === 'devices' && (
               <button
@@ -780,7 +884,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
 
               {/* Device Table */}
               <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
-                <table className="w-full border-collapse text-[0.75rem]">
+                <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-[0.75rem] table-fixed">
                   <thead>
                     <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                       <th className="p-3 text-left text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'ডিভাইস' : 'Device'}</th>
@@ -824,18 +929,32 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                                 }, 2000)
                               }}
                               disabled={syncingDevice === d.id}
+                              title={isBn ? 'সিঙ্ক' : 'Sync'}
                               className="w-7 h-7 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer hover:bg-[var(--green-light)] hover:border-[var(--green)] hover:text-[var(--green)] transition-all"
                             >
                               <RefreshCw size={11} className={syncingDevice === d.id ? 'animate-spin' : ''} />
                             </button>
                             <button
                               onClick={() => setShowDeviceSettings(d.id)}
+                              title={isBn ? 'এডিট' : 'Edit'}
                               className="w-7 h-7 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
                             >
                               <Settings size={11} />
                             </button>
                             <button
+                              onClick={() => {
+                                if (confirm(isBn ? `"${d.name}" মুছে ফেলতে চান?` : `Delete "${d.name}"?`)) {
+                                  setDevices((prev) => prev.filter((dev) => dev.id !== d.id))
+                                }
+                              }}
+                              title={isBn ? 'মুছুন' : 'Delete'}
+                              className="w-7 h-7 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer hover:bg-[var(--red-light)] hover:border-[var(--red)] hover:text-[var(--red)] transition-all"
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                            <button
                               onClick={() => setDevices((prev) => prev.map((dev) => dev.id === d.id ? { ...dev, status: dev.status === 'online' ? 'offline' : 'online' } : dev))}
+                              title={d.status === 'online' ? (isBn ? 'অফলাইন করুন' : 'Go Offline') : (isBn ? 'অনলাইন করুন' : 'Go Online')}
                               className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer transition-all ${d.status === 'online' ? 'bg-[var(--red-light)] border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white' : 'bg-[var(--green-light)] border-[var(--green)] text-[var(--green)] hover:bg-[var(--green)] hover:text-white'}`}
                             >
                               {d.status === 'online' ? <WifiOff size={11} /> : <Wifi size={11} />}
@@ -846,10 +965,11 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
 
               {/* Device Settings Modal */}
-              {showDeviceSettings && (
+              {showDeviceSettings && createPortal(
                 <div className="modal-overlay">
                   <div className="modal-content modal-box" style={{ maxWidth: '25rem' }}>
                     {(() => {
@@ -913,7 +1033,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                       )
                     })()}
                   </div>
-                </div>
+                </div>,
+                document.body
               )}
             </>
           )}
@@ -1502,67 +1623,87 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
           {/* ===== Mobile WebAuthn ===== */}
           {deviceTab === 'mobile' && (
             <>
-              {/* WiFi Settings Bar */}
-              <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3 mb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Wifi size={14} className="text-[var(--teal)]" />
-                    <span className="text-[0.75rem] font-medium text-[var(--text-primary)]">
-                      {isBn ? 'নেটওয়ার্ক সেটিংস' : 'Network Settings'}
+              {/* Network + Mode combined bar */}
+              <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] mb-4 flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Wifi size={13} className="text-[var(--teal)]" />
+                  <span className="text-[0.6875rem] font-medium text-[var(--text-primary)]">
+                    {isBn ? 'নেটওয়ার্ক' : 'Network'}
+                  </span>
+                  {institutionGateway && (
+                    <span className={`text-[0.5rem] px-1.5 py-0.5 rounded-full font-semibold ${wifiConnected === true ? 'bg-[var(--green-light)] text-[var(--green)]' : wifiConnected === false ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'}`}>
+                      {wifiConnected === true ? 'OK' : wifiConnected === false ? (isBn ? 'বিচ্ছিন্ন' : 'Off') : '...'}
                     </span>
-                    {institutionGateway && (
-                      <span
-                        className={`text-[0.5625rem] px-2 py-0.5 rounded-full font-semibold ${wifiConnected === true ? 'bg-[var(--green-light)] text-[var(--green)]' : wifiConnected === false ? 'bg-[var(--red-light)] text-[var(--red)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'}`}
-                      >
-                        {wifiConnected === true
-                          ? isBn
-                            ? 'সংযুক্ত'
-                            : 'Connected'
-                          : wifiConnected === false
-                            ? isBn
-                              ? 'সংযুক্ত নয়'
-                              : 'Disconnected'
-                            : isBn
-                              ? 'পরীক্ষাধীন'
-                              : 'Checking...'}
-                      </span>
-                    )}
-                  </div>
+                  )}
+                </div>
+                <div className="w-px h-4 bg-[var(--border)]" />
+                <span className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'মোড:' : 'Mode:'}</span>
+                <div className="relative flex gap-1 bg-[var(--bg-secondary)] rounded-lg p-1">
+                  <div
+                    className="absolute top-1 bottom-1 rounded-md transition-all duration-300 ease-out"
+                    style={{
+                      width: 'calc(50% - 0.25rem)',
+                      transform: authMode === 'kiosk' ? 'translateX(calc(100% + 0.25rem))' : 'translateX(0)',
+                      background: authMode === 'kiosk' ? 'var(--amber)' : 'var(--teal)',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    }}
+                  />
                   <button
-                    onClick={() => setShowWifiSettings(!showWifiSettings)}
-                    className="text-[0.6875rem] text-[var(--teal)] cursor-pointer bg-transparent border-none font-[inherit] font-medium"
+                    onClick={() => setAuthMode('personal')}
+                    className="relative z-10 px-3 py-1 rounded-md text-[0.625rem] font-medium cursor-pointer transition-colors duration-200 flex items-center gap-1"
+                    style={{ color: authMode === 'personal' ? '#fff' : 'var(--text-muted)' }}
                   >
-                    {showWifiSettings ? (isBn ? 'বন্ধ করুন' : 'Close') : isBn ? 'সেটিংস' : 'Settings'}
+                    <Smartphone size={10} />
+                    {isBn ? 'ব্যক্তিগত' : 'Personal'}
+                  </button>
+                  <button
+                    onClick={() => setAuthMode('kiosk')}
+                    className="relative z-10 px-3 py-1 rounded-md text-[0.625rem] font-medium cursor-pointer transition-colors duration-200 flex items-center gap-1"
+                    style={{ color: authMode === 'kiosk' ? '#fff' : 'var(--text-muted)' }}
+                  >
+                    <ScanFace size={10} />
+                    {isBn ? 'কিয়োস্ক' : 'Kiosk'}
                   </button>
                 </div>
-                {showWifiSettings && (
-                  <div className="mt-3 pt-3 border-t border-[var(--border)] space-y-2">
+                <div className="flex-1" />
+                <button
+                  onClick={() => setShowWifiSettings(!showWifiSettings)}
+                  className="text-[0.625rem] text-[var(--teal)] cursor-pointer bg-transparent border-none font-medium"
+                >
+                  {showWifiSettings ? (isBn ? 'বন্ধ' : 'Close') : isBn ? 'সেটিংস' : 'Settings'}
+                </button>
+              </div>
+
+              {/* WiFi Settings Panel */}
+              {showWifiSettings && (
+                <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div>
-                      <label className="text-[0.625rem] font-medium text-[var(--text-muted)] mb-1 block">
-                        {isBn ? 'WiFi নেটওয়ার্কের নাম' : 'WiFi Network Name (SSID)'}
+                      <label className="text-[0.5625rem] font-medium text-[var(--text-muted)] mb-1 block">
+                        {isBn ? 'WiFi নাম' : 'WiFi SSID'}
                       </label>
                       <input
                         value={institutionWifi}
                         onChange={(e) => setInstitutionWifi(e.target.value)}
-                        placeholder="e.g. Institution-Guest"
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
+                        placeholder="Institution-Guest"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-[0.625rem] font-medium text-[var(--text-muted)] mb-1 block">
-                        {isBn ? 'গেটওয়ে IP (ঐচ্ছিক)' : 'Gateway IP (Optional)'}
+                      <label className="text-[0.5625rem] font-medium text-[var(--text-muted)] mb-1 block">
+                        {isBn ? 'গেটওয়ে IP' : 'Gateway IP'}
                       </label>
                       <input
                         value={institutionGateway}
                         onChange={(e) => setInstitutionGateway(e.target.value)}
-                        placeholder="e.g. 192.168.1.1"
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] font-mono outline-none"
+                        placeholder="192.168.1.1"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] font-mono outline-none"
                       />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-end gap-1.5">
                       <button
                         onClick={saveWifiSettings}
-                        className="px-3 py-1.5 rounded-lg bg-[var(--teal)] text-white text-[0.6875rem] font-medium cursor-pointer border-none"
+                        className="px-3 py-1.5 rounded-lg bg-[var(--teal)] text-white text-[0.625rem] font-medium cursor-pointer border-none"
                       >
                         {isBn ? 'সংরক্ষণ' : 'Save'}
                       </button>
@@ -1573,133 +1714,21 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                           setWifiConnected(r.onNetwork)
                           setWifiChecking(false)
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.6875rem] cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.625rem] cursor-pointer"
                       >
-                        {wifiChecking ? (isBn ? 'পরীক্ষা হচ্ছে...' : 'Checking...') : isBn ? 'পরীক্ষা করুন' : 'Test Connection'}
+                        {wifiChecking ? '...' : isBn ? 'পরীক্ষা' : 'Test'}
                       </button>
                     </div>
-                    <div className="text-[0.5625rem] text-[var(--text-muted)]">
-                      {isBn
-                        ? 'গেটওয়ে IP সেট করলে স্টাফদের প্রতিষ্ঠানের WiFi নেটওয়ার্কে থাকতে হবে।'
-                        : 'With gateway IP set, staff must be on institution WiFi network to check in.'}
-                    </div>
                   </div>
-                )}
-              </div>
-
-              {/* Mode Selection */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <button
-                  onClick={() => setAuthMode('personal')}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${authMode === 'personal' ? 'border-[var(--teal)] bg-[var(--teal-light)]' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--teal)]'}`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${authMode === 'personal' ? 'bg-[var(--teal)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--teal)]'}`}
-                    >
-                      <Smartphone size={16} />
-                    </div>
-                    <div>
-                      <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-                        {isBn ? 'ব্যক্তিগত ফোন' : 'Personal Phone'}
-                      </div>
-                      <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'নিজের ফোনে চেক ইন' : 'Check in on own phone'}</div>
-                    </div>
+                  <div className="text-[0.5rem] text-[var(--text-muted)] mt-1.5">
+                    {isBn ? 'গেটওয়ে IP সেট করলে স্টাফদের WiFi নেটওয়ার্কে থাকতে হবে।' : 'With gateway IP, staff must be on institution WiFi to check in.'}
                   </div>
-                  <div className="text-[0.625rem] text-[var(--text-secondary)]">
-                    {isBn
-                      ? 'স্টাফ নিজের ফোনে ফিঙ্গারপ্রিন্ট দিয়ে চেক ইন করে। WiFi যাচাই সহ।'
-                      : 'Staff authenticates on own device. WiFi verification included.'}
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => setAuthMode('kiosk')}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${authMode === 'kiosk' ? 'border-[var(--amber)] bg-[var(--amber-light)]' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--amber)]'}`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${authMode === 'kiosk' ? 'bg-[var(--amber)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--amber)]'}`}
-                    >
-                      <Camera size={16} />
-                    </div>
-                    <div>
-                      <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-                        {isBn ? 'কিয়োস্ক মোড' : 'Kiosk Mode'}
-                      </div>
-                      <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'শেয়ার্ড ফোনে চেক ইন' : 'Shared phone check in'}</div>
-                    </div>
-                  </div>
-                  <div className="text-[0.625rem] text-[var(--text-secondary)]">
-                    {isBn
-                      ? 'শেয়ার্ড ডিভাইস। সব স্টাফ একটি ফোনে মুখ দেখিয়ে চেক ইন করবে।'
-                      : 'Shared device. All staff check in by showing face on one phone.'}
-                  </div>
-                </button>
-              </div>
+                </div>
+              )}
 
               {/* Personal Mode Content */}
               {authMode === 'personal' && (
                 <>
-                  {/* Info Banner */}
-                  <div className="bg-[var(--teal-light)] border border-[var(--teal)] rounded-xl p-3 mb-4">
-                    <div className="flex items-start gap-2">
-                      <Wifi size={16} className="text-[var(--teal)] mt-0.5 shrink-0" />
-                      <div>
-                        <div className="text-[0.75rem] font-semibold text-[var(--teal)]">
-                          {isBn ? 'ব্যক্তিগত ডিভাইস মোড' : 'Personal Device Mode'}
-                        </div>
-                        <div className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5">
-                          {isBn
-                            ? 'স্টাফরা তাদের নিজের ফোনে ফিঙ্গারপ্রিন্ট/ফেস আইডি দিয়ে চেক-ইন/আউট করবে। WiFi সংযোগ যাচাই করা হয়।'
-                            : 'Staff check in/out using their own phone biometric. WiFi connection is verified.'}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-2.5 mb-4">
-                    {[
-                      {
-                        label: isBn ? 'নিবন্ধিত' : 'Registered',
-                        value: mobileDevices.length,
-                        icon: <Wifi size={15} />,
-                        color: 'var(--teal)',
-                      },
-                      {
-                        label: isBn ? 'আজ চেক-ইন' : 'Today',
-                        value: mobileDevices.filter((d) => d.lastAuth?.startsWith(date)).length,
-                        icon: <CheckCircle size={15} />,
-                        color: 'var(--green)',
-                      },
-                      {
-                        label: isBn ? 'সক্রিয়' : 'Active',
-                        value: mobileDevices.filter((d) => d.lastAuth).length,
-                        icon: <Clock size={15} />,
-                        color: 'var(--brand)',
-                      },
-                    ].map((s, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-2.5 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]"
-                      >
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center"
-                          style={{ background: `${s.color}15`, color: s.color }}
-                        >
-                          {s.icon}
-                        </div>
-                        <div>
-                          <div className="text-[1rem] font-bold" style={{ color: s.color }}>
-                            {s.value}
-                          </div>
-                          <div className="text-[0.625rem] text-[var(--text-muted)]">{s.label}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
                   {/* Message */}
                   {mobileAuthMsg && (
                     <div
@@ -1733,24 +1762,16 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                           </div>
                         </div>
                       </div>
-                      <select
+                      <PersonSearchInput
                         value={mobileRegStaff}
-                        onChange={(e) => setMobileRegStaff(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] outline-none mb-2"
-                      >
-                        <option value="">{isBn ? 'স্টাফ নির্বাচন করুন...' : 'Select staff...'}</option>
-                        {activeTeachers
-                          .filter((t) => !mobileDevices.find((d) => d.staffId === t.id))
-                          .map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {isBn ? t.nameBn || t.nameEn : t.nameEn} ({t.id})
-                            </option>
-                          ))}
-                      </select>
+                        onChange={(id) => setMobileRegStaff(id)}
+                        isBn={isBn}
+                        people={allPeople.filter((p) => p.type === 'staff' && !mobileDevices.find((d) => d.staffId === p.id))}
+                      />
                       <button
                         onClick={handleRegisterDevice}
                         disabled={!mobileRegStaff || mobileRegPending}
-                        className={`w-full py-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileRegPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileRegStaff ? 'bg-[var(--teal)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}
+                        className={`w-full py-2 mt-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileRegPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileRegStaff ? 'bg-[var(--teal)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}
                       >
                         {mobileRegPending ? (isBn ? 'নিবন্ধন হচ্ছে...' : 'Registering...') : isBn ? 'নিবন্ধন করুন' : 'Register Now'}
                       </button>
@@ -1771,22 +1792,16 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                           </div>
                         </div>
                       </div>
-                      <select
+                      <PersonSearchInput
                         value={mobileAuthStaff}
-                        onChange={(e) => setMobileAuthStaff(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] outline-none mb-2"
-                      >
-                        <option value="">{isBn ? 'নিবন্ধিত স্টাফ...' : 'Registered staff...'}</option>
-                        {mobileDevices.map((d) => (
-                          <option key={d.staffId} value={d.staffId}>
-                            {d.staffName} ({d.staffId})
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(id) => setMobileAuthStaff(id)}
+                        isBn={isBn}
+                        people={mobileDevices.map((d) => ({ id: d.staffId, name: d.staffName, type: 'staff' as const, photo: '' }))}
+                      />
                       <button
                         onClick={handleMobileAuth}
                         disabled={!mobileAuthStaff || mobileAuthPending || wifiChecking}
-                        className={`w-full py-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileAuthPending || wifiChecking ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileAuthStaff ? 'bg-[var(--green)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}
+                        className={`w-full py-2 mt-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileAuthPending || wifiChecking ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileAuthStaff ? 'bg-[var(--green)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}
                       >
                         {wifiChecking
                           ? isBn
@@ -1806,8 +1821,18 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   {/* Devices List */}
                   <div className="border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-                      <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-                        {isBn ? 'নিবন্ধিত ডিভাইস' : 'Registered Devices'} ({mobileDevices.length})
+                      <div className="flex items-center gap-4">
+                        <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                          {isBn ? 'নিবন্ধিত ডিভাইস' : 'Registered Devices'} ({mobileDevices.length})
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <CheckCircle size={11} className="text-[var(--green)]" />
+                          <span className="text-[0.625rem] text-[var(--text-muted)]">{mobileDevices.filter((d) => d.lastAuth?.startsWith(date)).length} {isBn ? 'আজ' : 'Today'}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock size={11} className="text-[var(--brand)]" />
+                          <span className="text-[0.625rem] text-[var(--text-muted)]">{mobileDevices.filter((d) => d.lastAuth).length} {isBn ? 'সক্রিয়' : 'Active'}</span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-[0.3125rem]">
                         <Search size={12} className="text-[var(--text-muted)]" />
@@ -1900,7 +1925,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
           )}
 
           {/* Add Device Modal */}
-          {showAddDevice && (
+          {showAddDevice && createPortal(
             <div className="modal-overlay">
               <div className="modal-content modal-box" style={{ maxWidth: '26.25rem' }}>
                 <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
@@ -1999,11 +2024,12 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   </button>
                 </div>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
 
           {/* Add RFID Modal */}
-          {showAddRFID && (
+          {showAddRFID && createPortal(
             <div className="modal-overlay">
               <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
                 <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
@@ -2012,20 +2038,14 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                 <div className="space-y-3">
                   <div>
                     <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
-                      {isBn ? 'স্টাফ নির্বাচন করুন' : 'Select Staff'}
+                      {isBn ? 'ব্যক্তি নির্বাচন করুন' : 'Select Person'}
                     </label>
-                    <select
+                    <PersonSearchInput
                       value={newRFID.staffId}
-                      onChange={(e) => setNewRFID((p) => ({ ...p, staffId: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-secondary)] outline-none"
-                    >
-                      <option value="">{isBn ? 'নির্বাচন করুন...' : 'Select...'}</option>
-                      {activeTeachers.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.id} - {isBn ? t.nameBn || t.nameEn : t.nameEn}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(id) => setNewRFID((p) => ({ ...p, staffId: id }))}
+                      isBn={isBn}
+                      people={allPeople}
+                    />
                   </div>
                   <div>
                     <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
@@ -2052,15 +2072,15 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   <button
                     onClick={() => {
                       if (newRFID.staffId && newRFID.rfidCard) {
-                        const t = activeTeachers.find((te) => te.id === newRFID.staffId)
-                        if (t)
-                          setRfidEntries((p) => [
-                            ...p,
+                        const p = allPeople.find((pe) => pe.id === newRFID.staffId)
+                        if (p)
+                          setRfidEntries((prev) => [
+                            ...prev,
                             {
-                              staffId: t.id,
-                              staffName: isBn ? t.nameBn || t.nameEn : t.nameEn,
+                              staffId: p.id,
+                              staffName: p.name,
                               rfidCard: newRFID.rfidCard,
-                              type: 'Staff',
+                              type: p.type === 'student' ? 'Student' : 'Staff',
                               assigned: true,
                             },
                           ])
@@ -2074,11 +2094,12 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   </button>
                 </div>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
 
           {/* Add Fingerprint Modal */}
-          {showAddFP && (
+          {showAddFP && createPortal(
             <div className="modal-overlay">
               <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
                 <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
@@ -2087,20 +2108,14 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                 <div className="space-y-3">
                   <div>
                     <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
-                      {isBn ? 'স্টাফ নির্বাচন করুন' : 'Select Staff'}
+                      {isBn ? 'ব্যক্তি নির্বাচন করুন' : 'Select Person'}
                     </label>
-                    <select
+                    <PersonSearchInput
                       value={newFP.staffId}
-                      onChange={(e) => setNewFP((p) => ({ ...p, staffId: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-secondary)] outline-none"
-                    >
-                      <option value="">{isBn ? 'নির্বাচন করুন...' : 'Select...'}</option>
-                      {activeTeachers.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.id} - {isBn ? t.nameBn || t.nameEn : t.nameEn}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(id) => setNewFP((p) => ({ ...p, staffId: id }))}
+                      isBn={isBn}
+                      people={allPeople}
+                    />
                   </div>
                   <div className="bg-[var(--bg-secondary)] rounded-lg p-4 text-center">
                     <Fingerprint size={40} className="mx-auto mb-2 text-[var(--amber)]" />
@@ -2118,14 +2133,14 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   <button
                     onClick={() => {
                       if (newFP.staffId) {
-                        const t = activeTeachers.find((te) => te.id === newFP.staffId)
-                        if (t)
-                          setFpEntries((p) => [
-                            ...p,
+                        const p = allPeople.find((pe) => pe.id === newFP.staffId)
+                        if (p)
+                          setFpEntries((prev) => [
+                            ...prev,
                             {
-                              staffId: t.id,
-                              staffName: isBn ? t.nameBn || t.nameEn : t.nameEn,
-                              fpId: p.length + 1,
+                              staffId: p.id,
+                              staffName: p.name,
+                              fpId: prev.length + 1,
                               templates: 0,
                               status: 'pending',
                             },
@@ -2140,11 +2155,12 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   </button>
                 </div>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
 
           {/* Add Face Scan Modal */}
-          {showAddFace && (
+          {showAddFace && createPortal(
             <div className="modal-overlay">
               <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
                 <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
@@ -2153,20 +2169,14 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                 <div className="space-y-3">
                   <div>
                     <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
-                      {isBn ? 'স্টাফ নির্বাচন করুন' : 'Select Staff'}
+                      {isBn ? 'ব্যক্তি নির্বাচন করুন' : 'Select Person'}
                     </label>
-                    <select
+                    <PersonSearchInput
                       value={newFace.staffId}
-                      onChange={(e) => setNewFace((p) => ({ ...p, staffId: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-secondary)] outline-none"
-                    >
-                      <option value="">{isBn ? 'নির্বাচন করুন...' : 'Select...'}</option>
-                      {activeTeachers.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.id} - {isBn ? t.nameBn || t.nameEn : t.nameEn}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(id) => setNewFace((p) => ({ ...p, staffId: id }))}
+                      isBn={isBn}
+                      people={allPeople}
+                    />
                   </div>
                   <div className="bg-[var(--bg-secondary)] rounded-lg p-4 text-center">
                     <ScanFace size={40} className="mx-auto mb-2 text-[var(--green)]" />
@@ -2184,14 +2194,14 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   <button
                     onClick={() => {
                       if (newFace.staffId) {
-                        const t = activeTeachers.find((te) => te.id === newFace.staffId)
-                        if (t)
-                          setFaceEntries((p) => [
-                            ...p,
+                        const p = allPeople.find((pe) => pe.id === newFace.staffId)
+                        if (p)
+                          setFaceEntries((prev) => [
+                            ...prev,
                             {
-                              staffId: t.id,
-                              staffName: isBn ? t.nameBn || t.nameEn : t.nameEn,
-                              faceId: p.length + 1,
+                              staffId: p.id,
+                              staffName: p.name,
+                              faceId: prev.length + 1,
                               quality: 0,
                               status: 'pending',
                             },
@@ -2206,7 +2216,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   </button>
                 </div>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
     </>
   )
