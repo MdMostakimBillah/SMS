@@ -577,7 +577,7 @@ export default function ExamDashboard() {
                 className="glass"
                 style={{
                   borderRadius: '0.75rem',
-                  cursor: 'grab',
+                  cursor: 'pointer',
                   transition: 'all 0.2s ease',
                   display: 'flex',
                   flexDirection: isMobile ? 'row' : 'column',

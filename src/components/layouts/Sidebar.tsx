@@ -73,7 +73,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const isBn = useBn()
-  const { language, toggleSidebar, trackVisit, pageVisits, bookmarks, toggleBookmark, sidebarOrder, setSidebarOrder, sidebarPosition, toggleSidebarPosition } = useAppStore()
+  const { language, toggleSidebar, trackVisit, pageVisits, bookmarks, toggleBookmark, reorderBookmarks, sidebarOrder, setSidebarOrder, sidebarPosition, toggleSidebarPosition } = useAppStore()
   const { isMobile, width } = useWindowSize()
   const location = useLocation()
   const { institution, switchSession, addSession } = useClassStore()
@@ -83,6 +83,8 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const asideRef = useRef<HTMLElement>(null)
   const [hoveredItem, setHoveredItem] = useState<{ label: string; rect: DOMRect } | null>(null)
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   // Responsive collapsed width and icon size
   const collapsedWidth = width >= 1280 ? '4.25rem' : width >= 1024 ? '3.75rem' : '3.25rem'
@@ -295,9 +297,13 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     }
   }, [location.pathname, navItemsMap])
 
-  // Only manually bookmarked pages (max 6)
+  // Only manually bookmarked pages (max 5) — ordered by bookmarks array
   const quickAccess = useMemo(() => {
-    return pageVisits.filter((v) => bookmarks.includes(v.path)).slice(0, 6)
+    const visited = new Map(pageVisits.map((v) => [v.path, v]))
+    return bookmarks
+      .map((path) => visited.get(path))
+      .filter((v): v is NonNullable<typeof v> => Boolean(v))
+      .slice(0, 5)
   }, [pageVisits, bookmarks])
 
   useEffect(() => {
@@ -517,14 +523,39 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         {/* Bottom - Quick Access + Position Toggle */}
         {!collapsed && (
           <div className="px-3 py-2 border-t border-[var(--border)] mt-auto">
-            <div className="flex items-center justify-center gap-1">
-              {quickAccess.map((v) => {
+            <div className="flex items-center gap-1">
+              {quickAccess.map((v, idx) => {
                 const Icon = iconMap[v.icon] || Star
                 return (
                   <NavLink
                     key={v.path}
                     to={v.path}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--brand-light)] transition-colors relative group"
+                    draggable
+                    onDragStart={(e) => {
+                      setDragIndex(idx)
+                      e.dataTransfer.effectAllowed = 'move'
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault()
+                      e.dataTransfer.dropEffect = 'move'
+                      setDragOverIndex(idx)
+                    }}
+                    onDragLeave={() => setDragOverIndex(null)}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      if (dragIndex !== null && dragIndex !== idx) {
+                        reorderBookmarks(dragIndex, idx)
+                      }
+                      setDragIndex(null)
+                      setDragOverIndex(null)
+                    }}
+                    onDragEnd={() => {
+                      setDragIndex(null)
+                      setDragOverIndex(null)
+                    }}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all relative group cursor-pointer ${
+                      dragIndex === idx ? 'opacity-50 scale-95' : ''
+                    } ${dragOverIndex === idx && dragIndex !== null && dragIndex < idx ? 'border-r-2 border-[var(--brand)] pr-0.5' : ''} ${dragOverIndex === idx && dragIndex !== null && dragIndex > idx ? 'border-l-2 border-[var(--brand)] pl-0.5' : ''}`}
                     onMouseEnter={(e) => {
                       if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
                       const rect = e.currentTarget.getBoundingClientRect()
@@ -544,7 +575,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
               {quickAccess.length > 0 && <div className="w-px h-5 bg-[var(--border)] mx-0.5" />}
               <button
                 onClick={toggleSidebarPosition}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--brand-light)] transition-colors text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--brand-light)] transition-colors text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer ml-auto"
                 title={isBn ? (sidebarPosition === 'left' ? 'সাইডবার ডানে সরান' : 'সাইডবার বামে সরান') : (sidebarPosition === 'left' ? 'Move sidebar to right' : 'Move sidebar to left')}
               >
                 {sidebarPosition === 'left' ? <PanelRightClose size={15} /> : <PanelLeftClose size={15} />}

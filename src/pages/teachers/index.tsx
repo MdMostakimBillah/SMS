@@ -396,7 +396,7 @@ export default function TeachersPage() {
               style={{
                 borderRadius: '0.75rem',
                 padding: isMobile ? '12px' : '1rem',
-                cursor: 'grab',
+                cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 display: 'flex',
                 flexDirection: isMobile ? 'row' : 'column',

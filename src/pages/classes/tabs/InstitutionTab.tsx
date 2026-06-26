@@ -11,7 +11,6 @@ import {
   Clock,
   Plus,
   CalendarDays,
-  BookOpen,
   Camera,
   Move,
   Image,
@@ -269,11 +268,11 @@ export default React.memo(function InstitutionTab({
         )}
       </div>
 
-      {/* View Mode - Profile Style */}
+      {/* View Mode - Landing Page Style */}
       {!editingInst && (
         <div>
           {/* Banner */}
-          <div className="relative h-40 bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] overflow-hidden">
+          <div className="relative h-48 bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] overflow-hidden">
             {institution.banner && (
               <img 
                 src={institution.banner} 
@@ -289,125 +288,140 @@ export default React.memo(function InstitutionTab({
                 <Image size={80} className="text-white" />
               </div>
             )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           </div>
 
           {/* Profile Section */}
-          <div className="relative px-4 pb-4">
+          <div className="relative px-5 pb-6">
             {/* Logo */}
-            <div className="absolute -top-12 left-4">
-              <div className="w-24 h-24 rounded-xl border-4 border-[var(--bg-primary)] bg-[var(--bg-secondary)] shadow-lg overflow-hidden">
+            <div className="absolute -top-14 left-5">
+              <div className="w-28 h-28 rounded-2xl border-4 border-[var(--bg-primary)] bg-[var(--bg-secondary)] shadow-xl overflow-hidden">
                 {institution.logo ? (
                   <img src={institution.logo} alt="Logo" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-[var(--brand-light)]">
-                    <Building2 size={32} className="text-[var(--brand)]" />
+                    <Building2 size={36} className="text-[var(--brand)]" />
                   </div>
                 )}
               </div>
             </div>
 
             {/* Institution Info */}
-            <div className="pt-14">
-              <h2 className="text-lg font-bold text-[var(--text-primary)] m-0">{institution.name}</h2>
-              <p className="text-sm text-[var(--text-secondary)] m-0 mt-0.5">{institution.nameBn}</p>
+            <div className="pt-16">
+              <h2 className="text-base font-bold text-[var(--text-primary)] m-0 leading-tight">{institution.name}</h2>
+              <p className="text-[0.6875rem] text-[var(--text-muted)] m-0 mt-0.5">{institution.nameBn}</p>
               
               {institution.brandName && (
-                <div className="mt-1.5">
-                  <span className="text-xs font-semibold text-[var(--brand)]">{isBn ? 'ব্র্যান্ড' : 'Brand'}: {institution.brandName}</span>
+                <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--brand-light)]">
+                  <span className="text-[0.6875rem] font-semibold text-[var(--brand)]">{isBn ? 'ব্র্যান্ড' : 'Brand'}: {institution.brandName}</span>
                 </div>
               )}
               
               {institution.motto && (
-                <p className="text-xs text-[var(--text-muted)] italic m-0 mt-1">
+                <p className="text-[0.6875rem] text-[var(--text-muted)] italic m-0 mt-1.5">
                   "{institution.motto}"{institution.mottoBn ? ` / "${institution.mottoBn}"` : ''}
                 </p>
               )}
 
-              {/* Info Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                <div className="p-3 rounded-lg bg-[var(--bg-secondary)]">
-                  <div className="flex items-center gap-1.5 text-[0.625rem] text-[var(--text-muted)] mb-1">
-                    <Phone size={11} />
-                    {isBn ? 'ফোন' : 'Phone'}
-                  </div>
-                  <div className="text-sm font-semibold text-[var(--text-primary)]">{institution.phone}</div>
-                  {institution.eiin && (
-                    <div className="text-xs text-[var(--text-secondary)]">EIIN: {institution.eiin}</div>
+              {/* Contact Info - Full Width */}
+              <div className="mt-4 p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {institution.phone && (
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-lg bg-[var(--brand-light)] flex items-center justify-center shrink-0">
+                        <Phone size={14} className="text-[var(--brand)]" />
+                      </div>
+                      <div>
+                        <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ফোন' : 'Phone'}</div>
+                        <div className="text-xs font-semibold text-[var(--text-primary)]">{institution.phone}</div>
+                        {institution.eiin && <div className="text-[0.625rem] text-[var(--text-muted)]">EIIN: {institution.eiin}</div>}
+                      </div>
+                    </div>
                   )}
-                </div>
-
-                <div className="p-3 rounded-lg bg-[var(--bg-secondary)]">
-                  <div className="flex items-center gap-1.5 text-[0.625rem] text-[var(--text-muted)] mb-1">
-                    <Globe size={11} />
-                    Email / {isBn ? 'ওয়েবসাইট' : 'Website'}
-                  </div>
-                  <div className="text-sm font-medium text-[var(--text-primary)]">{institution.email}</div>
-                  <div className="text-xs text-[var(--text-secondary)]">{institution.website}</div>
-                </div>
-
-                <div className="p-3 rounded-lg bg-[var(--bg-secondary)]">
-                  <div className="flex items-center gap-1.5 text-[0.625rem] text-[var(--text-muted)] mb-1">
-                    <MapPin size={11} />
-                    {isBn ? 'ঠিকানা' : 'Address'}
-                  </div>
-                  <div className="text-sm font-medium text-[var(--text-primary)]">{institution.address}</div>
-                </div>
-
-                {(institution.subjects || []).length > 0 && (
-                  <div className="p-3 rounded-lg bg-[var(--bg-secondary)]">
-                    <div className="flex items-center gap-1.5 text-[0.625rem] text-[var(--text-muted)] mb-1">
-                      <BookOpen size={11} />
-                      {isBn ? 'প্রধান বিষয়' : 'Main Subjects'}
+                  {institution.email && (
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-lg bg-[var(--brand-light)] flex items-center justify-center shrink-0">
+                        <Globe size={14} className="text-[var(--brand)]" />
+                      </div>
+                      <div>
+                        <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ইমেইল / ওয়েবসাইট' : 'Email / Website'}</div>
+                        <div className="text-xs font-semibold text-[var(--text-primary)]">{institution.email}</div>
+                        {institution.website && <div className="text-[0.625rem] text-[var(--text-muted)]">{institution.website}</div>}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-1">
-                      {institution.subjects.map((s: string, i: number) => (
-                        <span key={i} className="text-[0.625rem] px-2 py-0.5 rounded-full bg-[var(--brand-light)] text-[var(--brand)] font-medium">{s}</span>
-                      ))}
+                  )}
+                  {institution.address && (
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-lg bg-[var(--brand-light)] flex items-center justify-center shrink-0">
+                        <MapPin size={14} className="text-[var(--brand)]" />
+                      </div>
+                      <div>
+                        <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ঠিকানা' : 'Address'}</div>
+                        <div className="text-xs font-semibold text-[var(--text-primary)]">{institution.address}</div>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Schedule */}
-              <div className="mt-3 p-3 rounded-lg bg-[var(--bg-secondary)]">
-                <div className="flex items-center gap-1.5 text-[0.625rem] text-[var(--text-muted)] mb-2">
-                  <Clock size={11} />
-                  {isBn ? 'সময়সূচি' : 'Schedule'}
-                </div>
-                <div className="flex gap-3 flex-wrap items-center">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-[var(--text-muted)]">{isBn ? 'শুরু' : 'Start'}:</span>
-                    <span className="text-sm font-semibold text-[var(--brand)] bg-[var(--brand-light)] px-2 py-0.5 rounded">{institution.startTime}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-[var(--text-muted)]">{isBn ? 'শেষ' : 'End'}:</span>
-                    <span className="text-sm font-semibold text-[var(--brand)] bg-[var(--brand-light)] px-2 py-0.5 rounded">{institution.endTime}</span>
-                  </div>
-                  {(institution.breaks || []).map((brk: any) => (
-                    <div key={brk.id} className="flex items-center gap-1.5">
-                      <span className="text-xs text-[var(--text-muted)]">{brk.label}:</span>
-                      <span className="text-sm font-semibold text-[var(--amber)] bg-[var(--amber-light)] px-2 py-0.5 rounded">{brk.start} - {brk.end}</span>
-                    </div>
-                  ))}
-                  {(institution.breaks || []).length === 0 && (
-                    <span className="text-xs text-[var(--text-muted)] italic">{isBn ? 'কোনো বিরতি নেই' : 'No breaks'}</span>
                   )}
                 </div>
               </div>
 
-              {/* Session */}
-              <div className="mt-3 p-3 rounded-lg bg-[var(--bg-secondary)]">
-                <div className="flex items-center gap-1.5 text-[0.625rem] text-[var(--text-muted)] mb-2">
-                  <CalendarDays size={11} />
-                  {isBn ? 'একাডেমিক সেশন' : 'Academic Session'}
+              {/* Bottom Cards - Full Width */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                {/* Schedule Card */}
+                <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-7 h-7 rounded-lg bg-[var(--brand-light)] flex items-center justify-center">
+                      <Clock size={12} className="text-[var(--brand)]" />
+                    </div>
+                    <span className="text-xs font-semibold text-[var(--text-primary)]">{isBn ? 'সময়সূচি' : 'Schedule'}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-2 rounded-lg bg-[var(--bg-primary)]">
+                      <div className="text-[0.625rem] text-[var(--text-muted)] mb-0.5">{isBn ? 'শুরু' : 'Start'}</div>
+                      <div className="text-sm font-bold text-[var(--brand)]">{institution.startTime}</div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-[var(--bg-primary)]">
+                      <div className="text-[0.625rem] text-[var(--text-muted)] mb-0.5">{isBn ? 'শেষ' : 'End'}</div>
+                      <div className="text-sm font-bold text-[var(--brand)]">{institution.endTime}</div>
+                    </div>
+                    {(institution.breaks || []).map((brk: any) => (
+                      <div key={brk.id} className="p-2 rounded-lg bg-[var(--bg-primary)]">
+                        <div className="text-[0.625rem] text-[var(--text-muted)] mb-0.5">{brk.label}</div>
+                        <div className="text-xs font-bold text-[var(--amber)]">{brk.start} - {brk.end}</div>
+                      </div>
+                    ))}
+                    {(institution.breaks || []).length === 0 && (
+                      <div className="col-span-2 text-[0.625rem] text-[var(--text-muted)] italic">{isBn ? 'কোনো বিরতি নেই' : 'No breaks'}</div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex gap-2 flex-wrap items-center">
-                  <span className="text-base font-bold text-[var(--brand)] bg-[var(--brand-light)] px-3 py-1 rounded">{institution.currentSession}</span>
-                  <span className="text-xs text-[var(--text-muted)]">{isBn ? 'বর্তমান সেশন' : 'Current Session'}</span>
-                  <span className="text-xs text-[var(--text-muted)]">·</span>
-                  <span className="text-xs text-[var(--text-muted)]">
-                    {institution.sessions.length} {isBn ? 'টি সেশন সংরক্ষিত' : 'sessions saved'}
-                  </span>
+
+                {/* Session & Subjects Card */}
+                <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-7 h-7 rounded-lg bg-[var(--brand-light)] flex items-center justify-center">
+                      <CalendarDays size={12} className="text-[var(--brand)]" />
+                    </div>
+                    <span className="text-xs font-semibold text-[var(--text-primary)]">{isBn ? 'একাডেমিক সেশন' : 'Academic Session'}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-[var(--bg-primary)] mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-bold text-[var(--brand)]">{institution.currentSession}</span>
+                      <span className="text-[0.625rem] text-[var(--text-muted)]">({isBn ? 'বর্তমান' : 'Current'})</span>
+                    </div>
+                    <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
+                      {institution.sessions.length} {isBn ? 'টি সেশন সংরক্ষিত' : 'sessions saved'}
+                    </div>
+                  </div>
+                  {(institution.subjects || []).length > 0 && (
+                    <div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'প্রধান বিষয়' : 'Main Subjects'}</div>
+                      <div className="flex flex-wrap gap-1">
+                        {institution.subjects.map((s: string, i: number) => (
+                          <span key={i} className="text-[0.625rem] px-2 py-0.5 rounded-full bg-[var(--brand-light)] text-[var(--brand)] font-medium">{s}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

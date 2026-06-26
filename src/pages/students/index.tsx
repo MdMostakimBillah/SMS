@@ -338,7 +338,7 @@ export default function StudentsPage() {
                 if (draggedIdx !== null) return
                 navigate(opt.path)
               }}
-              className={`glass rounded-[0.75rem] cursor-grab transition-all duration-200 flex ${isMobile ? 'flex-row items-center gap-3' : 'flex-col items-start gap-0'} ${isMobile ? 'p-3' : 'p-4'} ${isDragOver ? '!border-[var(--brand)] shadow-[0_8px_32px_rgba(0,0,0,0.12)]' : ''} ${isDragging ? 'opacity-50' : ''}`}
+              className={`glass rounded-[0.75rem] cursor-pointer transition-all duration-200 flex ${isMobile ? 'flex-row items-center gap-3' : 'flex-col items-start gap-0'} ${isMobile ? 'p-3' : 'p-4'} ${isDragOver ? '!border-[var(--brand)] shadow-[0_8px_32px_rgba(0,0,0,0.12)]' : ''} ${isDragging ? 'opacity-50' : ''}`}
               style={{ transform: isDragOver ? 'translateY(-2px)' : undefined }}
               onMouseEnter={(e) => {
                 if (draggedIdx !== null) return

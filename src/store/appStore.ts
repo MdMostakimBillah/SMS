@@ -36,6 +36,7 @@ interface AppState {
   trackVisit: (path: string, label: string, icon: string) => void
   toggleBookmark: (path: string) => void
   removeBookmark: (path: string) => void
+  reorderBookmarks: (fromIndex: number, toIndex: number) => void
   setSidebarOrder: (order: SidebarItem[]) => void
   setTeacherCardsOrder: (order: string[]) => void
   setStudentCardsOrder: (order: string[]) => void
@@ -108,6 +109,14 @@ export const useAppStore = create<AppState>()(
           bookmarks: state.bookmarks.filter((p) => p !== path),
           pageVisits: state.pageVisits.filter((v) => v.path !== path),
         })),
+
+      reorderBookmarks: (fromIndex: number, toIndex: number) =>
+        set((state) => {
+          const newBookmarks = [...state.bookmarks]
+          const [removed] = newBookmarks.splice(fromIndex, 1)
+          newBookmarks.splice(toIndex, 0, removed)
+          return { bookmarks: newBookmarks }
+        }),
 
       setSidebarOrder: (order) => set({ sidebarOrder: order }),
 
