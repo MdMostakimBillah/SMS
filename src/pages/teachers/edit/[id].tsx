@@ -97,7 +97,10 @@ export default function EditTeacherPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const signatureRef = useRef<HTMLInputElement>(null)
 
-  const teacher = useMemo(() => teachers.find((t) => t.id === id), [teachers, id])
+  const teacherMap = useMemo(() => new Map(teachers.map(t => [t.id, t])), [teachers])
+  const teacher = id ? teacherMap.get(id) : undefined
+  const departmentMap = useMemo(() => new Map(departments.map(d => [d.id, d])), [departments])
+  const departmentByNameMap = useMemo(() => new Map(departments.map(d => [d.name, d])), [departments])
 
   const [photo, setPhoto] = useState('')
   const [nameEn, setNameEn] = useState('')
@@ -472,9 +475,9 @@ export default function EditTeacherPage() {
           <FormField
             labelEn="Department"
             labelBn="বিভাগ"
-            value={departments.find((d) => d.id === departmentId)?.name || ''}
+            value={departmentMap.get(departmentId)?.name || ''}
             onChange={(v) => {
-              const dept = departments.find((d) => d.name === v)
+              const dept = departmentByNameMap.get(v)
               setDepartmentId(dept?.id || '')
               setSubjectIds([])
             }}

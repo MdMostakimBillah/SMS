@@ -542,23 +542,24 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
   }> => {
     // Method 1: Check if gateway IP is reachable (most reliable for same network)
     if (institutionGateway) {
-      try {
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 3000)
-        await fetch(`http://${institutionGateway}/ping`, {
-          method: 'HEAD',
-          mode: 'no-cors',
-          signal: controller.signal,
-        })
-        clearTimeout(timeout)
-        // If we get here (even with opaque response), the gateway is reachable
-        return {
-          onNetwork: true,
-          method: 'gateway',
-          info: `Gateway ${institutionGateway} reachable`,
+      for (const proto of ['https', 'http'] as const) {
+        try {
+          const controller = new AbortController()
+          const timeout = setTimeout(() => controller.abort(), 3000)
+          await fetch(`${proto}://${institutionGateway}/ping`, {
+            method: 'HEAD',
+            mode: 'no-cors',
+            signal: controller.signal,
+          })
+          clearTimeout(timeout)
+          return {
+            onNetwork: true,
+            method: 'gateway',
+            info: `Gateway ${institutionGateway} reachable (${proto.toUpperCase()})`,
+          }
+        } catch {
+          // try next protocol
         }
-      } catch {
-        // Gateway not reachable - might be on different network
       }
     }
 

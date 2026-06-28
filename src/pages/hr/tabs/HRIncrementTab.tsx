@@ -1,3 +1,4 @@
+import React from 'react'
 import { TrendingUp, Plus, FileText, Edit2, Trash2 } from 'lucide-react'
 import type { Teacher } from '@/pages/teachers/types'
 import type { IncrementRecord } from '@/store/hrStore'
@@ -31,7 +32,7 @@ interface HRIncrementTabProps {
   sectionCls?: (isMobile: boolean) => string
 }
 
-export default function HRIncrementTab({
+export const HRIncrementTab = React.memo(function HRIncrementTab({
   isBn,
   isMobile,
   teachers,
@@ -229,4 +230,4 @@ export default function HRIncrementTab({
       )}
     </div>
   )
-}
+})

@@ -1,3 +1,4 @@
+import React from 'react'
 import { Zap, CheckCircle2, XCircle, ThumbsUp, AlertCircle, Award, Gift, TrendingUp, Percent } from 'lucide-react'
 import CircularChart from '@/components/ui/CircularChart'
 import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
@@ -17,7 +18,7 @@ interface HRDecisionsTabProps {
   getTeacherDept: (id: string) => string
 }
 
-export default function HRDecisionsTab({
+export const HRDecisionsTab = React.memo(function HRDecisionsTab({
   isBn,
   isMobile,
   teachers,
@@ -247,4 +248,4 @@ export default function HRDecisionsTab({
       )}
     </>
   )
-}
+})

@@ -1,3 +1,4 @@
+import React from 'react'
 import { Briefcase, Users, HandCoins, Plus, Edit2, Trash2, Save, FileText } from 'lucide-react'
 import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
 import { PaginationControls } from '@/components/shared/PaginationControls'
@@ -45,7 +46,7 @@ interface HRFacilitiesTabProps {
   inputCls: string
 }
 
-export default function HRFacilitiesTab({
+export const HRFacilitiesTab = React.memo(function HRFacilitiesTab({
   isBn,
   isMobile,
   teachers,
@@ -488,4 +489,4 @@ export default function HRFacilitiesTab({
       </div>
     </>
   )
-}
+})

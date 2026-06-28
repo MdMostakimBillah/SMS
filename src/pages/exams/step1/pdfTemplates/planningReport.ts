@@ -2,6 +2,7 @@ import type { ExamConfig, SubjectMarkConfig, GradeScale, OMRConfig } from '@/sto
 import type { Subject } from '@/pages/teachers/types'
 import type { ClassInfo } from '@/store/classStore'
 import { getPDFBranding } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 interface PlanningReportParams {
   exam: ExamConfig
@@ -103,9 +104,9 @@ export function generatePlanningReportHTML(params: PlanningReportParams): string
         ${isBn ? 'গোপনীয়' : 'CONFIDENTIAL'}
       </div>
       <h1 style="font-size:20px;font-weight:800;margin:0 0 4px 0;color:#1e293b;letter-spacing:-0.5px">
-        ${isBn ? schoolNameBn : schoolName}
+        ${escapeHtml(isBn ? schoolNameBn : schoolName)}
       </h1>
-      <p style="font-size:11px;color:#64748b;margin:0 0 12px 0">${schoolAddress}</p>
+      <p style="font-size:11px;color:#64748b;margin:0 0 12px 0">${escapeHtml(schoolAddress)}</p>
       <div style="display:inline-block;padding:8px 24px;background:${BRAND};color:#fff;border-radius:6px">
         <div style="font-size:14px;font-weight:700">${isBn ? 'পরীক্ষা পরিকল্পনা প্রতিবেদন' : 'Exam Planning Report'}</div>
         <div style="font-size:10px;opacity:0.85;margin-top:2px">${isBn ? 'ধাপ ১: পরিকল্পনা ও প্রস্তুতি' : 'Step 1: Planning & Preparation'}</div>
@@ -134,11 +135,11 @@ export function generatePlanningReportHTML(params: PlanningReportParams): string
 
   // ─── Exam Details ───
   const details = [
-    [isBn ? 'নাম' : 'Name', isBn ? exam.nameBn : exam.name],
-    [isBn ? 'ধরন' : 'Type', isBn ? typeLabel.bn : typeLabel.en],
-    [isBn ? 'সেশন' : 'Session', exam.session],
-    [isBn ? 'শুরু' : 'Start', exam.startDate || '-'],
-    [isBn ? 'শেষ' : 'End', exam.endDate || '-'],
+    [isBn ? 'নাম' : 'Name', escapeHtml(isBn ? exam.nameBn : exam.name)],
+    [isBn ? 'ধরন' : 'Type', escapeHtml(isBn ? typeLabel.bn : typeLabel.en)],
+    [isBn ? 'সেশন' : 'Session', escapeHtml(exam.session)],
+    [isBn ? 'শুরু' : 'Start', escapeHtml(exam.startDate || '-')],
+    [isBn ? 'শেষ' : 'End', escapeHtml(exam.endDate || '-')],
     [isBn ? 'স্ট্যাটাস' : 'Status', exam.isActive ? (isBn ? 'সক্রিয়' : 'Active') : (isBn ? 'নিষ্ক্রিয়' : 'Inactive')],
   ]
 
@@ -166,7 +167,7 @@ export function generatePlanningReportHTML(params: PlanningReportParams): string
             <span style="width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:${item.done ? '#22c55e' : '#e2e8f0'};color:#fff;flex-shrink:0">
               ${item.done ? '&#10003;' : ''}
             </span>
-            ${item.label}
+            ${escapeHtml(item.label)}
             ${item.pct !== undefined ? `<span style="font-size:8px;color:#94a3b8;margin-left:2px">(${item.pct}%)</span>` : ''}
           </div>
         `).join('')}
@@ -186,7 +187,7 @@ export function generatePlanningReportHTML(params: PlanningReportParams): string
         <div style="margin-bottom:14px">
           <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:${BRAND_LIGHT};color:${BRAND};border-radius:4px;font-size:11px;font-weight:700;margin-bottom:8px">
             <span style="width:6px;height:6px;border-radius:50%;background:${BRAND}"></span>
-            ${cls?.name || classId}
+            ${escapeHtml(cls?.name || classId)}
           </div>
           <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
             ${tableHead(
@@ -205,12 +206,12 @@ export function generatePlanningReportHTML(params: PlanningReportParams): string
                 })
                 .map((cfg, i) => {
                   const sub = subjectMap.get(cfg.subjectId)
-                  const subExamNames = cfg.subExams.map((se) => `${se.name} (${se.fullMarks})`).join(', ') || '-'
+                  const subExamNames = cfg.subExams.map((se) => `${escapeHtml(se.name)} (${se.fullMarks})`).join(', ') || '-'
                   return `
                     <tr style="background:${zebraRow(i)}">
                       ${td(`${i + 1}`, 'center', 'color:#94a3b8;font-weight:500')}
-                      ${td((isBn ? sub?.nameBn || sub?.name : sub?.name) || cfg.subjectId, 'left', 'font-weight:600')}
-                      ${td(subExamNames, 'left', 'color:#64748b')}
+                      ${td(escapeHtml((isBn ? sub?.nameBn || sub?.name : sub?.name) || cfg.subjectId), 'left', 'font-weight:600')}
+                      ${td(escapeHtml(subExamNames), 'left', 'color:#64748b')}
                       ${td(`${cfg.fullMarks}`, 'center', 'font-weight:700;color:#1e293b')}
                       ${td(`${cfg.passMarks}`, 'center', '')}
                     </tr>
@@ -230,10 +231,10 @@ export function generatePlanningReportHTML(params: PlanningReportParams): string
   if (activeGradeScale) {
     html += `
       <div style="margin-bottom:24px">
-        ${sectionHeading(`${isBn ? 'গ্রেড স্কেল' : 'Grade Scale'}${activeGradeScale.name ? ` — ${isBn ? activeGradeScale.nameBn : activeGradeScale.name}` : ''}`)}
+        ${sectionHeading(`${isBn ? 'গ্রেড স্কেল' : 'Grade Scale'}${activeGradeScale.name ? ` — ${escapeHtml(isBn ? activeGradeScale.nameBn : activeGradeScale.name)}` : ''}`)}
         <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
           ${tableHead(
-            activeGradeScale.grades.map((g) => th(g.grade, 'center')).join('')
+            activeGradeScale.grades.map((g) => th(escapeHtml(g.grade), 'center')).join('')
           )}
           <tbody>
             <tr>
@@ -269,7 +270,7 @@ export function generatePlanningReportHTML(params: PlanningReportParams): string
                 return `
                   <tr style="background:${zebraRow(i)}">
                     ${td(`${i + 1}`, 'center', 'color:#94a3b8;font-weight:500')}
-                    ${td((isBn ? sub?.nameBn || sub?.name : sub?.name) || cfg.subjectId, 'left', 'font-weight:600')}
+                    ${td(escapeHtml((isBn ? sub?.nameBn || sub?.name : sub?.name) || cfg.subjectId), 'left', 'font-weight:600')}
                     ${td(`${cfg.totalQuestions}`, 'center')}
                     ${td(`+${cfg.correctMark}`, 'center', 'color:#10b981;font-weight:600')}
                     ${td(`${cfg.negativeMark > 0 ? `-${cfg.negativeMark}` : '0'}`, 'center', cfg.negativeMark > 0 ? 'color:#ef4444;font-weight:600' : '')}
@@ -291,7 +292,7 @@ export function generatePlanningReportHTML(params: PlanningReportParams): string
         <div style="width:6px;height:6px;border-radius:50%;background:${BRAND}"></div>
         ${isBn ? 'তৈরি' : 'Generated'}: ${new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
       </div>
-      <div style="font-weight:600;color:#64748b">${isBn ? schoolNameBn : schoolName}</div>
+      <div style="font-weight:600;color:#64748b">${escapeHtml(isBn ? schoolNameBn : schoolName)}</div>
     </div>
   `
 

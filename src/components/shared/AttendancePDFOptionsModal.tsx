@@ -2,6 +2,7 @@ import React, { useCallback } from 'react'
 import { GenericPDFOptionsModal } from './GenericPDFOptionsModal'
 import type { GenericPDFOptionsResult } from './GenericPDFOptionsModal'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 export interface AttendancePDFOptions {
   title: string
@@ -74,16 +75,16 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
           .join('')
 
         const nameCol = type === 'student'
-          ? `<td style="padding:4px;font-size:9px;font-weight:500">${optsIsBn ? record.nameBn || record.nameEn : record.nameEn}</td>
-             <td style="padding:4px;font-size:8px">${record.class}</td>
-             <td style="padding:4px;font-size:8px">${record.section || '—'}</td>`
-          : `<td style="padding:4px;font-size:9px;font-weight:500">${optsIsBn ? record.nameBn || record.nameEn : record.nameEn}</td>
-             <td style="padding:4px;font-size:8px">${record.dept}</td>
-             <td style="padding:4px;font-size:8px">${record.designation || '—'}</td>`
+          ? `<td style="padding:4px;font-size:9px;font-weight:500">${escapeHtml(optsIsBn ? record.nameBn || record.nameEn : record.nameEn)}</td>
+             <td style="padding:4px;font-size:8px">${escapeHtml(record.class || '')}</td>
+             <td style="padding:4px;font-size:8px">${escapeHtml(record.section || '—')}</td>`
+          : `<td style="padding:4px;font-size:9px;font-weight:500">${escapeHtml(optsIsBn ? record.nameBn || record.nameEn : record.nameEn)}</td>
+             <td style="padding:4px;font-size:8px">${escapeHtml(record.dept || '')}</td>
+             <td style="padding:4px;font-size:8px">${escapeHtml(record.designation || '—')}</td>`
 
         return `<tr class="${idx % 2 === 1 ? 'alt' : ''}">
         <td style="padding:4px;font-size:9px">${idx + 1}</td>
-        <td style="padding:4px;font-size:8px;font-family:monospace;color:${brand.brandColor}">${record.id}</td>
+        <td style="padding:4px;font-size:8px;font-family:monospace;color:${brand.brandColor}">${escapeHtml(record.id)}</td>
         ${nameCol}
         <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#059669">${p}</td>
         <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#dc2626">${a}</td>
@@ -116,10 +117,10 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
            <th style="width:60px">${optsIsBn ? 'বিভাগ' : 'Dept'}</th>
            <th style="width:60px">${optsIsBn ? 'পদবি' : 'Desig'}</th>`
 
-      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title>
 <style>@page{size:A4 ${orientation};margin:6mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:10px;padding-bottom:5px;border-bottom:2px solid ${brand.brandColor};margin-bottom:8px}.ttl{text-align:center;font-size:11px;font-weight:700;margin-bottom:3px}.sub{text-align:center;font-size:8px;color:#666;margin-bottom:8px}table{width:100%;border-collapse:collapse}th{background:${brand.brandColor};color:#fff;padding:3px;text-align:left;font-size:7px;font-weight:700;text-transform:uppercase;border:0.5px solid ${brand.brandColor}}td{padding:3px;border:0.5px solid #e5e7eb}tr.alt td{background:#f9fafb}.ftr{margin-top:8px;padding-top:5px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:7px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
-<div class="hdr">${pdfLogoHTML(brand, 28)}<div><div style="font-size:11px;font-weight:700;color:${brand.brandColor}">${brand.schoolName}</div><div style="font-size:7px;color:#888">${optsIsBn ? headerLabelBn : headerLabel}</div></div></div>
-<div class="ttl">${title}</div>
+<div class="hdr">${pdfLogoHTML(brand, 28)}<div><div style="font-size:11px;font-weight:700;color:${brand.brandColor}">${escapeHtml(brand.schoolName)}</div><div style="font-size:7px;color:#888">${optsIsBn ? headerLabelBn : headerLabel}</div></div></div>
+<div class="ttl">${escapeHtml(title)}</div>
 <div class="sub">${optsIsBn ? 'মোট' : 'Total'}: ${count} ${optsIsBn ? countLabelBn : countLabel} · ${dateFrom} → ${dateTo} · ${rangeDays.length} ${optsIsBn ? 'দিন' : 'days'}</div>
 <table><thead><tr>
   <th style="width:20px">#</th>
@@ -131,7 +132,7 @@ export const AttendancePDFOptionsModal = React.memo(function AttendancePDFOption
   <th style="width:20px">W</th>
   ${dayHeaders}
 </tr></thead><tbody>${rowsHtml}</tbody></table>
-<div class="ftr"><span>${brand.schoolName}</span><div>${optsIsBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div></body></html>`
+<div class="ftr"><span>${escapeHtml(brand.schoolName)}</span><div>${optsIsBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div></body></html>`
       return html
     },
     [type, records, dateFrom, dateTo, rangeDays]

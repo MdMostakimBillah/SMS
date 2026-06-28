@@ -1,3 +1,4 @@
+import React from 'react'
 import {
   HandCoins,
   Users,
@@ -36,7 +37,7 @@ interface HRFundTabProps {
   monthlySalaryConfigs: any[]
 }
 
-export default function HRFundTab({
+export const HRFundTab = React.memo(function HRFundTab({
   isBn,
   isMobile,
   activeTeachers,
@@ -396,4 +397,4 @@ export default function HRFundTab({
       </div>
     </>
   )
-}
+})

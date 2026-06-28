@@ -27,12 +27,31 @@ import { useSyllabusStore } from '@/store/syllabusStore'
 import type { SyllabusEntry, SyllabusChapter, SyllabusTopic } from '@/store/syllabusStore'
 import { SyllabusPDFOptionsModal } from './SyllabusPDFOptionsModal'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
+import { Skeleton, SkeletonCard, SkeletonLine } from '@/components/ui/Skeleton'
 
 const btnPri =
   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all'
 const inputCls =
   'px-3.5 py-2.5 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]'
 const selectCls = inputCls + ' cursor-pointer'
+
+function SyllabusPageSkeleton() {
+  return (
+    <div className="p-4 space-y-4">
+      <Skeleton variant="title" width="16rem" height="1.25rem" />
+      <Skeleton variant="text" width="10rem" />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <SkeletonCard key={i}>
+            <SkeletonLine width="50%" />
+            <SkeletonLine width="100%" />
+            <SkeletonLine width="70%" />
+          </SkeletonCard>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 type View = 'home' | 'sections' | 'subjects' | 'detail'
 
@@ -57,6 +76,12 @@ export default function SyllabusPage() {
   const syllabi = useMemo(() => allSyllabi.filter((s) => s.sessionId === currentSession), [allSyllabi, currentSession])
 
   const [view, setView] = useState<View>('home')
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 600)
+    return () => clearTimeout(timer)
+  }, [])
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedSection, setSelectedSection] = useState('')
   const [selectedSubject, setSelectedSubject] = useState('')
@@ -417,6 +442,8 @@ export default function SyllabusPage() {
   const getSectionSyllabusCount = (classNum: string, section: string) => {
     return syllabi.filter((s) => s.classId === classNum && s.sectionId === section).length
   }
+
+  if (isLoading) return <SyllabusPageSkeleton />
 
   return (
     <div className="flex flex-col h-[calc(100vh-60px)]">

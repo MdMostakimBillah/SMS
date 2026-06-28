@@ -1,6 +1,7 @@
 
 
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 export interface RoutinePDFColumn {
   key: string
@@ -78,11 +79,11 @@ export function generateRoutineGridPDF(
 
   const periodHeaders = Array.from({ length: totalPeriods }, (_, p) => {
     const time = periodTimes[p]
-    const timeStr = time ? `${time.start} - ${time.end}` : ''
+    const timeStr = time ? `${escapeHtml(time.start)} - ${escapeHtml(time.end)}` : ''
     return `<th class="period-hdr">P${p + 1}${timeStr ? `<br><span class="time">${timeStr}</span>` : ''}</th>`
   }).join('')
 
-  const extraHeaders = emptyColumns.map((h) => `<th class="empty-hdr">${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`).join('')
+  const extraHeaders = emptyColumns.map((h) => `<th class="empty-hdr">${escapeHtml(h) || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`).join('')
 
   const dataRows = activeDays.map((day, rowIdx) => {
     const dayCells = grid[day.index] || []
@@ -93,13 +94,13 @@ export function generateRoutineGridPDF(
 
       let content = ''
       if (showSubject) {
-        content += `<div class="subj">${subjectText}</div>`
+        content += `<div class="subj">${escapeHtml(subjectText)}</div>`
       }
       if (showTeacher && teacherText) {
-        content += `<div class="tchr">${teacherText}</div>`
+        content += `<div class="tchr">${escapeHtml(teacherText)}</div>`
       }
       if (!showSubject && !showTeacher) {
-        content = `<div class="subj">${subjectText}</div>`
+        content = `<div class="subj">${escapeHtml(subjectText)}</div>`
       }
 
       return `<td class="cell">${content}</td>`
@@ -107,7 +108,7 @@ export function generateRoutineGridPDF(
 
     const extra = emptyColumns.map(() => '<td class="cell empty-cell"></td>').join('')
 
-    return `<tr class="${rowIdx % 2 === 0 ? '' : 'alt'}"><td class="day-cell">${isBn ? day.nameBn : day.name}</td>${periodCells}${extra}</tr>`
+    return `<tr class="${rowIdx % 2 === 0 ? '' : 'alt'}"><td class="day-cell">${escapeHtml(isBn ? day.nameBn : day.name)}</td>${periodCells}${extra}</tr>`
   }).join('')
 
   const blankRows = Array.from({ length: emptyRows }, () => {
@@ -124,7 +125,7 @@ export function generateRoutineGridPDF(
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Routine — ${schoolName}</title>
+<title>Routine — ${escapeHtml(schoolName)}</title>
 <style>
   @page { size: A4 ${orientation}; margin: 8mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -155,8 +156,8 @@ export function generateRoutineGridPDF(
   <div style="display:flex;align-items:center;gap:10px">
     ${pdfLogoHTML(brand)}
     <div>
-      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${schoolName}</div>
-      ${brand.address ? `<div style="font-size:8px;color:#888">${brand.address}</div>` : ''}
+      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${escapeHtml(schoolName)}</div>
+      ${brand.address ? `<div style="font-size:8px;color:#888">${escapeHtml(brand.address)}</div>` : ''}
     </div>
   </div>
   <div class="meta">
@@ -165,7 +166,7 @@ export function generateRoutineGridPDF(
     <div>A4 · ${orientation}</div>
   </div>
 </div>
-<div class="ttl">${title}</div>
+<div class="ttl">${escapeHtml(title)}</div>
 <table>
   <thead>
     <tr><th class="day-cell" style="text-align:left">${dayHeaderLabel}</th>${periodHeaders}${extraHeaders}</tr>

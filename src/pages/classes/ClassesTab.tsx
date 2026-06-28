@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -91,7 +91,10 @@ export default function ClassesTab({
 
   useScrollLock(showSubjectModal !== null || showBulkTime || showBulkSubject || showBulkSection || copySectionModal !== null)
 
-  const getTeacher = useCallback((id: string) => teachers.find((t) => t.id === id), [teachers])
+  const teacherMap = useMemo(() => new Map(teachers.map((t) => [t.id, t])), [teachers])
+  const subjectMap = useMemo(() => new Map(subjects.map((s) => [s.id, s])), [subjects])
+
+  const getTeacher = useCallback((id: string) => teacherMap.get(id), [teacherMap])
 
   const getStudentCount = useCallback(
     (classNum: string, sectionName: string) => {
@@ -1117,7 +1120,7 @@ export default function ClassesTab({
                                   </div>
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                                     {sec.subjectIds.map((sid: string) => {
-                                      const sub = subjects.find((s) => s.id === sid)
+                                      const sub = subjectMap.get(sid)
                                       if (!sub) return null
                                       return (
                                         <span

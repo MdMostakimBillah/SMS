@@ -1,5 +1,6 @@
 import type { ExamConfig, SubjectMarkConfig, ExamRoutine } from '@/store/examStore'
 import type { Subject } from '@/pages/teachers/types'
+import { escapeHtml } from '@/lib/sanitize'
 
 interface Student {
   id: string
@@ -31,7 +32,7 @@ export function generateAdmitCardHTML(
 ): string {
   const examRoutines = routines.filter((r) => r.examId === exam.id)
   const examSubjectConfigs = subjectMarkConfigs.filter((c) => c.examId === exam.id)
-  const examDateRange = `${exam.startDate} ${isBn ? 'থেকে' : 'to'} ${exam.endDate}`
+  const examDateRange = `${escapeHtml(exam.startDate)} ${isBn ? 'থেকে' : 'to'} ${escapeHtml(exam.endDate)}`
 
   const cardsHTML = students.map((student) => {
     const studentRoutines = examRoutines
@@ -45,10 +46,10 @@ export function generateAdmitCardHTML(
       const subjectName = subject ? (isBn ? subject.nameBn : subject.name) : r.subjectId
       return `<tr>
         <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;color:#475569">${i + 1}</td>
-        <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:500;color:#1e293b">${subjectName}</td>
-        <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;color:#475569">${r.date}</td>
-        <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;color:#475569">${r.startTime} - ${r.endTime}</td>
-        <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;color:#475569;text-align:center">${r.roomNo}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:500;color:#1e293b">${escapeHtml(subjectName)}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;color:#475569">${escapeHtml(r.date)}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;color:#475569">${escapeHtml(r.startTime)} - ${escapeHtml(r.endTime)}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;color:#475569;text-align:center">${escapeHtml(r.roomNo)}</td>
       </tr>`
     }).join('')
 
@@ -57,7 +58,7 @@ export function generateAdmitCardHTML(
       const subjectName = subject ? (isBn ? subject.nameBn : subject.name) : cfg.subjectId
       return `<tr>
         <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;color:#475569">${i + 1}</td>
-        <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:500;color:#1e293b">${subjectName}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:500;color:#1e293b">${escapeHtml(subjectName)}</td>
         <td style="padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:11px;color:#94a3b8;font-style:italic" colspan="3">${isBn ? 'তারিখ নির্ধারিত হয়নি' : 'To be scheduled'}</td>
       </tr>`
     }).join('') : subjectRows
@@ -67,27 +68,27 @@ export function generateAdmitCardHTML(
         <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px">
           <div style="width:36px;height:36px;border-radius:8px;background:${brandColor};display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0">ET</div>
           <div style="text-align:left">
-            <div style="font-size:15px;font-weight:700;color:${brandColor};letter-spacing:0.3px">${inst.name}</div>
-            <div style="font-size:9px;color:#64748b;line-height:1.3">${inst.address} ${inst.phone ? '| ' + inst.phone : ''} ${inst.email ? '| ' + inst.email : ''}</div>
+            <div style="font-size:15px;font-weight:700;color:${brandColor};letter-spacing:0.3px">${escapeHtml(inst.name)}</div>
+            <div style="font-size:9px;color:#64748b;line-height:1.3">${escapeHtml(inst.address)} ${inst.phone ? '| ' + escapeHtml(inst.phone) : ''} ${inst.email ? '| ' + escapeHtml(inst.email) : ''}</div>
           </div>
         </div>
       </div>
       <div style="margin:14px 20px 0;padding:10px 16px;background:linear-gradient(135deg,${brandColor},${brandColor}dd);border-radius:8px;text-align:center">
-        <div style="font-size:16px;font-weight:700;color:#fff;letter-spacing:0.5px;text-transform:uppercase">${isBn ? exam.nameBn : exam.name}</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.8);margin-top:3px">${exam.session} · ${examDateRange}</div>
+        <div style="font-size:16px;font-weight:700;color:#fff;letter-spacing:0.5px;text-transform:uppercase">${escapeHtml(isBn ? exam.nameBn : exam.name)}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.8);margin-top:3px">${escapeHtml(exam.session)} · ${examDateRange}</div>
       </div>
       <div style="display:flex;gap:14px;padding:14px 20px;align-items:flex-start">
         <div style="width:60px;height:72px;border-radius:8px;border:1.5px solid #e2e8f0;overflow:hidden;background:#f8fafc;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          ${student.photo ? `<img src="${student.photo}" style="width:100%;height:100%;object-fit:cover" />` : `<span style="font-size:20px;color:#cbd5e1">👤</span>`}
+          ${student.photo ? `<img src="${escapeHtml(student.photo)}" style="width:100%;height:100%;object-fit:cover" />` : `<span style="font-size:20px;color:#cbd5e1">👤</span>`}
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:2px">${student.nameEn}</div>
-          ${student.nameBn ? `<div style="font-size:10px;color:#64748b;margin-bottom:6px">${student.nameBn}</div>` : ''}
+          <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:2px">${escapeHtml(student.nameEn)}</div>
+          ${student.nameBn ? `<div style="font-size:10px;color:#64748b;margin-bottom:6px">${escapeHtml(student.nameBn)}</div>` : ''}
           <div style="display:flex;flex-wrap:wrap;gap:6px">
-            <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:${brandColor}15;color:${brandColor};font-weight:600">${isBn ? 'শ্রেণি' : 'Class'}: ${student.class}</span>
-            <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:${brandColor}15;color:${brandColor};font-weight:600">${isBn ? 'সেকশন' : 'Section'}: ${student.section}</span>
-            <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:#f1f5f9;color:#475569;font-weight:600">${isBn ? 'রোল' : 'Roll'}: ${student.roll || '-'}</span>
-            <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:#f1f5f9;color:#475569;font-family:monospace">ID: ${student.id}</span>
+            <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:${brandColor}15;color:${brandColor};font-weight:600">${isBn ? 'শ্রেণি' : 'Class'}: ${escapeHtml(student.class)}</span>
+            <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:${brandColor}15;color:${brandColor};font-weight:600">${isBn ? 'সেকশন' : 'Section'}: ${escapeHtml(student.section)}</span>
+            <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:#f1f5f9;color:#475569;font-weight:600">${isBn ? 'রোল' : 'Roll'}: ${escapeHtml(student.roll || '-')}</span>
+            <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:#f1f5f9;color:#475569;font-family:monospace">ID: ${escapeHtml(student.id)}</span>
           </div>
         </div>
       </div>
@@ -108,7 +109,7 @@ export function generateAdmitCardHTML(
       </div>
       <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:16px 20px 14px;margin-top:10px">
         <div style="text-align:center">
-          <img src="${qrUrls[student.id]}" style="width:56px;height:56px" />
+          <img src="${escapeHtml(qrUrls[student.id])}" style="width:56px;height:56px" />
           <div style="font-size:7px;color:#94a3b8;margin-top:2px">${isBn ? 'উপস্থিতির জন্য স্ক্যান করুন' : 'Scan for Attendance'}</div>
         </div>
         <div style="display:flex;gap:30px">

@@ -629,10 +629,16 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         <div
           className="fixed z-[9000] pointer-events-none"
           style={collapsed ? {
-            left: hoveredItem.rect.right + 10,
+            ...(sidebarPosition === 'left' ? {
+              left: hoveredItem.rect.right + 10,
+              animation: 'tooltipInRight 0.2s ease-out',
+            } : {
+              left: hoveredItem.rect.left - 10,
+              transform: 'translate(-100%, -50%)',
+              animation: 'tooltipInLeft 0.2s ease-out',
+            }),
             top: hoveredItem.rect.top + hoveredItem.rect.height / 2,
-            transform: 'translate(0, -50%)',
-            animation: 'tooltipInRight 0.2s ease-out',
+            transform: sidebarPosition === 'left' ? 'translate(0, -50%)' : 'translate(-100%, -50%)',
           } : {
             left: hoveredItem.rect.left + hoveredItem.rect.width / 2,
             top: hoveredItem.rect.top - 8,
@@ -654,28 +660,57 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
             </div>
             {collapsed ? (
               <>
-                <div
-                  className="absolute top-1/2 -translate-y-1/2"
-                  style={{
-                    left: '-5px',
-                    width: 0,
-                    height: 0,
-                    borderTop: '5px solid transparent',
-                    borderBottom: '5px solid transparent',
-                    borderRight: '5px solid var(--border)',
-                  }}
-                />
-                <div
-                  className="absolute top-1/2 -translate-y-1/2"
-                  style={{
-                    left: '-4px',
-                    width: 0,
-                    height: 0,
-                    borderTop: '5px solid transparent',
-                    borderBottom: '5px solid transparent',
-                    borderRight: '5px solid var(--bg-primary)',
-                  }}
-                />
+                {sidebarPosition === 'left' ? (
+                  <>
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2"
+                      style={{
+                        left: '-5px',
+                        width: 0,
+                        height: 0,
+                        borderTop: '5px solid transparent',
+                        borderBottom: '5px solid transparent',
+                        borderRight: '5px solid var(--border)',
+                      }}
+                    />
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2"
+                      style={{
+                        left: '-4px',
+                        width: 0,
+                        height: 0,
+                        borderTop: '5px solid transparent',
+                        borderBottom: '5px solid transparent',
+                        borderRight: '5px solid var(--bg-primary)',
+                      }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2"
+                      style={{
+                        right: '-5px',
+                        width: 0,
+                        height: 0,
+                        borderTop: '5px solid transparent',
+                        borderBottom: '5px solid transparent',
+                        borderLeft: '5px solid var(--border)',
+                      }}
+                    />
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2"
+                      style={{
+                        right: '-4px',
+                        width: 0,
+                        height: 0,
+                        borderTop: '5px solid transparent',
+                        borderBottom: '5px solid transparent',
+                        borderLeft: '5px solid var(--bg-primary)',
+                      }}
+                    />
+                  </>
+                )}
               </>
             ) : (
               <>

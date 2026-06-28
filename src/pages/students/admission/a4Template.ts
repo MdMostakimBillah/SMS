@@ -1,4 +1,5 @@
 import type { StudentAdmission } from './types'
+import { escapeHtml } from '@/lib/sanitize'
 
 export function generateA4HTML(s: StudentAdmission, isBn = false, _qrDataUrl?: string, teacherName?: string, institutionName?: string): string {
   const statusColor = s.status === 'approved' ? '#10b981' : s.status === 'rejected' ? '#ef4444' : '#f59e0b'
@@ -10,7 +11,7 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, _qrDataUrl?: s
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admission Form - ${s.id}</title>
+<title>Admission Form - ${escapeHtml(s.id)}</title>
 <style>
   @page { size: A4; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -49,7 +50,7 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, _qrDataUrl?: s
 
   <!-- Status stamp -->
   <div class="status-stamp">
-    <div class="status-text">${isBn ? statusBn : statusText}</div>
+    <div class="status-text">${escapeHtml(isBn ? statusBn : statusText)}</div>
   </div>
 
   <!-- Header -->
@@ -57,7 +58,7 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, _qrDataUrl?: s
     <div class="logo-area">
       <div class="logo-box">ET</div>
       <div class="school-info">
-        <h1>${schoolName}</h1>
+        <h1>${escapeHtml(schoolName)}</h1>
         <p>Sunrise Academy, Dhaka, Bangladesh</p>
         <p>Phone: +880-2-1234567 | Email: info@sunrise.edu.bd</p>
       </div>
@@ -74,19 +75,19 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, _qrDataUrl?: s
   <div class="id-row">
     <div>
       <div class="id-label">${isBn ? 'ছাত্র আইডি' : 'Student ID'}</div>
-      <div class="id-value">${s.id}</div>
+      <div class="id-value">${escapeHtml(s.id)}</div>
     </div>
     <div>
       <div class="id-label">${isBn ? 'আবেদনের তারিখ' : 'Application Date'}</div>
-      <div class="id-value" style="font-size:13px">${s.admissionDate}</div>
+      <div class="id-value" style="font-size:13px">${escapeHtml(s.admissionDate)}</div>
     </div>
     <div>
       <div class="id-label">${isBn ? 'শিক্ষাবর্ষ' : 'Academic Year'}</div>
-      <div class="id-value" style="font-size:13px">${s.academicYear}</div>
+      <div class="id-value" style="font-size:13px">${escapeHtml(s.academicYear)}</div>
     </div>
     <div>
       <div class="id-label">${isBn ? 'অবস্থা' : 'Status'}</div>
-      <div class="id-value" style="font-size:13px;color:${statusColor}">${isBn ? statusBn : statusText}</div>
+      <div class="id-value" style="font-size:13px;color:${statusColor}">${escapeHtml(isBn ? statusBn : statusText)}</div>
     </div>
   </div>
 
@@ -94,16 +95,16 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, _qrDataUrl?: s
   <div class="section">
     <div class="section-title">${isBn ? 'ব্যক্তিগত তথ্য' : 'Personal Information'}</div>
     <div class="fields-grid">
-      <div class="field"><div class="field-label">${isBn ? 'নাম (ইংরেজি)' : 'Name (English)'}</div><div class="field-value">${s.nameEn || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'নাম (বাংলা)' : 'Name (Bengali)'}</div><div class="field-value">${s.nameBn || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'জন্ম তারিখ' : 'Date of Birth'}</div><div class="field-value">${s.dob || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'লিঙ্গ' : 'Gender'}</div><div class="field-value">${s.gender || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'রক্তের গ্রুপ' : 'Blood Group'}</div><div class="field-value">${s.bloodGroup || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'ধর্ম' : 'Religion'}</div><div class="field-value">${s.religion || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'মোবাইল' : 'Mobile'}</div><div class="field-value">${s.phone || '—'}</div></div>
-      <div class="field"><div class="field-label">Email</div><div class="field-value">${s.email || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'বর্তমান ঠিকানা' : 'Present Address'}</div><div class="field-value">${s.presentAddress || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'স্থায়ী ঠিকানা' : 'Permanent Address'}</div><div class="field-value">${s.permanentAddress || '—'}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'নাম (ইংরেজি)' : 'Name (English)'}</div><div class="field-value">${escapeHtml(s.nameEn || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'নাম (বাংলা)' : 'Name (Bengali)'}</div><div class="field-value">${escapeHtml(s.nameBn || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'জন্ম তারিখ' : 'Date of Birth'}</div><div class="field-value">${escapeHtml(s.dob || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'লিঙ্গ' : 'Gender'}</div><div class="field-value">${escapeHtml(s.gender || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'রক্তের গ্রুপ' : 'Blood Group'}</div><div class="field-value">${escapeHtml(s.bloodGroup || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'ধর্ম' : 'Religion'}</div><div class="field-value">${escapeHtml(s.religion || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'মোবাইল' : 'Mobile'}</div><div class="field-value">${escapeHtml(s.phone || '—')}</div></div>
+      <div class="field"><div class="field-label">Email</div><div class="field-value">${escapeHtml(s.email || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'বর্তমান ঠিকানা' : 'Present Address'}</div><div class="field-value">${escapeHtml(s.presentAddress || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'স্থায়ী ঠিকানা' : 'Permanent Address'}</div><div class="field-value">${escapeHtml(s.permanentAddress || '—')}</div></div>
     </div>
   </div>
 
@@ -111,13 +112,13 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, _qrDataUrl?: s
   <div class="section">
     <div class="section-title">${isBn ? 'একাডেমিক তথ্য' : 'Academic Information'}</div>
     <div class="fields-grid-3">
-      <div class="field"><div class="field-label">${isBn ? 'শ্রেণি' : 'Class'}</div><div class="field-value">${s.class ? `Class ${s.class}` : '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'সেকশন' : 'Section'}</div><div class="field-value">${s.section || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'রোল' : 'Roll'}</div><div class="field-value">${s.roll || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher'}</div><div class="field-value">${teacherName || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'আগের স্কুল' : 'Previous School'}</div><div class="field-value">${s.previousSchool || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'জাতীয়তা' : 'Nationality'}</div><div class="field-value">${s.nationality || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'জেলা' : 'District'}</div><div class="field-value">${s.district || '—'}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'শ্রেণি' : 'Class'}</div><div class="field-value">${s.class ? escapeHtml(`Class ${s.class}`) : '—'}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'সেকশন' : 'Section'}</div><div class="field-value">${escapeHtml(s.section || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'রোল' : 'Roll'}</div><div class="field-value">${escapeHtml(s.roll || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher'}</div><div class="field-value">${escapeHtml(teacherName || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'আগের স্কুল' : 'Previous School'}</div><div class="field-value">${escapeHtml(s.previousSchool || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'জাতীয়তা' : 'Nationality'}</div><div class="field-value">${escapeHtml(s.nationality || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'জেলা' : 'District'}</div><div class="field-value">${escapeHtml(s.district || '—')}</div></div>
     </div>
   </div>
 
@@ -125,14 +126,14 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, _qrDataUrl?: s
   <div class="section">
     <div class="section-title">${isBn ? 'পারিবারিক তথ্য' : 'Family Information'}</div>
     <div class="fields-grid">
-      <div class="field"><div class="field-label">${isBn ? 'পিতার নাম (ইং)' : "Father's Name (EN)"}</div><div class="field-value">${s.fatherNameEn || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'পিতার নাম (বাং)' : "Father's Name (BN)"}</div><div class="field-value">${s.fatherNameBn || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'পিতার পেশা' : "Father's Occupation"}</div><div class="field-value">${s.fatherOccupation || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'পিতার মোবাইল' : "Father's Mobile"}</div><div class="field-value">${s.fatherPhone || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'মাতার নাম (ইং)' : "Mother's Name (EN)"}</div><div class="field-value">${s.motherNameEn || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'মাতার নাম (বাং)' : "Mother's Name (BN)"}</div><div class="field-value">${s.motherNameBn || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'মাতার পেশা' : "Mother's Occupation"}</div><div class="field-value">${s.motherOccupation || '—'}</div></div>
-      <div class="field"><div class="field-label">${isBn ? 'মাতার মোবাইল' : "Mother's Mobile"}</div><div class="field-value">${s.motherPhone || '—'}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'পিতার নাম (ইং)' : "Father's Name (EN)"}</div><div class="field-value">${escapeHtml(s.fatherNameEn || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'পিতার নাম (বাং)' : "Father's Name (BN)"}</div><div class="field-value">${escapeHtml(s.fatherNameBn || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'পিতার পেশা' : "Father's Occupation"}</div><div class="field-value">${escapeHtml(s.fatherOccupation || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'পিতার মোবাইল' : "Father's Mobile"}</div><div class="field-value">${escapeHtml(s.fatherPhone || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'মাতার নাম (ইং)' : "Mother's Name (EN)"}</div><div class="field-value">${escapeHtml(s.motherNameEn || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'মাতার নাম (বাং)' : "Mother's Name (BN)"}</div><div class="field-value">${escapeHtml(s.motherNameBn || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'মাতার পেশা' : "Mother's Occupation"}</div><div class="field-value">${escapeHtml(s.motherOccupation || '—')}</div></div>
+      <div class="field"><div class="field-label">${isBn ? 'মাতার মোবাইল' : "Mother's Mobile"}</div><div class="field-value">${escapeHtml(s.motherPhone || '—')}</div></div>
     </div>
   </div>
 

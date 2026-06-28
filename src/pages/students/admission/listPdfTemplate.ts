@@ -1,6 +1,7 @@
 import type { StudentAdmission } from './types'
 import type { Teacher } from '@/pages/teachers/types'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 export interface PDFColumn {
   key: string
@@ -45,19 +46,19 @@ export interface ListPDFOptions {
 
 function getCellValue(s: StudentAdmission, key: string, idx: number, teachers?: Teacher[]): string {
   if (key === 'serial') return String(idx + 1)
-  if (key === 'class') return s.class ? `Class ${s.class}` : '—'
-  if (key === 'gender') return (s.gender || '').split(' / ')[0] || '—'
-  if (key === 'religion') return (s.religion || '').split(' / ')[0] || '—'
+  if (key === 'class') return s.class ? escapeHtml(`Class ${s.class}`) : '—'
+  if (key === 'gender') return escapeHtml((s.gender || '').split(' / ')[0] || '—')
+  if (key === 'religion') return escapeHtml((s.religion || '').split(' / ')[0] || '—')
   if (key === 'teacherId') {
     if (!s.teacherId || !teachers) return '—'
     const t = teachers.find((t) => t.id === s.teacherId)
-    return t?.nameEn || '—'
+    return escapeHtml(t?.nameEn || '—')
   }
   if (key === 'status') {
     const m: Record<string, string> = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' }
-    return m[s.status] || s.status
+    return escapeHtml(m[s.status] || s.status)
   }
-  return String((s as any)[key] || '—')
+  return escapeHtml(String((s as any)[key] || '—'))
 }
 
 const statusColor = (st: string) => (st === 'approved' ? '#10b981' : st === 'rejected' ? '#ef4444' : '#f59e0b')
@@ -96,8 +97,8 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
           : '0.625rem'
 
   // Headers
-  const dataHeaders = cols.map((c) => `<th>${isBn ? c.labelBn : c.label}</th>`).join('')
-  const extraHeaders = emptyColumns.map((h) => `<th>${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`).join('')
+  const dataHeaders = cols.map((c) => `<th>${escapeHtml(isBn ? c.labelBn : c.label)}</th>`).join('')
+  const extraHeaders = emptyColumns.map((h) => `<th>${escapeHtml(h || (isBn ? '(ফাঁকা)' : '(Empty)'))}</th>`).join('')
 
   // Data rows
   const dataRows = students
@@ -106,11 +107,11 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
         .map((c) => {
           if (c.key === 'status') {
             const col = statusColor(s.status)
-            const lbl = isBn ? statusBn[s.status] || s.status : getCellValue(s, c.key, i, opts.teachers)
+            const lbl = isBn ? escapeHtml(statusBn[s.status] || s.status) : getCellValue(s, c.key, i, opts.teachers)
             return `<td><b style="color:${col}">${lbl}</b></td>`
           }
-          if (c.key === 'id') return `<td><span style="font-family:monospace;font-size:8px;color:${brand.brandColor}">${s.id}</span></td>`
-          if (c.key === 'nameEn' && isBn) return `<td>${s.nameBn || s.nameEn}</td>`
+          if (c.key === 'id') return `<td><span style="font-family:monospace;font-size:8px;color:${brand.brandColor}">${escapeHtml(s.id)}</span></td>`
+          if (c.key === 'nameEn' && isBn) return `<td>${escapeHtml(s.nameBn || s.nameEn)}</td>`
           return `<td>${getCellValue(s, c.key, i, opts.teachers)}</td>`
         })
         .join('')
@@ -135,7 +136,7 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Student List — ${schoolName}</title>
+<title>Student List — ${escapeHtml(schoolName)}</title>
 <style>
   @page { size: A4 ${orientation}; margin: 8mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -157,8 +158,8 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
   <div style="display:flex;align-items:center;gap:10px">
     ${pdfLogoHTML(brand)}
     <div>
-      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${schoolName}</div>
-      ${brand.address ? `<div style="font-size:8px;color:#888">${brand.address}</div>` : ''}
+      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${escapeHtml(schoolName)}</div>
+      ${brand.address ? `<div style="font-size:8px;color:#888">${escapeHtml(brand.address)}</div>` : ''}
     </div>
   </div>
   <div class="meta">
@@ -169,7 +170,7 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
     <div>A4 · ${orientation}</div>
   </div>
 </div>
-<div class="ttl">${title} — ${isBn ? 'শিক্ষাবর্ষ ২০২৫–২৬' : 'Academic Year 2025–26'}</div>
+<div class="ttl">${escapeHtml(title)} — ${isBn ? 'শিক্ষাবর্ষ ২০২৫–২৬' : 'Academic Year 2025–26'}</div>
 <table>
   <thead><tr>${dataHeaders}${extraHeaders}</tr></thead>
   <tbody>${dataRows}${blankRows}</tbody>

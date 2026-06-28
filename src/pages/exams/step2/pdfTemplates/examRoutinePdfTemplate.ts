@@ -1,5 +1,6 @@
 
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 export interface ExamRoutinePDFColumn {
   key: string
@@ -76,8 +77,8 @@ export function generateExamRoutineGridPDF(
 
   const dateHeaderLabel = isBn ? 'তারিখ' : 'Date'
 
-  const classHeaders = classNames.map((cls) => `<th class="cls-hdr">${cls}</th>`).join('')
-  const extraHeaders = emptyColumns.map((h) => `<th class="empty-hdr">${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`).join('')
+  const classHeaders = classNames.map((cls) => `<th class="cls-hdr">${escapeHtml(cls)}</th>`).join('')
+  const extraHeaders = emptyColumns.map((h) => `<th class="empty-hdr">${escapeHtml(h || (isBn ? '(ফাঁকা)' : '(Empty)'))}</th>`).join('')
 
   const dataRows = dates.map((d, rowIdx) => {
     const cells = classNames.map((cls) => {
@@ -86,12 +87,12 @@ export function generateExamRoutineGridPDF(
 
       const items = cellRoutines.map((r) => {
         let lines: string[] = []
-        if (showSubject && r.subject) lines.push(`<div class="subj">${r.subject}</div>`)
-        if (showSection && r.section) lines.push(`<div class="sec">${r.section}</div>`)
-        if (showTime && r.time) lines.push(`<div class="time">${r.time}</div>`)
-        if (showRoom && r.room) lines.push(`<div class="room">${r.room}</div>`)
+        if (showSubject && r.subject) lines.push(`<div class="subj">${escapeHtml(r.subject)}</div>`)
+        if (showSection && r.section) lines.push(`<div class="sec">${escapeHtml(r.section)}</div>`)
+        if (showTime && r.time) lines.push(`<div class="time">${escapeHtml(r.time)}</div>`)
+        if (showRoom && r.room) lines.push(`<div class="room">${escapeHtml(r.room)}</div>`)
 
-        if (lines.length === 0 && r.subject) lines.push(`<div class="subj">${r.subject}</div>`)
+        if (lines.length === 0 && r.subject) lines.push(`<div class="subj">${escapeHtml(r.subject)}</div>`)
         if (lines.length === 0) lines.push(`<div class="subj">—</div>`)
 
         return `<div class="item">${lines.join('')}</div>`
@@ -102,7 +103,7 @@ export function generateExamRoutineGridPDF(
 
     const extra = emptyColumns.map(() => '<td class="cell empty-cell"></td>').join('')
 
-    return `<tr class="${rowIdx % 2 === 0 ? '' : 'alt'}"><td class="date-cell"><strong>${d.date}</strong><br/><span class="weekday">${d.weekday}</span></td>${cells}${extra}</tr>`
+    return `<tr class="${rowIdx % 2 === 0 ? '' : 'alt'}"><td class="date-cell"><strong>${escapeHtml(d.date)}</strong><br/><span class="weekday">${escapeHtml(d.weekday)}</span></td>${cells}${extra}</tr>`
   }).join('')
 
   const blankRows = Array.from({ length: emptyRows }, () => {
@@ -119,7 +120,7 @@ export function generateExamRoutineGridPDF(
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>${title} — ${schoolName}</title>
+<title>${escapeHtml(title)} — ${escapeHtml(schoolName)}</title>
 <style>
   @page { size: A4 ${orientation}; margin: 8mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -156,8 +157,8 @@ export function generateExamRoutineGridPDF(
   <div style="display:flex;align-items:center;gap:10px">
     ${pdfLogoHTML(brand)}
     <div>
-      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${schoolName}</div>
-      ${brand.address ? `<div style="font-size:8px;color:#888">${brand.address}</div>` : ''}
+      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${escapeHtml(schoolName)}</div>
+      ${brand.address ? `<div style="font-size:8px;color:#888">${escapeHtml(brand.address)}</div>` : ''}
     </div>
   </div>
   <div class="meta">
@@ -166,11 +167,11 @@ export function generateExamRoutineGridPDF(
     <div>A4 · ${orientation}</div>
   </div>
 </div>
-<div class="ttl">${title}</div>
-${examDateRange ? `<div class="subttl">${examDateRange}</div>` : ''}
+<div class="ttl">${escapeHtml(title)}</div>
+${examDateRange ? `<div class="subttl">${escapeHtml(examDateRange)}</div>` : ''}
 <table>
   <thead>
-    <tr><th class="date-hdr">${dateHeaderLabel}</th>${classHeaders}${extraHeaders}</tr>
+    <tr><th class="date-hdr">${escapeHtml(dateHeaderLabel)}</th>${classHeaders}${extraHeaders}</tr>
   </thead>
   <tbody>${dataRows}${blankRows}</tbody>
 </table>

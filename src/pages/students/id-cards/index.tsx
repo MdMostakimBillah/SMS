@@ -8,6 +8,7 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import QRCode from 'qrcode'
 import { getPDFBranding } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 const TEMPLATES = [
   { id: 'classic', name: 'Classic', nameBn: 'ক্লাসিক', primary: '#6366f1', secondary: '#eef2ff', accent: '#4f46e5', radius: 12 },
@@ -272,30 +273,30 @@ export default function IDCardsPage() {
         return `<div style="width:340px;height:210px;border-radius:${t.radius}px;border:2px solid ${t.primary};overflow:hidden;display:inline-flex;flex-direction:column;font-family:Arial,sans-serif;margin:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);page-break-inside:avoid;background:#fff">
         <div style="background:${t.primary};padding:8px 14px;display:flex;align-items:center;gap:10px">
           <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff">ET</div>
-          <div><div style="font-size:11px;font-weight:700;color:#fff">${institutionName}</div><div style="font-size:8px;color:rgba(255,255,255,0.7)">Student Identity Card</div></div>
+          <div><div style="font-size:11px;font-weight:700;color:#fff">${escapeHtml(institutionName)}</div><div style="font-size:8px;color:rgba(255,255,255,0.7)">Student Identity Card</div></div>
         </div>
         <div style="flex:1;display:flex;padding:8px 12px;gap:10px;background:${t.secondary}">
           ${show('photo') ? `<div style="width:65px;height:80px;border-radius:8px;border:2px solid ${t.primary};overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">${s.photo ? `<img src="${s.photo}" style="width:100%;height:100%;object-fit:cover" />` : `<span style="font-size:24px;color:${t.primary};opacity:0.4">👤</span>`}</div>` : ''}
           <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-            ${show('nameEn') ? `<div style="font-size:13px;font-weight:700;color:#1a1a1a">${s.nameEn}</div>` : ''}
-            ${show('nameBn') && s.nameBn ? `<div style="font-size:10px;color:#666">${s.nameBn}</div>` : ''}
+            ${show('nameEn') ? `<div style="font-size:13px;font-weight:700;color:#1a1a1a">${escapeHtml(s.nameEn)}</div>` : ''}
+            ${show('nameBn') && s.nameBn ? `<div style="font-size:10px;color:#666">${escapeHtml(s.nameBn)}</div>` : ''}
             <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px">
-              ${show('class') ? `<span style="font-size:8px;font-weight:600;padding:2px 6px;border-radius:4px;background:${t.primary};color:#fff">Cls ${s.class}-${s.section}</span>` : ''}
-              ${show('roll') && s.roll ? `<span style="font-size:8px;padding:2px 6px;border-radius:4px;background:#fff;color:${t.primary};border:1px solid ${t.primary}">Roll ${s.roll}</span>` : ''}
-              ${show('bloodGroup') && s.bloodGroup ? `<span style="font-size:8px;padding:2px 6px;border-radius:4px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca">${s.bloodGroup}</span>` : ''}
+              ${show('class') ? `<span style="font-size:8px;font-weight:600;padding:2px 6px;border-radius:4px;background:${t.primary};color:#fff">Cls ${escapeHtml(s.class)}-${escapeHtml(s.section)}</span>` : ''}
+              ${show('roll') && s.roll ? `<span style="font-size:8px;padding:2px 6px;border-radius:4px;background:#fff;color:${t.primary};border:1px solid ${t.primary}">Roll ${escapeHtml(String(s.roll))}</span>` : ''}
+              ${show('bloodGroup') && s.bloodGroup ? `<span style="font-size:8px;padding:2px 6px;border-radius:4px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca">${escapeHtml(s.bloodGroup)}</span>` : ''}
             </div>
             <div style="margin-top:auto;display:flex;flex-direction:column;gap:1px">
-              ${show('id') ? `<div style="font-size:8px;color:#888;font-family:monospace">ID: ${s.id}</div>` : ''}
-              ${show('fatherNameEn') && s.fatherNameEn ? `<div style="font-size:8px;color:#666">Father: ${s.fatherNameEn}</div>` : ''}
-              ${show('fatherPhone') && s.fatherPhone ? `<div style="font-size:8px;color:#666">Father Mobile: ${s.fatherPhone}</div>` : ''}
-              ${show('motherNameEn') && s.motherNameEn ? `<div style="font-size:8px;color:#666">Mother: ${s.motherNameEn}</div>` : ''}
-              ${show('phone') && s.phone ? `<div style="font-size:8px;color:#666">Mobile: ${s.phone}</div>` : ''}
+              ${show('id') ? `<div style="font-size:8px;color:#888;font-family:monospace">ID: ${escapeHtml(s.id)}</div>` : ''}
+              ${show('fatherNameEn') && s.fatherNameEn ? `<div style="font-size:8px;color:#666">Father: ${escapeHtml(s.fatherNameEn)}</div>` : ''}
+              ${show('fatherPhone') && s.fatherPhone ? `<div style="font-size:8px;color:#666">Father Mobile: ${escapeHtml(s.fatherPhone)}</div>` : ''}
+              ${show('motherNameEn') && s.motherNameEn ? `<div style="font-size:8px;color:#666">Mother: ${escapeHtml(s.motherNameEn)}</div>` : ''}
+              ${show('phone') && s.phone ? `<div style="font-size:8px;color:#666">Mobile: ${escapeHtml(s.phone)}</div>` : ''}
             </div>
           </div>
           ${qrImg}
         </div>
         <div style="padding:4px 12px;background:${t.accent};display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:7px;color:rgba(255,255,255,0.7)">Academic Year ${s.academicYear?.replace('-', '–')}</span>
+          <span style="font-size:7px;color:rgba(255,255,255,0.7)">Academic Year ${escapeHtml(s.academicYear?.replace('-', '–') || '')}</span>
           <div style="display:flex;gap:20px"><div style="text-align:center"><div style="width:50px;height:1px;background:rgba(255,255,255,0.5)"></div><span style="font-size:6px;color:rgba(255,255,255,0.7)">Principal</span></div><div style="text-align:center"><div style="width:50px;height:1px;background:rgba(255,255,255,0.5)"></div><span style="font-size:6px;color:rgba(255,255,255,0.7)">Seal</span></div></div>
         </div>
       </div>`

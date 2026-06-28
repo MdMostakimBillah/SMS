@@ -84,7 +84,12 @@ export default React.memo(function RoutineTab({
     }
   }, [])
 
-  const cls = classes.find((c) => c.id === selectedClass)
+  const classMap = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes])
+  const teacherMap = useMemo(() => new Map(teachers.map((t) => [t.id, t])), [teachers])
+  const subjectMap = useMemo(() => new Map(subjects.map((s) => [s.id, s])), [subjects])
+  const routineMap = useMemo(() => new Map(routines.map((r) => [`${r.classId}__${r.sectionId}`, r])), [routines])
+
+  const cls = classMap.get(selectedClass)
   const sections = cls?.sections || []
   const effectiveSection = selectedSection || sections[0]?.id || ''
 
@@ -102,7 +107,7 @@ export default React.memo(function RoutineTab({
     return subjects
   }, [editSlot, cls, effectiveSection, subjects])
 
-  const routine = routines.find((r) => r.classId === selectedClass && r.sectionId === effectiveSection)
+  const routine = routineMap.get(`${selectedClass}__${effectiveSection}`)
   const defaultDuration = routine?.periodDuration || 40
   const weekendDays = routine?.weekendDays || [5]
 
@@ -113,12 +118,12 @@ export default React.memo(function RoutineTab({
       (daySlots || []).map((slot: any) => {
         if (!slot?.teacherId) return slot
         if (slot.teacherName && !slot.teacherName.startsWith('TCH-')) return slot
-        const teacher = teachers.find((t) => t.id === slot.teacherId)
+        const teacher = teacherMap.get(slot.teacherId)
         if (teacher) return { ...slot, teacherName: teacher.nameEn }
         return { ...slot, teacherName: slot.teacherName || slot.teacherId }
       })
     )
-  }, [periods, teachers, routines])
+  }, [periods, teacherMap, routines])
 
   const startTime = cls?.startTime || institution.startTime || '07:30'
 
@@ -176,8 +181,8 @@ export default React.memo(function RoutineTab({
     }).sort((a: any, b: any) => a.afterPeriod - b.afterPeriod)
   }, [institution.breaks, startTime, periodDurations, defaultDuration, totalPeriods])
 
-  const getSubjectName = (id: string) => subjects.find((s) => s.id === id)?.name || id
-  const getTeacherName = (id: string) => teachers.find((t) => t.id === id)?.nameEn || id
+  const getSubjectName = (id: string) => subjectMap.get(id)?.name || id
+  const getTeacherName = (id: string) => teacherMap.get(id)?.nameEn || id
 
   const handleSaveSlot = () => {
     if (editSlot && slotForm.subjectId) {
@@ -218,7 +223,7 @@ export default React.memo(function RoutineTab({
   }
 
   const exportExcel = useCallback(() => {
-    const clsObj = classes.find((c) => c.id === selectedClass)
+    const clsObj = classMap.get(selectedClass)
     const secObj = clsObj?.sections.find((s: any) => s.id === effectiveSection)
     const secName = secObj?.name || ''
     const className = isBn ? clsObj?.nameBn : clsObj?.name
@@ -263,7 +268,7 @@ export default React.memo(function RoutineTab({
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Routine')
     XLSX.writeFile(wb, `routine_${className}_${secName}_${new Date().toISOString().split('T')[0]}.xlsx`)
-  }, [classes, selectedClass, effectiveSection, activeDays, totalPeriods, resolvedPeriods, institution, isBn])
+  }, [classMap, selectedClass, effectiveSection, activeDays, totalPeriods, resolvedPeriods, institution, isBn])
 
   const routineGridData: RoutineGridData = useMemo(() => {
     const periodTimes = Array.from({ length: totalPeriods }, (_, p) => getPeriodTime(p))

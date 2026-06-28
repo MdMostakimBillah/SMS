@@ -1,3 +1,4 @@
+import React from 'react'
 import {
   Calendar,
   Medal,
@@ -83,7 +84,7 @@ interface HROverviewTabProps {
   activeTeachers: Employee[]
 }
 
-export default function HROverviewTab({
+export const HROverviewTab = React.memo(function HROverviewTab({
   isBn,
   isMobile,
   isTablet,
@@ -598,4 +599,4 @@ export default function HROverviewTab({
       </div>
     </>
   )
-}
+})

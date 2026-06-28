@@ -90,6 +90,8 @@ export default function TeacherBulkUpdatePage() {
     }))
   )
 
+  const departmentMap = useMemo(() => new Map(departments.map(d => [d.id, d])), [departments])
+
   const [op, setOp] = useState<Op>('salary')
   const [search, setSearch] = useState('')
   const [fDept, setFDept] = useState('')
@@ -510,7 +512,7 @@ export default function TeacherBulkUpdatePage() {
                                 ? 'নেই'
                                 : 'None'
                             : op === 'department'
-                              ? departments.find((d) => d.id === t.departmentId)?.name || t.departmentId
+                              ? departmentMap.get(t.departmentId)?.name || t.departmentId
                               : op === 'designation'
                                 ? t.designation || '—'
                                 : op === 'inTime'

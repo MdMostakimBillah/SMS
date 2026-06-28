@@ -3,6 +3,7 @@ import type { Subject } from '@/pages/teachers/types'
 import type { Teacher } from '@/pages/teachers/types'
 import type { ClassInfo } from '@/store/classStore'
 import { getPDFBranding } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 interface ScheduleReportParams {
   exam: ExamConfig
@@ -109,9 +110,9 @@ export function generateScheduleReportHTML(params: ScheduleReportParams): string
         ${isBn ? 'গোপনীয়' : 'CONFIDENTIAL'}
       </div>
       <h1 style="font-size:20px;font-weight:800;margin:0 0 4px 0;color:#1e293b;letter-spacing:-0.5px">
-        ${isBn ? schoolNameBn : schoolName}
+        ${escapeHtml(isBn ? schoolNameBn : schoolName)}
       </h1>
-      <p style="font-size:11px;color:#64748b;margin:0 0 12px 0">${schoolAddress}</p>
+      <p style="font-size:11px;color:#64748b;margin:0 0 12px 0">${escapeHtml(schoolAddress)}</p>
       <div style="display:inline-block;padding:8px 24px;background:${BRAND};color:#fff;border-radius:6px">
         <div style="font-size:14px;font-weight:700">${isBn ? 'পরীক্ষার সময়সূচি ও আসন বিন্যাস' : 'Exam Schedule & Seat Plan'}</div>
         <div style="font-size:10px;opacity:0.85;margin-top:2px">${isBn ? 'ধাপ ২: সময়সূচি ও আসন পরিকল্পনা' : 'Step 2: Schedule & Seat Planning'}</div>
@@ -143,7 +144,7 @@ export function generateScheduleReportHTML(params: ScheduleReportParams): string
     [isBn ? 'নাম' : 'Name', isBn ? exam.nameBn : exam.name],
     [isBn ? 'ধরন' : 'Type', isBn ? typeLabel.bn : typeLabel.en],
     [isBn ? 'সেশন' : 'Session', exam.session],
-    [isBn ? 'তারিখ' : 'Dates', `${exam.startDate || '-'} ${isBn ? 'থেকে' : 'to'} ${exam.endDate || '-'}`],
+    [isBn ? 'তারিখ' : 'Dates', `${escapeHtml(exam.startDate || '-')} ${isBn ? 'থেকে' : 'to'} ${escapeHtml(exam.endDate || '-')}`],
     [isBn ? 'মোট দিন' : 'Total Days', `${totalRoutineDays}`],
     [isBn ? 'কক্ষ ক্ষমতা' : 'Room Capacity', `${totalCapacity} ${isBn ? 'জন' : 'seats'}`],
   ]
@@ -155,7 +156,7 @@ export function generateScheduleReportHTML(params: ScheduleReportParams): string
         ${details.map(([label, value], i) => `
           <tr style="background:${zebraRow(i)}">
             <td style="padding:8px 12px;width:140px;font-size:11px;color:#64748b;font-weight:500;border-bottom:1px solid #f1f5f9">${label}</td>
-            <td style="padding:8px 12px;font-size:11px;font-weight:600;color:#1e293b;border-bottom:1px solid #f1f5f9">${value}</td>
+            <td style="padding:8px 12px;font-size:11px;font-weight:600;color:#1e293b;border-bottom:1px solid #f1f5f9">${escapeHtml(String(value))}</td>
           </tr>
         `).join('')}
       </table>
@@ -186,7 +187,7 @@ export function generateScheduleReportHTML(params: ScheduleReportParams): string
         <div style="margin-bottom:14px">
           <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:${BRAND_LIGHT};color:${BRAND};border-radius:4px;font-size:11px;font-weight:700;margin-bottom:8px">
             <span style="width:6px;height:6px;border-radius:50%;background:${BRAND}"></span>
-            ${dateLabel}
+            ${escapeHtml(dateLabel)}
           </div>
           <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
             ${tableHead(
@@ -206,10 +207,10 @@ export function generateScheduleReportHTML(params: ScheduleReportParams): string
                     <tr style="background:${zebraRow(i)}">
                       ${td(`${i + 1}`, 'center', 'color:#94a3b8;font-weight:500')}
                       ${td(`${r.startTime} – ${r.endTime}`, 'center', 'font-weight:600;white-space:nowrap')}
-                      ${td((isBn ? sub?.nameBn || sub?.name : sub?.name) || r.subjectId, 'left', 'font-weight:600')}
-                      ${td(r.classId, 'center')}
-                      ${td(r.sectionId || '-', 'center')}
-                      ${td(r.roomNo || '-', 'center')}
+                      ${td(escapeHtml((isBn ? sub?.nameBn || sub?.name : sub?.name) || r.subjectId), 'left', 'font-weight:600')}
+                      ${td(escapeHtml(r.classId), 'center')}
+                      ${td(escapeHtml(r.sectionId || '-'), 'center')}
+                      ${td(escapeHtml(r.roomNo || '-'), 'center')}
                     </tr>
                   `
                 })
@@ -246,10 +247,10 @@ export function generateScheduleReportHTML(params: ScheduleReportParams): string
                 return `
                   <tr style="background:${zebraRow(i)}">
                     ${td(`${i + 1}`, 'center', 'color:#94a3b8;font-weight:500')}
-                    ${td(room.roomNo, 'left', 'font-weight:700')}
-                    ${td(room.roomName)}
-                    ${td(room.building || '-')}
-                    ${td(room.floor || '-', 'center')}
+                    ${td(escapeHtml(room.roomNo), 'left', 'font-weight:700')}
+                    ${td(escapeHtml(room.roomName))}
+                    ${td(escapeHtml(room.building || '-'))}
+                    ${td(escapeHtml(room.floor || '-'), 'center')}
                     ${td(`${room.capacity}`, 'center')}
                     ${td(`<span style="color:${assigned > 0 ? '#10b981' : '#94a3b8'};font-weight:600">${assigned}</span> <span style="font-size:8px;color:#94a3b8">(${utilPct}%)</span>`, 'center')}
                   </tr>
@@ -295,11 +296,11 @@ export function generateScheduleReportHTML(params: ScheduleReportParams): string
                 return `
                   <tr style="background:${zebraRow(i)}">
                     ${td(`${i + 1}`, 'center', 'color:#94a3b8;font-weight:500')}
-                    ${td(teacherName, 'left', 'font-weight:600')}
-                    ${td(dateLabel, 'center')}
-                    ${td(shiftLabel, 'center')}
-                    ${td(`<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:600;background:${inv.assignType === 'room' ? '#f5f3ff' : '#eff6ff'};color:${inv.assignType === 'room' ? '#7c3aed' : '#2563eb'}">${typeLabelStr}</span>`, 'center')}
-                    ${td(assignment, 'left', 'font-weight:600')}
+                    ${td(escapeHtml(teacherName), 'left', 'font-weight:600')}
+                    ${td(escapeHtml(dateLabel), 'center')}
+                    ${td(escapeHtml(shiftLabel), 'center')}
+                    ${td(`<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:600;background:${inv.assignType === 'room' ? '#f5f3ff' : '#eff6ff'};color:${inv.assignType === 'room' ? '#7c3aed' : '#2563eb'}">${escapeHtml(typeLabelStr)}</span>`, 'center')}
+                    ${td(escapeHtml(assignment), 'left', 'font-weight:600')}
                   </tr>
                 `
               })
@@ -334,7 +335,7 @@ export function generateScheduleReportHTML(params: ScheduleReportParams): string
         <div style="margin-bottom:14px">
           <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:#f5f3ff;color:#7c3aed;border-radius:4px;font-size:11px;font-weight:700;margin-bottom:8px">
             <span style="width:6px;height:6px;border-radius:50%;background:#7c3aed"></span>
-            ${cls?.nameBn || cls?.name || classId}
+            ${escapeHtml(cls?.nameBn || cls?.name || classId)}
           </div>
           <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
             ${tableHead(
@@ -353,9 +354,9 @@ export function generateScheduleReportHTML(params: ScheduleReportParams): string
                   const seatMax = Math.max(...sectionPlans.map((p) => p.seatNo))
                   return `
                     <tr style="background:${zebraRow(i)}">
-                      ${td(sectionId, 'left', 'font-weight:600')}
+                      ${td(escapeHtml(sectionId), 'left', 'font-weight:600')}
                       ${td(`${sectionPlans.length}`, 'center')}
-                      ${td(roomNames || '-')}
+                      ${td(escapeHtml(roomNames || '-'))}
                       ${td(seatMin === seatMax ? `${seatMin}` : `${seatMin} – ${seatMax}`, 'center', 'font-weight:600')}
                     </tr>
                   `
@@ -377,7 +378,7 @@ export function generateScheduleReportHTML(params: ScheduleReportParams): string
         <div style="width:6px;height:6px;border-radius:50%;background:${BRAND}"></div>
         ${isBn ? 'তৈরি' : 'Generated'}: ${new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
       </div>
-      <div style="font-weight:600;color:#64748b">${isBn ? schoolNameBn : schoolName}</div>
+      <div style="font-weight:600;color:#64748b">${escapeHtml(isBn ? schoolNameBn : schoolName)}</div>
     </div>
   `
 

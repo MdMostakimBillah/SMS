@@ -1,4 +1,5 @@
 import { useClassStore } from '@/store/classStore'
+import { escapeHtml } from '@/lib/sanitize'
 
 export interface PDFBranding {
   logo: string
@@ -25,7 +26,7 @@ export function getPDFBranding(): PDFBranding {
 
 export function pdfLogoHTML(b: PDFBranding, size = 32): string {
   if (b.logo) {
-    return `<img src="${b.logo}" style="width:${size}px;height:${size}px;border-radius:7px;object-fit:contain" />`
+    return `<img src="${escapeHtml(b.logo)}" style="width:${size}px;height:${size}px;border-radius:7px;object-fit:contain" />`
   }
   return `<div style="width:${size}px;height:${size}px;background:${b.brandColor};border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:${Math.round(size * 0.44)}px;font-weight:700">ET</div>`
 }
@@ -36,13 +37,13 @@ export function pdfHeaderHTML(b: PDFBranding, opts?: { showAddress?: boolean; ex
   <div style="display:flex;align-items:center;gap:10px">
     ${pdfLogoHTML(b)}
     <div>
-      <div style="font-size:13px;font-weight:700;color:${b.brandColor}">${b.schoolName}</div>
-      ${showAddress && b.address ? `<div style="font-size:8px;color:#888">${b.address}</div>` : ''}
+      <div style="font-size:13px;font-weight:700;color:${b.brandColor}">${escapeHtml(b.schoolName)}</div>
+      ${showAddress && b.address ? `<div style="font-size:8px;color:#888">${escapeHtml(b.address)}</div>` : ''}
     </div>
   </div>
   <div style="text-align:right;font-size:8px;color:#666;line-height:1.7">
     <div>Printed: ${new Date().toLocaleDateString()}</div>
-    ${opts?.extraMeta || ''}
+    ${escapeHtml(opts?.extraMeta || '')}
   </div>
 </div>`
 }

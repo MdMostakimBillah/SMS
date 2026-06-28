@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -23,16 +23,17 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { useHRStore } from '@/store/hrStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { Skeleton, SkeletonCard, SkeletonLine } from '@/components/ui/Skeleton'
 import type { Tab, ModalType, FacModalType, PDFModalType, IncForm, BonForm, ProForm, FundForm, FacForm, AssignForm } from './types'
 import { getAvatarGradient, getInitials } from './utils'
-import HROverviewTab from './tabs/HROverviewTab'
-import HRDecisionsTab from './tabs/HRDecisionsTab'
-import HRIncrementTab from './tabs/HRIncrementTab'
-import HRBonusTab from './tabs/HRBonusTab'
-import HRPromotionTab from './tabs/HRPromotionTab'
-import HRFundTab from './tabs/HRFundTab'
-import HRSalarySetupTab from './tabs/HRSalarySetupTab'
-import HRFacilitiesTab from './tabs/HRFacilitiesTab'
+import { HROverviewTab } from './tabs/HROverviewTab'
+import { HRDecisionsTab } from './tabs/HRDecisionsTab'
+import { HRIncrementTab } from './tabs/HRIncrementTab'
+import { HRBonusTab } from './tabs/HRBonusTab'
+import { HRPromotionTab } from './tabs/HRPromotionTab'
+import { HRFundTab } from './tabs/HRFundTab'
+import { HRSalarySetupTab } from './tabs/HRSalarySetupTab'
+import { HRFacilitiesTab } from './tabs/HRFacilitiesTab'
 import HRModals from './components/HRModals'
 import type { MonthlySalaryConfig } from '@/store/hrStore'
 import type { HRListPDFOptions } from '@/pages/hr/listPdfTemplate'
@@ -48,6 +49,38 @@ import {
 function toBnNum(n: number): string {
   const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
   return String(n).replace(/\d/g, (d) => bn[+d])
+}
+
+function HRPageSkeleton() {
+  return (
+    <div className="p-4 space-y-4">
+      <Skeleton variant="title" width="16rem" height="1.25rem" />
+      <Skeleton variant="text" width="10rem" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[1, 2, 3, 4].map((i) => (
+          <SkeletonCard key={i}>
+            <Skeleton variant="circle" width="2rem" height="2rem" />
+            <SkeletonLine width="3rem" height="1.125rem" />
+            <SkeletonLine width="2.5rem" />
+          </SkeletonCard>
+        ))}
+      </div>
+      <div className="flex gap-2 overflow-hidden">
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+          <Skeleton key={i} width="6rem" height="2rem" style={{ borderRadius: '9999px' }} />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {[1, 2, 3, 4].map((i) => (
+          <SkeletonCard key={i}>
+            <SkeletonLine width="40%" />
+            <SkeletonLine width="100%" />
+            <SkeletonLine width="70%" />
+          </SkeletonCard>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function HRPage() {
@@ -149,6 +182,12 @@ export default function HRPage() {
 
   // ─── UI State ───
   const [employeeSearch, setEmployeeSearch] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 600)
+    return () => clearTimeout(timer)
+  }, [])
   const [employeeStatusFilter, setEmployeeStatusFilter] = useState<string>('all')
   const [showGenerateRecs, setShowGenerateRecs] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
@@ -902,6 +941,8 @@ export default function HRPage() {
       bgCls: 'bg-[var(--amber-light)]',
     },
   ]
+
+  if (isLoading) return <HRPageSkeleton />
 
   return (
     <div>

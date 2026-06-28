@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle, Camera, Clock, Users, Send, Briefcase, X, IdCard, MessageSquare, FileText, ChevronRight, ChevronLeft } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -82,6 +82,8 @@ export default function AddTeacherPage() {
       getNextTeacherId: s.getNextTeacherId,
     }))
   )
+  const departmentMap = useMemo(() => new Map(departments.map(d => [d.id, d])), [departments])
+  const subjectMap = useMemo(() => new Map(subjects.map(s => [s.id, s])), [subjects])
   const fileRef = useRef<HTMLInputElement>(null)
   const signatureRef = useRef<HTMLInputElement>(null)
 
@@ -313,7 +315,7 @@ export default function AddTeacherPage() {
             <SummaryRow labelBn="প্রবেশ সময়" labelEn="In Time" value={form.inTime} isBn={isBn} />
             <SummaryRow labelBn="প্রস্থান সময়" labelEn="Out Time" value={form.outTime} isBn={isBn} />
             <div className="text-[0.75rem] font-medium text-[var(--text-muted)] mt-3 mb-1">{isBn ? 'বিভাগ ও পদবি' : 'Department & Designation'}</div>
-            <SummaryRow labelBn="বিভাগ" labelEn="Department" value={departments.find((d) => d.id === form.departmentId) ? (isBn ? departments.find((d) => d.id === form.departmentId)!.nameBn : departments.find((d) => d.id === form.departmentId)!.name) : ''} isBn={isBn} />
+            <SummaryRow labelBn="বিভাগ" labelEn="Department" value={departmentMap.get(form.departmentId) ? (isBn ? departmentMap.get(form.departmentId)!.nameBn : departmentMap.get(form.departmentId)!.name) : ''} isBn={isBn} />
             <SummaryRow labelBn="পদবি" labelEn="Designation" value={form.designation} isBn={isBn} />
             <SummaryRow labelBn="ক্যাটাগরি" labelEn="Category" value={form.category} isBn={isBn} />
             <SummaryRow labelBn="যোগ্যতা" labelEn="Qualification" value={form.qualification} isBn={isBn} />
@@ -325,7 +327,7 @@ export default function AddTeacherPage() {
             <SummaryRow labelBn="ওভারটাইম" labelEn="Overtime" value={form.overtime} isBn={isBn} />
             <SummaryRow labelBn="বেতন শুরুর তারিখ" labelEn="Salary Start Date" value={form.salaryStartDate} isBn={isBn} />
             {form.signature && <SummaryRow labelBn="সিগনেচার" labelEn="Signature" value="Uploaded" isBn={isBn} />}
-            {form.subjectIds.length > 0 && <SummaryRow labelBn="বিষয়" labelEn="Subjects" value={form.subjectIds.map((id) => subjects.find((s) => s.id === id)?.name || id).join(', ')} isBn={isBn} />}
+            {form.subjectIds.length > 0 && <SummaryRow labelBn="বিষয়" labelEn="Subjects" value={form.subjectIds.map((id) => subjectMap.get(id)?.name || id).join(', ')} isBn={isBn} />}
           </div>
         </div>
 

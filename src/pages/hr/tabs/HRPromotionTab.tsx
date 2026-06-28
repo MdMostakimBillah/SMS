@@ -1,3 +1,4 @@
+import React from 'react'
 import { Award, FileText, Plus, Edit2, Trash2 } from 'lucide-react'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { DateRangeFilter } from '@/components/shared/DateRangeFilter'
@@ -29,7 +30,7 @@ interface HRPromotionTabProps {
   getTeacherName: (id: string) => string
 }
 
-export default function HRPromotionTab({
+export const HRPromotionTab = React.memo(function HRPromotionTab({
   isBn,
   filteredPromotions,
   paginatedPromotions,
@@ -199,4 +200,4 @@ export default function HRPromotionTab({
       )}
     </div>
   )
-}
+})

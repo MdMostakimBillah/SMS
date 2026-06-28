@@ -1,5 +1,6 @@
 import { getBrandColor } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 export interface TabulationStudentRow {
   student: { id: string; nameEn: string; nameBn: string; roll?: string; academicYear?: string }
@@ -128,7 +129,7 @@ export function generateTabulationPDF(
     .map((row, i) => {
       const cells: string[] = []
       cells.push(`<td style="${tdBase};font-weight:600;color:#64748b">${i + 1}</td>`)
-      cells.push(`<td style="${tdName};font-weight:500">${isBn ? row.student.nameBn : row.student.nameEn}</td>`)
+      cells.push(`<td style="${tdName};font-weight:500">${escapeHtml(isBn ? row.student.nameBn : row.student.nameEn)}</td>`)
       if (cols.includes('roll')) cells.push(`<td style="${tdBase};color:#64748b">${row.student.roll || ''}</td>`)
       filterSubjects(row.subjectMarks).forEach((s) => {
         const failStyle = !s.passed ? 'color:#ef4444;font-weight:700;background:#fef2f2;' : ''
@@ -153,9 +154,9 @@ export function generateTabulationPDF(
   const headerRow = allCols.map((c) => c.th).join('')
   const colGroup = allCols.map((c) => `<col style="width:${c.width}">`).join('')
 
-  const examLabel = opts.examName || ''
-  const classLabel = opts.className || ''
-  const sectionLabel = opts.sectionName || ''
+  const examLabel = escapeHtml(opts.examName || '')
+  const classLabel = escapeHtml(opts.className || '')
+  const sectionLabel = escapeHtml(opts.sectionName || '')
   const academicYear = rows[0]?.student?.academicYear || ''
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Tabulation</title><style>
@@ -182,7 +183,7 @@ export function generateTabulationPDF(
         ${pdfLogoHTML(getPDFBranding(), 36)}
         <h1 style="font-size:18px;color:${darkBg};letter-spacing:1.5px;text-transform:uppercase;font-weight:800;margin:0">${isBn ? 'ট্যাবুলেশন শিট' : 'Tabulation Sheet'}</h1>
       </div>
-      <p class="subtitle">${isBn ? 'শিক্ষাবর্ষ' : 'Academic Year'}: ${academicYear}</p>
+      <p class="subtitle">${isBn ? 'শিক্ষাবর্ষ' : 'Academic Year'}: ${escapeHtml(academicYear)}</p>
       <div class="info">
         ${examLabel ? `<span>${isBn ? 'পরীক্ষা' : 'Exam'}: ${examLabel}</span>` : ''}
         ${classLabel ? `<span>${isBn ? 'শ্রেণি' : 'Class'}: ${classLabel}</span>` : ''}

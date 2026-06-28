@@ -88,7 +88,6 @@ export default function AssignmentPage() {
   const teachers = useTeacherStore((s) => s.teachers)
   const subjects = useTeacherStore((s) => s.subjects)
   const assignments = useAssignmentStore((s) => s.assignments)
-  const submissions = useAssignmentStore((s) => s.submissions)
   const addAssignment = useAssignmentStore((s) => s.addAssignment)
   const updateAssignment = useAssignmentStore((s) => s.updateAssignment)
   const deleteAssignment = useAssignmentStore((s) => s.deleteAssignment)
@@ -109,13 +108,19 @@ export default function AssignmentPage() {
     classId: '',
     sectionId: '',
     subjectId: '',
+    teacherId: '',
     dueDate: new Date().toISOString().split('T')[0],
     description: '',
   })
   const [hwErrors, setHwErrors] = useState<Record<string, string>>({})
+  const [hwTeacherQuery, setHwTeacherQuery] = useState('')
+  const [hwTeacherSelected, setHwTeacherSelected] = useState(false)
   const [teacherQuery, setTeacherQuery] = useState('')
   const [showTeacherSuggestions, setShowTeacherSuggestions] = useState(false)
   const [teacherSelected, setTeacherSelected] = useState(false)
+  const [filterClassId, setFilterClassId] = useState('')
+  const [filterSectionId, setFilterSectionId] = useState('')
+  const [filterSubjectId, setFilterSubjectId] = useState('')
 
   useScrollLock(showForm || !!detailItem || !!deleteTarget || showTypeSelect || showHwForm)
 
@@ -134,6 +139,14 @@ export default function AssignmentPage() {
 
   const getClassName = useCallback(
     (classId: string) => classes.find((c) => c.id === classId)?.name || classId,
+    [classes]
+  )
+  const getSectionName = useCallback(
+    (classId: string, sectionId: string) => {
+      const cls = classes.find((c) => c.id === classId)
+      const sec = cls?.sections.find((s) => s.id === sectionId)
+      return sec?.name || sectionId
+    },
     [classes]
   )
   const getSubjectName = useCallback(
@@ -174,14 +187,48 @@ export default function AssignmentPage() {
     return days
   }, [calMonth, calYear])
 
+  // Filter cascading
+  const filterSelectedClass = useMemo(() => classes.find((c) => c.id === filterClassId), [classes, filterClassId])
+  const filterAvailableSections = useMemo(() => filterSelectedClass?.sections || [], [filterSelectedClass])
+  const filterSelectedSection = useMemo(() => filterAvailableSections.find((s) => s.id === filterSectionId), [filterAvailableSections, filterSectionId])
+  const filterAvailableSubjects = useMemo(() => {
+    if (filterSelectedSection?.subjectIds?.length) return subjects.filter((s) => filterSelectedSection.subjectIds!.includes(s.id))
+    if (filterSelectedClass?.subjectIds?.length) return subjects.filter((s) => filterSelectedClass.subjectIds!.includes(s.id))
+    return subjects
+  }, [filterSelectedSection, filterSelectedClass, subjects])
+
+  // Filtered assignments
+  const filteredAssignments = useMemo(() => {
+    let result = assignments
+    if (filterClassId) result = result.filter((a) => a.classId === filterClassId)
+    if (filterSectionId) result = result.filter((a) => a.sectionId === filterSectionId)
+    if (filterSubjectId) result = result.filter((a) => a.subjectId === filterSubjectId)
+    return result
+  }, [assignments, filterClassId, filterSectionId, filterSubjectId])
+
+  // Homework per class summary
+  const homeworkPerClass = useMemo(() => {
+    const hw = filteredAssignments.filter((a) => a.type === 'homework')
+    const map = new Map<string, { name: string; nameBn: string; count: number }>()
+    hw.forEach((a) => {
+      const cls = classes.find((c) => c.id === a.classId)
+      if (cls) {
+        const existing = map.get(cls.id)
+        if (existing) existing.count++
+        else map.set(cls.id, { name: cls.name, nameBn: cls.nameBn, count: 1 })
+      }
+    })
+    return Array.from(map.values()).sort((a, b) => b.count - a.count)
+  }, [filteredAssignments, classes])
+
   const assignmentsOnDate = useMemo(
-    () => assignments.filter((a) => a.dueDate === selectedDate),
-    [assignments, selectedDate]
+    () => filteredAssignments.filter((a) => a.dueDate === selectedDate),
+    [filteredAssignments, selectedDate]
   )
 
   const assignmentsWithDots = useMemo(() => {
     const map = new Map<string, number>()
-    assignments.forEach((a) => map.set(a.dueDate, (map.get(a.dueDate) || 0) + 1))
+    filteredAssignments.forEach((a) => map.set(a.dueDate, (map.get(a.dueDate) || 0) + 1))
     return map
   }, [assignments])
 
@@ -219,23 +266,38 @@ export default function AssignmentPage() {
 
   const openEdit = (item: Assignment) => {
     setEditItem(item)
-    setForm({
-      title: item.title,
-      titleBn: item.titleBn,
-      description: item.description,
-      descriptionBn: item.descriptionBn,
-      subjectId: item.subjectId,
-      classId: item.classId,
-      sectionId: item.sectionId,
-      teacherId: item.teacherId,
-      dueDate: item.dueDate,
-      maxMarks: String(item.maxMarks),
-      status: item.status,
-    })
-    setFormErrors({})
-    setTeacherQuery('')
-    setTeacherSelected(!!item.teacherId)
-    setShowForm(true)
+    if (item.type === 'homework') {
+      setHwForm({
+        classId: item.classId,
+        sectionId: item.sectionId,
+        subjectId: item.subjectId,
+        teacherId: item.teacherId,
+        dueDate: item.dueDate,
+        description: isBn ? item.descriptionBn || item.description : item.description || item.descriptionBn,
+      })
+      setHwErrors({})
+      setHwTeacherQuery('')
+      setHwTeacherSelected(!!item.teacherId)
+      setShowHwForm(true)
+    } else {
+      setForm({
+        title: item.title,
+        titleBn: item.titleBn,
+        description: item.description,
+        descriptionBn: item.descriptionBn,
+        subjectId: item.subjectId,
+        classId: item.classId,
+        sectionId: item.sectionId,
+        teacherId: item.teacherId,
+        dueDate: item.dueDate,
+        maxMarks: String(item.maxMarks),
+        status: item.status,
+      })
+      setFormErrors({})
+      setTeacherQuery('')
+      setTeacherSelected(!!item.teacherId)
+      setShowForm(true)
+    }
   }
 
   const validate = (): boolean => {
@@ -254,6 +316,7 @@ export default function AssignmentPage() {
   const handleSave = () => {
     if (!validate()) return
     const data = {
+      type: editItem?.type || 'assignment',
       title: form.title,
       titleBn: form.titleBn,
       description: form.description,
@@ -280,12 +343,6 @@ export default function AssignmentPage() {
       deleteAssignment(deleteTarget.id)
       setDeleteTarget(null)
     }
-  }
-
-  const statusColor = (s: AssignmentStatus) => {
-    if (s === 'active') return 'var(--green)'
-    if (s === 'draft') return 'var(--amber)'
-    return 'var(--text-muted)'
   }
 
   if (isLoading) return <PageSkeleton />
@@ -326,70 +383,96 @@ export default function AssignmentPage() {
         {/* Day assignments list */}
         <div style={{ flex: isMobile ? 'none' : '1 1 65%', minWidth: 0, order: isMobile ? 2 : 0 }}>
           {assignmentsOnDate.length === 0 ? (
-            <div className="glass flex flex-col items-center justify-center" style={{ borderRadius: '0.75rem', padding: '2.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+            <div className="glass flex flex-col items-center justify-center" style={{ borderRadius: '0.75rem', padding: '2rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
                 {isBn ? 'এই তারিখে কোনো অ্যাসাইনমেন্ট নেই' : 'No assignments on this date'}
               </div>
-              <button onClick={() => openCreate(selectedDate)} className={btnPri}>
+              <button
+                onClick={() => setShowTypeSelect(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
+                  padding: '0.5rem 1.25rem',
+                  fontSize: '0.8125rem',
+                  fontWeight: 500,
+                  color: 'white',
+                  background: 'var(--brand)',
+                  border: 'none',
+                  borderRadius: '9999px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
                 <Plus size={14} />
-                {isBn ? 'অ্যাসাইনমেন্ট তৈরি করুন' : 'Create Assignment'}
+                {isBn ? 'তৈরি করুন' : 'Create'}
               </button>
             </div>
           ) : (
-            <div className="space-y-1.5">
+            <div className="space-y-2.5">
               {assignmentsOnDate.map((item) => {
-                const subs = submissions.filter((s) => s.assignmentId === item.id)
+                const isHomework = item.type === 'homework'
+                const typeLabel = isBn
+                  ? isHomework ? 'গৃহকাজ' : 'অ্যাসাইনমেন্ট'
+                  : isHomework ? 'Homework' : 'Assignment'
                 return (
                   <div
                     key={item.id}
-                    className="glass"
+                    className="glass flex items-center gap-3"
                     style={{
-                      borderRadius: '0.625rem',
-                      padding: isMobile ? '10px' : '0.75rem',
-                      borderLeft: `3px solid ${statusColor(item.status)}`,
+                      borderRadius: '0.5rem',
+                      padding: isMobile ? '10px 12px' : '0.75rem 1rem',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
                     onClick={() => setDetailItem(item)}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-1px)'
-                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)'
+                      e.currentTarget.style.background = 'var(--bg-secondary)'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)'
-                      e.currentTarget.style.boxShadow = 'none'
+                      e.currentTarget.style.background = ''
                     }}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: isMobile ? '0.8125rem' : '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '2px' }}>
-                          {isBn ? item.titleBn : item.title}
-                        </div>
-                        <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
-                          <span className="flex items-center gap-1"><BookOpen size={10} />{getSubjectName(item.subjectId)}</span>
-                          <span>•</span>
-                          <span>{getClassName(item.classId)}-{item.sectionId}</span>
-                          <span>•</span>
-                          <span>{isBn ? `${toBnNum(item.maxMarks)} নম্বর` : `${item.maxMarks} marks`}</span>
-                          {subs.length > 0 && (
-                            <>
-                              <span>•</span>
-                              <span>{isBn ? `${toBnNum(subs.length)} জমা` : `${subs.length} submitted`}</span>
-                            </>
-                          )}
-                        </div>
+                    {/* Type Icon */}
+                    <div
+                      className="flex items-center justify-center flex-shrink-0"
+                      style={{
+                        width: '2.25rem',
+                        height: '2.25rem',
+                        borderRadius: '0.5rem',
+                        background: isHomework ? 'rgba(245,158,11,0.12)' : 'rgba(99,102,241,0.12)',
+                      }}
+                    >
+                      {isHomework
+                        ? <BookOpen size={16} style={{ color: 'var(--amber)' }} />
+                        : <FileText size={16} style={{ color: 'var(--brand)' }} />
+                      }
+                    </div>
+                    {/* Content */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="flex items-center gap-2">
+                        <span style={{ fontSize: isMobile ? '0.8125rem' : '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                          {isBn ? item.titleBn || item.title : item.title || item.titleBn}
+                        </span>
+                        <span style={{ fontSize: '0.625rem', color: isHomework ? 'var(--amber)' : 'var(--brand)' }}>
+                          {typeLabel}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => setDetailItem(item)} className="p-1 rounded-md hover:bg-[var(--bg-secondary)] transition-colors border-none bg-transparent cursor-pointer">
-                          <Eye size={13} style={{ color: 'var(--text-muted)' }} />
-                        </button>
-                        <button onClick={() => openEdit(item)} className="p-1 rounded-md hover:bg-[var(--bg-secondary)] transition-colors border-none bg-transparent cursor-pointer">
-                          <Edit2 size={13} style={{ color: 'var(--text-muted)' }} />
-                        </button>
-                        <button onClick={() => setDeleteTarget(item)} className="p-1 rounded-md hover:bg-[var(--bg-secondary)] transition-colors border-none bg-transparent cursor-pointer">
-                          <Trash2 size={13} style={{ color: 'var(--red)' }} />
-                        </button>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        {getSubjectName(item.subjectId)} · {getClassName(item.classId)}-{getSectionName(item.classId, item.sectionId)}{item.maxMarks > 0 ? ` · ${item.maxMarks}${isBn ? ' নম্বর' : ' marks'}` : ''}
                       </div>
+                    </div>
+                    {/* Actions */}
+                    <div className="flex items-center gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => setDetailItem(item)} className="p-1.5 rounded-md hover:bg-[var(--bg-primary)] transition-colors border-none bg-transparent cursor-pointer">
+                        <Eye size={14} style={{ color: 'var(--text-muted)' }} />
+                      </button>
+                      <button onClick={() => openEdit(item)} className="p-1.5 rounded-md hover:bg-[var(--bg-primary)] transition-colors border-none bg-transparent cursor-pointer">
+                        <Edit2 size={14} style={{ color: 'var(--text-muted)' }} />
+                      </button>
+                      <button onClick={() => setDeleteTarget(item)} className="p-1.5 rounded-md hover:bg-[var(--bg-primary)] transition-colors border-none bg-transparent cursor-pointer">
+                        <Trash2 size={14} style={{ color: 'var(--text-muted)' }} />
+                      </button>
                     </div>
                   </div>
                 )
@@ -399,7 +482,7 @@ export default function AssignmentPage() {
         </div>
 
         {/* Calendar — compact on right */}
-        <div className="glass" style={{ borderRadius: '0.875rem', padding: isMobile ? '10px' : '0.75rem', flex: isMobile ? 'none' : '0 0 16rem', minWidth: 0, order: isMobile ? 1 : 0 }}>
+        <div className="glass" style={{ borderRadius: '0.875rem', padding: isMobile ? '10px' : '0.75rem', flex: isMobile ? 'none' : '0 0 16rem', flexShrink: 0, minWidth: 0, order: isMobile ? 1 : 0, maxHeight: isMobile ? 'none' : 'calc(100vh - 10rem)', overflowY: 'auto' }}>
           {/* Month nav */}
           <div className="flex items-center justify-between mb-2">
             <button
@@ -506,6 +589,84 @@ export default function AssignmentPage() {
               {isBn ? 'আজ' : 'Today'}
             </button>
           </div>
+
+          {/* Filter Section */}
+          <div className="mt-2 pt-2 border-t border-[var(--border)]">
+            <div className="flex items-center justify-between mb-1.5">
+              <span style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {isBn ? 'ফিল্টার' : 'Filter'}
+              </span>
+              {(filterClassId || filterSectionId || filterSubjectId) && (
+                <button
+                  onClick={() => { setFilterClassId(''); setFilterSectionId(''); setFilterSubjectId('') }}
+                  style={{ fontSize: '0.5625rem', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  {isBn ? 'মুছুন' : 'Clear'}
+                </button>
+              )}
+            </div>
+            <div className="space-y-1">
+              <select
+                value={filterClassId}
+                onChange={(e) => { setFilterClassId(e.target.value); setFilterSectionId(''); setFilterSubjectId('') }}
+                style={{ width: '100%', padding: '0.3rem 0.5rem', fontSize: '0.625rem', borderRadius: '0.375rem', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+              >
+                <option value="">{isBn ? 'সব শ্রেণি' : 'All Classes'}</option>
+                {classes.map((c) => <option key={c.id} value={c.id}>{isBn ? c.nameBn : c.name}</option>)}
+              </select>
+              <select
+                value={filterSectionId}
+                onChange={(e) => { setFilterSectionId(e.target.value); setFilterSubjectId('') }}
+                style={{ width: '100%', padding: '0.3rem 0.5rem', fontSize: '0.625rem', borderRadius: '0.375rem', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+              >
+                <option value="">{isBn ? 'সব শাখা' : 'All Sections'}</option>
+                {filterAvailableSections.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <select
+                value={filterSubjectId}
+                onChange={(e) => setFilterSubjectId(e.target.value)}
+                style={{ width: '100%', padding: '0.3rem 0.5rem', fontSize: '0.625rem', borderRadius: '0.375rem', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+              >
+                <option value="">{isBn ? 'সব বিষয়' : 'All Subjects'}</option>
+                {filterAvailableSubjects.map((s) => <option key={s.id} value={s.id}>{isBn ? s.nameBn : s.name}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Homework Summary */}
+          {homeworkPerClass.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-[var(--border)]">
+              <span style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {isBn ? 'গৃহকাজ' : 'Homework'}
+              </span>
+              <div className="mt-1.5 grid grid-cols-2 gap-1">
+                {homeworkPerClass.map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex items-center justify-between rounded-md"
+                    style={{ padding: '0.25rem 0.375rem', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}
+                  >
+                    <span style={{ fontSize: '0.5625rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {isBn ? item.nameBn : item.name}
+                    </span>
+                    <span
+                      className="inline-flex items-center justify-center rounded-full flex-shrink-0 ml-1"
+                      style={{
+                        fontSize: '0.5rem',
+                        fontWeight: 700,
+                        minWidth: '1rem',
+                        height: '1rem',
+                        background: 'var(--amber)',
+                        color: 'white',
+                      }}
+                    >
+                      {isBn ? toBnNum(item.count) : item.count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -571,7 +732,7 @@ export default function AssignmentPage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
-                  {isBn ? 'গৃহকাজ তৈরি করুন' : 'Create Home Work'}
+                  {editItem ? (isBn ? 'গৃহকাজ সম্পাদনা' : 'Edit Home Work') : (isBn ? 'গৃহকাজ তৈরি করুন' : 'Create Home Work')}
                 </h3>
                 <button onClick={() => setShowHwForm(false)} className="p-1 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors border-none bg-transparent cursor-pointer">
                   <X size={16} style={{ color: 'var(--text-muted)' }} />
@@ -603,6 +764,58 @@ export default function AssignmentPage() {
                   </div>
                 </div>
 
+                {/* Teacher */}
+                <div className="relative">
+                  <label className="block text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1">{isBn ? 'শিক্ষক' : 'Teacher'} *</label>
+                  <input
+                    type="text"
+                    value={hwTeacherSelected ? (isBn ? teachers.find((t) => t.id === hwForm.teacherId)?.nameBn : teachers.find((t) => t.id === hwForm.teacherId)?.nameEn) || '' : hwTeacherQuery}
+                    onChange={(e) => {
+                      setHwTeacherQuery(e.target.value)
+                      setHwTeacherSelected(false)
+                      if (!e.target.value) setHwForm({ ...hwForm, teacherId: '' })
+                    }}
+                    onFocus={() => { if (!hwTeacherSelected) setShowTeacherSuggestions(true) }}
+                    onBlur={() => setTimeout(() => setShowTeacherSuggestions(false), 200)}
+                    className={inputCls}
+                    style={{ padding: '0.625rem 0.75rem', borderColor: hwErrors.teacherId ? 'var(--red)' : undefined }}
+                    placeholder={isBn ? 'শিক্ষকের নাম লিখুন...' : 'Type teacher name...'}
+                  />
+                  {showTeacherSuggestions && !hwTeacherSelected && hwTeacherQuery && (
+                    <div className="absolute z-50 mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg max-h-40 overflow-auto">
+                      {teachers
+                        .filter((t) => {
+                          const q = hwTeacherQuery.toLowerCase()
+                          return (t.nameEn?.toLowerCase().includes(q) || t.nameBn?.includes(q) || t.id.toLowerCase().includes(q))
+                        })
+                        .slice(0, 8)
+                        .map((t) => (
+                          <div
+                            key={t.id}
+                            className="px-3 py-2 cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                            style={{ fontSize: '0.8125rem' }}
+                            onMouseDown={() => {
+                              setHwForm({ ...hwForm, teacherId: t.id })
+                              setHwTeacherQuery('')
+                              setHwTeacherSelected(true)
+                              setShowTeacherSuggestions(false)
+                            }}
+                          >
+                            <div className="font-medium text-[var(--text-primary)]">{isBn ? t.nameBn : t.nameEn}</div>
+                            {t.nameEn && t.nameBn && isBn && <div className="text-[0.6875rem] text-[var(--text-muted)]">{t.nameEn}</div>}
+                          </div>
+                        ))}
+                      {teachers.filter((t) => {
+                        const q = hwTeacherQuery.toLowerCase()
+                        return (t.nameEn?.toLowerCase().includes(q) || t.nameBn?.includes(q) || t.id.toLowerCase().includes(q))
+                      }).length === 0 && (
+                        <div className="px-3 py-2 text-[0.75rem] text-[var(--text-muted)]">{isBn ? 'কোনো শিক্ষক পাওয়া যায়নি' : 'No teachers found'}</div>
+                      )}
+                    </div>
+                  )}
+                  {hwErrors.teacherId && <div className="text-[0.625rem] text-[var(--red)] mt-0.5">{hwErrors.teacherId}</div>}
+                </div>
+
                 <div>
                   <label className="block text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1">{isBn ? 'তারিখ' : 'Date'} *</label>
                   <input type="date" value={hwForm.dueDate} onChange={(e) => setHwForm({ ...hwForm, dueDate: e.target.value })} className={inputCls} style={{ padding: '0.625rem 0.75rem' }} />
@@ -632,6 +845,7 @@ export default function AssignmentPage() {
                     if (!hwForm.classId) errors.classId = isBn ? 'শ্রেণি আবশ্যক' : 'Required'
                     if (!hwForm.sectionId) errors.sectionId = isBn ? 'শাখা আবশ্যক' : 'Required'
                     if (!hwForm.subjectId) errors.subjectId = isBn ? 'বিষয় আবশ্যক' : 'Required'
+                    if (!hwForm.teacherId) errors.teacherId = isBn ? 'শিক্ষক আবশ্যক' : 'Required'
                     if (!hwForm.description.trim()) errors.description = isBn ? 'বিবরণ আবশ্যক' : 'Required'
                     setHwErrors(errors)
                     if (Object.keys(errors).length > 0) return
@@ -640,7 +854,8 @@ export default function AssignmentPage() {
                     const sub = subjects.find((s) => s.id === hwForm.subjectId)
                     const titleBn = `${cls?.nameBn || ''} ${sub?.nameBn || ''} - গৃহকাজ`
                     const titleEn = `${cls?.name || ''} ${sub?.name || ''} - Homework`
-                    addAssignment({
+                    const hwData = {
+                      type: 'homework' as const,
                       title: titleEn,
                       titleBn,
                       description: hwForm.description,
@@ -648,19 +863,27 @@ export default function AssignmentPage() {
                       subjectId: hwForm.subjectId,
                       classId: hwForm.classId,
                       sectionId: hwForm.sectionId,
-                      teacherId: teachers[0]?.id || '',
+                      teacherId: hwForm.teacherId,
                       dueDate: hwForm.dueDate,
                       maxMarks: 0,
-                      status: 'active',
-                      attachments: [],
-                    })
-                    setHwForm({ classId: '', sectionId: '', subjectId: '', dueDate: new Date().toISOString().split('T')[0], description: '' })
+                      status: 'active' as const,
+                      attachments: editItem?.attachments || [],
+                    }
+                    if (editItem) {
+                      updateAssignment(editItem.id, hwData)
+                    } else {
+                      addAssignment(hwData)
+                    }
+                    setHwForm({ classId: '', sectionId: '', subjectId: '', teacherId: '', dueDate: new Date().toISOString().split('T')[0], description: '' })
                     setHwErrors({})
+                    setHwTeacherQuery('')
+                    setHwTeacherSelected(false)
+                    setEditItem(null)
                     setShowHwForm(false)
                   }}
                   className="flex-1 py-2 px-3 rounded-xl text-[0.8125rem] font-medium border-none bg-[var(--brand)] text-white cursor-pointer hover:opacity-90 transition-opacity"
                 >
-                  {isBn ? 'তৈরি করুন' : 'Create'}
+                  {editItem ? (isBn ? 'আপডেট' : 'Update') : (isBn ? 'তৈরি করুন' : 'Create')}
                 </button>
               </div>
             </div>
@@ -828,31 +1051,55 @@ export default function AssignmentPage() {
               style={{ maxWidth: isMobile ? '95vw' : '36rem', maxHeight: '85vh', overflow: 'auto' }}
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Header with type badge */}
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{isBn ? detailItem.titleBn : detailItem.title}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
+                    {isBn ? detailItem.titleBn || detailItem.title : detailItem.title || detailItem.titleBn}
+                  </h3>
+                  <span
+                    className="inline-flex items-center rounded px-1.5 py-0.5"
+                    style={{
+                      fontSize: '0.625rem',
+                      fontWeight: 500,
+                      background: detailItem.type === 'homework' ? 'rgba(245,158,11,0.1)' : 'rgba(124,58,237,0.1)',
+                      color: detailItem.type === 'homework' ? 'var(--amber)' : 'var(--purple)',
+                    }}
+                  >
+                    {isBn ? detailItem.type === 'homework' ? 'গৃহকাজ' : 'অ্যাসাইনমেন্ট' : detailItem.type === 'homework' ? 'Homework' : 'Assignment'}
+                  </span>
+                </div>
                 <button onClick={() => setDetailItem(null)} className="p-1 rounded-lg hover:bg-[var(--bg-secondary)] transition-colors border-none bg-transparent cursor-pointer">
                   <X size={16} style={{ color: 'var(--text-muted)' }} />
                 </button>
               </div>
 
-              <div className="space-y-2">
-                {[
-                  { l: isBn ? 'বিষয়' : 'Subject', v: getSubjectName(detailItem.subjectId) },
-                  { l: isBn ? 'শ্রেণি' : 'Class', v: `${getClassName(detailItem.classId)}-${detailItem.sectionId}` },
-                  { l: isBn ? 'শিক্ষক' : 'Teacher', v: getTeacherName(detailItem.teacherId) },
-                  { l: isBn ? 'তারিখ' : 'Date', v: detailItem.dueDate },
-                  { l: isBn ? 'নম্বর' : 'Marks', v: isBn ? toBnNum(detailItem.maxMarks) : String(detailItem.maxMarks) },
-                ].map((row) => (
-                  <div key={row.l} className="flex items-center justify-between py-1.5 border-b border-[var(--border)] last:border-0">
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{row.l}</span>
-                    <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>{row.v}</span>
+              {/* Description - main focus */}
+              {(detailItem.description || detailItem.descriptionBn) && (
+                <div className="mb-4" style={{ padding: '1rem', borderRadius: '0.75rem', background: detailItem.type === 'homework' ? 'rgba(245,158,11,0.08)' : 'rgba(124,58,237,0.08)', borderLeft: `3px solid ${detailItem.type === 'homework' ? 'var(--amber)' : 'var(--brand)'}` }}>
+                  <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: detailItem.type === 'homework' ? 'var(--amber)' : 'var(--brand)', marginBottom: '6px' }}>
+                    {isBn ? 'বিবরণ' : 'Description'}
                   </div>
-                ))}
-                {detailItem.description && (
-                  <div className="pt-1">
-                    <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>{isBn ? 'বিবরণ' : 'Description'}</div>
-                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{detailItem.description}</div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-primary)', lineHeight: 1.6 }}>
+                    {isBn ? detailItem.descriptionBn || detailItem.description : detailItem.description || detailItem.descriptionBn}
                   </div>
+                </div>
+              )}
+
+              {/* Meta info - minimal */}
+              <div className="flex items-center gap-3 flex-wrap mt-3" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span>{getSubjectName(detailItem.subjectId)}</span>
+                <span style={{ opacity: 0.4 }}>·</span>
+                <span>{getClassName(detailItem.classId)}-{getSectionName(detailItem.classId, detailItem.sectionId)}</span>
+                <span style={{ opacity: 0.4 }}>·</span>
+                <span>{getTeacherName(detailItem.teacherId)}</span>
+                <span style={{ opacity: 0.4 }}>·</span>
+                <span>{detailItem.dueDate}</span>
+                {detailItem.type === 'assignment' && detailItem.maxMarks > 0 && (
+                  <>
+                    <span style={{ opacity: 0.4 }}>·</span>
+                    <span>{isBn ? `${toBnNum(detailItem.maxMarks)} নম্বর` : `${detailItem.maxMarks} marks`}</span>
+                  </>
                 )}
               </div>
 

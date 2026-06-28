@@ -2,6 +2,7 @@ import QRCode from 'qrcode'
 import type { TabulationStudent } from './MarksheetTab'
 import type { MarksheetOptions } from './MarksheetTab'
 import { getBrandColor } from '@/lib/pdf'
+import { escapeHtml } from '@/lib/sanitize'
 
 
 function getGradeLetter(pct: number): string {
@@ -195,6 +196,12 @@ export async function generateMarksheetPDF(
   const color = getBrandColor()
   const { orientation, isBn, examName, examSession, className, sectionName, institutionName, institutionAddress, options } = opts
   const f = fontSizes[options.fontSize || 'default']
+  const safeExamName = escapeHtml(examName)
+  const safeExamSession = escapeHtml(examSession)
+  const safeClassName = escapeHtml(className)
+  const safeSectionName = escapeHtml(sectionName)
+  const safeInstitutionName = escapeHtml(institutionName)
+  const safeInstitutionAddress = escapeHtml(institutionAddress)
 
   // Generate QR codes for all students
   const qrMap: Record<string, string> = {}
@@ -324,11 +331,11 @@ export async function generateMarksheetPDF(
       <div class="marksheet-page">
         <!-- Header -->
         <div style="text-align:center;margin-bottom:${f.headerMarginBottom};">
-          <h1 style="font-size:${f.headerName};font-weight:700;color:${color};margin:0;">${institutionName}</h1>
-          <p style="font-size:${f.headerAddress};color:#6b7280;margin:1px 0 0 0;">${institutionAddress}</p>
+          <h1 style="font-size:${f.headerName};font-weight:700;color:${color};margin:0;">${safeInstitutionName}</h1>
+          <p style="font-size:${f.headerAddress};color:#6b7280;margin:1px 0 0 0;">${safeInstitutionAddress}</p>
           <h2 style="font-size:${f.headerTitle};font-weight:700;color:#1e293b;text-transform:uppercase;letter-spacing:1px;margin:4px 0 0 0;">Marksheet</h2>
           <div style="width:${f.dividerWidth};height:2px;background:${color};border-radius:2px;margin:${f.dividerMargin} auto;"></div>
-          <p style="font-size:${f.headerExam};color:#6b7280;margin:2px 0 0 0;">Exam: ${examName}</p>
+          <p style="font-size:${f.headerExam};color:#6b7280;margin:2px 0 0 0;">Exam: ${safeExamName}</p>
         </div>
 
         <!-- Student Info Card -->
@@ -336,17 +343,17 @@ export async function generateMarksheetPDF(
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:${f.cardGap};">
             <div style="flex:1;min-width:0;">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;font-size:${f.cardFontSize};">
-                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Name</span><span style="color:#1e293b;">${student.student.nameEn}</span></div>
-                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Roll</span><span style="color:#1e293b;">${student.student.roll}</span></div>
-                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Class</span><span style="color:#1e293b;">${className}</span></div>
-                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Section</span><span style="color:#1e293b;">${sectionName}</span></div>
-                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Student ID</span><span style="color:#1e293b;">${student.student.id}</span></div>
-                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Exam</span><span style="color:#1e293b;">${examName}</span></div>
-                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Session</span><span style="color:#1e293b;">${examSession}</span></div>
+                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Name</span><span style="color:#1e293b;">${escapeHtml(student.student.nameEn)}</span></div>
+                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Roll</span><span style="color:#1e293b;">${escapeHtml(student.student.roll || '')}</span></div>
+                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Class</span><span style="color:#1e293b;">${safeClassName}</span></div>
+                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Section</span><span style="color:#1e293b;">${safeSectionName}</span></div>
+                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Student ID</span><span style="color:#1e293b;">${escapeHtml(student.student.id)}</span></div>
+                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Exam</span><span style="color:#1e293b;">${safeExamName}</span></div>
+                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Session</span><span style="color:#1e293b;">${safeExamSession}</span></div>
               </div>
               ${(options.showFather || options.showMother) ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;font-size:${f.cardFontSize};margin-top:${f.cardFatherGap};padding-top:${f.cardFatherGap};border-top:1px solid #94a3b8;">
-                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Father</span><span style="color:#1e293b;">${options.showFather ? (isBn ? student.student.fatherNameBn : student.student.fatherNameEn || '-') : ''}</span></div>
-                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Mother</span><span style="color:#1e293b;">${options.showMother ? (isBn ? student.student.motherNameBn : student.student.motherNameEn || '-') : ''}</span></div>
+                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Father</span><span style="color:#1e293b;">${options.showFather ? escapeHtml(isBn ? student.student.fatherNameBn : student.student.fatherNameEn || '-') : ''}</span></div>
+                <div style="display:flex;gap:6px;"><span style="font-weight:600;color:#1e293b;width:${f.cardLabelWidth};flex-shrink:0;">Mother</span><span style="color:#1e293b;">${options.showMother ? escapeHtml(isBn ? student.student.motherNameBn : student.student.motherNameEn || '-') : ''}</span></div>
               </div>` : ''}
               <div style="display:flex;align-items:center;gap:6px;margin-top:${f.cardFatherGap};padding-top:${f.cardFatherGap};border-top:1px solid #94a3b8;flex-wrap:wrap;">
                 ${options.showClassRank && student.classRank ? `<span style="font-size:${f.badgeFontSize};font-weight:600;padding:2px 6px;border-radius:3px;background:${color}12;color:${color};white-space:nowrap;">Class Rank: #${student.classRank}</span>` : ''}
@@ -360,7 +367,7 @@ export async function generateMarksheetPDF(
 
         <!-- Class/Section Label -->
         <div style="padding:${f.labelPadding};background:white;border-left:3px solid ${color};border-radius:0 3px 3px 0;margin-bottom:${f.labelMarginBottom};font-size:${f.labelFontSize};font-weight:600;color:#1e293b;">
-          Class: ${className} — Section: ${sectionName}
+          Class: ${safeClassName} — Section: ${safeSectionName}
         </div>
 
         <!-- Marks Table -->

@@ -33,6 +33,7 @@ const Step4Results = lazy(() => import('@/pages/exams/step4'))
 const Step5Marksheet = lazy(() => import('@/pages/exams/step5'))
 const OMRSheetPage = lazy(() => import('@/pages/exams/omr'))
 const SyllabusPage = lazy(() => import('@/pages/syllabus'))
+const AssignmentsPage = lazy(() => import('@/pages/assignments'))
 
 function P({ name }: { name: string }) {
   return <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 500, padding: '1.25rem' }}>{name}</div>
@@ -75,7 +76,7 @@ export default function App() {
         <Route path="/exams/marksheet" element={<F><Step5Marksheet /></F>} />
         <Route path="/exams/omr" element={<F><OMRSheetPage /></F>} />
         <Route path="/syllabus" element={<F><SyllabusPage /></F>} />
-        <Route path="/assignments" element={<P name="Assignments" />} />
+        <Route path="/assignments" element={<F><AssignmentsPage /></F>} />
         <Route path="/online" element={<P name="Online Classes" />} />
         <Route path="/finance" element={<P name="Finance" />} />
         <Route path="/payroll" element={<F><PayrollPage /></F>} />

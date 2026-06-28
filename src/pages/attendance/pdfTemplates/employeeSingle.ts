@@ -1,4 +1,5 @@
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 interface Punch {
   time: string
@@ -82,10 +83,14 @@ export function genSinglePDF(params: GenSinglePDFParams): string {
     </tr>`
     })
     .join('')
+  const safeName = escapeHtml(name)
+  const safeId = escapeHtml(id)
+  const safeDept = escapeHtml(deptName)
+  const safeDesig = escapeHtml(designation)
   const photoTag = photo
     ? `<img src="${photo}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid ${brand.brandColor}" />`
-    : `<div style="width:48px;height:48px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${brand.brandColor};border:2px solid ${brand.brandColor}">${name.charAt(0)}</div>`
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${name} — Attendance</title>
+    : `<div style="width:48px;height:48px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${brand.brandColor};border:2px solid ${brand.brandColor}">${safeName.charAt(0)}</div>`
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${safeName} — Attendance</title>
 <style>
 @page{size:A4 landscape;margin:8mm}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -116,8 +121,8 @@ tr.alt td{background:#f8fafc}
   <div class="profile">
     ${photoTag}
     <div class="info">
-      <h2>${name}</h2>
-      <p>${id} · ${deptName} · ${designation}</p>
+      <h2>${safeName}</h2>
+      <p>${safeId} · ${safeDept} · ${safeDesig}</p>
     </div>
   </div>
 </div>

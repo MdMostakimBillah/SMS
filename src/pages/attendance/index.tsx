@@ -27,9 +27,11 @@ import { AttendancePDFOptionsModal } from '@/components/shared/AttendancePDFOpti
 import type { AttendancePDFOptions } from '@/components/shared/AttendancePDFOptionsModal'
 import type { AttendanceStatus, DayAttendance } from '@/store/teacherStore'
 import { genSinglePDF, genStudentSinglePDF } from './pdfTemplates'
+import { Skeleton, SkeletonCard, SkeletonLine } from '@/components/ui/Skeleton'
 const DeviceTab = lazy(() => import('./DeviceTab'))
 import { today, twentyDaysAgo, getDaysBetween, isFriday, setGlobalBn } from './helpers'
 import type { Tab, StatusFilter } from './helpers'
+import { escapeHtml } from '@/lib/sanitize'
 
 import { TodayTab } from './tabs/TodayTab'
 
@@ -37,6 +39,43 @@ import { EmployeeTab } from './tabs/EmployeeTab'
 import { StudentTab } from './tabs/StudentTab'
 import { PersonDetailModal } from './modals/PersonDetailModal'
 import { StudentDetailModal } from './modals/StudentDetailModal'
+
+function AttendancePageSkeleton() {
+  return (
+    <div className="p-4 space-y-4">
+      <Skeleton variant="title" width="16rem" height="1.25rem" />
+      <Skeleton variant="text" width="10rem" />
+      <div className="flex gap-2 overflow-hidden">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} width="6rem" height="2rem" style={{ borderRadius: '9999px' }} />
+        ))}
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[1, 2, 3, 4].map((i) => (
+          <SkeletonCard key={i}>
+            <Skeleton variant="circle" width="2rem" height="2rem" />
+            <SkeletonLine width="3rem" height="1.125rem" />
+            <SkeletonLine width="2.5rem" />
+          </SkeletonCard>
+        ))}
+      </div>
+      <div className="space-y-2">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <SkeletonCard key={i}>
+            <div className="flex items-center gap-3">
+              <Skeleton variant="circle" width="2.5rem" height="2.5rem" />
+              <div className="flex-1">
+                <SkeletonLine width="40%" />
+                <SkeletonLine width="25%" />
+              </div>
+              <Skeleton width="4rem" height="1.5rem" style={{ borderRadius: '9999px' }} />
+            </div>
+          </SkeletonCard>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function AttendancePage() {
   const navigate = useNavigate()
@@ -63,6 +102,12 @@ export default function AttendancePage() {
   }, [classes])
 
   const [activeTab, setActiveTab] = useState<Tab>('today')
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 600)
+    return () => clearTimeout(timer)
+  }, [])
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
@@ -387,10 +432,10 @@ export default function AttendancePage() {
 
         return `<tr class="${idx % 2 === 1 ? 'alt' : ''}">
         <td style="padding:4px;font-size:9px">${idx + 1}</td>
-        <td style="padding:4px;font-size:8px;font-family:monospace;color:#6366f1">${s.id}</td>
-        <td style="padding:4px;font-size:9px;font-weight:500">${optsIsBn ? s.nameBn || s.nameEn : s.nameEn}</td>
-        <td style="padding:4px;font-size:8px">${s.class}</td>
-        <td style="padding:4px;font-size:8px">${s.section || '—'}</td>
+        <td style="padding:4px;font-size:8px;font-family:monospace;color:#6366f1">${escapeHtml(s.id)}</td>
+        <td style="padding:4px;font-size:9px;font-weight:500">${escapeHtml(optsIsBn ? s.nameBn || s.nameEn : s.nameEn)}</td>
+        <td style="padding:4px;font-size:8px">${escapeHtml(s.class)}</td>
+        <td style="padding:4px;font-size:8px">${escapeHtml(s.section || '—')}</td>
         <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#059669">${p}</td>
         <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#dc2626">${a}</td>
         <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#d97706">${l}</td>
@@ -409,10 +454,10 @@ export default function AttendancePage() {
         })
         .join('')
 
-      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title>
 <style>@page{size:A4 ${orientation};margin:6mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:10px;padding-bottom:5px;border-bottom:2px solid #6366f1;margin-bottom:8px}.logo{width:28px;height:28px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}.ttl{text-align:center;font-size:11px;font-weight:700;margin-bottom:3px}.sub{text-align:center;font-size:8px;color:#666;margin-bottom:8px}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:3px;text-align:left;font-size:7px;font-weight:700;text-transform:uppercase;border:0.5px solid #5356d4}td{padding:3px;border:0.5px solid #e5e7eb}tr.alt td{background:#f9fafb}.ftr{margin-top:8px;padding-top:5px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:7px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
 <div class="hdr"><div class="logo">ET</div><div><div style="font-size:11px;font-weight:700;color:#6366f1">EduTech — Sunrise Academy</div><div style="font-size:7px;color:#888">Student Monthly Attendance</div></div></div>
-<div class="ttl">${title}</div>
+<div class="ttl">${escapeHtml(title)}</div>
 <div class="sub">${optsIsBn ? 'মোট' : 'Total'}: ${selectedList.length} ${optsIsBn ? 'জন' : 'students'} · ${dateFrom} → ${dateTo} · ${rangeDays.length} ${optsIsBn ? 'দিন' : 'days'}</div>
 <table><thead><tr>
   <th style="width:20px">#</th>
@@ -464,10 +509,10 @@ export default function AttendancePage() {
 
         return `<tr class="${idx % 2 === 1 ? 'alt' : ''}">
         <td style="padding:4px;font-size:9px">${idx + 1}</td>
-        <td style="padding:4px;font-size:8px;font-family:monospace;color:#6366f1">${t.id}</td>
-        <td style="padding:4px;font-size:9px;font-weight:500">${optsIsBn ? t.nameBn || t.nameEn : t.nameEn}</td>
-        <td style="padding:4px;font-size:8px">${getDeptName(t.departmentId)}</td>
-        <td style="padding:4px;font-size:8px">${t.designation || '—'}</td>
+        <td style="padding:4px;font-size:8px;font-family:monospace;color:#6366f1">${escapeHtml(t.id)}</td>
+        <td style="padding:4px;font-size:9px;font-weight:500">${escapeHtml(optsIsBn ? t.nameBn || t.nameEn : t.nameEn)}</td>
+        <td style="padding:4px;font-size:8px">${escapeHtml(getDeptName(t.departmentId))}</td>
+        <td style="padding:4px;font-size:8px">${escapeHtml(t.designation || '—')}</td>
         <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#059669">${p}</td>
         <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#dc2626">${a}</td>
         <td style="padding:4px;text-align:center;font-size:8px;font-weight:600;color:#d97706">${l}</td>
@@ -486,10 +531,10 @@ export default function AttendancePage() {
         })
         .join('')
 
-      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title>
 <style>@page{size:A4 ${orientation};margin:6mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:10px;padding-bottom:5px;border-bottom:2px solid #6366f1;margin-bottom:8px}.logo{width:28px;height:28px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}.ttl{text-align:center;font-size:11px;font-weight:700;margin-bottom:3px}.sub{text-align:center;font-size:8px;color:#666;margin-bottom:8px}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:3px;text-align:left;font-size:7px;font-weight:700;text-transform:uppercase;border:0.5px solid #5356d4}td{padding:3px;border:0.5px solid #e5e7eb}tr.alt td{background:#f9fafb}.ftr{margin-top:8px;padding-top:5px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:7px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
 <div class="hdr"><div class="logo">ET</div><div><div style="font-size:11px;font-weight:700;color:#6366f1">EduTech — Sunrise Academy</div><div style="font-size:7px;color:#888">Employee Monthly Attendance</div></div></div>
-<div class="ttl">${title}</div>
+<div class="ttl">${escapeHtml(title)}</div>
 <div class="sub">${optsIsBn ? 'মোট' : 'Total'}: ${selectedList.length} ${optsIsBn ? 'জন' : 'employees'} · ${dateFrom} → ${dateTo} · ${rangeDays.length} ${optsIsBn ? 'দিন' : 'days'}</div>
 <table><thead><tr>
   <th style="width:20px">#</th>
@@ -659,6 +704,8 @@ export default function AttendancePage() {
       Icon: LogOut,
     },
   ]
+
+  if (isLoading) return <AttendancePageSkeleton />
 
   return (
     <div>

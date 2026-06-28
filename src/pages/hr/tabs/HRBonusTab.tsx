@@ -1,3 +1,4 @@
+import React from 'react'
 import {
   Gift,
   FileText,
@@ -37,7 +38,7 @@ interface HRBonusTabProps {
   getTeacherName: (id: string) => string
 }
 
-export default function HRBonusTab({
+export const HRBonusTab = React.memo(function HRBonusTab({
   isBn,
   isMobile,
   filteredBonuses,
@@ -329,4 +330,4 @@ export default function HRBonusTab({
       )}
     </div>
   )
-}
+})

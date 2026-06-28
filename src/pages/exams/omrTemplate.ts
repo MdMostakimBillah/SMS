@@ -1,4 +1,5 @@
 import QRCode from 'qrcode'
+import { escapeHtml } from '@/lib/sanitize'
 
 const bn = (n: number): string => {
   const d = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
@@ -116,7 +117,7 @@ function buildExaminerColumns(c: string, totalQ: number, options: string[], qPer
     for (let q = start; q <= end; q++) {
       let bubs = ''
       options.forEach((m) => {
-        bubs += `<td style="width:20px;height:20px;text-align:center;vertical-align:middle;padding:1px;"><div style="width:16px;height:16px;border:1.5px solid ${c};border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:${c};background:white;">${m}</div></td>`
+        bubs += `<td style="width:20px;height:20px;text-align:center;vertical-align:middle;padding:1px;"><div style="width:16px;height:16px;border:1.5px solid ${c};border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:${c};background:white;">${escapeHtml(m)}</div></td>`
       })
       rows += `<tr>
         <td style="padding:2px 3px;font-size:9px;font-weight:700;color:#111827;text-align:center;border:1px solid ${c}33;width:22px;">${q}</td>
@@ -374,26 +375,26 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
   <!-- HEADER -->
   <div style="text-align:center;margin-bottom:6px;padding-bottom:5px;border-bottom:2px solid ${c};">
     <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:4px;">
-      <div style="width:60px;height:60px;border-radius:50%;border:2px solid ${c};display:flex;align-items:center;justify-content:center;font-size:7px;color:${c};font-weight:700;overflow:hidden;">${cfg.logo ? `<img src="${cfg.logo}" style="width:100%;height:100%;object-fit:cover;" />` : schoolName.charAt(0)}</div>
+      <div style="width:60px;height:60px;border-radius:50%;border:2px solid ${c};display:flex;align-items:center;justify-content:center;font-size:7px;color:${c};font-weight:700;overflow:hidden;">${cfg.logo ? `<img src="${cfg.logo}" style="width:100%;height:100%;object-fit:cover;" />` : escapeHtml(schoolName.charAt(0))}</div>
       <div>
-        <h1 style="font-size:18px;font-weight:800;color:${c};margin-bottom:1px;">${schoolName}</h1>
-        <div style="font-size:9px;color:#6b7280;">${schoolAddr}</div>
+        <h1 style="font-size:18px;font-weight:800;color:${c};margin-bottom:1px;">${escapeHtml(schoolName)}</h1>
+        <div style="font-size:9px;color:#6b7280;">${escapeHtml(schoolAddr)}</div>
       </div>
-      ${cfg.showBarcode ? `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${barcodePlaceholder(c)}<div style="font-size:6px;color:#9ca3af;">${uniqueSN}</div></div>` : ''}
+      ${cfg.showBarcode ? `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${barcodePlaceholder(c)}<div style="font-size:6px;color:#9ca3af;">${escapeHtml(uniqueSN)}</div></div>` : ''}
     </div>
-    <div style="font-size:10px;color:#374151;margin-bottom:2px;">${cfg.sessionName}</div>
-    ${cfg.showClass ? `<div style="font-size:15px;font-weight:800;color:#111827;margin-bottom:2px;">${isBn ? cfg.classNameBn : cfg.className}</div>` : ''}
-    ${cfg.showGroup && cfg.groupName ? `<div style="font-size:10px;color:#374151;margin-bottom:1px;">${isBn ? cfg.groupNameBn : cfg.groupName}</div>` : ''}
-    ${cfg.showSection && cfg.sectionName ? `<div style="font-size:10px;color:#374151;margin-bottom:1px;">${isBn ? 'শাখা' : 'Section'}: ${cfg.sectionName}</div>` : ''}
-    ${cfg.showExamName ? `<div style="font-size:12px;font-weight:700;color:${c};margin-bottom:3px;">${isBn ? cfg.examNameBn : cfg.examName}</div>` : ''}
-    ${cfg.showSubjectName ? `<div style="font-size:10px;color:#374151;margin-bottom:2px;">${isBn ? cfg.subjectNameBn : cfg.subjectName}</div>` : ''}
+    <div style="font-size:10px;color:#374151;margin-bottom:2px;">${escapeHtml(cfg.sessionName)}</div>
+    ${cfg.showClass ? `<div style="font-size:15px;font-weight:800;color:#111827;margin-bottom:2px;">${escapeHtml(isBn ? cfg.classNameBn : cfg.className)}</div>` : ''}
+    ${cfg.showGroup && cfg.groupName ? `<div style="font-size:10px;color:#374151;margin-bottom:1px;">${escapeHtml(isBn ? cfg.groupNameBn : cfg.groupName)}</div>` : ''}
+    ${cfg.showSection && cfg.sectionName ? `<div style="font-size:10px;color:#374151;margin-bottom:1px;">${isBn ? 'শাখা' : 'Section'}: ${escapeHtml(cfg.sectionName)}</div>` : ''}
+    ${cfg.showExamName ? `<div style="font-size:12px;font-weight:700;color:${c};margin-bottom:3px;">${escapeHtml(isBn ? cfg.examNameBn : cfg.examName)}</div>` : ''}
+    ${cfg.showSubjectName ? `<div style="font-size:10px;color:#374151;margin-bottom:2px;">${escapeHtml(isBn ? cfg.subjectNameBn : cfg.subjectName)}</div>` : ''}
     <div style="font-size:7px;color:#6b7280;">${isBn ? 'অবশ্যই কালো বা নীল পয়েন্ট কলম দিয়ে বৃত্ত ভর্তি করতে হবে' : 'Fill bubbles with black or blue pen'}</div>
   </div>
 
   <!-- SERIAL + SECURITY + VERIFICATION -->
-  ${cfg.showSerialNumber ? `<div style="position:absolute;top:10px;right:14px;text-align:right;"><div style="font-size:11px;font-weight:800;color:${c};">#${uniqueSN}</div></div>` : ''}
-  ${cfg.showSecurityCode ? `<div style="position:absolute;top:24px;right:14px;text-align:right;"><div style="font-size:6px;color:#9ca3af;">SEC: ${securityToken}</div></div>` : ''}
-  ${cfg.showVerificationCode ? `<div style="position:absolute;top:36px;right:14px;text-align:right;"><div style="font-size:6px;color:#9ca3af;">VER: ${verificationCode}</div></div>` : ''}
+  ${cfg.showSerialNumber ? `<div style="position:absolute;top:10px;right:14px;text-align:right;"><div style="font-size:11px;font-weight:800;color:${c};">#${escapeHtml(uniqueSN)}</div></div>` : ''}
+  ${cfg.showSecurityCode ? `<div style="position:absolute;top:24px;right:14px;text-align:right;"><div style="font-size:6px;color:#9ca3af;">SEC: ${escapeHtml(securityToken)}</div></div>` : ''}
+  ${cfg.showVerificationCode ? `<div style="position:absolute;top:36px;right:14px;text-align:right;"><div style="font-size:6px;color:#9ca3af;">VER: ${escapeHtml(verificationCode)}</div></div>` : ''}
 
   <!-- STUDENT PART -->
   <div style="margin-bottom:6px;">
@@ -439,7 +440,7 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
 
   <!-- FOOTER -->
   <div style="text-align:center;margin-top:5px;padding-top:3px;border-top:1.5px solid ${c};font-size:7px;color:#9ca3af;">
-    ${schoolName} &bull; OMR Sheet &bull; ${isBn ? 'ফরম্যাট' : 'Format'}: ${cfg.sheetFormat} &bull; ${uniqueSN}
+    ${escapeHtml(schoolName)} &bull; OMR Sheet &bull; ${isBn ? 'ফরম্যাট' : 'Format'}: ${cfg.sheetFormat} &bull; ${escapeHtml(uniqueSN)}
   </div>
 
 </div>

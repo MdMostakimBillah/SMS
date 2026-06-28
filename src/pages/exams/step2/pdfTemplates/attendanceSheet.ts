@@ -1,4 +1,5 @@
 import { getPDFBranding } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 interface Student {
   id: string
@@ -23,7 +24,7 @@ export function generateAttendanceSheetHTML(params: AttendanceParams): string {
   const brand = getPDFBranding()
   const schoolName = params.institutionName || brand.schoolName
 
-  return `<!DOCTYPE html><html><head><title>Attendance - ${classId} ${sectionId} ${date}</title>
+  return `<!DOCTYPE html><html><head><title>Attendance - ${escapeHtml(classId)} ${escapeHtml(sectionId)} ${escapeHtml(date)}</title>
 <style>
   @page{size:A4 portrait;margin:15mm}
   *{margin:0;padding:0;box-sizing:border-box}
@@ -45,20 +46,20 @@ export function generateAttendanceSheetHTML(params: AttendanceParams): string {
   @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 </style></head><body>
 <div class="header">
-  <div class="school">${schoolName}</div>
-  ${brand.address ? `<div class="sub">${brand.address}</div>` : ''}
+  <div class="school">${escapeHtml(schoolName)}</div>
+  ${brand.address ? `<div class="sub">${escapeHtml(brand.address)}</div>` : ''}
 </div>
 <div class="title">Exam Attendance Report / পরীক্ষার উপস্থিতি রিপোর্ট</div>
 <div class="info">
-  <span><b>Class:</b> ${classId} - ${sectionId}</span>
-  <span><b>Date:</b> ${date}</span>
-  <span><b>Shift:</b> ${shift || 'N/A'}</span>
+  <span><b>Class:</b> ${escapeHtml(classId)} - ${escapeHtml(sectionId)}</span>
+  <span><b>Date:</b> ${escapeHtml(date)}</span>
+  <span><b>Shift:</b> ${escapeHtml(shift || 'N/A')}</span>
 </div>
 <table>
   <thead><tr><th>#</th><th>Roll</th><th>Student Name</th><th>Student ID</th><th>Status</th></tr></thead>
   <tbody>
-    ${present.map((s, i) => `<tr><td>${i + 1}</td><td>${s.roll || '-'}</td><td>${s.nameEn}</td><td>${s.id}</td><td class="present">Present / উপস্থিত</td></tr>`).join('')}
-    ${absent.map((s, i) => `<tr><td>${present.length + i + 1}</td><td>${s.roll || '-'}</td><td>${s.nameEn}</td><td>${s.id}</td><td class="absent">Absent / অনুপস্থিত</td></tr>`).join('')}
+    ${present.map((s, i) => `<tr><td>${i + 1}</td><td>${escapeHtml(s.roll || '-')}</td><td>${escapeHtml(s.nameEn)}</td><td>${escapeHtml(s.id)}</td><td class="present">Present / উপস্থিত</td></tr>`).join('')}
+    ${absent.map((s, i) => `<tr><td>${present.length + i + 1}</td><td>${escapeHtml(s.roll || '-')}</td><td>${escapeHtml(s.nameEn)}</td><td>${escapeHtml(s.id)}</td><td class="absent">Absent / অনুপস্থিত</td></tr>`).join('')}
   </tbody>
 </table>
 <div class="summary">

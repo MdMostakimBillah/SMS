@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { Download, MessageSquare, X, CheckSquare, Square, Search, Send } from 'lucide-react'
 import QRCode from 'qrcode'
@@ -94,7 +94,7 @@ function getGradeColor(letter: string): string {
   return colors[letter] || '#6b7280'
 }
 
-export default function MarksheetTab({
+export const MarksheetTab = React.memo(function MarksheetTab({
   enrichedData,
   examName,
   examSession,
@@ -559,4 +559,4 @@ export default function MarksheetTab({
       )}
     </div>
   )
-}
+})

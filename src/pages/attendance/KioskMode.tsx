@@ -13,6 +13,7 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import { useSessionStudents } from '@/store/admissionStore'
+import { useClassStore } from '@/store/classStore'
 import { useFaceApi, type RegisteredFace } from '@/hooks/useFaceApi'
 
 
@@ -60,6 +61,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     }))
   )
   const students = useSessionStudents()
+  const { institution } = useClassStore()
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
   const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
   const { loaded: faceApiLoaded, loading: faceApiLoading, error: faceApiError, detectFace, matchFace } = useFaceApi()
@@ -238,7 +240,38 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     const existing = attendance[date]?.[staffId]
     const punches = existing?.punches || []
     const lastPunch = punches[punches.length - 1]
-    const punchType: 'in' | 'out' = !lastPunch || lastPunch.type === 'out' ? 'in' : 'out'
+
+    // Check if user already has an IN punch
+    const hasInProgress = punches.some((p) => p.type === 'in')
+
+    let punchType: 'in' | 'out'
+
+    if (!hasInProgress) {
+      // No IN punch yet → first punch is always IN
+      punchType = 'in'
+    } else {
+      // Has IN punch → use proximity logic
+      const currentTimeMinutes = now.getHours() * 60 + now.getMinutes()
+      const startTime = institution?.startTime || '07:30'
+      const endTime = institution?.endTime || '14:30'
+      const [startH, startM] = startTime.split(':').map(Number)
+      const [endH, endM] = endTime.split(':').map(Number)
+      const startMinutes = startH * 60 + startM
+      const endMinutes = endH * 60 + endM
+
+      const distToStart = Math.abs(currentTimeMinutes - startMinutes)
+      const distToEnd = Math.abs(currentTimeMinutes - endMinutes)
+
+      if (distToStart < distToEnd) {
+        punchType = 'in'
+      } else if (distToEnd < distToStart) {
+        punchType = 'out'
+      } else {
+        // Equidistant - toggle based on last punch
+        punchType = !lastPunch || lastPunch.type === 'out' ? 'in' : 'out'
+      }
+    }
+
     const punchesNew = [...punches, { time: timeStr, type: punchType }]
     const status = punchType === 'in' ? 'present' : existing?.status || 'present'
     const updatedAttendance = {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { ClipboardCheck, Save, Trash2, Settings, X, Award, BookOpen, Users } from 'lucide-react'
 import { sectionCls, sectionTitleCls, inputCls, btnPrimary } from '@/lib/styles'
 import type { MarkAdjustment, ExtraMarkEntry, ExtraMarkType } from '@/store/examStore'
@@ -48,7 +48,7 @@ interface StudentRow {
   finalPercentage: number
 }
 
-export function MarkAdjustmentTab({
+export const MarkAdjustmentTab = React.memo(function MarkAdjustmentTab({
   examId,
   classId,
   sectionId,
@@ -415,4 +415,4 @@ export function MarkAdjustmentTab({
       )}
     </div>
   )
-}
+})

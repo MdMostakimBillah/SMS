@@ -683,20 +683,22 @@ const ViewModal = React.memo(function ViewModal({
   student,
   isBn,
   onClose,
+  teacherMap,
 }: {
   student: StudentAdmission
   isBn: boolean
   onClose: () => void
+  teacherMap: Map<string, { id: string; nameEn: string }>
 }) {
   const download = useCallback(async () => {
     const qrDataUrl = await QRCode.toDataURL(student.id, { width: 120, margin: 1 })
-    const tName = student.teacherId ? useTeacherStore.getState().teachers.find((t) => t.id === student.teacherId)?.nameEn : ''
+    const tName = student.teacherId ? teacherMap.get(student.teacherId)?.nameEn : ''
     const win = window.open('', '_blank')
     if (!win) return
     win.document.write(generateA4HTML(student, isBn, qrDataUrl, tName, useClassStore.getState().institution.name))
     win.document.close()
     setTimeout(() => win.print(), 800)
-  }, [student, isBn])
+  }, [student, isBn, teacherMap])
 
   const sc = student.status === 'approved' ? 'var(--green)' : student.status === 'rejected' ? 'var(--red)' : 'var(--amber)'
   const sb =
@@ -865,7 +867,7 @@ const ViewModal = React.memo(function ViewModal({
               🎓 {isBn ? 'একাডেমিক' : 'Academic'}
             </div>
             {row(isBn ? 'শিক্ষাবর্ষ' : 'Academic Year', student.academicYear)}
-            {row(isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher', student.teacherId ? useTeacherStore.getState().teachers.find((t) => t.id === student.teacherId)?.nameEn || '—' : '—')}
+            {row(isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher', student.teacherId ? teacherMap.get(student.teacherId)?.nameEn || '—' : '—')}
             {row(isBn ? 'ভর্তির তারিখ' : 'Admission Date', student.admissionDate)}
             {row(isBn ? 'আগের স্কুল' : 'Prev School', student.previousSchool)}
           </div>
@@ -945,6 +947,7 @@ export default function AdmissionManage() {
   const allStudents = useAdmissionStore((s) => s.students)
   const { classes, institution } = useClassStore()
   const teachers = useTeacherStore((s) => s.teachers)
+  const teacherMap = useMemo(() => new Map(teachers.map((t) => [t.id, t])), [teachers])
   const currentSession = institution.currentSession
 
   const students = useMemo(
@@ -1198,7 +1201,7 @@ export default function AdmissionManage() {
           onSave={(d) => updateStudent(editingStudent.id, d)}
         />
       )}
-      {viewingStudent && <ViewModal student={viewingStudent} isBn={isBn} onClose={() => setViewingStudent(null)} />}
+      {viewingStudent && <ViewModal student={viewingStudent} isBn={isBn} onClose={() => setViewingStudent(null)} teacherMap={teacherMap} />}
       {showPDFModal && (
         <PDFOptionsModal
           count={selected.length > 0 ? selected.length : filtered.length}

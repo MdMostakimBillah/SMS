@@ -1,3 +1,4 @@
+import React from 'react'
 import {
   Calculator,
   Save,
@@ -64,7 +65,7 @@ interface HRSalarySetupTabProps {
   upsertManyMonthlySalaryConfigs: (configs: MonthlySalaryConfig[]) => void
 }
 
-export default function HRSalarySetupTab({
+export const HRSalarySetupTab = React.memo(function HRSalarySetupTab({
   isBn,
   isMobile,
   activeTeachers,
@@ -498,4 +499,4 @@ export default function HRSalarySetupTab({
       )}
     </div>
   )
-}
+})

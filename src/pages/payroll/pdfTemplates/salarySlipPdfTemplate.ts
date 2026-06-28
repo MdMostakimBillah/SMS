@@ -1,5 +1,6 @@
 import { getBrandColor } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 export interface SalarySlipEmployee {
   id: string
@@ -47,23 +48,23 @@ function calcSalary(t: SalarySlipEmployee) {
 function singleSlipHTML(t: SalarySlipEmployee, month: string, isBn: boolean, brand: string, schoolName: string, logoHTML: string): string {
   const s = calcSalary(t)
   const facilityRows = t.facilityDetails
-    .map((f) => `<tr><td>${isBn ? f.nameBn : f.name}</td><td style="text-align:right">৳${f.amount.toLocaleString()}</td></tr>`)
+    .map((f) => `<tr><td>${escapeHtml(isBn ? f.nameBn : f.name)}</td><td style="text-align:right">৳${f.amount.toLocaleString()}</td></tr>`)
     .join('')
 
   return `<div class="slip">
     <div class="header">
       <div style="display:flex;align-items:center;gap:6px">
         ${logoHTML}
-        <div class="school"><h1 style="color:${brand}">${schoolName}</h1><p>${schoolName}</p></div>
+        <div class="school"><h1 style="color:${brand}">${escapeHtml(schoolName)}</h1><p>${escapeHtml(schoolName)}</p></div>
       </div>
       <div style="text-align:right"><div style="font-size:7px;color:#666">${isBn ? 'বেতন পর্চি' : 'Payslip For'}</div><div style="font-size:10px;font-weight:700;color:${brand}">${month}</div></div>
     </div>
     <div class="title" style="background:${brand}">SALARY SLIP / বেতন পর্চি</div>
     <div class="info-row">
-      <div class="info-item"><div class="label">ID</div><div class="value" style="color:${brand}">${t.id}</div></div>
-      <div class="info-item"><div class="label">${isBn ? 'নাম' : 'Name'}</div><div class="value" style="color:${brand}">${t.nameEn}</div></div>
-      <div class="info-item"><div class="label">${isBn ? 'বিভাগ' : 'Dept'}</div><div class="value" style="color:${brand}">${t.departmentId}</div></div>
-      <div class="info-item"><div class="label">${isBn ? 'পদবি' : 'Designation'}</div><div class="value" style="color:${brand}">${t.designation || '—'}</div></div>
+      <div class="info-item"><div class="label">ID</div><div class="value" style="color:${brand}">${escapeHtml(t.id)}</div></div>
+      <div class="info-item"><div class="label">${isBn ? 'নাম' : 'Name'}</div><div class="value" style="color:${brand}">${escapeHtml(t.nameEn)}</div></div>
+      <div class="info-item"><div class="label">${isBn ? 'বিভাগ' : 'Dept'}</div><div class="value" style="color:${brand}">${escapeHtml(t.departmentId)}</div></div>
+      <div class="info-item"><div class="label">${isBn ? 'পদবি' : 'Designation'}</div><div class="value" style="color:${brand}">${escapeHtml(t.designation || '—')}</div></div>
     </div>
     <div style="display:flex;gap:12px">
       <div class="section" style="flex:1">
@@ -114,7 +115,7 @@ export function generateSingleSalarySlipPDF(
   const schoolName = opts.institutionName || pdfBrand.schoolName
   const logoHTML = pdfLogoHTML(pdfBrand, 32)
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Payslip - ${employee.id}</title>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Payslip - ${escapeHtml(employee.id)}</title>
 <style>
   @page{size:${orientation};margin:10mm}
   *{margin:0;padding:0;box-sizing:border-box}
@@ -162,7 +163,7 @@ export function generateAllSalarySlipsPDF(
     .map((emp) => `<div class="slip-wrap">${singleSlipHTML(emp, month, isBn, brand, schoolName, logoHTML)}</div>`)
     .join('\n')
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Salary Slips - ${month}</title>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Salary Slips - ${escapeHtml(month)}</title>
 <style>
   @page{size:portrait;margin:10mm}
   *{margin:0;padding:0;box-sizing:border-box}
@@ -211,10 +212,10 @@ export function generatePayrollSummaryPDF(
       const s = calcSalary(t)
       return `<tr style="page-break-inside:avoid;${i % 2 === 0 ? '' : 'background:#f8fafc'}">
         <td style="padding:5px 6px;font-size:10px;text-align:center;border:1px solid #cbd5e1">${i + 1}</td>
-        <td style="padding:5px 6px;font-size:10px;border:1px solid #cbd5e1;font-family:monospace;color:${brand}">${t.id}</td>
-        <td style="padding:5px 6px;font-size:10px;font-weight:500;border:1px solid #cbd5e1">${t.nameEn}</td>
-        <td style="padding:5px 6px;font-size:10px;border:1px solid #cbd5e1">${t.departmentId}</td>
-        <td style="padding:5px 6px;font-size:10px;border:1px solid #cbd5e1">${t.designation || '—'}</td>
+        <td style="padding:5px 6px;font-size:10px;border:1px solid #cbd5e1;font-family:monospace;color:${brand}">${escapeHtml(t.id)}</td>
+        <td style="padding:5px 6px;font-size:10px;font-weight:500;border:1px solid #cbd5e1">${escapeHtml(t.nameEn)}</td>
+        <td style="padding:5px 6px;font-size:10px;border:1px solid #cbd5e1">${escapeHtml(t.departmentId)}</td>
+        <td style="padding:5px 6px;font-size:10px;border:1px solid #cbd5e1">${escapeHtml(t.designation || '—')}</td>
         <td style="padding:5px 6px;font-size:10px;text-align:right;border:1px solid #cbd5e1">৳${s.basic.toLocaleString()}</td>
         <td style="padding:5px 6px;font-size:10px;text-align:right;border:1px solid #cbd5e1">৳${s.bonusVal.toLocaleString()}</td>
         <td style="padding:5px 6px;font-size:10px;text-align:right;border:1px solid #cbd5e1">৳${s.overtimeVal.toLocaleString()}</td>
@@ -230,7 +231,7 @@ export function generatePayrollSummaryPDF(
 
   const thStyle = (align = 'left') => `padding:6px 8px;background:#1e293b;color:#fff;font-weight:700;font-size:9px;border:2px solid ${brand};text-align:${align};white-space:nowrap`
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Payroll - ${employees.length} employees</title>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Payroll - ${escapeHtml(String(employees.length))} employees</title>
 <style>
   @page{size:${orientation};margin:6mm}
   *{margin:0;padding:0;box-sizing:border-box}
@@ -276,7 +277,7 @@ export function generatePayrollSummaryPDF(
     <tbody>
       ${rows}
       <tr class="total-row">
-        <td colspan="5" style="padding:6px 8px;font-size:10px">${isBn ? `মোট (${employees.length} জন)` : `TOTAL (${employees.length} employees)`}</td>
+        <td colspan="5" style="padding:6px 8px;font-size:10px">${isBn ? `মোট (${escapeHtml(String(employees.length))} জন)` : `TOTAL (${escapeHtml(String(employees.length))} employees)`}</td>
         <td style="padding:6px 8px;text-align:right">৳${totalBasic.toLocaleString()}</td>
         <td colspan="4"></td>
         <td style="padding:6px 8px;text-align:right;font-weight:700;color:${brand}">৳${totalNet.toLocaleString()}</td>

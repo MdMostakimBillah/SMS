@@ -1,4 +1,5 @@
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 export interface HRPDFColumn {
   key: string
@@ -86,7 +87,7 @@ const fundTypeLabel = (t: string, isBn: boolean) => {
 
 function getIncrementCell(row: any, key: string, idx: number, isBn: boolean, getTeacherName: (id: string) => string): string {
   if (key === 'serial') return String(idx + 1)
-  if (key === 'teacher') return getTeacherName(row.teacherId)
+  if (key === 'teacher') return escapeHtml(getTeacherName(row.teacherId))
   if (key === 'type') {
     const m: Record<string, string> = {
       annual: isBn ? 'বার্ষিক' : 'Annual',
@@ -97,12 +98,12 @@ function getIncrementCell(row: any, key: string, idx: number, isBn: boolean, get
   }
   if (key === 'percent') return `${row.percentage}%`
   if (key === 'amount') return `৳${row.amount.toLocaleString()}`
-  return String(row[key] || '—')
+  return escapeHtml(String(row[key] || '—'))
 }
 
 function getBonusCell(row: any, key: string, idx: number, isBn: boolean, getTeacherName: (id: string) => string): string {
   if (key === 'serial') return String(idx + 1)
-  if (key === 'teacher') return getTeacherName(row.teacherId)
+  if (key === 'teacher') return escapeHtml(getTeacherName(row.teacherId))
   if (key === 'type') {
     const m: Record<string, string> = {
       festival: isBn ? 'উৎসব' : 'Festival',
@@ -113,23 +114,23 @@ function getBonusCell(row: any, key: string, idx: number, isBn: boolean, getTeac
     return m[row.type] || row.type
   }
   if (key === 'amount') return `৳${row.amount.toLocaleString()}`
-  return String(row[key] || '—')
+  return escapeHtml(String(row[key] || '—'))
 }
 
 function getPromotionCell(row: any, key: string, idx: number, _isBn: boolean, getTeacherName: (id: string) => string): string {
   if (key === 'serial') return String(idx + 1)
-  if (key === 'teacher') return getTeacherName(row.teacherId)
-  if (key === 'from') return row.fromDesignation
-  if (key === 'to') return row.toDesignation
-  return String(row[key] || '—')
+  if (key === 'teacher') return escapeHtml(getTeacherName(row.teacherId))
+  if (key === 'from') return escapeHtml(row.fromDesignation)
+  if (key === 'to') return escapeHtml(row.toDesignation)
+  return escapeHtml(String(row[key] || '—'))
 }
 
 function getFundCell(row: any, key: string, idx: number, isBn: boolean): string {
   if (key === 'serial') return String(idx + 1)
   if (key === 'type') return fundTypeLabel(row.type, isBn)
   if (key === 'amount') return `${row.type === 'withdrawal' ? '-' : '+'}৳${row.amount.toLocaleString()}`
-  if (key === 'desc') return row.description
-  return String(row[key] || '—')
+  if (key === 'desc') return escapeHtml(row.description)
+  return escapeHtml(String(row[key] || '—'))
 }
 
 function getAssignmentCell(
@@ -141,15 +142,15 @@ function getAssignmentCell(
   getFacilityName: (id: string) => string
 ): string {
   if (key === 'serial') return String(idx + 1)
-  if (key === 'teacher') return getTeacherName(row.teacherId)
-  if (key === 'facility') return getFacilityName(row.facilityId)
+  if (key === 'teacher') return escapeHtml(getTeacherName(row.teacherId))
+  if (key === 'facility') return escapeHtml(getFacilityName(row.facilityId))
   if (key === 'amount') return `৳${row.amount.toLocaleString()}`
-  return String(row[key] || '—')
+  return escapeHtml(String(row[key] || '—'))
 }
 
 function getSalaryCell(row: any, key: string, idx: number, _isBn: boolean): string {
   if (key === 'serial') return String(idx + 1)
-  if (key === 'teacher') return row.nameEn
+  if (key === 'teacher') return escapeHtml(row.nameEn)
   if (key === 'basic') return `৳${row.basic.toLocaleString()}`
   if (key === 'perf') return row.perf > 0 ? `৳${row.perf.toLocaleString()}` : '—'
   if (key === 'atten') return row.atten > 0 ? `৳${row.atten.toLocaleString()}` : '—'
@@ -159,7 +160,7 @@ function getSalaryCell(row: any, key: string, idx: number, _isBn: boolean): stri
   if (key === 'deduction') return row.deduction > 0 ? `৳${row.deduction.toLocaleString()}` : '—'
   if (key === 'fund') return row.fundPercent > 0 ? `${row.fundPercent}%` : '—'
   if (key === 'net') return `৳${row.net.toLocaleString()}`
-  return String(row[key] || '—')
+  return escapeHtml(String(row[key] || '—'))
 }
 
 function buildPDF(
@@ -228,7 +229,7 @@ function buildPDF(
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>${title} — ${schoolName}</title>
+<title>${escapeHtml(title)} — ${escapeHtml(schoolName)}</title>
 <style>
   @page { size: A4 ${orientation}; margin: 8mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -250,8 +251,8 @@ function buildPDF(
   <div style="display:flex;align-items:center;gap:10px">
     ${pdfLogoHTML(brand)}
     <div>
-      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${schoolName}</div>
-      ${brand.address ? `<div style="font-size:8px;color:#888">${brand.address}</div>` : ''}
+      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${escapeHtml(schoolName)}</div>
+      ${brand.address ? `<div style="font-size:8px;color:#888">${escapeHtml(brand.address)}</div>` : ''}
     </div>
   </div>
   <div class="meta">
@@ -262,7 +263,7 @@ function buildPDF(
     <div>A4 · ${orientation}</div>
   </div>
 </div>
-<div class="ttl">${title} — ${isBn ? 'শিক্ষাবর্ষ ২০২৫–২৬' : 'Academic Year 2025–26'}</div>
+<div class="ttl">${escapeHtml(title)} — ${isBn ? 'শিক্ষাবর্ষ ২০২৫–২৬' : 'Academic Year 2025–26'}</div>
 <table>
   <thead><tr>${dataHeaders}${extraHeaders}</tr></thead>
   <tbody>${dataRows}${blankRows}</tbody>

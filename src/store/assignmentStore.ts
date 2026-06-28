@@ -3,11 +3,13 @@ import { persist } from 'zustand/middleware'
 
 export type AssignmentStatus = 'active' | 'draft' | 'closed' | 'archived'
 export type SubmissionStatus = 'submitted' | 'reviewed' | 'returned' | 'late'
+export type AssignmentType = 'homework' | 'assignment'
 
 export interface Assignment {
   id: string
   createdAt: string
   updatedAt: string
+  type: AssignmentType
   title: string
   titleBn: string
   description: string
@@ -56,6 +58,7 @@ const sampleAssignments: Assignment[] = [
     id: 'ASN-2026-001',
     createdAt: '2026-06-01',
     updatedAt: '2026-06-01',
+    type: 'homework',
     title: 'Chapter 3 Homework',
     titleBn: 'অধ্যায় ৩ গৃহকাজ',
     description: 'Complete exercises 3.1 to 3.5 from the textbook.',
@@ -73,6 +76,7 @@ const sampleAssignments: Assignment[] = [
     id: 'ASN-2026-002',
     createdAt: '2026-06-03',
     updatedAt: '2026-06-03',
+    type: 'assignment',
     title: 'Science Project Report',
     titleBn: 'বিজ্ঞান প্রকল্প প্রতিবেদন',
     description: 'Write a report on the water cycle experiment conducted in class.',
@@ -90,6 +94,7 @@ const sampleAssignments: Assignment[] = [
     id: 'ASN-2026-003',
     createdAt: '2026-05-20',
     updatedAt: '2026-06-05',
+    type: 'assignment',
     title: 'English Essay Writing',
     titleBn: 'ইংরেজি প্রবন্ধ লেখা',
     description: 'Write a 500-word essay on "My Favorite Teacher".',
@@ -107,6 +112,7 @@ const sampleAssignments: Assignment[] = [
     id: 'ASN-2026-004',
     createdAt: '2026-06-10',
     updatedAt: '2026-06-10',
+    type: 'homework',
     title: 'Math Practice Set',
     titleBn: 'গণিত অনুশীলন সেট',
     description: 'Solve the practice problems from Chapter 5.',
@@ -124,6 +130,7 @@ const sampleAssignments: Assignment[] = [
     id: 'ASN-2026-005',
     createdAt: '2026-05-15',
     updatedAt: '2026-05-28',
+    type: 'assignment',
     title: 'History Presentation',
     titleBn: 'ইতিহাস উপস্থাপনা',
     description: 'Prepare a presentation on the Mughal Empire in Bangladesh.',
@@ -141,6 +148,7 @@ const sampleAssignments: Assignment[] = [
     id: 'ASN-2026-006',
     createdAt: '2026-06-12',
     updatedAt: '2026-06-12',
+    type: 'assignment',
     title: 'Physics Lab Report',
     titleBn: 'পদার্থবিজ্ঞান ল্যাব রিপোর্ট',
     description: 'Write a lab report on the pendulum experiment.',

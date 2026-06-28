@@ -1,5 +1,6 @@
 
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { escapeHtml } from '@/lib/sanitize'
 
 export interface InvigilatorPDFColumn {
   key: string
@@ -84,9 +85,9 @@ export function generateInvigilatorGuardListPDF(
   const pagesHTML = gridData.days.map((day) => {
     const colHeaders = visibleCols.map((c) => {
       const isCenter = c.key === 'students' || c.key === 'capacity' || c.key === 'shift'
-      return `<th style="text-align:${isCenter ? 'center' : 'left'}">${isBn ? c.labelBn : c.label}</th>`
+      return `<th style="text-align:${isCenter ? 'center' : 'left'}">${escapeHtml(isBn ? c.labelBn : c.label)}</th>`
     }).join('')
-    const extraHeaders = emptyColumns.map((h) => `<th>${h || (isBn ? '(ফাঁকা)' : '(Empty)')}</th>`).join('')
+    const extraHeaders = emptyColumns.map((h) => `<th>${escapeHtml(h || (isBn ? '(ফাঁকা)' : '(Empty)'))}</th>`).join('')
 
     const rows = day.rows.map((row, idx) => {
       const cells = visibleCols.map((c) => {
@@ -101,7 +102,7 @@ export function generateInvigilatorGuardListPDF(
 
         const isCenter = c.key === 'students' || c.key === 'capacity' || c.key === 'shift'
         const isBold = c.key === 'classSection' || c.key === 'room'
-        return `<td style="text-align:${isCenter ? 'center' : 'left'};${isBold ? 'font-weight:600' : ''}">${val}</td>`
+        return `<td style="text-align:${isCenter ? 'center' : 'left'};${isBold ? 'font-weight:600' : ''}">${escapeHtml(val)}</td>`
       }).join('')
       const extra = emptyColumns.map(() => '<td></td>').join('')
       return `<tr class="${idx % 2 === 1 ? 'alt' : ''}">${cells}${extra}</tr>`
@@ -115,7 +116,7 @@ export function generateInvigilatorGuardListPDF(
 
     return `
       <div class="page">
-        <div class="date-badge">${day.dateFormatted}</div>
+        <div class="date-badge">${escapeHtml(day.dateFormatted)}</div>
         <table>
           <thead><tr>${colHeaders}${extraHeaders}</tr></thead>
           <tbody>${rows}${blankRowsHTML}</tbody>
@@ -133,7 +134,7 @@ export function generateInvigilatorGuardListPDF(
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>${title} — ${schoolName}</title>
+<title>${escapeHtml(title)} — ${escapeHtml(schoolName)}</title>
 <style>
   @page { size: A4 ${orientation}; margin: 8mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -160,8 +161,8 @@ export function generateInvigilatorGuardListPDF(
   <div style="display:flex;align-items:center;gap:10px">
     ${pdfLogoHTML(brand)}
     <div>
-      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${schoolName}</div>
-      ${brand.address ? `<div style="font-size:8px;color:#888">${brand.address}</div>` : ''}
+      <div style="font-size:13px;font-weight:700;color:${brand.brandColor}">${escapeHtml(schoolName)}</div>
+      ${brand.address ? `<div style="font-size:8px;color:#888">${escapeHtml(brand.address)}</div>` : ''}
     </div>
   </div>
   <div class="meta">
@@ -171,8 +172,8 @@ export function generateInvigilatorGuardListPDF(
     <div>A4 · ${orientation}</div>
   </div>
 </div>
-<div class="ttl">${title}</div>
-<div class="subttl">${headerLabel}</div>
+<div class="ttl">${escapeHtml(title)}</div>
+<div class="subttl">${escapeHtml(headerLabel)}</div>
 ${pagesHTML}
 <div class="ftr">
   <span style="font-size:7px;color:#999">Powered by EduTech</span>

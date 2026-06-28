@@ -47,8 +47,8 @@ import { TabulationPDFOptionsModal } from '@/components/shared/TabulationPDFOpti
 import type { TabulationPdfOptions } from '@/pages/exams/step4/tabulationPdfTemplate'
 import { generateTabulationPDF } from '@/pages/exams/step4/tabulationPdfTemplate'
 import { MarkAdjustmentTab } from '@/pages/exams/step4/MarkAdjustmentTab'
-import MarksheetTab from '@/pages/exams/step4/MarksheetTab'
-import CumulativeMarkSheetTab from '@/pages/exams/step4/CumulativeMarkSheetTab'
+import { MarksheetTab } from '@/pages/exams/step4/MarksheetTab'
+import { CumulativeMarkSheetTab } from '@/pages/exams/step4/CumulativeMarkSheetTab'
 
 type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position' | 'mark-adjustment' | 'marksheet' | 'cumulative-marksheet'
 

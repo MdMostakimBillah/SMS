@@ -58,7 +58,7 @@ const gradeScale = [
   { letter: 'B', range: '50-59' }, { letter: 'C', range: '40-49' }, { letter: 'D', range: '33-39' }, { letter: 'F', range: '0-32' },
 ]
 
-export default function CumulativeMarkSheetTab({
+export const CumulativeMarkSheetTab = React.memo(function CumulativeMarkSheetTab({
   currentExamData, currentExamId, currentExamName, currentExamSession,
   className, sectionName, institutionName, institutionAddress, isBn = false,
 }: CumulativeMarkSheetProps) {
@@ -424,4 +424,4 @@ export default function CumulativeMarkSheetTab({
       )}
     </div>
   )
-}
+})

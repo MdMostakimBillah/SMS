@@ -23,6 +23,7 @@ import { useHRStore } from '@/store/hrStore'
 import { SalarySlipPDFOptionsModal } from '@/components/shared/SalarySlipPDFOptionsModal'
 import type { SalarySlipEmployee } from '@/pages/payroll/pdfTemplates/salarySlipPdfTemplate'
 import { downloadHTML } from '@/lib/pdf'
+import { escapeHtml } from '@/lib/sanitize'
 
 type SortKey = 'name' | 'salary' | 'department' | 'designation'
 
@@ -217,10 +218,10 @@ export default function PayrollPage() {
         const net = gross - deductionAmount - fundAmount
         return `<tr style="border-bottom:1px solid #eee">
         <td style="padding:6px 8px;font-size:11px">${i + 1}</td>
-        <td style="padding:6px 8px;font-size:11px;font-family:monospace;color:#6366f1">${t.id}</td>
-        <td style="padding:6px 8px;font-size:11px;font-weight:500">${t.nameEn}</td>
-        <td style="padding:6px 8px;font-size:11px">${getDeptName(t.departmentId)}</td>
-        <td style="padding:6px 8px;font-size:11px">${t.designation || '—'}</td>
+        <td style="padding:6px 8px;font-size:11px;font-family:monospace;color:#6366f1">${escapeHtml(t.id)}</td>
+        <td style="padding:6px 8px;font-size:11px;font-weight:500">${escapeHtml(t.nameEn)}</td>
+        <td style="padding:6px 8px;font-size:11px">${escapeHtml(getDeptName(t.departmentId))}</td>
+        <td style="padding:6px 8px;font-size:11px">${escapeHtml(t.designation || '—')}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:right">৳${basic.toLocaleString()}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:right">৳${bonusVal.toLocaleString()}</td>
         <td style="padding:6px 8px;font-size:11px;text-align:right">৳${(t.overtime || 0).toLocaleString()}</td>
@@ -233,7 +234,7 @@ export default function PayrollPage() {
 
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(`<!DOCTYPE html><html><head><title>Payroll Report - ${month}</title>
+    win.document.write(`<!DOCTYPE html><html><head><title>Payroll Report - ${escapeHtml(month)}</title>
 <style>
   @page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:12px;background:#fff;padding:15px}
