@@ -20,7 +20,7 @@ import { generateRoutineGridPDF } from '@/pages/classes/routinePdfTemplate'
 import type { RoutineListPDFOptions, RoutineGridData } from '@/pages/classes/routinePdfTemplate'
 import { openPrintWindow } from '@/lib/pdf'
 import { btnPrimary } from '@/lib/styles'
-import * as XLSX from 'xlsx'
+import { XLSX } from '@/lib/excelExport'
 
 const DAYS = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 const DAYS_BN = ['শনিবার', 'রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার']

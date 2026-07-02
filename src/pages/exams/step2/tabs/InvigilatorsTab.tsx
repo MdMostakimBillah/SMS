@@ -20,7 +20,7 @@ import {
 } from 'date-fns'
 import { sectionCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
 import { openPrintWindow } from '@/lib/pdf'
-import * as XLSX from 'xlsx'
+import { XLSX } from '@/lib/excelExport'
 import { generateInvigilatorGuardListPDF } from '../pdfTemplates/invigilatorPdfTemplate'
 import type { InvigilatorGridData, InvigilatorGridDay, InvigilatorGridRow, InvigilatorPDFOptions } from '../pdfTemplates/invigilatorPdfTemplate'
 import { InvigilatorPDFOptionsModal } from '@/components/shared/InvigilatorPDFOptionsModal'

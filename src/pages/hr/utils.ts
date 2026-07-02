@@ -1,33 +1,4 @@
-export function toBnNum(n: number): string {
-  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
-  return String(n).replace(/\d/g, (d) => bn[+d])
-}
-
-export function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}
-
-const avatarGradients = [
-  'linear-gradient(135deg, #6366f1, #8b5cf6)',
-  'linear-gradient(135deg, #14b8a6, #0d9488)',
-  'linear-gradient(135deg, #f59e0b, #d97706)',
-  'linear-gradient(135deg, #22c55e, #16a34a)',
-  'linear-gradient(135deg, #a855f7, #9333ea)',
-  'linear-gradient(135deg, #ec4899, #db2777)',
-  'linear-gradient(135deg, #3b82f6, #2563eb)',
-  'linear-gradient(135deg, #ef4444, #dc2626)',
-]
-
-export function getAvatarGradient(id: string): string {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) hash = (hash << 5) - hash + id.charCodeAt(i)
-  return avatarGradients[Math.abs(hash) % avatarGradients.length]
-}
+export { toBnNum, getInitials, getAvatarGradient } from '@/lib/i18n'
 
 export const sectionCls = (isMobile: boolean) =>
   `bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl ${isMobile ? 'p-[0.875rem]' : 'p-4'} mb-3.5 overflow-hidden`

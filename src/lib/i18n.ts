@@ -1,6 +1,5 @@
 export const translations = {
   bn: {
-    // Navigation groups
     grp_main: 'প্রধান',
     grp_manage: 'ব্যবস্থাপনা',
     grp_academic: 'একাডেমিক',
@@ -10,8 +9,6 @@ export const translations = {
     grp_portal: 'পোর্টাল',
     grp_report: 'রিপোর্ট',
     grp_system: 'সিস্টেম',
-
-    // Nav items
     nav_dashboard: 'ড্যাশবোর্ড',
     nav_students: 'ছাত্র ব্যবস্থাপনা',
     nav_teachers: 'শিক্ষক ব্যবস্থাপনা',
@@ -38,8 +35,6 @@ export const translations = {
     nav_reports: 'রিপোর্ট',
     nav_superadmin: 'Super Admin',
     nav_settings: 'সেটিংস',
-
-    // Dashboard
     dashboard_title: 'ড্যাশবোর্ড',
     dashboard_sub: 'সার্বিক অবস্থা — শিক্ষাবর্ষ ২০২৫–২৬',
     total_students: 'মোট ছাত্র',
@@ -50,8 +45,6 @@ export const translations = {
     upcoming_events: 'আসন্ন ইভেন্ট',
     view_all: 'সব দেখুন',
     calendar: 'ক্যালেন্ডার',
-
-    // Common
     search_placeholder: 'ছাত্র, শিক্ষক, ক্লাস খুঁজুন...',
     add_new: 'নতুন যোগ করুন',
     academic_year: '২০২৫–২৬ শিক্ষাবর্ষ',
@@ -66,7 +59,6 @@ export const translations = {
   },
 
   en: {
-    // Navigation groups
     grp_main: 'Main',
     grp_manage: 'Management',
     grp_academic: 'Academics',
@@ -76,8 +68,6 @@ export const translations = {
     grp_portal: 'Portals',
     grp_report: 'Reports',
     grp_system: 'System',
-
-    // Nav items
     nav_dashboard: 'Dashboard',
     nav_students: 'Student Management',
     nav_teachers: 'Teacher Management',
@@ -104,8 +94,6 @@ export const translations = {
     nav_reports: 'Reports',
     nav_superadmin: 'Super Admin',
     nav_settings: 'Settings',
-
-    // Dashboard
     dashboard_title: 'Dashboard',
     dashboard_sub: 'Overview — Academic Year 2025–26',
     total_students: 'Total Students',
@@ -116,8 +104,6 @@ export const translations = {
     upcoming_events: 'Upcoming Events',
     view_all: 'View all',
     calendar: 'Calendar',
-
-    // Common
     search_placeholder: 'Search students, teachers...',
     add_new: 'Add New',
     academic_year: 'Academic Year 2025–26',
@@ -137,3 +123,41 @@ export type TranslationKey = keyof typeof translations.en
 export function t(key: TranslationKey, lang: 'bn' | 'en'): string {
   return translations[lang][key] ?? key
 }
+
+const BN_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
+
+export function toBnNum(n: number): string {
+  return String(n).replace(/\d/g, (d) => BN_DIGITS[+d])
+}
+
+export function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
+
+const AVATAR_GRADIENTS = [
+  'linear-gradient(135deg, #6366f1, #8b5cf6)',
+  'linear-gradient(135deg, #14b8a6, #0d9488)',
+  'linear-gradient(135deg, #f59e0b, #d97706)',
+  'linear-gradient(135deg, #22c55e, #16a34a)',
+  'linear-gradient(135deg, #a855f7, #9333ea)',
+  'linear-gradient(135deg, #ec4899, #db2777)',
+  'linear-gradient(135deg, #3b82f6, #2563eb)',
+  'linear-gradient(135deg, #ef4444, #dc2626)',
+]
+
+export function getAvatarGradient(id: string): string {
+  let hash = 0
+  for (let i = 0; i < id.length; i++) hash = (hash << 5) - hash + id.charCodeAt(i)
+  return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length]
+}
+
+export const WEEKDAYS_SHORT_EN = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+export const WEEKDAYS_SHORT_BN = ['শনি', 'রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহ', 'শুক্র']
+export const WEEKDAYS_FULL_BN = ['শনিবার', 'রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার']
+export const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+export const MONTHS_BN = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর']

@@ -3,22 +3,7 @@ import type { TabulationStudent } from './MarksheetTab'
 import type { MarksheetOptions } from './MarksheetTab'
 import { getBrandColor } from '@/lib/pdf'
 import { escapeHtml } from '@/lib/sanitize'
-
-
-function getGradeLetter(pct: number): string {
-  if (pct >= 80) return 'A+'
-  if (pct >= 70) return 'A'
-  if (pct >= 60) return 'A-'
-  if (pct >= 50) return 'B'
-  if (pct >= 40) return 'C'
-  if (pct >= 33) return 'D'
-  return 'F'
-}
-
-function getGradeColor(letter: string): string {
-  const colors: Record<string, string> = { 'A+': '#16a34a', A: '#22c55e', 'A-': '#4ade80', B: '#3b82f6', C: '#f59e0b', D: '#f97316', F: '#ef4444' }
-  return colors[letter] || '#6b7280'
-}
+import { getGradeLetter, getGradeColor } from '@/lib/grades'
 
 const gradeScale = [
   { letter: 'A+', range: '80–100' },
@@ -207,7 +192,6 @@ export async function generateMarksheetPDF(
   const qrMap: Record<string, string> = {}
   await Promise.all(
     students.map(async (s) => {
-      const subjects = s.subjectMarks.map((sm) => `${sm.subjectName}:${sm.obtained}/${sm.fullMarks}`).join('; ')
       const grade = s.passedAll ? getGradeLetter(s.percentage) : 'F'
       const payload = [
         `Name: ${s.student.nameEn}`,
@@ -215,12 +199,9 @@ export async function generateMarksheetPDF(
         `Roll: ${s.student.roll}`,
         `Class: ${className}-${sectionName}`,
         `Exam: ${examName} (${examSession})`,
-        `Father: ${isBn ? s.student.fatherNameBn : s.student.fatherNameEn || '-'}`,
-        `Mother: ${isBn ? s.student.motherNameBn : s.student.motherNameEn || '-'}`,
-        `Total: ${s.totalObtained}/${s.totalFull} (${s.percentage.toFixed(1)}%)`,
+        `Total: ${s.totalObtained}/${s.totalFull}`,
         `GPA: ${s.gpa.toFixed(1)} [${grade}]`,
-        `Rank: ${s.classRank ? '#' + s.classRank : '-'}`,
-        `Subjects: ${subjects}`,
+        `Position: ${s.classRank ? '#' + s.classRank : '-'}`,
       ].join('\n')
       try {
         qrMap[s.student.id] = await QRCode.toDataURL(payload, { width: 512, margin: 3, errorCorrectionLevel: 'H', color: { dark: '#000000', light: '#ffffff' } })
@@ -240,8 +221,8 @@ export async function generateMarksheetPDF(
     const examRows = student.subjectMarks.map((sm, idx) => {
       const stat = subjectStats[sm.subjectId]
       const rank = stat?.positions[student.student.id] || 0
-      const status = sm.passed ? 'Pass' : 'Fail'
-      const statusColor = sm.passed ? '#16a34a' : '#ef4444'
+      const grade = sm.passed ? getGradeLetter((sm.obtained / sm.fullMarks) * 100) : 'F'
+      const gradeColor = getGradeColor(grade)
       const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc'
       const subExams = sm.subExams || []
       const hasSub = showSub && subExams.length > 0
@@ -264,7 +245,7 @@ export async function generateMarksheetPDF(
             ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdObtainedFontSize};font-weight:700;border-bottom:1px solid #94a3b8;color:${color};vertical-align:middle;">${sm.obtained}</td>` : ''}
             ${options.showSubjectHighest && si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};font-weight:600;border-bottom:1px solid #94a3b8;color:${stat?.highest === sm.obtained && sm.obtained > 0 ? color : '#374151'};vertical-align:middle;">${stat?.highest || 0}</td>` : ''}
             ${options.showSubjectHighest && si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};font-weight:600;border-bottom:1px solid #94a3b8;color:${rank <= 3 && rank > 0 ? '#f59e0b' : '#374151'};vertical-align:middle;">${rank > 0 ? `#${rank}` : '-'}</td>` : ''}
-            ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};font-weight:600;border-bottom:1px solid #94a3b8;color:${statusColor};vertical-align:middle;">${status}</td>` : ''}
+            ${si === 0 ? `<td rowspan="${subExams.length}" style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};font-weight:600;border-bottom:1px solid #94a3b8;color:${gradeColor};vertical-align:middle;">${grade}</td>` : ''}
           </tr>`
         }).join('')
       }
@@ -277,7 +258,7 @@ export async function generateMarksheetPDF(
         ${showSub ? `<td style="padding:${f.tdSubPadding};text-align:center;font-size:${f.tdSubFontSize};border-bottom:1px solid #94a3b8;color:#9ca3af;">—</td>` : ''}
         <td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #94a3b8;font-weight:700;color:${color};">${sm.obtained}</td>
         ${highestCells}
-        <td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #94a3b8;font-weight:600;color:${statusColor};">${status}</td>
+        <td style="padding:${f.tdPadding};text-align:center;font-size:${f.tdFontSize};border-bottom:1px solid #94a3b8;font-weight:600;color:${gradeColor};">${grade}</td>
       </tr>`
     }).join('')
 
@@ -380,7 +361,7 @@ export async function generateMarksheetPDF(
                 ${subExamHeader}
                 <th style="padding:${f.thPadding};font-size:${f.thFontSize};font-weight:600;color:white;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid ${color};text-align:center;">Total</th>
                 ${highestCol}
-                <th style="padding:${f.thPadding};font-size:${f.thFontSize};font-weight:600;color:white;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid ${color};text-align:center;">Status</th>
+                <th style="padding:${f.thPadding};font-size:${f.thFontSize};font-weight:600;color:white;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid ${color};text-align:center;">Grade</th>
               </tr>
             </thead>
             <tbody>${examRows}</tbody>

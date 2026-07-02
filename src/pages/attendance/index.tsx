@@ -13,7 +13,7 @@ import {
   LogOut,
   XCircle,
 } from 'lucide-react'
-import * as XLSX from 'xlsx'
+import { XLSX } from '@/lib/excelExport'
 
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'

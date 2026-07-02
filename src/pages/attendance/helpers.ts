@@ -10,10 +10,7 @@ export function twentyDaysAgo() {
   return d.toISOString().split('T')[0]
 }
 
-export function toBnNum(n: number): string {
-  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
-  return String(n).replace(/\d/g, (d) => bn[+d])
-}
+export { toBnNum } from '@/lib/i18n'
 
 export function getDaysBetween(from: string, to: string): string[] {
   const days: string[] = []

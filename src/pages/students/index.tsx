@@ -7,11 +7,7 @@ import { useSessionStudents } from '@/store/admissionStore'
 import { useAppStore } from '@/store/appStore'
 import type { LucideIcon } from 'lucide-react'
 import gsap from 'gsap'
-
-function toBnNum(n: number): string {
-  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
-  return String(n).replace(/\d/g, (d) => bn[+d])
-}
+import { toBnNum } from '@/lib/i18n'
 
 function StudentsSkeleton() {
   return (

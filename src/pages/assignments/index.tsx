@@ -32,15 +32,10 @@ const btnPri =
 const btnSec =
   'flex items-center gap-1.5 px-4 py-2 rounded-xl text-[0.8125rem] font-semibold bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-primary)] cursor-pointer hover:shadow-sm transition-all'
 
-function toBnNum(n: number): string {
-  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
-  return String(n).replace(/\d/g, (d) => bn[+d])
-}
+import { toBnNum, MONTHS_EN, MONTHS_BN } from '@/lib/i18n'
 
 const DAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const DAYS_BN = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহ', 'শুক্র', 'শনি']
-const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-const MONTHS_BN = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর']
 
 interface AssignmentForm {
   title: string

@@ -20,7 +20,7 @@ import {
   ChevronDown,
   MoreVertical,
 } from 'lucide-react'
-import * as XLSX from 'xlsx'
+import { XLSX } from '@/lib/excelExport'
 import { useBn } from '@/hooks/useBn'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'

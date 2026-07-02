@@ -33,7 +33,7 @@ import {
 } from 'date-fns'
 import { sectionCls, sectionTitleCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
 import { openPrintWindow } from '@/lib/pdf'
-import * as XLSX from 'xlsx'
+import { XLSX } from '@/lib/excelExport'
 import { generateExamRoutineGridPDF } from '../pdfTemplates/examRoutinePdfTemplate'
 import type { ExamRoutineGridData, ExamRoutineGridCell, ExamRoutinePDFOptions } from '../pdfTemplates/examRoutinePdfTemplate'
 import { ExamRoutinePDFOptionsModal } from '@/components/shared/ExamRoutinePDFOptionsModal'

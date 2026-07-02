@@ -7,6 +7,7 @@ import { useExamStore } from '@/store/examStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, extractClassNumber } from '@/store/classStore'
 import type { TabulationStudent } from './MarksheetTab'
+import { getGradeLetter, getGradeColor } from '@/lib/grades'
 
 interface PrevExam {
   examId: string
@@ -32,21 +33,6 @@ interface Props {
   onDownload: (html: string, filename: string) => void
   onPrevExamsChange: (exams: PrevExam[]) => void
   onCurrentWeightChange: (w: number) => void
-}
-
-function getGradeLetter(pct: number): string {
-  if (pct >= 80) return 'A+'
-  if (pct >= 70) return 'A'
-  if (pct >= 60) return 'A-'
-  if (pct >= 50) return 'B'
-  if (pct >= 40) return 'C'
-  if (pct >= 33) return 'D'
-  return 'F'
-}
-
-function getGradeColor(letter: string): string {
-  const colors: Record<string, string> = { 'A+': '#16a34a', A: '#22c55e', 'A-': '#4ade80', B: '#3b82f6', C: '#f59e0b', D: '#f97316', F: '#ef4444' }
-  return colors[letter] || '#6b7280'
 }
 
 export const CumulativeMarksheetPDFOptionsModal = React.memo(function CumulativeMarksheetPDFOptionsModal({

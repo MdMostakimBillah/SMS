@@ -94,10 +94,7 @@ const STATIC_OPTIONS = [
   },
 ]
 
-function toBnNum(n: number): string {
-  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
-  return String(n).replace(/\d/g, (d) => bn[+d])
-}
+import { toBnNum } from '@/lib/i18n'
 
 // Skeleton Loading
 function TeachersSkeleton() {

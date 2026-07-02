@@ -7,6 +7,17 @@ import { useClassStore } from '@/store/classStore'
 import { getBrandColor, downloadHTML } from '@/lib/pdf'
 import { CumulativeMarksheetPDFOptionsModal } from './CumulativeMarksheetPDFOptionsModal'
 import type { TabulationStudent } from './MarksheetTab'
+import { getGradeLetter, getGradeColor, getGpa } from '@/lib/grades'
+
+const gradeScale = [
+  { letter: 'A+', range: '80–100' },
+  { letter: 'A', range: '70–79' },
+  { letter: 'A-', range: '60–69' },
+  { letter: 'B', range: '50–59' },
+  { letter: 'C', range: '40–49' },
+  { letter: 'D', range: '33–39' },
+  { letter: 'F', range: '0–32' },
+]
 
 interface CumulativeMarkSheetProps {
   currentExamData: (TabulationStudent & { adjustedPercentage: number; adjustedGpa: number })[]
@@ -26,37 +37,6 @@ interface PrevExam {
   weight: number
   students: Record<string, { obtained: number; full: number; percentage: number }>
 }
-
-function getGradeLetter(pct: number): string {
-  if (pct >= 80) return 'A+'
-  if (pct >= 70) return 'A'
-  if (pct >= 60) return 'A-'
-  if (pct >= 50) return 'B'
-  if (pct >= 40) return 'C'
-  if (pct >= 33) return 'D'
-  return 'F'
-}
-
-function getGpa(pct: number, passed: boolean): number {
-  if (!passed) return 0
-  if (pct >= 80) return 5.0
-  if (pct >= 70) return 4.0
-  if (pct >= 60) return 3.5
-  if (pct >= 50) return 3.0
-  if (pct >= 40) return 2.0
-  if (pct >= 33) return 1.0
-  return 0
-}
-
-function getGradeColor(letter: string): string {
-  const colors: Record<string, string> = { 'A+': '#16a34a', A: '#22c55e', 'A-': '#4ade80', B: '#3b82f6', C: '#f59e0b', D: '#f97316', F: '#ef4444' }
-  return colors[letter] || '#6b7280'
-}
-
-const gradeScale = [
-  { letter: 'A+', range: '80-100' }, { letter: 'A', range: '70-79' }, { letter: 'A-', range: '60-69' },
-  { letter: 'B', range: '50-59' }, { letter: 'C', range: '40-49' }, { letter: 'D', range: '33-39' }, { letter: 'F', range: '0-32' },
-]
 
 export const CumulativeMarkSheetTab = React.memo(function CumulativeMarkSheetTab({
   currentExamData, currentExamId, currentExamName, currentExamSession,

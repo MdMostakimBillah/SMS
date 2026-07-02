@@ -7,6 +7,17 @@ import { getBrandColor } from '@/lib/pdf'
 import { MarksheetPDFOptionsModal } from './MarksheetPDFOptionsModal'
 import { downloadHTML } from '@/lib/pdf'
 import { useClassStore } from '@/store/classStore'
+import { getGradeLetter, getGradeColor } from '@/lib/grades'
+
+const gradeScale = [
+  { letter: 'A+', range: '80–100' },
+  { letter: 'A', range: '70–79' },
+  { letter: 'A-', range: '60–69' },
+  { letter: 'B', range: '50–59' },
+  { letter: 'C', range: '40–49' },
+  { letter: 'D', range: '33–39' },
+  { letter: 'F', range: '0–32' },
+]
 
 interface SubjectMark {
   subjectId: string
@@ -67,31 +78,6 @@ export interface MarksheetOptions {
   showGradeScale: boolean
   showSignature: boolean
   fontSize: 'default' | 'compact'
-}
-
-const gradeScale = [
-  { letter: 'A+', range: '80–100', min: 80 },
-  { letter: 'A', range: '70–79', min: 70 },
-  { letter: 'A-', range: '60–69', min: 60 },
-  { letter: 'B', range: '50–59', min: 50 },
-  { letter: 'C', range: '40–49', min: 40 },
-  { letter: 'D', range: '33–39', min: 33 },
-  { letter: 'F', range: '0–32', min: 0 },
-]
-
-function getGradeLetter(pct: number): string {
-  if (pct >= 80) return 'A+'
-  if (pct >= 70) return 'A'
-  if (pct >= 60) return 'A-'
-  if (pct >= 50) return 'B'
-  if (pct >= 40) return 'C'
-  if (pct >= 33) return 'D'
-  return 'F'
-}
-
-function getGradeColor(letter: string): string {
-  const colors: Record<string, string> = { 'A+': '#16a34a', A: '#22c55e', 'A-': '#4ade80', B: '#3b82f6', C: '#f59e0b', D: '#f97316', F: '#ef4444' }
-  return colors[letter] || '#6b7280'
 }
 
 export const MarksheetTab = React.memo(function MarksheetTab({
@@ -170,8 +156,6 @@ export const MarksheetTab = React.memo(function MarksheetTab({
     qrCancelledRef.current = false
     Promise.all(
       enrichedData.map(async (s) => {
-        const admission = allStudents.find((a) => a.id === s.student.id)
-        const subjects = s.subjectMarks.map((sm) => `${sm.subjectName}:${sm.obtained}/${sm.fullMarks}`).join('; ')
         const grade = s.passedAll ? getGradeLetter(s.percentage) : 'F'
         const payload = [
           `Name: ${s.student.nameEn}`,
@@ -179,12 +163,9 @@ export const MarksheetTab = React.memo(function MarksheetTab({
           `Roll: ${s.student.roll}`,
           `Class: ${className}-${sectionName}`,
           `Exam: ${examName} (${examSession})`,
-          `Father: ${admission ? (isBn ? admission.fatherNameBn : admission.fatherNameEn || '-') : '-'}`,
-          `Mother: ${admission ? (isBn ? admission.motherNameBn : admission.motherNameEn || '-') : '-'}`,
-          `Total: ${s.totalObtained}/${s.totalFull} (${s.percentage.toFixed(1)}%)`,
+          `Total: ${s.totalObtained}/${s.totalFull}`,
           `GPA: ${s.gpa.toFixed(1)} [${grade}]`,
-          `Rank: ${s.classRank ? '#' + s.classRank : '-'}`,
-          `Subjects: ${subjects}`,
+          `Position: ${s.classRank ? '#' + s.classRank : '-'}`,
         ].join('\n')
         try {
           return { id: s.student.id, url: await QRCode.toDataURL(payload, { width: 512, margin: 3, errorCorrectionLevel: 'H', color: { dark: '#000000', light: '#ffffff' } }) }
@@ -200,7 +181,7 @@ export const MarksheetTab = React.memo(function MarksheetTab({
       }
     })
     return () => { qrCancelledRef.current = true }
-  }, [enrichedData, allStudents, isBn, className, sectionName, examName, examSession])
+  }, [enrichedData, className, sectionName, examName, examSession])
 
   const handlePdfDownload = (html: string, filename: string) => {
     downloadHTML(filename, html)
@@ -354,7 +335,7 @@ export const MarksheetTab = React.memo(function MarksheetTab({
                     <th className="text-center px-2 py-1.5 font-semibold">Total</th>
                     {options.showSubjectHighest && <th className="text-center px-2 py-1.5 font-semibold">High</th>}
                     {options.showSubjectHighest && <th className="text-center px-2 py-1.5 font-semibold">Pos</th>}
-                    <th className="text-center px-2 py-1.5 font-semibold">Status</th>
+                    <th className="text-center px-2 py-1.5 font-semibold">Grade</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -379,7 +360,7 @@ export const MarksheetTab = React.memo(function MarksheetTab({
                             {si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-bold border-b border-[var(--border)] align-middle" style={{ color: brand }}>{sm.obtained}</td>}
                             {options.showSubjectHighest && si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-semibold border-b border-[var(--border)] align-middle" style={{ color: stat?.highest === sm.obtained && sm.obtained > 0 ? brand : 'var(--text-primary)' }}>{stat?.highest || 0}</td>}
                             {options.showSubjectHighest && si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-semibold border-b border-[var(--border)] align-middle" style={{ color: rank <= 3 && rank > 0 ? '#f59e0b' : 'var(--text-primary)' }}>{rank > 0 ? `#${rank}` : '-'}</td>}
-                            {si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-semibold border-b border-[var(--border)] align-middle"><span className="px-1 py-0.5 rounded text-[0.55rem] font-bold" style={sm.passed ? { background: '#16a34a18', color: '#16a34a' } : { background: '#ef444418', color: '#ef4444' }}>{sm.passed ? 'Pass' : 'Fail'}</span></td>}
+                            {si === 0 && <td rowSpan={subExams.length} className="text-center px-2 py-1 font-semibold border-b border-[var(--border)] align-middle"><span className="px-1 py-0.5 rounded text-[0.55rem] font-bold" style={{ background: `${getGradeColor(sm.passed ? getGradeLetter((sm.obtained / sm.fullMarks) * 100) : 'F')}18`, color: getGradeColor(sm.passed ? getGradeLetter((sm.obtained / sm.fullMarks) * 100) : 'F') }}>{sm.passed ? getGradeLetter((sm.obtained / sm.fullMarks) * 100) : 'F'}</span></td>}
                           </tr>
                         )
                       })
@@ -395,7 +376,7 @@ export const MarksheetTab = React.memo(function MarksheetTab({
                         <td className="text-center px-2 py-1 font-bold border-b border-[var(--border)]" style={{ color: brand }}>{sm.obtained}</td>
                         {options.showSubjectHighest && <td className="text-center px-2 py-1 font-semibold border-b border-[var(--border)]" style={{ color: stat?.highest === sm.obtained && sm.obtained > 0 ? brand : 'var(--text-primary)' }}>{stat?.highest || 0}</td>}
                         {options.showSubjectHighest && <td className="text-center px-2 py-1 font-semibold border-b border-[var(--border)]" style={{ color: rank <= 3 && rank > 0 ? '#f59e0b' : 'var(--text-primary)' }}>{rank > 0 ? `#${rank}` : '-'}</td>}
-                        <td className="text-center px-2 py-1 font-semibold border-b border-[var(--border)]"><span className="px-1 py-0.5 rounded text-[0.55rem] font-bold" style={sm.passed ? { background: '#16a34a18', color: '#16a34a' } : { background: '#ef444418', color: '#ef4444' }}>{sm.passed ? 'Pass' : 'Fail'}</span></td>
+                        <td className="text-center px-2 py-1 font-semibold border-b border-[var(--border)]"><span className="px-1 py-0.5 rounded text-[0.55rem] font-bold" style={{ background: `${getGradeColor(sm.passed ? getGradeLetter((sm.obtained / sm.fullMarks) * 100) : 'F')}18`, color: getGradeColor(sm.passed ? getGradeLetter((sm.obtained / sm.fullMarks) * 100) : 'F') }}>{sm.passed ? getGradeLetter((sm.obtained / sm.fullMarks) * 100) : 'F'}</span></td>
                       </tr>
                     )
                   })}
