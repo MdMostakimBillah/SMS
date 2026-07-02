@@ -12,10 +12,13 @@ export function openPrintWindow(
 ): Window | null {
   const defaultCss = `
     @page { size: A4 portrait; margin: 0; }
+    @page :first { margin-top: 0; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; background: #fff; font-size: 12px; padding: 10mm; }
     @media print {
       body { print-color-adjust: exact; -webkit-print-color-adjust: exact; color-adjust: exact; padding: 10mm; }
+      html, body { margin: 0 !important; padding: 0 !important; }
+      @page { margin: 0 !important; }
     }
   `
 

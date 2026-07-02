@@ -171,7 +171,7 @@ export default function AttendancePage() {
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
 
   const filteredStudents = useMemo(() => {
-    let l = students.filter((s) => s.status === 'approved')
+    let l = students.filter((s) => s.status === 'approved' && s.active !== false)
     if (fClass) l = l.filter((s) => s.class === fClass)
     if (fSection) l = l.filter((s) => s.section === fSection)
     if (studentSearch) {

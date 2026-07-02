@@ -481,117 +481,106 @@ export default function AssignmentPage() {
           )}
         </div>
 
-        {/* Calendar — compact on right */}
-        <div className="glass" style={{ borderRadius: '0.875rem', padding: isMobile ? '10px' : '0.75rem', flex: isMobile ? 'none' : '0 0 16rem', flexShrink: 0, minWidth: 0, order: isMobile ? 1 : 0, maxHeight: isMobile ? 'none' : 'calc(100vh - 10rem)', overflowY: 'auto' }}>
-          {/* Month nav */}
-          <div className="flex items-center justify-between mb-2">
-            <button
-              onClick={() => {
-                if (calMonth === 0) { setCalMonth(11); setCalYear((y) => y - 1) }
-                else setCalMonth((m) => m - 1)
-              }}
-              className="p-1 rounded-md hover:bg-[var(--bg-secondary)] transition-colors border-none bg-transparent cursor-pointer"
-            >
-              <ChevronLeft size={14} style={{ color: 'var(--text-secondary)' }} />
-            </button>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-              {isBn ? `${MONTHS_BN[calMonth]} ${toBnNum(calYear)}` : `${MONTHS_EN[calMonth]} ${calYear}`}
-            </span>
-            <button
-              onClick={() => {
-                if (calMonth === 11) { setCalMonth(0); setCalYear((y) => y + 1) }
-                else setCalMonth((m) => m + 1)
-              }}
-              className="p-1 rounded-md hover:bg-[var(--bg-secondary)] transition-colors border-none bg-transparent cursor-pointer"
-            >
-              <ChevronRight size={14} style={{ color: 'var(--text-secondary)' }} />
-            </button>
+        {/* Right sidebar — 3 separate boxes */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '12px' : '0.75rem', flex: isMobile ? 'none' : '0 0 16rem', flexShrink: 0, minWidth: 0, order: isMobile ? 1 : 0 }}>
+
+          {/* Box 1: Calendar */}
+          <div className="glass" style={{ borderRadius: '0.75rem', padding: isMobile ? '10px' : '0.75rem' }}>
+            {/* Month nav */}
+            <div className="flex items-center justify-between mb-2">
+              <button
+                onClick={() => {
+                  if (calMonth === 0) { setCalMonth(11); setCalYear((y) => y - 1) }
+                  else setCalMonth((m) => m - 1)
+                }}
+                className="p-1 rounded-md hover:bg-[var(--bg-secondary)] transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <ChevronLeft size={14} style={{ color: 'var(--text-secondary)' }} />
+              </button>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {isBn ? `${MONTHS_BN[calMonth]} ${toBnNum(calYear)}` : `${MONTHS_EN[calMonth]} ${calYear}`}
+              </span>
+              <button
+                onClick={() => {
+                  if (calMonth === 11) { setCalMonth(0); setCalYear((y) => y + 1) }
+                  else setCalMonth((m) => m + 1)
+                }}
+                className="p-1 rounded-md hover:bg-[var(--bg-secondary)] transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <ChevronRight size={14} style={{ color: 'var(--text-secondary)' }} />
+              </button>
+            </div>
+
+            {/* Day headers */}
+            <div className="grid grid-cols-7 gap-0.5 mb-0.5">
+              {(isBn ? DAYS_BN : DAYS_EN).map((d) => (
+                <div key={d} style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-muted)', textAlign: 'center', padding: '2px 0' }}>
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            {/* Day grid */}
+            <div className="grid grid-cols-7 gap-0.5">
+              {calDays.map((d) => {
+                const isToday = d.date === today
+                const isSelected = d.date === selectedDate
+                const dotCount = assignmentsWithDots.get(d.date) || 0
+                return (
+                  <button
+                    key={d.date}
+                    onClick={() => setSelectedDate(d.date)}
+                    style={{
+                      position: 'relative',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '4px 0',
+                      borderRadius: '0.375rem',
+                      border: isSelected || isToday ? '1.5px solid var(--brand)' : '1.5px solid transparent',
+                      background: isSelected || isToday ? 'var(--brand-light)' : 'transparent',
+                      opacity: d.inMonth ? 1 : 0.3,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      fontSize: '0.6875rem',
+                      fontWeight: isToday || isSelected ? 700 : 400,
+                      color: isToday || isSelected ? 'var(--brand)' : 'var(--text-primary)',
+                    }}
+                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-secondary)' }}
+                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    {isBn ? toBnNum(d.day) : String(d.day)}
+                    {dotCount > 0 && (
+                      <div className="flex gap-px mt-px">
+                        {Array.from({ length: Math.min(dotCount, 3) }).map((_, i) => (
+                          <div key={i} style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--brand)' }} />
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Today button */}
+            <div className="flex justify-center mt-2">
+              <button
+                onClick={() => {
+                  const now = new Date()
+                  setCalMonth(now.getMonth())
+                  setCalYear(now.getFullYear())
+                  setSelectedDate(now.toISOString().split('T')[0])
+                }}
+                style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--brand)', background: 'var(--brand-light)', border: 'none', borderRadius: '9999px', padding: '2px 10px', cursor: 'pointer' }}
+              >
+                {isBn ? 'আজ' : 'Today'}
+              </button>
+            </div>
           </div>
 
-          {/* Day headers */}
-          <div className="grid grid-cols-7 gap-0.5 mb-0.5">
-            {(isBn ? DAYS_BN : DAYS_EN).map((d) => (
-              <div key={d} style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-muted)', textAlign: 'center', padding: '2px 0' }}>
-                {d}
-              </div>
-            ))}
-          </div>
-
-          {/* Day grid */}
-          <div className="grid grid-cols-7 gap-0.5">
-            {calDays.map((d) => {
-              const isToday = d.date === today
-              const isSelected = d.date === selectedDate
-              const dotCount = assignmentsWithDots.get(d.date) || 0
-              return (
-                <button
-                  key={d.date}
-                  onClick={() => {
-                    setSelectedDate(d.date)
-                  }}
-                  style={{
-                    position: 'relative',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '4px 0',
-                    borderRadius: '0.375rem',
-                    border: isSelected ? '1.5px solid var(--brand)' : isToday ? '1.5px solid var(--brand)' : '1.5px solid transparent',
-                    background: isSelected ? 'var(--brand-light)' : isToday ? 'var(--brand-light)' : 'transparent',
-                    opacity: d.inMonth ? 1 : 0.3,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    fontSize: '0.6875rem',
-                    fontWeight: isToday || isSelected ? 700 : 400,
-                    color: isToday || isSelected ? 'var(--brand)' : 'var(--text-primary)',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSelected) e.currentTarget.style.background = 'var(--bg-secondary)'
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) e.currentTarget.style.background = 'transparent'
-                  }}
-                >
-                  {isBn ? toBnNum(d.day) : String(d.day)}
-                  {dotCount > 0 && (
-                    <div className="flex gap-px mt-px">
-                      {Array.from({ length: Math.min(dotCount, 3) }).map((_, i) => (
-                        <div key={i} style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--brand)' }} />
-                      ))}
-                    </div>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Today button */}
-          <div className="flex justify-center mt-2">
-            <button
-              onClick={() => {
-                const now = new Date()
-                setCalMonth(now.getMonth())
-                setCalYear(now.getFullYear())
-                setSelectedDate(now.toISOString().split('T')[0])
-              }}
-              style={{
-                fontSize: '0.625rem',
-                fontWeight: 500,
-                color: 'var(--brand)',
-                background: 'var(--brand-light)',
-                border: 'none',
-                borderRadius: '9999px',
-                padding: '2px 10px',
-                cursor: 'pointer',
-              }}
-            >
-              {isBn ? 'আজ' : 'Today'}
-            </button>
-          </div>
-
-          {/* Filter Section */}
-          <div className="mt-2 pt-2 border-t border-[var(--border)]">
+          {/* Box 2: Filter */}
+          <div className="glass" style={{ borderRadius: '0.75rem', padding: isMobile ? '10px' : '0.75rem' }}>
             <div className="flex items-center justify-between mb-1.5">
               <span style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {isBn ? 'ফিল্টার' : 'Filter'}
@@ -633,9 +622,9 @@ export default function AssignmentPage() {
             </div>
           </div>
 
-          {/* Homework Summary */}
+          {/* Box 3: Homework Summary */}
           {homeworkPerClass.length > 0 && (
-            <div className="mt-2 pt-2 border-t border-[var(--border)]">
+            <div className="glass" style={{ borderRadius: '0.75rem', padding: isMobile ? '10px' : '0.75rem' }}>
               <span style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {isBn ? 'গৃহকাজ' : 'Homework'}
               </span>
@@ -651,14 +640,7 @@ export default function AssignmentPage() {
                     </span>
                     <span
                       className="inline-flex items-center justify-center rounded-full flex-shrink-0 ml-1"
-                      style={{
-                        fontSize: '0.5rem',
-                        fontWeight: 700,
-                        minWidth: '1rem',
-                        height: '1rem',
-                        background: 'var(--amber)',
-                        color: 'white',
-                      }}
+                      style={{ fontSize: '0.5rem', fontWeight: 700, minWidth: '1rem', height: '1rem', background: 'var(--amber)', color: 'white' }}
                     >
                       {isBn ? toBnNum(item.count) : item.count}
                     </span>
