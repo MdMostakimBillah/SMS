@@ -1,0 +1,80 @@
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./dist:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://edutech:${DB_PASSWORD:-changeme}@postgres:5432/edutech
+      REDIS_URL: redis://redis:6379
+      FACE_SERVICE_URL: http://face-service:8001
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      PORT: "3001"
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      face-service:
+        condition: service_started
+    restart: unless-stopped
+
+  face-service:
+    build:
+      context: ./apps/face-service
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://edutech:${DB_PASSWORD:-changeme}@postgres:5432/edutech
+      FACE_ENCRYPTION_KEY: ${FACE_ENCRYPTION_KEY:-}
+      MODEL_DIR: /app/models
+    volumes:
+      - face-models:/app/models
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    restart: unless-stopped
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: edutech
+      POSTGRES_USER: edutech
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edutech"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  face-models:

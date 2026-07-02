@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  super_admin
+  school_admin
+  teacher
+  student
+  hr_admin
+}
+
+model School {
+  id        String   @id @default(uuid())
+  name      String
+  nameBn    String?  @map("name_bn")
+  address   String?
+  phone     String?
+  email     String?
+  logo      String?
+  domain    String?  @unique
+  timezone  String   @default("Asia/Dhaka")
+  startTime String   @default("07:30") @map("start_time")
+  endTime   String   @default("14:30") @map("end_time")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users     User[]
+  teachers  Teacher[]
+  students  Student[]
+
+  @@map("schools")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(teacher)
+  schoolId     String   @map("school_id")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([email, schoolId])
+  @@index([schoolId])
+  @@map("users")
+}
+
+model Teacher {
+  id           String   @id @default(uuid())
+  schoolId     String   @map("school_id")
+  nameEn       String   @map("name_en")
+  nameBn       String?  @map("name_bn")
+  phone        String?
+  email        String?
+  photo        String?
+  departmentId String?  @map("department_id")
+  designation  String?
+  salary       Decimal?
+  status       String   @default("active")
+  joiningDate  String?  @map("joining_date")
+  inTime       String?  @map("in_time")
+  outTime      String?  @map("out_time")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId])
+  @@map("teachers")
+}
+
+model Student {
+  id            String   @id @default(uuid())
+  schoolId      String   @map("school_id")
+  nameEn        String   @map("name_en")
+  nameBn        String?  @map("name_bn")
+  phone         String?
+  email         String?
+  photo         String?
+  class         String?
+  section       String?
+  admissionDate String?  @map("admission_date")
+  status        String   @default("approved")
+  fatherNameEn  String?  @map("father_name_en")
+  fatherPhone   String?  @map("father_phone")
+  motherNameEn  String?  @map("mother_name_en")
+  motherPhone   String?  @map("mother_phone")
+  district      String?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId])
+  @@map("students")
+}
+
+model FaceEmbedding {
+  id          String   @id @default(uuid())
+  personId    String   @map("person_id")
+  personType  String   @map("person_type")
+  schoolId    String   @map("school_id")
+  embedding   Bytes
+  modelVersion String  @default("arcface_r100") @map("model_version")
+  enrolledBy  String?  @map("enrolled_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([personId, schoolId])
+  @@index([schoolId])
+  @@map("face_embeddings")
+}
+
+model FaceAttendanceLog {
+  id             String   @id @default(uuid())
+  schoolId       String   @map("school_id")
+  personId       String   @map("person_id")
+  personType     String   @map("person_type")
+  punchType      String   @map("punch_type")
+  confidence     Decimal  @db.Decimal(5, 4)
+  livenessScore  Decimal? @map("liveness_score") @db.Decimal(5, 4)
+  livenessMethod String?  @map("liveness_method")
+  deviceInfo     Json?    @map("device_info")
+  ipAddress      String?  @map("ip_address")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([schoolId, createdAt])
+  @@index([personId, createdAt])
+  @@map("face_attendance_log")
+}
