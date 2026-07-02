@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
-import * as faceapi from '@vladmandic/face-api'
+import { useState, useCallback } from 'react'
+import { faceApi, type RecognizeResponse, type EnrollResponse } from '@/lib/api'
 
 export interface RegisteredFace {
   staffId: string
   staffName: string
   photo: string
-  descriptor: number[]
 }
 
 export interface DetectionResult {
@@ -13,76 +12,80 @@ export interface DetectionResult {
   box: { x: number; y: number; width: number; height: number }
 }
 
-const MATCH_THRESHOLD = 0.5
-
 export function useFaceApi() {
-  const [loaded, setLoaded] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const loadingRef = useRef(false)
 
-  useEffect(() => {
-    if (loadingRef.current) return
-    loadingRef.current = true
-    const load = async () => {
-      try {
-        const uri = '/models'
-        await faceapi.nets.tinyFaceDetector.loadFromUri(uri)
-        await faceapi.nets.faceLandmark68Net.loadFromUri(uri)
-        await faceapi.nets.faceRecognitionNet.loadFromUri(uri)
-        setLoaded(true)
-      } catch (err) {
-        setError(String(err))
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
+  const captureImage = useCallback((video: HTMLVideoElement): string | null => {
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth || 640
+    canvas.height = video.videoHeight || 480
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+    return dataUrl.split(',')[1]
   }, [])
 
-  const detectFace = async (
-    input: HTMLVideoElement | HTMLCanvasElement | HTMLImageElement,
-    fast = false
-  ): Promise<DetectionResult | null> => {
-    if (!loaded) return null
-    try {
-      const options = new faceapi.TinyFaceDetectorOptions({
-        inputSize: fast ? 224 : 320,
-        scoreThreshold: fast ? 0.3 : 0.4,
-      })
-      const result = await faceapi
-        .detectSingleFace(input, options)
-        .withFaceLandmarks()
-        .withFaceDescriptor()
-      if (!result) return null
-      return {
-        descriptor: result.descriptor,
-        box: result.detection.box,
-      }
-    } catch (err) {
-      setError(String(err))
+  const enrollFace = useCallback(async (
+    video: HTMLVideoElement,
+    personId: string,
+    personType: 'teacher' | 'student'
+  ): Promise<EnrollResponse | null> => {
+    const base64 = captureImage(video)
+    if (!base64) {
+      setError('Failed to capture image')
       return null
     }
-  }
-
-  const matchFace = (
-    descriptor: Float32Array,
-    registeredFaces: RegisteredFace[]
-  ): RegisteredFace | null => {
-    if (registeredFaces.length === 0) return null
-    let bestMatch: RegisteredFace | null = null
-    let bestDistance = Infinity
-    for (const face of registeredFaces) {
-      const refDescriptor = new Float32Array(face.descriptor)
-      const distance = faceapi.euclideanDistance(descriptor, refDescriptor)
-      if (distance < bestDistance) {
-        bestDistance = distance
-        bestMatch = face
-      }
+    try {
+      setLoading(true)
+      setError(null)
+      const result = await faceApi.enroll(personId, personType, base64)
+      return result
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Enrollment failed'
+      setError(msg)
+      return null
+    } finally {
+      setLoading(false)
     }
-    if (bestDistance < MATCH_THRESHOLD) return bestMatch
-    return null
-  }
+  }, [captureImage])
 
-  return { loaded, loading, error, detectFace, matchFace }
+  const recognizeFace = useCallback(async (
+    video: HTMLVideoElement
+  ): Promise<RecognizeResponse | null> => {
+    const base64 = captureImage(video)
+    if (!base64) {
+      setError('Failed to capture image')
+      return null
+    }
+    try {
+      setLoading(true)
+      setError(null)
+      const result = await faceApi.recognize(base64)
+      return result
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Recognition failed'
+      setError(msg)
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }, [captureImage])
+
+  const detectFace = useCallback(async (
+    _input: HTMLVideoElement | HTMLCanvasElement | HTMLImageElement,
+    _fast?: boolean
+  ): Promise<DetectionResult | null> => {
+    return null
+  }, [])
+
+  const matchFace = useCallback((
+    _descriptor: Float32Array,
+    _registeredFaces: RegisteredFace[]
+  ): RegisteredFace | null => {
+    return null
+  }, [])
+
+  return { loaded: true, loading, error, detectFace, matchFace, enrollFace, recognizeFace }
 }

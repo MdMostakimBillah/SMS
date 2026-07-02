@@ -19,8 +19,7 @@ import { useFaceApi, type RegisteredFace } from '@/hooks/useFaceApi'
 
 const STORAGE_KEY = 'kioskFaces'
 const COOLDOWN_MS = 8000
-const DETECT_INTERVAL_MS = 200
-const STABLE_FRAMES = 2
+const DETECT_INTERVAL_MS = 500
 
 function loadFaces(): RegisteredFace[] {
   try {
@@ -64,7 +63,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const { institution } = useClassStore()
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
   const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
-  const { loaded: faceApiLoaded, loading: faceApiLoading, error: faceApiError, detectFace, matchFace } = useFaceApi()
+  const { loading: faceApiLoading, error: faceApiError, enrollFace, recognizeFace } = useFaceApi()
 
   const [kioskMode, setKioskMode] = useState<'register' | 'attendance'>('register')
   const [registeredFaces, setRegisteredFaces] = useState<RegisteredFace[]>(loadFaces)
@@ -78,6 +77,8 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const [identified, setIdentified] = useState<{
     staffId: string; staffName: string; photo: string; punchType: 'in' | 'out'; time: string
   } | null>(null)
+  const [enrolling, setEnrolling] = useState(false)
+  const [recognizing, setRecognizing] = useState(false)
 
   const allPeople = useMemo(() => {
     const staff = activeTeachers.map((t) => ({
@@ -118,7 +119,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const identifiedRef = useRef(false)
   const cooldownRef = useRef<Record<string, number>>({})
   const regDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const regStableCountRef = useRef(0)
 
   const videoCallbackRef = useCallback((node: HTMLVideoElement | null) => {
     videoRef.current = node
@@ -158,35 +158,10 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const stopRegDetectLoop = () => {
     if (regDetectIntervalRef.current) clearInterval(regDetectIntervalRef.current)
     regDetectIntervalRef.current = null
-    regStableCountRef.current = 0
   }
 
   const isVideoReady = (v: HTMLVideoElement) =>
     v.readyState >= 2 && v.videoWidth > 0 && v.videoHeight > 0
-
-  const startRegDetectLoop = () => {
-    if (regDetectIntervalRef.current) clearInterval(regDetectIntervalRef.current)
-    regStableCountRef.current = 0
-    regDetectIntervalRef.current = setInterval(async () => {
-      const v = videoRef.current
-      if (!v || !faceApiLoaded || !selectedStaff || !isVideoReady(v)) return
-      const result = await detectFace(v, true)
-      if (result) {
-        setFaceDetected(true)
-        regStableCountRef.current++
-        if (regStableCountRef.current >= STABLE_FRAMES) {
-          if (regDetectIntervalRef.current) clearInterval(regDetectIntervalRef.current)
-          regDetectIntervalRef.current = null
-          regStableCountRef.current = 0
-          setFaceDetected(false)
-          saveRegistration(result.descriptor)
-        }
-      } else {
-        setFaceDetected(false)
-        regStableCountRef.current = 0
-      }
-    }, DETECT_INTERVAL_MS)
-  }
 
   const capturePhoto = (): string | null => {
     if (!videoRef.current || !canvasRef.current) return null
@@ -199,33 +174,41 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     return canvas.toDataURL('image/jpeg', 0.6)
   }
 
-  const saveRegistration = (descriptor: Float32Array) => {
-    if (!selectedStaff) return
-    const person = allPeople.find((p) => p.id === selectedStaff)
-    if (!person) return
-    const photo = capturePhoto()
-    if (!photo) return
-    const entry: RegisteredFace = {
-      staffId: person.id,
-      staffName: isBn ? person.name : person.nameEn,
-      photo,
-      descriptor: Array.from(descriptor),
-    }
-    const updated = [...registeredFaces.filter((f) => f.staffId !== person.id), entry]
-    setRegisteredFaces(updated)
-    saveFaces(updated)
-    setSelectedStaff('')
-    setRegSearch('')
-    setCapturedPhoto(null)
-    stopCamera()
-  }
-
   const handleRegister = async () => {
     if (!selectedStaff || !videoRef.current) return
-    if (!faceApiLoaded || !isVideoReady(videoRef.current)) return
-    const result = await detectFace(videoRef.current, true)
-    if (!result) return
-    saveRegistration(result.descriptor)
+    if (!isVideoReady(videoRef.current)) return
+
+    const person = allPeople.find((p) => p.id === selectedStaff)
+    if (!person) return
+
+    setEnrolling(true)
+    try {
+      const result = await enrollFace(
+        videoRef.current,
+        person.id,
+        person.type === 'staff' ? 'teacher' : 'student'
+      )
+
+      if (result?.success) {
+        const photo = capturePhoto()
+        const entry: RegisteredFace = {
+          staffId: person.id,
+          staffName: isBn ? person.name : person.nameEn,
+          photo: photo || '',
+        }
+        const updated = [...registeredFaces.filter((f) => f.staffId !== person.id), entry]
+        setRegisteredFaces(updated)
+        saveFaces(updated)
+        setSelectedStaff('')
+        setRegSearch('')
+        setCapturedPhoto(null)
+        stopCamera()
+      }
+    } catch {
+      // error shown via useFaceApi
+    } finally {
+      setEnrolling(false)
+    }
   }
 
   const handleDeleteFace = (staffId: string) => {
@@ -241,16 +224,13 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     const punches = existing?.punches || []
     const lastPunch = punches[punches.length - 1]
 
-    // Check if user already has an IN punch
     const hasInProgress = punches.some((p) => p.type === 'in')
 
     let punchType: 'in' | 'out'
 
     if (!hasInProgress) {
-      // No IN punch yet → first punch is always IN
       punchType = 'in'
     } else {
-      // Has IN punch → use proximity logic
       const currentTimeMinutes = now.getHours() * 60 + now.getMinutes()
       const startTime = institution?.startTime || '07:30'
       const endTime = institution?.endTime || '14:30'
@@ -267,7 +247,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       } else if (distToEnd < distToStart) {
         punchType = 'out'
       } else {
-        // Equidistant - toggle based on last punch
         punchType = !lastPunch || lastPunch.type === 'out' ? 'in' : 'out'
       }
     }
@@ -298,20 +277,20 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     setDetecting(true)
     setFaceDetected(false)
     detectIntervalRef.current = setInterval(async () => {
-      if (identifiedRef.current) return
+      if (identifiedRef.current || recognizing) return
       const v = videoRef.current
-      if (!v || !faceApiLoaded || !isVideoReady(v)) return
-      const result = await detectFace(v, true)
-      if (result) {
-        setFaceDetected(true)
-        stableCountRef.current++
-        if (stableCountRef.current >= STABLE_FRAMES) {
-          if (detectIntervalRef.current) clearInterval(detectIntervalRef.current)
-          setDetecting(false)
-          setFaceDetected(false)
-          stableCountRef.current = 0
-          const match = matchFace(result.descriptor, registeredFaces)
+      if (!v || !isVideoReady(v)) return
+
+      setRecognizing(true)
+      try {
+        const result = await recognizeFace(v)
+        if (result?.personId) {
+          setFaceDetected(true)
+          const match = registeredFaces.find((f) => f.staffId === result.personId)
           if (match) {
+            if (detectIntervalRef.current) clearInterval(detectIntervalRef.current)
+            setDetecting(false)
+            setFaceDetected(false)
             const lastPunch = cooldownRef.current[match.staffId] || 0
             if (Date.now() - lastPunch < COOLDOWN_MS) {
               startDetectLoop()
@@ -320,12 +299,15 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
             handlePunch(match.staffId, match.staffName, match.photo)
             setTimeout(() => startDetectLoop(), 500)
           } else {
-            setTimeout(() => startDetectLoop(), 1500)
+            setFaceDetected(false)
           }
+        } else {
+          setFaceDetected(false)
         }
-      } else {
+      } catch {
         setFaceDetected(false)
-        stableCountRef.current = 0
+      } finally {
+        setRecognizing(false)
       }
     }, DETECT_INTERVAL_MS)
   }
@@ -367,17 +349,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camActive, kioskMode])
-
-  useEffect(() => {
-    if (camActive && kioskMode === 'register' && selectedStaff && faceApiLoaded) {
-      const t = setTimeout(() => startRegDetectLoop(), 500)
-      return () => {
-        clearTimeout(t)
-        stopRegDetectLoop()
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [camActive, kioskMode, selectedStaff, faceApiLoaded])
 
   useEffect(() => {
     return () => {
@@ -508,16 +479,14 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
         </div>
       )}
 
-      {/* ML loading indicator */}
-      {!faceApiLoaded && (
-        <div className="mb-4 py-3 px-4 rounded-xl bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.75rem] font-medium text-center">
-          {faceApiLoading
-            ? (isBn ? '🧠 ML মডেল লোড হচ্ছে...' : '🧠 Loading face recognition models...')
-            : faceApiError
-              ? `❌ ${faceApiError}`
-              : (isBn ? '🧠 ML মডেল লোড হয়েছে' : '🧠 ML models loaded')}
-        </div>
-      )}
+      {/* Backend connection indicator */}
+      <div className="mb-4 py-3 px-4 rounded-xl bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] font-medium text-center">
+        {faceApiLoading
+          ? (isBn ? '🔄 ব্যাকএন্ড সংযোগ হচ্ছে...' : '🔄 Connecting to backend...')
+          : faceApiError
+            ? `❌ ${faceApiError}`
+            : (isBn ? '✅ ব্যাকএন্ড সংযুক্ত — সার্ভার-সাইড মুখ সনাক্তকরণ সক্রিয়' : '✅ Backend connected — Server-side face recognition active')}
+      </div>
 
       {/* Mode tabs */}
       <div className="flex gap-2 mb-4">
@@ -551,7 +520,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                 {isBn ? 'মুখ নিবন্ধন' : 'Register Face'}
               </div>
               <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
-                {isBn ? 'ক্যামেরায় মুখ তুলুন' : 'Capture face with camera'}
+                {isBn ? 'ক্যামেরায় মুখ তুলুন — সার্ভারে সংরক্ষিত হবে' : 'Capture face with camera — stored on server'}
               </div>
             </div>
             <div className="p-4 space-y-3">
@@ -658,10 +627,10 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                   </div>
                   <button
                     onClick={handleRegister}
-                    disabled={!faceApiLoaded}
+                    disabled={enrolling}
                     className="w-full py-2.5 rounded-lg text-[0.75rem] bg-[var(--green)] text-white border-none font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   >
-                    {isBn ? 'নিবন্ধন করুন' : 'Register'}
+                    {enrolling ? (isBn ? 'নিবন্ধন হচ্ছে...' : 'Enrolling...') : (isBn ? 'নিবন্ধন করুন' : 'Register')}
                   </button>
                   <button
                     onClick={() => { stopCamera(); setCapturedPhoto(null) }}
@@ -745,7 +714,13 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-[var(--border)] shrink-0 bg-[var(--bg-secondary)]">
-                          <img src={f.photo} alt="" className="w-full h-full object-cover" />
+                          {f.photo ? (
+                            <img src={f.photo} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <User size={14} className="text-[var(--text-muted)]" />
+                            </div>
+                          )}
                         </div>
                         <div>
                           <div className="font-semibold text-[var(--text-primary)]">{f.staffName}</div>

@@ -27,7 +27,6 @@
     "@tiptap/pm": "^3.26.0",
     "@tiptap/react": "^3.26.0",
     "@tiptap/starter-kit": "^3.26.0",
-    "@vladmandic/face-api": "^1.7.15",
     "axios": "^1.16.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
