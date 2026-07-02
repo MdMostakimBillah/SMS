@@ -25,3 +25,14 @@ dist-ssr
 
 # SSL certificates
 *.pem
+
+# Backend
+apps/api/dist
+apps/api/node_modules
+apps/face-service/models
+apps/face-service/__pycache__
+.env
+
+# Docker
+pgdata/
+face-models/
