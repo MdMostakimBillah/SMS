@@ -15,7 +15,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['xlsx'],
+    include: ['exceljs'],
   },
   server: {
     host: true,
