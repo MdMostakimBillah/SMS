@@ -22,6 +22,7 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { useHRStore } from '@/store/hrStore'
+import { useAssignmentStore } from '@/store/assignmentStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { Skeleton, SkeletonCard, SkeletonLine } from '@/components/ui/Skeleton'
 import type { Tab, ModalType, FacModalType, PDFModalType, IncForm, BonForm, ProForm, FundForm, FacForm, AssignForm } from './types'
@@ -90,7 +91,7 @@ export default function HRPage() {
       attendance: s.attendance,
     }))
   )
-  const { institution } = useClassStore()
+  const { institution, routines } = useClassStore()
   const {
     increments,
     bonuses,
@@ -150,6 +151,7 @@ export default function HRPage() {
       upsertTeacherFacilities: s.upsertTeacherFacilities,
     }))
   )
+  const assignments = useAssignmentStore((s) => s.assignments)
 
   // ─── Tab & Modal State ───
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -384,31 +386,96 @@ export default function HRPage() {
   const teacherMetrics = useMemo(() => {
     const from = new Date(dateFrom)
     const to = new Date(dateTo)
-    let totalDays = 0
-    const d = new Date(from)
-    while (d <= to) {
-      if (d.getDay() !== 0) totalDays++
-      d.setDate(d.getDate() + 1)
-    }
 
+    // Build a map: teacherId -> { date -> { totalClasses, submittedHw } }
+    // For each working day, count routine slots and matched assignments/homework
     const metricsMap = new Map<string, { attRate: number; hwRate: number; repRate: number; avgScore: number }>()
 
+    // Helper: JS getDay (0=Sun...6=Sat) -> routine dayIndex (0=Sat...6=Fri)
+    const jsDayToRoutineDay = (jsDay: number) => (jsDay + 1) % 7
+
+    // Build routine lookup: teacherId -> Set of (dayIndex, classId, sectionId) combos
+    const teacherRoutineMap = new Map<string, Map<string, { classId: string; sectionId: string; subjectId: string }[]>>()
+    for (const routine of routines) {
+      if (!routine.periods) continue
+      for (let dayIdx = 0; dayIdx < routine.periods.length; dayIdx++) {
+        const daySlots = routine.periods[dayIdx]
+        if (!daySlots) continue
+        for (const slot of daySlots) {
+          if (!slot.teacherId) continue
+          const key = `${dayIdx}`
+          if (!teacherRoutineMap.has(slot.teacherId)) teacherRoutineMap.set(slot.teacherId, new Map())
+          const dayMap = teacherRoutineMap.get(slot.teacherId)!
+          if (!dayMap.has(key)) dayMap.set(key, [])
+          dayMap.get(key)!.push({
+            classId: routine.classId,
+            sectionId: routine.sectionId || '',
+            subjectId: slot.subjectId,
+          })
+        }
+      }
+    }
+
+    // Build assignment submission lookup: teacherId -> (date, classId, sectionId) -> count
+    const hwSubmittedMap = new Map<string, Map<string, number>>()
+    for (const a of assignments) {
+      if (a.type !== 'homework' && a.type !== 'assignment') continue
+      if (a.status !== 'active') continue
+      if (!hwSubmittedMap.has(a.teacherId)) hwSubmittedMap.set(a.teacherId, new Map())
+      const dateMap = hwSubmittedMap.get(a.teacherId)!
+      // Use dueDate as the submission reference date
+      const dateKey = a.dueDate
+      dateMap.set(dateKey, (dateMap.get(dateKey) || 0) + 1)
+    }
+
+    // Also include homeworkRecords from HR store
+    for (const r of homeworkRecords) {
+      if (!r.submitted) continue
+      if (!hwSubmittedMap.has(r.teacherId)) hwSubmittedMap.set(r.teacherId, new Map())
+      const dateMap = hwSubmittedMap.get(r.teacherId)!
+      dateMap.set(r.date, (dateMap.get(r.date) || 0) + 1)
+    }
+
     for (const t of activeTeachers) {
+      // Attendance
       let presentCount = 0
+      let totalWorkingDays = 0
       const dd = new Date(from)
       while (dd <= to) {
         if (dd.getDay() !== 0) {
+          totalWorkingDays++
           const dateStr = dd.toISOString().split('T')[0]
           if (attendance[dateStr]?.[t.id]?.status === 'present') presentCount++
         }
         dd.setDate(dd.getDate() + 1)
       }
-      const attRate = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0
+      const attRate = totalWorkingDays > 0 ? Math.round((presentCount / totalWorkingDays) * 100) : 0
 
-      const hwRecords = homeworkRecords.filter((r) => r.teacherId === t.id && r.date >= dateFrom && r.date <= dateTo)
-      const hwSubmitted = hwRecords.filter((r) => r.submitted).length
-      const hwRate = hwRecords.length > 0 ? Math.round((hwSubmitted / hwRecords.length) * 100) : 0
+      // Homework rate: count total routine slots across all days vs submitted
+      const teacherRoutines = teacherRoutineMap.get(t.id)
+      let totalClasses = 0
+      let submittedClasses = 0
+      const dateMap = hwSubmittedMap.get(t.id) || new Map()
 
+      const dd2 = new Date(from)
+      while (dd2 <= to) {
+        const jsDay = dd2.getDay()
+        if (jsDay !== 0) {
+          const routineDayIdx = jsDayToRoutineDay(jsDay)
+          const daySlots = teacherRoutines?.get(String(routineDayIdx))
+          if (daySlots && daySlots.length > 0) {
+            totalClasses += daySlots.length
+            // Check if homework/assignment was submitted for any of these classes on this date
+            const dateStr = dd2.toISOString().split('T')[0]
+            const submitted = dateMap.get(dateStr) || 0
+            submittedClasses += Math.min(submitted, daySlots.length)
+          }
+        }
+        dd2.setDate(dd2.getDate() + 1)
+      }
+      const hwRate = totalClasses > 0 ? Math.round((submittedClasses / totalClasses) * 100) : 0
+
+      // Daily reports
       const reports = dailyReports.filter((r) => r.teacherId === t.id && r.date >= dateFrom && r.date <= dateTo)
       const repSubmitted = reports.filter((r) => r.submitted).length
       const repRate = reports.length > 0 ? Math.round((repSubmitted / reports.length) * 100) : 0
@@ -418,7 +485,7 @@ export default function HRPage() {
       metricsMap.set(t.id, { attRate, hwRate, repRate, avgScore })
     }
     return metricsMap
-  }, [attendance, activeTeachers, homeworkRecords, dailyReports, dateFrom, dateTo])
+  }, [attendance, activeTeachers, homeworkRecords, dailyReports, dateFrom, dateTo, routines, assignments])
 
   const getMetrics = useCallback((id: string) => teacherMetrics.get(id) || { attRate: 0, hwRate: 0, repRate: 0, avgScore: 0 }, [teacherMetrics])
 
