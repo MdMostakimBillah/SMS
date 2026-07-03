@@ -20,6 +20,7 @@ import { useAssignmentStore } from '@/store/assignmentStore'
 import type { Assignment, AssignmentStatus } from '@/store/assignmentStore'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useHRStore } from '@/store/hrStore'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { useScrollLock } from '@/hooks/useScrollLock'
@@ -86,6 +87,7 @@ export default function AssignmentPage() {
   const addAssignment = useAssignmentStore((s) => s.addAssignment)
   const updateAssignment = useAssignmentStore((s) => s.updateAssignment)
   const deleteAssignment = useAssignmentStore((s) => s.deleteAssignment)
+  const addHomeworkRecord = useHRStore((s) => s.addHomeworkRecord)
 
   const [isLoading, setIsLoading] = useState(true)
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth())
@@ -923,6 +925,15 @@ export default function AssignmentPage() {
                       updateAssignment(editItem.id, hwData)
                     } else {
                       addAssignment(hwData)
+                      addHomeworkRecord({
+                        id: `HWR-${Date.now()}`,
+                        teacherId: hwForm.teacherId,
+                        classId: hwForm.classId,
+                        sectionId: hwForm.sectionId,
+                        subject: hwForm.subjectId,
+                        date: hwForm.dueDate,
+                        submitted: true,
+                      })
                     }
                     setHwForm({ classId: '', sectionId: '', subjectId: '', teacherId: '', dueDate: new Date().toISOString().split('T')[0], description: '' })
                     setHwErrors({})
