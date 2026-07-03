@@ -203,7 +203,7 @@ export default function AssignmentPage() {
 
   // Homework per class summary
   const homeworkPerClass = useMemo(() => {
-    const hw = filteredAssignments.filter((a) => a.type === 'homework')
+    const hw = filteredAssignments.filter((a) => a.type === 'homework' && a.status === 'active')
     const map = new Map<string, { name: string; nameBn: string; count: number }>()
     hw.forEach((a) => {
       const cls = classes.find((c) => c.id === a.classId)
@@ -628,7 +628,7 @@ export default function AssignmentPage() {
                   <div
                     key={item.name}
                     className="flex items-center justify-between rounded-md"
-                    style={{ padding: '0.25rem 0.375rem', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}
+                    style={{ padding: '0.25rem 0.375rem', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)' }}
                   >
                     <span style={{ fontSize: '0.5625rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {isBn ? item.nameBn : item.name}
