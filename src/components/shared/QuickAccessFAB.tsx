@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { useBn } from '@/hooks/useBn'
+import { useAppStore } from '@/store/appStore'
 import {
   LayoutDashboard,
   Users,
@@ -92,6 +93,8 @@ export default function QuickAccessFAB() {
   const location = useLocation()
   const navigate = useNavigate()
   const isBn = useBn()
+  const sidebarPosition = useAppStore((s) => s.sidebarPosition)
+  const isLeft = sidebarPosition === 'left'
   const [isOpen, setIsOpen] = useState(false)
   const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const tlRef = useRef<gsap.core.Timeline | null>(null)
@@ -209,7 +212,7 @@ export default function QuickAccessFAB() {
     <>
       {/* Trigger button — fixed bottom-right */}
       <button
-        className="fixed bottom-6 right-6 z-[310] w-12 h-12 rounded-full bg-[var(--brand)] text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+        className={`fixed bottom-6 z-[310] w-12 h-12 rounded-full bg-[var(--brand)] text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow cursor-pointer ${isLeft ? 'right-6' : 'left-6'}`}
         onClick={toggle}
         aria-label="Quick actions"
       >
