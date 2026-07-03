@@ -65,7 +65,6 @@ export default function ClassesPage() {
     tabRefs,
     sliderRef,
     getContainer: (slider) => slider.parentElement,
-    useScrollLeft: false,
   })
 
   const handleSaveInstitution = () => {
@@ -135,7 +134,7 @@ export default function ClassesPage() {
       <div className={`relative flex gap-[0.375rem] glass rounded-xl p-[0.3125rem] mb-[0.875rem] w-full ${isMobile || isTablet ? 'overflow-x-auto flex-nowrap' : 'flex-wrap'}`}>
         <div
           ref={sliderRef}
-          className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out"
+          className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out]"
           style={{
             background: activeTab === 'institution' ? 'var(--brand)' : activeTab === 'classes' ? 'var(--teal)' : 'var(--purple)',
             boxShadow: activeTab === 'institution' ? '0 2px 8px rgba(99,102,241,0.3)' : activeTab === 'classes' ? '0 2px 8px rgba(20,184,166,0.3)' : '0 2px 8px rgba(168,85,247,0.3)',

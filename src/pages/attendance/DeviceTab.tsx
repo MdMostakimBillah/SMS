@@ -214,9 +214,10 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     if (el && container) {
       const containerRect = container.getBoundingClientRect()
       const elRect = el.getBoundingClientRect()
+      const scrollLeft = container.scrollLeft || 0
       setSectionSliderStyle({
-        left: `${elRect.left - containerRect.left - 4}px`,
-        width: `${elRect.width + 8}px`,
+        left: `${elRect.left - containerRect.left + scrollLeft}px`,
+        width: `${elRect.width}px`,
         background: tabColors[deviceTab] || '#7C3AED',
       })
     }
@@ -804,7 +805,15 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   ref={(el) => { sectionTabRefs.current[tab.key] = el }}
                   onClick={() => {
                     setDeviceTab(tab.key)
-                    sectionTabRefs.current[tab.key]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' })
+                    const btn = sectionTabRefs.current[tab.key]
+                    const container = sectionTabsRef.current
+                    if (btn && container) {
+                      const cRect = container.getBoundingClientRect()
+                      const bRect = btn.getBoundingClientRect()
+                      if (bRect.left < cRect.left || bRect.right > cRect.right) {
+                        btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+                      }
+                    }
                   }}
                   className="relative z-10 px-3 py-1 rounded-md text-[0.625rem] font-medium cursor-pointer transition-colors duration-200 flex items-center gap-1"
                   style={{ color: deviceTab === tab.key ? '#fff' : 'var(--text-muted)' }}
@@ -813,8 +822,8 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                   {isBn ? tab.lBn : tab.lEn}
                 </button>
               ))}
-              <div
-                className="absolute top-1 bottom-1 rounded-md transition-all duration-300 ease-out"
+               <div
+                className="absolute top-1 bottom-1 rounded-md [transition:left_300ms_ease-out,width_300ms_ease-out,background-color_300ms_ease-out]"
                 style={{
                   left: sectionSliderStyle.left,
                   width: sectionSliderStyle.width,
@@ -1641,7 +1650,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
                 <span className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'মোড:' : 'Mode:'}</span>
                 <div className="relative flex gap-1 bg-[var(--bg-secondary)] rounded-lg p-1">
                   <div
-                    className="absolute top-1 bottom-1 rounded-md transition-all duration-300 ease-out"
+className="absolute top-1 bottom-1 rounded-md [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out]"
                     style={{
                       width: 'calc(50% - 0.25rem)',
                       transform: authMode === 'kiosk' ? 'translateX(calc(100% + 0.25rem))' : 'translateX(0)',

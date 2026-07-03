@@ -3,6 +3,11 @@ import axios from 'axios'
 const FACE_SERVICE_URL = process.env.FACE_SERVICE_URL || 'http://localhost:8001'
 
 export const faceClient = {
+  async detect(data: { image: string }) {
+    const response = await axios.post(`${FACE_SERVICE_URL}/detect`, data, { timeout: 5000 })
+    return response.data
+  },
+
   async enroll(data: { personId: string; schoolId: string; image: string }) {
     const response = await axios.post(`${FACE_SERVICE_URL}/enroll`, data, { timeout: 15000 })
     return response.data

@@ -3,8 +3,9 @@ from pydantic import BaseModel
 from typing import Optional
 from .recognizer import enroll_face, recognize_face, verify_face
 from .liveness import verify_liveness_simple
-from .detector import detect_faces
+from .detector import detect_faces, _app, is_recognition_available
 import os
+import base64
 
 app = FastAPI(title="EduTech Face Service", version="1.0.0")
 
@@ -26,13 +27,36 @@ class VerifyRequest(BaseModel):
     image: str
 
 
+class DetectRequest(BaseModel):
+    image: str
+
+
 @app.get("/health")
 async def health():
     return {
         "status": "ok",
-        "model_loaded": True,
+        "model_loaded": _app is not None,
+        "recognition_available": is_recognition_available(),
         "gpu": False,
     }
+
+
+@app.post("/detect")
+async def detect(req: DetectRequest):
+    try:
+        image_bytes = base64.b64decode(req.image)
+        faces = detect_faces(image_bytes)
+        if not faces:
+            return {"face_detected": False, "bbox": None, "score": 0, "message": "No face detected"}
+        best = max(faces, key=lambda f: f["det_score"])
+        return {
+            "face_detected": True,
+            "bbox": best["bbox"],
+            "score": round(best["det_score"], 4),
+            "message": "Face detected",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/enroll")
@@ -49,7 +73,7 @@ async def enroll(req: EnrollRequest):
 @app.post("/recognize")
 async def recognize(req: RecognizeRequest):
     try:
-        image_bytes = __import__("base64").b64decode(req.image)
+        image_bytes = base64.b64decode(req.image)
         faces = detect_faces(image_bytes)
         if not faces:
             return {"personId": None, "confidence": 0, "liveness_score": 0, "message": "No face detected"}

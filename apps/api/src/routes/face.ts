@@ -57,6 +57,20 @@ export function faceRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
+  router.post('/detect', auth, async (req: Request, res: Response) => {
+    try {
+      const { image } = req.body
+      if (!image) {
+        return res.status(400).json({ error: 'Missing image' })
+      }
+      const result = await faceClient.detect({ image })
+      res.json(result)
+    } catch (err: any) {
+      console.error('[Face Detect]', err.message)
+      res.status(500).json({ error: err.message || 'Detection failed' })
+    }
+  })
+
   router.post('/recognize', auth, async (req: Request, res: Response) => {
     try {
       const { image, challenge } = req.body

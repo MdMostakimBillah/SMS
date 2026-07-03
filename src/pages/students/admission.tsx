@@ -27,7 +27,6 @@ export default function StudentAdmission() {
     tabRefs,
     sliderRef,
     getContainer: (slider) => slider.parentElement,
-    useScrollLeft: false,
   })
 
   return (
@@ -56,7 +55,7 @@ export default function StudentAdmission() {
         {/* Sliding indicator */}
         <div
           ref={sliderRef}
-          className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out"
+          className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out]"
           style={{
             background: 'var(--brand)',
             boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',

@@ -89,10 +89,11 @@ export const TodayTab = React.memo(function TodayTab({
     if (el && container) {
       const containerRect = container.getBoundingClientRect()
       const elRect = el.getBoundingClientRect()
+      const scrollLeft = container.scrollLeft || 0
       const activeFilter = statusFilters.find((f) => f.key === statusFilter)
       setSliderStyle({
-        left: `${elRect.left - containerRect.left - 4}px`,
-        width: `${elRect.width + 8}px`,
+        left: `${elRect.left - containerRect.left + scrollLeft}px`,
+        width: `${elRect.width}px`,
         background: activeFilter?.color || 'var(--brand)',
       })
     }
@@ -186,7 +187,15 @@ export const TodayTab = React.memo(function TodayTab({
                 onClick={() => {
                   setStatusFilter(sf.key)
                   setEmpPage(1)
-                  filterTabRefs.current[sf.key]?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' })
+                  const btn = filterTabRefs.current[sf.key]
+                  const container = filterTabsRef.current
+                  if (btn && container) {
+                    const cRect = container.getBoundingClientRect()
+                    const bRect = btn.getBoundingClientRect()
+                    if (bRect.left < cRect.left || bRect.right > cRect.right) {
+                      btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+                    }
+                  }
                 }}
                 className="relative z-10 px-3 py-1 rounded-md text-[0.625rem] font-medium cursor-pointer transition-colors duration-200"
                 style={{ color: statusFilter === sf.key ? '#fff' : 'var(--text-muted)' }}
@@ -195,7 +204,7 @@ export const TodayTab = React.memo(function TodayTab({
               </button>
             ))}
             <div
-              className="absolute top-1 bottom-1 rounded-md transition-all duration-300 ease-out"
+              className="absolute top-1 bottom-1 rounded-md [transition:left_300ms_ease-out,width_300ms_ease-out,background-color_300ms_ease-out]"
               style={{
                 left: sliderStyle.left,
                 width: sliderStyle.width,

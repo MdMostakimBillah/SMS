@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { faceApi, type RecognizeResponse, type EnrollResponse } from '@/lib/api'
+import { faceApi, type RecognizeResponse, type EnrollResponse, type DetectResponse } from '@/lib/api'
 
 export interface RegisteredFace {
   staffId: string
@@ -26,6 +26,25 @@ export function useFaceApi() {
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
     return dataUrl.split(',')[1]
   }, [])
+
+  const detectFace = useCallback(async (
+    video: HTMLVideoElement
+  ): Promise<DetectResponse | null> => {
+    const base64 = captureImage(video)
+    if (!base64) {
+      setError('Failed to capture image')
+      return null
+    }
+    try {
+      setError(null)
+      const result = await faceApi.detect(base64)
+      return result
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Detection failed'
+      setError(msg)
+      return null
+    }
+  }, [captureImage])
 
   const enrollFace = useCallback(async (
     video: HTMLVideoElement,
@@ -73,19 +92,5 @@ export function useFaceApi() {
     }
   }, [captureImage])
 
-  const detectFace = useCallback(async (
-    _input: HTMLVideoElement | HTMLCanvasElement | HTMLImageElement,
-    _fast?: boolean
-  ): Promise<DetectionResult | null> => {
-    return null
-  }, [])
-
-  const matchFace = useCallback((
-    _descriptor: Float32Array,
-    _registeredFaces: RegisteredFace[]
-  ): RegisteredFace | null => {
-    return null
-  }, [])
-
-  return { loaded: true, loading, error, detectFace, matchFace, enrollFace, recognizeFace }
+  return { loaded: true, loading, error, detectFace, enrollFace, recognizeFace }
 }

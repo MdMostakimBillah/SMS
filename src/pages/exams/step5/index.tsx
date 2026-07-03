@@ -215,7 +215,7 @@ export default function Step5Marksheet() {
           {/* Sliding indicator */}
           <div
             ref={sliderRef}
-            className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out z-0"
+            className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out] z-0"
             style={{
               background: activeSubTab === 'marksheets' ? 'var(--brand)' : activeSubTab === 'cumulative' ? 'var(--teal)' : 'var(--purple)',
               boxShadow: activeSubTab === 'marksheets' ? '0 2px 8px rgba(99,102,241,0.3)' : activeSubTab === 'cumulative' ? '0 2px 8px rgba(20,184,166,0.3)' : '0 2px 8px rgba(168,85,247,0.3)',

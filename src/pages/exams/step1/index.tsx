@@ -434,7 +434,7 @@ export default function Step1Planning() {
           {/* Sliding indicator */}
           <div
             ref={sliderRef}
-            className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out z-0"
+            className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out] z-0"
             style={{
               background: activeSubTab === 'exams' ? 'var(--brand)' : activeSubTab === 'subjects' ? 'var(--teal)' : activeSubTab === 'grade-scale' ? 'var(--purple)' : 'var(--amber)',
               boxShadow: activeSubTab === 'exams' ? '0 2px 8px rgba(99,102,241,0.3)' : activeSubTab === 'subjects' ? '0 2px 8px rgba(20,184,166,0.3)' : activeSubTab === 'grade-scale' ? '0 2px 8px rgba(168,85,247,0.3)' : '0 2px 8px rgba(245,158,11,0.3)',

@@ -4,18 +4,40 @@ from insightface.app import FaceAnalysis
 from .config import DETECTION_MODEL, DEVICE_ID, MODEL_DIR
 
 _app = None
+_recognition_available = False
+
+
+def is_recognition_available() -> bool:
+    return _recognition_available
 
 
 def get_app() -> FaceAnalysis:
-    global _app
+    global _app, _recognition_available
     if _app is None:
-        _app = FaceAnalysis(
-            name=DETECTION_MODEL,
-            root=MODEL_DIR,
-            providers=["CPUExecutionProvider"],
-        )
-        _app.prepare(ctx_id=DEVICE_ID, det_size=(640, 640))
-        print(f"[Detector] InsightFace model '{DETECTION_MODEL}' loaded from {MODEL_DIR}")
+        try:
+            _app = FaceAnalysis(
+                name=DETECTION_MODEL,
+                root=MODEL_DIR,
+                providers=["CPUExecutionProvider"],
+            )
+            _app.prepare(ctx_id=DEVICE_ID, det_size=(640, 640))
+            _recognition_available = True
+            print(f"[Detector] InsightFace model '{DETECTION_MODEL}' loaded (full) from {MODEL_DIR}")
+        except Exception as e:
+            print(f"[Detector] Full model load failed ({e}), trying detection-only...")
+            try:
+                _app = FaceAnalysis(
+                    name=DETECTION_MODEL,
+                    root=MODEL_DIR,
+                    providers=["CPUExecutionProvider"],
+                    allowed_modules=["detection", "landmark_2d_106"],
+                )
+                _app.prepare(ctx_id=DEVICE_ID, det_size=(640, 640))
+                _recognition_available = False
+                print(f"[Detector] Detection-only model loaded from {MODEL_DIR}")
+            except Exception as e2:
+                print(f"[Detector] Detection-only load also failed: {e2}")
+                raise
     return _app
 
 

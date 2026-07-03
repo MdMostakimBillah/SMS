@@ -105,7 +105,21 @@ export const authApi = {
     }),
 }
 
+export interface DetectResponse {
+  face_detected: boolean
+  bbox: number[] | null
+  score: number
+  message: string
+}
+
 export const faceApi = {
+  detect: (image: string) =>
+    apiRequest<DetectResponse>('/api/face/detect', {
+      method: 'POST',
+      body: { image },
+      timeout: 5000,
+    }),
+
   enroll: (personId: string, personType: 'teacher' | 'student', image: string) =>
     apiRequest<EnrollResponse>('/api/face/enroll', {
       method: 'POST',

@@ -122,8 +122,9 @@ export default function SyllabusPage() {
     if (!container) return
     const containerRect = container.getBoundingClientRect()
     const btnRect = btn.getBoundingClientRect()
+    const scrollLeft = container.scrollLeft || 0
     slider.style.width = `${btnRect.width}px`
-    slider.style.transform = `translateX(${btnRect.left - containerRect.left}px)`
+    slider.style.transform = `translateX(${btnRect.left - containerRect.left + scrollLeft}px)`
   }, [chapterLangMode])
 
   useEffect(() => {
@@ -134,8 +135,9 @@ export default function SyllabusPage() {
     if (!container) return
     const containerRect = container.getBoundingClientRect()
     const btnRect = btn.getBoundingClientRect()
+    const scrollLeft = container.scrollLeft || 0
     slider.style.width = `${btnRect.width}px`
-    slider.style.transform = `translateX(${btnRect.left - containerRect.left}px)`
+    slider.style.transform = `translateX(${btnRect.left - containerRect.left + scrollLeft}px)`
   }, [topicLangMode])
 
   // Get class numbers
@@ -935,7 +937,7 @@ export default function SyllabusPage() {
             </div>
             <div className="px-5 sm:px-8 py-6 space-y-5 overflow-y-auto">
               <div className="relative flex items-center gap-2 p-1 bg-[var(--bg-secondary)] rounded-xl w-fit">
-                <div ref={chapterLangSliderRef} className="absolute top-1 bottom-1 bg-[var(--brand)] rounded-lg transition-all duration-300 ease-out shadow-sm" />
+                <div ref={chapterLangSliderRef} className="absolute top-1 bottom-1 bg-[var(--brand)] rounded-lg [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out] shadow-sm" />
                 {(['both', 'en', 'bn'] as const).map((mode) => (
                   <button
                     key={mode}
@@ -1075,7 +1077,7 @@ export default function SyllabusPage() {
             </div>
             <div className="px-5 sm:px-8 py-6 space-y-5 overflow-y-auto">
               <div className="relative flex items-center gap-2 p-1 bg-[var(--bg-secondary)] rounded-xl w-fit">
-                <div ref={topicLangSliderRef} className="absolute top-1 bottom-1 bg-[var(--brand)] rounded-lg transition-all duration-300 ease-out shadow-sm" />
+                <div ref={topicLangSliderRef} className="absolute top-1 bottom-1 bg-[var(--brand)] rounded-lg [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out] shadow-sm" />
                 {(['both', 'en', 'bn'] as const).map((mode) => (
                   <button
                     key={mode}

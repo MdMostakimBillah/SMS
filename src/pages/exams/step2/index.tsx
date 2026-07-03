@@ -282,7 +282,7 @@ export default function Step2Schedule() {
         <div className={`relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] ${isMobile || isTablet ? 'overflow-x-auto flex-nowrap' : 'flex-wrap'}`}>
           <div
             ref={sliderRef}
-            className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] transition-all duration-300 ease-out z-0"
+            className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out] z-0"
             style={{
               background: activeSubTab === 'rooms' ? 'var(--brand)' : activeSubTab === 'routine' ? 'var(--teal)' : activeSubTab === 'seats' ? 'var(--purple)' : activeSubTab === 'invigilators' ? 'var(--amber)' : activeSubTab === 'admit-cards' ? 'var(--brand)' : 'var(--green)',
               boxShadow: activeSubTab === 'rooms' ? '0 2px 8px rgba(99,102,241,0.3)' : activeSubTab === 'routine' ? '0 2px 8px rgba(20,184,166,0.3)' : activeSubTab === 'seats' ? '0 2px 8px rgba(168,85,247,0.3)' : activeSubTab === 'invigilators' ? '0 2px 8px rgba(245,158,11,0.3)' : activeSubTab === 'admit-cards' ? '0 2px 8px rgba(99,102,241,0.3)' : '0 2px 8px rgba(34,197,94,0.3)',

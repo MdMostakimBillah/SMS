@@ -19,7 +19,8 @@ import { useFaceApi, type RegisteredFace } from '@/hooks/useFaceApi'
 
 const STORAGE_KEY = 'kioskFaces'
 const COOLDOWN_MS = 8000
-const DETECT_INTERVAL_MS = 500
+const DETECT_INTERVAL_MS = 350
+const STABLE_FRAMES = 3
 
 function loadFaces(): RegisteredFace[] {
   try {
@@ -63,7 +64,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const { institution } = useClassStore()
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
   const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
-  const { loading: faceApiLoading, error: faceApiError, enrollFace, recognizeFace } = useFaceApi()
+  const { loading: faceApiLoading, error: faceApiError, detectFace, enrollFace, recognizeFace } = useFaceApi()
 
   const [kioskMode, setKioskMode] = useState<'register' | 'attendance'>('register')
   const [registeredFaces, setRegisteredFaces] = useState<RegisteredFace[]>(loadFaces)
@@ -73,12 +74,12 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const [regSearch, setRegSearch] = useState('')
   const [camActive, setCamActive] = useState(false)
   const [faceDetected, setFaceDetected] = useState(false)
-  const [, setDetecting] = useState(false)
   const [identified, setIdentified] = useState<{
     staffId: string; staffName: string; photo: string; punchType: 'in' | 'out'; time: string
   } | null>(null)
   const [enrolling, setEnrolling] = useState(false)
   const [recognizing, setRecognizing] = useState(false)
+  const [modelReady, setModelReady] = useState<boolean | null>(null)
 
   const allPeople = useMemo(() => {
     const staff = activeTeachers.map((t) => ({
@@ -119,6 +120,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const identifiedRef = useRef(false)
   const cooldownRef = useRef<Record<string, number>>({})
   const regDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const recognizingRef = useRef(false)
 
   const videoCallbackRef = useCallback((node: HTMLVideoElement | null) => {
     videoRef.current = node
@@ -274,40 +276,52 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const startDetectLoop = () => {
     if (detectIntervalRef.current) clearInterval(detectIntervalRef.current)
     stableCountRef.current = 0
-    setDetecting(true)
+    recognizingRef.current = false
     setFaceDetected(false)
     detectIntervalRef.current = setInterval(async () => {
-      if (identifiedRef.current || recognizing) return
+      if (identifiedRef.current) return
+      if (recognizingRef.current) return
       const v = videoRef.current
       if (!v || !isVideoReady(v)) return
 
-      setRecognizing(true)
       try {
-        const result = await recognizeFace(v)
-        if (result?.personId) {
+        const result = await detectFace(v)
+        if (result?.face_detected) {
           setFaceDetected(true)
-          const match = registeredFaces.find((f) => f.staffId === result.personId)
-          if (match) {
+          stableCountRef.current++
+          if (stableCountRef.current >= STABLE_FRAMES) {
             if (detectIntervalRef.current) clearInterval(detectIntervalRef.current)
-            setDetecting(false)
-            setFaceDetected(false)
-            const lastPunch = cooldownRef.current[match.staffId] || 0
-            if (Date.now() - lastPunch < COOLDOWN_MS) {
-              startDetectLoop()
-              return
+            stableCountRef.current = 0
+            recognizingRef.current = true
+            setRecognizing(true)
+
+            try {
+              const matchResult = await recognizeFace(v)
+              if (matchResult?.personId) {
+                const match = registeredFaces.find((f) => f.staffId === matchResult.personId)
+                if (match) {
+                  const lastPunch = cooldownRef.current[match.staffId] || 0
+                  if (Date.now() - lastPunch >= COOLDOWN_MS) {
+                    handlePunch(match.staffId, match.staffName, match.photo)
+                  }
+                }
+              }
+            } catch {
+              // recognition failed, just restart
+            } finally {
+              setRecognizing(false)
+              recognizingRef.current = false
+              setFaceDetected(false)
+              setTimeout(() => startDetectLoop(), 500)
             }
-            handlePunch(match.staffId, match.staffName, match.photo)
-            setTimeout(() => startDetectLoop(), 500)
-          } else {
-            setFaceDetected(false)
           }
         } else {
           setFaceDetected(false)
+          stableCountRef.current = 0
         }
       } catch {
         setFaceDetected(false)
-      } finally {
-        setRecognizing(false)
+        stableCountRef.current = 0
       }
     }, DETECT_INTERVAL_MS)
   }
@@ -317,8 +331,9 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     detectIntervalRef.current = null
     stableCountRef.current = 0
     identifiedRef.current = false
-    setDetecting(false)
+    recognizingRef.current = false
     setFaceDetected(false)
+    setRecognizing(false)
   }
 
   const openAttendance = async () => {
@@ -358,6 +373,21 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
         streamRef.current.getTracks().forEach((t) => t.stop())
       }
     }
+  }, [])
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const res = await fetch('http://localhost:3001/api/face/health')
+        const data = await res.json()
+        setModelReady(data.model_loaded === true)
+      } catch {
+        setModelReady(false)
+      }
+    }
+    checkHealth()
+    const interval = setInterval(checkHealth, 10000)
+    return () => clearInterval(interval)
   }, [])
 
   const stats = useMemo(() => {
@@ -416,9 +446,11 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
           {camActive && !identified && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
               <div className={`px-5 py-2.5 rounded-full text-[0.875rem] font-bold transition-colors duration-200 ${faceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/50 text-white/80 backdrop-blur-sm'}`}>
-                {faceDetected
-                  ? isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...'
-                  : isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid'}
+                {recognizing
+                  ? isBn ? 'শনাক্তকরণ হচ্ছে...' : 'Recognizing...'
+                  : faceDetected
+                    ? isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...'
+                    : isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid'}
               </div>
             </div>
           )}
@@ -439,7 +471,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                   <div className="text-[0.9375rem] font-bold text-white truncate">{identified.staffName}</div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`px-2 py-0.5 rounded-md text-[0.625rem] font-bold ${identified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
-                      {identified.punchType === 'in' ? (isBn ? 'CHECKED IN' : 'CHECKED IN') : isBn ? 'CHECKED OUT' : 'CHECKED OUT'}
+                      {identified.punchType === 'in' ? 'CHECKED IN' : 'CHECKED OUT'}
                     </span>
                     <span className="text-[0.625rem] text-white/50 font-mono">{identified.staffId}</span>
                   </div>
@@ -479,13 +511,23 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
         </div>
       )}
 
-      {/* Backend connection indicator */}
-      <div className="mb-4 py-3 px-4 rounded-xl bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] font-medium text-center">
-        {faceApiLoading
-          ? (isBn ? '🔄 ব্যাকএন্ড সংযোগ হচ্ছে...' : '🔄 Connecting to backend...')
-          : faceApiError
-            ? `❌ ${faceApiError}`
-            : (isBn ? '✅ ব্যাকএন্ড সংযুক্ত — সার্ভার-সাইড মুখ সনাক্তকরণ সক্রিয়' : '✅ Backend connected — Server-side face recognition active')}
+      {/* Backend status */}
+      <div className={`mb-4 py-3 px-4 rounded-xl text-[0.75rem] font-medium text-center ${
+        modelReady === true
+          ? 'bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)]'
+          : modelReady === false
+            ? 'bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)]'
+            : 'bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)]'
+      }`}>
+        {modelReady === true
+          ? (isBn ? '✅ মডেল লোডেড — সার্ভার-সাইড মুখ সনাক্তকরণ সক্রিয়' : '✅ Model loaded — Server-side face recognition active')
+          : modelReady === false
+            ? (isBn ? '❌ মডেল লোড হয়নি — ব্যাকএন্ড পুনরায় চালু করুন' : '❌ Model not loaded — Restart the backend')
+            : faceApiLoading
+              ? (isBn ? '🔄 ব্যাকএন্ড সংযোগ হচ্ছে...' : '🔄 Connecting to backend...')
+              : faceApiError
+                ? `❌ ${faceApiError}`
+                : (isBn ? '🔄 মডেল লোড হচ্ছে...' : '🔄 Loading model...')}
       </div>
 
       {/* Mode tabs */}
