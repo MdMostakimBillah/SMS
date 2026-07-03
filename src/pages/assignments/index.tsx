@@ -931,7 +931,7 @@ export default function AssignmentPage() {
                         classId: hwForm.classId,
                         sectionId: hwForm.sectionId,
                         subject: hwForm.subjectId,
-                        date: hwForm.dueDate,
+                        date: new Date().toISOString().split('T')[0],
                         submitted: true,
                       })
                     }
