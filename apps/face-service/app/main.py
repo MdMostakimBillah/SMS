@@ -3,7 +3,8 @@ from pydantic import BaseModel
 from typing import Optional
 from .recognizer import enroll_face, recognize_face, verify_face
 from .liveness import verify_liveness_simple
-from .detector import detect_faces, _app, is_recognition_available
+from . import detector
+from .detector import detect_faces
 import os
 import base64
 
@@ -35,8 +36,8 @@ class DetectRequest(BaseModel):
 async def health():
     return {
         "status": "ok",
-        "model_loaded": _app is not None,
-        "recognition_available": is_recognition_available(),
+        "model_loaded": detector._app is not None,
+        "recognition_available": detector.is_recognition_available(),
         "gpu": False,
     }
 
