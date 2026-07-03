@@ -4,16 +4,19 @@ import { authApi, setAuthToken, getAuthToken, ApiError } from '@/lib/api'
 interface User {
   id: string
   email: string
+  name: string | null
   role: string
-  schoolId: string
+  schoolId: string | null
+  schoolName: string | null
+  avatar: string | null
 }
 
 interface AuthContextType {
   user: User | null
   token: string | null
   loading: boolean
-  login: (email: string, password: string, schoolId: string) => Promise<void>
-  register: (email: string, password: string, schoolId: string, role?: string) => Promise<void>
+  login: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string, name: string, role?: string) => Promise<void>
   logout: () => void
   error: string | null
   clearError: () => void
@@ -33,7 +36,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const payload = JSON.parse(atob(storedToken.split('.')[1]))
         if (payload.exp * 1000 > Date.now()) {
-          setUser({ id: payload.userId, email: '', role: payload.role, schoolId: payload.schoolId })
+          setUser({
+            id: payload.userId,
+            email: '',
+            name: null,
+            role: payload.role,
+            schoolId: payload.schoolId,
+            schoolName: null,
+            avatar: null,
+          })
           setToken(storedToken)
         } else {
           setAuthToken(null)
@@ -47,10 +58,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false)
   }, [])
 
-  const login = useCallback(async (email: string, password: string, schoolId: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setError(null)
     try {
-      const res = await authApi.login(email, password, schoolId)
+      const res = await authApi.login(email, password)
       setAuthToken(res.token)
       setToken(res.token)
       setUser(res.user)
@@ -61,10 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const register = useCallback(async (email: string, password: string, schoolId: string, role?: string) => {
+  const register = useCallback(async (email: string, password: string, name: string, role?: string) => {
     setError(null)
     try {
-      const res = await authApi.register(email, password, schoolId, role)
+      const res = await authApi.register(email, password, name, role)
       setAuthToken(res.token)
       setToken(res.token)
       setUser(res.user)

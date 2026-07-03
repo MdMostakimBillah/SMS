@@ -34,6 +34,7 @@ function PersonSearchInput({ value, onChange, placeholder, isBn: lang, people }:
   const [query, setQuery] = useState(value ? people.find((p) => p.id === value)?.name || '' : '')
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<Person | null>(value ? people.find((p) => p.id === value) || null : null)
+  const [highlightedIdx, setHighlightedIdx] = useState(-1)
   const wrapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -43,6 +44,13 @@ function PersonSearchInput({ value, onChange, placeholder, isBn: lang, people }:
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
+
+  useEffect(() => {
+    if (highlightedIdx >= 0) {
+      const el = document.getElementById(`psuggestion-${highlightedIdx}`)
+      el?.scrollIntoView({ block: 'nearest' })
+    }
+  }, [highlightedIdx])
 
   const filtered = useMemo(() => {
     if (!query.trim()) return []
@@ -62,6 +70,7 @@ function PersonSearchInput({ value, onChange, placeholder, isBn: lang, people }:
     setSelected(p)
     setQuery(p.name)
     setOpen(false)
+    setHighlightedIdx(-1)
     onChange(p.id, p.name)
   }, [onChange])
 
@@ -71,7 +80,24 @@ function PersonSearchInput({ value, onChange, placeholder, isBn: lang, people }:
         <Search size={13} className="text-[var(--text-muted)] shrink-0" />
         <input
           value={query}
-          onChange={(e) => { setQuery(e.target.value); setSelected(null); setOpen(true); onChange('', '') }}
+          onChange={(e) => { setQuery(e.target.value); setSelected(null); setOpen(true); onChange('', ''); setHighlightedIdx(-1) }}
+          onKeyDown={(e) => {
+            if (!query.trim() || selected) return
+            const max = Math.min(filtered.length, 15) - 1
+            if (e.key === 'ArrowDown') {
+              e.preventDefault()
+              setHighlightedIdx((prev) => (prev < max ? prev + 1 : 0))
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault()
+              setHighlightedIdx((prev) => (prev > 0 ? prev - 1 : max))
+            } else if (e.key === 'Enter' && highlightedIdx >= 0 && highlightedIdx <= max) {
+              e.preventDefault()
+              const p = filtered[highlightedIdx]
+              if (p) select(p)
+            } else if (e.key === 'Escape') {
+              setHighlightedIdx(-1)
+            }
+          }}
           onFocus={() => setOpen(true)}
           placeholder={placeholder || (lang ? 'নাম, আইডি বা সেকশন লিখুন...' : 'Type name, ID, or section...')}
           className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
@@ -84,11 +110,15 @@ function PersonSearchInput({ value, onChange, placeholder, isBn: lang, people }:
       </div>
       {open && query.trim() && !selected && filtered.length > 0 && (
         <div className="absolute z-50 w-full mt-1 max-h-[12rem] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xl">
-          {filtered.slice(0, 15).map((p) => (
+          {filtered.slice(0, 15).map((p, idx) => (
             <button
               key={p.id}
+              id={`psuggestion-${idx}`}
               onClick={() => select(p)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none bg-transparent"
+              onMouseEnter={() => setHighlightedIdx(idx)}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors cursor-pointer border-none ${
+                idx === highlightedIdx ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--bg-secondary)]'
+              }`}
             >
               <div className="w-7 h-7 rounded-lg overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] shrink-0 flex items-center justify-center">
                 {p.photo ? (

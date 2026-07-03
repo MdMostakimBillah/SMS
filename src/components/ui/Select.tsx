@@ -30,6 +30,7 @@ export function Select({
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [highlightedIdx, setHighlightedIdx] = useState(-1)
   const selectRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
@@ -39,6 +40,7 @@ export function Select({
       if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
         setIsOpen(false)
         setSearchQuery('')
+        setHighlightedIdx(-1)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -51,6 +53,13 @@ export function Select({
     }
   }, [isOpen])
 
+  useEffect(() => {
+    if (highlightedIdx >= 0 && listRef.current) {
+      const el = listRef.current.querySelector(`[data-idx="${highlightedIdx}"]`)
+      el?.scrollIntoView({ block: 'nearest' })
+    }
+  }, [highlightedIdx])
+
   const filteredOptions = options.filter((opt) =>
     opt.label.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -61,12 +70,25 @@ export function Select({
     onChange(optionValue)
     setIsOpen(false)
     setSearchQuery('')
+    setHighlightedIdx(-1)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       setIsOpen(false)
       setSearchQuery('')
+      setHighlightedIdx(-1)
+    } else if (isOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+      e.preventDefault()
+      const max = filteredOptions.length - 1
+      if (e.key === 'ArrowDown') {
+        setHighlightedIdx((prev) => (prev < max ? prev + 1 : 0))
+      } else {
+        setHighlightedIdx((prev) => (prev > 0 ? prev - 1 : max))
+      }
+    } else if (isOpen && e.key === 'Enter' && highlightedIdx >= 0 && highlightedIdx < filteredOptions.length) {
+      e.preventDefault()
+      handleSelect(filteredOptions[highlightedIdx].value)
     }
   }
 
@@ -160,22 +182,27 @@ export function Select({
                 </p>
               </div>
             ) : (
-              filteredOptions.map((opt) => {
+              filteredOptions.map((opt, idx) => {
                 const isSelected = value === opt.value
+                const isHighlighted = idx === highlightedIdx
                 return (
                   <button
                     key={opt.value}
                     type="button"
                     role="option"
                     aria-selected={isSelected}
+                    data-idx={idx}
                     onClick={() => handleSelect(opt.value)}
+                    onMouseEnter={() => setHighlightedIdx(idx)}
                     className={`
                       w-full px-3.5 py-2.5 text-[0.8125rem] text-left
                       flex items-center justify-between gap-2
                       transition-colors duration-100
                       ${isSelected
                         ? 'bg-[var(--brand-light)] text-[var(--brand)]'
-                        : 'text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
+                        : isHighlighted
+                          ? 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'
+                          : 'text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
                       }
                     `}
                   >

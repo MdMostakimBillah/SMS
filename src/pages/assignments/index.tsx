@@ -110,9 +110,11 @@ export default function AssignmentPage() {
   const [hwErrors, setHwErrors] = useState<Record<string, string>>({})
   const [hwTeacherQuery, setHwTeacherQuery] = useState('')
   const [hwTeacherSelected, setHwTeacherSelected] = useState(false)
+  const [hwTeacherHighlighted, setHwTeacherHighlighted] = useState(-1)
   const [teacherQuery, setTeacherQuery] = useState('')
   const [showTeacherSuggestions, setShowTeacherSuggestions] = useState(false)
   const [teacherSelected, setTeacherSelected] = useState(false)
+  const [teacherHighlighted, setTeacherHighlighted] = useState(-1)
   const [filterClassId, setFilterClassId] = useState('')
   const [filterSectionId, setFilterSectionId] = useState('')
   const [filterSubjectId, setFilterSubjectId] = useState('')
@@ -201,9 +203,11 @@ export default function AssignmentPage() {
     return result
   }, [assignments, filterClassId, filterSectionId, filterSubjectId])
 
-  // Homework per class summary
+  // Homework per class summary — only for selected date
   const homeworkPerClass = useMemo(() => {
-    const hw = filteredAssignments.filter((a) => a.type === 'homework' && a.status === 'active')
+    const hw = filteredAssignments.filter(
+      (a) => a.type === 'homework' && a.status === 'active' && a.dueDate === selectedDate
+    )
     const map = new Map<string, { name: string; nameBn: string; count: number }>()
     hw.forEach((a) => {
       const cls = classes.find((c) => c.id === a.classId)
@@ -214,7 +218,26 @@ export default function AssignmentPage() {
       }
     })
     return Array.from(map.values()).sort((a, b) => b.count - a.count)
-  }, [filteredAssignments, classes])
+  }, [filteredAssignments, classes, selectedDate])
+
+  // Assignment per class summary — only for selected date
+  const assignmentPerClass = useMemo(() => {
+    const asg = filteredAssignments.filter(
+      (a) => a.type === 'assignment' && a.status === 'active' && a.dueDate === selectedDate
+    )
+    const map = new Map<string, { name: string; nameBn: string; count: number }>()
+    asg.forEach((a) => {
+      const cls = classes.find((c) => c.id === a.classId)
+      if (cls) {
+        const existing = map.get(cls.id)
+        if (existing) existing.count++
+        else map.set(cls.id, { name: cls.name, nameBn: cls.nameBn, count: 1 })
+      }
+    })
+    return Array.from(map.values()).sort((a, b) => b.count - a.count)
+  }, [filteredAssignments, classes, selectedDate])
+
+  const showSummary = homeworkPerClass.length > 0 || assignmentPerClass.length > 0
 
   const assignmentsOnDate = useMemo(
     () => filteredAssignments.filter((a) => a.dueDate === selectedDate),
@@ -617,31 +640,64 @@ export default function AssignmentPage() {
             </div>
           </div>
 
-          {/* Box 3: Homework Summary */}
-          {homeworkPerClass.length > 0 && (
+          {/* Box 3: Today's Summary */}
+          {showSummary && (
             <div className="glass" style={{ borderRadius: '0.75rem', padding: isMobile ? '10px' : '0.75rem' }}>
               <span style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {isBn ? 'গৃহকাজ' : 'Homework'}
+                {isBn ? 'আজকের সারসংক্ষেপ' : "Today's Summary"}
               </span>
-              <div className="mt-1.5 grid grid-cols-2 gap-1">
-                {homeworkPerClass.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex items-center justify-between rounded-md"
-                    style={{ padding: '0.25rem 0.375rem', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)' }}
-                  >
-                    <span style={{ fontSize: '0.5625rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {isBn ? item.nameBn : item.name}
-                    </span>
-                    <span
-                      className="inline-flex items-center justify-center rounded-full flex-shrink-0 ml-1"
-                      style={{ fontSize: '0.5rem', fontWeight: 700, minWidth: '1rem', height: '1rem', background: 'var(--amber)', color: 'white' }}
-                    >
-                      {isBn ? toBnNum(item.count) : item.count}
-                    </span>
+              {homeworkPerClass.length > 0 && (
+                <div className="mt-1.5">
+                  <span style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--amber)' }}>
+                    {isBn ? 'গৃহকাজ' : 'Homework'}
+                  </span>
+                  <div className="mt-1 grid grid-cols-2 gap-1">
+                    {homeworkPerClass.map((item) => (
+                      <div
+                        key={`hw-${item.name}`}
+                        className="flex items-center justify-between rounded-md"
+                        style={{ padding: '0.25rem 0.375rem', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)' }}
+                      >
+                        <span style={{ fontSize: '0.5625rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {isBn ? item.nameBn : item.name}
+                        </span>
+                        <span
+                          className="inline-flex items-center justify-center rounded-full flex-shrink-0 ml-1"
+                          style={{ fontSize: '0.5rem', fontWeight: 700, minWidth: '1rem', height: '1rem', background: 'var(--amber)', color: 'white' }}
+                        >
+                          {isBn ? toBnNum(item.count) : item.count}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+              {assignmentPerClass.length > 0 && (
+                <div className={`mt-1.5 ${homeworkPerClass.length > 0 ? 'pt-1.5 border-t border-[var(--border)]' : ''}`}>
+                  <span style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--brand)' }}>
+                    {isBn ? 'অ্যাসাইনমেন্ট' : 'Assignment'}
+                  </span>
+                  <div className="mt-1 grid grid-cols-2 gap-1">
+                    {assignmentPerClass.map((item) => (
+                      <div
+                        key={`asg-${item.name}`}
+                        className="flex items-center justify-between rounded-md"
+                        style={{ padding: '0.25rem 0.375rem', background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.25)' }}
+                      >
+                        <span style={{ fontSize: '0.5625rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {isBn ? item.nameBn : item.name}
+                        </span>
+                        <span
+                          className="inline-flex items-center justify-center rounded-full flex-shrink-0 ml-1"
+                          style={{ fontSize: '0.5rem', fontWeight: 700, minWidth: '1rem', height: '1rem', background: 'var(--brand)', color: 'white' }}
+                        >
+                          {isBn ? toBnNum(item.count) : item.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -750,10 +806,25 @@ export default function AssignmentPage() {
                     onChange={(e) => {
                       setHwTeacherQuery(e.target.value)
                       setHwTeacherSelected(false)
+                      setHwTeacherHighlighted(-1)
                       if (!e.target.value) setHwForm({ ...hwForm, teacherId: '' })
                     }}
+                    onKeyDown={(e) => {
+                      const filtered = teachers.filter((t) => {
+                        const q = hwTeacherQuery.toLowerCase()
+                        return (t.nameEn?.toLowerCase().includes(q) || t.nameBn?.includes(q) || t.id.toLowerCase().includes(q))
+                      }).slice(0, 8)
+                      const max = filtered.length - 1
+                      if (e.key === 'ArrowDown') { e.preventDefault(); setHwTeacherHighlighted((prev) => (prev < max ? prev + 1 : 0)) }
+                      else if (e.key === 'ArrowUp') { e.preventDefault(); setHwTeacherHighlighted((prev) => (prev > 0 ? prev - 1 : max)) }
+                      else if (e.key === 'Enter' && hwTeacherHighlighted >= 0 && hwTeacherHighlighted <= max) {
+                        e.preventDefault()
+                        const t = filtered[hwTeacherHighlighted]
+                        if (t) { setHwForm({ ...hwForm, teacherId: t.id }); setHwTeacherQuery(''); setHwTeacherSelected(true); setShowTeacherSuggestions(false); setHwTeacherHighlighted(-1) }
+                      } else if (e.key === 'Escape') { setHwTeacherHighlighted(-1) }
+                    }}
                     onFocus={() => { if (!hwTeacherSelected) setShowTeacherSuggestions(true) }}
-                    onBlur={() => setTimeout(() => setShowTeacherSuggestions(false), 200)}
+                    onBlur={() => setTimeout(() => { setShowTeacherSuggestions(false); setHwTeacherHighlighted(-1) }, 200)}
                     className={inputCls}
                     style={{ padding: '0.625rem 0.75rem', borderColor: hwErrors.teacherId ? 'var(--red)' : undefined }}
                     placeholder={isBn ? 'শিক্ষকের নাম লিখুন...' : 'Type teacher name...'}
@@ -766,16 +837,18 @@ export default function AssignmentPage() {
                           return (t.nameEn?.toLowerCase().includes(q) || t.nameBn?.includes(q) || t.id.toLowerCase().includes(q))
                         })
                         .slice(0, 8)
-                        .map((t) => (
+                        .map((t, idx) => (
                           <div
                             key={t.id}
-                            className="px-3 py-2 cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                            className={`px-3 py-2 cursor-pointer transition-colors ${idx === hwTeacherHighlighted ? 'bg-[var(--brand-light)]' : 'hover:bg-[var(--bg-secondary)]'}`}
                             style={{ fontSize: '0.8125rem' }}
+                            onMouseEnter={() => setHwTeacherHighlighted(idx)}
                             onMouseDown={() => {
                               setHwForm({ ...hwForm, teacherId: t.id })
                               setHwTeacherQuery('')
                               setHwTeacherSelected(true)
                               setShowTeacherSuggestions(false)
+                              setHwTeacherHighlighted(-1)
                             }}
                           >
                             <div className="font-medium text-[var(--text-primary)]">{isBn ? t.nameBn : t.nameEn}</div>
@@ -925,10 +998,25 @@ export default function AssignmentPage() {
                       setTeacherQuery(e.target.value)
                       setTeacherSelected(false)
                       setShowTeacherSuggestions(true)
+                      setTeacherHighlighted(-1)
                       if (!e.target.value) setForm({ ...form, teacherId: '' })
                     }}
+                    onKeyDown={(e) => {
+                      const filtered = teachers.filter((t) => {
+                        const q = teacherQuery.toLowerCase()
+                        return (t.nameEn?.toLowerCase().includes(q) || t.nameBn?.includes(q) || t.id.toLowerCase().includes(q))
+                      }).slice(0, 8)
+                      const max = filtered.length - 1
+                      if (e.key === 'ArrowDown') { e.preventDefault(); setTeacherHighlighted((prev) => (prev < max ? prev + 1 : 0)) }
+                      else if (e.key === 'ArrowUp') { e.preventDefault(); setTeacherHighlighted((prev) => (prev > 0 ? prev - 1 : max)) }
+                      else if (e.key === 'Enter' && teacherHighlighted >= 0 && teacherHighlighted <= max) {
+                        e.preventDefault()
+                        const t = filtered[teacherHighlighted]
+                        if (t) { setForm({ ...form, teacherId: t.id }); setTeacherQuery(''); setTeacherSelected(true); setShowTeacherSuggestions(false); setTeacherHighlighted(-1) }
+                      } else if (e.key === 'Escape') { setTeacherHighlighted(-1) }
+                    }}
                     onFocus={() => { if (!teacherSelected) setShowTeacherSuggestions(true) }}
-                    onBlur={() => setTimeout(() => setShowTeacherSuggestions(false), 200)}
+                    onBlur={() => setTimeout(() => { setShowTeacherSuggestions(false); setTeacherHighlighted(-1) }, 200)}
                     className={inputCls}
                     style={{ padding: '0.625rem 0.75rem', borderColor: formErrors.teacherId ? 'var(--red)' : undefined }}
                     placeholder={isBn ? 'শিক্ষকের নাম লিখুন...' : 'Type teacher name...'}
@@ -941,16 +1029,18 @@ export default function AssignmentPage() {
                           return (t.nameEn?.toLowerCase().includes(q) || t.nameBn?.includes(q) || t.id.toLowerCase().includes(q))
                         })
                         .slice(0, 8)
-                        .map((t) => (
+                        .map((t, idx) => (
                           <div
                             key={t.id}
-                            className="px-3 py-2 cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+                            className={`px-3 py-2 cursor-pointer transition-colors ${idx === teacherHighlighted ? 'bg-[var(--brand-light)]' : 'hover:bg-[var(--bg-secondary)]'}`}
                             style={{ fontSize: '0.8125rem' }}
+                            onMouseEnter={() => setTeacherHighlighted(idx)}
                             onMouseDown={() => {
                               setForm({ ...form, teacherId: t.id })
                               setTeacherQuery('')
                               setTeacherSelected(true)
                               setShowTeacherSuggestions(false)
+                              setTeacherHighlighted(-1)
                             }}
                           >
                             <div className="font-medium text-[var(--text-primary)]">{isBn ? t.nameBn : t.nameEn}</div>

@@ -33,49 +33,130 @@ model School {
   users     User[]
   teachers  Teacher[]
   students  Student[]
+  departments Department[]
+  subjects    Subject[]
+  designations Designation[]
 
   @@map("schools")
 }
 
 model User {
   id           String   @id @default(uuid())
-  email        String
+  email        String   @unique
   passwordHash String   @map("password_hash")
+  name         String?
   role         UserRole @default(teacher)
-  schoolId     String   @map("school_id")
+  schoolId     String?  @map("school_id")
   isActive     Boolean  @default(true) @map("is_active")
+  avatar       String?
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  school School? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
 
-  @@unique([email, schoolId])
   @@index([schoolId])
   @@map("users")
 }
 
 model Teacher {
-  id           String   @id @default(uuid())
-  schoolId     String   @map("school_id")
-  nameEn       String   @map("name_en")
-  nameBn       String?  @map("name_bn")
-  phone        String?
-  email        String?
-  photo        String?
-  departmentId String?  @map("department_id")
-  designation  String?
-  salary       Decimal?
-  status       String   @default("active")
-  joiningDate  String?  @map("joining_date")
-  inTime       String?  @map("in_time")
-  outTime      String?  @map("out_time")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(uuid())
+  schoolId        String   @map("school_id")
+  nameEn          String   @map("name_en")
+  nameBn          String?  @map("name_bn")
+  gender          String?
+  dob             String?
+  bloodGroup      String?  @map("blood_group")
+  religion        String?
+  phone           String?
+  email           String?
+  address         String?
+  nid             String?
+  emergencyPhone  String?  @map("emergency_phone")
+  photo           String?
+  departmentId    String?  @map("department_id")
+  subjectIds      String[] @default([]) @map("subject_ids")
+  designation     String?
+  qualification   String?
+  experience      String?
+  salary          Decimal?
+  salaryStartDate String?  @map("salary_start_date")
+  bonus           Decimal?
+  overtime        Decimal?
+  festivalBonus   Decimal? @map("festival_bonus")
+  status          String   @default("active")
+  category        String?
+  joiningDate     String?  @map("joining_date")
+  inTime          String?  @map("in_time")
+  outTime         String?  @map("out_time")
+  fatherNameEn    String?  @map("father_name_en")
+  fatherNameBn    String?  @map("father_name_bn")
+  fatherPhone     String?  @map("father_phone")
+  fatherNid       String?  @map("father_nid")
+  motherNameEn    String?  @map("mother_name_en")
+  motherNameBn    String?  @map("mother_name_bn")
+  motherPhone     String?  @map("mother_phone")
+  guardianName    String?  @map("guardian_name")
+  guardianPhone   String?  @map("guardian_phone")
+  guardianRelation String? @map("guardian_relation")
+  parentAddress   String?  @map("parent_address")
+  signature       String?
+  expertSubjects  String?  @map("expert_subjects")
+  applySalaryRule Boolean? @default(false) @map("apply_salary_rule")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@index([schoolId])
   @@map("teachers")
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  schoolId  String   @map("school_id")
+  name      String
+  nameBn    String?  @map("name_bn")
+  head      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([name, schoolId])
+  @@index([schoolId])
+  @@map("departments")
+}
+
+model Subject {
+  id           String   @id @default(uuid())
+  schoolId     String   @map("school_id")
+  name         String
+  nameBn       String?  @map("name_bn")
+  departmentId String?  @map("department_id")
+  departmentIds String[] @default([]) @map("department_ids")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([name, schoolId])
+  @@index([schoolId])
+  @@map("subjects")
+}
+
+model Designation {
+  id        String   @id @default(uuid())
+  schoolId  String   @map("school_id")
+  name      String
+  nameBn    String?  @map("name_bn")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([name, schoolId])
+  @@index([schoolId])
+  @@map("designations")
 }
 
 model Student {
@@ -103,38 +184,4 @@ model Student {
 
   @@index([schoolId])
   @@map("students")
-}
-
-model FaceEmbedding {
-  id          String   @id @default(uuid())
-  personId    String   @map("person_id")
-  personType  String   @map("person_type")
-  schoolId    String   @map("school_id")
-  embedding   Bytes
-  modelVersion String  @default("arcface_r100") @map("model_version")
-  enrolledBy  String?  @map("enrolled_by")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@unique([personId, schoolId])
-  @@index([schoolId])
-  @@map("face_embeddings")
-}
-
-model FaceAttendanceLog {
-  id             String   @id @default(uuid())
-  schoolId       String   @map("school_id")
-  personId       String   @map("person_id")
-  personType     String   @map("person_type")
-  punchType      String   @map("punch_type")
-  confidence     Decimal  @db.Decimal(5, 4)
-  livenessScore  Decimal? @map("liveness_score") @db.Decimal(5, 4)
-  livenessMethod String?  @map("liveness_method")
-  deviceInfo     Json?    @map("device_info")
-  ipAddress      String?  @map("ip_address")
-  createdAt      DateTime @default(now()) @map("created_at")
-
-  @@index([schoolId, createdAt])
-  @@index([personId, createdAt])
-  @@map("face_attendance_log")
 }

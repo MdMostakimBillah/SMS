@@ -66,74 +66,102 @@ export async function apiRequest<T = unknown>(
 
 export interface AuthResponse {
   token: string
-  user: { id: string; email: string; role: string; schoolId: string }
+  user: {
+    id: string
+    email: string
+    name: string | null
+    role: string
+    schoolId: string | null
+    schoolName: string | null
+    avatar: string | null
+  }
 }
 
-export interface RecognizeResponse {
-  personId: string | null
-  personType: string | null
-  confidence: number
-  distance: number
-  liveness_score: number
-  liveness_methods: string[]
-  message: string
-}
-
-export interface EnrollResponse {
-  success: boolean
-  embedding_id: string
-  det_score: number
-}
-
-export interface HealthResponse {
-  status: string
-  model_loaded: boolean
-  gpu: boolean
+export interface AccountInfo {
+  id: string
+  email: string
+  name: string | null
+  role: string
+  avatar: string | null
+  isActive: boolean
+  createdAt: string
 }
 
 export const authApi = {
-  login: (email: string, password: string, schoolId: string) =>
+  login: (email: string, password: string) =>
     apiRequest<AuthResponse>('/api/auth/login', {
       method: 'POST',
-      body: { email, password, schoolId },
+      body: { email, password },
     }),
 
-  register: (email: string, password: string, schoolId: string, role?: string) =>
+  register: (email: string, password: string, name: string, role?: string, schoolId?: string) =>
     apiRequest<AuthResponse>('/api/auth/register', {
       method: 'POST',
-      body: { email, password, schoolId, role },
+      body: { email, password, name, role, schoolId },
     }),
+
+  accounts: () => apiRequest<AccountInfo[]>('/api/auth/accounts'),
 }
 
-export interface DetectResponse {
-  face_detected: boolean
-  bbox: number[] | null
-  score: number
-  message: string
+export interface TeacherData {
+  id: string
+  schoolId: string
+  nameEn: string
+  nameBn: string | null
+  gender: string | null
+  dob: string | null
+  bloodGroup: string | null
+  religion: string | null
+  phone: string | null
+  email: string | null
+  address: string | null
+  nid: string | null
+  emergencyPhone: string | null
+  photo: string | null
+  departmentId: string | null
+  subjectIds: string[]
+  designation: string | null
+  qualification: string | null
+  experience: string | null
+  salary: string | null
+  salaryStartDate: string | null
+  bonus: string | null
+  overtime: string | null
+  festivalBonus: string | null
+  status: string
+  category: string | null
+  joiningDate: string | null
+  inTime: string | null
+  outTime: string | null
+  fatherNameEn: string | null
+  fatherNameBn: string | null
+  fatherPhone: string | null
+  fatherNid: string | null
+  motherNameEn: string | null
+  motherNameBn: string | null
+  motherPhone: string | null
+  guardianName: string | null
+  guardianPhone: string | null
+  guardianRelation: string | null
+  parentAddress: string | null
+  signature: string | null
+  expertSubjects: string | null
+  applySalaryRule: boolean | null
+  createdAt: string
+  updatedAt: string
 }
 
-export const faceApi = {
-  detect: (image: string) =>
-    apiRequest<DetectResponse>('/api/face/detect', {
-      method: 'POST',
-      body: { image },
-      timeout: 5000,
-    }),
+export const teachersApi = {
+  list: () => apiRequest<TeacherData[]>('/api/teachers'),
 
-  enroll: (personId: string, personType: 'teacher' | 'student', image: string) =>
-    apiRequest<EnrollResponse>('/api/face/enroll', {
-      method: 'POST',
-      body: { personId, personType, image },
-      timeout: 20000,
-    }),
+  get: (id: string) => apiRequest<TeacherData>(`/api/teachers/${id}`),
 
-  recognize: (image: string) =>
-    apiRequest<RecognizeResponse>('/api/face/recognize', {
-      method: 'POST',
-      body: { image },
-      timeout: 15000,
-    }),
+  create: (data: Partial<TeacherData>) =>
+    apiRequest<TeacherData>('/api/teachers', { method: 'POST', body: data }),
 
-  health: () =>
-    apiRequest<HealthResponse>('/api/face/health', { timeout: 5000 }),
+  update: (id: string, data: Partial<TeacherData>) =>
+    apiRequest<TeacherData>(`/api/teachers/${id}`, { method: 'PUT', body: data }),
+
+  delete: (id: string) =>
+    apiRequest<{ success: boolean }>(`/api/teachers/${id}`, { method: 'DELETE' }),
 }

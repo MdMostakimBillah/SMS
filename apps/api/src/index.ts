@@ -2,11 +2,8 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import { PrismaClient } from '@prisma/client'
-import { z } from 'zod'
-import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
-import { faceRouter } from './routes/face.js'
 import { authRouter } from './routes/auth.js'
+import { teacherRouter } from './routes/teachers.js'
 
 const app = express()
 const prisma = new PrismaClient()
@@ -22,7 +19,7 @@ app.get('/health', (_req, res) => {
 })
 
 app.use('/api/auth', authRouter(prisma, JWT_SECRET))
-app.use('/api/face', faceRouter(prisma, JWT_SECRET))
+app.use('/api/teachers', teacherRouter(prisma, JWT_SECRET))
 
 app.listen(PORT, () => {
   console.log(`[API] Server running on http://localhost:${PORT}`)

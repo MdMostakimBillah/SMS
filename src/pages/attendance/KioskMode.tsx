@@ -64,7 +64,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const { institution } = useClassStore()
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
   const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
-  const { loading: faceApiLoading, error: faceApiError, detectFace, enrollFace, recognizeFace } = useFaceApi()
+  const { loaded: faceApiLoaded, loading: faceApiLoading, error: faceApiError, detectFace, enrollFace, recognizeFace } = useFaceApi()
 
   const [kioskMode, setKioskMode] = useState<'register' | 'attendance'>('register')
   const [registeredFaces, setRegisteredFaces] = useState<RegisteredFace[]>(loadFaces)
@@ -72,6 +72,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [regSearch, setRegSearch] = useState('')
+  const [highlightedIdx, setHighlightedIdx] = useState(-1)
   const [camActive, setCamActive] = useState(false)
   const [faceDetected, setFaceDetected] = useState(false)
   const [identified, setIdentified] = useState<{
@@ -79,12 +80,11 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   } | null>(null)
   const [enrolling, setEnrolling] = useState(false)
   const [recognizing, setRecognizing] = useState(false)
-  const [modelReady, setModelReady] = useState<boolean | null>(null)
 
   const allPeople = useMemo(() => {
     const staff = activeTeachers.map((t) => ({
       id: t.id,
-      name: t.nameBn || t.nameEn,
+      name: isBn ? (t.nameBn || t.nameEn) : t.nameEn,
       nameEn: t.nameEn,
       photo: t.photo || '',
       type: 'staff' as const,
@@ -93,7 +93,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     }))
     const stu = activeStudents.map((s) => ({
       id: s.id,
-      name: s.nameBn || s.nameEn,
+      name: isBn ? (s.nameBn || s.nameEn) : s.nameEn,
       nameEn: s.nameEn,
       photo: s.photo || '',
       type: 'student' as const,
@@ -101,7 +101,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       section: s.section,
     }))
     return [...staff, ...stu]
-  }, [activeTeachers, activeStudents])
+  }, [activeTeachers, activeStudents, isBn])
 
   const filteredPeople = useMemo(() => {
     let list = allPeople
@@ -121,6 +121,13 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const cooldownRef = useRef<Record<string, number>>({})
   const regDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const recognizingRef = useRef(false)
+
+  useEffect(() => {
+    if (highlightedIdx >= 0) {
+      const el = document.getElementById(`suggestion-${highlightedIdx}`)
+      el?.scrollIntoView({ block: 'nearest' })
+    }
+  }, [highlightedIdx])
 
   const videoCallbackRef = useCallback((node: HTMLVideoElement | null) => {
     videoRef.current = node
@@ -186,9 +193,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     setEnrolling(true)
     try {
       const result = await enrollFace(
-        videoRef.current,
-        person.id,
-        person.type === 'staff' ? 'teacher' : 'student'
+        videoRef.current
       )
 
       if (result?.success) {
@@ -197,6 +202,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
           staffId: person.id,
           staffName: isBn ? person.name : person.nameEn,
           photo: photo || '',
+          embedding: result.embedding,
         }
         const updated = [...registeredFaces.filter((f) => f.staffId !== person.id), entry]
         setRegisteredFaces(updated)
@@ -296,7 +302,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
             setRecognizing(true)
 
             try {
-              const matchResult = await recognizeFace(v)
+              const matchResult = await recognizeFace(v, registeredFaces)
               if (matchResult?.personId) {
                 const match = registeredFaces.find((f) => f.staffId === matchResult.personId)
                 if (match) {
@@ -373,21 +379,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
         streamRef.current.getTracks().forEach((t) => t.stop())
       }
     }
-  }, [])
-
-  useEffect(() => {
-    const checkHealth = async () => {
-      try {
-        const res = await fetch('http://localhost:3001/api/face/health')
-        const data = await res.json()
-        setModelReady(data.model_loaded === true)
-      } catch {
-        setModelReady(false)
-      }
-    }
-    checkHealth()
-    const interval = setInterval(checkHealth, 10000)
-    return () => clearInterval(interval)
   }, [])
 
   const stats = useMemo(() => {
@@ -511,23 +502,21 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
         </div>
       )}
 
-      {/* Backend status */}
+      {/* Face API status */}
       <div className={`mb-4 py-3 px-4 rounded-xl text-[0.75rem] font-medium text-center ${
-        modelReady === true
+        faceApiLoaded
           ? 'bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)]'
-          : modelReady === false
+          : faceApiError
             ? 'bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)]'
             : 'bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)]'
       }`}>
-        {modelReady === true
-          ? (isBn ? '✅ মডেল লোডেড — সার্ভার-সাইড মুখ সনাক্তকরণ সক্রিয়' : '✅ Model loaded — Server-side face recognition active')
-          : modelReady === false
-            ? (isBn ? '❌ মডেল লোড হয়নি — ব্যাকএন্ড পুনরায় চালু করুন' : '❌ Model not loaded — Restart the backend')
+        {faceApiLoaded
+          ? (isBn ? 'মডেল লোডেড — ব্রাউজারে মুখ সনাক্তকরণ সক্রিয়' : 'Model loaded — Browser face recognition active')
+          : faceApiError
+            ? faceApiError
             : faceApiLoading
-              ? (isBn ? '🔄 ব্যাকএন্ড সংযোগ হচ্ছে...' : '🔄 Connecting to backend...')
-              : faceApiError
-                ? `❌ ${faceApiError}`
-                : (isBn ? '🔄 মডেল লোড হচ্ছে...' : '🔄 Loading model...')}
+              ? (isBn ? 'মডেল লোড হচ্ছে...' : 'Loading model...')
+              : (isBn ? 'মডেল লোড হচ্ছে...' : 'Loading model...')}
       </div>
 
       {/* Mode tabs */}
@@ -562,7 +551,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                 {isBn ? 'মুখ নিবন্ধন' : 'Register Face'}
               </div>
               <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
-                {isBn ? 'ক্যামেরায় মুখ তুলুন — সার্ভারে সংরক্ষিত হবে' : 'Capture face with camera — stored on server'}
+                {isBn ? 'ক্যামেরায় মুখ তুলুন — ব্রাউজারে সংরক্ষিত হবে' : 'Capture face with camera — stored locally in browser'}
               </div>
             </div>
             <div className="p-4 space-y-3">
@@ -572,7 +561,24 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                   <Search size={13} className="text-[var(--text-muted)] shrink-0" />
                   <input
                     value={regSearch}
-                    onChange={(e) => { setRegSearch(e.target.value); setSelectedStaff(''); setCapturedPhoto(null) }}
+                    onChange={(e) => { setRegSearch(e.target.value); setSelectedStaff(''); setCapturedPhoto(null); setHighlightedIdx(-1) }}
+                    onKeyDown={(e) => {
+                      if (!regSearch || selectedStaff) return
+                      const max = Math.min(filteredPeople.length, 20) - 1
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault()
+                        setHighlightedIdx((prev) => (prev < max ? prev + 1 : 0))
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault()
+                        setHighlightedIdx((prev) => (prev > 0 ? prev - 1 : max))
+                      } else if (e.key === 'Enter' && highlightedIdx >= 0 && highlightedIdx <= max) {
+                        e.preventDefault()
+                        const p = filteredPeople[highlightedIdx]
+                        if (p) { setSelectedStaff(p.id); setRegSearch(p.name); setCapturedPhoto(null); setHighlightedIdx(-1) }
+                      } else if (e.key === 'Escape') {
+                        setHighlightedIdx(-1)
+                      }
+                    }}
                     onFocus={() => {}}
                     placeholder={isBn ? 'নাম, আইডি বা সেকশন লিখুন...' : 'Type name, ID, or section...'}
                     className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
@@ -586,13 +592,18 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                 {/* Suggestions dropdown */}
                 {regSearch && !selectedStaff && filteredPeople.length > 0 && (
                   <div className="absolute z-50 w-full mt-1 max-h-[14rem] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xl">
-                    {filteredPeople.slice(0, 20).map((p) => {
+                    {filteredPeople.slice(0, 20).map((p, idx) => {
                       const registered = registeredFaces.find((f) => f.staffId === p.id)
+                      const isHighlighted = idx === highlightedIdx
                       return (
                         <button
                           key={p.id}
+                          id={`suggestion-${idx}`}
                           onClick={() => { setSelectedStaff(p.id); setRegSearch(p.name); setCapturedPhoto(null) }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none bg-transparent"
+                          onMouseEnter={() => setHighlightedIdx(idx)}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors cursor-pointer border-none ${
+                            isHighlighted ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--bg-secondary)]'
+                          }`}
                         >
                           <div className="w-8 h-8 rounded-lg overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] shrink-0 flex items-center justify-center">
                             {p.photo ? (
