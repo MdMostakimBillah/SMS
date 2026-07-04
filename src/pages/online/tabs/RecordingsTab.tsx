@@ -4,7 +4,6 @@ import { useBn } from '@/hooks/useBn'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useOnlineStore, getThumbnail, platformColors, platformLabels, type OnlineClass } from '@/store/onlineStore'
-import { getVideoProgressPercent } from '../utils'
 
 interface Props {
   filterClassId: string
@@ -64,7 +63,6 @@ export function RecordingsTab({ filterClassId, filterSectionId, filterSubjectId,
         const cls = classes.find((c) => c.id === item.classId)
         const teacher = teachers.find((t) => t.id === item.teacherId)
         const subject = subjects.find((s) => s.id === item.subjectId)
-        const progress = getVideoProgressPercent(item.url)
         return (
           <div
             key={item.id}
@@ -90,12 +88,6 @@ export function RecordingsTab({ filterClassId, filterSectionId, filterSubjectId,
                   <Play size={24} className="text-white ml-0.5" fill="white" />
                 </div>
               </div>
-              {/* Progress bar */}
-              {progress > 0 && (
-                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-black/40 z-10">
-                  <div className="h-full bg-[var(--brand)] transition-all duration-700" style={{ width: `${progress}%` }} />
-                </div>
-              )}
             </div>
             {/* Info */}
             <div className="p-3">

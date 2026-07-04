@@ -44,6 +44,11 @@ export function getYouTubeId(url: string): string | null {
   return m ? m[1] : null
 }
 
+export function getFacebookVideoId(url: string): string | null {
+  const m = url.match(/(?:facebook\.com\/(?:watch\/?\?v=|share\/v\/|reel\/|videos\/)|fb\.watch\/)([^&?/]+)/)
+  return m ? m[1] : null
+}
+
 export function getThumbnail(url: string): string {
   const ytId = getYouTubeId(url)
   if (ytId) return `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`
