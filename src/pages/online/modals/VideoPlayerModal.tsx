@@ -111,7 +111,7 @@ export function VideoPlayerModal({ item, onClose }: Props) {
       const ytPlayer = new window.YT.Player(containerRef.current, {
         videoId,
         playerVars: {
-          autoplay: 1, controls: 0, disablekb: 1, fs: 0,
+          autoplay: 1, controls: 0, disablekb: 1, fs: 0, mute: 1,
           modestbranding: 1, rel: 0, showinfo: 0, iv_load_policy: 3,
           playsinline: 1, origin: window.location.origin,
         },
@@ -122,6 +122,7 @@ export function VideoPlayerModal({ item, onClose }: Props) {
             setPlayerReady(true)
             const dur = e.target.getDuration()
             setDuration(dur)
+            e.target.playVideo()
             if (saved.currentTime > 3 && saved.duration > 0 && !isLiveStream(dur)) {
               e.target.seekTo(saved.currentTime, true)
               setResumeFrom(saved.currentTime)
