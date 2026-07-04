@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || ''
 
 let authToken: string | null = localStorage.getItem('edutech_token')
 
@@ -101,6 +101,21 @@ export const authApi = {
     }),
 
   accounts: () => apiRequest<AccountInfo[]>('/api/auth/accounts'),
+
+  getSuperAdmin: () =>
+    apiRequest<{ email: string; hasCustomPassword: boolean }>('/api/auth/super-admin'),
+
+  updateSuperAdmin: (data: { email?: string; password?: string }) =>
+    apiRequest<{ success: boolean }>('/api/auth/super-admin', {
+      method: 'PUT',
+      body: data,
+    }),
+
+  verifySuperAdmin: (email: string, password: string) =>
+    apiRequest<{ valid: boolean }>('/api/auth/verify-super-admin', {
+      method: 'POST',
+      body: { email, password },
+    }),
 }
 
 export interface TeacherData {

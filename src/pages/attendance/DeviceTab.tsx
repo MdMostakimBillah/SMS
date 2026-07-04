@@ -434,64 +434,22 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
       quality: number
       status: 'enrolled' | 'pending' | 'failed'
     }[]
-  >([
-    {
-      staffId: 'TCH-2026-001',
-      staffName: 'Dr. Rafiqul Islam',
-      faceId: 1,
-      quality: 92,
-      status: 'enrolled',
-    },
-    {
-      staffId: 'TCH-2026-002',
-      staffName: 'Prof. Salma Khatun',
-      faceId: 2,
-      quality: 88,
-      status: 'enrolled',
-    },
-    {
-      staffId: 'TCH-2026-003',
-      staffName: 'Md. Habibur Rahman',
-      faceId: 3,
-      quality: 85,
-      status: 'enrolled',
-    },
-    {
-      staffId: 'TCH-2026-004',
-      staffName: 'Farhana Rahman',
-      faceId: 4,
-      quality: 90,
-      status: 'enrolled',
-    },
-    {
-      staffId: 'TCH-2026-005',
-      staffName: 'Abdul Karim',
-      faceId: 5,
-      quality: 78,
-      status: 'enrolled',
-    },
-    {
-      staffId: 'TCH-2026-006',
-      staffName: 'Nasreen Akhter',
-      faceId: 6,
-      quality: 82,
-      status: 'enrolled',
-    },
-    {
-      staffId: 'TCH-2026-008',
-      staffName: 'Mohammad Ali',
-      faceId: 7,
-      quality: 0,
-      status: 'pending',
-    },
-    {
-      staffId: 'TCH-2026-009',
-      staffName: 'Roksana Begum',
-      faceId: 8,
-      quality: 0,
-      status: 'failed',
-    },
-  ])
+  >(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('kioskFaces') || '[]') as Array<{
+        staffId: string; staffName: string; embedding?: string; embeddings?: string[]; qualityScore?: number
+      }>
+      return stored.map((f, i) => ({
+        staffId: f.staffId,
+        staffName: f.staffName,
+        faceId: i + 1,
+        quality: f.qualityScore || 0,
+        status: (f.embedding ? 'enrolled' : 'failed') as 'enrolled' | 'failed',
+      }))
+    } catch {
+      return []
+    }
+  })
   const [rfidSearch, setRfidSearch] = useState('')
   const [fpSearch, setFpSearch] = useState('')
   const [faceSearch, setFaceSearch] = useState('')

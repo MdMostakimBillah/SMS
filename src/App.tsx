@@ -5,6 +5,7 @@ import AppLayout from '@/components/layouts/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,6 +20,7 @@ const queryClient = new QueryClient({
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
 const DashboardPage = lazy(() => import('@/pages/dashboard'))
+const SuperAdminPage = lazy(() => import('@/pages/super-admin'))
 const StudentsPage = lazy(() => import('@/pages/students'))
 const StudentAdmission = lazy(() => import('@/pages/students/admission'))
 const AllStudentsPage = lazy(() => import('@/pages/students/all'))
@@ -48,6 +50,7 @@ const Step5Marksheet = lazy(() => import('@/pages/exams/step5'))
 const OMRSheetPage = lazy(() => import('@/pages/exams/omr'))
 const SyllabusPage = lazy(() => import('@/pages/syllabus'))
 const AssignmentsPage = lazy(() => import('@/pages/assignments'))
+const OnlineClassesPage = lazy(() => import('@/pages/online'))
 
 function P({ name }: { name: string }) {
   return <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 500, padding: '1.25rem' }}>{name}</div>
@@ -64,7 +67,8 @@ export default function App() {
         <Routes>
         <Route path="/login" element={<F><LoginPage /></F>} />
         <Route path="/register" element={<F><RegisterPage /></F>} />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<F><DashboardPage /></F>} />
             <Route path="/students" element={<F><StudentsPage /></F>} />
@@ -95,7 +99,7 @@ export default function App() {
             <Route path="/exams/omr" element={<F><OMRSheetPage /></F>} />
             <Route path="/syllabus" element={<F><SyllabusPage /></F>} />
             <Route path="/assignments" element={<F><AssignmentsPage /></F>} />
-            <Route path="/online" element={<P name="Online Classes" />} />
+            <Route path="/online" element={<F><OnlineClassesPage /></F>} />
             <Route path="/finance" element={<P name="Finance" />} />
             <Route path="/payroll" element={<F><PayrollPage /></F>} />
             <Route path="/store" element={<P name="School Store" />} />
@@ -110,9 +114,10 @@ export default function App() {
             <Route path="/student-portal" element={<P name="Student Portal" />} />
             <Route path="/analytics" element={<P name="Analytics" />} />
             <Route path="/reports" element={<P name="Reports" />} />
-            <Route path="/super-admin" element={<P name="Super Admin" />} />
+            <Route path="/super-admin" element={<F><SuperAdminPage /></F>} />
             <Route path="/settings" element={<P name="Settings" />} />
           </Route>
+        </Route>
       </Routes>
       </AuthProvider>
     </QueryClientProvider>

@@ -19,6 +19,13 @@ import {
   FileBarChart,
   Receipt,
   Zap,
+  Lock,
+  CreditCard,
+  MessageSquare,
+  Database,
+  Bell,
+  Globe,
+  Crown,
   X,
   type LucideIcon,
 } from 'lucide-react'
@@ -38,6 +45,13 @@ const iconMap: Record<string, LucideIcon> = {
   receipt: Receipt,
   'building-2': Building2,
   zap: Zap,
+  lock: Lock,
+  'credit-card': CreditCard,
+  'message-square': MessageSquare,
+  database: Database,
+  bell: Bell,
+  globe: Globe,
+  crown: Crown,
 }
 
 interface RouteItem {
@@ -74,6 +88,19 @@ const sectionRoutes: Record<string, RouteItem[]> = {
     { path: '/exams/results', label: 'Results', labelBn: 'ফলাফল', icon: 'bar-chart-2' },
     { path: '/exams/marksheet', label: 'Marksheet', labelBn: 'মার্কশিট', icon: 'file-bar-chart' },
     { path: '/exams/omr', label: 'OMR Sheet', labelBn: 'ওএমআর শিট', icon: 'check-square' },
+  ],
+  'super-admin': [
+    { path: '/super-admin', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
+    { path: '/super-admin/account', label: 'Account', labelBn: 'অ্যাকাউন্ট', icon: 'lock' },
+    { path: '/super-admin/schools', label: 'Schools', labelBn: 'স্কুল', icon: 'building-2' },
+    { path: '/super-admin/requests', label: 'Requests', labelBn: 'অনুরোধ', icon: 'users' },
+    { path: '/super-admin/subscriptions', label: 'Packages', labelBn: 'প্যাকেজ', icon: 'credit-card' },
+    { path: '/super-admin/sms', label: 'SMS', labelBn: 'SMS', icon: 'message-square' },
+    { path: '/super-admin/database', label: 'Database', labelBn: 'ডাটাবেজ', icon: 'database' },
+    { path: '/super-admin/add-school', label: 'Add School', labelBn: 'নতুন স্কুল', icon: 'crown' },
+    { path: '/super-admin/notices', label: 'Notices', labelBn: 'নোটিশ', icon: 'bell' },
+    { path: '/super-admin/status', label: 'Status', labelBn: 'স্ট্যাটাস', icon: 'globe' },
+    { path: '/super-admin/payments', label: 'Payments', labelBn: 'পেমেন্ট', icon: 'file-text' },
   ],
 }
 

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { authApi, setAuthToken, getAuthToken, ApiError } from '@/lib/api'
+import { validateAdminCredentials, createSuperAdminToken, createSuperAdminUser } from '@/lib/adminAuth'
 
 interface User {
   id: string
@@ -60,13 +61,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     setError(null)
+
+    // Try API verification first (database credentials)
+    try {
+      const result = await authApi.verifySuperAdmin(email, password)
+      if (result.valid) {
+        const token = createSuperAdminToken()
+        const user = createSuperAdminUser()
+        localStorage.setItem('edutech_admin_credentials', JSON.stringify({ email, password }))
+        setAuthToken(token)
+        setToken(token)
+        setUser(user)
+        return
+      }
+    } catch {
+      // API not available, fall back to local check
+    }
+
+    // Fallback: check local credentials (localStorage overrides + .env defaults)
+    if (validateAdminCredentials(email, password)) {
+      const token = createSuperAdminToken()
+      const user = createSuperAdminUser()
+      setAuthToken(token)
+      setToken(token)
+      setUser(user)
+      return
+    }
+
+    // Final fallback: always allow .env defaults regardless of localStorage
+    const envEmail = import.meta.env.VITE_SUPER_ADMIN_EMAIL || 'admin@edutech.com'
+    const envPassword = import.meta.env.VITE_SUPER_ADMIN_PASSWORD || 'Admin@123456'
+    if (email === envEmail && password === envPassword) {
+      const token = createSuperAdminToken()
+      const user = createSuperAdminUser()
+      setAuthToken(token)
+      setToken(token)
+      setUser(user)
+      return
+    }
+
+    // Try regular API login
     try {
       const res = await authApi.login(email, password)
       setAuthToken(res.token)
       setToken(res.token)
       setUser(res.user)
     } catch (err) {
-      const msg = err instanceof ApiError ? err.message : 'Login failed'
+      const msg = err instanceof ApiError ? err.message : 'Invalid credentials'
       setError(msg)
       throw err
     }

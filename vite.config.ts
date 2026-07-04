@@ -26,5 +26,11 @@ export default defineConfig({
         cert: fs.readFileSync(certPath),
       },
     } : {}),
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
   },
 })

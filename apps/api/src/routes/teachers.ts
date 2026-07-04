@@ -41,8 +41,9 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
   router.get('/:id', auth, async (req: Request, res: Response) => {
     try {
       const schoolId = (req as any).schoolId as string
+      const id = req.params.id as string
       const teacher = await prisma.teacher.findFirst({
-        where: { id: req.params.id, schoolId },
+        where: { id, schoolId },
       })
       if (!teacher) return res.status(404).json({ error: 'Teacher not found' })
       res.json(teacher)
@@ -86,12 +87,13 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
   router.put('/:id', auth, async (req: Request, res: Response) => {
     try {
       const schoolId = (req as any).schoolId as string
-      const existing = await prisma.teacher.findFirst({ where: { id: req.params.id, schoolId } })
+      const id = req.params.id as string
+      const existing = await prisma.teacher.findFirst({ where: { id, schoolId } })
       if (!existing) return res.status(404).json({ error: 'Teacher not found' })
 
       const { nameEn, nameBn, phone, email, departmentId, designation, salary, status, joiningDate, inTime, outTime, photo } = req.body
       const teacher = await prisma.teacher.update({
-        where: { id: req.params.id },
+        where: { id },
         data: {
           ...(nameEn !== undefined && { nameEn }),
           ...(nameBn !== undefined && { nameBn }),
@@ -119,10 +121,11 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
   router.delete('/:id', auth, async (req: Request, res: Response) => {
     try {
       const schoolId = (req as any).schoolId as string
-      const existing = await prisma.teacher.findFirst({ where: { id: req.params.id, schoolId } })
+      const id = req.params.id as string
+      const existing = await prisma.teacher.findFirst({ where: { id, schoolId } })
       if (!existing) return res.status(404).json({ error: 'Teacher not found' })
 
-      await prisma.teacher.delete({ where: { id: req.params.id } })
+      await prisma.teacher.delete({ where: { id } })
       res.json({ success: true })
     } catch {
       res.status(500).json({ error: 'Internal server error' })

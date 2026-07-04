@@ -1,26 +1,19 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import {
-  CheckCircle,
-  Clock,
-  GraduationCap,
-  ScanFace,
-  Search,
-  User,
-  X,
-} from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { ScanFace, User, GraduationCap } from 'lucide-react'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { useFaceApi, type RegisteredFace } from '@/hooks/useFaceApi'
-
+import { logAuditEvent } from '@/lib/faceAudit'
+import RegistrationPopup from './kiosk/RegistrationPopup'
+import AttendancePopup from './kiosk/AttendancePopup'
+import RegisteredFacesTable from './kiosk/RegisteredFacesTable'
+import AuditLog from './kiosk/AuditLog'
+import ExportImport from './kiosk/ExportImport'
 
 const STORAGE_KEY = 'kioskFaces'
-const COOLDOWN_MS = 8000
-const DETECT_INTERVAL_MS = 350
-const STABLE_FRAMES = 3
 
 function loadFaces(): RegisteredFace[] {
   try {
@@ -34,25 +27,6 @@ function saveFaces(faces: RegisteredFace[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(faces))
 }
 
-function playSuccessSound() {
-  try {
-    const ctx = new AudioContext()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(880, ctx.currentTime)
-    osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1)
-    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.2)
-    gain.gain.setValueAtTime(0.3, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4)
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.4)
-    osc.onended = () => ctx.close()
-  } catch {}
-}
-
 export default function KioskMode({ isBn, date }: { isBn: boolean; date: string }) {
   const { teachers, attendance } = useTeacherStore(
     useShallow((s) => ({
@@ -64,7 +38,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const { institution } = useClassStore()
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
   const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
-  const { loaded: faceApiLoaded, loading: faceApiLoading, error: faceApiError, detectFace, enrollFace, recognizeFace } = useFaceApi()
+  const { loaded: faceApiLoaded, error: faceApiError } = useFaceApi()
 
   const [kioskMode, setKioskMode] = useState<'register' | 'attendance'>('register')
   const [registeredFaces, setRegisteredFaces] = useState<RegisteredFace[]>(loadFaces)
@@ -72,15 +46,8 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const [search, setSearch] = useState('')
   const [regSearch, setRegSearch] = useState('')
   const [highlightedIdx, setHighlightedIdx] = useState(-1)
-  const [camActive, setCamActive] = useState(false)
-  const [faceDetected, setFaceDetected] = useState(false)
   const [regPopupOpen, setRegPopupOpen] = useState(false)
-  const [regFaceDetected, setRegFaceDetected] = useState(false)
-  const [regAutoStatus, setRegAutoStatus] = useState<'idle' | 'detecting' | 'enrolling' | 'done' | 'error'>('idle')
-  const [identified, setIdentified] = useState<{
-    staffId: string; staffName: string; photo: string; punchType: 'in' | 'out'; time: string
-  } | null>(null)
-  const [recognizing, setRecognizing] = useState(false)
+  const [attendanceOpen, setAttendanceOpen] = useState(false)
 
   const allPeople = useMemo(() => {
     const staff = activeTeachers.map((t) => ({
@@ -89,8 +56,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       nameEn: t.nameEn,
       photo: t.photo || '',
       type: 'staff' as const,
-      dept: '',
-      section: '',
     }))
     const stu = activeStudents.map((s) => ({
       id: s.id,
@@ -98,233 +63,27 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       nameEn: s.nameEn,
       photo: s.photo || '',
       type: 'student' as const,
-      dept: s.class,
-      section: s.section,
     }))
     return [...staff, ...stu]
   }, [activeTeachers, activeStudents, isBn])
 
   const filteredPeople = useMemo(() => {
-    let list = allPeople
-    if (regSearch) {
-      const q = regSearch.toLowerCase()
-      list = list.filter((p) => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.section?.toLowerCase().includes(q))
-    }
-    return list
+    if (!regSearch) return allPeople
+    const q = regSearch.toLowerCase()
+    return allPeople.filter((p) => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q))
   }, [allPeople, regSearch])
-
-  const streamRef = useRef<MediaStream | null>(null)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const detectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const stableCountRef = useRef(0)
-  const identifiedRef = useRef(false)
-  const cooldownRef = useRef<Record<string, number>>({})
-  const regDetectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const recognizingRef = useRef(false)
-  const regAutoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const regStableCountRef = useRef(0)
-  const regAutoDoneRef = useRef(false)
-
-  useEffect(() => {
-    if (highlightedIdx >= 0) {
-      const el = document.getElementById(`suggestion-${highlightedIdx}`)
-      el?.scrollIntoView({ block: 'nearest' })
-    }
-  }, [highlightedIdx])
-
-  const videoCallbackRef = useCallback((node: HTMLVideoElement | null) => {
-    videoRef.current = node
-    if (node && streamRef.current) {
-      node.srcObject = streamRef.current
-      node.onloadedmetadata = () => {
-        node.play().catch(() => {})
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (camActive && regPopupOpen && videoRef.current && streamRef.current) {
-      videoRef.current.srcObject = streamRef.current
-      videoRef.current.play().catch(() => {})
-    }
-  }, [camActive, regPopupOpen])
-
-  const startCamera = async (onReady?: () => void) => {
-    try {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop())
-      }
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-      })
-      streamRef.current = stream
-      
-      setCamActive(true)
-      if (onReady) {
-        setTimeout(onReady, 300)
-      }
-    } catch {}
-
-  }
-
-  const stopCamera = () => {
-    stopRegDetectLoop()
-    stopRegAutoDetect()
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop())
-      streamRef.current = null
-    }
-    setCamActive(false)
-    setFaceDetected(false)
-  }
-
-  const stopRegDetectLoop = () => {
-    if (regDetectIntervalRef.current) clearInterval(regDetectIntervalRef.current)
-    regDetectIntervalRef.current = null
-  }
-
-  const STABLE_THRESHOLD = 5
-  const REG_DETECT_MS = 400
-
-  const startRegAutoDetect = () => {
-    if (regAutoIntervalRef.current) clearInterval(regAutoIntervalRef.current)
-    regStableCountRef.current = 0
-    regAutoDoneRef.current = false
-    setRegFaceDetected(false)
-    setRegAutoStatus('detecting')
-    regAutoIntervalRef.current = setInterval(async () => {
-      if (regAutoDoneRef.current) return
-      const v = videoRef.current
-      if (!v || !isVideoReady(v)) return
-      try {
-        const result = await detectFace(v)
-        if (result?.face_detected) {
-          setRegFaceDetected(true)
-          regStableCountRef.current++
-          if (regStableCountRef.current >= STABLE_THRESHOLD) {
-            if (regAutoIntervalRef.current) clearInterval(regAutoIntervalRef.current)
-            regAutoDoneRef.current = true
-            setRegAutoStatus('enrolling')
-            try {
-              const enrollResult = await enrollFace(v)
-              if (enrollResult?.success) {
-                const person = allPeople.find((p) => p.id === selectedStaff)
-                if (person) {
-                  const photo = capturePhoto()
-                  const entry: RegisteredFace = {
-                    staffId: person.id,
-                    staffName: isBn ? person.name : person.nameEn,
-                    photo: photo || '',
-                    embedding: enrollResult.embedding,
-                  }
-                  const updated = [...registeredFaces.filter((f) => f.staffId !== person.id), entry]
-                  setRegisteredFaces(updated)
-                  saveFaces(updated)
-                  setRegAutoStatus('done')
-                  setTimeout(() => {
-                    setRegPopupOpen(false)
-                    stopCamera()
-                    setSelectedStaff('')
-                    setRegSearch('')
-                    setRegAutoStatus('idle')
-                    setRegFaceDetected(false)
-                  }, 1500)
-                }
-              } else {
-                setRegAutoStatus('error')
-                setTimeout(() => {
-                  regAutoDoneRef.current = false
-                  setRegAutoStatus('detecting')
-                  regStableCountRef.current = 0
-                  startRegAutoDetect()
-                }, 2000)
-              }
-            } catch {
-              setRegAutoStatus('error')
-              setTimeout(() => {
-                regAutoDoneRef.current = false
-                setRegAutoStatus('detecting')
-                regStableCountRef.current = 0
-                startRegAutoDetect()
-              }, 2000)
-            }
-          }
-        } else {
-          setRegFaceDetected(false)
-          regStableCountRef.current = 0
-        }
-      } catch {
-        setRegFaceDetected(false)
-        regStableCountRef.current = 0
-      }
-    }, REG_DETECT_MS)
-  }
-
-  const stopRegAutoDetect = () => {
-    if (regAutoIntervalRef.current) clearInterval(regAutoIntervalRef.current)
-    regAutoIntervalRef.current = null
-    regStableCountRef.current = 0
-    regAutoDoneRef.current = false
-    setRegFaceDetected(false)
-    setRegAutoStatus('idle')
-  }
-
-  const isVideoReady = (v: HTMLVideoElement) =>
-    v.readyState >= 2 && v.videoWidth > 0 && v.videoHeight > 0
-
-  const capturePhoto = (): string | null => {
-    if (!videoRef.current || !canvasRef.current) return null
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-    canvas.width = 320
-    canvas.height = 240
-    ctx.drawImage(videoRef.current, 0, 0, 320, 240)
-    return canvas.toDataURL('image/jpeg', 0.6)
-  }
 
   const handleDeleteFace = (staffId: string) => {
     const updated = registeredFaces.filter((f) => f.staffId !== staffId)
     setRegisteredFaces(updated)
     saveFaces(updated)
+    logAuditEvent({ type: 'deleted', personId: staffId })
   }
 
-  const handlePunch = (staffId: string, staffName: string, photo: string) => {
-    const now = new Date()
-    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  const handlePunch = (staffId: string, _staffName: string, _photo: string, punchType: 'in' | 'out', time: string) => {
     const existing = attendance[date]?.[staffId]
     const punches = existing?.punches || []
-    const lastPunch = punches[punches.length - 1]
-
-    const hasInProgress = punches.some((p) => p.type === 'in')
-
-    let punchType: 'in' | 'out'
-
-    if (!hasInProgress) {
-      punchType = 'in'
-    } else {
-      const currentTimeMinutes = now.getHours() * 60 + now.getMinutes()
-      const startTime = institution?.startTime || '07:30'
-      const endTime = institution?.endTime || '14:30'
-      const [startH, startM] = startTime.split(':').map(Number)
-      const [endH, endM] = endTime.split(':').map(Number)
-      const startMinutes = startH * 60 + startM
-      const endMinutes = endH * 60 + endM
-
-      const distToStart = Math.abs(currentTimeMinutes - startMinutes)
-      const distToEnd = Math.abs(currentTimeMinutes - endMinutes)
-
-      if (distToStart < distToEnd) {
-        punchType = 'in'
-      } else if (distToEnd < distToStart) {
-        punchType = 'out'
-      } else {
-        punchType = !lastPunch || lastPunch.type === 'out' ? 'in' : 'out'
-      }
-    }
-
-    const punchesNew = [...punches, { time: timeStr, type: punchType }]
+    const punchesNew = [...punches, { time, type: punchType }]
     const status = punchType === 'in' ? 'present' : existing?.status || 'present'
     const updatedAttendance = {
       ...attendance,
@@ -334,319 +93,33 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       },
     }
     useTeacherStore.setState({ attendance: updatedAttendance })
-    setIdentified({ staffId, staffName, photo, punchType, time: timeStr })
-    identifiedRef.current = true
-    playSuccessSound()
-    cooldownRef.current[staffId] = Date.now()
-    setTimeout(() => {
-      setIdentified(null)
-      identifiedRef.current = false
-    }, 4000)
   }
 
-  const startDetectLoop = () => {
-    if (detectIntervalRef.current) clearInterval(detectIntervalRef.current)
-    stableCountRef.current = 0
-    recognizingRef.current = false
-    setFaceDetected(false)
-    detectIntervalRef.current = setInterval(async () => {
-      if (identifiedRef.current) return
-      if (recognizingRef.current) return
-      const v = videoRef.current
-      if (!v || !isVideoReady(v)) return
-
-      try {
-        const result = await detectFace(v)
-        if (result?.face_detected) {
-          setFaceDetected(true)
-          stableCountRef.current++
-          if (stableCountRef.current >= STABLE_FRAMES) {
-            if (detectIntervalRef.current) clearInterval(detectIntervalRef.current)
-            stableCountRef.current = 0
-            recognizingRef.current = true
-            setRecognizing(true)
-
-            try {
-              const matchResult = await recognizeFace(v, registeredFaces)
-              if (matchResult?.personId) {
-                const match = registeredFaces.find((f) => f.staffId === matchResult.personId)
-                if (match) {
-                  const lastPunch = cooldownRef.current[match.staffId] || 0
-                  if (Date.now() - lastPunch >= COOLDOWN_MS) {
-                    handlePunch(match.staffId, match.staffName, match.photo)
-                  }
-                }
-              }
-            } catch {
-              // recognition failed, just restart
-            } finally {
-              setRecognizing(false)
-              recognizingRef.current = false
-              setFaceDetected(false)
-              setTimeout(() => startDetectLoop(), 500)
-            }
-          }
-        } else {
-          setFaceDetected(false)
-          stableCountRef.current = 0
-        }
-      } catch {
-        setFaceDetected(false)
-        stableCountRef.current = 0
-      }
-    }, DETECT_INTERVAL_MS)
-  }
-
-  const stopDetectLoop = () => {
-    if (detectIntervalRef.current) clearInterval(detectIntervalRef.current)
-    detectIntervalRef.current = null
-    stableCountRef.current = 0
-    identifiedRef.current = false
-    recognizingRef.current = false
-    setFaceDetected(false)
-    setRecognizing(false)
-  }
-
-  const openAttendance = async () => {
-    setKioskMode('attendance')
-    setIdentified(null)
-    
-    await startCamera()
-  }
-
-  const closeAttendance = () => {
-    stopDetectLoop()
-    stopCamera()
-    setKioskMode('register')
-    setIdentified(null)
-  }
-
-  useEffect(() => {
-    let t: ReturnType<typeof setTimeout> | null = null
-    if (camActive && kioskMode === 'attendance' && videoRef.current && streamRef.current) {
-      videoRef.current.srcObject = streamRef.current
-      videoRef.current.onloadedmetadata = () => {
-        videoRef.current?.play().catch(() => {})
-        t = setTimeout(() => startDetectLoop(), 300)
-      }
-    }
-    return () => {
-      if (t) clearTimeout(t)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [camActive, kioskMode])
-
-  useEffect(() => {
-    return () => {
-      stopDetectLoop()
-      stopRegDetectLoop()
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop())
-      }
-    }
-  }, [])
-
-  const stats = useMemo(() => {
-    const registered = registeredFaces.length
-    const todayCheckin = registeredFaces.filter((f) => attendance[date]?.[f.staffId]?.punches?.length).length
-    const active = registeredFaces.filter((f) => attendance[date]?.[f.staffId]?.status === 'present').length
-    return { registered, todayCheckin, active }
-  }, [registeredFaces, attendance, date])
-
-  const filteredFaces = useMemo(() => {
-    if (!search) return registeredFaces
-    const q = search.toLowerCase()
-    return registeredFaces.filter(
-      (f) => f.staffName.toLowerCase().includes(q) || f.staffId.toLowerCase().includes(q)
-    )
-  }, [registeredFaces, search])
-
-  const renderAttendancePopup = () => {
-    if (kioskMode !== 'attendance') return null
-    return createPortal(
-      <div className="fixed inset-0 z-[600] bg-black flex flex-col">
-        {/* Camera feed - takes most of screen */}
-        <div className="relative flex-1 bg-black">
-          <video ref={videoCallbackRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-          <canvas ref={canvasRef} className="hidden" />
-
-          {/* Close button */}
-          <button
-            onClick={closeAttendance}
-            className="absolute top-5 right-5 w-12 h-12 rounded-full bg-black/50 border border-white/20 flex items-center justify-center cursor-pointer text-white hover:bg-black/70 z-20 transition-colors"
-          >
-            <X size={24} />
-          </button>
-
-          {/* LIVE indicator */}
-          {camActive && !identified && (
-            <div className="absolute top-5 left-5 bg-black/60 rounded-lg px-3 py-1.5 text-white text-[0.75rem] font-medium flex items-center gap-2 z-10">
-              <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
-              {isBn ? 'লাইভ' : 'LIVE'}
-            </div>
-          )}
-
-          {/* Face guide overlay */}
-          {camActive && !identified && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <div className="absolute inset-[12%] grid grid-cols-3 grid-rows-3 gap-0.5">
-                {[...Array(9)].map((_, i) => (
-                  <div key={i} className={`border ${faceDetected ? 'border-[var(--green)]/60' : 'border-white/15'} transition-colors duration-200`} />
-                ))}
-              </div>
-              <div className={`w-40 h-52 border-[3px] rounded-[50%] transition-all duration-200 ${faceDetected ? 'border-[var(--green)] shadow-[0_0_40px_rgba(34,197,94,0.5)]' : 'border-white/30'}`} />
-            </div>
-          )}
-
-          {/* Status text */}
-          {camActive && !identified && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
-              <div className={`px-5 py-2.5 rounded-full text-[0.875rem] font-bold transition-colors duration-200 ${faceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/50 text-white/80 backdrop-blur-sm'}`}>
-                {recognizing
-                  ? isBn ? 'শনাক্তকরণ হচ্ছে...' : 'Recognizing...'
-                  : faceDetected
-                    ? isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...'
-                    : isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid'}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Bottom bar - identified person */}
-        <div className="px-4 py-3" style={{ background: 'linear-gradient(to top, #000, #111827)' }}>
-          {identified && (
-            <div className="max-w-xl mx-auto animate-[slideUp_0.3s_ease-out]">
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl px-4 py-3 flex items-center gap-4 border border-white/15">
-                <div className="relative shrink-0">
-                  <img src={identified.photo} alt="" className="w-14 h-14 rounded-xl object-cover border-2 border-[var(--green)]/60" />
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[var(--green)] flex items-center justify-center border-2 border-gray-900">
-                    <CheckCircle size={11} className="text-white" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[0.9375rem] font-bold text-white truncate">{identified.staffName}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`px-2 py-0.5 rounded-md text-[0.625rem] font-bold ${identified.punchType === 'in' ? 'bg-[var(--green)] text-white' : 'bg-[var(--amber)] text-white'}`}>
-                      {identified.punchType === 'in' ? 'CHECKED IN' : 'CHECKED OUT'}
-                    </span>
-                    <span className="text-[0.625rem] text-white/50 font-mono">{identified.staffId}</span>
-                  </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <div className="text-[1.375rem] font-bold text-white font-mono leading-none">{identified.time}</div>
-                  <div className="text-[0.5625rem] text-white/40 mt-1">{isBn ? 'পাঞ্চ সময়' : 'Punch Time'}</div>
-                </div>
-              </div>
-            </div>
-          )}
-          {!identified && (
-            <div className="text-center py-1.5">
-              <div className="text-white/30 text-[0.75rem] font-medium">
-                {isBn ? 'অপেক্ষা করুন...' : 'Waiting for face...'}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>,
-      document.body
-    )
-  }
-
-  const renderRegPopup = () => {
-    if (!regPopupOpen) return null
-    const person = allPeople.find((p) => p.id === selectedStaff)
-    return createPortal(
-      <div className="fixed inset-0 z-[600] bg-black flex flex-col">
-        <div className="relative flex-1 bg-black">
-          <video ref={videoCallbackRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-          <canvas ref={canvasRef} className="hidden" />
-
-          <button
-            onClick={() => { stopRegAutoDetect(); stopCamera(); setRegPopupOpen(false); setRegAutoStatus('idle') }}
-            className="absolute top-5 right-5 w-12 h-12 rounded-full bg-black/50 border border-white/20 flex items-center justify-center cursor-pointer text-white hover:bg-black/70 z-20 transition-colors"
-          >
-            <X size={24} />
-          </button>
-
-          {camActive && (
-            <div className="absolute top-5 left-5 bg-black/60 rounded-lg px-3 py-1.5 text-white text-[0.75rem] font-medium flex items-center gap-2 z-10">
-              <div className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
-              LIVE
-            </div>
-          )}
-
-          {camActive && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <div className="absolute inset-[12%] grid grid-cols-3 grid-rows-3 gap-0.5">
-                {[...Array(9)].map((_, i) => (
-                  <div key={i} className={`border ${regFaceDetected ? 'border-[var(--green)]/60' : 'border-white/15'} transition-colors duration-200`} />
-                ))}
-              </div>
-              <div className={`w-40 h-52 border-[3px] rounded-[50%] transition-all duration-200 ${regFaceDetected ? 'border-[var(--green)] shadow-[0_0_40px_rgba(34,197,94,0.5)]' : 'border-white/30'}`} />
-            </div>
-          )}
-
-          {camActive && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
-              <div className={`px-5 py-2.5 rounded-full text-[0.875rem] font-bold transition-colors duration-200 ${
-                regAutoStatus === 'done' ? 'bg-[var(--green)] text-white'
-                  : regAutoStatus === 'enrolling' ? 'bg-[var(--amber)] text-white'
-                    : regAutoStatus === 'error' ? 'bg-[var(--red)] text-white'
-                      : regFaceDetected ? 'bg-[var(--green)] text-white' : 'bg-black/50 text-white/80 backdrop-bl-sm'
-              }`}>
-                {regAutoStatus === 'done'
-                  ? isBn ? 'নিবন্ধন সম্পন্ন!' : 'Registration Complete!'
-                  : regAutoStatus === 'enrolling'
-                    ? isBn ? 'নিবন্ধন হচ্ছে...' : 'Enrolling...'
-                      : regAutoStatus === 'error'
-                        ? isBn ? 'আবার চেষ্টা করুন...' : 'Try again...'
-                          : regFaceDetected
-                            ? isBn ? 'মুখ সনাক্ত হয়েছে — ধরুন...' : 'Face detected — Hold...'
-                            : isBn ? 'মুখকে গ্রিডের মাঝখানে রাখুন' : 'Center your face in the grid'}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="px-4 py-3" style={{ background: 'linear-gradient(to top, #000, #111827)' }}>
-          {person && (
-            <div className="max-w-xl mx-auto">
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl px-4 py-3 flex items-center gap-4 border border-white/15">
-                <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/10 shrink-0 flex items-center justify-center">
-                  {person.photo ? (
-                    <img src={person.photo} alt="" className="w-full h-full object-cover" />
-                  ) : person.type === 'staff' ? (
-                    <User size={18} className="text-white/50" />
-                  ) : (
-                    <GraduationCap size={18} className="text-white/50" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[0.875rem] font-bold text-white truncate">{person.name}</div>
-                  <div className="text-[0.625rem] text-white/50 font-mono">{person.id}</div>
-                </div>
-                <span className={`text-[0.5rem] px-2 py-0.5 rounded font-bold ${person.type === 'student' ? 'bg-[var(--green)] text-white' : 'bg-[var(--brand)] text-white'}`}>
-                  {person.type === 'student' ? 'STU' : 'STAFF'}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>,
-      document.body
-    )
-  }
+  const selectedPerson = allPeople.find((p) => p.id === selectedStaff)
 
   return (
     <>
+      {regPopupOpen && selectedPerson && (
+        <RegistrationPopup
+          isBn={isBn}
+          person={selectedPerson}
+          existingFaces={registeredFaces}
+          onEnrolled={setRegisteredFaces}
+          onClose={() => { setRegPopupOpen(false); setSelectedStaff(''); setRegSearch('') }}
+        />
+      )}
 
-      {/* Attendance popup */}
-      {renderAttendancePopup()}
+      {attendanceOpen && (
+        <AttendancePopup
+          isBn={isBn}
+          date={date}
+          registeredFaces={registeredFaces}
+          institution={institution}
+          onPunch={handlePunch}
+          onClose={() => setAttendanceOpen(false)}
+        />
+      )}
 
-      {/* Registration popup */}
-      {renderRegPopup()}
-
-      {/* HTTPS warning */}
       {window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && (
         <div className="mb-4 py-3 px-4 rounded-xl bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.75rem] font-medium text-center">
           <span className="font-bold">🔒 {isBn ? 'HTTPS প্রয়োজন!' : 'HTTPS Required!'}</span>
@@ -655,7 +128,6 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
         </div>
       )}
 
-      {/* Face API status */}
       <div className={`mb-4 py-3 px-4 rounded-xl text-[0.75rem] font-medium text-center ${
         faceApiLoaded
           ? 'bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)]'
@@ -664,18 +136,15 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
             : 'bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)]'
       }`}>
         {faceApiLoaded
-          ? (isBn ? 'মডেল লোডেড — ব্রাউজারে মুখ সনাক্তকরণ সক্রিয়' : 'Model loaded — Browser face recognition active')
+          ? (isBn ? 'মডেল লোডেড — লাইভনেস চেক সক্রিয়' : 'Model loaded — Liveness check active')
           : faceApiError
             ? faceApiError
-            : faceApiLoading
-              ? (isBn ? 'মডেল লোড হচ্ছে...' : 'Loading model...')
-              : (isBn ? 'মডেল লোড হচ্ছে...' : 'Loading model...')}
+            : (isBn ? 'মডেল লোড হচ্ছে...' : 'Loading model...')}
       </div>
 
-      {/* Mode tabs */}
       <div className="flex gap-2 mb-4">
         <button
-          onClick={() => { if (kioskMode === 'attendance') closeAttendance(); setKioskMode('register') }}
+          onClick={() => { setKioskMode('register'); setAttendanceOpen(false) }}
           className={`flex-1 py-2.5 rounded-lg text-[0.8125rem] font-semibold border transition-all ${kioskMode === 'register' ? 'bg-[var(--green)] text-white border-[var(--green)]' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--green)]'}`}
         >
           <span className="flex items-center justify-center gap-2">
@@ -684,7 +153,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
           </span>
         </button>
         <button
-          onClick={openAttendance}
+          onClick={() => { setKioskMode('attendance'); setAttendanceOpen(true) }}
           className={`flex-1 py-2.5 rounded-lg text-[0.8125rem] font-semibold border transition-all ${kioskMode === 'attendance' ? 'bg-[var(--teal)] text-white border-[var(--teal)]' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--teal)]'}`}
         >
           <span className="flex items-center justify-center gap-2">
@@ -694,141 +163,95 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
         </button>
       </div>
 
-      {/* Register Mode */}
       {kioskMode === 'register' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-          {/* Register Face */}
           <div className="border border-[var(--border)] rounded-xl bg-[var(--bg-primary)]">
             <div className="px-4 py-3 border-b border-[var(--border)]">
               <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
                 {isBn ? 'মুখ নিবন্ধন' : 'Register Face'}
               </div>
               <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
-                {isBn ? 'ক্যামেরায় মুখ তুলুন — ব্রাউজারে সংরক্ষিত হবে' : 'Capture face with camera — stored locally in browser'}
+                {isBn ? 'লাইভনেস চেক + বহু-কোণ ক্যাপচার' : 'Liveness check + multi-angle capture'}
               </div>
             </div>
             <div className="p-4 space-y-3">
-              {/* Autocomplete input */}
               <div className="relative">
                 <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-2">
-                  <Search size={13} className="text-[var(--text-muted)] shrink-0" />
+                  <span className="text-[var(--text-muted)] shrink-0">🔍</span>
                   <input
                     value={regSearch}
-                    onChange={(e) => { setRegSearch(e.target.value); setSelectedStaff(''); ; setHighlightedIdx(-1) }}
+                    onChange={(e) => { setRegSearch(e.target.value); setSelectedStaff(''); setHighlightedIdx(-1) }}
                     onKeyDown={(e) => {
                       if (!regSearch || selectedStaff) return
                       const max = Math.min(filteredPeople.length, 20) - 1
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault()
-                        setHighlightedIdx((prev) => (prev < max ? prev + 1 : 0))
-                      } else if (e.key === 'ArrowUp') {
-                        e.preventDefault()
-                        setHighlightedIdx((prev) => (prev > 0 ? prev - 1 : max))
-                      } else if (e.key === 'Enter' && highlightedIdx >= 0 && highlightedIdx <= max) {
+                      if (e.key === 'ArrowDown') { e.preventDefault(); setHighlightedIdx((p) => (p < max ? p + 1 : 0)) }
+                      else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlightedIdx((p) => (p > 0 ? p - 1 : max)) }
+                      else if (e.key === 'Enter' && highlightedIdx >= 0 && highlightedIdx <= max) {
                         e.preventDefault()
                         const p = filteredPeople[highlightedIdx]
-                        if (p) { setSelectedStaff(p.id); setRegSearch(p.name); ; setHighlightedIdx(-1) }
-                      } else if (e.key === 'Escape') {
-                        setHighlightedIdx(-1)
+                        if (p) { setSelectedStaff(p.id); setRegSearch(p.name); setHighlightedIdx(-1) }
                       }
+                      else if (e.key === 'Escape') setHighlightedIdx(-1)
                     }}
-                    onFocus={() => {}}
-                    placeholder={isBn ? 'নাম, আইডি বা সেকশন লিখুন...' : 'Type name, ID, or section...'}
+                    placeholder={isBn ? 'নাম, আইডি লিখুন...' : 'Type name or ID...'}
                     className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
                   />
                   {regSearch && (
-                    <button onClick={() => { setRegSearch(''); setSelectedStaff('') }} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)]">
-                      <X size={12} />
-                    </button>
+                    <button onClick={() => { setRegSearch(''); setSelectedStaff('') }} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)]">✕</button>
                   )}
                 </div>
-                {/* Suggestions dropdown */}
                 {regSearch && !selectedStaff && filteredPeople.length > 0 && (
                   <div className="absolute z-50 w-full mt-1 max-h-[14rem] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xl">
                     {filteredPeople.slice(0, 20).map((p, idx) => {
                       const registered = registeredFaces.find((f) => f.staffId === p.id)
-                      const isHighlighted = idx === highlightedIdx
                       return (
                         <button
                           key={p.id}
-                          id={`suggestion-${idx}`}
-                          onClick={() => { setSelectedStaff(p.id); setRegSearch(p.name);  }}
+                          onClick={() => { setSelectedStaff(p.id); setRegSearch(p.name) }}
                           onMouseEnter={() => setHighlightedIdx(idx)}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors cursor-pointer border-none ${
-                            isHighlighted ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--bg-secondary)]'
-                          }`}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors cursor-pointer border-none ${idx === highlightedIdx ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--bg-secondary)]'}`}
                         >
                           <div className="w-8 h-8 rounded-lg overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] shrink-0 flex items-center justify-center">
-                            {p.photo ? (
-                              <img src={p.photo} alt="" className="w-full h-full object-cover" />
-                            ) : p.type === 'staff' ? (
-                              <User size={12} className="text-[var(--text-muted)]" />
-                            ) : (
-                              <GraduationCap size={12} className="text-[var(--text-muted)]" />
-                            )}
+                            {p.photo ? <img src={p.photo} alt="" className="w-full h-full object-cover" />
+                              : p.type === 'staff' ? <User size={12} className="text-[var(--text-muted)]" />
+                                : <GraduationCap size={12} className="text-[var(--text-muted)]" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] truncate">
-                              {p.name}
-                              {registered && <span className="text-[var(--green)] ml-1">✓</span>}
+                              {p.name}{registered && <span className="text-[var(--green)] ml-1">✓</span>}
                             </div>
-                            <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono truncate">
-                              {p.id}{p.type === 'student' && p.dept ? ` · ${p.dept}-${p.section}` : ''}
-                            </div>
+                            <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono">{p.id}</div>
                           </div>
-                          <span className={`text-[0.4375rem] px-1.5 py-0.5 rounded font-semibold shrink-0 ${
-                            p.type === 'student' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--brand-light)] text-[var(--brand)]'
-                          }`}>
+                          <span className={`text-[0.4375rem] px-1.5 py-0.5 rounded font-semibold ${p.type === 'student' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--brand-light)] text-[var(--brand)]'}`}>
                             {p.type === 'student' ? 'STU' : 'STAFF'}
                           </span>
                         </button>
                       )
                     })}
-                    {filteredPeople.length > 20 && (
-                      <div className="px-3 py-1.5 text-center text-[0.5625rem] text-[var(--text-muted)] border-t border-[var(--border)]">
-                        +{filteredPeople.length - 20} {isBn ? 'আরও...' : 'more...'}
-                      </div>
-                    )}
-                  </div>
-                )}
-                {regSearch && !selectedStaff && filteredPeople.length === 0 && (
-                  <div className="absolute z-50 w-full mt-1 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xl p-4 text-center">
-                    <div className="text-[0.6875rem] text-[var(--text-muted)]">
-                      {isBn ? 'কোনো ফলাফল পাওয়া যায়নি' : 'No results found'}
-                    </div>
                   </div>
                 )}
               </div>
-              {selectedStaff && !camActive && (
+              {selectedStaff && (
                 <button
-                  onClick={() => {
-                    setRegPopupOpen(true)
-                    startCamera(() => startRegAutoDetect())
-                  }}
+                  onClick={() => setRegPopupOpen(true)}
                   className="w-full py-2.5 rounded-lg text-[0.75rem] font-semibold bg-[var(--green)] text-white border-none cursor-pointer flex items-center justify-center gap-2"
                 >
                   <ScanFace size={14} />
                   {isBn ? 'ক্যামেরা খুলুন' : 'Open Camera'}
                 </button>
               )}
-              {selectedStaff && camActive && !regPopupOpen && (
-                <div className="text-center py-3 text-[0.75rem] text-[var(--text-muted)]">
-                  {isBn ? 'ক্যামেরা সক্রিয়...' : 'Camera active...'}
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Quick Info */}
           <div className="border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] flex flex-col justify-center items-center text-center min-h-[12rem] p-6">
             <ScanFace size={40} className="text-[var(--text-muted)] mb-3 opacity-30" />
             <div className="text-[0.875rem] font-semibold text-[var(--text-secondary)] mb-1">
-              {isBn ? 'স্টাফ বা শিক্ষার্থী নির্বাচন করুন' : 'Select staff or student'}
+              {isBn ? 'উন্নত মুখ সনাক্তকরণ' : 'Advanced Face Detection'}
             </div>
             <div className="text-[0.6875rem] text-[var(--text-muted)] max-w-[16rem]">
               {isBn
-                ? 'নিবন্ধিত সকলে কিওস্ক মোডে মুখ দেখিয়ে চেক ইন/আউট করতে পারবেন'
-                : 'Registered staff & students can check in/out by showing face in kiosk mode'}
+                ? 'লাইভনেস চেক, বহু-কোণ ক্যাপচার, মান নিয়ন্ত্রণ, এনক্রিপ্টেড সংরক্ষণ'
+                : 'Liveness check, multi-angle capture, quality control, encrypted storage'}
             </div>
             <div className="flex items-center gap-4 mt-3">
               <div className="flex items-center gap-1.5">
@@ -844,98 +267,25 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
         </div>
       )}
 
-      {/* Registered Staff & Students Table */}
-      <div className="border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-          <div className="flex items-center gap-4">
-            <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-              {isBn ? `নিবন্ধিত (${registeredFaces.length})` : `Registered (${registeredFaces.length})`}
-            </div>
-            <div className="flex items-center gap-1">
-              <CheckCircle size={11} className="text-[var(--teal)]" />
-              <span className="text-[0.625rem] text-[var(--text-muted)]">{stats.todayCheckin} {isBn ? 'আজ' : 'Today'}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock size={11} className="text-[var(--brand)]" />
-              <span className="text-[0.625rem] text-[var(--text-muted)]">{stats.active} {isBn ? 'সক্রিয়' : 'Active'}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-2.5 py-[0.3125rem]">
-            <Search size={12} className="text-[var(--text-muted)]" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={isBn ? 'খুঁজুন...' : 'Search...'}
-              className="flex-1 border-none bg-transparent outline-none text-[0.6875rem] text-[var(--text-primary)] w-[6.25rem]"
-            />
-          </div>
-        </div>
-        <div className="overflow-auto max-h-[35vh]">
-          <table className="w-full border-collapse text-[0.8125rem]">
-            <thead>
-              <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                <th className="px-4 py-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)] w-[2.5rem] uppercase tracking-wider">#</th>
-                <th className="px-4 py-3 text-left text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{isBn ? 'নাম' : 'Name'}</th>
-                <th className="px-4 py-3 text-left text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{isBn ? 'আইডি' : 'ID'}</th>
-                <th className="px-4 py-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{isBn ? 'স্ট্যাটাস' : 'Status'}</th>
-                <th className="px-4 py-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{isBn ? 'অ্যাকশন' : 'Action'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredFaces.map((f, i) => {
-                const isCheckedIn = attendance[date]?.[f.staffId]?.status === 'present'
-                return (
-                  <tr key={f.staffId} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)]/50 transition-colors">
-                    <td className="px-4 py-3 text-center text-[var(--text-muted)] font-medium">{i + 1}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-[var(--border)] shrink-0 bg-[var(--bg-secondary)]">
-                          {f.photo ? (
-                            <img src={f.photo} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <User size={14} className="text-[var(--text-muted)]" />
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-[var(--text-primary)]">{f.staffName}</div>
-                          <div className="text-[0.625rem] text-[var(--text-muted)] font-mono">{f.staffId}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-[0.75rem] text-[var(--text-secondary)]">{f.staffId}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex items-center gap-1 text-[0.625rem] px-2.5 py-1 rounded-full font-semibold ${
-                        isCheckedIn
-                          ? 'bg-[var(--green-light)] text-[var(--green)]'
-                          : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isCheckedIn ? 'bg-[var(--green)]' : 'bg-[var(--text-muted)]'}`} />
-                        {isCheckedIn ? (isBn ? 'চেক-ইন' : 'Checked In') : (isBn ? 'নিবন্ধিত' : 'Registered')}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => handleDeleteFace(f.staffId)}
-                        className="px-3 py-1.5 rounded-lg text-[0.625rem] font-semibold bg-[var(--red-light)] text-[var(--red)] border border-transparent hover:bg-[var(--red)] hover:text-white cursor-pointer transition-all"
-                      >
-                        {isBn ? 'মুছুন' : 'Delete'}
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
-              {filteredFaces.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-[var(--text-muted)]">
-                    {isBn ? 'কোনো নিবন্ধিত ব্যক্তি নেই' : 'No registered people'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      <div className="mb-4">
+        <RegisteredFacesTable
+          isBn={isBn}
+          faces={registeredFaces}
+          date={date}
+          attendance={attendance}
+          search={search}
+          onSearchChange={setSearch}
+          onDelete={handleDeleteFace}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <AuditLog isBn={isBn} />
+        <ExportImport
+          isBn={isBn}
+          faces={registeredFaces}
+          onImport={setRegisteredFaces}
+        />
       </div>
     </>
   )

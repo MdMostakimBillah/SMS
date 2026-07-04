@@ -25,6 +25,7 @@ import { useAppStore } from '@/store/appStore'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
 import type { Theme, Language } from '@/types'
@@ -104,6 +105,7 @@ const demoMessages = [
 
 export default function Topbar() {
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const { theme, language, setTheme, setLanguage, sidebarCollapsed, setSidebarCollapsed, setCommandPaletteOpen, toggleSidebar } = useAppStore()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
@@ -875,6 +877,10 @@ export default function Topbar() {
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  onClick={() => {
+                    logout()
+                    navigate('/login')
+                  }}
                 >
                   <LogOut size={14} />
                   {isBn ? 'লগ আউট' : 'Log Out'}

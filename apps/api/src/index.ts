@@ -8,10 +8,20 @@ import { teacherRouter } from './routes/teachers.js'
 const app = express()
 const prisma = new PrismaClient()
 const PORT = process.env.PORT || 3001
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production'
+
+if (!process.env.JWT_SECRET) {
+  console.error('[FATAL] JWT_SECRET environment variable is required')
+  process.exit(1)
+}
+const JWT_SECRET = process.env.JWT_SECRET
 
 app.use(helmet())
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', credentials: true }))
+const corsOrigin = process.env.CORS_ORIGIN
+if (!corsOrigin) {
+  console.error('[FATAL] CORS_ORIGIN environment variable is required')
+  process.exit(1)
+}
+app.use(cors({ origin: corsOrigin, credentials: true }))
 app.use(express.json({ limit: '10mb' }))
 
 app.get('/health', (_req, res) => {

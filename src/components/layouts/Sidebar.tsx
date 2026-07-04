@@ -39,6 +39,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAppStore } from '@/store/appStore'
 import { useClassStore } from '@/store/classStore'
+import { useAuth } from '@/contexts/AuthContext'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
 
@@ -77,6 +78,8 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const { isMobile, width } = useWindowSize()
   const location = useLocation()
   const { institution, switchSession, addSession } = useClassStore()
+  const { user } = useAuth()
+  const isSuperAdmin = user?.role === 'super_admin'
   const [showSessionDropdown, setShowSessionDropdown] = useState(false)
   const [newSession, setNewSession] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -191,8 +194,8 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     {
       key: 'grp_system',
       items: [
-        { key: 'nav_superadmin', page: '/super-admin', icon: 'crown' },
         { key: 'nav_settings', page: '/settings', icon: 'settings' },
+        ...(isSuperAdmin ? [{ key: 'nav_superadmin', page: '/super-admin', icon: 'crown' }] : []),
       ],
     },
   ]
