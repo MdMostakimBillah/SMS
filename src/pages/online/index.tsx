@@ -146,7 +146,7 @@ export default function OnlineClassesPage() {
 
       {/* Tab content */}
       {activeTab === 'live' ? (
-        <LiveNowTab filterClassId={filterClassId} filterSectionId={filterSectionId} filterSubjectId={filterSubjectId} search={search} onPlay={setPlayItem} />
+        <LiveNowTab filterClassId={filterClassId} filterSectionId={filterSectionId} filterSubjectId={filterSubjectId} search={search} onPlay={setPlayItem} onEdit={(item) => { setEditItem(item); setShowCreate(true) }} onDelete={(id) => setDeleteTarget(id)} />
       ) : (
         <RecordingsTab
           filterClassId={filterClassId}

@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { Play } from 'lucide-react'
+import { Play, Edit2, Trash2 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
-import { useOnlineStore, platformColors, platformLabels, type OnlineClass } from '@/store/onlineStore'
+import { useOnlineStore, getThumbnail, platformColors, platformLabels, type OnlineClass } from '@/store/onlineStore'
 
 interface Props {
   filterClassId: string
@@ -11,9 +11,11 @@ interface Props {
   filterSubjectId: string
   search: string
   onPlay: (item: OnlineClass) => void
+  onEdit: (item: OnlineClass) => void
+  onDelete: (id: string) => void
 }
 
-export function LiveNowTab({ filterClassId, filterSectionId, filterSubjectId, search, onPlay }: Props) {
+export function LiveNowTab({ filterClassId, filterSectionId, filterSubjectId, search, onPlay, onEdit, onDelete }: Props) {
   const isBn = useBn()
   const { classes } = useClassStore()
   const { teachers, subjects } = useTeacherStore()
@@ -53,13 +55,12 @@ export function LiveNowTab({ filterClassId, filterSectionId, filterSubjectId, se
         return (
           <div
             key={item.id}
-            className="group rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--bg-primary)] hover:shadow-lg transition-all cursor-pointer"
-            onClick={() => onPlay(item)}
+            className="group rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--bg-primary)] hover:shadow-lg transition-all"
           >
-            {/* Thumbnail */}
-            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-              {item.thumbnailUrl ? (
-                <img src={item.thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            {/* Thumbnail — clickable to play */}
+            <div className="relative w-full cursor-pointer" style={{ paddingBottom: '56.25%' }} onClick={() => onPlay(item)}>
+              {item.thumbnailUrl || getThumbnail(item.url) ? (
+                <img src={item.thumbnailUrl || getThumbnail(item.url)} alt="" className="absolute inset-0 w-full h-full object-cover" />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${platformColors[item.platform]}30, ${platformColors[item.platform]}10)` }}>
                   <Play size={48} className="text-white/70" />
@@ -81,16 +82,27 @@ export function LiveNowTab({ filterClassId, filterSectionId, filterSubjectId, se
                 </div>
               </div>
             </div>
-            {/* Info */}
+            {/* Info + actions */}
             <div className="p-3">
               <h3 className="text-[0.8125rem] font-semibold text-[var(--text-primary)] line-clamp-2 mb-1">
                 {isBn && item.titleBn ? item.titleBn : item.title}
               </h3>
-              <p className="text-[0.6875rem] text-[var(--text-muted)]">
+              <p className="text-[0.6875rem] text-[var(--text-muted)] mb-2">
                 {teacher ? (isBn ? teacher.nameBn : teacher.nameEn) : ''}
                 {cls ? ` · ${isBn ? cls.nameBn : cls.name}` : ''}
                 {subject ? ` · ${isBn ? subject.nameBn : subject.name}` : ''}
               </p>
+              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                <button onClick={() => onPlay(item)} className="w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--brand)] hover:bg-[var(--brand-light)] transition-colors cursor-pointer">
+                  <Play size={12} />
+                </button>
+                <button onClick={() => onEdit(item)} className="w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--brand)] hover:bg-[var(--brand-light)] transition-colors cursor-pointer">
+                  <Edit2 size={12} />
+                </button>
+                <button onClick={() => onDelete(item.id)} className="w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red-light)] transition-colors cursor-pointer">
+                  <Trash2 size={12} />
+                </button>
+              </div>
             </div>
           </div>
         )

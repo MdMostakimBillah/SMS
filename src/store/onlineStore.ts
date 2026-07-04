@@ -143,6 +143,20 @@ export const useOnlineStore = create<OnlineState>()(
         })),
       deleteClass: (id) => set((s) => ({ classes: s.classes.filter((c) => c.id !== id) })),
     }),
-    { name: 'edutech-online' }
+    {
+      name: 'edutech-online',
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        const fixed = state.classes.map((c) => {
+          if (!c.thumbnailUrl && c.url) {
+            const thumb = getThumbnail(c.url)
+            if (thumb) return { ...c, thumbnailUrl: thumb }
+          }
+          return c
+        })
+        const needsFix = fixed.some((c, i) => c.thumbnailUrl !== state.classes[i].thumbnailUrl)
+        if (needsFix) useOnlineStore.setState({ classes: fixed })
+      },
+    }
   )
 )

@@ -12,7 +12,7 @@ interface Props {
 
 function getEmbedUrl(url: string): string {
   const ytId = getYouTubeId(url)
-  if (ytId) return `https://www.youtube.com/embed/${ytId}?autoplay=1`
+  if (ytId) return `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`
   if (/facebook\.com|fb\.watch/.test(url)) return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=560`
   return url
 }

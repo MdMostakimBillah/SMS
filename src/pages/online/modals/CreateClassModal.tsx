@@ -115,9 +115,11 @@ export function CreateClassModal({ open, onClose, editItem }: Props) {
                 <span className="text-[0.625rem] px-2 py-0.5 rounded-full font-medium" style={{ background: `${platformColors[detectedPlatform]}20`, color: platformColors[detectedPlatform] }}>
                   {platformLabels[detectedPlatform][isBn ? 'bn' : 'en']}
                 </span>
-                {getThumbnail(form.url) && (
-                  <img src={getThumbnail(form.url)} alt="" className="w-16 h-9 rounded object-cover" />
-                )}
+              </div>
+            )}
+            {form.url && getThumbnail(form.url) && (
+              <div className="mt-2 rounded-lg overflow-hidden border border-[var(--border)]">
+                <img src={getThumbnail(form.url)} alt="" className="w-full h-auto object-cover" style={{ maxHeight: '12rem' }} />
               </div>
             )}
           </div>
