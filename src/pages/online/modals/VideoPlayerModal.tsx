@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import { X, ExternalLink } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { getYouTubeId, platformColors, platformLabels, type OnlineClass } from '@/store/onlineStore'
 import { useClassStore } from '@/store/classStore'
@@ -14,7 +14,7 @@ function getEmbedUrl(url: string): string {
   const ytId = getYouTubeId(url)
   if (ytId) return `https://www.youtube.com/embed/${ytId}?autoplay=1`
   if (/facebook\.com|fb\.watch/.test(url)) return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=560`
-  return ''
+  return url
 }
 
 export function VideoPlayerModal({ item, onClose }: Props) {
@@ -40,32 +40,16 @@ export function VideoPlayerModal({ item, onClose }: Props) {
           <X size={18} />
         </button>
 
-        {/* Video embed */}
-        {embedUrl ? (
-          <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-            <iframe
-              src={embedUrl}
-              className="absolute inset-0 w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              title={item.title}
-            />
-          </div>
-        ) : (
-          <div className="relative w-full flex items-center justify-center" style={{ paddingBottom: '56.25%', background: '#000' }}>
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-              <ExternalLink size={48} className="text-white/50" />
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
-              >
-                {isBn ? 'লিংকে যান' : 'Open Link'}
-              </a>
-            </div>
-          </div>
-        )}
+        {/* Video embed — always rendered */}
+        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+          <iframe
+            src={embedUrl}
+            className="absolute inset-0 w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title={item.title}
+          />
+        </div>
 
         {/* Info */}
         <div className="p-4">

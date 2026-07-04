@@ -40,7 +40,7 @@ export function detectPlatform(url: string): Platform {
 }
 
 export function getYouTubeId(url: string): string | null {
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/)
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/live\/)([^&?/]+)/)
   return m ? m[1] : null
 }
 

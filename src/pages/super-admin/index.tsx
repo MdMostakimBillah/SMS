@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import {
   Crown, Building2, Users, Mail, Lock, Eye, EyeOff,
   CheckCircle, AlertTriangle, Plus, Database, CreditCard, MessageSquare, FileText, Globe,
   Bell,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useAuth } from '@/contexts/AuthContext'
 import { getAdminCredentials, isDefaultCredentials } from '@/lib/adminAuth'
 import gsap from 'gsap'
 
@@ -44,6 +45,7 @@ export default function SuperAdminPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const containerRef = useRef<HTMLDivElement>(null)
+  const { user } = useAuth()
 
   const currentPage = PATH_MAP[location.pathname] || 'home'
 
@@ -54,6 +56,11 @@ export default function SuperAdminPage() {
   }, [currentPage])
 
   const goTo = (page: Page) => navigate(REVERSE_MAP[page])
+
+  // Role check after all hooks
+  if (user && user.role !== 'super_admin') {
+    return <Navigate to="/dashboard" replace />
+  }
 
   const actions = [
     { id: 'account' as Page, icon: <Lock size={20} />, label: isBn ? 'অ্যাকাউন্ট' : 'Account', desc: isBn ? 'ইমেইল ও পাসওয়ার্ড' : 'Email & password', color: '#6366f1', functional: true },

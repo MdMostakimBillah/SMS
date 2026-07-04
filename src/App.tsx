@@ -115,6 +115,7 @@ export default function App() {
             <Route path="/analytics" element={<P name="Analytics" />} />
             <Route path="/reports" element={<P name="Reports" />} />
             <Route path="/super-admin" element={<F><SuperAdminPage /></F>} />
+            <Route path="/super-admin/:subpage" element={<F><SuperAdminPage /></F>} />
             <Route path="/settings" element={<P name="Settings" />} />
           </Route>
         </Route>
