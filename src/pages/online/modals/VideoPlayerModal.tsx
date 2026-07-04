@@ -113,7 +113,7 @@ export function VideoPlayerModal({ item, onClose }: Props) {
         playerVars: {
           autoplay: 1, controls: 0, disablekb: 1, fs: 0, mute: 1,
           modestbranding: 1, rel: 0, showinfo: 0, iv_load_policy: 3,
-          playsinline: 1, origin: window.location.origin,
+          playsinline: 1,
         },
         events: {
           onReady: (e: any) => {
