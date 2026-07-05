@@ -6,6 +6,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { AuthRoute } from '@/components/AuthRoute'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,9 +66,11 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Routes>
-        <Route path="/login" element={<F><LoginPage /></F>} />
-        <Route path="/register" element={<F><RegisterPage /></F>} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route element={<AuthRoute />}>
+          <Route path="/login" element={<F><LoginPage /></F>} />
+          <Route path="/register" element={<F><RegisterPage /></F>} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        </Route>
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<F><DashboardPage /></F>} />

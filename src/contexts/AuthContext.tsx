@@ -25,15 +25,31 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
+const SESSION_KEY = 'edutech_session_start'
+const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
+
+function isSessionValid(): boolean {
+  const start = localStorage.getItem(SESSION_KEY)
+  if (!start) return false
+  return Date.now() - Number(start) < SESSION_DURATION
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(getAuthToken())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const logout = useCallback(() => {
+    setAuthToken(null)
+    setToken(null)
+    setUser(null)
+    localStorage.removeItem(SESSION_KEY)
+  }, [])
+
   useEffect(() => {
     const storedToken = getAuthToken()
-    if (storedToken) {
+    if (storedToken && isSessionValid()) {
       try {
         const payload = JSON.parse(atob(storedToken.split('.')[1]))
         if (payload.exp * 1000 > Date.now()) {
@@ -50,14 +66,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setAuthToken(null)
           setToken(null)
+          localStorage.removeItem(SESSION_KEY)
         }
       } catch {
         setAuthToken(null)
         setToken(null)
+        localStorage.removeItem(SESSION_KEY)
       }
+    } else if (storedToken) {
+      setAuthToken(null)
+      setToken(null)
+      localStorage.removeItem(SESSION_KEY)
     }
     setLoading(false)
   }, [])
+
+  // Auto-logout timer
+  useEffect(() => {
+    if (!user) return
+
+    const start = localStorage.getItem(SESSION_KEY)
+    if (!start) return
+
+    const elapsed = Date.now() - Number(start)
+    const remaining = SESSION_DURATION - elapsed
+
+    if (remaining <= 0) {
+      logout()
+      return
+    }
+
+    const timer = setTimeout(() => {
+      logout()
+    }, remaining)
+
+    return () => clearTimeout(timer)
+  }, [user, logout])
 
   const login = useCallback(async (email: string, password: string) => {
     setError(null)
@@ -72,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthToken(token)
         setToken(token)
         setUser(user)
+        localStorage.setItem(SESSION_KEY, String(Date.now()))
         return
       }
     } catch {
@@ -85,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthToken(token)
       setToken(token)
       setUser(user)
+      localStorage.setItem(SESSION_KEY, String(Date.now()))
       return
     }
 
@@ -97,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthToken(token)
       setToken(token)
       setUser(user)
+      localStorage.setItem(SESSION_KEY, String(Date.now()))
       return
     }
 
@@ -106,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthToken(res.token)
       setToken(res.token)
       setUser(res.user)
+      localStorage.setItem(SESSION_KEY, String(Date.now()))
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : 'Invalid credentials'
       setError(msg)
@@ -120,17 +168,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthToken(res.token)
       setToken(res.token)
       setUser(res.user)
+      localStorage.setItem(SESSION_KEY, String(Date.now()))
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : 'Registration failed'
       setError(msg)
       throw err
     }
-  }, [])
-
-  const logout = useCallback(() => {
-    setAuthToken(null)
-    setToken(null)
-    setUser(null)
   }, [])
 
   const clearError = useCallback(() => setError(null), [])
