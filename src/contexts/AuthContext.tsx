@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null)
     setUser(null)
     localStorage.removeItem(SESSION_KEY)
+    localStorage.removeItem('edutech_login_email')
   }, [])
 
   useEffect(() => {

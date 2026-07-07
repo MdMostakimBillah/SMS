@@ -22,7 +22,7 @@ const PASSWORD_RULES: PasswordRule[] = [
 
 function getInitialTheme(): 'light' | 'dark' {
   try {
-    const stored = localStorage.getItem('edutech_app')
+    const stored = localStorage.getItem('edutech-settings')
     if (stored) {
       const parsed = JSON.parse(stored)
       const t = parsed?.state?.theme

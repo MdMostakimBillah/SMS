@@ -3,12 +3,13 @@ import {
   Shield, Mail, Lock, Eye, EyeOff, Save, CheckCircle, AlertTriangle, Loader2,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useBn } from '@/hooks/useBn'
 import { getAdminCredentials } from '@/lib/adminAuth'
 import { authApi } from '@/lib/api'
 
 export default function Page() {
   const { user } = useAuth()
-  const [isBn] = useState(() => document.documentElement.dataset.lang === 'bn')
+  const isBn = useBn()
   const isSuperAdmin = user?.role === 'super_admin'
 
   if (!isSuperAdmin) {

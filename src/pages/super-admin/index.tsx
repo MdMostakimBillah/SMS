@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import {
   Crown, Building2, Users, Mail, Lock, Eye, EyeOff,
@@ -7,73 +7,51 @@ import {
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useAuth } from '@/contexts/AuthContext'
+import { useCardReveal } from '@/hooks/useCardReveal'
 import { getAdminCredentials, isDefaultCredentials } from '@/lib/adminAuth'
-import gsap from 'gsap'
+import { SUPER_ADMIN_ROUTES, SUPER_ADMIN_PATH_MAP, SUPER_ADMIN_REVERSE_MAP } from '@/lib/superAdminRoutes'
+import { Placeholder } from '@/components/shared/Placeholder'
 
-type Page = 'home' | 'account' | 'schools' | 'requests' | 'subscriptions' | 'sms' | 'database' | 'add-school' | 'notices' | 'status' | 'payments'
-
-const PATH_MAP: Record<string, Page> = {
-  '/super-admin': 'home',
-  '/super-admin/account': 'account',
-  '/super-admin/schools': 'schools',
-  '/super-admin/requests': 'requests',
-  '/super-admin/subscriptions': 'subscriptions',
-  '/super-admin/sms': 'sms',
-  '/super-admin/database': 'database',
-  '/super-admin/add-school': 'add-school',
-  '/super-admin/notices': 'notices',
-  '/super-admin/status': 'status',
-  '/super-admin/payments': 'payments',
+const iconMap: Record<string, React.ReactNode> = {
+  lock: <Lock size={20} />,
+  'building-2': <Building2 size={20} />,
+  users: <Users size={20} />,
+  'credit-card': <CreditCard size={20} />,
+  'message-square': <MessageSquare size={20} />,
+  database: <Database size={20} />,
+  crown: <Plus size={20} />,
+  bell: <Bell size={20} />,
+  globe: <Globe size={20} />,
+  'file-text': <FileText size={20} />,
 }
 
-const REVERSE_MAP: Record<Page, string> = {
-  home: '/super-admin',
-  account: '/super-admin/account',
-  schools: '/super-admin/schools',
-  requests: '/super-admin/requests',
-  subscriptions: '/super-admin/subscriptions',
-  sms: '/super-admin/sms',
-  database: '/super-admin/database',
-  'add-school': '/super-admin/add-school',
-  notices: '/super-admin/notices',
-  status: '/super-admin/status',
-  payments: '/super-admin/payments',
+const iconMapLg: Record<string, React.ReactNode> = {
+  lock: <Lock size={28} />,
+  'building-2': <Building2 size={28} />,
+  users: <Users size={28} />,
+  'credit-card': <CreditCard size={28} />,
+  'message-square': <MessageSquare size={28} />,
+  database: <Database size={28} />,
+  crown: <Plus size={28} />,
+  bell: <Bell size={28} />,
+  globe: <Globe size={28} />,
+  'file-text': <FileText size={28} />,
 }
 
 export default function SuperAdminPage() {
   const isBn = useBn()
   const navigate = useNavigate()
   const location = useLocation()
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useCardReveal([location.pathname])
   const { user } = useAuth()
 
-  const currentPage = PATH_MAP[location.pathname] || 'home'
+  const currentPage = SUPER_ADMIN_PATH_MAP[location.pathname] || 'home'
 
-  useEffect(() => {
-    if (!containerRef.current) return
-    const cards = containerRef.current.querySelectorAll('.anim-card')
-    gsap.fromTo(cards, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.04, ease: 'power2.out' })
-  }, [currentPage])
-
-  const goTo = (page: Page) => navigate(REVERSE_MAP[page])
-
-  // Role check after all hooks
   if (user && user.role !== 'super_admin') {
     return <Navigate to="/dashboard" replace />
   }
 
-  const actions = [
-    { id: 'account' as Page, icon: <Lock size={20} />, label: isBn ? 'অ্যাকাউন্ট' : 'Account', desc: isBn ? 'ইমেইল ও পাসওয়ার্ড' : 'Email & password', color: '#6366f1', functional: true },
-    { id: 'schools' as Page, icon: <Building2 size={20} />, label: isBn ? 'স্কুল' : 'Schools', desc: isBn ? 'নিবন্ধিত' : 'Registered', color: '#14b8a6', functional: false },
-    { id: 'requests' as Page, icon: <Users size={20} />, label: isBn ? 'অনুরোধ' : 'Requests', desc: isBn ? 'পেন্ডিং' : 'Pending', color: '#f59e0b', functional: false },
-    { id: 'subscriptions' as Page, icon: <CreditCard size={20} />, label: isBn ? 'প্যাকেজ' : 'Packages', desc: isBn ? 'সাবস্ক্রিপশন' : 'Subscriptions', color: '#ec4899', functional: false },
-    { id: 'sms' as Page, icon: <MessageSquare size={20} />, label: isBn ? 'SMS' : 'SMS', desc: isBn ? 'প্রোভাইডার' : 'Provider', color: '#06b6d4', functional: false },
-    { id: 'database' as Page, icon: <Database size={20} />, label: isBn ? 'ডাটাবেজ' : 'Database', desc: isBn ? 'ব্যাকআপ' : 'Backup', color: '#22c55e', functional: false },
-    { id: 'add-school' as Page, icon: <Plus size={20} />, label: isBn ? 'নতুন স্কুল' : 'Add School', desc: isBn ? 'যোগ' : 'Register', color: '#3b82f6', functional: false },
-    { id: 'notices' as Page, icon: <Bell size={20} />, label: isBn ? 'নোটিশ' : 'Notices', desc: isBn ? 'বার্তা' : 'System', color: '#f97316', functional: false },
-    { id: 'status' as Page, icon: <Globe size={20} />, label: isBn ? 'স্ট্যাটাস' : 'Status', desc: isBn ? 'সিস্টেম' : 'App', color: '#10b981', functional: false },
-    { id: 'payments' as Page, icon: <FileText size={20} />, label: isBn ? 'পেমেন্ট' : 'Payments', desc: isBn ? 'প্রতিষ্ঠান' : 'Institution', color: '#a855f7', functional: false },
-  ]
+  const goTo = (id: string) => navigate(SUPER_ADMIN_REVERSE_MAP[id])
 
   return (
     <div ref={containerRef} className="max-w-5xl mx-auto space-y-5">
@@ -106,7 +84,7 @@ export default function SuperAdminPage() {
           </div>
 
           <div className="anim-card grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {actions.map((a) => (
+            {SUPER_ADMIN_ROUTES.map((a) => (
               <button key={a.id} onClick={() => goTo(a.id)}
                 className="group relative p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] cursor-pointer text-left hover:shadow-lg hover:shadow-black/5 transition-all duration-200">
                 {!a.functional && (
@@ -116,10 +94,10 @@ export default function SuperAdminPage() {
                 )}
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
                   style={{ background: `${a.color}12`, color: a.color }}>
-                  {a.icon}
+                  {iconMap[a.icon]}
                 </div>
-                <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] mb-0.5 leading-tight">{a.label}</div>
-                <div className="text-[0.6875rem] text-[var(--text-muted)] leading-snug">{a.desc}</div>
+                <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] mb-0.5 leading-tight">{isBn ? a.labelBn : a.label}</div>
+                <div className="text-[0.6875rem] text-[var(--text-muted)] leading-snug">{isBn ? a.descBn : a.desc}</div>
               </button>
             ))}
           </div>
@@ -128,20 +106,14 @@ export default function SuperAdminPage() {
 
       {currentPage === 'account' && <AccountSettings isBn={isBn} />}
 
-      {currentPage === 'schools' && <Placeholder title={isBn ? 'সকল স্কুল' : 'All Schools'} icon={<Building2 size={28} />} color="#14b8a6" isBn={isBn} />}
-      {currentPage === 'requests' && <Placeholder title={isBn ? 'রেজিস্ট্রেশন' : 'Requests'} icon={<Users size={28} />} color="#f59e0b" isBn={isBn} />}
-      {currentPage === 'subscriptions' && <Placeholder title={isBn ? 'প্যাকেজ' : 'Packages'} icon={<CreditCard size={28} />} color="#ec4899" isBn={isBn} />}
-      {currentPage === 'sms' && <Placeholder title={isBn ? 'SMS সেবা' : 'SMS Service'} icon={<MessageSquare size={28} />} color="#06b6d4" isBn={isBn} />}
-      {currentPage === 'database' && <Placeholder title={isBn ? 'ডাটাবেজ' : 'Database'} icon={<Database size={28} />} color="#22c55e" isBn={isBn} />}
-      {currentPage === 'add-school' && <Placeholder title={isBn ? 'নতুন স্কুল' : 'Add School'} icon={<Plus size={28} />} color="#3b82f6" isBn={isBn} />}
-      {currentPage === 'notices' && <Placeholder title={isBn ? 'নোটিশ' : 'Notices'} icon={<Bell size={28} />} color="#f97316" isBn={isBn} />}
-      {currentPage === 'status' && <Placeholder title={isBn ? 'স্ট্যাটাস' : 'Status'} icon={<Globe size={28} />} color="#10b981" isBn={isBn} />}
-      {currentPage === 'payments' && <Placeholder title={isBn ? 'পেমেন্ট' : 'Payments'} icon={<FileText size={28} />} color="#a855f7" isBn={isBn} />}
+      {currentPage !== 'home' && currentPage !== 'account' && (() => {
+        const route = SUPER_ADMIN_ROUTES.find((r) => r.id === currentPage)
+        if (!route) return null
+        return <Placeholder title={isBn ? route.labelBn : route.label} icon={iconMapLg[route.icon]} color={route.color} isBn={isBn} />
+      })()}
     </div>
   )
 }
-
-/* ── Account Settings ────────────────────────────────────────── */
 
 function AccountSettings({ isBn }: { isBn: boolean }) {
   const creds = getAdminCredentials()
@@ -235,18 +207,6 @@ function AccountSettings({ isBn }: { isBn: boolean }) {
           </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-/* ── Placeholder ─────────────────────────────────────────────── */
-
-function Placeholder({ title, icon, color, isBn }: { title: string; icon: React.ReactNode; color: string; isBn: boolean }) {
-  return (
-    <div className="anim-card flex flex-col items-center justify-center py-20 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)]">
-      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: `${color}12`, color }}>{icon}</div>
-      <div className="text-[1rem] font-semibold text-[var(--text-primary)] mb-1">{title}</div>
-      <div className="text-[0.8125rem] text-[var(--text-muted)]">{isBn ? 'শীঘ্রই আসছে' : 'Coming soon'}</div>
     </div>
   )
 }

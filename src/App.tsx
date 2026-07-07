@@ -5,7 +5,7 @@ import AppLayout from '@/components/layouts/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { AuthProvider } from '@/contexts/AuthContext'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { ProtectedRoute, RoleProtectedRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
 
 const queryClient = new QueryClient({
@@ -117,9 +117,13 @@ export default function App() {
             <Route path="/student-portal" element={<P name="Student Portal" />} />
             <Route path="/analytics" element={<P name="Analytics" />} />
             <Route path="/reports" element={<P name="Reports" />} />
+            <Route path="/settings" element={<P name="Settings" />} />
+          </Route>
+        </Route>
+        <Route element={<RoleProtectedRoute allowedRoles={['super_admin']} />}>
+          <Route element={<AppLayout />}>
             <Route path="/super-admin" element={<F><SuperAdminPage /></F>} />
             <Route path="/super-admin/:subpage" element={<F><SuperAdminPage /></F>} />
-            <Route path="/settings" element={<P name="Settings" />} />
           </Route>
         </Route>
       </Routes>
