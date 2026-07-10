@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { UserPlus, Eye, EyeOff, GraduationCap, ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { LOGIN_PATH } from '@/lib/constants'
 
 export default function RegisterPage() {
   const { register, error, clearError } = useAuth()
@@ -30,7 +31,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-secondary)] px-4">
       <div className="w-full max-w-sm">
         <Link
-          to="/login"
+          to={LOGIN_PATH}
           className="inline-flex items-center gap-1.5 text-[0.75rem] text-[var(--text-muted)] hover:text-[var(--brand)] mb-6 no-underline"
         >
           <ArrowLeft size={14} />
@@ -119,7 +120,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-[0.6875rem] text-[var(--text-muted)] mt-4">
           Already have an account?{' '}
-          <Link to="/login" className="text-[var(--brand)] hover:underline">Sign in</Link>
+          <Link to={LOGIN_PATH} className="text-[var(--brand)] hover:underline">Sign in</Link>
         </p>
       </div>
     </div>

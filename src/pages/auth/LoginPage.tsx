@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogIn, Eye, EyeOff, GraduationCap, Mail, Lock, Check, X } from 'lucide-react'
+import { LogIn, Eye, EyeOff, GraduationCap, Mail, Lock, Check, X, ShieldAlert, Clock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
+import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 
 const EMAIL_KEY = 'edutech_login_email'
 
@@ -34,7 +35,7 @@ function getInitialTheme(): 'light' | 'dark' {
 }
 
 export default function LoginPage() {
-  const { login, error, clearError } = useAuth()
+  const { login, error, clearError, isLockedOut, lockoutRemaining } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY) || '')
   const [password, setPassword] = useState('')
@@ -65,246 +66,14 @@ export default function LoginPage() {
 
   const isPasswordValid = password.length > 0 && passwordValidation.every((r) => r.met)
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  const canSubmit = isEmailValid && isPasswordValid && !submitting
+  const canSubmit = isEmailValid && isPasswordValid && !submitting && !isLockedOut
 
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const resize = () => {
-      const dpr = window.devicePixelRatio || 1
-      canvas.width = canvas.offsetWidth * dpr
-      canvas.height = canvas.offsetHeight * dpr
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
-    interface RibbonLine {
-      yStart: number
-      yEnd: number
-      curveDepth: number
-      amplitude: number
-      frequency: number
-      speed: number
-      phase: number
-      opacity: number
-      strokeWidth: number
-      drawDelay: number
-      drawSpeed: number
-    }
-
-    const lineCount = 35
-    const lines: RibbonLine[] = Array.from({ length: lineCount }, (_, i) => {
-      const t = i / lineCount
-      return {
-        yStart: 0.05 + t * 0.15,
-        yEnd: 0.55 + t * 0.35,
-        curveDepth: 0.3 + t * 0.15,
-        amplitude: 0.012 + Math.random() * 0.018,
-        frequency: 2 + Math.random() * 1.5,
-        speed: 0.25 + Math.random() * 0.2,
-        phase: t * Math.PI * 1.2 + Math.random() * 0.5,
-        opacity: 0.06 + t * 0.12,
-        strokeWidth: 0.8 + Math.random() * 0.4,
-        drawDelay: i * 0.12,
-        drawSpeed: 3.5 + Math.random() * 1.0,
-      }
-    })
-
-    interface Balloon {
-      x: number
-      y: number
-      size: number
-      speedY: number
-      swayAmp: number
-      swayFreq: number
-      phase: number
-      opacity: number
-      pulse: number
-    }
-
-    const balloonCount = 12
-    const balloons: Balloon[] = Array.from({ length: balloonCount }, (_, i) => {
-      const cluster = i < 8 ? 0.4 + Math.random() * 0.2 : i < 14 ? 0.3 + Math.random() * 0.4 : Math.random()
-      return {
-        x: cluster,
-        y: 0.3 + Math.random() * 0.7,
-        size: 3 + Math.random() * 5,
-        speedY: 0.008 + Math.random() * 0.012,
-        swayAmp: 0.01 + Math.random() * 0.02,
-        swayFreq: 0.5 + Math.random() * 0.8,
-        phase: Math.random() * Math.PI * 2,
-        opacity: 0.04 + Math.random() * 0.08,
-        pulse: Math.random() * Math.PI * 2,
-      }
-    })
-
-    interface Floater {
-      x: number
-      y: number
-      char: string
-      size: number
-      speedY: number
-      swayAmp: number
-      swayFreq: number
-      phase: number
-      opacity: number
-      rotation: number
-      rotSpeed: number
-    }
-
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzঅআইঈউঋএঐওঔকখগঘচছজঝটঠডঢণতথদধনপফবভমযরলশষসহאבגדהוזחטיכלמנסעקרשתअइউएকখগघজ�ডढতদধনপবভমযরলवসহ가나다라마바사아자차카타파하的一二三四五六七八九十百千万亿零左右上下大小多少来去出入开关好坏有无الألأإآببةتثجحخدذرزسشصضطظعغفقكلمنهويءأ'.split('')
-
-    const floaters: Floater[] = Array.from({ length: 12 }, () => ({
-      x: Math.random(),
-      y: 0.2 + Math.random() * 0.8,
-      char: chars[Math.floor(Math.random() * chars.length)],
-      size: 24 + Math.random() * 20,
-      speedY: 0.003 + Math.random() * 0.006,
-      swayAmp: 0.005 + Math.random() * 0.01,
-      swayFreq: 0.2 + Math.random() * 0.3,
-      phase: Math.random() * Math.PI * 2,
-      opacity: 0.01 + Math.random() * 0.015,
-      rotation: (Math.random() - 0.5) * 0.3,
-      rotSpeed: (Math.random() - 0.5) * 0.15,
-    }))
-
-    let animId: number
-    let time = 0
-    let lastTime = performance.now()
-
-    const easeOutQuad = (t: number) => 1 - (1 - t) * (1 - t)
-
-    const isDarkMode = document.documentElement.getAttribute('data-theme') !== 'light'
-    const r = isDarkMode ? 255 : 255
-    const g = isDarkMode ? 255 : 255
-    const b = isDarkMode ? 255 : 255
-    const lineOpacityMult = isDarkMode ? 1 : 1.5
-    const balloonOpacityMult = isDarkMode ? 1 : 1.8
-    const floaterOpacityMult = isDarkMode ? 1 : 2
-
-    const draw = (now: number) => {
-      const dt = (now - lastTime) / 1000
-      lastTime = now
-      time += dt
-
-      const w = canvas.offsetWidth
-      const h = canvas.offsetHeight
-
-      ctx.clearRect(0, 0, w, h)
-
-      // Draw balloons
-      for (const bl of balloons) {
-        bl.y -= bl.speedY * dt
-        bl.phase += dt * bl.swayFreq
-        bl.pulse += dt * 1.2
-
-        if (bl.y < -0.1) {
-          bl.y = 1.1
-          bl.x = 0.3 + Math.random() * 0.4
-        }
-
-        const swayX = Math.sin(bl.phase) * bl.swayAmp
-        const bobY = Math.sin(bl.pulse) * 0.003
-        const px = (bl.x + swayX) * w
-        const py = (bl.y + bobY) * h
-        const pulseOpacity = bl.opacity * (0.7 + 0.3 * Math.sin(bl.pulse * 0.8)) * balloonOpacityMult
-
-        ctx.beginPath()
-        ctx.ellipse(px, py, bl.size * 0.8, bl.size, 0, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(${r},${g},${b},${pulseOpacity * 0.3})`
-        ctx.fill()
-
-        ctx.beginPath()
-        ctx.ellipse(px - bl.size * 0.2, py - bl.size * 0.3, bl.size * 0.25, bl.size * 0.35, -0.3, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(${r},${g},${b},${pulseOpacity * 0.6})`
-        ctx.fill()
-
-        ctx.beginPath()
-        ctx.moveTo(px, py + bl.size)
-        ctx.quadraticCurveTo(px + Math.sin(bl.phase * 0.7) * 3, py + bl.size + 8, px + Math.sin(bl.phase) * 2, py + bl.size + 14)
-        ctx.strokeStyle = `rgba(${r},${g},${b},${pulseOpacity * 0.25})`
-        ctx.lineWidth = 0.5
-        ctx.stroke()
-      }
-
-      // Draw floating letters
-      for (const f of floaters) {
-        f.y -= f.speedY * dt
-        f.phase += dt * f.swayFreq
-        f.rotation += f.rotSpeed * dt
-
-        if (f.y < -0.1) {
-          f.y = 1.1
-          f.x = Math.random()
-          f.char = chars[Math.floor(Math.random() * chars.length)]
-        }
-
-        const swayX = Math.sin(f.phase) * f.swayAmp
-        const px = (f.x + swayX) * w
-        const py = f.y * h
-
-        ctx.save()
-        ctx.translate(px, py)
-        ctx.rotate(f.rotation)
-        ctx.font = `${f.size}px 'Inter', sans-serif`
-        ctx.fillStyle = `rgba(${r},${g},${b},${f.opacity * floaterOpacityMult})`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText(f.char, 0, 0)
-        ctx.restore()
-      }
-
-      // Draw lines
-      const segments = 100
-
-      for (const line of lines) {
-        const lineTime = Math.max(0, time - line.drawDelay)
-        const drawProgress = Math.min(1, lineTime / line.drawSpeed)
-        const headT = easeOutQuad(drawProgress)
-
-        ctx.beginPath()
-        ctx.strokeStyle = `rgba(${r},${g},${b},${line.opacity * lineOpacityMult})`
-        ctx.lineWidth = line.strokeWidth
-
-        for (let s = 0; s <= segments; s++) {
-          const t = s / segments
-
-          if (t > headT) break
-
-          const x = t * w
-
-          const baseY = line.yStart + (line.yEnd - line.yStart) * t
-          const curve = Math.sin(t * Math.PI) * line.curveDepth * h
-          const wave = Math.sin(
-            t * Math.PI * line.frequency + time * line.speed + line.phase
-          ) * line.amplitude * h * Math.min(1, lineTime * 0.5)
-
-          const y = baseY * h + curve + wave
-
-          if (s === 0) ctx.moveTo(x, y)
-          else ctx.lineTo(x, y)
-        }
-
-        ctx.stroke()
-      }
-
-      animId = requestAnimationFrame(draw)
-    }
-
-    animId = requestAnimationFrame(draw)
-
-    return () => {
-      cancelAnimationFrame(animId)
-      window.removeEventListener('resize', resize)
-    }
-  }, [isDark])
+  const formatTime = (ms: number) => {
+    const totalSeconds = Math.ceil(ms / 1000)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -357,17 +126,13 @@ export default function LoginPage() {
           className="absolute inset-0"
           style={{
             background: isDark
-              ? 'linear-gradient(160deg, #0a0a0f 0%, #0d0d14 40%, #0f0f18 70%, #0a0a0f 100%)'
-              : 'linear-gradient(160deg, #1a1d2e 0%, #1e2235 40%, #222740 70%, #1a1d2e 100%)',
+              ? 'linear-gradient(180deg, #0f0f18 0%, #141420 100%)'
+              : 'linear-gradient(180deg, #1a1a2e 0%, #1e1e32 100%)',
           }}
         />
 
-        {/* Flowing curved lines canvas */}
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full"
-          style={{ pointerEvents: 'none' }}
-        />
+        {/* SVG wave paths */}
+        <BackgroundPaths isDark={isDark} />
 
         {/* Branding content */}
         <div className="relative z-10 text-center px-8">
@@ -404,6 +169,20 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* Lockout banner */}
+          {isLockedOut && (
+            <div className="mb-5 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                <ShieldAlert size={12} className="text-amber-500" />
+              </div>
+              <span className="text-[0.8125rem] text-amber-500 flex-1">
+                {isBn
+                  ? `অনেক ব্যর্থ চেষ্টা। আবার চেষ্টা করুন ${formatTime(lockoutRemaining)} মিনিটে।`
+                  : `Too many failed attempts. Try again in ${formatTime(lockoutRemaining)}.`}
+              </span>
+            </div>
+          )}
+
           {/* Error */}
           {error && (
             <div className="mb-5 px-4 py-3 rounded-xl bg-[var(--red)]/10 border border-[var(--red)]/20 flex items-center gap-3">
@@ -431,11 +210,12 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); clearError() }}
                   placeholder="admin@example.com"
+                  disabled={isLockedOut}
                   className={`w-full h-11 pl-10 pr-4 rounded-xl border text-[0.875rem] outline-none transition-all ${
                     isDark
                       ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50 focus:bg-white/[0.07]'
                       : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]/50 focus:bg-[var(--bg-secondary)]'
-                  }`}
+                  } ${isLockedOut ? 'opacity-50 cursor-not-allowed' : ''}`}
                   required
                 />
               </div>
@@ -453,11 +233,12 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); clearError() }}
                   placeholder="••••••••"
+                  disabled={isLockedOut}
                   className={`w-full h-11 pl-10 pr-11 rounded-xl border text-[0.875rem] outline-none transition-all ${
                     isDark
                       ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50 focus:bg-white/[0.07]'
                       : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]/50 focus:bg-[var(--bg-secondary)]'
-                  }`}
+                  } ${isLockedOut ? 'opacity-50 cursor-not-allowed' : ''}`}
                   required
                 />
                 <button
@@ -506,14 +287,18 @@ export default function LoginPage() {
                 color: canSubmit ? '#fff' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
               }}
             >
-              {submitting ? (
+              {isLockedOut ? (
+                <Clock size={16} />
+              ) : submitting ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <LogIn size={16} />
               )}
-              {submitting
-                ? (isBn ? 'সাইন ইন হচ্ছে...' : 'Signing in...')
-                : (isBn ? 'সাইন ইন' : 'Sign In')
+              {isLockedOut
+                ? (isBn ? `লকড আউট — ${formatTime(lockoutRemaining)}` : `Locked out — ${formatTime(lockoutRemaining)}`)
+                : submitting
+                  ? (isBn ? 'সাইন ইন হচ্ছে...' : 'Signing in...')
+                  : (isBn ? 'সাইন ইন' : 'Sign In')
               }
             </button>
           </form>

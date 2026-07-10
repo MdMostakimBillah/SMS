@@ -26,6 +26,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { LOGIN_PATH } from '@/lib/constants'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
 import type { Theme, Language } from '@/types'
@@ -879,7 +880,7 @@ export default function Topbar() {
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   onClick={() => {
                     logout()
-                    navigate('/login')
+                    navigate(LOGIN_PATH)
                   }}
                 >
                   <LogOut size={14} />

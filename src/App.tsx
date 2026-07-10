@@ -7,6 +7,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute, RoleProtectedRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
+import { LOGIN_PATH } from '@/lib/constants'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +53,7 @@ const OMRSheetPage = lazy(() => import('@/pages/exams/omr'))
 const SyllabusPage = lazy(() => import('@/pages/syllabus'))
 const AssignmentsPage = lazy(() => import('@/pages/assignments'))
 const OnlineClassesPage = lazy(() => import('@/pages/online'))
+const FinancePage = lazy(() => import('@/pages/finance'))
 
 function P({ name }: { name: string }) {
   return <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 500, padding: '1.25rem' }}>{name}</div>
@@ -67,7 +69,7 @@ export default function App() {
       <AuthProvider>
         <Routes>
         <Route element={<AuthRoute />}>
-          <Route path="/login" element={<F><LoginPage /></F>} />
+          <Route path={LOGIN_PATH} element={<F><LoginPage /></F>} />
           <Route path="/register" element={<F><RegisterPage /></F>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Route>
@@ -103,7 +105,7 @@ export default function App() {
             <Route path="/syllabus" element={<F><SyllabusPage /></F>} />
             <Route path="/assignments" element={<F><AssignmentsPage /></F>} />
             <Route path="/online" element={<F><OnlineClassesPage /></F>} />
-            <Route path="/finance" element={<P name="Finance" />} />
+            <Route path="/finance" element={<F><FinancePage /></F>} />
             <Route path="/payroll" element={<F><PayrollPage /></F>} />
             <Route path="/store" element={<P name="School Store" />} />
             <Route path="/expenses" element={<P name="Expenses" />} />
