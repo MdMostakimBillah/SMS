@@ -95,7 +95,7 @@ function FloatingPaths({ position }: { position: number }) {
   )
 }
 
-export function BackgroundPaths({ isDark = true }: { isDark?: boolean }) {
+export function BackgroundPaths({ isDark: _isDark }: { isDark?: boolean }) {
   return (
     <div className="absolute inset-0">
       <FloatingPaths position={1} />
