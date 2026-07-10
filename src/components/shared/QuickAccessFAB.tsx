@@ -27,6 +27,13 @@ import {
   Bell,
   Globe,
   Crown,
+  Layers,
+  AlertTriangle,
+  History,
+  BadgePercent,
+  BarChart3,
+  Ban,
+  Banknote,
   X,
   type LucideIcon,
 } from 'lucide-react'
@@ -53,6 +60,13 @@ const iconMap: Record<string, LucideIcon> = {
   bell: Bell,
   globe: Globe,
   crown: Crown,
+  layers: Layers,
+  'alert-triangle': AlertTriangle,
+  history: History,
+  'badge-percent': BadgePercent,
+  'bar-chart-3': BarChart3,
+  ban: Ban,
+  banknote: Banknote,
 }
 
 interface RouteItem {
@@ -80,6 +94,16 @@ const sectionRoutes: Record<string, RouteItem[]> = {
     { path: '/students/bulk-update', label: 'Bulk Update', labelBn: 'বাল্ক আপডেট', icon: 'clipboard-list' },
     { path: '/students/id-cards', label: 'ID Cards', labelBn: 'আইডি কার্ড', icon: 'receipt' },
     { path: '/students/promotion', label: 'Promotion', labelBn: 'প্রমোশন', icon: 'zap' },
+  ],
+  finance: [
+    { path: '/finance', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
+    { path: '/finance?view=structures', label: 'Fee Structures', labelBn: 'ফি কাঠামো', icon: 'layers' },
+    { path: '/finance?view=dues', label: 'Due Fees', labelBn: 'বকেয়', icon: 'alert-triangle' },
+    { path: '/finance?view=collect', label: 'Fee Collect', labelBn: 'ফি আদায়', icon: 'banknote' },
+    { path: '/finance?view=payments', label: 'Payment History', labelBn: 'পেমেন্ট ইতিহাস', icon: 'history' },
+    { path: '/finance?view=waivers', label: 'Waivers', labelBn: 'ছাড়', icon: 'badge-percent' },
+    { path: '/finance?view=reports', label: 'Reports', labelBn: 'রিপোর্ট', icon: 'bar-chart-3' },
+    { path: '/finance?view=inactive', label: 'Inactive Dues', labelBn: 'নিষ্ক্রিয় বকেয়', icon: 'ban' },
   ],
   exams: [
     { path: '/exams', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
@@ -126,14 +150,24 @@ export default function QuickAccessFAB() {
     const result = getSectionForPath(location.pathname)
     if (!result) return null
     const basePath = `/${result.section}`
-    if (location.pathname === basePath || location.pathname === `${basePath}/`) return null
+    const isBasePath = location.pathname === basePath || location.pathname === `${basePath}/`
+    const hasSearchParams = location.search && location.search.length > 1
+
+    if (isBasePath && !hasSearchParams) return null
+
     const siblings = result.items.filter((item) => {
+      if (item.path.includes('?')) {
+        const itemPath = item.path.split('?')[0]
+        const itemSearch = item.path.split('?')[1]
+        if (location.pathname === itemPath && location.search.includes(itemSearch)) return false
+        return true
+      }
       if (location.pathname.startsWith(`${item.path}/`)) return false
       return location.pathname !== item.path
     })
     if (siblings.length === 0) return null
     return { section: result.section, items: siblings.slice(0, 8) }
-  }, [location.pathname])
+  }, [location.pathname, location.search])
 
   useEffect(() => {
     setIsOpen(false)

@@ -26,6 +26,7 @@ interface AppState {
   sidebarOrder: SidebarItem[]
   teacherCardsOrder: string[]
   studentCardsOrder: string[]
+  feeCardsOrder: string[]
   quickAccessCardsOrder: string[]
   setTheme: (theme: Theme) => void
   setLanguage: (language: Language) => void
@@ -40,6 +41,7 @@ interface AppState {
   setSidebarOrder: (order: SidebarItem[]) => void
   setTeacherCardsOrder: (order: string[]) => void
   setStudentCardsOrder: (order: string[]) => void
+  setFeeCardsOrder: (order: string[]) => void
   setQuickAccessCardsOrder: (order: string[]) => void
 }
 
@@ -57,6 +59,7 @@ export const useAppStore = create<AppState>()(
       sidebarOrder: [],
       teacherCardsOrder: [],
       studentCardsOrder: [],
+      feeCardsOrder: [],
       quickAccessCardsOrder: [],
 
       setTheme: (theme) => {
@@ -124,6 +127,8 @@ export const useAppStore = create<AppState>()(
 
       setStudentCardsOrder: (order) => set({ studentCardsOrder: order }),
 
+      setFeeCardsOrder: (order) => set({ feeCardsOrder: order }),
+
       setQuickAccessCardsOrder: (order) => set({ quickAccessCardsOrder: order }),
     }),
     {
@@ -137,6 +142,7 @@ export const useAppStore = create<AppState>()(
         sidebarOrder: state.sidebarOrder,
         teacherCardsOrder: state.teacherCardsOrder,
         studentCardsOrder: state.studentCardsOrder,
+        feeCardsOrder: state.feeCardsOrder,
         quickAccessCardsOrder: state.quickAccessCardsOrder,
       }),
     }

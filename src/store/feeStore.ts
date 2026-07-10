@@ -9,10 +9,10 @@ export interface FeeStructure {
   section?: string
   academicYear: string
   amount: number
-  dueDate: string
   description: string
   descriptionBn: string
   isActive: boolean
+  type: 'monthly' | 'onetime'
   createdAt: string
 }
 
@@ -29,6 +29,17 @@ export interface FeePayment {
   createdAt: string
 }
 
+export interface FeeWaiver {
+  id: string
+  studentId: string
+  feeStructureId: string
+  amount: number
+  reason: string
+  reasonBn: string
+  approvedBy: string
+  createdAt: string
+}
+
 export interface FeeDue {
   studentId: string
   studentName: string
@@ -42,9 +53,8 @@ export interface FeeDue {
   feeNameBn: string
   totalAmount: number
   paidAmount: number
+  waivedAmount: number
   dueAmount: number
-  dueDate: string
-  isOverdue: boolean
   isActive: boolean
   inactiveAt?: string
   inactiveReason?: string
@@ -66,22 +76,40 @@ interface StudentInfo {
 interface FeeState {
   structures: FeeStructure[]
   payments: FeePayment[]
+  waivers: FeeWaiver[]
 
   addStructure: (s: FeeStructure) => void
   updateStructure: (id: string, data: Partial<FeeStructure>) => void
   deleteStructure: (id: string) => void
+  toggleStructureActive: (id: string) => void
+  bulkAddStructures: (structures: FeeStructure[]) => void
 
   addPayment: (p: FeePayment) => void
   deletePayment: (id: string) => void
 
+  addWaiver: (w: FeeWaiver) => void
+  deleteWaiver: (id: string) => void
+
   calculateDues: (students: StudentInfo[], classId?: string, sectionId?: string, onlyInactive?: boolean) => FeeDue[]
+  getStudentPayments: (studentId: string) => FeePayment[]
+  getPaymentsByStructure: (structureId: string) => FeePayment[]
+  getCollectionSummary: () => {
+    totalCollected: number
+    totalPending: number
+    totalOverdue: number
+    totalWaived: number
+    collectedThisMonth: number
+    paymentCount: number
+  }
+  getClassWiseSummary: (students: StudentInfo[]) => { className: string; totalDue: number; totalPaid: number; studentCount: number }[]
 }
 
 export const useFeeStore = create<FeeState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       structures: [],
       payments: [],
+      waivers: [],
 
       addStructure: (s) => set((state) => ({ structures: [...state.structures, s] })),
 
@@ -94,7 +122,16 @@ export const useFeeStore = create<FeeState>()(
         set((state) => ({
           structures: state.structures.filter((s) => s.id !== id),
           payments: state.payments.filter((p) => p.feeStructureId !== id),
+          waivers: state.waivers.filter((w) => w.feeStructureId !== id),
         })),
+
+      toggleStructureActive: (id) =>
+        set((state) => ({
+          structures: state.structures.map((s) => (s.id === id ? { ...s, isActive: !s.isActive } : s)),
+        })),
+
+      bulkAddStructures: (newStructures) =>
+        set((state) => ({ structures: [...state.structures, ...newStructures] })),
 
       addPayment: (p) => set((state) => ({ payments: [...state.payments, p] })),
 
@@ -103,8 +140,15 @@ export const useFeeStore = create<FeeState>()(
           payments: state.payments.filter((p) => p.id !== id),
         })),
 
+      addWaiver: (w) => set((state) => ({ waivers: [...state.waivers, w] })),
+
+      deleteWaiver: (id) =>
+        set((state) => ({
+          waivers: state.waivers.filter((w) => w.id !== id),
+        })),
+
       calculateDues: (students, classId, sectionId, onlyInactive) => {
-        const { structures, payments } = useFeeStore.getState()
+        const { structures, payments, waivers } = get()
         const dues: FeeDue[] = []
 
         const activeStructures = structures.filter((s) => {
@@ -128,7 +172,10 @@ export const useFeeStore = create<FeeState>()(
             const paid = payments
               .filter((p) => p.studentId === student.id && p.feeStructureId === fee.id)
               .reduce((sum, p) => sum + p.amount, 0)
-            const due = fee.amount - paid
+            const waived = waivers
+              .filter((w) => w.studentId === student.id && w.feeStructureId === fee.id)
+              .reduce((sum, w) => sum + w.amount, 0)
+            const due = fee.amount - paid - waived
 
             if (due > 0) {
               dues.push({
@@ -144,9 +191,8 @@ export const useFeeStore = create<FeeState>()(
                 feeNameBn: fee.nameBn,
                 totalAmount: fee.amount,
                 paidAmount: paid,
+                waivedAmount: waived,
                 dueAmount: Math.max(0, due),
-                dueDate: fee.dueDate,
-                isOverdue: due > 0 && new Date(fee.dueDate) < new Date(),
                 isActive: student.active !== false,
                 inactiveAt: student.inactiveAt,
                 inactiveReason: student.inactiveReason,
@@ -157,10 +203,93 @@ export const useFeeStore = create<FeeState>()(
 
         return dues
       },
+
+      getStudentPayments: (studentId) => {
+        return get().payments.filter((p) => p.studentId === studentId)
+      },
+
+      getPaymentsByStructure: (structureId) => {
+        return get().payments.filter((p) => p.feeStructureId === structureId)
+      },
+
+      getCollectionSummary: () => {
+        const { structures, payments, waivers } = get()
+        const now = new Date()
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+
+        const totalCollected = payments.reduce((sum, p) => sum + p.amount, 0)
+        const totalWaived = waivers.reduce((sum, w) => sum + w.amount, 0)
+        const collectedThisMonth = payments.filter((p) => p.paidAt >= monthStart).reduce((sum, p) => sum + p.amount, 0)
+
+        let totalPending = 0
+        for (const s of structures) {
+          if (!s.isActive) continue
+          const structPayments = payments.filter((p) => p.feeStructureId === s.id)
+          const structWaivers = waivers.filter((w) => w.feeStructureId === s.id)
+          const totalPaid = structPayments.reduce((sum, p) => sum + p.amount, 0)
+          const totalWaived = structWaivers.reduce((sum, w) => sum + w.amount, 0)
+          const remaining = s.amount - totalPaid - totalWaived
+          if (remaining > 0) {
+            totalPending += remaining
+          }
+        }
+
+        return {
+          totalCollected,
+          totalPending,
+          totalOverdue: 0,
+          totalWaived,
+          collectedThisMonth,
+          paymentCount: payments.length,
+        }
+      },
+
+      getClassWiseSummary: (students) => {
+        const { structures, payments, waivers } = get()
+        const classMap = new Map<string, { totalDue: number; totalPaid: number; studentCount: Set<string> }>()
+
+        for (const student of students) {
+          if (student.active === false) continue
+          const studentStructures = structures.filter((s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section))
+
+          for (const fee of studentStructures) {
+            if (!classMap.has(student.class)) {
+              classMap.set(student.class, { totalDue: 0, totalPaid: 0, studentCount: new Set() })
+            }
+            const entry = classMap.get(student.class)!
+            entry.studentCount.add(student.id)
+            const paid = payments.filter((p) => p.studentId === student.id && p.feeStructureId === fee.id).reduce((sum, p) => sum + p.amount, 0)
+            const waived = waivers.filter((w) => w.studentId === student.id && w.feeStructureId === fee.id).reduce((sum, w) => sum + w.amount, 0)
+            entry.totalPaid += paid + waived
+            entry.totalDue += fee.amount
+          }
+        }
+
+        return Array.from(classMap.entries())
+          .map(([className, data]) => ({
+            className,
+            totalDue: data.totalDue,
+            totalPaid: data.totalPaid,
+            studentCount: data.studentCount.size,
+          }))
+          .sort((a, b) => a.className.localeCompare(b.className))
+      },
     }),
     {
       name: 'edutech-fees',
-      version: 1,
+      version: 3,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 2) {
+          persistedState.waivers = persistedState.waivers || []
+        }
+        if (version < 3) {
+          persistedState.structures = (persistedState.structures || []).map((s: any) => ({
+            ...s,
+            type: s.type || 'monthly',
+          }))
+        }
+        return persistedState
+      },
     }
   )
 )
