@@ -437,26 +437,26 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             </div>
             <span className="font-bold text-[12px] text-[var(--text-primary)]">{bn ? 'ফিল্টার' : 'Filters'}</span>
           </div>
-          <div className="flex gap-[10px]">
-            <div className="flex-1"><label className={labelCls}>{bn ? 'সেশন' : 'Session'}</label>
+          <div className="grid grid-cols-2 gap-[10px]">
+            <div><label className={labelCls}>{bn ? 'সেশন' : 'Session'}</label>
               <select value={fSession} onChange={(e) => { setFSession(e.target.value); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
                 {(institution?.sessions || []).map((s) => <option key={s} value={s}>{s}</option>)}
               </select></div>
-            <div className="w-[90px]"><label className={labelCls}>{bn ? 'শ্রেণি' : 'Class'}</label>
-              <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
-                <option value="">{bn ? 'সব' : 'All'}</option>
-                {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select></div>
-            <div className="w-[90px]"><label className={labelCls}>{bn ? 'সেকশন' : 'Section'}</label>
-              <select value={fSection} onChange={(e) => { setFSection(e.target.value); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
-                <option value="">{bn ? 'সব' : 'All'}</option>
-                {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select></div>
-            <div className="w-[90px]"><label className={labelCls}>{bn ? 'স্ট্যাটাস' : 'Status'}</label>
+            <div><label className={labelCls}>{bn ? 'স্ট্যাটাস' : 'Status'}</label>
               <select value={fStatus} onChange={(e) => setFStatus(e.target.value)} className={`${fieldSelectCls} h-9 text-[12px]`}>
                 <option value="all">{bn ? 'সব' : 'All'}</option>
                 <option value="active">{bn ? 'সক্রিয়' : 'Active'}</option>
                 <option value="inactive">{bn ? 'নিষ্ক্রিয়' : 'Inactive'}</option>
+              </select></div>
+            <div><label className={labelCls}>{bn ? 'শ্রেণি' : 'Class'}</label>
+              <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
+                <option value="">{bn ? 'সব' : 'All'}</option>
+                {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select></div>
+            <div><label className={labelCls}>{bn ? 'সেকশন' : 'Section'}</label>
+              <select value={fSection} onChange={(e) => { setFSection(e.target.value); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
+                <option value="">{bn ? 'সব' : 'All'}</option>
+                {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select></div>
           </div>
         </div>
