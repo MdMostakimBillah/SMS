@@ -502,7 +502,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
               <div className="w-px h-4 bg-[var(--border)]" />
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'প্রাপ্য:' : 'Receivable:'}</span>
-                <span className="font-mono font-semibold text-sm tracking-wide text-[var(--text-primary)]">{fmt(totalReceivable)}</span>
+                <span className="font-mono font-bold text-sm tracking-wide text-[var(--green)]">{fmt(totalReceivable)}</span>
               </div>
               <div className="ml-auto flex items-center gap-1.5 bg-[var(--brand-light)] rounded-lg px-3 py-1.5">
                 <span className="text-[11px] text-[var(--brand)] font-semibold">{bn ? 'গ্রহণ:' : 'Receiving:'}</span>
