@@ -524,6 +524,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 {bn ? 'এসএমএস' : 'SMS'}
               </label>
               <div className="ml-auto flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'প্রাপ্য:' : 'Receivable:'}</span>
+                  <span className="font-mono font-bold text-sm tracking-wide text-[var(--green)]">{fmt(totalReceivable)}</span>
+                </div>
+                <div className="w-px h-4 bg-[var(--border)]" />
                 <span className="font-mono font-extrabold text-lg tracking-wide text-[var(--brand)]">{fmt(totalReceive)}</span>
                 <button onClick={handleReceiveFee} disabled={totalReceive <= 0}
                   className="h-9 px-5 rounded-lg bg-[var(--brand)] text-white font-semibold text-[13px] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
