@@ -236,6 +236,14 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
   const fmt = (n: number) => `\u09F3${Math.round(n).toLocaleString()}`
 
+  const todayStr = new Date().toISOString().split('T')[0]
+  const todayIncome = useMemo(() => payments.filter((p) => p.paidAt === todayStr).reduce((s, p) => s + p.amount, 0), [payments, todayStr])
+  const todayDiscount = useMemo(() => {
+    if (!selectedStudent) return 0
+    return displayRows.filter((r) => getRowEdit(r.key).checked).reduce((s, r) => s + getRowEdit(r.key).discount, 0)
+  }, [displayRows, getRowEdit, selectedStudent])
+  const todayWaiver = useMemo(() => waivers.filter((w) => w.createdAt?.startsWith(todayStr)).reduce((s, w) => s + w.amount, 0), [waivers, todayStr])
+
   const generateReceipt = useCallback((paymentRows: { feeName: string; feeNameBn: string; dateRange: string; amount: number; discount: number; receive: number }[]) => {
     if (!selectedStudent || !institution) return
     const ta = paymentRows.reduce((s, r) => s + r.amount, 0)
@@ -319,6 +327,37 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
   return (
     <div className="space-y-4">
+      {/* Today's Summary Cards */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="flex items-center gap-3 p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
+          <div className="w-10 h-10 rounded-lg bg-[var(--green-light)] text-[var(--green)] flex items-center justify-center flex-shrink-0">
+            <Receipt size={18} />
+          </div>
+          <div>
+            <div className="text-[11px] text-[var(--text-muted)] uppercase font-semibold">{bn ? 'আজকের আয়' : "Today's income"}</div>
+            <div className="font-mono font-extrabold text-[15px] tracking-wide text-[var(--green)]">{fmt(todayIncome)}</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
+          <div className="w-10 h-10 rounded-lg bg-[var(--amber-light)] text-[var(--amber)] flex items-center justify-center flex-shrink-0">
+            <Ban size={18} />
+          </div>
+          <div>
+            <div className="text-[11px] text-[var(--text-muted)] uppercase font-semibold">{bn ? 'আজকের ছাড়' : "Today's discount"}</div>
+            <div className="font-mono font-extrabold text-[15px] tracking-wide text-[var(--amber)]">{fmt(todayDiscount)}</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
+          <div className="w-10 h-10 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0">
+            <CheckCircle2 size={18} />
+          </div>
+          <div>
+            <div className="text-[11px] text-[var(--text-muted)] uppercase font-semibold">{bn ? 'আজকের মওকুফ' : "Today's waiver"}</div>
+            <div className="font-mono font-extrabold text-[15px] tracking-wide text-[var(--brand)]">{fmt(todayWaiver)}</div>
+          </div>
+        </div>
+      </div>
+
       {/* Filter Bar */}
       <div className="grid grid-cols-4 gap-[10px] p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] ">
         <div><label className={labelCls}>{bn ? 'সেশন' : 'Session'}</label>
