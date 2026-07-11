@@ -359,7 +359,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       </div>
 
       {/* Student + Filters Row */}
-      <div className="grid grid-cols-[1fr_auto] gap-[14px] items-start">
+      <div className="grid grid-cols-[1fr_auto] gap-[14px] items-stretch">
         {/* Student Card */}
         <div className="p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
           <div className="flex gap-[14px]">
@@ -430,7 +430,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         </div>
 
         {/* Filter Card */}
-        <div className="p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] w-[420px]">
+        <div className="p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] w-[420px] flex flex-col justify-between">
           <div className="flex items-center gap-2 mb-[10px]">
             <div className="w-5 h-5 rounded bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0">
               <span className="text-[9px] font-bold">&#x2699;</span>
