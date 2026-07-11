@@ -492,7 +492,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             <div className="border border-[var(--border)] rounded-xl overflow-hidden max-h-[360px] overflow-y-auto bg-[var(--bg-primary)]">
               <table className="w-full text-[12.5px]" style={{ tableLayout: 'fixed' }}>
                 <colgroup>
-                  <col style={{ width: '32px' }} />
+                  <col style={{ width: '24px' }} />
                   <col style={{ width: '28%' }} />
                   <col style={{ width: '12%' }} />
                   <col style={{ width: '9%' }} />
@@ -502,10 +502,10 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 </colgroup>
                 <thead>
                   <tr className="bg-[var(--bg-secondary)]">
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">
+                    <th className="text-center px-1 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">
                       <input type="checkbox" checked={displayRows.length > 0 && displayRows.every((r) => getRowEdit(r.key).checked)}
                         onChange={() => { const ac = displayRows.every((r) => getRowEdit(r.key).checked); const next: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}; for (const r of displayRows) { const e = getRowEdit(r.key); next[r.key] = { ...e, checked: !ac, receive: !ac ? r.receive : 0 } }; setEditState((prev) => ({ ...prev, ...next })) }}
-                        className="w-[14px] h-[14px] accent-[var(--brand)]" />
+                        className="w-3 h-3 accent-[var(--brand)]" />
                     </th>
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'বিবরণ' : 'Particular'}</th>
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
@@ -520,8 +520,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     const edit = getRowEdit(row.key)
                     return (
                       <tr key={row.key} className={`transition-colors border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40 ${!edit.checked ? 'opacity-45' : ''}`}>
-                        <td className="text-center px-2 py-2">
-                          <input type="checkbox" checked={edit.checked} onChange={(e) => updateRow(row.key, 'checked', e.target.checked)} className="w-3.5 h-3.5 accent-[var(--brand)]" />
+                        <td className="text-center px-1 py-2">
+                          <input type="checkbox" checked={edit.checked} onChange={(e) => updateRow(row.key, 'checked', e.target.checked)} className="w-3 h-3 accent-[var(--brand)]" />
                         </td>
                         <td className="text-center px-2 py-2">
                           <span className="font-semibold text-[var(--text-primary)] text-[12px]">{bn ? row.feeNameBn : row.feeName}</span>
