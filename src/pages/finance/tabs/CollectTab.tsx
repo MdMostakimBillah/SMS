@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
-import { User, Search, ChevronDown, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2 } from 'lucide-react'
+import { User, Search, ChevronDown, X, CheckCircle2, Plus, History, Ban, Receipt } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -25,7 +25,6 @@ interface MonthRow {
   receive: number
   structureId: string
   isOnetime: boolean
-  isManual?: boolean
 }
 
 function generateMonthRows(
@@ -71,7 +70,7 @@ function generateMonthRows(
         key: `${struct.id}-onetime`, feeName: struct.name, feeNameBn: struct.nameBn,
         dateRange: `${academicYear}`, dateRangeBn: `${academicYear}`,
         amount: struct.amount, discount: 0, remarks: '', receivable, receive: 0,
-        structureId: struct.id, isOnetime: true, isManual: false,
+        structureId: struct.id, isOnetime: true,
       })
     } else {
       for (let i = 0; i < totalMonths; i++) {
@@ -93,7 +92,7 @@ function generateMonthRows(
           key: `${struct.id}-${currentYear}-${monthIdx}`, feeName: struct.name, feeNameBn: struct.nameBn,
           dateRange: `(${startDate} - ${endDate})`, dateRangeBn: `(${startDateBn} - ${endDateBn})`,
           amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable,
-          structureId: struct.id, isOnetime: false, isManual: false,
+          structureId: struct.id, isOnetime: false,
         })
       }
     }
@@ -224,11 +223,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     setEditState((prev) => { const c = prev[key] || { discount: 0, remarks: '', receive: 0, checked: true }; return { ...prev, [key]: { ...c, [field]: value } } })
   }, [])
 
-  const removeRow = useCallback((key: string) => {
-    setExtraRows((prev) => prev.filter((r) => r.key !== key))
-    setEditState((prev) => { const next = { ...prev }; delete next[key]; return next })
-  }, [])
-
   const totalAmount = useMemo(() => displayRows.reduce((sum, r) => sum + r.amount, 0), [displayRows])
   const totalDiscount = useMemo(() => displayRows.reduce((sum, r) => sum + getRowEdit(r.key).discount, 0), [displayRows, getRowEdit])
   const totalReceivable = useMemo(() => displayRows.filter((r) => getRowEdit(r.key).checked).reduce((sum, r) => sum + r.amount - getRowEdit(r.key).discount, 0), [displayRows, getRowEdit])
@@ -310,7 +304,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       const waived = waivers.filter((w) => w.studentId === selectedStudent.id && w.feeStructureId === struct.id).reduce((sum, w) => sum + w.amount, 0)
       const receivable = struct.amount - paid - waived
       if (receivable <= 0) continue
-      newRows.push({ key: `${struct.id}-onetime-manual-${Date.now()}`, feeName: struct.name, feeNameBn: struct.nameBn, dateRange: fSession, dateRangeBn: fSession, amount: struct.amount, discount: 0, remarks: '', receivable, receive: 0, structureId: struct.id, isOnetime: true, isManual: true })
+      newRows.push({ key: `${struct.id}-onetime-manual-${Date.now()}`, feeName: struct.name, feeNameBn: struct.nameBn, dateRange: fSession, dateRangeBn: fSession, amount: struct.amount, discount: 0, remarks: '', receivable, receive: 0, structureId: struct.id, isOnetime: true })
     }
     setExtraRows((prev) => [...prev, ...newRows]); setSelectedOneTimeFees(new Set()); setShowOneTimeModal(false)
   }, [selectedStudent, oneTimeStructures, selectedOneTimeFees, payments, waivers, fSession])
@@ -318,7 +312,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const handleAddFine = useCallback(() => {
     if (!selectedStudent || !fineDesc || !fineAmount) return
     const amount = Number(fineAmount); if (amount <= 0) return
-    setExtraRows((prev) => [...prev, { key: `fine-${Date.now()}`, feeName: fineDesc, feeNameBn: fineDescBn || fineDesc, dateRange: fSession, dateRangeBn: fSession, amount, discount: 0, remarks: '', receivable: amount, receive: 0, structureId: '', isOnetime: true, isManual: true }])
+    setExtraRows((prev) => [...prev, { key: `fine-${Date.now()}`, feeName: fineDesc, feeNameBn: fineDescBn || fineDesc, dateRange: fSession, dateRangeBn: fSession, amount, discount: 0, remarks: '', receivable: amount, receive: 0, structureId: '', isOnetime: true }])
     setFineDesc(''); setFineDescBn(''); setFineAmount(''); setShowFineModal(false)
   }, [selectedStudent, fineDesc, fineDescBn, fineAmount, fSession])
 
@@ -429,13 +423,12 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
               <table className="w-full text-[12.5px]" style={{ tableLayout: 'fixed' }}>
                 <colgroup>
                   <col style={{ width: '32px' }} />
-                  <col style={{ width: '26%' }} />
-                  <col style={{ width: '11%' }} />
-                  <col style={{ width: '8%' }} />
-                  <col style={{ width: '14%' }} />
-                  <col style={{ width: '11%' }} />
-                  <col style={{ width: '11%' }} />
-                  <col style={{ width: '40px' }} />
+                  <col style={{ width: '28%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '9%' }} />
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '12%' }} />
                 </colgroup>
                 <thead>
                   <tr className="bg-[var(--bg-secondary)]">
@@ -450,7 +443,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'গ্রহণ' : 'Receive'}</th>
-                    <th className="sticky top-0 bg-[var(--bg-secondary)]"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -477,15 +469,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         </td>
                         <td className="text-center px-2 py-2"><span className="font-mono font-semibold text-[var(--text-primary)] tracking-wide">{fmt(row.receivable)}</span></td>
                         <td className="text-center px-2 py-2">
-                          <input type="number" value={edit.receive || ''} onChange={(e) => updateRow(row.key, 'receive', Number(e.target.value) || 0)}
+                          <input type="number" value={edit.receive} onChange={(e) => updateRow(row.key, 'receive', Number(e.target.value) || 0)}
                             className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--brand-light)] bg-[var(--bg-primary)] text-[var(--brand)] font-bold outline-none focus:border-[var(--brand)]" placeholder="0" />
-                        </td>
-                        <td className="text-center px-1 py-2">
-                          {row.isManual && (
-                            <button onClick={() => removeRow(row.key)} className="w-5 h-5 rounded bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors" title={bn ? 'মুছুন' : 'Remove'}>
-                              <Trash2 size={11} />
-                            </button>
-                          )}
                         </td>
                       </tr>
                     )
