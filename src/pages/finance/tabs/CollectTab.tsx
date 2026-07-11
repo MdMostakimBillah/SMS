@@ -229,12 +229,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const totalReceive = useMemo(() => displayRows.filter((r) => getRowEdit(r.key).checked).reduce((sum, r) => sum + getRowEdit(r.key).receive, 0), [displayRows, getRowEdit])
   const selectedCount = useMemo(() => displayRows.filter((r) => getRowEdit(r.key).checked).length, [displayRows, getRowEdit])
 
-  const todayStr = new Date().toISOString().split('T')[0]
-  const todayPayments = useMemo(() => {
-    if (!selectedStudent) return []
-    return payments.filter((p) => p.studentId === selectedStudent.id && p.paidAt === todayStr)
-  }, [payments, selectedStudent, todayStr])
-
   const studentPayments = useMemo(() => {
     if (!selectedStudent) return []
     return payments.filter((p) => p.studentId === selectedStudent.id).sort((a, b) => b.paidAt.localeCompare(a.paidAt))
@@ -536,33 +530,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             </div>
           )}
 
-          {/* Today's Payments */}
-          {selectedStudent && todayPayments.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-[11px]">
-                <div className="w-6 h-6 rounded-md bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0"><Receipt size={13} /></div>
-                <span className="font-bold text-[13.5px] text-[var(--text-primary)]">{bn ? 'আজকের পেমেন্ট' : "Today's payments"}</span>
-                <span className="ml-auto text-[11.5px] font-bold text-[var(--brand)]">{fmt(todayPayments.reduce((s, p) => s + p.amount, 0))}</span>
-              </div>
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]  px-4">
-                {todayPayments.map((p) => {
-                  const struct = structures.find((s) => s.id === p.feeStructureId)
-                  return (
-                    <div key={p.id} className="flex items-center gap-3 py-[10px] border-t border-[var(--border)] first:border-t-0 text-[12.5px]">
-                      <div className="w-[30px] h-[30px] rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0">
-                        <Receipt size={14} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="font-semibold text-[var(--text-primary)]">{struct ? (bn ? struct.nameBn : struct.name) : '-'}</span>
-                        <span className="text-[var(--text-muted)] text-[11px]"> &middot; {p.method}</span>
-                      </div>
-                      <div className="font-mono font-bold text-[var(--brand)]">{fmt(p.amount)}</div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Right Sidebar */}
