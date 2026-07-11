@@ -92,7 +92,7 @@ function generateMonthRows(
         rows.push({
           key: `${struct.id}-${currentYear}-${monthIdx}`, feeName: struct.name, feeNameBn: struct.nameBn,
           dateRange: `(${startDate} - ${endDate})`, dateRangeBn: `(${startDateBn} - ${endDateBn})`,
-          amount: struct.amount, discount: 0, remarks: '', receivable, receive: 0,
+          amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable,
           structureId: struct.id, isOnetime: false, isManual: false,
         })
       }
@@ -429,12 +429,13 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
               <table className="w-full text-[12.5px]" style={{ tableLayout: 'fixed' }}>
                 <colgroup>
                   <col style={{ width: '32px' }} />
-                  <col style={{ width: '28%' }} />
-                  <col style={{ width: '12%' }} />
-                  <col style={{ width: '9%' }} />
-                  <col style={{ width: '15%' }} />
-                  <col style={{ width: '12%' }} />
-                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '26%' }} />
+                  <col style={{ width: '11%' }} />
+                  <col style={{ width: '8%' }} />
+                  <col style={{ width: '14%' }} />
+                  <col style={{ width: '11%' }} />
+                  <col style={{ width: '11%' }} />
+                  <col style={{ width: '40px' }} />
                 </colgroup>
                 <thead>
                   <tr className="bg-[var(--bg-secondary)]">
@@ -449,6 +450,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'গ্রহণ' : 'Receive'}</th>
+                    <th className="sticky top-0 bg-[var(--bg-secondary)]"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -457,14 +459,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     return (
                       <tr key={row.key} className={`transition-colors border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40 ${!edit.checked ? 'opacity-45' : ''}`}>
                         <td className="text-center px-2 py-2">
-                          <div className="flex items-center justify-center gap-1">
-                            <input type="checkbox" checked={edit.checked} onChange={(e) => updateRow(row.key, 'checked', e.target.checked)} className="w-3.5 h-3.5 accent-[var(--brand)]" />
-                            {row.isManual && (
-                              <button onClick={() => removeRow(row.key)} className="w-4 h-4 rounded bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors" title={bn ? 'মুছুন' : 'Remove'}>
-                                <Trash2 size={10} />
-                              </button>
-                            )}
-                          </div>
+                          <input type="checkbox" checked={edit.checked} onChange={(e) => updateRow(row.key, 'checked', e.target.checked)} className="w-3.5 h-3.5 accent-[var(--brand)]" />
                         </td>
                         <td className="text-center px-2 py-2">
                           <span className="font-semibold text-[var(--text-primary)] text-[12px]">{bn ? row.feeNameBn : row.feeName}</span>
@@ -484,6 +479,13 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         <td className="text-center px-2 py-2">
                           <input type="number" value={edit.receive || ''} onChange={(e) => updateRow(row.key, 'receive', Number(e.target.value) || 0)}
                             className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--brand-light)] bg-[var(--bg-primary)] text-[var(--brand)] font-bold outline-none focus:border-[var(--brand)]" placeholder="0" />
+                        </td>
+                        <td className="text-center px-1 py-2">
+                          {row.isManual && (
+                            <button onClick={() => removeRow(row.key)} className="w-5 h-5 rounded bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors" title={bn ? 'মুছুন' : 'Remove'}>
+                              <Trash2 size={11} />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )
