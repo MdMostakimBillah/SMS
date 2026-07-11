@@ -66,10 +66,10 @@ function generateMonthRows(
       const waived = waivers.filter((w) => w.feeStructureId === struct.id).reduce((sum, w) => sum + w.amount, 0)
       const receivable = struct.amount - paid - waived
       if (receivable <= 0) continue
-      rows.push({
+        rows.push({
         key: `${struct.id}-onetime`, feeName: struct.name, feeNameBn: struct.nameBn,
         dateRange: `${academicYear}`, dateRangeBn: `${academicYear}`,
-        amount: struct.amount, discount: 0, remarks: '', receivable, receive: 0,
+        amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable,
         structureId: struct.id, isOnetime: true,
       })
     } else {
@@ -304,7 +304,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       const waived = waivers.filter((w) => w.studentId === selectedStudent.id && w.feeStructureId === struct.id).reduce((sum, w) => sum + w.amount, 0)
       const receivable = struct.amount - paid - waived
       if (receivable <= 0) continue
-      newRows.push({ key: `${struct.id}-onetime-manual-${Date.now()}`, feeName: struct.name, feeNameBn: struct.nameBn, dateRange: fSession, dateRangeBn: fSession, amount: struct.amount, discount: 0, remarks: '', receivable, receive: 0, structureId: struct.id, isOnetime: true })
+      newRows.push({ key: `${struct.id}-onetime-manual-${Date.now()}`, feeName: struct.name, feeNameBn: struct.nameBn, dateRange: fSession, dateRangeBn: fSession, amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable, structureId: struct.id, isOnetime: true })
     }
     setExtraRows((prev) => [...prev, ...newRows]); setSelectedOneTimeFees(new Set()); setShowOneTimeModal(false)
   }, [selectedStudent, oneTimeStructures, selectedOneTimeFees, payments, waivers, fSession])
@@ -312,7 +312,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const handleAddFine = useCallback(() => {
     if (!selectedStudent || !fineDesc || !fineAmount) return
     const amount = Number(fineAmount); if (amount <= 0) return
-    setExtraRows((prev) => [...prev, { key: `fine-${Date.now()}`, feeName: fineDesc, feeNameBn: fineDescBn || fineDesc, dateRange: fSession, dateRangeBn: fSession, amount, discount: 0, remarks: '', receivable: amount, receive: 0, structureId: '', isOnetime: true }])
+    setExtraRows((prev) => [...prev, { key: `fine-${Date.now()}`, feeName: fineDesc, feeNameBn: fineDescBn || fineDesc, dateRange: fSession, dateRangeBn: fSession, amount, discount: 0, remarks: '', receivable: amount, receive: amount, structureId: '', isOnetime: true }])
     setFineDesc(''); setFineDescBn(''); setFineAmount(''); setShowFineModal(false)
   }, [selectedStudent, fineDesc, fineDescBn, fineAmount, fSession])
 
