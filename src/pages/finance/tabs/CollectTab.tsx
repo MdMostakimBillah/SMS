@@ -298,21 +298,28 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const handleAddOneTimeFees = useCallback(() => {
     if (!selectedStudent) return
     const newRows: MonthRow[] = []
+    const newEditState: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}
     for (const struct of oneTimeStructures) {
       if (!selectedOneTimeFees.has(struct.id)) continue
       const paid = payments.filter((p) => p.studentId === selectedStudent.id && p.feeStructureId === struct.id).reduce((sum, p) => sum + p.amount, 0)
       const waived = waivers.filter((w) => w.studentId === selectedStudent.id && w.feeStructureId === struct.id).reduce((sum, w) => sum + w.amount, 0)
       const receivable = struct.amount - paid - waived
       if (receivable <= 0) continue
-      newRows.push({ key: `${struct.id}-onetime-manual-${Date.now()}`, feeName: struct.name, feeNameBn: struct.nameBn, dateRange: fSession, dateRangeBn: fSession, amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable, structureId: struct.id, isOnetime: true })
+      const key = `${struct.id}-onetime-manual-${Date.now()}`
+      newRows.push({ key, feeName: struct.name, feeNameBn: struct.nameBn, dateRange: fSession, dateRangeBn: fSession, amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable, structureId: struct.id, isOnetime: true })
+      newEditState[key] = { discount: 0, remarks: '', receive: receivable, checked: true }
     }
-    setExtraRows((prev) => [...prev, ...newRows]); setSelectedOneTimeFees(new Set()); setShowOneTimeModal(false)
+    setExtraRows((prev) => [...prev, ...newRows])
+    setEditState((prev) => ({ ...prev, ...newEditState }))
+    setSelectedOneTimeFees(new Set()); setShowOneTimeModal(false)
   }, [selectedStudent, oneTimeStructures, selectedOneTimeFees, payments, waivers, fSession])
 
   const handleAddFine = useCallback(() => {
     if (!selectedStudent || !fineDesc || !fineAmount) return
     const amount = Number(fineAmount); if (amount <= 0) return
-    setExtraRows((prev) => [...prev, { key: `fine-${Date.now()}`, feeName: fineDesc, feeNameBn: fineDescBn || fineDesc, dateRange: fSession, dateRangeBn: fSession, amount, discount: 0, remarks: '', receivable: amount, receive: amount, structureId: '', isOnetime: true }])
+    const key = `fine-${Date.now()}`
+    setExtraRows((prev) => [...prev, { key, feeName: fineDesc, feeNameBn: fineDescBn || fineDesc, dateRange: fSession, dateRangeBn: fSession, amount, discount: 0, remarks: '', receivable: amount, receive: amount, structureId: '', isOnetime: true }])
+    setEditState((prev) => ({ ...prev, [key]: { discount: 0, remarks: '', receive: amount, checked: true } }))
     setFineDesc(''); setFineDescBn(''); setFineAmount(''); setShowFineModal(false)
   }, [selectedStudent, fineDesc, fineDescBn, fineAmount, fSession])
 
