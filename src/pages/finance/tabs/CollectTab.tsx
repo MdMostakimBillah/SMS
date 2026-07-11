@@ -358,78 +358,107 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         </div>
       </div>
 
-      {/* Student Search + Filters */}
-      <div className="flex gap-[14px] p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] items-start">
-        {/* Left: Student Search */}
-        <div className="flex items-end gap-[12px] flex-1 min-w-0">
-          <div className="w-[48px] h-[48px] rounded-full bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center font-extrabold text-[14px] flex-shrink-0 border border-[var(--border)] overflow-hidden">
-            {selectedStudent?.photo ? <img src={selectedStudent.photo} alt="" className="w-full h-full object-cover" /> : selectedStudent ? initials(bn ? selectedStudent.nameBn : selectedStudent.nameEn) : <User size={18} />}
+      {/* Student + Filters Row */}
+      <div className="grid grid-cols-[1fr_auto] gap-[14px] items-start">
+        {/* Student Card */}
+        <div className="p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
+          <div className="flex gap-[14px]">
+            {/* Photo */}
+            <div className="w-[80px] h-[96px] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex-shrink-0 overflow-hidden flex items-center justify-center">
+              {selectedStudent?.photo ? <img src={selectedStudent.photo} alt="" className="w-full h-full object-cover" /> : <User size={28} className="text-[var(--text-muted)]" />}
+            </div>
+            {/* Info */}
+            <div className="flex-1 min-w-0 flex flex-col justify-between">
+              {selectedStudent ? (
+                <>
+                  <div>
+                    <div className="text-[14px] font-bold text-[var(--text-primary)] truncate">{selectedStudent.nameEn}</div>
+                    <div className="text-[11px] text-[var(--text-muted)]">{selectedStudent.class}{selectedStudent.section ? ` - ${selectedStudent.section}` : ''} &middot; {selectedStudent.id}</div>
+                  </div>
+                  <div className="flex gap-4 text-[10.5px] text-[var(--text-muted)]">
+                    {selectedStudent.fatherNameEn && <span><span className="font-semibold">{bn ? 'বাবা:' : 'Father:'}</span> {selectedStudent.fatherNameEn}</span>}
+                    {selectedStudent.motherNameEn && <span><span className="font-semibold">{bn ? 'মা:' : 'Mother:'}</span> {selectedStudent.motherNameEn}</span>}
+                    {selectedStudent.phone && <span><span className="font-semibold">{bn ? 'ফোন:' : 'Phone:'}</span> {selectedStudent.phone}</span>}
+                  </div>
+                </>
+              ) : (
+                <div className="text-[12px] text-[var(--text-muted)]">{bn ? 'শিক্ষার্থী নির্বাচন করুন' : 'Select a student'}</div>
+              )}
+            </div>
           </div>
-          <div className="flex-1 relative min-w-0" ref={dropdownRef}>
-            <label className={labelCls}>{bn ? 'শিক্ষার্থী' : 'Student'}</label>
-            <div className="relative">
-              <Search size={15} className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+          {/* Search + Find Due */}
+          <div className="flex items-center gap-[10px] mt-[12px]">
+            <div className="flex-1 relative" ref={dropdownRef}>
+              <Search size={14} className="absolute left-[10px] top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
               <input ref={inputRef} type="text"
                 value={isDropdownOpen ? studentSearch : (selectedStudent ? `${selectedStudent.nameEn} (${selectedStudent.id})` : '')}
                 placeholder={bn ? 'নাম বা আইডি লিখুন...' : 'Type name or admission ID...'}
                 onChange={(e) => { setStudentSearch(e.target.value); setSelectedStudentId(null); setIsDropdownOpen(true); setHighlightedIndex(0) }}
                 onFocus={() => { setIsDropdownOpen(true); setHighlightedIndex(0) }}
                 onKeyDown={handleKeyDown}
-                className={`${fieldInputCls} h-9 pl-[34px] pr-8 text-[12px]`}
+                className={`${fieldInputCls} h-9 pl-[32px] pr-8 text-[12px]`}
               />
               {selectedStudent && !isDropdownOpen ? (
-                <button onClick={() => { setSelectedStudentId(null); setStudentSearch('') }} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[var(--bg-secondary)] cursor-pointer border-0 bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={14} /></button>
+                <button onClick={() => { setSelectedStudentId(null); setStudentSearch('') }} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[var(--bg-secondary)] cursor-pointer border-0 bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={13} /></button>
               ) : (
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+              )}
+              {isDropdownOpen && (
+                <div className="absolute z-50 mt-[6px] w-full max-h-[260px] overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_12px_30px_rgba(20,23,33,0.12)]">
+                  {dropdownStudents.length === 0 ? (
+                    <div className="px-3 py-2 text-xs text-[var(--text-muted)]">{bn ? 'কোনো শিক্ষার্থী পাওয়া যায়নি' : 'No students found'}</div>
+                  ) : dropdownStudents.map((s, i) => (
+                    <button key={s.id} data-index={i} onClick={() => selectStudent(s.id)} onMouseEnter={() => setHighlightedIndex(i)}
+                      className={`w-full flex items-center gap-[10px] px-[13px] py-[9px] text-left border-0 border-b border-[var(--border)] last:border-b-0 cursor-pointer transition-colors ${i === highlightedIndex ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--brand-light)]'}`}>
+                      <div className="w-[28px] h-[28px] rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] flex items-center justify-center text-[10.5px] font-bold flex-shrink-0 overflow-hidden">
+                        {s.photo ? <img src={s.photo} alt="" className="w-full h-full object-cover" /> : initials(s.nameEn)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[12px] font-semibold text-[var(--text-primary)]">{s.nameEn}</p>
+                        <p className="text-[10.5px] text-[var(--text-muted)]">{s.class} &middot; {s.id}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
-            {isDropdownOpen && (
-              <div className="absolute z-50 mt-[6px] w-full max-h-[260px] overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_12px_30px_rgba(20,23,33,0.12)]">
-                {dropdownStudents.length === 0 ? (
-                  <div className="px-3 py-2 text-xs text-[var(--text-muted)]">{bn ? 'কোনো শিক্ষার্থী পাওয়া যায়নি' : 'No students found'}</div>
-                ) : dropdownStudents.map((s, i) => (
-                  <button key={s.id} data-index={i} onClick={() => selectStudent(s.id)} onMouseEnter={() => setHighlightedIndex(i)}
-                    className={`w-full flex items-center gap-[10px] px-[13px] py-[9px] text-left border-0 border-b border-[var(--border)] last:border-b-0 cursor-pointer transition-colors ${i === highlightedIndex ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--brand-light)]'}`}>
-                    <div className="w-[28px] h-[28px] rounded-full bg-[var(--bg-secondary)] text-[var(--text-muted)] flex items-center justify-center text-[10.5px] font-bold flex-shrink-0 overflow-hidden">
-                      {s.photo ? <img src={s.photo} alt="" className="w-full h-full rounded-full object-cover" /> : initials(s.nameEn)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[12.5px] font-semibold text-[var(--text-primary)]">{s.nameEn}</p>
-                      <p className="text-[11px] text-[var(--text-muted)]">{s.class} &middot; {s.id}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+            <button onClick={() => setFindDueTrigger((t) => t + 1)} disabled={!selectedStudentId}
+              className="h-9 px-4 rounded-lg bg-[var(--brand)] text-white font-bold text-[12px] border-0 cursor-pointer flex items-center gap-[6px] flex-shrink-0 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
+              <Search size={13} />{bn ? 'বকেয়' : 'Find due'}
+            </button>
           </div>
-          <button onClick={() => setFindDueTrigger((t) => t + 1)} disabled={!selectedStudentId}
-            className="h-9 px-4 rounded-lg bg-[var(--brand)] text-white font-bold text-[12px] border-0 cursor-pointer flex items-center gap-[6px] flex-shrink-0 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
-            <Search size={13} />{bn ? 'বকেয়' : 'Find due'}
-          </button>
         </div>
 
-        {/* Right: Filters */}
-        <div className="flex items-end gap-[10px] flex-shrink-0">
-          <div className="w-[130px]"><label className={labelCls}>{bn ? 'সেশন' : 'Session'}</label>
-            <select value={fSession} onChange={(e) => { setFSession(e.target.value); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
-              {(institution?.sessions || []).map((s) => <option key={s} value={s}>{s}</option>)}
-            </select></div>
-          <div className="w-[100px]"><label className={labelCls}>{bn ? 'শ্রেণি' : 'Class'}</label>
-            <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
-              <option value="">{bn ? 'সব' : 'All'}</option>
-              {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select></div>
-          <div className="w-[100px]"><label className={labelCls}>{bn ? 'সেকশন' : 'Section'}</label>
-            <select value={fSection} onChange={(e) => { setFSection(e.target.value); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
-              <option value="">{bn ? 'সব' : 'All'}</option>
-              {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select></div>
-          <div className="w-[100px]"><label className={labelCls}>{bn ? 'স্ট্যাটাস' : 'Status'}</label>
-            <select value={fStatus} onChange={(e) => setFStatus(e.target.value)} className={`${fieldSelectCls} h-9 text-[12px]`}>
-              <option value="all">{bn ? 'সব' : 'All'}</option>
-              <option value="active">{bn ? 'সক্রিয়' : 'Active'}</option>
-              <option value="inactive">{bn ? 'নিষ্ক্রিয়' : 'Inactive'}</option>
-            </select></div>
+        {/* Filter Card */}
+        <div className="p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] w-[420px]">
+          <div className="flex items-center gap-2 mb-[10px]">
+            <div className="w-5 h-5 rounded bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0">
+              <span className="text-[9px] font-bold">&#x2699;</span>
+            </div>
+            <span className="font-bold text-[12px] text-[var(--text-primary)]">{bn ? 'ফিল্টার' : 'Filters'}</span>
+          </div>
+          <div className="flex gap-[10px]">
+            <div className="flex-1"><label className={labelCls}>{bn ? 'সেশন' : 'Session'}</label>
+              <select value={fSession} onChange={(e) => { setFSession(e.target.value); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
+                {(institution?.sessions || []).map((s) => <option key={s} value={s}>{s}</option>)}
+              </select></div>
+            <div className="w-[90px]"><label className={labelCls}>{bn ? 'শ্রেণি' : 'Class'}</label>
+              <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
+                <option value="">{bn ? 'সব' : 'All'}</option>
+                {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select></div>
+            <div className="w-[90px]"><label className={labelCls}>{bn ? 'সেকশন' : 'Section'}</label>
+              <select value={fSection} onChange={(e) => { setFSection(e.target.value); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
+                <option value="">{bn ? 'সব' : 'All'}</option>
+                {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select></div>
+            <div className="w-[90px]"><label className={labelCls}>{bn ? 'স্ট্যাটাস' : 'Status'}</label>
+              <select value={fStatus} onChange={(e) => setFStatus(e.target.value)} className={`${fieldSelectCls} h-9 text-[12px]`}>
+                <option value="all">{bn ? 'সব' : 'All'}</option>
+                <option value="active">{bn ? 'সক্রিয়' : 'Active'}</option>
+                <option value="inactive">{bn ? 'নিষ্ক্রিয়' : 'Inactive'}</option>
+              </select></div>
+          </div>
         </div>
       </div>
 
