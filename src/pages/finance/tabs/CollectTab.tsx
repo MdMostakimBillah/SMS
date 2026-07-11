@@ -375,10 +375,10 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     <div className="text-[14px] font-bold text-[var(--text-primary)] truncate">{selectedStudent.nameEn}</div>
                     <div className="text-[11px] text-[var(--text-muted)]">{selectedStudent.class}{selectedStudent.section ? ` - ${selectedStudent.section}` : ''} &middot; {selectedStudent.id}</div>
                   </div>
-                  <div className="flex gap-4 text-[10.5px] text-[var(--text-muted)]">
-                    {selectedStudent.fatherNameEn && <span><span className="font-semibold">{bn ? 'বাবা:' : 'Father:'}</span> {selectedStudent.fatherNameEn}</span>}
-                    {selectedStudent.motherNameEn && <span><span className="font-semibold">{bn ? 'মা:' : 'Mother:'}</span> {selectedStudent.motherNameEn}</span>}
-                    {selectedStudent.phone && <span><span className="font-semibold">{bn ? 'ফোন:' : 'Phone:'}</span> {selectedStudent.phone}</span>}
+                  <div className="text-[10.5px] text-[var(--text-muted)] space-y-0.5">
+                    {selectedStudent.fatherNameEn && <div><span className="font-semibold">{bn ? 'বাবা:' : 'Father:'}</span> {selectedStudent.fatherNameEn}</div>}
+                    {selectedStudent.motherNameEn && <div><span className="font-semibold">{bn ? 'মা:' : 'Mother:'}</span> {selectedStudent.motherNameEn}</div>}
+                    {selectedStudent.phone && <div><span className="font-semibold">{bn ? 'ফোন:' : 'Phone:'}</span> {selectedStudent.phone}</div>}
                   </div>
                 </>
               ) : (
