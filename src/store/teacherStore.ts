@@ -58,8 +58,12 @@ export const useTeacherStore = create<TeacherState>()(
 
       getNextTeacherId: () => {
         const year = new Date().getFullYear()
-        const count = get().teachers.length + 1
-        const num = String(100 + count).padStart(3, '0')
+        const existing = get().teachers
+          .filter((t) => t.id.startsWith(`TCH-${year}-`))
+          .map((t) => parseInt(t.id.split('-')[2], 10))
+          .filter((n) => !isNaN(n))
+        const maxNum = existing.length > 0 ? Math.max(...existing) : 99
+        const num = String(maxNum + 1).padStart(3, '0')
         return `TCH-${year}-${num}`
       },
 

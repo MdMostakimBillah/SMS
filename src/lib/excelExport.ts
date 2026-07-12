@@ -1,5 +1,3 @@
-import ExcelJS from 'exceljs'
-
 type AoaData = (string | number | boolean | null | undefined)[][]
 
 interface SheetState {
@@ -18,7 +16,8 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-function buildWorkbook(sheets: Map<string, SheetState>): ExcelJS.Workbook {
+async function buildWorkbook(sheets: Map<string, SheetState>) {
+  const { default: ExcelJS } = await import('exceljs')
   const wb = new ExcelJS.Workbook()
   for (const [name, state] of sheets) {
     const ws = wb.addWorksheet(name)
@@ -92,13 +91,12 @@ export const XLSX = {
     },
   },
 
-  writeFile(wb: WorkbookWrapper, filename: string) {
-    const workbook = buildWorkbook(wb._sheets)
-    workbook.xlsx.writeBuffer().then((buffer) => {
-      const blob = new Blob([buffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      })
-      downloadBlob(blob, filename)
+  async writeFile(wb: WorkbookWrapper, filename: string) {
+    const workbook = await buildWorkbook(wb._sheets)
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
+    downloadBlob(blob, filename)
   },
 }

@@ -249,7 +249,13 @@ export const useAssignmentStore = create<AssignmentState>()(
       submissions: sampleSubmissions,
       addAssignment: (a) =>
         set((state) => {
-          const id = `ASN-${new Date().getFullYear()}-${String(state.assignments.length + 1).padStart(3, '0')}`
+          const year = new Date().getFullYear()
+          const existing = state.assignments
+            .filter((x) => x.id.startsWith(`ASN-${year}-`))
+            .map((x) => parseInt(x.id.split('-')[2], 10))
+            .filter((n) => !isNaN(n))
+          const maxNum = existing.length > 0 ? Math.max(...existing) : 0
+          const id = `ASN-${year}-${String(maxNum + 1).padStart(3, '0')}`
           const now = today()
           return {
             assignments: [{ ...a, id, createdAt: now, updatedAt: now }, ...state.assignments],
@@ -268,7 +274,13 @@ export const useAssignmentStore = create<AssignmentState>()(
         })),
       addSubmission: (s) =>
         set((state) => {
-          const id = `SUB-${new Date().getFullYear()}-${String(state.submissions.length + 1).padStart(3, '0')}`
+          const year = new Date().getFullYear()
+          const existing = state.submissions
+            .filter((x) => x.id.startsWith(`SUB-${year}-`))
+            .map((x) => parseInt(x.id.split('-')[2], 10))
+            .filter((n) => !isNaN(n))
+          const maxNum = existing.length > 0 ? Math.max(...existing) : 0
+          const id = `SUB-${year}-${String(maxNum + 1).padStart(3, '0')}`
           const now = today()
           return {
             submissions: [{ ...s, id, createdAt: now, updatedAt: now }, ...state.submissions],

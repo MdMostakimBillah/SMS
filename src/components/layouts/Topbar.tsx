@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   Search,
   Bell,
@@ -73,6 +73,33 @@ const demoNotifications = [
   },
 ]
 
+const THEME_OPTIONS: { value: Theme; labelKey: TranslationKey; icon: React.ReactNode }[] = [
+  { value: 'light', labelKey: 'theme_light', icon: <Sun size={13} /> },
+  { value: 'dark', labelKey: 'theme_dark', icon: <Moon size={13} /> },
+  { value: 'system', labelKey: 'theme_system', icon: <Monitor size={13} /> },
+]
+
+const LANG_OPTIONS: { value: Language; labelKey: TranslationKey }[] = [
+  { value: 'bn', labelKey: 'lang_bn' },
+  { value: 'en', labelKey: 'lang_en' },
+]
+
+const ICON_BTN: React.CSSProperties = {
+  width: '2rem',
+  height: '2rem',
+  borderRadius: '0.5rem',
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  color: 'var(--text-secondary)',
+  position: 'relative',
+  flexShrink: 0,
+  transition: 'all 0.15s',
+}
+
 const demoMessages = [
   {
     id: 1,
@@ -104,7 +131,7 @@ const demoMessages = [
   },
 ]
 
-export default function Topbar() {
+export default React.memo(function Topbar() {
   const navigate = useNavigate()
   const { logout } = useAuth()
   const { theme, language, setTheme, setLanguage, sidebarCollapsed, setSidebarCollapsed, setCommandPaletteOpen, toggleSidebar } = useAppStore()
@@ -128,37 +155,8 @@ export default function Topbar() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  const themeOptions: {
-    value: Theme
-    labelKey: TranslationKey
-    icon: React.ReactNode
-  }[] = [
-    { value: 'light', labelKey: 'theme_light', icon: <Sun size={13} /> },
-    { value: 'dark', labelKey: 'theme_dark', icon: <Moon size={13} /> },
-    { value: 'system', labelKey: 'theme_system', icon: <Monitor size={13} /> },
-  ]
-  const langOptions: { value: Language; labelKey: TranslationKey }[] = [
-    { value: 'bn', labelKey: 'lang_bn' },
-    { value: 'en', labelKey: 'lang_en' },
-  ]
   const unreadNotifs = demoNotifications.filter((n) => n.unread).length
   const unreadMsgs = demoMessages.reduce((sum, m) => sum + m.unread, 0)
-
-  const iconBtn: React.CSSProperties = {
-    width: '2rem',
-    height: '2rem',
-    borderRadius: '0.5rem',
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    color: 'var(--text-secondary)',
-    position: 'relative',
-    flexShrink: 0,
-    transition: 'all 0.15s',
-  }
   const panelStyle: React.CSSProperties = {
     position: 'absolute',
     top: '2.375rem',
@@ -252,7 +250,7 @@ export default function Topbar() {
 
       {/* Search */}
       {isMobile ? (
-        <button style={{ ...iconBtn, flexShrink: 0 }} onClick={() => setCommandPaletteOpen(true)}>
+        <button style={{ ...ICON_BTN, flexShrink: 0 }} onClick={() => setCommandPaletteOpen(true)}>
           <Search size={16} />
         </button>
       ) : (
@@ -303,7 +301,7 @@ export default function Topbar() {
         {/* Notification */}
         <div ref={notifRef} style={{ position: 'relative' }}>
           <button
-            style={iconBtn}
+            style={ICON_BTN}
             onClick={() => {
               setNotifOpen(!notifOpen)
               setMsgOpen(false)
@@ -444,7 +442,7 @@ export default function Topbar() {
         {/* Messages */}
         <div ref={msgRef} style={{ position: 'relative' }}>
           <button
-            style={iconBtn}
+            style={ICON_BTN}
             onClick={() => {
               setMsgOpen(!msgOpen)
               setNotifOpen(false)
@@ -773,7 +771,7 @@ export default function Topbar() {
                 }}
               >
                 <div style={{ display: 'flex', padding: '4px 10px', gap: '0.375rem' }}>
-                  {langOptions.map((opt) => (
+                  {LANG_OPTIONS.map((opt) => (
                     <div
                       key={opt.value}
                       onClick={() => setLanguage(opt.value)}
@@ -805,7 +803,7 @@ export default function Topbar() {
                 }}
               >
                 <div style={{ display: 'flex', padding: '4px 10px', gap: '0.375rem' }}>
-                  {themeOptions.map((opt) => (
+                  {THEME_OPTIONS.map((opt) => (
                     <div
                       key={opt.value}
                       onClick={() => setTheme(opt.value)}
@@ -893,4 +891,4 @@ export default function Topbar() {
       </div>
     </header>
   )
-}
+})

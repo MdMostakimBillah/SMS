@@ -455,6 +455,6 @@ export const useHRStore = create<HRState>()(
           return { teacherFacilities: newTfs }
         }),
     }),
-    { name: 'edutech-hr' }
+    { name: 'edutech-hr', version: 1 }
   )
 )

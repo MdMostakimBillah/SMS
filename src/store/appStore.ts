@@ -133,9 +133,11 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'edutech-settings',
+      version: 1,
       partialize: (state) => ({
         theme: state.theme,
         language: state.language,
+        sidebarCollapsed: state.sidebarCollapsed,
         sidebarPosition: state.sidebarPosition,
         pageVisits: state.pageVisits,
         bookmarks: state.bookmarks,

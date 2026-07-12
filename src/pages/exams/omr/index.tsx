@@ -14,6 +14,7 @@ import { useExamStore, type OMRTemplate } from '@/store/examStore'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { generateOMRHtml, generateOMRSheet, generateOMRSheetMultiCopy, type OMRConfig, type PaperSize } from '@/pages/exams/omrTemplate'
+import { logger } from '@/lib/logger'
 
 const THEME_PRESETS = [
   { label: 'Indigo', value: '#6366f1' },
@@ -267,15 +268,11 @@ export default function OMRSheetPage() {
       const html = await generateOMRHtml(omrConfig, sheetIsBn)
       setPreviewHtml(html)
     } catch {
-      console.error(isBn ? 'জেনারেট ব্যর্থ' : 'Generation failed')
+      logger.error(isBn ? 'জেনারেট ব্যর্থ' : 'Generation failed')
     } finally {
       setIsGenerating(false)
     }
   }, [omrConfig, sheetIsBn, isBn])
-
-  useEffect(() => {
-    handleGenerate()
-  }, [])
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
@@ -284,7 +281,7 @@ export default function OMRSheetPage() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [omrConfig])
+  }, [omrConfig, handleGenerate])
 
   const handleDownloadClick = () => {
     setPdfCopyCount(computeCopyCount)
@@ -304,7 +301,7 @@ export default function OMRSheetPage() {
         setTimeout(() => w.print(), 600)
       }
     }
-    console.log(isBn ? `${pdfCopyCount} কপি জেনারেট হচ্ছে...` : `Generating ${pdfCopyCount} copies...`)
+    logger.info(isBn ? `${pdfCopyCount} কপি জেনারেট হচ্ছে...` : `Generating ${pdfCopyCount} copies...`)
   }
 
   const handlePrint = () => {
@@ -320,7 +317,7 @@ export default function OMRSheetPage() {
     if (!templateName.trim()) return
     if (activeTemplateId) {
       updateOMRTemplate(activeTemplateId, { ...omrConfig, name: templateName, nameBn: templateName, modifiedBy: 'Admin' })
-      console.log(isBn ? 'টেমপ্লেট আপডেট হয়েছে' : 'Template updated')
+      logger.info(isBn ? 'টেমপ্লেট আপডেট হয়েছে' : 'Template updated')
     } else {
       saveOMRTemplate({
         ...omrConfig,
@@ -334,7 +331,7 @@ export default function OMRSheetPage() {
         isDefault: false,
         modifiedBy: 'Admin',
       })
-      console.log(isBn ? 'টেমপ্লেট সংরক্ষিত হয়েছে' : 'Template saved')
+      logger.info(isBn ? 'টেমপ্লেট সংরক্ষিত হয়েছে' : 'Template saved')
     }
     setShowSaveDialog(false)
     setTemplateName('')
@@ -393,7 +390,7 @@ export default function OMRSheetPage() {
     setShowPracticalMarks(tpl.showPracticalMarks)
     setShowVivaMarks(tpl.showVivaMarks)
     setShowInstructions(tpl.showInstructions)
-    console.log(isBn ? 'টেমপ্লেট লোড হয়েছে' : 'Template loaded')
+    logger.info(isBn ? 'টেমপ্লেট লোড হয়েছে' : 'Template loaded')
   }
 
   const handleReset = () => {
@@ -435,7 +432,7 @@ export default function OMRSheetPage() {
     setShowCheckedBy(true); setShowVerifiedBy(true); setShowTotalMarks(true)
     setShowPracticalMarks(false); setShowVivaMarks(false); setShowInstructions(true)
     setCurrentStep(1)
-    console.log(isBn ? 'রিসেট সম্পন্ন' : 'Reset complete')
+    logger.info(isBn ? 'রিসেট সম্পন্ন' : 'Reset complete')
   }
 
   const inputCls =
@@ -1072,7 +1069,7 @@ export default function OMRSheetPage() {
             <button onClick={() => {
               if (activeTemplateId) {
                 updateOMRTemplate(activeTemplateId, { ...omrConfig, name: templateName, nameBn: templateName, modifiedBy: 'Admin' })
-                console.log(isBn ? 'টেমপ্লেট আপডেট হয়েছে' : 'Template updated')
+                logger.info(isBn ? 'টেমপ্লেট আপডেট হয়েছে' : 'Template updated')
               } else {
                 setShowSaveDialog(true)
               }
@@ -1330,7 +1327,7 @@ export default function OMRSheetPage() {
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <button onClick={() => { deleteOMRTemplate(showDeleteConfirm); setShowDeleteConfirm(null); console.log(isBn ? 'মুছে ফেলা হয়েছে' : 'Deleted') }}
+              <button onClick={() => { deleteOMRTemplate(showDeleteConfirm); setShowDeleteConfirm(null); logger.info(isBn ? 'মুছে ফেলা হয়েছে' : 'Deleted') }}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--red)] text-white text-[0.75rem] font-semibold cursor-pointer hover:brightness-110 transition-all">
                 {isBn ? 'মুছুন' : 'Delete'}
               </button>

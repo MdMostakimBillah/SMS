@@ -88,8 +88,12 @@ export const useAdmissionStore = create<AdmissionState>()(
 
       getNextId: () => {
         const year = new Date().getFullYear()
-        const count = get().students.length + 1
-        const num = String(10000 + count).padStart(5, '0')
+        const existing = get().students
+          .filter((s) => s.id.startsWith(`ET-${year}-`))
+          .map((s) => parseInt(s.id.split('-')[2], 10))
+          .filter((n) => !isNaN(n))
+        const maxNum = existing.length > 0 ? Math.max(...existing) : 9999
+        const num = String(maxNum + 1).padStart(5, '0')
         return `ET-${year}-${num}`
       },
     }),

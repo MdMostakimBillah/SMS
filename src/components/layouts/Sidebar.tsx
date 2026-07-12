@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { gsap } from 'gsap'
 import {
@@ -72,7 +72,7 @@ const iconMap: Record<string, LucideIcon> = {
   settings: Settings,
 }
 
-export default function Sidebar({ collapsed }: { collapsed: boolean }) {
+export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }) {
   const isBn = useBn()
   const { language, toggleSidebar, trackVisit, pageVisits, bookmarks, toggleBookmark, reorderBookmarks, sidebarOrder, setSidebarOrder, sidebarPosition, toggleSidebarPosition } = useAppStore()
   const { isMobile, width } = useWindowSize()
@@ -128,7 +128,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     setShowSessionDropdown(false)
   }
 
-  const navGroups = [
+  const navGroups = useMemo(() => [
     {
       key: 'grp_main',
       items: [{ key: 'nav_dashboard', page: '/dashboard', icon: 'layout-dashboard' }],
@@ -198,7 +198,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         ...(isSuperAdmin ? [{ key: 'nav_superadmin', page: '/super-admin', icon: 'crown' }] : []),
       ],
     },
-  ]
+  ], [isSuperAdmin])
 
   // Apply custom sidebar order
   type NavItem = { key: string; page: string }
@@ -746,4 +746,4 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       )}
     </>
   )
-}
+})

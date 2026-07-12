@@ -1,3 +1,0 @@
-export default function Page() {
-  return <div className="text-[var(--text-primary)] text-xl font-medium">Transport</div>
-}
