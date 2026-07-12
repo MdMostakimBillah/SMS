@@ -282,20 +282,26 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       addPayment(payment)
       receiptRows.push({ feeName: row.feeName, feeNameBn: row.feeNameBn, dateRange: row.dateRange, amount: row.amount, discount: edit.discount, receive: edit.receive })
     }
-    generateReceipt(receiptRows); setExtraRows([]); setEditState({}); setFindDueTrigger((t) => t + 1)
+    generateReceipt(receiptRows)
+    const receivedKeys = new Set(checkedRows.map((r) => r.key))
+    setExtraRows((prev) => prev.filter((r) => !receivedKeys.has(r.key)))
+    setEditState({})
+    setFindDueTrigger((t) => t + 1)
   }, [selectedStudent, displayRows, getRowEdit, totalReceive, receivedDate, addPayment, generateReceipt])
 
   const oneTimeStructures = useMemo(() => {
     if (!selectedStudent) return []
+    const existingKeys = new Set(displayRows.filter((r) => r.isOnetime).map((r) => r.structureId))
     return structures.filter((s) => {
       if (s.type !== 'onetime' || !s.isActive) return false
       if (s.class !== selectedStudent.class) return false
       if (s.section && s.section !== selectedStudent.section) return false
+      if (existingKeys.has(s.id)) return false
       const paid = payments.filter((p) => p.studentId === selectedStudent.id && p.feeStructureId === s.id).reduce((sum, p) => sum + p.amount, 0)
       const waived = waivers.filter((w) => w.studentId === selectedStudent.id && w.feeStructureId === s.id).reduce((sum, w) => sum + w.amount, 0)
       return paid + waived < s.amount
     })
-  }, [structures, selectedStudent, payments, waivers])
+  }, [structures, selectedStudent, payments, waivers, displayRows])
 
   const handleAddOneTimeFees = useCallback(() => {
     if (!selectedStudent) return
