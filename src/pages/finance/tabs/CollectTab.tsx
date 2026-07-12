@@ -85,7 +85,8 @@ function generateMonthRows(
           .filter((w) => { if (w.feeStructureId !== struct.id) return false; const d = new Date(w.createdAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
           .reduce((sum, w) => sum + w.amount, 0)
         const receivable = struct.amount - paid - Math.min(waived, struct.amount)
-        if (receivable <= 0) continue
+        const isPastMonth = currentYear < currentYearNum || (currentYear === currentYearNum && monthIdx < currentMonthIdx)
+        if (isPastMonth && receivable <= 0) continue
         const startDate = `01 ${m.label} ${currentYear}`
         const endDate = `${m.days} ${m.label} ${currentYear}`
         const startDateBn = `০১ ${m.labelBn} ${currentYear}`
@@ -93,7 +94,7 @@ function generateMonthRows(
         rows.push({
           key: `${struct.id}-${currentYear}-${monthIdx}`, feeName: struct.name, feeNameBn: struct.nameBn,
           dateRange: `(${startDate} - ${endDate})`, dateRangeBn: `(${startDateBn} - ${endDateBn})`,
-          amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable,
+          amount: struct.amount, discount: 0, remarks: '', receivable: Math.max(0, receivable), receive: Math.max(0, receivable),
           structureId: struct.id, isOnetime: false,
         })
       }
