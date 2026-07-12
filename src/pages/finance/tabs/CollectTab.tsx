@@ -233,7 +233,22 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
   const studentPayments = useMemo(() => {
     if (!selectedStudent) return []
-    return payments.filter((p) => p.studentId === selectedStudent.id).sort((a, b) => b.paidAt.localeCompare(a.paidAt))
+    const allPayments = payments.filter((p) => p.studentId === selectedStudent.id).sort((a, b) => b.paidAt.localeCompare(a.paidAt))
+    const grouped = new Map<string, FeePayment[]>()
+    for (const p of allPayments) {
+      const key = p.batchId || p.id
+      const group = grouped.get(key) || []
+      group.push(p)
+      grouped.set(key, group)
+    }
+    return Array.from(grouped.entries()).map(([key, items]) => ({
+      batchId: key,
+      payments: items,
+      totalAmount: items.reduce((s, p) => s + p.amount, 0),
+      paidAt: items[0].paidAt,
+      method: items[0].method,
+      invoiceNo: `INV-${items[0].id.replace('pay-', '').slice(0, 10).toUpperCase()}`,
+    }))
   }, [payments, selectedStudent])
 
   const fmt = (n: number) => `\u09F3${Math.round(n).toLocaleString()}`
@@ -261,26 +276,24 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     if (w) w.onload = () => w.print()
   }, [selectedStudent, institution, bn])
 
-  const generateSingleReceipt = useCallback((payment: FeePayment) => {
+  const generateBatchReceipt = useCallback((batch: { payments: FeePayment[]; totalAmount: number; paidAt: string }) => {
     if (!selectedStudent || !institution) return
-    const struct = structures.find((s) => s.id === payment.feeStructureId)
-    const rn = `RCP-${Date.now().toString(36).toUpperCase()}`
-    const f = (n: number) => `\u09F3${n.toLocaleString()}`
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fee Receipt</title><style>@page{size:A4;margin:15mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff}.receipt{width:100%;max-width:750px;margin:0 auto;page-break-after:always}.receipt:last-child{page-break-after:auto}.header{display:flex;align-items:center;gap:20px;border-bottom:3px solid #1e3a5f;padding-bottom:12px;margin-bottom:15px}.logo{width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid #1e3a5f}.school-info{flex:1;text-align:center}.school-name{font-size:16px;font-weight:700;color:#1e3a5f}.school-address{font-size:10px;color:#666;margin-top:2px}.copy-label{font-size:10px;color:#999;text-align:center;margin:5px 0}.title{text-align:center;font-size:14px;font-weight:700;color:#1e3a5f;margin:10px 0}.info-row{display:flex;justify-content:space-between;margin-bottom:3px}.info-label{font-weight:600;color:#333}.info-value{color:#555}table{width:100%;border-collapse:collapse;margin:10px 0;font-size:10px}th{background:#1e3a5f;color:#fff;padding:6px 8px;text-align:center;font-weight:600}td{padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.totals{display:flex;justify-content:flex-end;margin-top:10px}.totals-table{width:280px}.totals-table td{padding:4px 8px;font-size:10px}.totals-table td:first-child{text-align:right;font-weight:600;color:#555}.totals-table td:last-child{text-align:right;font-weight:700;color:#1e3a5f}.totals-table tr:last-child td{border-top:2px solid #1e3a5f;font-size:12px;color:#1e3a5f}.signatures{display:flex;justify-content:space-between;margin-top:30px;padding-top:15px}.signature-box{text-align:center;width:150px}.signature-line{border-top:1px solid #333;margin-top:40px;padding-top:5px;font-size:10px;color:#666}.footer{text-align:center;font-size:9px;color:#999;margin-top:15px;padding-top:10px;border-top:1px dashed #ddd}</style></head><body><div class="receipt"><div class="header">${institution.logo ? `<img src="${institution.logo}" class="logo" />` : '<div class="logo" style="font-size:24px;font-weight:700;color:#1e3a5f;display:flex;align-items:center;justify-content:center">🏫</div>'}<div class="school-info"><div class="school-name">${institution.nameBn || institution.name}</div><div class="school-address">${institution.address || ''}${institution.phone ? ` | ${institution.phone}` : ''}</div></div></div><div class="copy-label">--- Admin Copy ---</div><div class="title">Fee Receipt</div><div class="info-row"><span class="info-label">Receipt No:</span><span class="info-value">${rn}</span></div><div class="info-row"><span class="info-label">Student:</span><span class="info-value">${selectedStudent.nameEn} (${selectedStudent.id})</span></div><div class="info-row"><span class="info-label">Class:</span><span class="info-value">${selectedStudent.class}${selectedStudent.section ? ' - ' + selectedStudent.section : ''}</span></div><div class="info-row"><span class="info-label">Date:</span><span class="info-value">${payment.paidAt}</span></div><table><thead><tr><th>Fee</th><th>Amount</th><th>Method</th><th>Note</th></tr></thead><tbody><tr><td>${struct ? (bn ? struct.nameBn : struct.name) : '-'}</td><td>${f(payment.amount)}</td><td>${payment.method}</td><td>${payment.note || '-'}</td></tr></tbody></table><div class="totals"><table class="totals-table"><tr><td>Total:</td><td>${f(payment.amount)}</td></tr><tr><td colspan="2" style="text-align:center;font-size:9px;color:#999">(${bn ? 'কথায়' : 'In words'}: ${bn ? 'টাকা' : 'Taka'} ${Math.round(payment.amount).toLocaleString()} ${bn ? 'মাত্র' : 'only'})</td></tr></table></div><div class="signatures"><div class="signature-box"><div class="signature-line">${bn ? 'অভিভাবকের স্বাক্ষর' : "Guardian's Signature"}</div></div><div class="signature-box"><div class="signature-line">${bn ? 'হিসাবরক্ষকের স্বাক্ষর' : "Accountant's Signature"}</div></div><div class="signature-box"><div class="signature-line">${bn ? 'প্রধান শিক্ষকের স্বাক্ষর' : "Headmaster's Signature"}</div></div></div><div class="footer">${institution.nameBn || institution.name}${institution.eiin ? ` | EIIN: ${institution.eiin}` : ''}${institution.phone ? ` | ${institution.phone}` : ''}</div></div></body></html>`
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const w = window.open(url, '_blank')
-    if (w) w.onload = () => w.print()
-  }, [selectedStudent, institution, bn, structures])
+    const receiptRows = batch.payments.map((p) => {
+      const struct = structures.find((s) => s.id === p.feeStructureId)
+      return { feeName: struct?.name || '-', feeNameBn: struct?.nameBn || '-', dateRange: p.paidAt, amount: p.amount, discount: 0, receive: p.amount }
+    })
+    generateReceipt(receiptRows)
+  }, [selectedStudent, institution, structures, generateReceipt])
 
   const handleReceiveFee = useCallback(() => {
     if (!selectedStudent || totalReceive <= 0) return
     const checkedRows = displayRows.filter((r) => getRowEdit(r.key).checked && getRowEdit(r.key).receive > 0)
     if (checkedRows.length === 0) return
+    const batchId = `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     const receiptRows: { feeName: string; feeNameBn: string; dateRange: string; amount: number; discount: number; receive: number }[] = []
     for (const row of checkedRows) {
       const edit = getRowEdit(row.key)
-      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString() }
+      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId }
       addPayment(payment)
       receiptRows.push({ feeName: row.feeName, feeNameBn: row.feeNameBn, dateRange: row.dateRange, amount: row.amount, discount: edit.discount, receive: edit.receive })
     }
@@ -333,10 +346,15 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     setFineDesc(''); setFineDescBn(''); setFineAmount(''); setShowFineModal(false)
   }, [selectedStudent, fineDesc, fineDescBn, fineAmount, fSession])
 
-  const handleDeletePayment = useCallback((paymentId: string) => {
-    deletePayment(paymentId)
+  const handleDeletePayment = useCallback((batchId: string) => {
+    const batch = studentPayments.find((b) => b.batchId === batchId)
+    if (batch) {
+      for (const p of batch.payments) {
+        deletePayment(p.id)
+      }
+    }
     setFindDueTrigger((t) => t + 1)
-  }, [deletePayment])
+  }, [deletePayment, studentPayments])
 
   return (
     <div className="space-y-4">
@@ -733,19 +751,17 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 <table className="w-full text-[12px]" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '4%' }} />
-                    <col style={{ width: '18%' }} />
+                    <col style={{ width: '28%' }} />
                     <col style={{ width: '12%' }} />
                     <col style={{ width: '10%' }} />
-                    <col style={{ width: '8%' }} />
                     <col style={{ width: '16%' }} />
                     <col style={{ width: '12%' }} />
-                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '10%' }} />
                   </colgroup>
                   <thead>
                     <tr className="bg-[var(--bg-secondary)] sticky top-0 z-10">
                       <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">#</th>
                       <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ফি' : 'Fee'}</th>
-                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'মাস' : 'Month'}</th>
                       <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'তারিখ' : 'Date'}</th>
                       <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পদ্ধতি' : 'Method'}</th>
                       <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ইনভয়েস' : 'Invoice'}</th>
@@ -754,26 +770,32 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     </tr>
                   </thead>
                   <tbody>
-                    {studentPayments.map((p, idx) => {
-                      const struct = structures.find((s) => s.id === p.feeStructureId)
-                      const paidDate = new Date(p.paidAt)
+                    {studentPayments.map((batch, idx) => {
+                      const feeNames = batch.payments.map((p) => {
+                        const struct = structures.find((s) => s.id === p.feeStructureId)
+                        return struct ? (bn ? struct.nameBn : struct.name) : '-'
+                      })
+                      const uniqueNames = [...new Set(feeNames)]
+                      const paidDate = new Date(batch.paidAt)
                       const monthLabel = `${paidDate.toLocaleString('en', { month: 'short' })} ${paidDate.getFullYear()}`
-                      const invoiceNo = `INV-${p.id.replace('pay-', '').slice(0, 10).toUpperCase()}`
                       return (
-                        <tr key={p.id} className="border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40">
+                        <tr key={batch.batchId} className="border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40">
                           <td className="text-center px-2 py-2.5 text-[var(--text-muted)]">{idx + 1}</td>
-                          <td className="text-center px-2 py-2.5"><span className="font-semibold text-[var(--text-primary)]">{struct ? (bn ? struct.nameBn : struct.name) : '-'}</span></td>
+                          <td className="text-center px-2 py-2.5">
+                            <div className="space-y-0.5">
+                              {uniqueNames.map((name, i) => <div key={i} className="font-semibold text-[var(--text-primary)] text-[11px]">{name}</div>)}
+                            </div>
+                          </td>
                           <td className="text-center px-2 py-2.5 text-[var(--text-muted)]">{monthLabel}</td>
-                          <td className="text-center px-2 py-2.5 text-[var(--text-muted)]">{p.paidAt}</td>
-                          <td className="text-center px-2 py-2.5"><span className="inline-block px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] font-medium text-[11px]">{p.method}</span></td>
-                          <td className="text-center px-2 py-2.5"><span className="text-[11px] text-[var(--text-muted)]">{invoiceNo}</span></td>
-                          <td className="text-center px-2 py-2.5"><span className="font-bold text-[var(--brand)]">{fmt(p.amount)}</span></td>
+                          <td className="text-center px-2 py-2.5"><span className="inline-block px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] font-medium text-[11px]">{batch.method}</span></td>
+                          <td className="text-center px-2 py-2.5"><span className="text-[11px] text-[var(--text-muted)]">{batch.invoiceNo}</span></td>
+                          <td className="text-center px-2 py-2.5"><span className="font-bold text-[var(--brand)]">{fmt(batch.totalAmount)}</span></td>
                           <td className="text-center px-2 py-2.5">
                             <div className="flex items-center justify-center gap-1">
-                              <button onClick={() => generateSingleReceipt(p)} className="w-7 h-7 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center cursor-pointer border-0 hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'ডাউনলোড' : 'Download'}>
+                              <button onClick={() => generateBatchReceipt(batch)} className="w-7 h-7 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center cursor-pointer border-0 hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'ডাউনলোড' : 'Download'}>
                                 <Receipt size={13} />
                               </button>
-                              <button onClick={() => handleDeletePayment(p.id)} className="w-7 h-7 rounded-lg bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                              <button onClick={() => handleDeletePayment(batch.batchId)} className="w-7 h-7 rounded-lg bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
                                 <Trash2 size={13} />
                               </button>
                             </div>

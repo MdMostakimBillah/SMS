@@ -27,6 +27,7 @@ export interface FeePayment {
   note: string
   collectedBy: string
   createdAt: string
+  batchId?: string
 }
 
 export interface FeeWaiver {
