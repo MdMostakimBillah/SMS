@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
-import { User, Search, ChevronDown, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2 } from 'lucide-react'
+import { User, Search, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -106,7 +106,6 @@ function generateMonthRows(
 
 const labelCls = 'block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.03em] mb-[5px]'
 const fieldInputCls = 'w-full border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] text-[var(--text-primary)] bg-[var(--bg-primary)] outline-none transition-colors focus:border-[var(--brand)]'
-const fieldSelectCls = `${fieldInputCls} appearance-auto`
 
 export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect }: Props) {
   const bn = useBn()
@@ -392,108 +391,99 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         </div>
       </div>
 
-      {/* Student + Filters Row */}
-      <div className="grid grid-cols-[1fr_auto] gap-[14px] items-stretch">
-        {/* Student Card */}
-        <div className="p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
-          <div className="flex gap-[14px]">
-            {/* Photo */}
-            <div className="w-[80px] h-[96px] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex-shrink-0 overflow-hidden flex items-center justify-center">
-              {selectedStudent?.photo ? <img src={selectedStudent.photo} alt="" className="w-full h-full object-cover" /> : <User size={28} className="text-[var(--text-muted)]" />}
-            </div>
-            {/* Info */}
-            <div className="flex-1 min-w-0 flex flex-col justify-between">
-              {selectedStudent ? (
-                <>
-                  <div>
-                    <div className="text-[14px] font-bold text-[var(--text-primary)] truncate">{selectedStudent.nameEn}</div>
-                    <div className="text-[11px] text-[var(--text-muted)]">{selectedStudent.class}{selectedStudent.section ? ` - ${selectedStudent.section}` : ''} &middot; {selectedStudent.id}</div>
-                  </div>
-                  <div className="text-[10.5px] text-[var(--text-muted)] space-y-0.5">
-                    {selectedStudent.fatherNameEn && <div><span className="font-semibold">{bn ? 'বাবা:' : 'Father:'}</span> {selectedStudent.fatherNameEn}</div>}
-                    {selectedStudent.motherNameEn && <div><span className="font-semibold">{bn ? 'মা:' : 'Mother:'}</span> {selectedStudent.motherNameEn}</div>}
-                    {selectedStudent.phone && <div><span className="font-semibold">{bn ? 'ফোন:' : 'Phone:'}</span> {selectedStudent.phone}</div>}
-                  </div>
-                </>
-              ) : (
-                <div className="text-[12px] text-[var(--text-muted)]">{bn ? 'শিক্ষার্থী নির্বাচন করুন' : 'Select a student'}</div>
-              )}
-            </div>
-          </div>
-          {/* Search + Find Due */}
-          <div className="flex items-center gap-[10px] mt-[12px]">
-            <div className="flex-1 relative" ref={dropdownRef}>
-              <Search size={14} className="absolute left-[10px] top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
-              <input ref={inputRef} type="text"
-                value={isDropdownOpen ? studentSearch : (selectedStudent ? `${selectedStudent.nameEn} (${selectedStudent.id})` : '')}
-                placeholder={bn ? 'নাম বা আইডি লিখুন...' : 'Type name or admission ID...'}
-                onChange={(e) => { setStudentSearch(e.target.value); setSelectedStudentId(null); setIsDropdownOpen(true); setHighlightedIndex(0) }}
-                onFocus={() => { setIsDropdownOpen(true); setHighlightedIndex(0) }}
-                onKeyDown={handleKeyDown}
-                className={`${fieldInputCls} h-9 pl-[32px] pr-8 text-[12px]`}
-              />
-              {selectedStudent && !isDropdownOpen ? (
-                <button onClick={() => { setSelectedStudentId(null); setStudentSearch('') }} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[var(--bg-secondary)] cursor-pointer border-0 bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X size={13} /></button>
-              ) : (
-                <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
-              )}
-              {isDropdownOpen && (
-                <div className="absolute z-50 mt-[6px] w-full max-h-[260px] overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_12px_30px_rgba(20,23,33,0.12)]">
-                  {dropdownStudents.length === 0 ? (
-                    <div className="px-3 py-2 text-xs text-[var(--text-muted)]">{bn ? 'কোনো শিক্ষার্থী পাওয়া যায়নি' : 'No students found'}</div>
-                  ) : dropdownStudents.map((s, i) => (
-                    <button key={s.id} data-index={i} onClick={() => selectStudent(s.id)} onMouseEnter={() => setHighlightedIndex(i)}
-                      className={`w-full flex items-center gap-[10px] px-[13px] py-[9px] text-left border-0 border-b border-[var(--border)] last:border-b-0 cursor-pointer transition-colors ${i === highlightedIndex ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--brand-light)]'}`}>
-                      <div className="w-[28px] h-[28px] rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] flex items-center justify-center text-[10.5px] font-bold flex-shrink-0 overflow-hidden">
-                        {s.photo ? <img src={s.photo} alt="" className="w-full h-full object-cover" /> : initials(s.nameEn)}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[12px] font-semibold text-[var(--text-primary)]">{s.nameEn}</p>
-                        <p className="text-[10.5px] text-[var(--text-muted)]">{s.class} &middot; {s.id}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+      {/* Compact Toolbar */}
+      <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] space-y-2.5">
+        {/* Row 1: Filters + Find Due */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <select value={fSession} onChange={(e) => { setFSession(e.target.value); setSelectedStudentId(null) }}
+            className="h-7 text-[11px] px-2 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer">
+            {(institution?.sessions || []).map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={fStatus} onChange={(e) => setFStatus(e.target.value)}
+            className="h-7 text-[11px] px-2 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer">
+            <option value="all">{bn ? 'সব' : 'All'}</option>
+            <option value="active">{bn ? 'সক্রিয়' : 'Active'}</option>
+            <option value="inactive">{bn ? 'নিষ্ক্রিয়' : 'Inactive'}</option>
+          </select>
+          <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); setSelectedStudentId(null) }}
+            className="h-7 text-[11px] px-2 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer">
+            <option value="">{bn ? 'সব শ্রেণি' : 'All classes'}</option>
+            {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={fSection} onChange={(e) => { setFSection(e.target.value); setSelectedStudentId(null) }}
+            className="h-7 text-[11px] px-2 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer">
+            <option value="">{bn ? 'সব সেকশন' : 'All sections'}</option>
+            {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <div className="ml-auto">
             <button onClick={() => setFindDueTrigger((t) => t + 1)} disabled={!selectedStudentId}
-              className="h-9 px-4 rounded-lg bg-[var(--brand)] text-white font-bold text-[12px] border-0 cursor-pointer flex items-center gap-[6px] flex-shrink-0 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
-              <Search size={13} />{bn ? 'বকেয়' : 'Find due'}
+              className="h-7 px-3 rounded-md bg-[var(--brand)] text-white font-semibold text-[11px] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
+              <Search size={12} />{bn ? 'বকেয়' : 'Find due'}
             </button>
           </div>
         </div>
 
-        {/* Filter Card */}
-        <div className="p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] w-[420px] flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-[10px]">
-            <div className="w-5 h-5 rounded bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0">
-              <span className="text-[9px] font-bold">&#x2699;</span>
+        {/* Row 2: Student Info Strip or Search Input */}
+        {selectedStudent ? (
+          <div className="flex items-center gap-2.5 py-1.5 px-2.5 rounded-lg bg-[var(--bg-secondary)]">
+            {/* Photo with hover zoom */}
+            <div className="relative group flex-shrink-0">
+              <div className="w-6 h-6 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden flex items-center justify-center cursor-pointer">
+                {selectedStudent.photo ? <img src={selectedStudent.photo} alt="" className="w-full h-full object-cover" /> : <span className="text-[11px] font-bold text-[var(--brand)]">{initials(selectedStudent.nameEn)}</span>}
+              </div>
+              {selectedStudent.photo && (
+                <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 pointer-events-none">
+                  <div className="w-[180px] h-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_30px_rgba(0,0,0,0.25)] overflow-hidden">
+                    <img src={selectedStudent.photo} alt="" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+              )}
             </div>
-            <span className="font-bold text-[12px] text-[var(--text-primary)]">{bn ? 'ফিল্টার' : 'Filters'}</span>
+            {/* Info */}
+            <span className="text-[12px] font-bold text-[var(--text-primary)]">{selectedStudent.nameEn}</span>
+            <span className="text-[10px] text-[var(--text-muted)]">·</span>
+            <span className="text-[10.5px] text-[var(--text-muted)]">{selectedStudent.class}{selectedStudent.section ? ` - ${selectedStudent.section}` : ''}</span>
+            <span className="text-[10px] text-[var(--text-muted)]">·</span>
+            <span className="text-[10.5px] text-[var(--text-muted)]">{selectedStudent.id}</span>
+            {selectedStudent.phone && <><span className="text-[10px] text-[var(--text-muted)]">·</span><span className="text-[10.5px] text-[var(--text-muted)]">{selectedStudent.phone}</span></>}
+            {selectedStudent.fatherNameEn && <><span className="text-[10px] text-[var(--text-muted)]">·</span><span className="text-[10.5px] text-[var(--text-muted)]">{bn ? 'বাবা:' : 'Father:'} {selectedStudent.fatherNameEn}</span></>}
+            {selectedStudent.motherNameEn && <><span className="text-[10px] text-[var(--text-muted)]">·</span><span className="text-[10.5px] text-[var(--text-muted)]">{bn ? 'মা:' : 'Mother:'} {selectedStudent.motherNameEn}</span></>}
+            <button onClick={() => { setSelectedStudentId(null); setStudentSearch(''); setFSession(institution?.currentSession || ''); setFStatus('active'); setFClass(''); setFSection('') }}
+              className="ml-auto w-5 h-5 rounded-md hover:bg-[var(--border)] flex items-center justify-center cursor-pointer border-0 bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+              <X size={12} />
+            </button>
           </div>
-          <div className="grid grid-cols-2 gap-[10px]">
-            <div><label className={labelCls}>{bn ? 'সেশন' : 'Session'}</label>
-              <select value={fSession} onChange={(e) => { setFSession(e.target.value); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
-                {(institution?.sessions || []).map((s) => <option key={s} value={s}>{s}</option>)}
-              </select></div>
-            <div><label className={labelCls}>{bn ? 'স্ট্যাটাস' : 'Status'}</label>
-              <select value={fStatus} onChange={(e) => setFStatus(e.target.value)} className={`${fieldSelectCls} h-9 text-[12px]`}>
-                <option value="all">{bn ? 'সব' : 'All'}</option>
-                <option value="active">{bn ? 'সক্রিয়' : 'Active'}</option>
-                <option value="inactive">{bn ? 'নিষ্ক্রিয়' : 'Inactive'}</option>
-              </select></div>
-            <div><label className={labelCls}>{bn ? 'শ্রেণি' : 'Class'}</label>
-              <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
-                <option value="">{bn ? 'সব' : 'All'}</option>
-                {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select></div>
-            <div><label className={labelCls}>{bn ? 'সেকশন' : 'Section'}</label>
-              <select value={fSection} onChange={(e) => { setFSection(e.target.value); setSelectedStudentId(null) }} className={`${fieldSelectCls} h-9 text-[12px]`}>
-                <option value="">{bn ? 'সব' : 'All'}</option>
-                {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select></div>
+        ) : (
+          <div className="relative" ref={dropdownRef}>
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+            <input ref={inputRef} type="text"
+              value={isDropdownOpen ? studentSearch : ''}
+              placeholder={bn ? 'নাম বা আইডি দিয়ে শিক্ষার্থী খুঁজুন...' : 'Search student by name or ID...'}
+              onChange={(e) => { setStudentSearch(e.target.value); setSelectedStudentId(null); setIsDropdownOpen(true); setHighlightedIndex(0) }}
+              onFocus={() => { setIsDropdownOpen(true); setHighlightedIndex(0) }}
+              onKeyDown={handleKeyDown}
+              className="w-full h-8 pl-8 pr-3 text-[12px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]"
+            />
+            {isDropdownOpen && (
+              <div className="absolute z-50 mt-1 w-full max-h-[240px] overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_12px_30px_rgba(20,23,33,0.12)]">
+                {dropdownStudents.length === 0 ? (
+                  <div className="px-3 py-2 text-xs text-[var(--text-muted)]">{bn ? 'কোনো শিক্ষার্থী পাওয়া যায়নি' : 'No students found'}</div>
+                ) : dropdownStudents.map((s, i) => (
+                  <button key={s.id} data-index={i} onClick={() => selectStudent(s.id)} onMouseEnter={() => setHighlightedIndex(i)}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-left border-0 border-b border-[var(--border)] last:border-b-0 cursor-pointer transition-colors ${i === highlightedIndex ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--brand-light)]'}`}>
+                    <div className="w-6 h-6 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] flex items-center justify-center text-[9px] font-bold flex-shrink-0 overflow-hidden">
+                      {s.photo ? <img src={s.photo} alt="" className="w-full h-full object-cover" /> : initials(s.nameEn)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold text-[var(--text-primary)]">{s.nameEn}</p>
+                      <p className="text-[9.5px] text-[var(--text-muted)]">{s.class} &middot; {s.id}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Main Grid */}
@@ -538,14 +528,14 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   <col style={{ width: '24px' }} />
                   <col style={{ width: '28%' }} />
                   <col style={{ width: '12%' }} />
-                  <col style={{ width: '9%' }} />
-                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '11%' }} />
+                  <col style={{ width: '13%' }} />
                   <col style={{ width: '12%' }} />
                   <col style={{ width: '12%' }} />
                 </colgroup>
                 <thead>
                   <tr className="bg-[var(--bg-secondary)]">
-                    <th className="text-center px-1 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">
+                    <th className="text-center py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">
                       <input type="checkbox" checked={displayRows.length > 0 && displayRows.every((r) => getRowEdit(r.key).checked)}
                         onChange={() => { const ac = displayRows.every((r) => getRowEdit(r.key).checked); const next: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}; for (const r of displayRows) { const e = getRowEdit(r.key); const newChecked = !ac; next[r.key] = { ...e, checked: newChecked, receive: newChecked ? Math.max(0, r.receivable - e.discount) : 0 } }; setEditState((prev) => ({ ...prev, ...next })) }}
                         className="w-3 h-3 accent-[var(--brand)]" />
@@ -563,7 +553,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     const edit = getRowEdit(row.key)
                     return (
                       <tr key={row.key} className={`transition-colors border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40 ${!edit.checked ? 'opacity-45' : ''}`}>
-                        <td className="text-center px-1 py-2">
+                        <td className="text-center py-2">
                           <input type="checkbox" checked={edit.checked} onChange={(e) => {
                             const checked = e.target.checked
                             setEditState((prev) => {
