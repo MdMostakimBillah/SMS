@@ -236,7 +236,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const allPayments = payments.filter((p) => p.studentId === selectedStudent.id).sort((a, b) => b.paidAt.localeCompare(a.paidAt))
     const grouped = new Map<string, FeePayment[]>()
     for (const p of allPayments) {
-      const key = p.batchId || p.id
+      const key = p.batchId || `${p.paidAt}__${p.method}`
       const group = grouped.get(key) || []
       group.push(p)
       grouped.set(key, group)
