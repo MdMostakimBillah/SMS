@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
-import { User, Search, ChevronDown, X, CheckCircle2, Plus, History, Ban, Receipt } from 'lucide-react'
+import { User, Search, ChevronDown, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -108,7 +108,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const bn = useBn()
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
-  const { structures, payments, waivers, addPayment } = useFeeStore()
+  const { structures, payments, waivers, addPayment, deletePayment } = useFeeStore()
 
   const [fSession, setFSession] = useState(institution?.currentSession || '')
   const [fClass, setFClass] = useState('')
@@ -330,6 +330,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     setEditState((prev) => ({ ...prev, [key]: { discount: 0, remarks: '', receive: amount, checked: true } }))
     setFineDesc(''); setFineDescBn(''); setFineAmount(''); setShowFineModal(false)
   }, [selectedStudent, fineDesc, fineDescBn, fineAmount, fSession])
+
+  const handleDeletePayment = useCallback((paymentId: string) => {
+    deletePayment(paymentId)
+    setFindDueTrigger((t) => t + 1)
+  }, [deletePayment])
 
   return (
     <div className="space-y-4">
@@ -726,13 +731,14 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 <table className="w-full text-[12px]" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '4%' }} />
-                    <col style={{ width: '18%' }} />
-                    <col style={{ width: '14%' }} />
-                    <col style={{ width: '12%' }} />
-                    <col style={{ width: '10%' }} />
                     <col style={{ width: '16%' }} />
                     <col style={{ width: '12%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '8%' }} />
                     <col style={{ width: '14%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '14%' }} />
+                    <col style={{ width: '6%' }} />
                   </colgroup>
                   <thead>
                     <tr className="bg-[var(--bg-secondary)] sticky top-0 z-10">
@@ -744,6 +750,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                       <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ইনভয়েস' : 'Invoice'}</th>
                       <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পরিমাণ' : 'Amount'}</th>
                       <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'রসিদ' : 'Receipt'}</th>
+                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -764,6 +771,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           <td className="text-center px-2 py-2.5">
                             <button onClick={() => generateSingleReceipt(p)} className="inline-flex items-center gap-1 h-7 px-3 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] text-[11px] font-semibold border-0 cursor-pointer hover:bg-[var(--brand)]/20 transition-colors">
                               <Receipt size={12} />{bn ? 'ডাউনলোড' : 'Download'}
+                            </button>
+                          </td>
+                          <td className="text-center px-2 py-2.5">
+                            <button onClick={() => handleDeletePayment(p.id)} className="w-7 h-7 rounded-lg bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors mx-auto" title={bn ? 'মুছুন' : 'Delete'}>
+                              <Trash2 size={13} />
                             </button>
                           </td>
                         </tr>
