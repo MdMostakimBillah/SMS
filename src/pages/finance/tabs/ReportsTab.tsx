@@ -13,7 +13,7 @@ export const ReportsTab = React.memo(function ReportsTab() {
   const summary = useMemo(() => getCollectionSummary(), [structures])
   const classSummary = useMemo(() => getClassWiseSummary(students), [students, structures])
 
-  const fmt = (n: number) => `৳${n.toLocaleString()}`
+  const fmt = (n: number) => n.toLocaleString()
 
   const stats = [
     { label: bn ? 'মোট সংগ্রহ' : 'Total Collected', value: fmt(summary.totalCollected), color: 'var(--green)', icon: <DollarSign size={18} /> },

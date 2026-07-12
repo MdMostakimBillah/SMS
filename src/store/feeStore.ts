@@ -21,6 +21,7 @@ export interface FeePayment {
   studentId: string
   feeStructureId: string
   amount: number
+  discount: number
   paidAt: string
   method: 'cash' | 'bank' | 'mobile' | 'other'
   reference: string
@@ -279,7 +280,7 @@ export const useFeeStore = create<FeeState>()(
     }),
     {
       name: 'edutech-fees',
-      version: 3,
+      version: 4,
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
           persistedState.waivers = persistedState.waivers || []
@@ -288,6 +289,12 @@ export const useFeeStore = create<FeeState>()(
           persistedState.structures = (persistedState.structures || []).map((s: any) => ({
             ...s,
             type: s.type || 'monthly',
+          }))
+        }
+        if (version < 4) {
+          persistedState.payments = (persistedState.payments || []).map((p: any) => ({
+            ...p,
+            discount: p.discount || 0,
           }))
         }
         return persistedState

@@ -42,7 +42,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
 
   const totalWaived = useMemo(() => sorted.reduce((sum, w) => sum + w.amount, 0), [sorted])
 
-  const fmt = (n: number) => `৳${n.toLocaleString()}`
+  const fmt = (n: number) => n.toLocaleString()
 
   return (
     <div>

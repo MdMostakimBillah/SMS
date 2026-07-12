@@ -38,7 +38,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const totalDue = useMemo(() => dues.reduce((sum, d) => sum + d.dueAmount, 0), [dues])
   const studentCount = useMemo(() => new Set(dues.map((d) => d.studentId)).size, [dues])
 
-  const fmt = (n: number) => `৳${n.toLocaleString()}`
+  const fmt = (n: number) => n.toLocaleString()
 
   return (
     <div>

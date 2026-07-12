@@ -46,7 +46,7 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt }: Pr
 
   const totalCollected = useMemo(() => sorted.reduce((sum, p) => sum + p.amount, 0), [sorted])
 
-  const fmt = (n: number) => `৳${n.toLocaleString()}`
+  const fmt = (n: number) => n.toLocaleString()
 
   const methodLabel = (m: string) => m === 'cash' ? (bn ? 'নগদ' : 'Cash') : m === 'bank' ? (bn ? 'ব্যাংক' : 'Bank') : m === 'mobile' ? (bn ? 'মোবাইল' : 'Mobile') : (bn ? 'অন্যান্য' : 'Other')
 

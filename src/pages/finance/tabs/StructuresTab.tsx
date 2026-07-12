@@ -43,7 +43,7 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
     return list
   }, [structures, feeType, fClass, search])
 
-  const fmt = (n: number) => `৳${n.toLocaleString()}`
+  const fmt = (n: number) => n.toLocaleString()
 
   const canQuickAdd = qName && qClass && qAmount
 
@@ -165,7 +165,7 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
               </select>
             </div>
             <div>
-              <label className="text-[0.65rem] font-medium text-[var(--text-muted)] block mb-0.5">{bn ? 'পরিমাণ (৳) *' : 'Amount (৳) *'}</label>
+              <label className="text-[0.65rem] font-medium text-[var(--text-muted)] block mb-0.5">{bn ? 'পরিমাণ *' : 'Amount *'}</label>
               <input type="number" min="0" value={qAmount} onChange={(e) => setQAmount(e.target.value)} className={`${inputCls} w-full h-7 text-xs`} placeholder="5000" />
             </div>
           </div>

@@ -29,7 +29,7 @@ interface MonthRow {
 
 function generateMonthRows(
   structures: FeeStructure[],
-  payments: { feeStructureId: string; amount: number; paidAt: string; forMonth?: string }[],
+  payments: { feeStructureId: string; amount: number; discount?: number; paidAt: string; forMonth?: string }[],
   waivers: { feeStructureId: string; amount: number; createdAt: string }[],
   _studentId: string,
   academicYear: string,
@@ -78,15 +78,16 @@ function generateMonthRows(
         const yearOffset = Math.floor((startMonth + i) / 12)
         const m = months[monthIdx]
         const currentYear = year + yearOffset
-        const paid = payments
+        const monthPayments = payments
           .filter((p) => { if (p.feeStructureId !== struct.id) return false; if (p.forMonth) return p.forMonth === `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}`; const d = new Date(p.paidAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
-          .reduce((sum, p) => sum + p.amount, 0)
+        const paid = monthPayments.reduce((sum, p) => sum + p.amount, 0)
+        const discountFromPayments = monthPayments.reduce((sum, p) => sum + (p.discount || 0), 0)
         const waived = waivers
           .filter((w) => { if (w.feeStructureId !== struct.id) return false; const d = new Date(w.createdAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
           .reduce((sum, w) => sum + w.amount, 0)
-        const receivable = struct.amount - paid - Math.min(waived, struct.amount)
-        const isPastMonth = currentYear < currentYearNum || (currentYear === currentYearNum && monthIdx < currentMonthIdx)
-        if (isPastMonth && receivable <= 0) continue
+        const receivable = struct.amount - paid - discountFromPayments - Math.min(waived, struct.amount)
+        const isPastOrCurrentMonth = currentYear < currentYearNum || (currentYear === currentYearNum && monthIdx <= currentMonthIdx)
+        if (isPastOrCurrentMonth && receivable <= 0) continue
         const startDate = `01 ${m.label} ${currentYear}`
         const endDate = `${m.days} ${m.label} ${currentYear}`
         const startDateBn = `০১ ${m.labelBn} ${currentYear}`
@@ -212,7 +213,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   useEffect(() => {
     if (monthRows.length > 0) {
       const initial: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}
-      for (const row of monthRows) { if (!editState[row.key]) initial[row.key] = { discount: 0, remarks: '', receive: row.receive, checked: true }; else initial[row.key] = { ...editState[row.key] } }
+      for (const row of monthRows) { if (!editState[row.key]) initial[row.key] = { discount: 0, remarks: '', receive: row.receive, checked: false }; else initial[row.key] = { ...editState[row.key] } }
       setEditState((prev) => ({ ...prev, ...initial }))
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -246,20 +247,18 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       batchId: key,
       payments: items,
       totalAmount: items.reduce((s, p) => s + p.amount, 0),
+      totalDiscount: items.reduce((s, p) => s + (p.discount || 0), 0),
       paidAt: items[0].paidAt,
       method: items[0].method,
       invoiceNo: `INV-${items[0].id.replace('pay-', '').slice(0, 10).toUpperCase()}`,
     }))
   }, [payments, selectedStudent])
 
-  const fmt = (n: number) => `\u09F3${Math.round(n).toLocaleString()}`
+  const fmt = (n: number) => Math.round(n).toLocaleString()
 
   const todayStr = new Date().toISOString().split('T')[0]
   const todayIncome = useMemo(() => payments.filter((p) => p.paidAt === todayStr).reduce((s, p) => s + p.amount, 0), [payments, todayStr])
-  const todayDiscount = useMemo(() => {
-    if (!selectedStudent) return 0
-    return displayRows.filter((r) => getRowEdit(r.key).checked).reduce((s, r) => s + getRowEdit(r.key).discount, 0)
-  }, [displayRows, getRowEdit, selectedStudent])
+  const todayDiscount = useMemo(() => payments.filter((p) => p.paidAt === todayStr).reduce((s, p) => s + (p.discount || 0), 0), [payments, todayStr])
   const todayWaiver = useMemo(() => waivers.filter((w) => w.createdAt?.startsWith(todayStr)).reduce((s, w) => s + w.amount, 0), [waivers, todayStr])
 
   const generateReceipt = useCallback((paymentRows: { feeName: string; feeNameBn: string; dateRange: string; amount: number; discount: number; receive: number }[]) => {
@@ -281,7 +280,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     if (!selectedStudent || !institution) return
     const receiptRows = batch.payments.map((p) => {
       const struct = structures.find((s) => s.id === p.feeStructureId)
-      return { feeName: struct?.name || '-', feeNameBn: struct?.nameBn || '-', dateRange: p.paidAt, amount: p.amount, discount: 0, receive: p.amount }
+      return { feeName: struct?.name || '-', feeNameBn: struct?.nameBn || '-', dateRange: p.paidAt, amount: p.amount + (p.discount || 0), discount: p.discount || 0, receive: p.amount }
     })
     generateReceipt(receiptRows)
   }, [selectedStudent, institution, structures, generateReceipt])
@@ -294,9 +293,10 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const receiptRows: { feeName: string; feeNameBn: string; dateRange: string; amount: number; discount: number; receive: number }[] = []
     for (const row of checkedRows) {
       const edit = getRowEdit(row.key)
-      const parts = row.key.split('-')
-      const forMonth = row.isOnetime ? undefined : `${parts[1]}-${parts[2].padStart(2, '0')}`
-      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
+      const lastDash = row.key.lastIndexOf('-')
+      const secondLastDash = row.key.lastIndexOf('-', lastDash - 1)
+      const forMonth = row.isOnetime ? undefined : `${row.key.substring(secondLastDash + 1, lastDash)}-${String(Number(row.key.substring(lastDash + 1)) + 1).padStart(2, '0')}`
+      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
       addPayment(payment)
       receiptRows.push({ feeName: row.feeName, feeNameBn: row.feeNameBn, dateRange: row.dateRange, amount: row.amount, discount: edit.discount, receive: edit.receive })
     }
@@ -333,7 +333,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       if (receivable <= 0) continue
       const key = `${struct.id}-onetime-manual-${Date.now()}`
       newRows.push({ key, feeName: struct.name, feeNameBn: struct.nameBn, dateRange: fSession, dateRangeBn: fSession, amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable, structureId: struct.id, isOnetime: true })
-      newEditState[key] = { discount: 0, remarks: '', receive: receivable, checked: true }
+      newEditState[key] = { discount: 0, remarks: '', receive: receivable, checked: false }
     }
     setExtraRows((prev) => [...prev, ...newRows])
     setEditState((prev) => ({ ...prev, ...newEditState }))
@@ -345,7 +345,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const amount = Number(fineAmount); if (amount <= 0) return
     const key = `fine-${Date.now()}`
     setExtraRows((prev) => [...prev, { key, feeName: fineDesc, feeNameBn: fineDescBn || fineDesc, dateRange: fSession, dateRangeBn: fSession, amount, discount: 0, remarks: '', receivable: amount, receive: amount, structureId: '', isOnetime: true }])
-    setEditState((prev) => ({ ...prev, [key]: { discount: 0, remarks: '', receive: amount, checked: true } }))
+    setEditState((prev) => ({ ...prev, [key]: { discount: 0, remarks: '', receive: amount, checked: false } }))
     setFineDesc(''); setFineDescBn(''); setFineAmount(''); setShowFineModal(false)
   }, [selectedStudent, fineDesc, fineDescBn, fineAmount, fSession])
 
@@ -497,7 +497,12 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-[1fr_220px] gap-4 items-start max-lg:grid-cols-1">
+      {!selectedStudent ? (
+        <div className="h-[14rem] flex items-center justify-center text-[var(--text-muted)] text-sm border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] ">
+          <div className="text-center"><User size={32} className="mx-auto mb-2 opacity-50" /><p>{bn ? 'শিক্ষার্থী নির্বাচন করুন' : 'Select a student to view fee details'}</p></div>
+        </div>
+      ) : (
+      <div className="grid grid-cols-[1fr_200px] gap-4 items-start max-lg:grid-cols-1">
         {/* Left Column */}
         <div className="space-y-4">
           {/* Section Label */}
@@ -510,17 +515,21 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
           </div>
 
           {/* Table */}
-          {!selectedStudent ? (
-            <div className="h-[14rem] flex items-center justify-center text-[var(--text-muted)] text-sm border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] ">
-              <div className="text-center"><User size={32} className="mx-auto mb-2 opacity-50" /><p>{bn ? 'শিক্ষার্থী নির্বাচন করুন' : 'Select a student to view fee details'}</p></div>
-            </div>
-          ) : findDueTrigger === 0 ? (
+          {findDueTrigger === 0 ? (
             <div className="h-[14rem] flex items-center justify-center text-[var(--text-muted)] text-sm border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] ">
               <div className="text-center"><Search size={32} className="mx-auto mb-2 opacity-50" /><p>{bn ? '"বকেয় খুঁজুন" বাটনে ক্লিক করুন' : 'Click "Find due" to view dues'}</p></div>
             </div>
           ) : displayRows.length === 0 ? (
-            <div className="h-[14rem] flex items-center justify-center text-[var(--text-muted)] text-sm border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] ">
-              <p>{bn ? 'কোনো বকেয় নেই' : 'No dues found'}</p>
+            <div className="rounded-xl bg-[var(--bg-primary)] p-6 flex items-center justify-center text-center">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[var(--green)]/10 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 size={18} className="text-[var(--green)]" />
+                </div>
+                <div>
+                  <p className="font-bold text-[13px] text-[var(--text-primary)]">{bn ? 'সব বকেয় পরিশোধিত' : 'All dues cleared'}</p>
+                  <p className="text-[11px] text-[var(--text-muted)]">{bn ? 'কোনো বকেয় নেই' : 'No outstanding dues'}</p>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="border border-[var(--border)] rounded-xl overflow-hidden max-h-[360px] overflow-y-auto bg-[var(--bg-primary)]">
@@ -536,17 +545,17 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 </colgroup>
                 <thead>
                   <tr className="bg-[var(--bg-secondary)]">
-                    <th className="text-center px-1 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">
+                    <th className="text-center px-1 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">
                       <input type="checkbox" checked={displayRows.length > 0 && displayRows.every((r) => getRowEdit(r.key).checked)}
-                        onChange={() => { const ac = displayRows.every((r) => getRowEdit(r.key).checked); const next: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}; for (const r of displayRows) { const e = getRowEdit(r.key); next[r.key] = { ...e, checked: !ac, receive: !ac ? r.receive : 0 } }; setEditState((prev) => ({ ...prev, ...next })) }}
+                        onChange={() => { const ac = displayRows.every((r) => getRowEdit(r.key).checked); const next: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}; for (const r of displayRows) { const e = getRowEdit(r.key); const newChecked = !ac; next[r.key] = { ...e, checked: newChecked, receive: newChecked ? Math.max(0, r.receivable - e.discount) : 0 } }; setEditState((prev) => ({ ...prev, ...next })) }}
                         className="w-3 h-3 accent-[var(--brand)]" />
                     </th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'বিবরণ' : 'Particular'}</th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'ছাড়' : 'Discount'}</th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)]">{bn ? 'গ্রহণ' : 'Receive'}</th>
+                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'বিবরণ' : 'Particular'}</th>
+                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'ছাড়' : 'Discount'}</th>
+                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'মন্তব্য' : 'Remarks'}</th>
+                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
+                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'গ্রহণ' : 'Receive'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -555,7 +564,13 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     return (
                       <tr key={row.key} className={`transition-colors border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40 ${!edit.checked ? 'opacity-45' : ''}`}>
                         <td className="text-center px-1 py-2">
-                          <input type="checkbox" checked={edit.checked} onChange={(e) => updateRow(row.key, 'checked', e.target.checked)} className="w-3 h-3 accent-[var(--brand)]" />
+                          <input type="checkbox" checked={edit.checked} onChange={(e) => {
+                            const checked = e.target.checked
+                            setEditState((prev) => {
+                              const c = prev[row.key] || { discount: 0, remarks: '', receive: 0, checked: false }
+                              return { ...prev, [row.key]: { ...c, checked, receive: checked ? Math.max(0, row.receivable - c.discount) : 0 } }
+                            })
+                          }} className="w-3 h-3 accent-[var(--brand)]" />
                         </td>
                         <td className="text-center px-2 py-2">
                           <span className="font-semibold text-[var(--text-primary)] text-[12px]">{bn ? row.feeNameBn : row.feeName}</span>
@@ -564,8 +579,14 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         </td>
                         <td className="text-center px-2 py-2"><span className="font-semibold text-[var(--text-primary)] text-[12px]">{fmt(row.amount)}</span></td>
                         <td className="text-center px-2 py-2">
-                          <input type="number" value={edit.discount || ''} onChange={(e) => updateRow(row.key, 'discount', Number(e.target.value) || 0)}
-                            className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder="0" />
+                          <input type="number" value={edit.discount || ''} onChange={(e) => {
+                            const discount = Math.min(Number(e.target.value) || 0, row.receivable)
+                            setEditState((prev) => {
+                              const c = prev[row.key] || { discount: 0, remarks: '', receive: 0, checked: false }
+                              return { ...prev, [row.key]: { ...c, discount, receive: c.checked ? Math.max(0, row.receivable - discount) : c.receive } }
+                            })
+                          }}
+                            className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder="0" max={row.receivable} />
                         </td>
                         <td className="text-center px-2 py-2">
                           <input type="text" value={edit.remarks} onChange={(e) => updateRow(row.key, 'remarks', e.target.value)}
@@ -636,43 +657,43 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         </div>
 
         {/* Right Sidebar */}
-        {selectedStudent && displayRows.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-[11px]">
-              <div className="w-6 h-6 rounded-md bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0"><Receipt size={13} /></div>
-              <span className="font-bold text-[13.5px] text-[var(--text-primary)]">{bn ? 'পুনরাবৃত্ত ফি' : 'Recurring fee'}</span>
-            </div>
-            <div className="p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]  space-y-3">
-              <div><label className={labelCls}>{bn ? 'ফি ধরন' : 'Fee type'}</label>
-                <select value={selectedFeeType} onChange={(e) => setSelectedFeeType(e.target.value)} className={fieldSelectCls}>
-                  <option value="">{bn ? 'সব ফি' : 'All fees'}</option>
+          <div className="space-y-2">
+            <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase whitespace-nowrap">{bn ? 'ফি ধরন' : 'Fee'}</label>
+                <select value={selectedFeeType} onChange={(e) => setSelectedFeeType(e.target.value)}
+                  className="flex-1 h-7 text-[11px] px-1.5 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]">
+                  <option value="">{bn ? 'সব' : 'All'}</option>
                   {feeTypes.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select></div>
-              <div><label className={labelCls}>{bn ? 'অগ্রিম মাস' : 'Advance months'}</label>
-                <div className="flex items-center gap-[7px]">
-                  <input type="number" value={monthCount} onChange={(e) => setMonthCount(Math.max(0, Math.min(12, Number(e.target.value) || 0)))} min={0} max={12}
-                    className="w-[54px] h-[30px] text-[13px] text-center px-[8px] rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none transition-[border-color,box-shadow] focus:border-[var(--brand)] focus:ring-[3px] focus:ring-[var(--brand)]/10" />
-                  <div className="flex flex-col gap-[2px]">
-                    <button onClick={() => setMonthCount((c) => Math.min(12, c + 1))} className="w-5 h-[14px] rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[8px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)]">&#9650;</button>
-                    <button onClick={() => setMonthCount((c) => Math.max(0, c - 1))} className="w-5 h-[14px] rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[8px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)]">&#9660;</button>
-                  </div>
-                </div></div>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase whitespace-nowrap">{bn ? 'অগ্রিম' : 'Advance'}</label>
+                <input type="number" value={monthCount} onChange={(e) => setMonthCount(Math.max(0, Math.min(12, Number(e.target.value) || 0)))} min={0} max={12}
+                  className="w-[40px] h-7 text-[11px] text-center rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" />
+                <div className="flex flex-col">
+                  <button onClick={() => setMonthCount((c) => Math.min(12, c + 1))} className="w-4 h-3 rounded-sm border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[7px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)]">&#9650;</button>
+                  <button onClick={() => setMonthCount((c) => Math.max(0, c - 1))} className="w-4 h-3 rounded-sm border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[7px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)]">&#9660;</button>
+                </div>
+              </div>
+            </div>
+            <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-1.5">
               <button onClick={() => setShowOneTimeModal(true)}
-                className="w-full flex items-center justify-center gap-[7px] h-[36px] rounded-lg bg-[var(--brand)] text-white text-[12.5px] font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
-                <Plus size={14} />{bn ? 'এককালীন ফি' : 'One-time fee'}
+                className="w-full flex items-center justify-center gap-1.5 h-7 rounded-md bg-[var(--brand)] text-white text-[11px] font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
+                <Plus size={12} />{bn ? 'এককালীন ফি' : 'One-time fee'}
               </button>
               <button onClick={() => setShowFineModal(true)}
-                className="w-full flex items-center justify-center gap-[7px] h-[36px] rounded-lg border border-[var(--border)] text-[var(--text-primary)] text-[12.5px] font-semibold cursor-pointer bg-transparent hover:bg-[var(--bg-secondary)] transition-colors">
-                <Ban size={14} />{bn ? 'জরিমানা' : 'Add fine'}
+                className="w-full flex items-center justify-center gap-1.5 h-7 rounded-md border border-[var(--border)] text-[var(--text-primary)] text-[11px] font-semibold cursor-pointer bg-transparent hover:bg-[var(--bg-secondary)] transition-colors">
+                <Ban size={12} />{bn ? 'জরিমানা' : 'Add fine'}
               </button>
               <button onClick={() => setShowHistoryModal(true)}
-                className="w-full flex items-center justify-center gap-[7px] h-[36px] rounded-lg border border-[var(--border)] text-[var(--text-primary)] text-[12.5px] font-semibold cursor-pointer bg-transparent hover:bg-[var(--bg-secondary)] transition-colors">
-                <History size={14} />{bn ? 'পেমেন্ট ইতিহাস' : 'Payment history'}
+                className="w-full flex items-center justify-center gap-1.5 h-7 rounded-md border border-[var(--border)] text-[var(--text-primary)] text-[11px] font-semibold cursor-pointer bg-transparent hover:bg-[var(--bg-secondary)] transition-colors">
+                <History size={12} />{bn ? 'পেমেন্ট ইতিহাস' : 'Payment history'}
               </button>
             </div>
           </div>
-        )}
       </div>
+      )}
 
       {/* One-Time Fee Modal */}
       {showOneTimeModal && createPortal(

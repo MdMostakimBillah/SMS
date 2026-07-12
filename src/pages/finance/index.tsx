@@ -219,12 +219,12 @@ export default function FeeManagementPage() {
 
   const getStatForOpt = (opt: typeof STATIC_OPTIONS[number]) => {
     if (opt.id === 'structures') return { statBn: `${toBnNum(structures.length)}টি সক্রিয়`, statEn: `${structures.length} active` }
-    if (opt.id === 'dues') return { statBn: `৳${toBnNum(totalPending)}`, statEn: `৳${totalPending.toLocaleString()}` }
-    if (opt.id === 'collect') return { statBn: `৳${toBnNum(totalPending)} সংগ্রহযোগ্য`, statEn: `৳${totalPending.toLocaleString()} collectible` }
+    if (opt.id === 'dues') return { statBn: `${toBnNum(totalPending)}`, statEn: `${totalPending.toLocaleString()}` }
+    if (opt.id === 'collect') return { statBn: `${toBnNum(totalPending)} সংগ্রহযোগ্য`, statEn: `${totalPending.toLocaleString()} collectible` }
     if (opt.id === 'payments') return { statBn: `${toBnNum(payments.length)}টি`, statEn: `${payments.length} total` }
-    if (opt.id === 'waivers') return { statBn: `৳${toBnNum(totalWaived)}`, statEn: `৳${totalWaived.toLocaleString()}` }
-    if (opt.id === 'reports') return { statBn: `৳${toBnNum(totalCollected)} সংগৃহীত`, statEn: `৳${totalCollected.toLocaleString()} collected` }
-    if (opt.id === 'inactive') return { statBn: `৳${toBnNum(totalOverdue)} বকেয়`, statEn: `৳${totalOverdue.toLocaleString()} overdue` }
+    if (opt.id === 'waivers') return { statBn: `${toBnNum(totalWaived)}`, statEn: `${totalWaived.toLocaleString()}` }
+    if (opt.id === 'reports') return { statBn: `${toBnNum(totalCollected)} সংগৃহীত`, statEn: `${totalCollected.toLocaleString()} collected` }
+    if (opt.id === 'inactive') return { statBn: `${toBnNum(totalOverdue)} বকেয়`, statEn: `${totalOverdue.toLocaleString()} overdue` }
     return { statBn: '', statEn: '' }
   }
 
@@ -237,8 +237,8 @@ export default function FeeManagementPage() {
     {
       labelBn: 'সংগৃহীত',
       labelEn: 'Collected',
-      valueBn: `৳${toBnNum(totalCollected)}`,
-      valueEn: `৳${totalCollected.toLocaleString()}`,
+      valueBn: `${toBnNum(totalCollected)}`,
+      valueEn: `${totalCollected.toLocaleString()}`,
       icon: Layers,
       color: 'var(--green)',
       bg: 'var(--green-light)',
@@ -246,8 +246,8 @@ export default function FeeManagementPage() {
     {
       labelBn: 'বকেয়',
       labelEn: 'Pending',
-      valueBn: `৳${toBnNum(totalPending)}`,
-      valueEn: `৳${totalPending.toLocaleString()}`,
+      valueBn: `${toBnNum(totalPending)}`,
+      valueEn: `${totalPending.toLocaleString()}`,
       icon: AlertTriangle,
       color: 'var(--amber)',
       bg: 'var(--amber-light)',
@@ -255,8 +255,8 @@ export default function FeeManagementPage() {
     {
       labelBn: 'বিলম্বিত',
       labelEn: 'Overdue',
-      valueBn: `৳${toBnNum(totalOverdue)}`,
-      valueEn: `৳${totalOverdue.toLocaleString()}`,
+      valueBn: `${toBnNum(totalOverdue)}`,
+      valueEn: `${totalOverdue.toLocaleString()}`,
       icon: Ban,
       color: 'var(--red)',
       bg: 'var(--red-light)',
@@ -264,8 +264,8 @@ export default function FeeManagementPage() {
     {
       labelBn: 'ছাড়',
       labelEn: 'Waived',
-      valueBn: `৳${toBnNum(totalWaived)}`,
-      valueEn: `৳${totalWaived.toLocaleString()}`,
+      valueBn: `${toBnNum(totalWaived)}`,
+      valueEn: `${totalWaived.toLocaleString()}`,
       icon: BadgePercent,
       color: 'var(--purple)',
       bg: 'var(--purple-light)',
@@ -403,6 +403,7 @@ export default function FeeManagementPage() {
                 studentId: collectPayment.studentId,
                 feeStructureId: collectPayment.feeStructureId,
                 amount,
+                discount: 0,
                 paidAt: today,
                 method,
                 reference: '',
