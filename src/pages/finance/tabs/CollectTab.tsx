@@ -30,7 +30,7 @@ interface MonthRow {
 function generateMonthRows(
   structures: FeeStructure[],
   payments: { feeStructureId: string; amount: number; paidAt: string }[],
-  waivers: { feeStructureId: string; amount: number }[],
+  waivers: { feeStructureId: string; amount: number; createdAt: string }[],
   _studentId: string,
   academicYear: string,
   advanceMonths: number,
@@ -81,7 +81,9 @@ function generateMonthRows(
         const paid = payments
           .filter((p) => { if (p.feeStructureId !== struct.id) return false; const d = new Date(p.paidAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
           .reduce((sum, p) => sum + p.amount, 0)
-        const waived = waivers.filter((w) => w.feeStructureId === struct.id).reduce((sum, w) => sum + w.amount, 0)
+        const waived = waivers
+          .filter((w) => { if (w.feeStructureId !== struct.id) return false; const d = new Date(w.createdAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
+          .reduce((sum, w) => sum + w.amount, 0)
         const receivable = struct.amount - paid - Math.min(waived, struct.amount)
         if (receivable <= 0) continue
         const startDate = `01 ${m.label} ${currentYear}`
