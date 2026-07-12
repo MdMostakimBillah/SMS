@@ -29,7 +29,7 @@ interface MonthRow {
 
 function generateMonthRows(
   structures: FeeStructure[],
-  payments: { feeStructureId: string; amount: number; paidAt: string }[],
+  payments: { feeStructureId: string; amount: number; paidAt: string; forMonth?: string }[],
   waivers: { feeStructureId: string; amount: number; createdAt: string }[],
   _studentId: string,
   academicYear: string,
@@ -79,7 +79,7 @@ function generateMonthRows(
         const m = months[monthIdx]
         const currentYear = year + yearOffset
         const paid = payments
-          .filter((p) => { if (p.feeStructureId !== struct.id) return false; const d = new Date(p.paidAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
+          .filter((p) => { if (p.feeStructureId !== struct.id) return false; if (p.forMonth) return p.forMonth === `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}`; const d = new Date(p.paidAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
           .reduce((sum, p) => sum + p.amount, 0)
         const waived = waivers
           .filter((w) => { if (w.feeStructureId !== struct.id) return false; const d = new Date(w.createdAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
@@ -294,7 +294,9 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const receiptRows: { feeName: string; feeNameBn: string; dateRange: string; amount: number; discount: number; receive: number }[] = []
     for (const row of checkedRows) {
       const edit = getRowEdit(row.key)
-      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId }
+      const parts = row.key.split('-')
+      const forMonth = row.isOnetime ? undefined : `${parts[1]}-${parts[2].padStart(2, '0')}`
+      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
       addPayment(payment)
       receiptRows.push({ feeName: row.feeName, feeNameBn: row.feeNameBn, dateRange: row.dateRange, amount: row.amount, discount: edit.discount, receive: edit.receive })
     }

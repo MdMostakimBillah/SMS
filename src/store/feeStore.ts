@@ -28,6 +28,7 @@ export interface FeePayment {
   collectedBy: string
   createdAt: string
   batchId?: string
+  forMonth?: string
 }
 
 export interface FeeWaiver {
