@@ -709,62 +709,70 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       {/* Payment History Modal */}
       {showHistoryModal && selectedStudent && createPortal(
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 " onClick={() => setShowHistoryModal(false)}>
-          <div className="bg-[var(--bg-primary)] rounded-xl w-[90vw] max-h-[85vh] overflow-y-auto p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-[var(--bg-primary)] rounded-xl w-[90vw] h-[90vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            {/* Sticky Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
               <div>
                 <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">{bn ? 'পেমেন্ট ইতিহাস' : 'Payment history'}</h3>
                 <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{selectedStudent.nameEn} ({selectedStudent.id})</p>
               </div>
               <button onClick={() => setShowHistoryModal(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)]"><X size={14} /></button>
             </div>
-            {studentPayments.length === 0 ? (
-              <p className="text-xs text-[var(--text-muted)] text-center py-6">{bn ? 'কোনো পেমেন্ট নেই' : 'No payments found'}</p>
-            ) : (
-              <table className="w-full text-[12px]" style={{ tableLayout: 'fixed' }}>
-                <colgroup>
-                  <col style={{ width: '5%' }} />
-                  <col style={{ width: '25%' }} />
-                  <col style={{ width: '20%' }} />
-                  <col style={{ width: '15%' }} />
-                  <col style={{ width: '15%' }} />
-                  <col style={{ width: '10%' }} />
-                  <col style={{ width: '10%' }} />
-                </colgroup>
-                <thead>
-                  <tr className="bg-[var(--bg-secondary)]">
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">#</th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ফি' : 'Fee'}</th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'মাস' : 'Month'}</th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পেমেন্ট তারিখ' : 'Payment date'}</th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পদ্ধতি' : 'Method'}</th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'রসিদ' : 'Receipt'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {studentPayments.map((p, idx) => {
-                    const struct = structures.find((s) => s.id === p.feeStructureId)
-                    const note = p.note || '-'
-                    return (
-                      <tr key={p.id} className="border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40">
-                        <td className="text-center px-2 py-2 text-[var(--text-muted)]">{idx + 1}</td>
-                        <td className="text-center px-2 py-2"><span className="font-semibold text-[var(--text-primary)]">{struct ? (bn ? struct.nameBn : struct.name) : (p.feeStructureId ? p.feeStructureId.slice(0, 8) : '-')}</span></td>
-                        <td className="text-center px-2 py-2 text-[var(--text-muted)]">{p.reference || '-'}</td>
-                        <td className="text-center px-2 py-2 text-[var(--text-muted)]">{p.paidAt}</td>
-                        <td className="text-center px-2 py-2"><span className="inline-block px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] font-medium">{p.method}</span></td>
-                        <td className="text-center px-2 py-2"><span className="font-mono font-bold text-[var(--brand)] tracking-wide">{fmt(p.amount)}</span></td>
-                        <td className="text-center px-2 py-2">
-                          {note !== '-' && <span className="text-[10px] text-[var(--text-muted)] block mb-1 truncate" title={note}>{note}</span>}
-                          <button onClick={() => generateSingleReceipt(p)} className="inline-flex items-center gap-1 h-6 px-2 rounded-md bg-[var(--brand-light)] text-[var(--brand)] text-[10.5px] font-semibold border-0 cursor-pointer hover:bg-[var(--brand)]/20 transition-colors">
-                            <Receipt size={11} />{bn ? 'ডাউনলোড' : 'Download'}
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            )}
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto">
+              {studentPayments.length === 0 ? (
+                <p className="text-xs text-[var(--text-muted)] text-center py-6">{bn ? 'কোনো পেমেন্ট নেই' : 'No payments found'}</p>
+              ) : (
+                <table className="w-full text-[12px]" style={{ tableLayout: 'fixed' }}>
+                  <colgroup>
+                    <col style={{ width: '4%' }} />
+                    <col style={{ width: '18%' }} />
+                    <col style={{ width: '14%' }} />
+                    <col style={{ width: '12%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '16%' }} />
+                    <col style={{ width: '12%' }} />
+                    <col style={{ width: '14%' }} />
+                  </colgroup>
+                  <thead>
+                    <tr className="bg-[var(--bg-secondary)] sticky top-0 z-10">
+                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">#</th>
+                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ফি' : 'Fee'}</th>
+                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'মাস' : 'Month'}</th>
+                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'তারিখ' : 'Date'}</th>
+                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ইনভয়েস' : 'Invoice'}</th>
+                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'রসিদ' : 'Receipt'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {studentPayments.map((p, idx) => {
+                      const struct = structures.find((s) => s.id === p.feeStructureId)
+                      const paidDate = new Date(p.paidAt)
+                      const monthLabel = `${paidDate.toLocaleString('en', { month: 'short' })} ${paidDate.getFullYear()}`
+                      const invoiceNo = `INV-${p.id.replace('pay-', '').slice(0, 10).toUpperCase()}`
+                      return (
+                        <tr key={p.id} className="border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40">
+                          <td className="text-center px-2 py-2.5 text-[var(--text-muted)]">{idx + 1}</td>
+                          <td className="text-center px-2 py-2.5"><span className="font-semibold text-[var(--text-primary)]">{struct ? (bn ? struct.nameBn : struct.name) : '-'}</span></td>
+                          <td className="text-center px-2 py-2.5 text-[var(--text-muted)]">{monthLabel}</td>
+                          <td className="text-center px-2 py-2.5 text-[var(--text-muted)]">{p.paidAt}</td>
+                          <td className="text-center px-2 py-2.5"><span className="inline-block px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] font-medium text-[11px]">{p.method}</span></td>
+                          <td className="text-center px-2 py-2.5"><span className="font-mono text-[11px] text-[var(--text-muted)]">{invoiceNo}</span></td>
+                          <td className="text-center px-2 py-2.5"><span className="font-mono font-bold text-[var(--brand)] tracking-wide">{fmt(p.amount)}</span></td>
+                          <td className="text-center px-2 py-2.5">
+                            <button onClick={() => generateSingleReceipt(p)} className="inline-flex items-center gap-1 h-7 px-3 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] text-[11px] font-semibold border-0 cursor-pointer hover:bg-[var(--brand)]/20 transition-colors">
+                              <Receipt size={12} />{bn ? 'ডাউনলোড' : 'Download'}
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </div>, document.body
       )}
