@@ -57,7 +57,7 @@ function generateMonthRows(
   const now = new Date()
   const currentMonthIdx = now.getMonth()
   const currentYearNum = now.getFullYear()
-  const totalMonths = (currentYearNum - year) * 12 + (currentMonthIdx - startMonth) + advanceMonths
+  const totalMonths = (currentYearNum - year) * 12 + (currentMonthIdx - startMonth) + 1 + advanceMonths
 
   for (const struct of structures) {
     if (!struct.isActive) continue
@@ -348,7 +348,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
           </div>
           <div>
             <div className="text-[11px] text-[var(--text-muted)] uppercase font-semibold">{bn ? 'আজকের আয়' : "Today's income"}</div>
-            <div className="font-mono font-extrabold text-[15px] tracking-wide text-[var(--green)]">{fmt(todayIncome)}</div>
+            <div className="font-extrabold text-[15px] text-[var(--green)]">{fmt(todayIncome)}</div>
           </div>
         </div>
         <div className="flex items-center gap-3 p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
@@ -357,7 +357,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
           </div>
           <div>
             <div className="text-[11px] text-[var(--text-muted)] uppercase font-semibold">{bn ? 'আজকের ছাড়' : "Today's discount"}</div>
-            <div className="font-mono font-extrabold text-[15px] tracking-wide text-[var(--amber)]">{fmt(todayDiscount)}</div>
+            <div className="font-extrabold text-[15px] text-[var(--amber)]">{fmt(todayDiscount)}</div>
           </div>
         </div>
         <div className="flex items-center gap-3 p-[14px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
@@ -366,7 +366,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
           </div>
           <div>
             <div className="text-[11px] text-[var(--text-muted)] uppercase font-semibold">{bn ? 'আজকের মওকুফ' : "Today's waiver"}</div>
-            <div className="font-mono font-extrabold text-[15px] tracking-wide text-[var(--brand)]">{fmt(todayWaiver)}</div>
+            <div className="font-extrabold text-[15px] text-[var(--brand)]">{fmt(todayWaiver)}</div>
           </div>
         </div>
       </div>
@@ -541,7 +541,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           {row.isOnetime && <span className="ml-1 inline-block text-[9px] font-bold uppercase bg-[var(--amber-light)] text-[var(--amber)] px-1 py-px rounded">One-time</span>}
                           <div className="text-[10px] text-[var(--text-muted)]">{bn ? row.dateRangeBn : row.dateRange}</div>
                         </td>
-                        <td className="text-center px-2 py-2"><span className="font-mono font-semibold text-[var(--text-primary)] text-[12px] tracking-wide">{fmt(row.amount)}</span></td>
+                        <td className="text-center px-2 py-2"><span className="font-semibold text-[var(--text-primary)] text-[12px]">{fmt(row.amount)}</span></td>
                         <td className="text-center px-2 py-2">
                           <input type="number" value={edit.discount || ''} onChange={(e) => updateRow(row.key, 'discount', Number(e.target.value) || 0)}
                             className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder="0" />
@@ -550,7 +550,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           <input type="text" value={edit.remarks} onChange={(e) => updateRow(row.key, 'remarks', e.target.value)}
                             className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder={bn ? '...' : '...'} />
                         </td>
-                        <td className="text-center px-2 py-2"><span className="font-mono font-semibold text-[var(--text-primary)] tracking-wide">{fmt(row.receivable)}</span></td>
+                        <td className="text-center px-2 py-2"><span className="font-semibold text-[var(--text-primary)]">{fmt(row.receivable)}</span></td>
                         <td className="text-center px-2 py-2">
                           <input type="number" value={edit.receive} onChange={(e) => updateRow(row.key, 'receive', Number(e.target.value) || 0)}
                             className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--brand-light)] bg-[var(--bg-primary)] text-[var(--brand)] font-bold outline-none focus:border-[var(--brand)]" placeholder="0" />
@@ -568,21 +568,21 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             <div className="flex items-center gap-3 py-2">
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'মোট:' : 'Total:'}</span>
-                <span className="font-mono font-semibold text-sm tracking-wide text-[var(--text-primary)]">{fmt(totalAmount)}</span>
+                <span className="font-semibold text-sm text-[var(--text-primary)]">{fmt(totalAmount)}</span>
               </div>
               <div className="w-px h-4 bg-[var(--border)]" />
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'ছাড়:' : 'Discount:'}</span>
-                <span className="font-mono font-semibold text-sm tracking-wide text-[var(--amber)]">{fmt(totalDiscount)}</span>
+                <span className="font-bold text-sm text-[var(--amber)]">{fmt(totalDiscount)}</span>
               </div>
               <div className="w-px h-4 bg-[var(--border)]" />
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'প্রাপ্য:' : 'Receivable:'}</span>
-                <span className="font-mono font-bold text-sm tracking-wide text-[var(--green)]">{fmt(totalReceivable)}</span>
+                <span className="font-bold text-sm text-[var(--green)]">{fmt(totalReceivable)}</span>
               </div>
               <div className="ml-auto flex items-center gap-1.5 bg-[var(--brand-light)] rounded-lg px-3 py-1.5">
                 <span className="text-[11px] text-[var(--brand)] font-semibold">{bn ? 'গ্রহণ:' : 'Receiving:'}</span>
-                <span className="font-mono font-extrabold text-base tracking-wide text-[var(--brand)]">{fmt(totalReceive)}</span>
+                <span className="font-extrabold text-base text-[var(--brand)]">{fmt(totalReceive)}</span>
               </div>
             </div>
           )}
@@ -602,7 +602,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
               <div className="ml-auto flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'প্রাপ্য:' : 'Receivable:'}</span>
-                  <span className="font-mono font-bold text-sm tracking-wide text-[var(--green)]">{fmt(totalReceivable)}</span>
+                  <span className="font-bold text-sm text-[var(--green)]">{fmt(totalReceivable)}</span>
                 </div>
                 <button onClick={handleReceiveFee} disabled={totalReceive <= 0}
                   className="h-9 px-5 rounded-lg bg-[var(--brand)] text-white font-semibold text-[13px] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
@@ -675,7 +675,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         <div className="text-[12.5px] font-semibold text-[var(--text-primary)]">{bn ? s.nameBn : s.name}</div>
                         <div className="text-[10.5px] text-[var(--text-muted)]">{s.descriptionBn || s.description}</div>
                       </div>
-                      <div className="font-mono font-bold text-[var(--brand)] text-[12.5px]">{fmt(s.amount)}</div>
+                      <div className="text-[var(--brand)] text-[12.5px]">{fmt(s.amount)}</div>
                     </label>
                   ))}
                 </div>
@@ -768,8 +768,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           <td className="text-center px-2 py-2.5 text-[var(--text-muted)]">{monthLabel}</td>
                           <td className="text-center px-2 py-2.5 text-[var(--text-muted)]">{p.paidAt}</td>
                           <td className="text-center px-2 py-2.5"><span className="inline-block px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] font-medium text-[11px]">{p.method}</span></td>
-                          <td className="text-center px-2 py-2.5"><span className="font-mono text-[11px] text-[var(--text-muted)]">{invoiceNo}</span></td>
-                          <td className="text-center px-2 py-2.5"><span className="font-mono font-bold text-[var(--brand)] tracking-wide">{fmt(p.amount)}</span></td>
+                          <td className="text-center px-2 py-2.5"><span className="text-[11px] text-[var(--text-muted)]">{invoiceNo}</span></td>
+                          <td className="text-center px-2 py-2.5"><span className="font-bold text-[var(--brand)]">{fmt(p.amount)}</span></td>
                           <td className="text-center px-2 py-2.5">
                             <button onClick={() => generateSingleReceipt(p)} className="inline-flex items-center gap-1 h-7 px-3 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] text-[11px] font-semibold border-0 cursor-pointer hover:bg-[var(--brand)]/20 transition-colors">
                               <Receipt size={12} />{bn ? 'ডাউনলোড' : 'Download'}
