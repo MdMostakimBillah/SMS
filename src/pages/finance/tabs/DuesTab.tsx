@@ -56,9 +56,11 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   )
 
   const categoryOptions = useMemo(() => {
-    const names = new Set(activeStructures.map((s) => s.name))
+    let list = activeStructures
+    if (fType) list = list.filter((s) => s.type === fType)
+    const names = new Set(list.map((s) => s.name))
     return Array.from(names)
-  }, [activeStructures])
+  }, [activeStructures, fType])
 
   const feeOptions = useMemo(() => {
     let list = activeStructures
