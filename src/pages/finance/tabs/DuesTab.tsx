@@ -1,12 +1,16 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
-import { Search, DollarSign, Users, CalendarDays, Ban, CheckCircle2, ChevronDown, CircleCheck, FileSpreadsheet, FileText } from 'lucide-react'
+import { Search, DollarSign, Users, CalendarDays, Ban, CheckCircle2, ChevronDown, CircleCheck, FileSpreadsheet, FileText, MoreVertical } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
 import type { FeeDue } from '@/store/feeStore'
 import { XLSX } from '@/lib/excelExport'
+import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsModal'
+import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
+import { openPrintWindow } from '@/lib/pdf'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 
 interface Props {
   onCollect: (due: FeeDue) => void
@@ -70,6 +74,9 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const monthDropdownRef = useRef<HTMLDivElement>(null)
   const [showResults, setShowResults] = useState(false)
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
+  const [showActionMenu, setShowActionMenu] = useState(false)
+  const actionMenuRef = useRef<HTMLDivElement>(null)
+  const [showPdfModal, setShowPdfModal] = useState(false)
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
@@ -112,6 +119,16 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     document.addEventListener('mousedown', h)
     return () => document.removeEventListener('mousedown', h)
   }, [])
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node)) {
+        setShowActionMenu(false)
+      }
+    }
+    if (showActionMenu) document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [showActionMenu])
 
   const toggleMonth = useCallback((m: number) => {
     setSelectedMonths((prev) => {
@@ -334,46 +351,58 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     XLSX.writeFile(wb, `dues-${fYear}.xlsx`)
   }, [results, fYear, bn, showMonthPicker, sortedMonths])
 
-  const exportPdf = useCallback(() => {
-    const rows = results
-    const title = bn ? `বকেয় তালিকা — ${fYear}` : `Dues List — ${fYear}`
-    const monthHeaders = showMonthPicker
-      ? sortedMonths.map((m) => `<th style="background:#1e3a5f;color:#fff;padding:6px 8px;text-align:center;font-weight:600;min-width:60px">${bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}</th>`)
-      : ''
-    const monthCells = (r: DueMatrixRow) => {
-      if (!showMonthPicker) return ''
-      return sortedMonths.map((m) => {
-        const cell = r.months[m]
-        if (!cell) return '<td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">—</td>'
-        if (cell.paid) return `<td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center;color:#16a34a;font-weight:700">✓</td>`
-        return `<td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center;color:#d97706;font-weight:700">${cell.amount.toLocaleString()}</td>`
-      }).join('')
+  const pdfColumns = useMemo<PDFColumnDef[]>(() => {
+    const cols: PDFColumnDef[] = [
+      { key: 'student', label: 'Student', labelBn: 'শিক্ষার্থী', default: true },
+      { key: 'roll', label: 'Roll', labelBn: 'রোল', default: true },
+      { key: 'class', label: 'Class', labelBn: 'শ্রেণি', default: true },
+      { key: 'fee', label: 'Fee', labelBn: 'ফি', default: true },
+      { key: 'type', label: 'Type', labelBn: 'ধরন', default: true },
+      { key: 'feeAmt', label: 'Fee Amt', labelBn: 'ফির পরিমাণ', default: true },
+    ]
+    if (showMonthPicker) {
+      for (const m of sortedMonths) {
+        const lbl = bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en
+        cols.push({ key: `month-${m}`, label: lbl, labelBn: MONTH_LABELS[m].bn, default: true })
+      }
     }
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
-<style>@page{size:A4 landscape;margin:15mm}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff}h1{font-size:16px;color:#1e3a5f;margin:0 0 10px}table{width:100%;border-collapse:collapse;font-size:10px}th{background:#1e3a5f;color:#fff;padding:6px 8px;text-align:center;font-weight:600}td{padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.footer{margin-top:15px;font-size:9px;color:#999;text-align:right}</style></head><body>
-<h1>${title}</h1>
-<table><thead><tr>
-<th style="text-align:left">Student</th><th>Roll</th><th>Class</th><th>Fee</th><th>Type</th><th>Fee Amt</th>
-${monthHeaders}
-<th>Total Due</th>
-</tr></thead><tbody>
-${rows.map((r) => `<tr>
-<td style="text-align:left;font-weight:600">${bn ? r.studentNameBn || r.studentName : r.studentName}</td>
-<td>${r.roll}</td><td>${r.class}${r.section ? `-${r.section}` : ''}</td>
-<td>${bn ? r.feeNameBn : r.feeName}</td>
-<td>${r.feeType === 'monthly' ? 'Monthly' : 'One-time'}</td>
-<td style="text-align:right">${r.totalAmount.toLocaleString()}</td>
-${monthCells(r)}
-<td style="text-align:right;font-weight:700;color:#d97706">${r.totalDue.toLocaleString()}</td>
-</tr>`).join('')}
-</tbody></table>
-<div class="footer">Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
-</body></html>`
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const w = window.open(url, '_blank')
-    if (w) w.onload = () => w.print()
-  }, [results, fYear, bn, showMonthPicker, sortedMonths])
+    cols.push({ key: 'totalDue', label: 'Total Due', labelBn: 'মোট বকেয়', default: true })
+    return cols
+  }, [showMonthPicker, sortedMonths, bn])
+
+  const buildPdfRow = useCallback((r: DueMatrixRow, selectedCols: string[]): Record<string, string | number> => {
+    const row: Record<string, string | number> = {}
+    if (selectedCols.includes('student')) row[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? r.studentNameBn || r.studentName : r.studentName
+    if (selectedCols.includes('roll')) row[bn ? 'রোল' : 'Roll'] = r.roll
+    if (selectedCols.includes('class')) row[bn ? 'শ্রেণি' : 'Class'] = `${r.class}${r.section ? `-${r.section}` : ''}`
+    if (selectedCols.includes('fee')) row[bn ? 'ফি' : 'Fee'] = bn ? r.feeNameBn : r.feeName
+    if (selectedCols.includes('type')) row[bn ? 'ধরন' : 'Type'] = r.feeType === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')
+    if (selectedCols.includes('feeAmt')) row[bn ? 'ফির পরিমাণ' : 'Fee Amt'] = r.totalAmount
+    if (showMonthPicker) {
+      for (const m of sortedMonths) {
+        if (selectedCols.includes(`month-${m}`)) {
+          const cell = r.months[m]
+          row[bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en] = cell ? (cell.paid ? '✓' : cell.amount) : '—'
+        }
+      }
+    }
+    if (selectedCols.includes('totalDue')) row[bn ? 'মোট বকেয়' : 'Total Due'] = r.totalDue
+    return row
+  }, [bn, showMonthPicker, sortedMonths])
+
+  const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
+    const selectedData = results.filter((r) => selectedRows.has(`${r.studentId}-${r.feeStructureId}`))
+    const rows = selectedData.map((r) => buildPdfRow(r, opts.selectedCols))
+    const pdfBranding = getPDFBranding()
+    const logoHtml = pdfLogoHTML(pdfBranding)
+    const css = `@page{size:${opts.orientation};margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}`
+    const headers = opts.selectedCols.map((c) => {
+      const col = pdfColumns.find((p) => p.key === c)
+      return col ? (opts.isBn ? col.labelBn : col.label) : c
+    })
+    const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${headers.map((h) => `<td>${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="ftr">Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>`
+    openPrintWindow(opts.title, bodyHTML, { css })
+  }, [results, selectedRows, pdfColumns, bn, showMonthPicker, sortedMonths, buildPdfRow])
 
   const fmt = (n: number) => n.toLocaleString()
 
@@ -510,7 +539,7 @@ ${monthCells(r)}
         </div>
       )}
 
-      {/* Action Bar — shown when results exist and rows are selected */}
+      {/* Action Bar — shown when results exist */}
       {showResults && results.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[12px] text-[var(--text-muted)]">
@@ -519,20 +548,40 @@ ${monthCells(r)}
               : `${results.length} ${bn ? 'টি ফলাফল' : 'results'}`}
           </span>
           <div className="ml-auto flex items-center gap-2">
-            <button
-              onClick={exportExcel}
-              disabled={selectedRows.size === 0}
-              className="h-8 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[12px] font-semibold cursor-pointer flex items-center gap-1.5 hover:bg-[var(--bg-secondary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <FileSpreadsheet size={13} /> Excel
-            </button>
-            <button
-              onClick={exportPdf}
-              disabled={selectedRows.size === 0}
-              className="h-8 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[12px] font-semibold cursor-pointer flex items-center gap-1.5 hover:bg-[var(--bg-secondary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <FileText size={13} /> PDF
-            </button>
+            {selectedRows.size > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowActionMenu(!showActionMenu)}
+                  className="h-8 px-3 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-[12px] font-semibold cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+                >
+                  <MoreVertical size={13} />
+                  {bn ? 'অ্যাকশন' : 'Action'}
+                  <ChevronDown size={12} />
+                </button>
+                {showActionMenu && (
+                  <div
+                    ref={actionMenuRef}
+                    className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-[100] overflow-hidden"
+                  >
+                    <button
+                      onClick={() => { exportExcel(); setShowActionMenu(false) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
+                    >
+                      <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                      {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                    </button>
+                    <div className="h-px bg-[var(--border)] mx-2" />
+                    <button
+                      onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
+                    >
+                      <FileText size={14} className="text-[var(--red)]" />
+                      {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -646,6 +695,22 @@ ${monthCells(r)}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* PDF Options Modal */}
+      {showPdfModal && (
+        <GenericPDFOptionsModal
+          columns={pdfColumns}
+          defaultTitle="Dues List"
+          defaultTitleBn="বকেয় তালিকা"
+          recordLabel="student"
+          recordLabelBn="শিক্ষার্থী"
+          count={selectedRows.size}
+          isBn={bn}
+          showColumns={true}
+          onClose={() => setShowPdfModal(false)}
+          onDownload={handlePdfDownload}
+        />
       )}
     </div>
   )
