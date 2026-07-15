@@ -404,6 +404,30 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     openPrintWindow(opts.title, bodyHTML, { css })
   }, [results, selectedRows, pdfColumns, bn, showMonthPicker, sortedMonths, buildPdfRow])
 
+  const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
+    const selectedData = results.filter((r) => selectedRows.has(`${r.studentId}-${r.feeStructureId}`))
+    const rows = selectedData.map((r) => buildPdfRow(r, opts.selectedCols))
+    const pdfBranding = getPDFBranding()
+    const headers = opts.selectedCols.map((c) => {
+      const col = pdfColumns.find((p) => p.key === c)
+      return col ? (opts.isBn ? col.labelBn : col.label) : c
+    })
+    return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a">
+      <div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:8px;margin-bottom:10px">
+        ${pdfLogoHTML(pdfBranding, 28)}
+        <div><div style="font-size:14px;font-weight:700;color:${pdfBranding.brandColor}">${pdfBranding.schoolName}</div>
+        <div style="font-size:9px;color:#666">${pdfBranding.address}</div></div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:${pdfBranding.brandColor};margin-bottom:8px">${opts.title}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:9px">
+        <thead><tr>${headers.map((h) => `<th style="background:${pdfBranding.brandColor};color:#fff;padding:4px 6px;text-align:center;font-weight:600">${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows.slice(0, 20).map((r) => `<tr>${headers.map((h) => `<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}
+        ${rows.length > 20 ? `<tr><td colspan="${headers.length}" style="padding:4px;text-align:center;color:#999;font-style:italic">... ${rows.length - 20} more rows</td></tr>` : ''}
+        </tbody>
+      </table>
+    </div>`
+  }, [results, selectedRows, pdfColumns, buildPdfRow])
+
   const fmt = (n: number) => n.toLocaleString()
 
   return (
@@ -708,6 +732,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
           count={selectedRows.size}
           isBn={bn}
           showColumns={true}
+          previewRenderer={pdfPreviewRenderer}
           onClose={() => setShowPdfModal(false)}
           onDownload={handlePdfDownload}
         />
