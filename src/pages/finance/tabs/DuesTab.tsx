@@ -186,7 +186,23 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
           const monthCells: Record<number, MonthCell> = {}
           let anyDue = false
 
+          const billingDateStr = student.billingDate
+          let billingMonthIdx = -1
+          let billingYear = -1
+          if (billingDateStr) {
+            const bd = new Date(billingDateStr)
+            billingYear = bd.getFullYear()
+            billingMonthIdx = bd.getMonth()
+          }
+
           for (const m of monthsToShow) {
+            const isBeforeBilling = billingYear > 0 && (fYear < billingYear || (fYear === billingYear && m < billingMonthIdx))
+
+            if (isBeforeBilling) {
+              monthCells[m] = { paid: true, amount: 0 }
+              continue
+            }
+
             const monthKey = `${fYear}-${String(m + 1).padStart(2, '0')}`
             const monthPayments = payments.filter((p) => {
               if (p.studentId !== student.id || p.feeStructureId !== fee.id) return false
