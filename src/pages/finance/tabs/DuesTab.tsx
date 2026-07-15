@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
-import { Search, DollarSign, Users, CalendarDays, Ban, CheckCircle2, ChevronDown } from 'lucide-react'
+import { Search, DollarSign, Users, CalendarDays, Ban, CheckCircle2, ChevronDown, CircleCheck } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -27,6 +27,29 @@ const MONTH_LABELS = [
 ]
 
 const selectCls = 'h-[34px] text-[13px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer'
+
+interface MonthCell {
+  paid: boolean
+  amount: number
+}
+
+interface DueMatrixRow {
+  studentId: string
+  studentName: string
+  studentNameBn: string
+  class: string
+  section: string
+  roll: string
+  photo: string
+  feeStructureId: string
+  feeName: string
+  feeNameBn: string
+  feeType: 'monthly' | 'onetime'
+  totalAmount: number
+  months: Record<number, MonthCell>
+  totalDue: number
+  totalPaid: number
+}
 
 export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const bn = useBn()
@@ -74,6 +97,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
   const showMonthPicker = fType === 'monthly' || (!fType && feeStructuresForCategory.some((s) => s.type === 'monthly'))
 
+  const sortedMonths = useMemo(() => Array.from(selectedMonths).sort((a, b) => a - b), [selectedMonths])
+
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (monthDropdownRef.current && !monthDropdownRef.current.contains(e.target as Node)) {
@@ -107,24 +132,23 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const monthDisplayText = useMemo(() => {
     if (selectedMonths.size === 0) return bn ? 'মাস বাছাই করুন' : 'Select months'
     if (selectedMonths.size === 12) return bn ? 'সব মাস' : 'All months'
-    const sorted = Array.from(selectedMonths).sort((a, b) => a - b)
-    const labels = sorted.map((m) => bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en)
+    const labels = sortedMonths.map((m) => bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en)
     if (labels.length <= 3) return labels.join(', ')
     return `${labels.slice(0, 2).join(', ')} +${labels.length - 2}`
-  }, [selectedMonths, bn])
+  }, [selectedMonths, sortedMonths, bn])
 
-  const results = useMemo<FeeDue[]>(() => {
+  const results = useMemo<DueMatrixRow[]>(() => {
     if (!showResults) return []
     if (feeStructuresForCategory.length === 0 || activeStudents.length === 0) return []
 
-    const dues: FeeDue[] = []
+    const rows: DueMatrixRow[] = []
     const filteredStudents = activeStudents.filter((s) => {
       if (fClass && s.class !== fClass) return false
       if (fSection && s.section !== fSection) return false
       return true
     })
 
-    const monthsToShow = showMonthPicker ? Array.from(selectedMonths) : []
+    const monthsToShow = showMonthPicker ? sortedMonths : []
 
     for (const fee of feeStructuresForCategory) {
       for (const student of filteredStudents) {
@@ -140,7 +164,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             .reduce((sum, w) => sum + w.amount, 0)
           const due = fee.amount - paid - waived
           if (due > 0) {
-            dues.push({
+            rows.push({
               studentId: student.id,
               studentName: student.nameEn,
               studentNameBn: student.nameBn,
@@ -151,14 +175,17 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
               feeStructureId: fee.id,
               feeName: fee.name,
               feeNameBn: fee.nameBn,
+              feeType: 'onetime',
               totalAmount: fee.amount,
-              paidAmount: paid,
-              waivedAmount: waived,
-              dueAmount: Math.max(0, due),
-              isActive: true,
+              months: {},
+              totalDue: Math.max(0, due),
+              totalPaid: paid,
             })
           }
         } else {
+          const monthCells: Record<number, MonthCell> = {}
+          let anyDue = false
+
           for (const m of monthsToShow) {
             const monthKey = `${fYear}-${String(m + 1).padStart(2, '0')}`
             const monthPayments = payments.filter((p) => {
@@ -176,39 +203,67 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             })
             const waived = monthWaivers.reduce((sum, w) => sum + w.amount, 0)
             const receivable = fee.amount - paid - discount - waived
-            if (receivable > 0) {
-              dues.push({
-                studentId: student.id,
-                studentName: student.nameEn,
-                studentNameBn: student.nameBn,
-                class: student.class,
-                section: student.section,
-                roll: student.roll,
-                photo: student.photo,
-                feeStructureId: fee.id,
-                feeName: `${fee.name} (${bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en})`,
-                feeNameBn: `${fee.nameBn} (${MONTH_LABELS[m].bn})`,
-                totalAmount: fee.amount,
-                paidAmount: paid + discount,
-                waivedAmount: waived,
-                dueAmount: Math.max(0, receivable),
-                isActive: true,
-              })
-            }
+            const isPaid = receivable <= 0
+            monthCells[m] = { paid: isPaid, amount: Math.max(0, receivable) }
+            if (!isPaid) anyDue = true
+          }
+
+          if (anyDue) {
+            const totalPaidCount = Object.values(monthCells).filter((c) => c.paid).length
+            const totalDueAmount = Object.values(monthCells).reduce((sum, c) => sum + c.amount, 0)
+            rows.push({
+              studentId: student.id,
+              studentName: student.nameEn,
+              studentNameBn: student.nameBn,
+              class: student.class,
+              section: student.section,
+              roll: student.roll,
+              photo: student.photo,
+              feeStructureId: fee.id,
+              feeName: fee.name,
+              feeNameBn: fee.nameBn,
+              feeType: 'monthly',
+              totalAmount: fee.amount,
+              months: monthCells,
+              totalDue: totalDueAmount,
+              totalPaid: totalPaidCount,
+            })
           }
         }
       }
     }
 
-    return dues
-  }, [showResults, feeStructuresForCategory, activeStudents, fClass, fSection, payments, waivers, fYear, selectedMonths, showMonthPicker, bn])
+    return rows
+  }, [showResults, feeStructuresForCategory, activeStudents, fClass, fSection, payments, waivers, fYear, sortedMonths, showMonthPicker])
 
-  const totalDue = useMemo(() => results.reduce((sum, d) => sum + d.dueAmount, 0), [results])
-  const studentCount = useMemo(() => new Set(results.map((d) => d.studentId)).size, [results])
+  const totalDue = useMemo(() => results.reduce((sum, r) => sum + r.totalDue, 0), [results])
+  const studentCount = useMemo(() => new Set(results.map((r) => r.studentId)).size, [results])
 
   const handleFindDue = useCallback(() => {
     setShowResults(true)
   }, [])
+
+  const buildCollectDue = useCallback((row: DueMatrixRow, monthIdx?: number): FeeDue | null => {
+    const fee = feeStructuresForCategory.find((f) => f.id === row.feeStructureId)
+    if (!fee) return null
+    return {
+      studentId: row.studentId,
+      studentName: row.studentName,
+      studentNameBn: row.studentNameBn,
+      class: row.class,
+      section: row.section,
+      roll: row.roll,
+      photo: row.photo,
+      feeStructureId: row.feeStructureId,
+      feeName: fee.name,
+      feeNameBn: fee.nameBn,
+      totalAmount: fee.amount,
+      paidAmount: 0,
+      waivedAmount: 0,
+      dueAmount: monthIdx !== undefined ? (row.months[monthIdx]?.amount || 0) : row.totalDue,
+      isActive: true,
+    }
+  }, [feeStructuresForCategory])
 
   const fmt = (n: number) => n.toLocaleString()
 
@@ -352,57 +407,67 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
           </div>
         </div>
       ) : (
-        <div className="border border-[var(--border)] rounded-xl overflow-hidden max-h-[360px] overflow-y-auto bg-[var(--bg-primary)]">
-          <table className="w-full text-[12.5px]" style={{ tableLayout: 'fixed' }}>
-            <colgroup>
-              <col style={{ width: '24%' }} />
-              <col style={{ width: '8%' }} />
-              <col style={{ width: '12%' }} />
-              <col style={{ width: '16%' }} />
-              <col style={{ width: '10%' }} />
-              <col style={{ width: '10%' }} />
-              <col style={{ width: '10%' }} />
-              <col style={{ width: '8%' }} />
-            </colgroup>
+        <div className="border border-[var(--border)] rounded-xl overflow-auto max-h-[400px] bg-[var(--bg-primary)]">
+          <table className="w-full text-[12.5px]">
             <thead>
               <tr className="bg-[var(--bg-secondary)]">
-                <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'রোল' : 'Roll'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'শ্রেণি' : 'Class'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'ফি' : 'Fee'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'ধরন' : 'Type'}</th>
-                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'মোট' : 'Total'}</th>
-                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'পরিশোধিত' : 'Paid'}</th>
-                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'বকেয়' : 'Due'}</th>
-                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10"></th>
+                <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky left-0 bg-[var(--bg-secondary)] z-20">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky left-0 bg-[var(--bg-secondary)] z-20">{bn ? 'রোল' : 'Roll'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'শ্রেণি' : 'Class'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ফি' : 'Fee'}</th>
+                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
+                {showMonthPicker && sortedMonths.map((m) => (
+                  <th key={m} className="text-center px-2 py-2 text-[10px] uppercase font-bold sticky top-0 z-10" style={{ background: 'var(--bg-secondary)', color: 'var(--brand)', minWidth: '70px' }}>
+                    {bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}
+                  </th>
+                ))}
+                {!showMonthPicker && (
+                  <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'বকেয়' : 'Due'}</th>
+                )}
+                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'মোট বকেয়' : 'Total Due'}</th>
               </tr>
             </thead>
             <tbody>
-              {results.map((d, i) => (
-                <tr key={`${d.studentId}-${d.feeStructureId}-${i}`} className="border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40 transition-colors">
-                  <td className="px-3 py-2">
-                    <p className="font-semibold text-[var(--text-primary)] text-[12px]">{bn ? d.studentNameBn || d.studentName : d.studentName}</p>
+              {results.map((row, i) => (
+                <tr key={`${row.studentId}-${row.feeStructureId}-${i}`} className="border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40 transition-colors">
+                  <td className="px-3 py-2 sticky left-0 bg-[var(--bg-primary)] z-10">
+                    <p className="font-semibold text-[var(--text-primary)] text-[12px]">{bn ? row.studentNameBn || row.studentName : row.studentName}</p>
                   </td>
-                  <td className="text-center px-2 py-2 text-[var(--text-secondary)]">{d.roll}</td>
-                  <td className="text-center px-2 py-2 text-[var(--text-secondary)]">{d.class}{d.section ? `-${d.section}` : ''}</td>
+                  <td className="text-center px-2 py-2 text-[var(--text-secondary)] sticky left-0 bg-[var(--bg-primary)] z-10">{row.roll}</td>
+                  <td className="text-center px-2 py-2 text-[var(--text-secondary)]">{row.class}{row.section ? `-${row.section}` : ''}</td>
                   <td className="text-center px-2 py-2">
-                    <span className="font-semibold text-[var(--text-primary)] text-[11px]">{bn ? d.feeNameBn || d.feeName : d.feeName}</span>
+                    <span className="font-semibold text-[var(--text-primary)] text-[11px]">{bn ? row.feeNameBn : row.feeName}</span>
                   </td>
-                  <td className="text-center px-2 py-2">
-                    <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded" style={{
-                      background: feeStructuresForCategory.find((f) => f.id === d.feeStructureId)?.type === 'onetime' ? 'var(--amber-light)' : 'var(--brand-light)',
-                      color: feeStructuresForCategory.find((f) => f.id === d.feeStructureId)?.type === 'onetime' ? 'var(--amber)' : 'var(--brand)',
-                    }}>
-                      {feeStructuresForCategory.find((f) => f.id === d.feeStructureId)?.type === 'onetime'
-                        ? (bn ? 'এককালীন' : 'One-time')
-                        : (bn ? 'মাসিক' : 'Monthly')}
-                    </span>
-                  </td>
-                  <td className="text-right px-2 py-2 text-[var(--text-secondary)]">{fmt(d.totalAmount)}</td>
-                  <td className="text-right px-2 py-2 text-[var(--green)]">{fmt(d.paidAmount)}</td>
-                  <td className="text-right px-2 py-2 font-semibold text-[var(--amber)]">{fmt(d.dueAmount)}</td>
+                  <td className="text-right px-2 py-2 text-[var(--text-secondary)]">{fmt(row.totalAmount)}</td>
+                  {showMonthPicker && sortedMonths.map((m) => {
+                    const cell = row.months[m]
+                    if (!cell) return <td key={m} className="text-center px-2 py-2 text-[var(--text-muted)]">—</td>
+                    return (
+                      <td key={m} className="text-center px-2 py-2">
+                        {cell.paid ? (
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--green-light)]">
+                            <CircleCheck size={14} className="text-[var(--green)]" />
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => { const due = buildCollectDue(row, m); if (due) onCollect(due) }}
+                            className="font-bold text-[12px] text-[var(--amber)] hover:text-[var(--brand)] cursor-pointer bg-transparent border-0 p-0 transition-colors"
+                            title={bn ? 'পরিশোধ করুন' : 'Collect'}
+                          >
+                            {fmt(cell.amount)}
+                          </button>
+                        )}
+                      </td>
+                    )
+                  })}
+                  {!showMonthPicker && (
+                    <td className="text-center px-2 py-2 font-bold text-[var(--amber)]">{fmt(row.totalDue)}</td>
+                  )}
                   <td className="text-right px-2 py-2">
-                    <button onClick={() => onCollect(d)} className="h-7 px-2.5 rounded-lg bg-[var(--green-light)] text-[var(--green)] text-[11px] font-semibold border-0 cursor-pointer hover:bg-[var(--green)] hover:text-white transition-colors flex items-center gap-1">
+                    <button
+                      onClick={() => { const due = buildCollectDue(row); if (due) onCollect(due) }}
+                      className="h-7 px-2.5 rounded-lg bg-[var(--green-light)] text-[var(--green)] text-[11px] font-semibold border-0 cursor-pointer hover:bg-[var(--green)] hover:text-white transition-colors flex items-center gap-1 ml-auto"
+                    >
                       <CheckCircle2 size={12} />{bn ? 'পরিশোধ' : 'Collect'}
                     </button>
                   </td>
