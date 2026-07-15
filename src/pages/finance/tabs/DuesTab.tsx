@@ -68,7 +68,10 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
   const [fStatus, setFStatus] = useState<'all' | 'paid' | 'due'>('all')
-  const [fYear, setFYear] = useState(() => new Date().getFullYear())
+  const { institution } = useClassStore()
+  const sessions = institution?.sessions || []
+  const [fSession, setFSession] = useState(() => institution?.currentSession || '')
+  const fYear = parseInt(fSession.split('-')[0]) || new Date().getFullYear()
   const [selectedMonths, setSelectedMonths] = useState<Set<number>>(new Set([new Date().getMonth()]))
   const [showMonthDropdown, setShowMonthDropdown] = useState(false)
   const monthDropdownRef = useRef<HTMLDivElement>(null)
@@ -270,7 +273,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     }
 
     return rows
-  }, [showResults, feeStructuresForCategory, activeStudents, fClass, fSection, payments, waivers, fYear, sortedMonths, showMonthPicker])
+  }, [showResults, feeStructuresForCategory, activeStudents, fClass, fSection, payments, waivers, fYear, sortedMonths, showMonthPicker, fSession])
 
   const results = useMemo(() => {
     if (fStatus === 'due') return allResults.filter((r) => r.totalDue > 0)
@@ -348,7 +351,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     const ws = XLSX.utils.json_to_sheet(sheetData)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, bn ? 'বকেয়' : 'Dues')
-    XLSX.writeFile(wb, `dues-${fYear}.xlsx`)
+    XLSX.writeFile(wb, `dues-${fSession}.xlsx`)
   }, [results, fYear, bn, showMonthPicker, sortedMonths])
 
   const pdfColumns = useMemo<PDFColumnDef[]>(() => {
@@ -437,12 +440,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         {/* Row 1: Year + Type + Category + Status + Month + Find Due */}
         <div className="flex items-center gap-2 flex-wrap">
           <select
-            value={fYear}
-            onChange={(e) => { setFYear(Number(e.target.value)); setShowResults(false); setSelectedRows(new Set()) }}
+            value={fSession}
+            onChange={(e) => { setFSession(e.target.value); setShowResults(false); setSelectedRows(new Set()) }}
             className={selectCls}
           >
-            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((y) => (
-              <option key={y} value={y}>{y}</option>
+            {sessions.map((s) => (
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
           <select
