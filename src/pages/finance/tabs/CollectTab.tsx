@@ -20,7 +20,7 @@ interface ReceiptData {
   admissionNo: string
   class: string
   section: string
-  fees: { name: string; nameBn: string; amount: number; month?: string; year?: string }[]
+  fees: { name: string; nameBn: string; amount: number; month?: string; year?: string; remarks?: string }[]
   totalAmount: number
   discount: number
   totalReceived: number
@@ -327,16 +327,17 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       const forMonth = row.isOnetime ? undefined : `${row.key.substring(secondLastDash + 1, lastDash)}-${String(Number(row.key.substring(lastDash + 1)) + 1).padStart(2, '0')}`
       const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
       addPayment(payment)
-      const feeItem: { name: string; nameBn: string; amount: number; month?: string; year?: string } = {
+      const feeItem: { name: string; nameBn: string; amount: number; month?: string; year?: string; remarks?: string } = {
         name: row.feeName,
         nameBn: row.feeNameBn,
         amount: row.amount,
+        remarks: edit.remarks || undefined,
       }
       if (!row.isOnetime && forMonth) {
         const [yr, mo] = forMonth.split('-').map(Number)
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         feeItem.month = monthNames[mo - 1]
-        feeItem.year = String(yr)
+        feeItem.year = String(yr).slice(-2)
       } else if (row.isOnetime) {
         feeItem.year = row.dateRange || fSession
       }
@@ -389,8 +390,9 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const b = getPDFBranding()
     const logoHtml = pdfLogoHTML(b, 50)
     const feeRows = data.fees.map((f, i) => {
-      const sub = f.month ? `<div style="font-size:8px;color:#888">${f.month} ${f.year}</div>` : (f.year ? `<div style="font-size:8px;color:#888">${f.year}</div>` : '')
-      return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name}</div>${sub}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
+      const sub = f.month ? `<div style="font-size:8px;color:#888">${f.month}-${f.year}</div>` : (f.year ? `<div style="font-size:8px;color:#888">${f.year}</div>` : '')
+      const rem = f.remarks ? `<div style="font-size:7px;color:#aaa;font-style:italic">${f.remarks}</div>` : ''
+      return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name}</div>${sub}${rem}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
     }).join('')
     const dueRow = data.totalDue > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555;border-top:2px solid #ef4444">${bn ? 'বকেয়' : 'Due'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#ef4444;border-top:2px solid #ef4444">${data.totalDue.toLocaleString()}</td></tr>` : ''
     return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;max-width:480px;padding:0 10px">
@@ -833,8 +835,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
                               <div className="font-semibold">{bn ? f.nameBn : f.name}</div>
-                              {f.month && <div className="text-[8px] text-[var(--text-muted)]">{f.month} {f.year}</div>}
-                              {!f.month && f.year && <div className="text-[8px] text-[var(--text-muted)]">{f.year}</div>}
+                              {(f.month || f.year) && <div className="text-[8px] text-[var(--text-muted)]">{f.month ? `${f.month}-${f.year}` : f.year}</div>}
+                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">{f.remarks}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
@@ -883,8 +885,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
                               <div className="font-semibold">{bn ? f.nameBn : f.name}</div>
-                              {f.month && <div className="text-[8px] text-[var(--text-muted)]">{f.month} {f.year}</div>}
-                              {!f.month && f.year && <div className="text-[8px] text-[var(--text-muted)]">{f.year}</div>}
+                              {(f.month || f.year) && <div className="text-[8px] text-[var(--text-muted)]">{f.month ? `${f.month}-${f.year}` : f.year}</div>}
+                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">{f.remarks}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
