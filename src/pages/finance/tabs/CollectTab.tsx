@@ -20,7 +20,7 @@ interface ReceiptData {
   admissionNo: string
   class: string
   section: string
-  fees: { name: string; nameBn: string; amount: number; month?: string; year?: string; remarks?: string }[]
+  fees: { name: string; nameBn: string; amount: number; month?: string; year?: string; remarks?: string; due?: number; isOnetime?: boolean }[]
   totalAmount: number
   discount: number
   totalReceived: number
@@ -318,7 +318,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const checkedRows = displayRows.filter((r) => getRowEdit(r.key).checked && getRowEdit(r.key).receive > 0)
     if (checkedRows.length === 0) return
     const batchId = `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    const receiptFees: { name: string; nameBn: string; amount: number; month?: string; year?: string }[] = []
+    const receiptFees: ReceiptData['fees'] = []
     let totalDiscount = 0
     for (const row of checkedRows) {
       const edit = getRowEdit(row.key)
@@ -327,10 +327,12 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       const forMonth = row.isOnetime ? undefined : `${row.key.substring(secondLastDash + 1, lastDash)}-${String(Number(row.key.substring(lastDash + 1)) + 1).padStart(2, '0')}`
       const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
       addPayment(payment)
-      const feeItem: { name: string; nameBn: string; amount: number; month?: string; year?: string; remarks?: string } = {
+      const feeItem: ReceiptData['fees'][number] = {
         name: row.feeName,
         nameBn: row.feeNameBn,
-        amount: row.amount,
+        amount: edit.receive,
+        due: Math.max(0, row.receivable - edit.receive - edit.discount),
+        isOnetime: row.isOnetime,
         remarks: edit.remarks || undefined,
       }
       if (!row.isOnetime && forMonth) {
@@ -358,7 +360,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       class: selectedStudent.class,
       section: selectedStudent.section || '-',
       fees: receiptFees,
-      totalAmount: receiptFees.reduce((s, f) => s + f.amount, 0) + totalDiscount,
+      totalAmount: receiptFees.filter((f) => !f.isOnetime).reduce((s, f) => s + f.amount, 0) + totalDiscount,
       discount: totalDiscount,
       totalReceived: totalReceive,
       totalDue,
@@ -390,7 +392,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const b = getPDFBranding()
     const logoHtml = pdfLogoHTML(b, 50)
     const feeRows = data.fees.map((f, i) => {
-      const sub = f.month ? `<div style="font-size:8px;color:#888">${f.month}-${f.year}</div>` : (f.year ? `<div style="font-size:8px;color:#888">${f.year}</div>` : '')
+      const sub = f.month ? `<div style="font-size:8px;color:#888;display:flex;align-items:center;gap:6px"><span>${f.month}-${f.year}</span>${(f.due ?? 0) > 0 ? `<span style="color:#ef4444;font-weight:600">Due: ${f.due!.toLocaleString()}</span>` : ''}</div>` : (f.year ? `<div style="font-size:8px;color:#888;display:flex;align-items:center;gap:6px"><span>${f.year}</span>${(f.due ?? 0) > 0 ? `<span style="color:#ef4444;font-weight:600">Due: ${f.due!.toLocaleString()}</span>` : ''}</div>` : ((f.due ?? 0) > 0 ? `<div style="font-size:8px;color:#ef4444;font-weight:600">Due: ${f.due!.toLocaleString()}</div>` : ''))
       const rem = f.remarks ? `<div style="font-size:7px;color:#aaa;font-style:italic">${f.remarks}</div>` : ''
       return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name}</div>${sub}${rem}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
     }).join('')
@@ -835,7 +837,10 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
                               <div className="font-semibold">{bn ? f.nameBn : f.name}</div>
-                              {(f.month || f.year) && <div className="text-[8px] text-[var(--text-muted)]">{f.month ? `${f.month}-${f.year}` : f.year}</div>}
+                              <div className="flex items-center gap-2">
+                                {(f.month || f.year) && <span className="text-[8px] text-[var(--text-muted)]">{f.month ? `${f.month}-${f.year}` : f.year}</span>}
+                                {(f.due ?? 0) > 0 && <span className="text-[8px] text-red-500 font-semibold">{bn ? 'বকেয়:' : 'Due:'} {fmt(f.due!)}</span>}
+                              </div>
                               {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">{f.remarks}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
@@ -848,7 +853,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মোট:' : 'Total:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalAmount)}</span></div>
                         {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">{fmt(receiptData.discount)}</span></div>}
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--green)]">{fmt(receiptData.totalReceived)}</span></div>
-                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়:' : 'Due:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
+                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মোট বকেয়:' : 'Total Due:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
                       </div>
                     </div>
                   </div>
@@ -885,7 +890,10 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
                               <div className="font-semibold">{bn ? f.nameBn : f.name}</div>
-                              {(f.month || f.year) && <div className="text-[8px] text-[var(--text-muted)]">{f.month ? `${f.month}-${f.year}` : f.year}</div>}
+                              <div className="flex items-center gap-2">
+                                {(f.month || f.year) && <span className="text-[8px] text-[var(--text-muted)]">{f.month ? `${f.month}-${f.year}` : f.year}</span>}
+                                {(f.due ?? 0) > 0 && <span className="text-[8px] text-red-500 font-semibold">{bn ? 'বকেয়:' : 'Due:'} {fmt(f.due!)}</span>}
+                              </div>
                               {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">{f.remarks}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
