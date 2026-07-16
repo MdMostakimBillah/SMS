@@ -289,29 +289,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const todayDiscount = useMemo(() => payments.filter((p) => p.paidAt === todayStr).reduce((s, p) => s + (p.discount || 0), 0), [payments, todayStr])
   const todayWaiver = useMemo(() => waivers.filter((w) => w.createdAt?.startsWith(todayStr)).reduce((s, w) => s + w.amount, 0), [waivers, todayStr])
 
-  const generateReceipt = useCallback((paymentRows: { feeName: string; feeNameBn: string; dateRange: string; amount: number; discount: number; receive: number }[]) => {
-    if (!selectedStudent || !institution) return
-    const ta = paymentRows.reduce((s, r) => s + r.amount, 0)
-    const td = paymentRows.reduce((s, r) => s + r.discount, 0)
-    const tr = paymentRows.reduce((s, r) => s + r.receive, 0)
-    const rn = `RCP-${Date.now().toString(36).toUpperCase()}`
-    const ds = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    const f = (n: number) => `\u09F3${n.toLocaleString()}`
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fee Receipt</title><style>@page{size:A4;margin:15mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff}.receipt{width:100%;max-width:750px;margin:0 auto;page-break-after:always}.receipt:last-child{page-break-after:auto}.header{display:flex;align-items:center;gap:20px;border-bottom:3px solid #1e3a5f;padding-bottom:12px;margin-bottom:15px}.logo{width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid #1e3a5f}.school-info{flex:1;text-align:center}.school-name{font-size:16px;font-weight:700;color:#1e3a5f}.school-address{font-size:10px;color:#666;margin-top:2px}.copy-label{font-size:10px;color:#999;text-align:center;margin:5px 0}.title{text-align:center;font-size:14px;font-weight:700;color:#1e3a5f;margin:10px 0}.info-row{display:flex;justify-content:space-between;margin-bottom:3px}.info-label{font-weight:600;color:#333}.info-value{color:#555}table{width:100%;border-collapse:collapse;margin:10px 0;font-size:10px}th{background:#1e3a5f;color:#fff;padding:6px 8px;text-align:center;font-weight:600}td{padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.totals{display:flex;justify-content:flex-end;margin-top:10px}.totals-table{width:280px}.totals-table td{padding:4px 8px;font-size:10px}.totals-table td:first-child{text-align:right;font-weight:600;color:#555}.totals-table td:last-child{text-align:right;font-weight:700;color:#1e3a5f}.totals-table tr:last-child td{border-top:2px solid #1e3a5f;font-size:12px;color:#1e3a5f}.signatures{display:flex;justify-content:space-between;margin-top:30px;padding-top:15px}.signature-box{text-align:center;width:150px}.signature-line{border-top:1px solid #333;margin-top:40px;padding-top:5px;font-size:10px;color:#666}.footer{text-align:center;font-size:9px;color:#999;margin-top:15px;padding-top:10px;border-top:1px dashed #ddd}.btn-row{text-align:center;margin:10px 0}.download-btn{display:inline-block;background:#16a34a;color:#fff;padding:8px 16px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none}</style></head><body>${[0,1].map(ci=>{const cl=ci===0?'Admin Copy':'Student Copy';return`<div class="receipt"><div class="header"><img src="${institution.logo||''}" class="logo" alt="" onerror="this.style.display='none'"><div class="school-info"><div class="school-name">${institution.name||'School Name'}</div><div class="school-address">${institution.address||''} | ${institution.phone||''} | ${institution.email||''}</div></div></div><div class="copy-label">${cl}</div><div class="info-row"><div><div><span class="info-label">Student Name:</span> <span class="info-value">${bn?selectedStudent.nameBn:selectedStudent.nameEn}</span></div><div><span class="info-label">Student Id:</span> <span class="info-value">${selectedStudent.id}</span></div><div><span class="info-label">Roll No:</span> <span class="info-value">${selectedStudent.roll}</span></div><div><span class="info-label">Class:</span> <span class="info-value">${selectedStudent.class}</span></div><div><span class="info-label">Section:</span> <span class="info-value">${selectedStudent.section}</span></div></div><div style="text-align:right"><div><span class="info-label">Receipt No:</span> <span class="info-value">${rn}</span></div><div><span class="info-label">Date:</span> <span class="info-value">${ds}</span></div></div></div><div class="title">Fee Receipt</div><table><thead><tr><th style="text-align:left">Particulars</th><th>Actual Amount</th><th>Discount</th><th>Receivable</th><th>Received Amount</th></tr></thead><tbody>${paymentRows.map(r=>`<tr><td style="text-align:left">${bn?r.feeNameBn:r.feeName} ${r.dateRange?'('+r.dateRange+')':''}</td><td>${f(r.amount)}</td><td>${f(r.discount)}</td><td>${f(r.amount-r.discount)}</td><td>${f(r.receive)}</td></tr>`).join('')}</tbody></table><div class="totals"><table class="totals-table"><tr><td>Total Actual Amount:</td><td>${f(ta)}</td></tr><tr><td>Total Discount:</td><td>${f(td)}</td></tr><tr><td>Total Receivable:</td><td>${f(ta-td)}</td></tr><tr><td>Total Amount Received:</td><td>${f(tr)}</td></tr></table></div><div class="signatures"><div class="signature-box"><div class="signature-line">Principal's Signature</div></div><div class="signature-box"><div class="signature-line">Receiver's Signature</div></div></div><div class="footer">The amount once paid is nonrefundable.<br>Software developed and managed by: SMS EduTech</div></div>`}).join('')}<div class="btn-row"><button class="download-btn" onclick="window.print()">Download Receipt</button></div></body></html>`
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const w = window.open(url, '_blank')
-    if (w) w.onload = () => w.print()
-  }, [selectedStudent, institution, bn])
-
-  const generateBatchReceipt = useCallback((batch: { payments: FeePayment[]; totalAmount: number; paidAt: string }) => {
-    if (!selectedStudent || !institution) return
-    const receiptRows = batch.payments.map((p) => {
-      const struct = structures.find((s) => s.id === p.feeStructureId)
-      return { feeName: struct?.name || '-', feeNameBn: struct?.nameBn || '-', dateRange: p.paidAt, amount: p.amount + (p.discount || 0), discount: p.discount || 0, receive: p.amount }
-    })
-    generateReceipt(receiptRows)
-  }, [selectedStudent, institution, structures, generateReceipt])
 
   const handleReceiveFee = useCallback(() => {
     if (!selectedStudent || totalReceive <= 0) return
@@ -432,6 +409,58 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       <div style="text-align:center;font-size:8px;color:#999;margin-top:10px;padding-top:8px;border-top:1px dashed #ddd">${bn ? 'একবার ফি পরিশোধ হলে ফেরত দেওয়া হবে না' : 'Fee Once paid will not be refunded'}</div>
     </div>`
   }, [bn, numberToWords])
+
+  const generateBatchReceipt = useCallback((batch: { payments: FeePayment[]; totalAmount: number; paidAt: string }) => {
+    if (!selectedStudent || !institution) return
+    const rn = `RCP-${Date.now().toString(36).toUpperCase()}`
+    const ds = new Date(batch.paidAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    const fees: ReceiptData['fees'] = batch.payments.map((p) => {
+      const struct = structures.find((s) => s.id === p.feeStructureId)
+      const isOnetime = struct?.type === 'onetime'
+      const item: ReceiptData['fees'][number] = {
+        name: struct?.name || '-',
+        nameBn: struct?.nameBn || '-',
+        amount: p.amount,
+        due: 0,
+        isOnetime,
+        remarks: p.note || undefined,
+      }
+      if (!isOnetime && p.forMonth) {
+        const [yr, mo] = p.forMonth.split('-').map(Number)
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        item.month = monthNames[mo - 1]
+        item.year = String(yr).slice(-2)
+      } else if (isOnetime) {
+        item.year = fSession
+      }
+      return item
+    })
+    const totalAmount = fees.reduce((s, f) => s + f.amount, 0) + batch.payments.reduce((s, p) => s + (p.discount || 0), 0)
+    const totalDiscount = batch.payments.reduce((s, p) => s + (p.discount || 0), 0)
+    const totalReceived = batch.payments.reduce((s, p) => s + p.amount, 0)
+    const receiptData: ReceiptData = {
+      receiptNo: rn,
+      date: ds,
+      session: fSession,
+      feePeriod: fees.length === 1 ? fees[0].name : `${fees.length} fees`,
+      studentName: selectedStudent.nameEn,
+      studentNameBn: selectedStudent.nameBn || selectedStudent.nameEn,
+      admissionNo: selectedStudent.id,
+      class: selectedStudent.class,
+      section: selectedStudent.section || '-',
+      fees,
+      totalAmount,
+      discount: totalDiscount,
+      totalReceived,
+      totalDue: 0,
+      paymentMethod: batch.payments[0]?.method || 'cash',
+    }
+    const leftCopy = buildReceiptHTML(bn ? 'শিক্ষার্থী কপি' : 'Student Copy', receiptData)
+    const rightCopy = buildReceiptHTML(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy', receiptData)
+    const css = `@page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm}.container{display:flex;gap:20px}.copy{flex:1;max-width:50%}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}`
+    const bodyHTML = `<div class=container><div class=copy>${leftCopy}</div><div class=copy>${rightCopy}</div></div>`
+    openPrintWindow(rn, bodyHTML, { css })
+  }, [selectedStudent, institution, structures, fSession, bn, buildReceiptHTML])
 
   const handleDownloadReceipt = useCallback(() => {
     if (!receiptData) return
