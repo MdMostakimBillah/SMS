@@ -1,12 +1,31 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
-import { User, Search, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2 } from 'lucide-react'
+import { User, Search, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2, Download, CircleCheck } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
 import type { FeeDue, FeeStructure, FeePayment } from '@/store/feeStore'
+import { openPrintWindow } from '@/lib/pdf'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+
+interface ReceiptData {
+  receiptNo: string
+  date: string
+  session: string
+  feePeriod: string
+  studentName: string
+  studentNameBn: string
+  admissionNo: string
+  class: string
+  section: string
+  fees: { name: string; nameBn: string; amount: number }[]
+  totalAmount: number
+  discount: number
+  totalReceived: number
+  paymentMethod: string
+}
 
 interface Props {
   onCollect: (due: FeeDue) => void
@@ -141,6 +160,15 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const [showHistoryModal, setShowHistoryModal] = useState(false)
 
   const [extraRows, setExtraRows] = useState<MonthRow[]>([])
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
+  const [showSuccess, setShowSuccess] = useState(false)
+
+  useEffect(() => {
+    if (showSuccess) {
+      const t = setTimeout(() => setShowSuccess(false), 5000)
+      return () => clearTimeout(t)
+    }
+  }, [showSuccess])
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
@@ -289,7 +317,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const checkedRows = displayRows.filter((r) => getRowEdit(r.key).checked && getRowEdit(r.key).receive > 0)
     if (checkedRows.length === 0) return
     const batchId = `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    const receiptRows: { feeName: string; feeNameBn: string; dateRange: string; amount: number; discount: number; receive: number }[] = []
+    const receiptFees: { name: string; nameBn: string; amount: number }[] = []
+    let totalDiscount = 0
     for (const row of checkedRows) {
       const edit = getRowEdit(row.key)
       const lastDash = row.key.lastIndexOf('-')
@@ -297,14 +326,95 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       const forMonth = row.isOnetime ? undefined : `${row.key.substring(secondLastDash + 1, lastDash)}-${String(Number(row.key.substring(lastDash + 1)) + 1).padStart(2, '0')}`
       const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
       addPayment(payment)
-      receiptRows.push({ feeName: row.feeName, feeNameBn: row.feeNameBn, dateRange: row.dateRange, amount: row.amount, discount: edit.discount, receive: edit.receive })
+      receiptFees.push({ name: row.feeName, nameBn: row.feeNameBn, amount: edit.receive })
+      totalDiscount += edit.discount
     }
-    generateReceipt(receiptRows)
+    const rn = `RCP-${Date.now().toString(36).toUpperCase()}`
+    const ds = new Date(receivedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    setReceiptData({
+      receiptNo: rn,
+      date: ds,
+      session: fSession,
+      feePeriod: receiptFees.length === 1 ? receiptFees[0].name : `${checkedRows.length} fees`,
+      studentName: selectedStudent.nameEn,
+      studentNameBn: selectedStudent.nameBn || selectedStudent.nameEn,
+      admissionNo: selectedStudent.id,
+      class: selectedStudent.class,
+      section: selectedStudent.section || '-',
+      fees: receiptFees,
+      totalAmount: receiptFees.reduce((s, f) => s + f.amount, 0) + totalDiscount,
+      discount: totalDiscount,
+      totalReceived: totalReceive,
+      paymentMethod: 'cash',
+    })
+    setShowSuccess(true)
     const receivedKeys = new Set(checkedRows.map((r) => r.key))
     setExtraRows((prev) => prev.filter((r) => !receivedKeys.has(r.key)))
     setEditState({})
     setFindDueTrigger((t) => t + 1)
-  }, [selectedStudent, displayRows, getRowEdit, totalReceive, receivedDate, addPayment, generateReceipt])
+  }, [selectedStudent, displayRows, getRowEdit, totalReceive, receivedDate, addPayment, fSession])
+
+  const numberToWords = useCallback((n: number): string => {
+    if (n === 0) return 'Zero'
+    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+    const conv = (num: number): string => {
+      if (num < 20) return ones[num]
+      if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 ? ' ' + ones[num % 10] : '')
+      if (num < 1000) return ones[Math.floor(num / 100)] + ' Hundred' + (num % 100 ? ' and ' + conv(num % 100) : '')
+      if (num < 100000) return conv(Math.floor(num / 1000)) + ' Thousand' + (num % 1000 ? ' ' + conv(num % 1000) : '')
+      if (num < 10000000) return conv(Math.floor(num / 100000)) + ' Lakh' + (num % 100000 ? ' ' + conv(num % 100000) : '')
+      return conv(Math.floor(num / 10000000)) + ' Crore' + (num % 10000000 ? ' ' + conv(num % 10000000) : '')
+    }
+    return conv(Math.floor(n))
+  }, [])
+
+  const buildReceiptHTML = useCallback((copyLabel: string, data: ReceiptData): string => {
+    const b = getPDFBranding()
+    const logoHtml = pdfLogoHTML(b, 50)
+    const feeRows = data.fees.map((f, i) => `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left">${bn ? f.nameBn : f.name}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${data.totalAmount.toLocaleString()}</td></tr>`).join('')
+    return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;max-width:480px;padding:0 10px">
+      <div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid ${b.brandColor};padding-bottom:10px;margin-bottom:12px">
+        ${logoHtml}
+        <div style="flex:1;text-align:center">
+          <div style="font-size:15px;font-weight:700;color:${b.brandColor}">${b.schoolName}</div>
+          <div style="font-size:9px;color:#666;margin-top:2px">${b.address}</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:13px;font-weight:700;color:${b.brandColor};background:${b.brandColor}11;border:1px solid ${b.brandColor}33;border-radius:4px;padding:6px;margin-bottom:12px">${bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [${copyLabel}]</div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span><b>${bn ? 'সেশন' : 'Session'}:</b> ${data.session}</span><span><b>${bn ? 'ফি সময়কাল' : 'Fee Period'}:</b> ${data.feePeriod}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:10px"><span><b>${bn ? 'তারিখ' : 'Date'}:</b> ${data.date}</span><span><b>${bn ? 'রসিদ নং' : 'Receipt No'}:</b> ${data.receiptNo}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span><b>${bn ? 'নাম' : 'Name'}:</b> ${bn ? data.studentNameBn : data.studentName}</span><span><b>${bn ? 'ভর্তি নং' : 'Adm No'}:</b> ${data.admissionNo}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:10px"><span><b>${bn ? 'শ্রেণি' : 'Class'}:</b> ${data.class}</span><span><b>${bn ? 'সেকশন' : 'Section'}:</b> ${data.section}</span></div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:10px">
+        <thead><tr><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600;width:30px">S.No</th><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:left;font-weight:600">${bn ? 'ফি শিরোনাম' : 'Fee Head'}</th><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:right;font-weight:600">${bn ? 'পরিমাণ' : 'Amount'}</th></tr></thead>
+        <tbody>${feeRows}</tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
+        <table style="width:220px;border-collapse:collapse;font-size:10px">
+          <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555">${bn ? 'মোট' : 'Total'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:${b.brandColor}">${data.totalAmount.toLocaleString()}</td></tr>
+          ${data.discount > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555">${bn ? 'ছাড়' : 'Discount'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:var(--amber)">${data.discount.toLocaleString()}</td></tr>` : ''}
+          <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555;border-top:2px solid ${b.brandColor}">${bn ? '�রিশোধিত' : 'Paid'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:${b.brandColor};border-top:2px solid ${b.brandColor}">${data.totalReceived.toLocaleString()}</td></tr>
+        </table>
+      </div>
+      <div style="font-size:9px;color:#666;margin-bottom:3px"><b>${bn ? 'অর্থের পরিমাণ' : 'Amt in words'}:</b> ${numberToWords(data.totalReceived)} Only.</div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:#666;margin-bottom:3px"><span><b>${bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Mode'}:</b> ${data.paymentMethod.toUpperCase()}</span><span><b>BALANCE:</b> 0.0</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:25px;padding-top:10px">
+        <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#666">${bn ? 'ফি আদায়কারী' : 'Fee Collected by'}</div></div>
+        <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#666">${bn ? 'অভিভাবক' : 'Parent/Guardian'}</div></div>
+      </div>
+      <div style="text-align:center;font-size:8px;color:#999;margin-top:10px;padding-top:8px;border-top:1px dashed #ddd">${bn ? 'একবার ফি পরিশোধ হলে ফেরত দেওয়া হবে না' : 'Fee Once paid will not be refunded'}</div>
+    </div>`
+  }, [bn, numberToWords])
+
+  const handleDownloadReceipt = useCallback(() => {
+    if (!receiptData) return
+    const leftCopy = buildReceiptHTML(bn ? 'শিক্ষার্থী কপি' : 'Student Copy', receiptData)
+    const rightCopy = buildReceiptHTML(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy', receiptData)
+    const css = `@page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm}.container{display:flex;gap:20px}.copy{flex:1;max-width:50%}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}`
+    const bodyHTML = `<div class="container"><div class="copy">${leftCopy}</div><div class="copy">${rightCopy}</div></div>`
+    openPrintWindow(receiptData.receiptNo, bodyHTML, { css })
+  }, [receiptData, bn, buildReceiptHTML])
 
   const oneTimeStructures = useMemo(() => {
     if (!selectedStudent) return []
@@ -637,9 +747,129 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   <span className="font-bold text-sm text-[var(--green)]">{fmt(totalReceivable)}</span>
                 </div>
                 <button onClick={handleReceiveFee} disabled={totalReceive <= 0}
-                  className="h-9 px-5 rounded-lg bg-[var(--brand)] text-white font-semibold text-[13px] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
-                  <CheckCircle2 size={15} />{bn ? 'প্রাপ্ত' : 'Receive'}
+                  className="h-10 px-6 rounded-full bg-[var(--green)] text-white font-bold text-[13px] border-0 cursor-pointer flex items-center gap-2 shadow-[0_2px_8px_rgba(34,197,94,0.3)] hover:shadow-[0_4px_12px_rgba(34,197,94,0.4)] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                  <CircleCheck size={16} />{bn ? 'প্রাপ্ত' : 'Receive'}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Success Banner */}
+          {showSuccess && (
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-green-500/10 border border-green-500/30 text-green-600 text-[13px] font-semibold">
+              <CheckCircle2 size={16} className="text-green-500 flex-shrink-0" />
+              <span>{bn ? 'পেমেন্ট সফলভাবে গৃহীত হয়েছে!' : 'Payment received successfully!'}</span>
+              <button onClick={() => setShowSuccess(false)} className="ml-auto text-green-500/60 hover:text-green-600 cursor-pointer border-0 bg-transparent"><X size={14} /></button>
+            </div>
+          )}
+
+          {/* Inline Receipt */}
+          {receiptData && (
+            <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+                <div className="flex items-center gap-2">
+                  <Receipt size={15} className="text-[var(--brand)]" />
+                  <span className="text-[13px] font-bold text-[var(--text-primary)]">{receiptData.receiptNo}</span>
+                  <span className="text-[11px] text-[var(--text-muted)]">· {receiptData.date}</span>
+                </div>
+                <button onClick={handleDownloadReceipt}
+                  className="h-7 px-3 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity">
+                  <Download size={12} />{bn ? 'রসিদ ডাউনলোড' : 'Download Receipt'}
+                </button>
+              </div>
+              <div className="p-4" style={{ fontSize: '10px' }}>
+                {/* Two-column receipt */}
+                <div className="flex gap-5">
+                  {/* Student Copy */}
+                  <div className="flex-1 border-r border-dashed border-[var(--border)] pr-5">
+                    <div className="flex items-center gap-3 pb-2 mb-2 border-b-2 border-[var(--brand)]">
+                      {institution?.logo ? <img src={institution.logo} alt="" className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-[14px] font-bold">ET</div>}
+                      <div className="text-center flex-1">
+                        <div className="text-[13px] font-bold text-[var(--brand)]">{institution?.name || 'EduTech'}</div>
+                        <div className="text-[9px] text-[var(--text-muted)]">{institution?.address}</div>
+                      </div>
+                    </div>
+                    <div className="text-center text-[11px] font-bold text-[var(--brand)] bg-[var(--brand)]/5 border border-[var(--brand)]/20 rounded px-2 py-1 mb-2">
+                      {bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [{bn ? 'শিক্ষার্থী কপি' : 'Student Copy'}]
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[9px] mb-2">
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেশন:' : 'Session:'}</span> {receiptData.session}</div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'তারিখ:' : 'Date:'}</span> {receiptData.date}</div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'নাম:' : 'Name:'}</span> {bn ? receiptData.studentNameBn : receiptData.studentName}</div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'রসিদ নং:' : 'Receipt No:'}</span> {receiptData.receiptNo}</div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span> {receiptData.class}</div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেকশন:' : 'Section:'}</span> {receiptData.section}</div>
+                    </div>
+                    <table className="w-full border-collapse mb-2 text-[9px]">
+                      <thead><tr className="bg-[var(--brand)] text-white">
+                        <th className="px-2 py-1 text-center font-semibold">S.No</th>
+                        <th className="px-2 py-1 text-left font-semibold">{bn ? 'ফি শিরোনাম' : 'Fee Head'}</th>
+                        <th className="px-2 py-1 text-right font-semibold">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                      </tr></thead>
+                      <tbody>
+                        {receiptData.fees.map((f, i) => (
+                          <tr key={i} className="border-b border-[var(--border)]">
+                            <td className="px-2 py-1 text-center">{i + 1}</td>
+                            <td className="px-2 py-1 text-left">{bn ? f.nameBn : f.name}</td>
+                            <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="flex justify-end text-[9px]">
+                      <div className="space-y-0.5">
+                        <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মোট:' : 'Total:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalAmount)}</span></div>
+                        {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">{fmt(receiptData.discount)}</span></div>}
+                        <div className="flex justify-between gap-4 border-t border-[var(--brand)] pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalReceived)}</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Institute Copy */}
+                  <div className="flex-1 pl-5">
+                    <div className="flex items-center gap-3 pb-2 mb-2 border-b-2 border-[var(--brand)]">
+                      {institution?.logo ? <img src={institution.logo} alt="" className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-[14px] font-bold">ET</div>}
+                      <div className="text-center flex-1">
+                        <div className="text-[13px] font-bold text-[var(--brand)]">{institution?.name || 'EduTech'}</div>
+                        <div className="text-[9px] text-[var(--text-muted)]">{institution?.address}</div>
+                      </div>
+                    </div>
+                    <div className="text-center text-[11px] font-bold text-[var(--brand)] bg-[var(--brand)]/5 border border-[var(--brand)]/20 rounded px-2 py-1 mb-2">
+                      {bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [{bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy'}]
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[9px] mb-2">
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেশন:' : 'Session:'}</span> {receiptData.session}</div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'তারিখ:' : 'Date:'}</span> {receiptData.date}</div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'নাম:' : 'Name:'}</span> {bn ? receiptData.studentNameBn : receiptData.studentName}</div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'রসিদ নং:' : 'Receipt No:'}</span> {receiptData.receiptNo}</div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span> {receiptData.class}</div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেকশন:' : 'Section:'}</span> {receiptData.section}</div>
+                    </div>
+                    <table className="w-full border-collapse mb-2 text-[9px]">
+                      <thead><tr className="bg-[var(--brand)] text-white">
+                        <th className="px-2 py-1 text-center font-semibold">S.No</th>
+                        <th className="px-2 py-1 text-left font-semibold">{bn ? 'ফি শিরোনাম' : 'Fee Head'}</th>
+                        <th className="px-2 py-1 text-right font-semibold">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                      </tr></thead>
+                      <tbody>
+                        {receiptData.fees.map((f, i) => (
+                          <tr key={i} className="border-b border-[var(--border)]">
+                            <td className="px-2 py-1 text-center">{i + 1}</td>
+                            <td className="px-2 py-1 text-left">{bn ? f.nameBn : f.name}</td>
+                            <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="flex justify-end text-[9px]">
+                      <div className="space-y-0.5">
+                        <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মোট:' : 'Total:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalAmount)}</span></div>
+                        {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">{fmt(receiptData.discount)}</span></div>}
+                        <div className="flex justify-between gap-4 border-t border-[var(--brand)] pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalReceived)}</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
