@@ -20,10 +20,11 @@ interface ReceiptData {
   admissionNo: string
   class: string
   section: string
-  fees: { name: string; nameBn: string; amount: number }[]
+  fees: { name: string; nameBn: string; amount: number; month?: string; year?: string }[]
   totalAmount: number
   discount: number
   totalReceived: number
+  totalDue: number
   paymentMethod: string
 }
 
@@ -317,7 +318,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const checkedRows = displayRows.filter((r) => getRowEdit(r.key).checked && getRowEdit(r.key).receive > 0)
     if (checkedRows.length === 0) return
     const batchId = `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    const receiptFees: { name: string; nameBn: string; amount: number }[] = []
+    const receiptFees: { name: string; nameBn: string; amount: number; month?: string; year?: string }[] = []
     let totalDiscount = 0
     for (const row of checkedRows) {
       const edit = getRowEdit(row.key)
@@ -326,11 +327,25 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       const forMonth = row.isOnetime ? undefined : `${row.key.substring(secondLastDash + 1, lastDash)}-${String(Number(row.key.substring(lastDash + 1)) + 1).padStart(2, '0')}`
       const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
       addPayment(payment)
-      receiptFees.push({ name: row.feeName, nameBn: row.feeNameBn, amount: edit.receive })
+      const feeItem: { name: string; nameBn: string; amount: number; month?: string; year?: string } = {
+        name: row.feeName,
+        nameBn: row.feeNameBn,
+        amount: row.amount,
+      }
+      if (!row.isOnetime && forMonth) {
+        const [yr, mo] = forMonth.split('-').map(Number)
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        feeItem.month = monthNames[mo - 1]
+        feeItem.year = String(yr)
+      } else if (row.isOnetime) {
+        feeItem.year = row.dateRange || fSession
+      }
+      receiptFees.push(feeItem)
       totalDiscount += edit.discount
     }
     const rn = `RCP-${Date.now().toString(36).toUpperCase()}`
     const ds = new Date(receivedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    const totalDue = displayRows.filter((r) => !getRowEdit(r.key).checked).reduce((s, r) => s + Math.max(0, r.receivable - getRowEdit(r.key).discount), 0)
     setReceiptData({
       receiptNo: rn,
       date: ds,
@@ -345,6 +360,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       totalAmount: receiptFees.reduce((s, f) => s + f.amount, 0) + totalDiscount,
       discount: totalDiscount,
       totalReceived: totalReceive,
+      totalDue,
       paymentMethod: 'cash',
     })
     setShowSuccess(true)
@@ -372,7 +388,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const buildReceiptHTML = useCallback((copyLabel: string, data: ReceiptData): string => {
     const b = getPDFBranding()
     const logoHtml = pdfLogoHTML(b, 50)
-    const feeRows = data.fees.map((f, i) => `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left">${bn ? f.nameBn : f.name}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${data.totalAmount.toLocaleString()}</td></tr>`).join('')
+    const feeRows = data.fees.map((f, i) => {
+      const sub = f.month ? `<div style="font-size:8px;color:#888">${f.month} ${f.year}</div>` : (f.year ? `<div style="font-size:8px;color:#888">${f.year}</div>` : '')
+      return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name}</div>${sub}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
+    }).join('')
+    const dueRow = data.totalDue > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555;border-top:2px solid #ef4444">${bn ? 'বকেয়' : 'Due'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#ef4444;border-top:2px solid #ef4444">${data.totalDue.toLocaleString()}</td></tr>` : ''
     return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;max-width:480px;padding:0 10px">
       <div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid ${b.brandColor};padding-bottom:10px;margin-bottom:12px">
         ${logoHtml}
@@ -393,12 +413,13 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
         <table style="width:220px;border-collapse:collapse;font-size:10px">
           <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555">${bn ? 'মোট' : 'Total'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:${b.brandColor}">${data.totalAmount.toLocaleString()}</td></tr>
-          ${data.discount > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555">${bn ? 'ছাড়' : 'Discount'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:var(--amber)">${data.discount.toLocaleString()}</td></tr>` : ''}
-          <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555;border-top:2px solid ${b.brandColor}">${bn ? '�রিশোধিত' : 'Paid'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:${b.brandColor};border-top:2px solid ${b.brandColor}">${data.totalReceived.toLocaleString()}</td></tr>
+          ${data.discount > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555">${bn ? 'ছাড়' : 'Discount'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#f59e0b">${data.discount.toLocaleString()}</td></tr>` : ''}
+          <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555;border-top:2px solid ${b.brandColor}">${bn ? 'পরিশোধিত' : 'Paid'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#22c55e;border-top:2px solid ${b.brandColor}">${data.totalReceived.toLocaleString()}</td></tr>
+          ${dueRow}
         </table>
       </div>
       <div style="font-size:9px;color:#666;margin-bottom:3px"><b>${bn ? 'অর্থের পরিমাণ' : 'Amt in words'}:</b> ${numberToWords(data.totalReceived)} Only.</div>
-      <div style="display:flex;justify-content:space-between;font-size:9px;color:#666;margin-bottom:3px"><span><b>${bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Mode'}:</b> ${data.paymentMethod.toUpperCase()}</span><span><b>BALANCE:</b> 0.0</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:#666;margin-bottom:3px"><span><b>${bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Mode'}:</b> ${data.paymentMethod.toUpperCase()}</span><span><b>BALANCE:</b> ${data.totalDue.toLocaleString()}</span></div>
       <div style="display:flex;justify-content:space-between;margin-top:25px;padding-top:10px">
         <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#666">${bn ? 'ফি আদায়কারী' : 'Fee Collected by'}</div></div>
         <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#666">${bn ? 'অভিভাবক' : 'Parent/Guardian'}</div></div>
@@ -810,7 +831,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         {receiptData.fees.map((f, i) => (
                           <tr key={i} className="border-b border-[var(--border)]">
                             <td className="px-2 py-1 text-center">{i + 1}</td>
-                            <td className="px-2 py-1 text-left">{bn ? f.nameBn : f.name}</td>
+                            <td className="px-2 py-1 text-left">
+                              <div className="font-semibold">{bn ? f.nameBn : f.name}</div>
+                              {f.month && <div className="text-[8px] text-[var(--text-muted)]">{f.month} {f.year}</div>}
+                              {!f.month && f.year && <div className="text-[8px] text-[var(--text-muted)]">{f.year}</div>}
+                            </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
                         ))}
@@ -820,7 +845,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                       <div className="space-y-0.5">
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মোট:' : 'Total:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalAmount)}</span></div>
                         {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">{fmt(receiptData.discount)}</span></div>}
-                        <div className="flex justify-between gap-4 border-t border-[var(--brand)] pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalReceived)}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--green)]">{fmt(receiptData.totalReceived)}</span></div>
+                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়:' : 'Due:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
                       </div>
                     </div>
                   </div>
@@ -855,7 +881,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         {receiptData.fees.map((f, i) => (
                           <tr key={i} className="border-b border-[var(--border)]">
                             <td className="px-2 py-1 text-center">{i + 1}</td>
-                            <td className="px-2 py-1 text-left">{bn ? f.nameBn : f.name}</td>
+                            <td className="px-2 py-1 text-left">
+                              <div className="font-semibold">{bn ? f.nameBn : f.name}</div>
+                              {f.month && <div className="text-[8px] text-[var(--text-muted)]">{f.month} {f.year}</div>}
+                              {!f.month && f.year && <div className="text-[8px] text-[var(--text-muted)]">{f.year}</div>}
+                            </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
                         ))}
@@ -865,7 +895,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                       <div className="space-y-0.5">
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মোট:' : 'Total:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalAmount)}</span></div>
                         {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">{fmt(receiptData.discount)}</span></div>}
-                        <div className="flex justify-between gap-4 border-t border-[var(--brand)] pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalReceived)}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--green)]">{fmt(receiptData.totalReceived)}</span></div>
+                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়:' : 'Due:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
                       </div>
                     </div>
                   </div>
