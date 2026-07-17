@@ -366,7 +366,7 @@ export default function FeeManagementPage() {
           {activeView === 'structures' && <StructuresTab onEdit={(s) => setEditStruct(s)} onBulkAssign={() => setShowBulkAssign(true)} />}
           {activeView === 'dues' && <DuesTab onCollect={(d) => setCollectPayment(d)} />}
           {activeView === 'collect' && <CollectTab onCollect={(d) => setCollectPayment(d)} />}
-          {activeView === 'payments' && <PaymentsTab onViewReceipt={(p) => setReceiptData(p)} />}
+          {activeView === 'payments' && <PaymentsTab />}
           {activeView === 'waivers' && <WaiversTab onAddWaiver={() => setShowWaiverModal(true)} />}
           {activeView === 'reports' && <ReportsTab />}
           {activeView === 'inactive' && <InactiveDuesTab />}
