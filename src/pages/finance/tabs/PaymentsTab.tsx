@@ -337,7 +337,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     </div>`
     const leftCopy = copyHtml(bn ? 'শিক্ষার্থী কপি' : 'Student Copy')
     const rightCopy = copyHtml(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy')
-    const css = `@page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm;height:100vh}.container{display:flex;gap:20px;height:100%}.copy{flex:1;max-width:50%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}th{background:${b.brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact}}`
+    const css = `@page{size:A4 landscape;margin:10mm}html,body{height:100%;margin:0;padding:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm}.container{display:flex;gap:20px;height:100%}.copy{flex:1;max-width:50%;height:100%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}th{background:${b.brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600}@media print{html,body{height:100%!important;margin:0!important;padding:0!important}body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;padding:10mm!important}}`
     const bodyHTML = `<div class="container"><div class="copy">${leftCopy}</div><div class="copy">${rightCopy}</div></div>`
     openPrintWindow(batch.receiptNo, bodyHTML, { css })
   }, [bn, structureMap, numberToWords, fSession])
