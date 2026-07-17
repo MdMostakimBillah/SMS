@@ -463,7 +463,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     }
     const leftCopy = buildReceiptHTML(bn ? 'শিক্ষার্থী কপি' : 'Student Copy', receiptData)
     const rightCopy = buildReceiptHTML(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy', receiptData)
-    const css = `@page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm;height:100vh}.container{display:flex;gap:20px;height:100%}.copy{flex:1;max-width:50%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}`
+    const css = `@page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm;height:100vh;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.container{display:flex;gap:20px;height:100%}.copy{flex:1;max-width:50%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}td,div,span{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}`
     const bodyHTML = `<div class=container><div class=copy>${leftCopy}</div><div class=copy>${rightCopy}</div></div>`
     openPrintWindow(rn, bodyHTML, { css })
   }, [selectedStudent, institution, structures, fSession, bn, buildReceiptHTML])
@@ -472,7 +472,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     if (!receiptData) return
     const leftCopy = buildReceiptHTML(bn ? 'শিক্ষার্থী কপি' : 'Student Copy', receiptData)
     const rightCopy = buildReceiptHTML(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy', receiptData)
-    const css = `@page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm;height:100vh}.container{display:flex;gap:20px;height:100%}.copy{flex:1;max-width:50%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}`
+    const css = `@page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm;height:100vh;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.container{display:flex;gap:20px;height:100%}.copy{flex:1;max-width:50%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}td,div,span{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}`
     const bodyHTML = `<div class="container"><div class="copy">${leftCopy}</div><div class="copy">${rightCopy}</div></div>`
     openPrintWindow(receiptData.receiptNo, bodyHTML, { css })
   }, [receiptData, bn, buildReceiptHTML])
