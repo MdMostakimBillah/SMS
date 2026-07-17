@@ -282,6 +282,18 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   }, [allResults, fStatus])
 
   const totalDue = useMemo(() => results.reduce((sum, r) => sum + r.totalDue, 0), [results])
+  const monthSums = useMemo(() => {
+    if (!showMonthPicker || sortedMonths.length === 0) return {} as Record<number, number>
+    const sums: Record<number, number> = {}
+    for (const m of sortedMonths) sums[m] = 0
+    for (const r of results) {
+      for (const m of sortedMonths) {
+        const cell = r.months[m]
+        if (cell && !cell.paid) sums[m] += cell.amount
+      }
+    }
+    return sums
+  }, [results, sortedMonths, showMonthPicker])
   const studentCount = useMemo(() => new Set(results.map((r) => r.studentId)).size, [results])
 
   const handleFindDue = useCallback(() => {
@@ -396,6 +408,24 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
     const selectedData = results.filter((r) => selectedRows.has(`${r.studentId}-${r.feeStructureId}`))
     const rows = selectedData.map((r) => buildPdfRow(r, opts.selectedCols))
+    const summaryRow: Record<string, string | number> = {}
+    summaryRow[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? 'মোট' : 'Total'
+    if (opts.selectedCols.includes('roll')) summaryRow[bn ? 'রোল' : 'Roll'] = ''
+    if (opts.selectedCols.includes('class')) summaryRow[bn ? 'শ্রেণি' : 'Class'] = ''
+    if (opts.selectedCols.includes('fee')) summaryRow[bn ? 'ফি' : 'Fee'] = ''
+    if (opts.selectedCols.includes('type')) summaryRow[bn ? 'ধরন' : 'Type'] = ''
+    if (opts.selectedCols.includes('feeAmt')) summaryRow[bn ? 'ফির পরিমাণ' : 'Fee Amt'] = selectedData.reduce((s, r) => s + r.totalAmount, 0)
+    if (showMonthPicker) {
+      for (const m of sortedMonths) {
+        if (opts.selectedCols.includes(`month-${m}`)) {
+          let sum = 0
+          for (const r of selectedData) { const c = r.months[m]; if (c && !c.paid) sum += c.amount }
+          summaryRow[bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en] = sum > 0 ? sum : '—'
+        }
+      }
+    }
+    if (opts.selectedCols.includes('totalDue')) summaryRow[bn ? 'মোট বকেয়' : 'Total Due'] = selectedData.reduce((s, r) => s + r.totalDue, 0)
+    rows.push(summaryRow)
     const pdfBranding = getPDFBranding()
     const logoHtml = pdfLogoHTML(pdfBranding)
     const css = `@page{size:${opts.orientation};margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}`
@@ -410,11 +440,30 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
     const selectedData = results.filter((r) => selectedRows.has(`${r.studentId}-${r.feeStructureId}`))
     const rows = selectedData.map((r) => buildPdfRow(r, opts.selectedCols))
+    const summaryRow: Record<string, string | number> = {}
+    summaryRow[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? 'মোট' : 'Total'
+    if (opts.selectedCols.includes('roll')) summaryRow[bn ? 'রোল' : 'Roll'] = ''
+    if (opts.selectedCols.includes('class')) summaryRow[bn ? 'শ্রেণি' : 'Class'] = ''
+    if (opts.selectedCols.includes('fee')) summaryRow[bn ? 'ফি' : 'Fee'] = ''
+    if (opts.selectedCols.includes('type')) summaryRow[bn ? 'ধরন' : 'Type'] = ''
+    if (opts.selectedCols.includes('feeAmt')) summaryRow[bn ? 'ফির পরিমাণ' : 'Fee Amt'] = selectedData.reduce((s, r) => s + r.totalAmount, 0)
+    if (showMonthPicker) {
+      for (const m of sortedMonths) {
+        if (opts.selectedCols.includes(`month-${m}`)) {
+          let sum = 0
+          for (const r of selectedData) { const c = r.months[m]; if (c && !c.paid) sum += c.amount }
+          summaryRow[bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en] = sum > 0 ? sum : '—'
+        }
+      }
+    }
+    if (opts.selectedCols.includes('totalDue')) summaryRow[bn ? 'মোট বকেয়' : 'Total Due'] = selectedData.reduce((s, r) => s + r.totalDue, 0)
+    rows.push(summaryRow)
     const pdfBranding = getPDFBranding()
     const headers = opts.selectedCols.map((c) => {
       const col = pdfColumns.find((p) => p.key === c)
       return col ? (opts.isBn ? col.labelBn : col.label) : c
     })
+    const totalRowIdx = rows.length - 1
     return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a">
       <div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:8px;margin-bottom:10px">
         ${pdfLogoHTML(pdfBranding, 28)}
@@ -424,12 +473,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
       <div style="font-size:12px;font-weight:700;color:${pdfBranding.brandColor};margin-bottom:8px">${opts.title}</div>
       <table style="width:100%;border-collapse:collapse;font-size:9px">
         <thead><tr>${headers.map((h) => `<th style="background:${pdfBranding.brandColor};color:#fff;padding:4px 6px;text-align:center;font-weight:600">${h}</th>`).join('')}</tr></thead>
-        <tbody>${rows.slice(0, 20).map((r) => `<tr>${headers.map((h) => `<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}
-        ${rows.length > 20 ? `<tr><td colspan="${headers.length}" style="padding:4px;text-align:center;color:#999;font-style:italic">... ${rows.length - 20} more rows</td></tr>` : ''}
+        <tbody>${rows.slice(0, 20).map((r, i) => `<tr${i === totalRowIdx ? ' style="font-weight:700;border-top:2px solid #333;background:#f0f0f0"' : ''}>${headers.map((h) => `<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}
+        ${rows.length > 21 ? `<tr><td colspan="${headers.length}" style="padding:4px;text-align:center;color:#999;font-style:italic">... ${rows.length - 21} more rows</td></tr>` : ''}
         </tbody>
       </table>
     </div>`
-  }, [results, selectedRows, pdfColumns, buildPdfRow])
+  }, [results, selectedRows, pdfColumns, bn, showMonthPicker, sortedMonths, buildPdfRow])
 
   const fmt = (n: number) => n.toLocaleString()
 
@@ -720,6 +769,25 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 )
               })}
             </tbody>
+            {showMonthPicker && sortedMonths.length > 0 && (
+              <tfoot>
+                <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold sticky bottom-0 z-10">
+                  <td className="px-2 py-2 sticky left-0 bg-[var(--bg-secondary)] z-10" />
+                  <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--text-primary)]">{bn ? 'মোট' : 'Total'}</td>
+                  <td className="px-2 py-2" />
+                  <td className="px-2 py-2" />
+                  <td className="px-2 py-2" />
+                  <td className="px-2 py-2" />
+                  <td className="text-right px-2 py-2 text-[12px]">{fmt(results.reduce((s, r) => s + r.totalAmount, 0))}</td>
+                  {sortedMonths.map((m) => (
+                    <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)]" style={{ minWidth: '70px' }}>
+                      {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
+                    </td>
+                  ))}
+                  <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)]">{fmt(totalDue)}</td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       )}
