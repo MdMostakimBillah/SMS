@@ -429,6 +429,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         amount: p.amount,
         due: 0,
         isOnetime,
+        discount: p.discount || undefined,
         remarks: p.note || undefined,
       }
       if (!isOnetime && p.forMonth) {
