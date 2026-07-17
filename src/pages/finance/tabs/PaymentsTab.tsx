@@ -3,6 +3,7 @@ import React from 'react'
 import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Filter, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
+import { useClassStore } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
 import type { FeePayment } from '@/store/feeStore'
 import { XLSX } from '@/lib/excelExport'
@@ -34,6 +35,7 @@ interface Props {
 export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const bn = useBn()
   const students = useSessionStudents()
+  const { institution } = useClassStore()
   const { payments, structures, deletePayment } = useFeeStore()
   const [search, setSearch] = useState('')
   const [fMethod, setFMethod] = useState('')
@@ -42,6 +44,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
+  const fSession = institution?.currentSession || ''
 
   const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -297,7 +300,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
       totalDue: 0,
       paymentMethod: batch.method,
     }
-    const copyHtml = (copyLabel: string) => `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;max-width:480px;padding:0 10px;display:flex;flex-direction:column;position:relative">
+    const copyHtml = (copyLabel: string) => `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;height:100%;max-width:480px;padding:0 10px;display:flex;flex-direction:column;position:relative">
       ${watermarkHtml}
       <div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid ${b.brandColor};padding-bottom:10px;margin-bottom:12px">
         ${logoHtml}
@@ -307,9 +310,10 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
         </div>
       </div>
       <div style="text-align:center;font-size:13px;font-weight:700;color:${b.brandColor};background:${b.brandColor}11;border:1px solid ${b.brandColor}33;border-radius:4px;padding:6px;margin-bottom:12px">${bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [${copyLabel}]</div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span><b>${bn ? 'তারিখ' : 'Date'}:</b> ${receiptData.date}</span><span><b>${bn ? 'রসিদ নং' : 'Receipt No'}:</b> ${receiptData.receiptNo}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span><b>${bn ? 'সেশন' : 'Session'}:</b> ${fSession}</span><span><b>${bn ? 'ফি সময়কাল' : 'Fee Period'}:</b> ${receiptData.feePeriod}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:10px"><span><b>${bn ? 'তারিখ' : 'Date'}:</b> ${receiptData.date}</span><span><b>${bn ? 'রসিদ নং' : 'Receipt No'}:</b> ${receiptData.receiptNo}</span></div>
       <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span><b>${bn ? 'নাম' : 'Name'}:</b> ${bn ? receiptData.studentNameBn : receiptData.studentName}</span><span><b>${bn ? 'ভর্তি নং' : 'Adm No'}:</b> ${receiptData.admissionNo}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:10px"><span><b>${bn ? 'শ্রেণি' : 'Class'}:</b> ${receiptData.class}</span><span><b>${bn ? 'সেকশন' : 'Section'}:</b> ${receiptData.section}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span><b>${bn ? 'শ্রেণি' : 'Class'}:</b> ${receiptData.class}</span><span><b>${bn ? 'সেকশন' : 'Section'}:</b> ${receiptData.section}</span></div>
       <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:10px">
         <thead><tr><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600;width:30px">S.No</th><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:left;font-weight:600">${bn ? 'ফি শিরোনাম' : 'Fee Head'}</th><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:right;font-weight:600">${bn ? 'পরিমাণ' : 'Amount'}</th></tr></thead>
         <tbody>${feeRows}</tbody>
@@ -336,7 +340,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     const css = `@page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm;height:100vh}.container{display:flex;gap:20px;height:100%}.copy{flex:1;max-width:50%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}th{background:${b.brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact}}`
     const bodyHTML = `<div class="container"><div class="copy">${leftCopy}</div><div class="copy">${rightCopy}</div></div>`
     openPrintWindow(batch.receiptNo, bodyHTML, { css })
-  }, [bn, structureMap, numberToWords])
+  }, [bn, structureMap, numberToWords, fSession])
 
   return (
     <div className="space-y-4">
