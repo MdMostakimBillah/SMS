@@ -372,7 +372,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const buildReceiptHTML = useCallback((copyLabel: string, data: ReceiptData): string => {
     const b = getPDFBranding()
     const logoHtml = pdfLogoHTML(b, 50)
-    const watermarkHtml = b.logo ? `<img src="${b.logo}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;opacity:0.04;pointer-events:none;object-fit:contain" />` : ''
+    const watermarkHtml = b.logo ? `<img src="${b.logo}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:350px;height:350px;opacity:0.05;pointer-events:none;object-fit:contain" />` : ''
     const feeRows = data.fees.map((f, i) => {
       const period = f.month ? `<span style="font-size:8px;color:#888;font-weight:400">(${f.month}-${f.year})</span>` : (f.year ? `<span style="font-size:8px;color:#888;font-weight:400">(${f.year})</span>` : '')
       const rem = f.remarks ? `<div style="font-size:7px;color:#aaa;font-style:italic">${f.amount.toLocaleString()} amount discount for ${f.remarks}</div>` : ''
