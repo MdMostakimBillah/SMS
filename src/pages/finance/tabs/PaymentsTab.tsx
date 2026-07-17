@@ -41,6 +41,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const [dateTo, setDateTo] = useState('')
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
 
   const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -115,7 +116,27 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     setFMethod('')
     setDateFrom('')
     setDateTo('')
+    setSelectedRows(new Set())
   }, [])
+
+  const toggleRowSelection = useCallback((key: string) => {
+    setSelectedRows((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }, [])
+
+  const toggleAllRows = useCallback(() => {
+    setSelectedRows((prev) => {
+      if (prev.size === batches.length) return new Set()
+      return new Set(batches.map((b) => b.batchKey))
+    })
+  }, [batches])
+
+  const selectedBatches = useMemo(() => batches.filter((b) => selectedRows.has(b.batchKey)), [batches, selectedRows])
+  const hasSelection = selectedRows.size > 0
 
   const pdfColumns = useMemo<PDFColumnDef[]>(() => [
     { key: 'date', label: 'Date', labelBn: 'তারিখ', default: true },
@@ -146,14 +167,17 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   }, [bn, structureMap])
 
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
-    const rows = batches.map((b) => buildPdfRow(b, opts.selectedCols))
+    const data = hasSelection ? selectedBatches : batches
+    const totalAmt = data.reduce((s, b) => s + b.totalAmount, 0)
+    const totalDisc = data.reduce((s, b) => s + b.totalDiscount, 0)
+    const rows = data.map((b) => buildPdfRow(b, opts.selectedCols))
     const summaryRow: Record<string, string | number> = {}
     summaryRow[bn ? 'তারিখ' : 'Date'] = ''
     summaryRow[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? 'মোট' : 'Total'
     summaryRow[bn ? 'রসিদ নং' : 'Receipt No'] = ''
     summaryRow[bn ? 'পরিশোধিত ফি' : 'Fees Paid'] = ''
-    if (opts.selectedCols.includes('amount')) summaryRow[bn ? 'পরিমাণ' : 'Amount'] = totalCollected
-    if (opts.selectedCols.includes('discount')) summaryRow[bn ? 'ছাড়' : 'Discount'] = totalDiscount
+    if (opts.selectedCols.includes('amount')) summaryRow[bn ? 'পরিমাণ' : 'Amount'] = totalAmt
+    if (opts.selectedCols.includes('discount')) summaryRow[bn ? 'ছাড়' : 'Discount'] = totalDisc
     summaryRow[bn ? 'পদ্ধতি' : 'Method'] = ''
     rows.push(summaryRow)
     const pdfBranding = getPDFBranding()
@@ -165,17 +189,20 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     const css = `@page{size:${opts.orientation};margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}`
     const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r, i) => `<tr${i === rows.length - 1 ? ' style="font-weight:700;border-top:2px solid #333;background:#f0f0f0"' : ''}>${headers.map((h) => `<td>${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="ftr">Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>`
     openPrintWindow(opts.title, bodyHTML, { css })
-  }, [batches, pdfColumns, bn, totalCollected, totalDiscount, buildPdfRow])
+  }, [batches, selectedBatches, hasSelection, pdfColumns, bn, buildPdfRow])
 
   const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
-    const rows = batches.slice(0, 20).map((b) => buildPdfRow(b, opts.selectedCols))
+    const data = hasSelection ? selectedBatches : batches
+    const totalAmt = data.reduce((s, b) => s + b.totalAmount, 0)
+    const totalDisc = data.reduce((s, b) => s + b.totalDiscount, 0)
+    const rows = data.slice(0, 20).map((b) => buildPdfRow(b, opts.selectedCols))
     const summaryRow: Record<string, string | number> = {}
     summaryRow[bn ? 'তারিখ' : 'Date'] = ''
     summaryRow[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? 'মোট' : 'Total'
     summaryRow[bn ? 'রসিদ নং' : 'Receipt No'] = ''
     summaryRow[bn ? 'পরিশোধিত ফি' : 'Fees Paid'] = ''
-    if (opts.selectedCols.includes('amount')) summaryRow[bn ? 'পরিমাণ' : 'Amount'] = totalCollected
-    if (opts.selectedCols.includes('discount')) summaryRow[bn ? 'ছাড়' : 'Discount'] = totalDiscount
+    if (opts.selectedCols.includes('amount')) summaryRow[bn ? 'পরিমাণ' : 'Amount'] = totalAmt
+    if (opts.selectedCols.includes('discount')) summaryRow[bn ? 'ছাড়' : 'Discount'] = totalDisc
     summaryRow[bn ? 'পদ্ধতি' : 'Method'] = ''
     rows.push(summaryRow)
     const pdfBranding = getPDFBranding()
@@ -196,10 +223,11 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
         </tbody>
       </table>
     </div>`
-  }, [batches, pdfColumns, bn, totalCollected, totalDiscount, buildPdfRow])
+  }, [batches, selectedBatches, hasSelection, pdfColumns, bn, buildPdfRow])
 
   const exportExcel = useCallback(() => {
-    const sheetData = batches.map((b) => {
+    const data = hasSelection ? selectedBatches : batches
+    const sheetData = data.map((b) => {
       const feeNames = b.payments.map((p) => {
         const fn = structureMap[p.feeStructureId]
         return bn ? (fn?.nameBn || fn?.name || '') : (fn?.name || '')
@@ -218,7 +246,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, bn ? 'পেমেন্ট' : 'Payments')
     XLSX.writeFile(wb, `payments-${new Date().toISOString().split('T')[0]}.xlsx`)
-  }, [batches, bn, structureMap])
+  }, [batches, selectedBatches, hasSelection, bn, structureMap])
 
   const handleDeleteBatch = useCallback((batch: PaymentBatch) => {
     const msg = bn
@@ -400,6 +428,9 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-[var(--bg-secondary)]">
+                  <th className="text-center px-2 py-2 w-[36px]">
+                    <input type="checkbox" checked={batches.length > 0 && selectedRows.size === batches.length} onChange={toggleAllRows} className="w-3.5 h-3.5 accent-[var(--brand)] cursor-pointer" />
+                  </th>
                   <th className="text-center px-2 py-2 w-[36px] text-[10px] uppercase text-[var(--text-muted)] font-bold">#</th>
                   <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
                   <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
@@ -412,7 +443,10 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
               </thead>
               <tbody>
                 {batches.map((b, idx) => (
-                  <tr key={b.batchKey} className="border-t border-[var(--border)] hover:bg-[var(--brand-light)]/30 transition-colors">
+                  <tr key={b.batchKey} className={`border-t border-[var(--border)] transition-colors ${selectedRows.has(b.batchKey) ? 'bg-[var(--brand-light)]/60' : 'hover:bg-[var(--brand-light)]/30'}`}>
+                    <td className="text-center px-2 py-2">
+                      <input type="checkbox" checked={selectedRows.has(b.batchKey)} onChange={() => toggleRowSelection(b.batchKey)} className="w-3.5 h-3.5 accent-[var(--brand)] cursor-pointer" />
+                    </td>
                     <td className="text-center px-2 py-2 text-[var(--text-muted)] text-[11px]">{idx + 1}</td>
                     <td className="px-3 py-2">
                       <p className="font-semibold text-[var(--text-primary)] text-[11px]">{bn ? b.studentNameBn || b.studentName : b.studentName}</p>
@@ -445,6 +479,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
               <tfoot>
                 <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold">
                   <td className="px-2 py-2" />
+                  <td className="px-2 py-2" />
                   <td className="px-3 py-2 text-[10px] uppercase text-[var(--text-muted)]" colSpan={2}>{bn ? 'মোট' : 'Total'} ({batches.length})</td>
                   <td className="px-3 py-2" />
                   <td className="px-3 py-2 text-right text-sm text-[var(--green)]">{fmt(totalCollected)}</td>
@@ -466,7 +501,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
           defaultTitleBn="পেমেন্ট ইতিহাস"
           recordLabel="payment"
           recordLabelBn="পেমেন্ট"
-          count={batches.length}
+          count={hasSelection ? selectedRows.size : batches.length}
           isBn={bn}
           showColumns={true}
           previewRenderer={pdfPreviewRenderer}
