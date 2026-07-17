@@ -20,7 +20,7 @@ interface ReceiptData {
   admissionNo: string
   class: string
   section: string
-  fees: { name: string; nameBn: string; amount: number; month?: string; year?: string; remarks?: string; due?: number; isOnetime?: boolean }[]
+  fees: { name: string; nameBn: string; amount: number; month?: string; year?: string; remarks?: string; due?: number; isOnetime?: boolean; discount?: number }[]
   totalAmount: number
   discount: number
   totalReceived: number
@@ -310,6 +310,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         amount: edit.receive,
         due: Math.max(0, row.receivable - edit.receive - edit.discount),
         isOnetime: row.isOnetime,
+        discount: edit.discount || undefined,
         remarks: edit.remarks || undefined,
       }
       if (!row.isOnetime && forMonth) {
@@ -375,7 +376,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const watermarkHtml = b.logo ? `<img src="${b.logo}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:350px;height:350px;opacity:0.05;pointer-events:none;object-fit:contain" />` : ''
     const feeRows = data.fees.map((f, i) => {
       const period = f.month ? `<span style="font-size:8px;color:#888;font-weight:400">(${f.month}-${f.year})</span>` : (f.year ? `<span style="font-size:8px;color:#888;font-weight:400">(${f.year})</span>` : '')
-      const rem = f.remarks ? `<div style="font-size:7px;color:#aaa;font-style:italic">${f.amount.toLocaleString()} amount discount for ${f.remarks}</div>` : ''
+      const rem = f.remarks ? `<div style="font-size:7px;color:#aaa;font-style:italic">${(f.discount ?? 0).toLocaleString()} amount discount for ${f.remarks}</div>` : ''
       return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name} ${period}</div>${rem}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
     }).join('')
     return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;height:100%;max-width:480px;padding:0 10px;display:flex;flex-direction:column;position:relative">
@@ -872,7 +873,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
                               <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[8px] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
-                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">{f.amount.toLocaleString()} amount discount for {f.remarks}</div>}
+                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">{(f.discount ?? 0).toLocaleString()} amount discount for {f.remarks}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
@@ -921,7 +922,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
                               <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[8px] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
-                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">{f.amount.toLocaleString()} amount discount for {f.remarks}</div>}
+                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">{(f.discount ?? 0).toLocaleString()} amount discount for {f.remarks}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
