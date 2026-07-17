@@ -370,12 +370,10 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const logoHtml = pdfLogoHTML(b, 50)
     const feeRows = data.fees.map((f, i) => {
       const period = f.month ? `<span style="font-size:8px;color:#888;font-weight:400">(${f.month}-${f.year})</span>` : (f.year ? `<span style="font-size:8px;color:#888;font-weight:400">(${f.year})</span>` : '')
-      const rem = f.remarks ? `<div style="font-size:7px;color:#aaa;font-style:italic">Amount for: ${f.remarks}</div>` : ''
-      const due = (f.due ?? 0) > 0 ? `<div style="font-size:8px;color:#ef4444;font-weight:600">Due: ${f.due!.toLocaleString()}</div>` : ''
-      return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name} ${period}</div>${rem}${due}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
+      const rem = f.remarks ? `<div style="font-size:7px;color:#aaa;font-style:italic">Discount for: ${f.remarks}</div>` : ''
+      return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name} ${period}</div>${rem}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
     }).join('')
-    const dueRow = data.totalDue > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555;border-top:2px solid #ef4444">${bn ? 'বকেয়' : 'Due'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#ef4444;border-top:2px solid #ef4444">${data.totalDue.toLocaleString()}</td></tr>` : ''
-    return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;max-width:480px;padding:0 10px">
+    return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;height:100%;max-width:480px;padding:0 10px;display:flex;flex-direction:column">
       <div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid ${b.brandColor};padding-bottom:10px;margin-bottom:12px">
         ${logoHtml}
         <div style="flex:1;text-align:center">
@@ -392,12 +390,13 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         <thead><tr><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600;width:30px">S.No</th><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:left;font-weight:600">${bn ? 'ফি শিরোনাম' : 'Fee Head'}</th><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:right;font-weight:600">${bn ? 'পরিমাণ' : 'Amount'}</th></tr></thead>
         <tbody>${feeRows}</tbody>
       </table>
+      <div style="flex:1"></div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
         <table style="width:220px;border-collapse:collapse;font-size:10px">
           <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555">${bn ? 'মোট' : 'Total'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:${b.brandColor}">${data.totalAmount.toLocaleString()}</td></tr>
           ${data.discount > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555">${bn ? 'ছাড়' : 'Discount'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#f59e0b">${data.discount.toLocaleString()}</td></tr>` : ''}
           <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555;border-top:2px solid ${b.brandColor}">${bn ? 'পরিশোধিত' : 'Paid'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#22c55e;border-top:2px solid ${b.brandColor}">${data.totalReceived.toLocaleString()}</td></tr>
-          ${dueRow}
+          ${data.totalDue > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555;border-top:2px solid #ef4444">${bn ? 'বকেয়' : 'Balance'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#ef4444;border-top:2px solid #ef4444">${data.totalDue.toLocaleString()}</td></tr>` : ''}
         </table>
       </div>
       <div style="font-size:9px;color:#666;margin-bottom:3px"><b>${bn ? 'অর্থের পরিমাণ' : 'Amt in words'}:</b> ${numberToWords(data.totalReceived)} Only.</div>
@@ -457,7 +456,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     }
     const leftCopy = buildReceiptHTML(bn ? 'শিক্ষার্থী কপি' : 'Student Copy', receiptData)
     const rightCopy = buildReceiptHTML(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy', receiptData)
-    const css = `@page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm}.container{display:flex;gap:20px}.copy{flex:1;max-width:50%}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}`
+    const css = `@page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm;height:100vh}.container{display:flex;gap:20px;height:100%}.copy{flex:1;max-width:50%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}`
     const bodyHTML = `<div class=container><div class=copy>${leftCopy}</div><div class=copy>${rightCopy}</div></div>`
     openPrintWindow(rn, bodyHTML, { css })
   }, [selectedStudent, institution, structures, fSession, bn, buildReceiptHTML])
@@ -466,7 +465,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     if (!receiptData) return
     const leftCopy = buildReceiptHTML(bn ? 'শিক্ষার্থী কপি' : 'Student Copy', receiptData)
     const rightCopy = buildReceiptHTML(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy', receiptData)
-    const css = `@page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm}.container{display:flex;gap:20px}.copy{flex:1;max-width:50%}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}`
+    const css = `@page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm;height:100vh}.container{display:flex;gap:20px;height:100%}.copy{flex:1;max-width:50%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}`
     const bodyHTML = `<div class="container"><div class="copy">${leftCopy}</div><div class="copy">${rightCopy}</div></div>`
     openPrintWindow(receiptData.receiptNo, bodyHTML, { css })
   }, [receiptData, bn, buildReceiptHTML])
@@ -867,8 +866,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
                               <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[8px] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
-                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">Amount for: {f.remarks}</div>}
-                              {(f.due ?? 0) > 0 && <div className="text-[8px] text-red-500 font-semibold">{bn ? 'বকেয়:' : 'Due:'} {fmt(f.due!)}</div>}
+                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">Discount for: {f.remarks}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
@@ -880,7 +878,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মোট:' : 'Total:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalAmount)}</span></div>
                         {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">{fmt(receiptData.discount)}</span></div>}
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--green)]">{fmt(receiptData.totalReceived)}</span></div>
-                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মোট বকেয়:' : 'Total Due:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
+                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়:' : 'Balance:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
                       </div>
                     </div>
                   </div>
@@ -917,8 +915,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
                               <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[8px] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
-                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">Amount for: {f.remarks}</div>}
-                              {(f.due ?? 0) > 0 && <div className="text-[8px] text-red-500 font-semibold">{bn ? 'বকেয়:' : 'Due:'} {fmt(f.due!)}</div>}
+                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">Discount for: {f.remarks}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
