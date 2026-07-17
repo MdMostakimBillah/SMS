@@ -291,7 +291,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
 
   const handleReceiveFee = useCallback(() => {
-    if (!selectedStudent || (totalReceive <= 0 && totalDiscount <= 0)) return
+    const hasCheckedWithAmount = displayRows.some((r) => { const e = getRowEdit(r.key); return e.checked && (e.receive > 0 || e.discount > 0) })
+    if (!selectedStudent || !hasCheckedWithAmount) return
     const checkedRows = displayRows.filter((r) => { const e = getRowEdit(r.key); return e.checked && (e.receive > 0 || e.discount > 0) })
     if (checkedRows.length === 0) return
     const batchId = `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -353,7 +354,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     setExtraRows((prev) => prev.filter((r) => !receivedKeys.has(r.key)))
     setEditState({})
     setFindDueTrigger((t) => t + 1)
-  }, [selectedStudent, displayRows, getRowEdit, totalReceive, totalDiscount, receivedDate, addPayment, fSession])
+  }, [selectedStudent, displayRows, getRowEdit, receivedDate, addPayment, fSession])
 
   const numberToWords = useCallback((n: number): string => {
     if (n === 0) return 'Zero'
@@ -810,7 +811,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'প্রাপ্য:' : 'Receivable:'}</span>
                   <span className="font-bold text-sm text-[var(--green)]">{fmt(totalReceivable)}</span>
                 </div>
-                <button onClick={handleReceiveFee} disabled={totalReceive <= 0 && totalDiscount <= 0}
+                <button onClick={handleReceiveFee} disabled={!displayRows.some((r) => { const e = getRowEdit(r.key); return e.checked && (e.receive > 0 || e.discount > 0) })}
                   className="h-10 px-6 rounded-full bg-[var(--green)] text-white font-bold text-[13px] border-0 cursor-pointer flex items-center gap-2 shadow-[0_2px_8px_rgba(34,197,94,0.3)] hover:shadow-[0_4px_12px_rgba(34,197,94,0.4)] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                   <CircleCheck size={16} />{bn ? 'প্রাপ্ত' : 'Receive'}
                 </button>
