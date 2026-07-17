@@ -325,7 +325,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     }
     const rn = `RCP-${Date.now().toString(36).toUpperCase()}`
     const ds = new Date(receivedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    const totalDue = displayRows.filter((r) => !getRowEdit(r.key).checked).reduce((s, r) => s + Math.max(0, r.receivable - getRowEdit(r.key).discount), 0)
+    const totalDue = displayRows.reduce((s, r) => {
+      const edit = getRowEdit(r.key)
+      if (edit.checked) return s + Math.max(0, r.receivable - edit.receive - edit.discount)
+      return s + Math.max(0, r.receivable - edit.discount)
+    }, 0)
     setReceiptData({
       receiptNo: rn,
       date: ds,
@@ -368,12 +372,14 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const buildReceiptHTML = useCallback((copyLabel: string, data: ReceiptData): string => {
     const b = getPDFBranding()
     const logoHtml = pdfLogoHTML(b, 50)
+    const watermarkHtml = b.logo ? `<img src="${b.logo}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;opacity:0.04;pointer-events:none;object-fit:contain" />` : ''
     const feeRows = data.fees.map((f, i) => {
       const period = f.month ? `<span style="font-size:8px;color:#888;font-weight:400">(${f.month}-${f.year})</span>` : (f.year ? `<span style="font-size:8px;color:#888;font-weight:400">(${f.year})</span>` : '')
-      const rem = f.remarks ? `<div style="font-size:7px;color:#aaa;font-style:italic">Discount for: ${f.remarks}</div>` : ''
+      const rem = f.remarks ? `<div style="font-size:7px;color:#aaa;font-style:italic">${f.amount.toLocaleString()} amount discount for ${f.remarks}</div>` : ''
       return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name} ${period}</div>${rem}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
     }).join('')
-    return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;height:100%;max-width:480px;padding:0 10px;display:flex;flex-direction:column">
+    return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;height:100%;max-width:480px;padding:0 10px;display:flex;flex-direction:column;position:relative">
+      ${watermarkHtml}
       <div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid ${b.brandColor};padding-bottom:10px;margin-bottom:12px">
         ${logoHtml}
         <div style="flex:1;text-align:center">
@@ -866,7 +872,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
                               <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[8px] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
-                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">Discount for: {f.remarks}</div>}
+                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">{f.amount.toLocaleString()} amount discount for {f.remarks}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
@@ -915,7 +921,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
                               <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[8px] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
-                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">Discount for: {f.remarks}</div>}
+                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">{f.amount.toLocaleString()} amount discount for {f.remarks}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
