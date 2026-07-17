@@ -41,6 +41,7 @@ export interface FeeWaiver {
   reasonBn: string
   approvedBy: string
   createdAt: string
+  forMonth?: string
 }
 
 export interface FeeDue {

@@ -50,7 +50,7 @@ interface MonthRow {
 function generateMonthRows(
   structures: FeeStructure[],
   payments: { feeStructureId: string; amount: number; discount?: number; paidAt: string; forMonth?: string }[],
-  waivers: { feeStructureId: string; amount: number; createdAt: string }[],
+  waivers: { feeStructureId: string; amount: number; createdAt: string; forMonth?: string }[],
   _studentId: string,
   academicYear: string,
   advanceMonths: number,
@@ -103,7 +103,14 @@ function generateMonthRows(
         const paid = monthPayments.reduce((sum, p) => sum + p.amount, 0)
         const discountFromPayments = monthPayments.reduce((sum, p) => sum + (p.discount || 0), 0)
         const waived = waivers
-          .filter((w) => { if (w.feeStructureId !== struct.id) return false; const d = new Date(w.createdAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
+          .filter((w) => {
+            if (w.feeStructureId !== struct.id) return false
+            if (w.forMonth) {
+              return w.forMonth === `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}`
+            }
+            const d = new Date(w.createdAt)
+            return d.getFullYear() === currentYear && d.getMonth() === monthIdx
+          })
           .reduce((sum, w) => sum + w.amount, 0)
         const receivable = struct.amount - paid - discountFromPayments - Math.min(waived, struct.amount)
         const isPastOrCurrentMonth = currentYear < currentYearNum || (currentYear === currentYearNum && monthIdx <= currentMonthIdx)

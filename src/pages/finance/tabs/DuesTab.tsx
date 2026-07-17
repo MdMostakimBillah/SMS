@@ -239,6 +239,9 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             const discount = monthPayments.reduce((sum, p) => sum + (p.discount || 0), 0)
             const monthWaivers = waivers.filter((w) => {
               if (w.studentId !== student.id || w.feeStructureId !== fee.id) return false
+              if (w.forMonth) {
+                return w.forMonth === `${fYear}-${String(m + 1).padStart(2, '0')}`
+              }
               const d = new Date(w.createdAt)
               return d.getFullYear() === fYear && d.getMonth() === m
             })
