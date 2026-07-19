@@ -57,9 +57,10 @@ describe('admissionStore', () => {
 
   it('getNextId increments with student count', () => {
     const id1 = useAdmissionStore.getState().getNextId()
-    useAdmissionStore.getState().addStudent({ id: 'x' } as any)
+    const year = new Date().getFullYear()
+    useAdmissionStore.getState().addStudent({ id: `ET-${year}-10099` } as any)
     const id2 = useAdmissionStore.getState().getNextId()
-    expect(id2 > id1).toBe(true)
+    expect(id2).toBe(`ET-${year}-10100`)
   })
 
   it('updateStudent does nothing for non-existent id', () => {
