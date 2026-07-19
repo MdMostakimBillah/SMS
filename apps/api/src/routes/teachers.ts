@@ -1,35 +1,16 @@
 import { Router, type Request, type Response } from 'express'
 import type { PrismaClient } from '@prisma/client'
-import jwt from 'jsonwebtoken'
-
-export function authMiddleware(jwtSecret: string) {
-  return (req: Request, res: Response, next: () => void) => {
-    const authHeader = req.headers.authorization
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Missing or invalid authorization header' })
-    }
-    try {
-      const token = authHeader.slice(7)
-      const payload = jwt.verify(token, jwtSecret) as { userId: string; schoolId: string; role: string }
-      ;(req as any).userId = payload.userId
-      ;(req as any).schoolId = payload.schoolId
-      ;(req as any).role = payload.role
-      next()
-    } catch {
-      return res.status(401).json({ error: 'Invalid or expired token' })
-    }
-  }
-}
+import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js'
 
 export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
   const router = Router()
-  const auth = authMiddleware(jwtSecret)
+  const auth = requireAuth(jwtSecret)
 
-  router.get('/', auth, async (req: Request, res: Response) => {
+  router.get('/', auth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = (req as any).schoolId as string
+      const schoolId = req.schoolId
       const teachers = await prisma.teacher.findMany({
-        where: { schoolId },
+        where: { schoolId: schoolId! },
         orderBy: { createdAt: 'desc' },
       })
       res.json(teachers)
@@ -38,12 +19,12 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
-  router.get('/:id', auth, async (req: Request, res: Response) => {
+  router.get('/:id', auth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = (req as any).schoolId as string
+      const schoolId = req.schoolId
       const id = req.params.id as string
       const teacher = await prisma.teacher.findFirst({
-        where: { id, schoolId },
+        where: { id, schoolId: schoolId! },
       })
       if (!teacher) return res.status(404).json({ error: 'Teacher not found' })
       res.json(teacher)
@@ -52,15 +33,15 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
-  router.post('/', auth, async (req: Request, res: Response) => {
+  router.post('/', auth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = (req as any).schoolId as string
+      const schoolId = req.schoolId
       const { nameEn, nameBn, phone, email, departmentId, designation, salary, status, joiningDate, inTime, outTime, photo } = req.body
       if (!nameEn) return res.status(400).json({ error: 'nameEn is required' })
 
       const teacher = await prisma.teacher.create({
         data: {
-          schoolId,
+          schoolId: schoolId!,
           nameEn,
           nameBn: nameBn || null,
           phone: phone || null,
@@ -84,11 +65,11 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
-  router.put('/:id', auth, async (req: Request, res: Response) => {
+  router.put('/:id', auth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = (req as any).schoolId as string
+      const schoolId = req.schoolId
       const id = req.params.id as string
-      const existing = await prisma.teacher.findFirst({ where: { id, schoolId } })
+      const existing = await prisma.teacher.findFirst({ where: { id, schoolId: schoolId! } })
       if (!existing) return res.status(404).json({ error: 'Teacher not found' })
 
       const { nameEn, nameBn, phone, email, departmentId, designation, salary, status, joiningDate, inTime, outTime, photo } = req.body
@@ -118,11 +99,11 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
-  router.delete('/:id', auth, async (req: Request, res: Response) => {
+  router.delete('/:id', auth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = (req as any).schoolId as string
+      const schoolId = req.schoolId
       const id = req.params.id as string
-      const existing = await prisma.teacher.findFirst({ where: { id, schoolId } })
+      const existing = await prisma.teacher.findFirst({ where: { id, schoolId: schoolId! } })
       if (!existing) return res.status(404).json({ error: 'Teacher not found' })
 
       await prisma.teacher.delete({ where: { id } })

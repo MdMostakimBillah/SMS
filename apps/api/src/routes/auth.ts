@@ -3,6 +3,7 @@ import type { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { z } from 'zod'
+import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -103,26 +104,9 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
-  // Auth middleware for protected routes
-  function requireAuth(req: Request, res: Response, next: Function) {
-    const authHeader = req.headers.authorization
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Authentication required' })
-    }
-    try {
-      const token = authHeader.split(' ')[1]
-      const payload = jwt.verify(token, jwtSecret) as { userId: string; role: string }
-      ;(req as any).userId = payload.userId
-      ;(req as any).userRole = payload.role
-      next()
-    } catch {
-      return res.status(401).json({ error: 'Invalid or expired token' })
-    }
-  }
-
   // Only super_admin can list accounts
-  router.get('/accounts', requireAuth, async (req: Request, res: Response) => {
-    if ((req as any).userRole !== 'super_admin') {
+  router.get('/accounts', requireAuth(jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
+    if (req.userRole !== 'super_admin') {
       return res.status(403).json({ error: 'Forbidden: super_admin only' })
     }
     try {
@@ -145,8 +129,8 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string) {
   })
 
   // Get super admin credentials
-  router.get('/super-admin', requireAuth, async (req: Request, res: Response) => {
-    if ((req as any).userRole !== 'super_admin') {
+  router.get('/super-admin', requireAuth(jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
+    if (req.userRole !== 'super_admin') {
       return res.status(403).json({ error: 'Forbidden' })
     }
     try {
@@ -162,8 +146,8 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string) {
   })
 
   // Update super admin credentials
-  router.put('/super-admin', requireAuth, async (req: Request, res: Response) => {
-    if ((req as any).userRole !== 'super_admin') {
+  router.put('/super-admin', requireAuth(jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
+    if (req.userRole !== 'super_admin') {
       return res.status(403).json({ error: 'Forbidden' })
     }
     try {

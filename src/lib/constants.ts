@@ -68,7 +68,7 @@ export const DAYS_OF_WEEK = [
   { value: 3, labelEn: 'Wednesday', labelBn: 'বুধবার', shortEn: 'Wed', shortBn: 'বুধ' },
   { value: 4, labelEn: 'Thursday', labelBn: 'বৃহস্পতিবার', shortEn: 'Thu', shortBn: 'বৃহ' },
   { value: 5, labelEn: 'Friday', labelBn: 'শুক্রবার', shortEn: 'Fri', shortBn: 'শুক্র' },
-  { value: 6, labelEn: 'Saturday', labelBn: 'शनिबार', shortEn: 'Sat', shortBn: 'শনি' },
+  { value: 6, labelEn: 'Saturday', labelBn: 'শনিবার', shortEn: 'Sat', shortBn: 'শনি' },
 ]
 
 export const WEEKEND_DAYS = [5]

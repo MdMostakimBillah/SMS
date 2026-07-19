@@ -171,28 +171,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    // Try API verification first (database credentials)
     try {
-      // Try API verification first (database credentials)
-      try {
-        const result = await authApi.verifySuperAdmin(email, password)
-        if (result.valid) {
-          const token = createSuperAdminToken()
-          const user = createSuperAdminUser()
-          localStorage.setItem('edutech_admin_credentials', JSON.stringify({ email, password }))
-          setAuthToken(token)
-          setToken(token)
-          setUser(user)
-          localStorage.setItem(SESSION_KEY, String(Date.now()))
-          clearLoginAttempts()
-          return
-        }
-      } catch {
-        // API not available, fall back to local check
-      }
-
-      // Fallback: check local credentials (localStorage overrides + .env defaults)
-      if (validateAdminCredentials(email, password)) {
-        const token = createSuperAdminToken()
+      const result = await authApi.verifySuperAdmin(email, password)
+      if (result.valid) {
+        const token = await createSuperAdminToken(password)
         const user = createSuperAdminUser()
         setAuthToken(token)
         setToken(token)
@@ -201,58 +184,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearLoginAttempts()
         return
       }
+    } catch {
+      // API not available, fall back to local check
+    }
 
-      // Final fallback: always allow .env defaults regardless of localStorage
-      const envEmail = import.meta.env.VITE_SUPER_ADMIN_EMAIL || 'admin@edutech.com'
-      const envPassword = import.meta.env.VITE_SUPER_ADMIN_PASSWORD || 'Admin@123456'
-      if (email === envEmail && password === envPassword) {
-        const token = createSuperAdminToken()
-        const user = createSuperAdminUser()
-        setAuthToken(token)
-        setToken(token)
-        setUser(user)
-        localStorage.setItem(SESSION_KEY, String(Date.now()))
-        clearLoginAttempts()
-        return
-      }
+    // Fallback: check local credentials (localStorage overrides + .env defaults)
+    if (validateAdminCredentials(email, password)) {
+      const token = await createSuperAdminToken(password)
+      const user = createSuperAdminUser()
+      setAuthToken(token)
+      setToken(token)
+      setUser(user)
+      localStorage.setItem(SESSION_KEY, String(Date.now()))
+      clearLoginAttempts()
+      return
+    }
 
-      // Try regular API login
-      try {
-        const res = await authApi.login(email, password)
-        setAuthToken(res.token)
-        setToken(res.token)
-        setUser(res.user)
-        localStorage.setItem(SESSION_KEY, String(Date.now()))
-        clearLoginAttempts()
-      } catch (err) {
-        const msg = err instanceof ApiError ? err.message : 'Invalid credentials'
-        recordFailedAttempt()
-        const attempts = getAttempts()
-        if (attempts >= MAX_ATTEMPTS) {
-          setIsLockedOut(true)
-          setLockoutRemaining(LOCKOUT_DURATION)
-          setError(`Too many failed attempts. Locked out for 5 minutes.`)
-        } else {
-          setError(`${msg}. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`)
-        }
-        throw err
-      }
+    // Try regular API login
+    try {
+      const res = await authApi.login(email, password)
+      setAuthToken(res.token)
+      setToken(res.token)
+      setUser(res.user)
+      localStorage.setItem(SESSION_KEY, String(Date.now()))
+      clearLoginAttempts()
     } catch (err) {
-      // If we haven't set error yet (from non-API login paths that failed)
-      if (!error && !isCurrentlyLockedOut()) {
-        recordFailedAttempt()
-        const attempts = getAttempts()
-        if (attempts >= MAX_ATTEMPTS) {
-          setIsLockedOut(true)
-          setLockoutRemaining(LOCKOUT_DURATION)
-          setError(`Invalid credentials. Too many failed attempts. Locked out for 5 minutes.`)
-        } else {
-          setError(`Invalid credentials. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`)
-        }
+      const msg = err instanceof ApiError ? err.message : 'Invalid credentials'
+      recordFailedAttempt()
+      const attempts = getAttempts()
+      if (attempts >= MAX_ATTEMPTS) {
+        setIsLockedOut(true)
+        setLockoutRemaining(LOCKOUT_DURATION)
+        setError(`Too many failed attempts. Locked out for 5 minutes.`)
+      } else {
+        setError(`${msg}. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`)
       }
       throw err
     }
-  }, [error])
+  }, [])
 
   const register = useCallback(async (email: string, password: string, name: string, role?: string) => {
     setError(null)
