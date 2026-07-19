@@ -11,7 +11,7 @@ export const InactiveDuesTab = React.memo(function InactiveDuesTab() {
   const bn = useBn()
   const students = useSessionStudents()
   const { classes } = useClassStore()
-  const { structures, payments, waivers, calculateDues } = useFeeStore()
+  const { structures, payments, waiverEntries, calculateDues } = useFeeStore()
   const [search, setSearch] = useState('')
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
@@ -22,7 +22,7 @@ export const InactiveDuesTab = React.memo(function InactiveDuesTab() {
 
   const inactiveStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active === false), [students])
 
-  const dues = useMemo(() => calculateDues(inactiveStudents, fClass || undefined, fSection || undefined, true), [inactiveStudents, fClass, fSection, structures, payments, waivers])
+  const dues = useMemo(() => calculateDues(inactiveStudents, fClass || undefined, fSection || undefined, true), [inactiveStudents, fClass, fSection, structures, payments, waiverEntries])
 
   const filteredDues = useMemo(() => {
     if (!search) return dues

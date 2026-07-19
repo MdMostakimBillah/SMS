@@ -171,7 +171,7 @@ const STATIC_OPTIONS: {
 export default function FeeManagementPage() {
   const bn = useBn()
   const { isMobile, isTablet } = useWindowSize()
-  const { structures, payments, addStructure, updateStructure, addPayment, addWaiver, bulkAddStructures } = useFeeStore()
+  const { structures, payments, addStructure, updateStructure, addPayment, bulkAddStructures } = useFeeStore()
   const { feeCardsOrder, setFeeCardsOrder, trackVisit } = useAppStore()
   const [searchParams, setSearchParams] = useSearchParams()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -437,10 +437,7 @@ export default function FeeManagementPage() {
 
         {showWaiverModal && (
           <WaiverModal
-            onSaved={(waiver) => {
-              addWaiver(waiver)
-              setShowWaiverModal(false)
-            }}
+            onSaved={() => setShowWaiverModal(false)}
             onClose={() => setShowWaiverModal(false)}
           />
         )}

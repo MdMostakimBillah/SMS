@@ -138,7 +138,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const bn = useBn()
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
-  const { structures, payments, waivers, addPayment, deletePayment } = useFeeStore()
+  const { structures, payments, generateWaivers, addPayment, deletePayment } = useFeeStore()
+  const waivers = useMemo(() => generateWaivers(), [generateWaivers, structures, payments])
 
   const [fSession, setFSession] = useState(institution?.currentSession || '')
   const [fClass, setFClass] = useState('')
