@@ -102,56 +102,26 @@ export const TodayTab = React.memo(function TodayTab({
   return (
     <>
       {/* Stats cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5 mb-3.5">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-[0.625rem] mb-3.5">
         {[
-          {
-            lBn: 'মোট',
-            lEn: 'Total',
-            v: filteredEmployees.length + filteredStudents.length,
-            Icon: Users,
-            c: 'var(--brand)',
-            bg: 'var(--brand-light)',
-          },
-          {
-            lBn: 'স্টাফ',
-            lEn: 'Staff',
-            v: filteredEmployees.length,
-            Icon: Briefcase,
-            c: 'var(--brand)',
-            bg: 'var(--brand-light)',
-          },
-          {
-            lBn: 'শিক্ষার্থী',
-            lEn: 'Students',
-            v: filteredStudents.length,
-            Icon: GraduationCap,
-            c: 'var(--green)',
-            bg: 'var(--green-light)',
-          },
-          {
-            lBn: 'অনুপস্থিত',
-            lEn: 'Absent',
-            v: stats.absent,
-            Icon: XCircle,
-            c: 'var(--red)',
-            bg: 'var(--red-light)',
-          },
-          {
-            lBn: 'ছুটিতে',
-            lEn: 'Leave',
-            v: stats.onLeave,
-            Icon: Clock,
-            c: 'var(--amber)',
-            bg: 'var(--amber-light)',
-          },
+          { lBn: 'মোট', lEn: 'Total', v: filteredEmployees.length + filteredStudents.length, Icon: Users, c: 'var(--brand)', bg: 'var(--brand-light)' },
+          { lBn: 'স্টাফ', lEn: 'Staff', v: filteredEmployees.length, Icon: Briefcase, c: 'var(--brand)', bg: 'var(--brand-light)' },
+          { lBn: 'শিক্ষার্থী', lEn: 'Students', v: filteredStudents.length, Icon: GraduationCap, c: 'var(--green)', bg: 'var(--green-light)' },
+          { lBn: 'অনুপস্থিত', lEn: 'Absent', v: stats.absent, Icon: XCircle, c: 'var(--red)', bg: 'var(--red-light)' },
+          { lBn: 'ছুটিতে', lEn: 'Leave', v: stats.onLeave, Icon: Clock, c: 'var(--amber)', bg: 'var(--amber-light)' },
         ].map((s) => (
-          <div key={s.lEn} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5 flex items-center gap-3">
-            <div className="w-[2.375rem] h-[2.375rem] rounded-[0.625rem] flex items-center justify-center shrink-0" style={{ background: s.bg }}>
-              <s.Icon size={18} style={{ color: s.c }} />
+          <div
+            key={s.lEn}
+            className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+          >
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: s.bg }}>
+              <s.Icon size={15} style={{ color: s.c }} />
             </div>
-            <div>
-              <div className="text-xl font-bold text-[var(--text-primary)]">{s.v}</div>
-              <div className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? s.lBn : s.lEn}</div>
+            <div className="min-w-0">
+              <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{s.v}</div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{isBn ? s.lBn : s.lEn}</div>
             </div>
           </div>
         ))}

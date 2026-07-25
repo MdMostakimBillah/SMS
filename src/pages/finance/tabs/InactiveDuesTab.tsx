@@ -38,19 +38,33 @@ export const InactiveDuesTab = React.memo(function InactiveDuesTab() {
   return (
     <div>
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {[
-          { label: bn ? 'মোট বকেয়' : 'Total Due', value: fmt(totalDue), color: 'var(--brand)', icon: <DollarSign size={16} /> },
-          { label: bn ? 'নিষ্ক্রিয় শিক্ষার্থী' : 'Inactive Students', value: String(studentCount), color: 'var(--amber)', icon: <Users size={16} /> },
-        ].map((s, i) => (
-          <div key={i} className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${s.color}12`, color: s.color }}>{s.icon}</span>
-              <span className="text-[0.7rem] text-[var(--text-secondary)]">{s.label}</span>
-            </div>
-            <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
+      <div className="grid grid-cols-2 gap-[0.625rem] mb-4">
+        <div
+          className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+        >
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand-light)' }}>
+            <DollarSign size={15} style={{ color: 'var(--brand)' }} />
           </div>
-        ))}
+          <div className="min-w-0">
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalDue)}</div>
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট বকেয়' : 'Total Due'}</div>
+          </div>
+        </div>
+        <div
+          className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+        >
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--amber-light)' }}>
+            <Users size={15} style={{ color: 'var(--amber)' }} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{String(studentCount)}</div>
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'নিষ্ক্রিয় শিক্ষার্থী' : 'Inactive Students'}</div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}

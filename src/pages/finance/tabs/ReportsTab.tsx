@@ -16,27 +16,40 @@ export const ReportsTab = React.memo(function ReportsTab() {
   const fmt = (n: number) => n.toLocaleString()
 
   const stats = [
-    { label: bn ? 'মোট সংগ্রহ' : 'Total Collected', value: fmt(summary.totalCollected), color: 'var(--green)', icon: <DollarSign size={18} /> },
-    { label: bn ? 'এই মাসে' : 'This Month', value: fmt(summary.collectedThisMonth), color: 'var(--brand)', icon: <TrendingUp size={18} /> },
-    { label: bn ? 'অপেক্ষমাণ' : 'Pending', value: fmt(summary.totalPending), color: 'var(--amber)', icon: <AlertTriangle size={18} /> },
-    { label: bn ? 'অতিক্রান্ত' : 'Overdue', value: fmt(summary.totalOverdue), color: 'var(--red)', icon: <AlertTriangle size={18} /> },
-    { label: bn ? 'মোট ছাড়' : 'Total Waived', value: fmt(summary.totalWaived), color: 'var(--purple)', icon: <Gift size={18} /> },
-    { label: bn ? 'মোট পেমেন্ট' : 'Total Payments', value: String(summary.paymentCount), color: 'var(--teal)', icon: <BarChart3 size={18} /> },
+    { label: bn ? 'মোট সংগ্রহ' : 'Total Collected', value: fmt(summary.totalCollected), icon: DollarSign, bg: 'var(--green-light)', color: 'var(--green)' },
+    { label: bn ? 'এই মাসে' : 'This Month', value: fmt(summary.collectedThisMonth), icon: TrendingUp, bg: 'var(--brand-light)', color: 'var(--brand)' },
+    { label: bn ? 'অপেক্ষমাণ' : 'Pending', value: fmt(summary.totalPending), icon: AlertTriangle, bg: 'var(--amber-light)', color: 'var(--amber)' },
+    { label: bn ? 'অতিক্রান্ত' : 'Overdue', value: fmt(summary.totalOverdue), icon: AlertTriangle, bg: 'var(--red-light)', color: 'var(--red)' },
+    { label: bn ? 'মোট ছাড়' : 'Total Waived', value: fmt(summary.totalWaived), icon: Gift, bg: 'var(--purple-light)', color: 'var(--purple)' },
+    { label: bn ? 'মোট পেমেন্ট' : 'Total Payments', value: String(summary.paymentCount), icon: BarChart3, bg: 'var(--teal-light)', color: 'var(--teal)' },
   ]
 
   return (
     <div>
       {/* Overview Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        {stats.map((s, i) => (
-          <div key={i} className="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${s.color}12`, color: s.color }}>{s.icon}</span>
-              <span className="text-[0.7rem] text-[var(--text-secondary)]">{s.label}</span>
+      <div className="grid grid-cols-3 gap-[0.625rem] mb-5">
+        {stats.map((s, i) => {
+          const IconComp = s.icon
+          return (
+            <div
+              key={i}
+              className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+            >
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: s.bg }}
+              >
+                <IconComp size={15} style={{ color: s.color }} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{s.value}</div>
+                <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{s.label}</div>
+              </div>
             </div>
-            <p className="text-xl font-bold" style={{ color: s.color }}>{s.value}</p>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Class-wise Summary */}

@@ -267,7 +267,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const totalDiscount = useMemo(() => displayRows.reduce((sum, r) => sum + getRowEdit(r.key).discount, 0), [displayRows, getRowEdit])
   const totalReceivable = useMemo(() => displayRows.filter((r) => getRowEdit(r.key).checked).reduce((sum, r) => sum + r.amount - getRowEdit(r.key).discount, 0), [displayRows, getRowEdit])
   const totalReceive = useMemo(() => displayRows.filter((r) => getRowEdit(r.key).checked).reduce((sum, r) => sum + getRowEdit(r.key).receive, 0), [displayRows, getRowEdit])
-  const selectedCount = useMemo(() => displayRows.filter((r) => getRowEdit(r.key).checked).length, [displayRows, getRowEdit])
 
   const studentPayments = useMemo(() => {
     if (!selectedStudent) return []

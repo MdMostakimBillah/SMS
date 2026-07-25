@@ -542,20 +542,34 @@ export default function SyllabusPage() {
         {/* ═══ HOME VIEW - Class Cards ═══ */}
         {view === 'home' && (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-[0.625rem] mb-4">
               {[
-                { label: isBn ? 'মোট শ্রেণি' : 'Total Classes', value: classes.length, color: 'var(--brand)' },
-                { label: isBn ? 'মোট সিলেবাস' : 'Total Syllabi', value: syllabi.length, color: 'var(--green)' },
-                { label: isBn ? 'মোট অধ্যায়' : 'Total Chapters', value: syllabi.reduce((s, sy) => s + sy.totalChapters, 0), color: 'var(--amber)' },
-                { label: isBn ? 'সম্পন্ন' : 'Completed', value: syllabi.reduce((s, sy) => s + sy.completedTopics, 0), color: 'var(--purple)' },
-              ].map((st, i) => (
-                <div key={i} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3">
-                  <div className="text-[1.125rem] font-bold" style={{ color: st.color }}>
-                    {st.value}
+                { label: isBn ? 'মোট শ্রেণি' : 'Total Classes', value: classes.length, icon: GraduationCap, bg: 'var(--brand-light)', color: 'var(--brand)' },
+                { label: isBn ? 'মোট সিলেবাস' : 'Total Syllabi', value: syllabi.length, icon: BookOpen, bg: 'var(--green-light)', color: 'var(--green)' },
+                { label: isBn ? 'মোট অধ্যায়' : 'Total Chapters', value: syllabi.reduce((s, sy) => s + sy.totalChapters, 0), icon: FileText, bg: 'var(--amber-light)', color: 'var(--amber)' },
+                { label: isBn ? 'সম্পন্ন' : 'Completed', value: syllabi.reduce((s, sy) => s + sy.completedTopics, 0), icon: CheckCircle, bg: 'var(--purple-light)', color: 'var(--purple)' },
+              ].map((st, i) => {
+                const IconComp = st.icon
+                return (
+                  <div
+                    key={i}
+                    className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ background: st.bg }}
+                    >
+                      <IconComp size={15} style={{ color: st.color }} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{st.value}</div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{st.label}</div>
+                    </div>
                   </div>
-                  <div className="text-[0.625rem] text-[var(--text-muted)]">{st.label}</div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-3">
@@ -744,17 +758,30 @@ export default function SyllabusPage() {
         {view === 'detail' && selectedSyllabus && (
           <div className="grid gap-3">
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-3 mb-2">
+            <div className="grid grid-cols-3 gap-[0.625rem] mb-2">
               {[
-                { label: isBn ? 'অধ্যায়' : 'Chapters', value: selectedSyllabus.totalChapters, color: 'var(--brand)' },
-                { label: isBn ? 'টপিক' : 'Topics', value: selectedSyllabus.totalTopics, color: 'var(--amber)' },
-                { label: isBn ? 'সম্পন্ন' : 'Done', value: selectedSyllabus.completedTopics, color: 'var(--green)' },
-              ].map((st, i) => (
-                <div key={i} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3 text-center">
-                  <div className="text-[1rem] font-bold" style={{ color: st.color }}>{st.value}</div>
-                  <div className="text-[0.625rem] text-[var(--text-muted)]">{st.label}</div>
-                </div>
-              ))}
+                { label: isBn ? 'অধ্যায়' : 'Chapters', value: selectedSyllabus.totalChapters, icon: BookOpen, bg: 'var(--brand-light)', color: 'var(--brand)' },
+                { label: isBn ? 'টপিক' : 'Topics', value: selectedSyllabus.totalTopics, icon: FileText, bg: 'var(--amber-light)', color: 'var(--amber)' },
+                { label: isBn ? 'সম্পন্ন' : 'Done', value: selectedSyllabus.completedTopics, icon: CheckCircle, bg: 'var(--green-light)', color: 'var(--green)' },
+              ].map((st, i) => {
+                const IconComp = st.icon
+                return (
+                  <div
+                    key={i}
+                    className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+                  >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: st.bg }}>
+                      <IconComp size={15} style={{ color: st.color }} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{st.value}</div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{st.label}</div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
 
             {/* Chapter Header */}

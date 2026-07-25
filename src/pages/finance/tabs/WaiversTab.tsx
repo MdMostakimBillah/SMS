@@ -219,12 +219,18 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
   return (
     <div>
       {/* Summary */}
-      <div className="flex items-center justify-between mb-4 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
-        <div className="flex items-center gap-2">
-          <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--purple-light)]"><Gift size={16} className="text-[var(--purple)]" /></span>
-          <div>
-            <p className="text-[0.65rem] text-[var(--text-muted)]">{bn ? 'মোট ছাড়' : 'Total Waived'}</p>
-            <p className="text-sm font-bold text-[var(--purple)]">{fmt(totalWaived)}</p>
+      <div className="flex items-center justify-between mb-4">
+        <div
+          className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+        >
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--purple-light)' }}>
+            <Gift size={15} style={{ color: 'var(--purple)' }} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalWaived)}</div>
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট ছাড়' : 'Total Waived'}</div>
           </div>
         </div>
         <button onClick={onAddWaiver} className="flex items-center gap-1 py-1.5 px-3 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer">
