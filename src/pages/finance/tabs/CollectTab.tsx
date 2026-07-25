@@ -718,19 +718,10 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             </div>
           ) : (
             <div className="border border-[var(--border)] rounded-xl overflow-hidden max-h-[360px] overflow-y-auto bg-[var(--bg-primary)]">
-              <table className="w-full text-[12.5px]" style={{ tableLayout: 'fixed' }}>
-                <colgroup>
-                  <col style={{ width: '24px' }} />
-                  <col style={{ width: '28%' }} />
-                  <col style={{ width: '12%' }} />
-                  <col style={{ width: '11%' }} />
-                  <col style={{ width: '13%' }} />
-                  <col style={{ width: '12%' }} />
-                  <col style={{ width: '12%' }} />
-                </colgroup>
+              <table className="w-full text-[12.5px]">
                 <thead>
                   <tr className="bg-[var(--bg-secondary)]">
-                    <th className="text-center py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">
+                    <th className="text-center py-2 px-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-10">
                       <input type="checkbox" checked={displayRows.length > 0 && displayRows.every((r) => getRowEdit(r.key).checked)}
                         onChange={() => { const ac = displayRows.every((r) => getRowEdit(r.key).checked); const next: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}; for (const r of displayRows) { const e = getRowEdit(r.key); const newChecked = !ac; next[r.key] = { ...e, checked: newChecked, receive: newChecked ? Math.max(0, r.receivable - e.discount) : 0 } }; setEditState((prev) => ({ ...prev, ...next })) }}
                         className="w-3 h-3 accent-[var(--brand)]" />
@@ -748,7 +739,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     const edit = getRowEdit(row.key)
                     return (
                       <tr key={row.key} className={`transition-colors border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40 ${!edit.checked ? 'opacity-45' : ''}`}>
-                        <td className="text-center py-2">
+                        <td className="text-center py-2 px-2">
                           <input type="checkbox" checked={edit.checked} onChange={(e) => {
                             const checked = e.target.checked
                             setEditState((prev) => {
