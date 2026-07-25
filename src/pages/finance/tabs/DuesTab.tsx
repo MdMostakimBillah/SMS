@@ -601,20 +601,32 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
       {/* Stats — only shown after Find Due */}
       {showResults && results.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)]"><DollarSign size={16} /></span>
-              <span className="text-[0.7rem] text-[var(--text-secondary)]">{bn ? 'মোট বকেয়' : 'Total Due'}</span>
+        <div className="grid grid-cols-2 gap-[0.625rem]">
+          <div
+            className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+          >
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand-light)' }}>
+              <DollarSign size={15} style={{ color: 'var(--brand)' }} />
             </div>
-            <p className="text-lg font-bold text-[var(--brand)]">{fmt(totalDue)}</p>
+            <div className="min-w-0">
+              <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalDue)}</div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট বকেয়' : 'Total Due'}</div>
+            </div>
           </div>
-          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)]">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--amber-light)] text-[var(--amber)]"><Users size={16} /></span>
-              <span className="text-[0.7rem] text-[var(--text-secondary)]">{bn ? 'বকেয় শিক্ষার্থী' : 'Students with Dues'}</span>
+          <div
+            className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+          >
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--amber-light)' }}>
+              <Users size={15} style={{ color: 'var(--amber)' }} />
             </div>
-            <p className="text-lg font-bold text-[var(--amber)]">{studentCount}</p>
+            <div className="min-w-0">
+              <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{studentCount}</div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'বকেয় শিক্ষার্থী' : 'Students with Dues'}</div>
+            </div>
           </div>
         </div>
       )}
