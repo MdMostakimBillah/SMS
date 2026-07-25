@@ -345,10 +345,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
   const exportExcel = useCallback(() => {
     const rows = results
-    const sheetData = rows.map((r) => {
+    const sheetData = rows.map((r, idx) => {
       const row: Record<string, string | number> = {
+        [bn ? 'ক্রমিক' : 'S/N']: idx + 1,
         [bn ? 'শিক্ষার্থী' : 'Student']: bn ? r.studentNameBn || r.studentName : r.studentName,
         [bn ? 'রোল' : 'Roll']: r.roll,
+        [bn ? 'শিক্ষার্থী আইডি' : 'Student ID']: r.studentId,
         [bn ? 'শ্রেণি' : 'Class']: `${r.class}${r.section ? `-${r.section}` : ''}`,
         [bn ? 'ফি' : 'Fee']: bn ? r.feeNameBn : r.feeName,
         [bn ? 'ধরন' : 'Type']: r.feeType === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'),
@@ -372,8 +374,10 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
   const pdfColumns = useMemo<PDFColumnDef[]>(() => {
     const cols: PDFColumnDef[] = [
+      { key: 'sn', label: 'S/N', labelBn: 'ক্রমিক', default: true },
       { key: 'student', label: 'Student', labelBn: 'শিক্ষার্থী', default: true },
       { key: 'roll', label: 'Roll', labelBn: 'রোল', default: true },
+      { key: 'studentId', label: 'Student ID', labelBn: 'শিক্ষার্থী আইডি', default: true },
       { key: 'class', label: 'Class', labelBn: 'শ্রেণি', default: true },
       { key: 'fee', label: 'Fee', labelBn: 'ফি', default: true },
       { key: 'type', label: 'Type', labelBn: 'ধরন', default: true },
@@ -389,10 +393,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     return cols
   }, [showMonthPicker, sortedMonths, bn])
 
-  const buildPdfRow = useCallback((r: DueMatrixRow, selectedCols: string[]): Record<string, string | number> => {
+  const buildPdfRow = useCallback((r: DueMatrixRow, selectedCols: string[], idx: number): Record<string, string | number> => {
     const row: Record<string, string | number> = {}
+    if (selectedCols.includes('sn')) row[bn ? 'ক্রমিক' : 'S/N'] = idx + 1
     if (selectedCols.includes('student')) row[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? r.studentNameBn || r.studentName : r.studentName
     if (selectedCols.includes('roll')) row[bn ? 'রোল' : 'Roll'] = r.roll
+    if (selectedCols.includes('studentId')) row[bn ? 'শিক্ষার্থী আইডি' : 'Student ID'] = r.studentId
     if (selectedCols.includes('class')) row[bn ? 'শ্রেণি' : 'Class'] = `${r.class}${r.section ? `-${r.section}` : ''}`
     if (selectedCols.includes('fee')) row[bn ? 'ফি' : 'Fee'] = bn ? r.feeNameBn : r.feeName
     if (selectedCols.includes('type')) row[bn ? 'ধরন' : 'Type'] = r.feeType === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')
@@ -411,8 +417,10 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
     const selectedData = results.filter((r) => selectedRows.has(`${r.studentId}-${r.feeStructureId}`))
-    const rows = selectedData.map((r) => buildPdfRow(r, opts.selectedCols))
+    const rows = selectedData.map((r, i) => buildPdfRow(r, opts.selectedCols, i))
     const summaryRow: Record<string, string | number> = {}
+    if (opts.selectedCols.includes('sn')) summaryRow[bn ? 'ক্রমিক' : 'S/N'] = ''
+    if (opts.selectedCols.includes('studentId')) summaryRow[bn ? 'শিক্ষার্থী আইডি' : 'Student ID'] = ''
     summaryRow[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? 'মোট' : 'Total'
     if (opts.selectedCols.includes('roll')) summaryRow[bn ? 'রোল' : 'Roll'] = ''
     if (opts.selectedCols.includes('class')) summaryRow[bn ? 'শ্রেণি' : 'Class'] = ''
@@ -443,8 +451,10 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
   const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
     const selectedData = results.filter((r) => selectedRows.has(`${r.studentId}-${r.feeStructureId}`))
-    const rows = selectedData.map((r) => buildPdfRow(r, opts.selectedCols))
+    const rows = selectedData.map((r, i) => buildPdfRow(r, opts.selectedCols, i))
     const summaryRow: Record<string, string | number> = {}
+    if (opts.selectedCols.includes('sn')) summaryRow[bn ? 'ক্রমিক' : 'S/N'] = ''
+    if (opts.selectedCols.includes('studentId')) summaryRow[bn ? 'শিক্ষার্থী আইডি' : 'Student ID'] = ''
     summaryRow[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? 'মোট' : 'Total'
     if (opts.selectedCols.includes('roll')) summaryRow[bn ? 'রোল' : 'Roll'] = ''
     if (opts.selectedCols.includes('class')) summaryRow[bn ? 'শ্রেণি' : 'Class'] = ''
@@ -489,113 +499,108 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   return (
     <div className="space-y-4">
       {/* Filter Toolbar */}
-      <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] space-y-2.5">
-        {/* Row 1: Year + Type + Category + Status + Month + Find Due */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <select
-            value={fSession}
-            onChange={(e) => { setFSession(e.target.value); setShowResults(false); setSelectedRows(new Set()) }}
-            className={selectCls}
-          >
-            {sessions.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <select
-            value={fType}
-            onChange={(e) => { setFType(e.target.value as '' | 'monthly' | 'onetime'); setFCategory(''); setShowResults(false); setSelectedRows(new Set()) }}
-            className={selectCls}
-          >
-            <option value="">{bn ? 'সব ধরন' : 'All types'}</option>
-            <option value="monthly">{bn ? 'মাসিক' : 'Monthly'}</option>
-            <option value="onetime">{bn ? 'এককালীন' : 'One-time'}</option>
-          </select>
-          <select
-            value={fCategory}
-            onChange={(e) => { setFCategory(e.target.value); setShowResults(false); setSelectedRows(new Set()) }}
-            className={selectCls}
-          >
-            <option value="">{bn ? 'সব ক্যাটাগরি' : 'All categories'}</option>
-            {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select
-            value={fStatus}
-            onChange={(e) => { setFStatus(e.target.value as 'all' | 'paid' | 'due'); setSelectedRows(new Set()) }}
-            className={selectCls}
-          >
-            <option value="all">{bn ? 'সব' : 'All'}</option>
-            <option value="paid">{bn ? 'পরিশোধিত' : 'Paid'}</option>
-            <option value="due">{bn ? 'বকেয়' : 'Due'}</option>
-          </select>
-          {showMonthPicker && (
-            <div className="relative" ref={monthDropdownRef}>
-              <button
-                onClick={() => setShowMonthDropdown((p) => !p)}
-                className="h-[34px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] cursor-pointer flex items-center gap-1.5 min-w-[160px] outline-none focus:border-[var(--brand)]"
-              >
-                <CalendarDays size={13} className="text-[var(--text-muted)] flex-shrink-0" />
-                <span className="truncate text-left flex-1">{monthDisplayText}</span>
-                <ChevronDown size={13} className="text-[var(--text-muted)] flex-shrink-0" />
-              </button>
-              {showMonthDropdown && (
-                <div className="absolute z-50 mt-1 w-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_12px_30px_rgba(20,23,33,0.12)] p-2">
-                  <div className="flex items-center gap-1 mb-1.5 pb-1.5 border-b border-[var(--border)]">
-                    <button onClick={selectAllMonths} className="text-[11px] font-semibold text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0">{bn ? 'সব নির্বাচন' : 'Select all'}</button>
-                    <span className="text-[var(--text-muted)]">·</span>
-                    <button onClick={clearAllMonths} className="text-[11px] font-semibold text-[var(--text-muted)] hover:underline cursor-pointer bg-transparent border-0 p-0">{bn ? 'পরিষ্কার' : 'Clear'}</button>
-                    <span className="text-[11px] text-[var(--text-muted)] ml-auto">{selectedMonths.size}/12</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-1">
-                    {MONTH_LABELS.map((m, i) => (
-                      <button
-                        key={i}
-                        onClick={() => toggleMonth(i)}
-                        className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium border cursor-pointer transition-all ${
-                          selectedMonths.has(i)
-                            ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]'
-                            : 'bg-transparent border-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
-                        }`}
-                      >
-                        <div className={`w-3.5 h-3.5 rounded flex items-center justify-center flex-shrink-0 border ${selectedMonths.has(i) ? 'bg-[var(--brand)] border-[var(--brand)]' : 'border-[var(--border)]'}`}>
-                          {selectedMonths.has(i) && <CheckCircle2 size={9} className="text-white" />}
-                        </div>
-                        {bn ? m.bn : m.en}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          <div className="ml-auto">
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] flex items-center gap-2 flex-wrap">
+        <select
+          value={fSession}
+          onChange={(e) => { setFSession(e.target.value); setShowResults(false); setSelectedRows(new Set()) }}
+          className={selectCls}
+        >
+          {sessions.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <select
+          value={fType}
+          onChange={(e) => { setFType(e.target.value as '' | 'monthly' | 'onetime'); setFCategory(''); setShowResults(false); setSelectedRows(new Set()) }}
+          className={selectCls}
+        >
+          <option value="">{bn ? 'সব ধরন' : 'All types'}</option>
+          <option value="monthly">{bn ? 'মাসিক' : 'Monthly'}</option>
+          <option value="onetime">{bn ? 'এককালীন' : 'One-time'}</option>
+        </select>
+        <select
+          value={fCategory}
+          onChange={(e) => { setFCategory(e.target.value); setShowResults(false); setSelectedRows(new Set()) }}
+          className={selectCls}
+        >
+          <option value="">{bn ? 'সব ক্যাটাগরি' : 'All categories'}</option>
+          {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select
+          value={fStatus}
+          onChange={(e) => { setFStatus(e.target.value as 'all' | 'paid' | 'due'); setSelectedRows(new Set()) }}
+          className={selectCls}
+        >
+          <option value="all">{bn ? 'সব' : 'All'}</option>
+          <option value="paid">{bn ? 'পরিশোধিত' : 'Paid'}</option>
+          <option value="due">{bn ? 'বকেয়' : 'Due'}</option>
+        </select>
+        {showMonthPicker && (
+          <div className="relative" ref={monthDropdownRef}>
             <button
-              onClick={handleFindDue}
-              className="h-[34px] px-4 rounded-lg bg-[var(--brand)] text-white font-semibold text-[13px] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+              onClick={() => setShowMonthDropdown((p) => !p)}
+              className="h-[34px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] cursor-pointer flex items-center gap-1.5 min-w-[160px] outline-none focus:border-[var(--brand)]"
             >
-              <Search size={14} />{bn ? 'খুঁজুন' : 'Find'}
+              <CalendarDays size={13} className="text-[var(--text-muted)] flex-shrink-0" />
+              <span className="truncate text-left flex-1">{monthDisplayText}</span>
+              <ChevronDown size={13} className="text-[var(--text-muted)] flex-shrink-0" />
             </button>
+            {showMonthDropdown && (
+              <div className="absolute z-50 mt-1 w-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_12px_30px_rgba(20,23,33,0.12)] p-2">
+                <div className="flex items-center gap-1 mb-1.5 pb-1.5 border-b border-[var(--border)]">
+                  <button onClick={selectAllMonths} className="text-[11px] font-semibold text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0">{bn ? 'সব নির্বাচন' : 'Select all'}</button>
+                  <span className="text-[var(--text-muted)]">·</span>
+                  <button onClick={clearAllMonths} className="text-[11px] font-semibold text-[var(--text-muted)] hover:underline cursor-pointer bg-transparent border-0 p-0">{bn ? 'পরিষ্কার' : 'Clear'}</button>
+                  <span className="text-[11px] text-[var(--text-muted)] ml-auto">{selectedMonths.size}/12</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  {MONTH_LABELS.map((m, i) => (
+                    <button
+                      key={i}
+                      onClick={() => toggleMonth(i)}
+                      className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium border cursor-pointer transition-all ${
+                        selectedMonths.has(i)
+                          ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]'
+                          : 'bg-transparent border-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
+                      }`}
+                    >
+                      <div className={`w-3.5 h-3.5 rounded flex items-center justify-center flex-shrink-0 border ${selectedMonths.has(i) ? 'bg-[var(--brand)] border-[var(--brand)]' : 'border-[var(--border)]'}`}>
+                        {selectedMonths.has(i) && <CheckCircle2 size={9} className="text-white" />}
+                      </div>
+                      {bn ? m.bn : m.en}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-        {/* Row 2: Class + Section */}
-        <div className="flex items-center gap-2 flex-wrap">
+        )}
+        <div className="w-px self-stretch bg-[var(--border)] mx-1" />
+        <select
+          value={fClass}
+          onChange={(e) => { setFClass(e.target.value); setFSection(''); setShowResults(false); setSelectedRows(new Set()) }}
+          className={selectCls}
+        >
+          <option value="">{bn ? 'সব শ্রেণি' : 'All classes'}</option>
+          {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+        {fClass && (
           <select
-            value={fClass}
-            onChange={(e) => { setFClass(e.target.value); setFSection(''); setShowResults(false); setSelectedRows(new Set()) }}
+            value={fSection}
+            onChange={(e) => { setFSection(e.target.value); setShowResults(false); setSelectedRows(new Set()) }}
             className={selectCls}
           >
-            <option value="">{bn ? 'সব শ্রেণি' : 'All classes'}</option>
-            {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+            <option value="">{bn ? 'সব সেকশন' : 'All sections'}</option>
+            {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-          {fClass && (
-            <select
-              value={fSection}
-              onChange={(e) => { setFSection(e.target.value); setShowResults(false); setSelectedRows(new Set()) }}
-              className={selectCls}
-            >
-              <option value="">{bn ? 'সব সেকশন' : 'All sections'}</option>
-              {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          )}
+        )}
+        <div className="ml-auto">
+          <button
+            onClick={handleFindDue}
+            className="h-[34px] px-4 rounded-lg bg-[var(--brand)] text-white font-semibold text-[13px] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+          >
+            <Search size={14} />{bn ? 'খুঁজুন' : 'Find'}
+          </button>
         </div>
       </div>
 
@@ -706,8 +711,10 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     className="w-3.5 h-3.5 accent-[var(--brand)] cursor-pointer"
                   />
                 </th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ক্রমিক' : 'S/N'}</th>
                 <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky left-[36px] bg-[var(--bg-secondary)] z-20">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
                 <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'রোল' : 'Roll'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
                 <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'শ্রেণি' : 'Class'}</th>
                 <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ফি' : 'Fee'}</th>
                 <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ধরন' : 'Type'}</th>
@@ -737,10 +744,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                         className="w-3.5 h-3.5 accent-[var(--brand)] cursor-pointer"
                       />
                     </td>
+                    <td className="text-center px-2 py-2 text-[var(--text-secondary)] text-[12px]">{i + 1}</td>
                     <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-primary)] z-10" style={{ background: isChecked ? 'var(--brand-light)' : 'var(--bg-primary)' }}>
                       <p className="font-semibold text-[var(--text-primary)] text-[12px]">{bn ? row.studentNameBn || row.studentName : row.studentName}</p>
                     </td>
                     <td className="text-center px-2 py-2 text-[var(--text-secondary)]">{row.roll}</td>
+                    <td className="text-center px-2 py-2 text-[var(--text-secondary)] text-[12px]">{row.studentId}</td>
                     <td className="text-center px-2 py-2 text-[var(--text-secondary)]">{row.class}{row.section ? `-${row.section}` : ''}</td>
                     <td className="text-center px-2 py-2">
                       <span className="font-semibold text-[var(--text-primary)] text-[11px]">{bn ? row.feeNameBn : row.feeName}</span>
@@ -790,6 +799,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold sticky bottom-0 z-10">
                   <td className="px-2 py-2 sticky left-0 bg-[var(--bg-secondary)] z-10" />
                   <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--text-primary)]">{bn ? 'মোট' : 'Total'}</td>
+                  <td className="px-2 py-2" />
+                  <td className="px-2 py-2" />
                   <td className="px-2 py-2" />
                   <td className="px-2 py-2" />
                   <td className="px-2 py-2" />
