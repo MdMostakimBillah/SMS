@@ -632,12 +632,15 @@ export default React.memo(function Topbar() {
               background: 'transparent',
               color: 'var(--text-secondary)',
               cursor: 'pointer',
-              transition: 'all 0.15s ease',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: 'scale(1)',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none' }}
+            onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.9)' }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1.1)' }}
           >
-            {isFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
+            {isFullscreen ? <Minimize size={15} style={{ transition: 'transform 0.3s ease' }} /> : <Maximize size={15} style={{ transition: 'transform 0.3s ease' }} />}
           </button>
         )}
 

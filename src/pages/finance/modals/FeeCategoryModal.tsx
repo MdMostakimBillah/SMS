@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Plus, Edit2, Trash2, Tag, ToggleLeft, ToggleRight } from 'lucide-react'
+import { X, Edit2, Trash2, Tag, ToggleLeft, ToggleRight } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useFeeStore } from '@/store/feeStore'
 import type { FeeCategory } from '@/store/feeStore'
