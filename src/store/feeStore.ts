@@ -1,6 +1,16 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+export interface FeeCategory {
+  id: string
+  name: string
+  nameBn: string
+  description: string
+  descriptionBn: string
+  isActive: boolean
+  createdAt: string
+}
+
 export interface FeeStructure {
   id: string
   name: string
@@ -13,6 +23,7 @@ export interface FeeStructure {
   descriptionBn: string
   isActive: boolean
   type: 'monthly' | 'onetime'
+  categoryId?: string
   createdAt: string
 }
 
@@ -104,8 +115,14 @@ interface StudentInfo {
 interface FeeState {
   structures: FeeStructure[]
   payments: FeePayment[]
+  feeCategories: FeeCategory[]
   waiverCategories: WaiverCategory[]
   waiverEntries: WaiverEntry[]
+
+  addFeeCategory: (c: FeeCategory) => void
+  updateFeeCategory: (id: string, data: Partial<FeeCategory>) => void
+  deleteFeeCategory: (id: string) => void
+  toggleFeeCategoryActive: (id: string) => void
 
   addStructure: (s: FeeStructure) => void
   updateStructure: (id: string, data: Partial<FeeStructure>) => void
@@ -154,8 +171,27 @@ export const useFeeStore = create<FeeState>()(
     (set, get) => ({
       structures: [],
       payments: [],
+      feeCategories: [],
       waiverCategories: [],
       waiverEntries: [],
+
+      addFeeCategory: (c) => set((state) => ({ feeCategories: [...state.feeCategories, c] })),
+
+      updateFeeCategory: (id, data) =>
+        set((state) => ({
+          feeCategories: state.feeCategories.map((c) => (c.id === id ? { ...c, ...data } : c)),
+        })),
+
+      deleteFeeCategory: (id) =>
+        set((state) => ({
+          feeCategories: state.feeCategories.filter((c) => c.id !== id),
+          structures: state.structures.map((s) => (s.categoryId === id ? { ...s, categoryId: undefined } : s)),
+        })),
+
+      toggleFeeCategoryActive: (id) =>
+        set((state) => ({
+          feeCategories: state.feeCategories.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c)),
+        })),
 
       addStructure: (s) => set((state) => ({ structures: [...state.structures, s] })),
 
@@ -397,7 +433,7 @@ export const useFeeStore = create<FeeState>()(
     }),
     {
       name: 'edutech-fees',
-      version: 5,
+      version: 6,
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
           persistedState.waivers = persistedState.waivers || []
@@ -468,6 +504,9 @@ export const useFeeStore = create<FeeState>()(
           persistedState.waiverCategories = categories
           persistedState.waiverEntries = entries
           delete persistedState.waivers
+        }
+        if (version < 6) {
+          persistedState.feeCategories = persistedState.feeCategories || []
         }
         return persistedState
       },

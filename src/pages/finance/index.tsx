@@ -26,6 +26,7 @@ import { ReportsTab } from './tabs/ReportsTab'
 import { InactiveDuesTab } from './tabs/InactiveDuesTab'
 import { CollectTab } from './tabs/CollectTab'
 import { FeeStructureModal } from './modals/FeeStructureModal'
+import { FeeCategoryModal } from './modals/FeeCategoryModal'
 import { CollectPaymentModal } from './modals/CollectPaymentModal'
 import { BulkAssignModal } from './modals/BulkAssignModal'
 import { WaiverModal } from './modals/WaiverModal'
@@ -188,6 +189,7 @@ export default function FeeManagementPage() {
   const [collectPayment, setCollectPayment] = useState<FeeDue | null>(null)
   const [showBulkAssign, setShowBulkAssign] = useState(false)
   const [showWaiverModal, setShowWaiverModal] = useState(false)
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [receiptData, setReceiptData] = useState<(FeePayment & { studentName: string; studentNameBn: string; feeName: string; feeNameBn: string }) | null>(null)
 
   useEffect(() => {
@@ -363,7 +365,7 @@ export default function FeeManagementPage() {
         </div>
 
         <div className="gsap-fade-up">
-          {activeView === 'structures' && <StructuresTab onEdit={(s) => setEditStruct(s)} onBulkAssign={() => setShowBulkAssign(true)} />}
+          {activeView === 'structures' && <StructuresTab onEdit={(s) => setEditStruct(s)} onBulkAssign={() => setShowBulkAssign(true)} onManageCategories={() => setShowCategoryModal(true)} />}
           {activeView === 'dues' && <DuesTab onCollect={(d) => setCollectPayment(d)} />}
           {activeView === 'collect' && <CollectTab onCollect={(d) => setCollectPayment(d)} />}
           {activeView === 'payments' && <PaymentsTab />}
@@ -440,6 +442,10 @@ export default function FeeManagementPage() {
             onSaved={() => setShowWaiverModal(false)}
             onClose={() => setShowWaiverModal(false)}
           />
+        )}
+
+        {showCategoryModal && (
+          <FeeCategoryModal onClose={() => setShowCategoryModal(false)} />
         )}
 
         {receiptData && (

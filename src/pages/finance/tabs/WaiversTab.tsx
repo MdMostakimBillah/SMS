@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef } from 'react'
 import React from 'react'
-import { Search, Trash2, Plus, Gift, ChevronDown, ChevronRight, Tag } from 'lucide-react'
+import { Search, Trash2, Plus, Gift, ChevronDown, ChevronRight, Tag, Edit2, Check, X, Award, Heart, Briefcase, Users, Percent, HandCoins } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -29,10 +30,27 @@ const MONTH_LABELS = [
 
 const selectCls = 'h-[34px] text-[13px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer'
 
+const CATEGORY_ICON_KEYWORDS: { icon: LucideIcon; keywords: string[] }[] = [
+  { icon: Award, keywords: ['scholarship', 'বৃত্তি', 'merit', 'সুমেরু', 'award', 'পুরস্কার'] },
+  { icon: Heart, keywords: ['orphan', 'এতিম', 'widow', 'বিধবা', 'poor', 'গরিব', 'poverty', 'দুঃখিত'] },
+  { icon: Briefcase, keywords: ['staff', 'কর্মচারী', 'employee', 'employee', 'teacher', 'শিক্ষক'] },
+  { icon: Users, keywords: ['sibling', 'ভাই', 'বোন', 'brother', 'sister', 'family', 'পরিবার', 'twin', 'যমজ'] },
+  { icon: Percent, keywords: ['discount', 'ছাড়', 'rebate', 'স্বার্থ', 'concession'] },
+  { icon: HandCoins, keywords: ['financial', 'অর্থ', 'aid', 'help', 'সাহায্য', 'support', 'মাসিক'] },
+]
+
+function getCategoryIcon(name: string, nameBn: string): LucideIcon {
+  const combined = `${name} ${nameBn}`.toLowerCase()
+  for (const { icon, keywords } of CATEGORY_ICON_KEYWORDS) {
+    if (keywords.some((kw) => combined.includes(kw))) return icon
+  }
+  return Tag
+}
+
 export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props) {
   const bn = useBn()
   const students = useSessionStudents()
-  const { waiverCategories, waiverEntries, structures, deleteWaiverCategory, deleteWaiverEntry } = useFeeStore()
+  const { waiverCategories, waiverEntries, structures, deleteWaiverCategory, deleteWaiverEntry, updateWaiverCategory } = useFeeStore()
   const { institution, classes } = useClassStore()
   const sessions = institution?.sessions || []
 
@@ -45,6 +63,11 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
   const [fCategory, setFCategory] = useState('')
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [editingCatId, setEditingCatId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editNameBn, setEditNameBn] = useState('')
+  const [editDesc, setEditDesc] = useState('')
+  const [editDescBn, setEditDescBn] = useState('')
 
   useTabSlider({ activeTab: subTab, tabRefs, sliderRef, getContainer: (s) => s.parentElement })
 
@@ -73,6 +96,29 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
   const allWaivers = useMemo(() => generateWaivers(), [generateWaivers, waiverEntries, structures])
 
   const fmt = (n: number) => `৳${n.toLocaleString()}`
+
+  const startEditCat = (cat: { id: string; name: string; nameBn: string; description: string; descriptionBn: string }) => {
+    setEditingCatId(cat.id)
+    setEditName(cat.name)
+    setEditNameBn(cat.nameBn)
+    setEditDesc(cat.description)
+    setEditDescBn(cat.descriptionBn)
+  }
+
+  const saveEditCat = () => {
+    if (!editingCatId || !editName) return
+    updateWaiverCategory(editingCatId, {
+      name: editName,
+      nameBn: editNameBn || editName,
+      description: editDesc,
+      descriptionBn: editDescBn || editDesc,
+    })
+    setEditingCatId(null)
+  }
+
+  const cancelEditCat = () => {
+    setEditingCatId(null)
+  }
 
   // Categories data
   const categoryStats = useMemo(() => {
@@ -227,32 +273,70 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
               {bn ? 'কোনো ক্যাটাগরি নেই। "ছাড় যোগ করুন" এ ক্লিক করে প্রথম ক্যাটাগরি তৈরি করুন।' : 'No categories yet. Click "Add Waiver" to create the first category.'}
             </div>
           ) : (
-            categoryStats.map((cat) => (
-              <div key={cat.id} className={`p-3 rounded-xl border transition-all ${cat.isActive ? 'border-[var(--border)] bg-[var(--bg-primary)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] opacity-60'}`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-[var(--text-primary)]">{bn ? cat.nameBn || cat.name : cat.name}</p>
-                    {cat.description && <p className="text-[0.65rem] text-[var(--text-muted)] mt-0.5">{bn ? cat.descriptionBn || cat.description : cat.description}</p>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      <p className="text-[0.65rem] text-[var(--text-muted)]">{cat.entryCount} {bn ? 'জন শিক্ষার্থী' : 'students'}</p>
-                      <p className="text-xs font-bold text-[var(--purple)]">{fmt(cat.totalWaived)}</p>
+            categoryStats.map((cat) => {
+              const CatIcon = getCategoryIcon(cat.name, cat.nameBn)
+              const isEditing = editingCatId === cat.id
+              return (
+                <div key={cat.id} className={`p-3 rounded-xl border transition-all ${cat.isActive ? 'border-[var(--border)] bg-[var(--bg-primary)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] opacity-60'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-[var(--purple-light)] flex items-center justify-center flex-shrink-0">
+                      <CatIcon size={16} className="text-[var(--purple)]" />
                     </div>
-                    <button
-                      onClick={() => {
-                        if (confirm(bn ? `ক্যাটাগরি মুছে ফেলতে চান? ${cat.entryCount} জন শিক্ষার্থীর ছাড় মুছে যাবে।` : `Delete this category? ${cat.entryCount} student waivers will be removed.`)) {
-                          deleteWaiverCategory(cat.id)
-                        }
-                      }}
-                      className="w-6 h-6 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer"
-                    >
-                      <Trash2 size={11} />
-                    </button>
+                    <div className="flex-1 min-w-0">
+                      {isEditing ? (
+                        <div className="space-y-1.5">
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <input value={editName} onChange={(e) => setEditName(e.target.value)} className={`${selectCls} w-full !h-7 !text-[0.65rem]`} placeholder="Name *" />
+                            <input value={editNameBn} onChange={(e) => setEditNameBn(e.target.value)} className={`${selectCls} w-full !h-7 !text-[0.65rem]`} placeholder="নাম" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} className={`${selectCls} w-full !h-7 !text-[0.65rem]`} placeholder="Description" />
+                            <input value={editDescBn} onChange={(e) => setEditDescBn(e.target.value)} className={`${selectCls} w-full !h-7 !text-[0.65rem]`} placeholder="বিবরণ" />
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-xs font-semibold text-[var(--text-primary)]">{bn ? cat.nameBn || cat.name : cat.name}</p>
+                          {cat.description && <p className="text-[0.65rem] text-[var(--text-muted)] mt-0.5">{bn ? cat.descriptionBn || cat.description : cat.description}</p>}
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="text-right">
+                        <p className="text-[0.65rem] text-[var(--text-muted)]">{cat.entryCount} {bn ? 'জন শিক্ষার্থী' : 'students'}</p>
+                        <p className="text-xs font-bold text-[var(--purple)]">{fmt(cat.totalWaived)}</p>
+                      </div>
+                      {isEditing ? (
+                        <div className="flex items-center gap-1">
+                          <button onClick={saveEditCat} disabled={!editName} className="w-6 h-6 rounded flex items-center justify-center bg-[var(--green-light)] text-[var(--green)] border-0 cursor-pointer disabled:opacity-40" title={bn ? 'সংরক্ষণ' : 'Save'}>
+                            <Check size={11} />
+                          </button>
+                          <button onClick={cancelEditCat} className="w-6 h-6 rounded flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--text-muted)] border-0 cursor-pointer" title={bn ? 'বাতিল' : 'Cancel'}>
+                            <X size={11} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => startEditCat(cat)} className="w-6 h-6 rounded flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer" title={bn ? 'সম্পাদনা' : 'Edit'}>
+                            <Edit2 size={11} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(bn ? `ক্যাটাগরি মুছে ফেলতে চান? ${cat.entryCount} জন শিক্ষার্থীর ছাড় মুছে যাবে।` : `Delete this category? ${cat.entryCount} student waivers will be removed.`)) {
+                                deleteWaiverCategory(cat.id)
+                              }
+                            }}
+                            className="w-6 h-6 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       ) : (

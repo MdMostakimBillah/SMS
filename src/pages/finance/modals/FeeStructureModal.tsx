@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { X, Repeat, Zap } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
+import { useFeeStore } from '@/store/feeStore'
 import type { FeeStructure } from '@/store/feeStore'
 import { inputCls, selectCls, btnPrimary } from '@/lib/styles'
 import { modalOverlayCls, modalStyleCls } from '@/pages/hr/utils'
@@ -16,6 +17,7 @@ interface Props {
 export function FeeStructureModal({ existing, onSaved, onClose }: Props) {
   const bn = useBn()
   const { classes } = useClassStore()
+  const { feeCategories } = useFeeStore()
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
@@ -27,6 +29,7 @@ export function FeeStructureModal({ existing, onSaved, onClose }: Props) {
   const [desc, setDesc] = useState(existing?.description || '')
   const [descBn, setDescBn] = useState(existing?.descriptionBn || '')
   const [type, setType] = useState<'monthly' | 'onetime'>(existing?.type || 'monthly')
+  const [categoryId, setCategoryId] = useState(existing?.categoryId || '')
 
   const sectionOptions = useMemo(() => (cls ? sectionsMap[cls] || [] : []), [cls, sectionsMap])
 
@@ -41,6 +44,7 @@ export function FeeStructureModal({ existing, onSaved, onClose }: Props) {
       description: desc,
       descriptionBn: descBn || desc,
       type,
+      categoryId: categoryId || undefined,
     })
   }
 
@@ -96,6 +100,15 @@ export function FeeStructureModal({ existing, onSaved, onClose }: Props) {
                 {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
+          </div>
+          <div>
+            <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'ক্যাটাগরি' : 'Category'}</label>
+            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={`${selectCls} w-full text-xs`}>
+              <option value="">{bn ? 'কোনো ক্যাটাগরি নেই' : 'No category'}</option>
+              {feeCategories.filter((c) => c.isActive).map((c) => (
+                <option key={c.id} value={c.id}>{bn && c.nameBn ? c.nameBn : c.name}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'পরিমাণ (৳) *' : 'Amount (৳) *'}</label>
