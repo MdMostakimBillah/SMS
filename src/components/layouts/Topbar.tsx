@@ -20,6 +20,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Menu,
+  Maximize,
+  Minimize,
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useBn } from '@/hooks/useBn'
@@ -144,6 +146,21 @@ export default React.memo(function Topbar() {
   const notifRef = useRef<HTMLDivElement>(null)
   const msgRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', handler)
+    return () => document.removeEventListener('fullscreenchange', handler)
+  }, [])
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {})
+    } else {
+      document.exitFullscreen().catch(() => {})
+    }
+  }
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -599,6 +616,31 @@ export default React.memo(function Topbar() {
           )}
         </div>
 
+        {/* Fullscreen Toggle */}
+        {!isMobile && (
+          <button
+            onClick={toggleFullscreen}
+            title={isFullscreen ? (isBn ? 'ফুলস্ক্রিন বন্ধ' : 'Exit Fullscreen') : (isBn ? 'ফুলস্ক্রিন' : 'Fullscreen')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '1.75rem',
+              height: '1.75rem',
+              borderRadius: '0.5rem',
+              border: '1px solid var(--border)',
+              background: 'transparent',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+          >
+            {isFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
+          </button>
+        )}
+
         {!isMobile && (
           <div
             style={{
@@ -645,7 +687,7 @@ export default React.memo(function Topbar() {
             >
               SA
             </div>
-            {!isMobile && (
+        {!isMobile && (
               <div>
                 <div
                   style={{
