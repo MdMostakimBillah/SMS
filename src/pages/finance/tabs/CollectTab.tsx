@@ -20,7 +20,7 @@ interface ReceiptData {
   admissionNo: string
   class: string
   section: string
-  fees: { name: string; nameBn: string; amount: number; month?: string; year?: string; remarks?: string; due?: number; isOnetime?: boolean; discount?: number }[]
+  fees: { name: string; nameBn: string; amount: number; month?: string; year?: string; remarks?: string; due?: number; isOnetime?: boolean; discount?: number; waived?: number; waiverReason?: string; waiverReasonBn?: string }[]
   totalAmount: number
   discount: number
   totalReceived: number
@@ -45,12 +45,15 @@ interface MonthRow {
   receive: number
   structureId: string
   isOnetime: boolean
+  waivedAmount: number
+  waiverReason: string
+  waiverReasonBn: string
 }
 
 function generateMonthRows(
   structures: FeeStructure[],
   payments: { feeStructureId: string; amount: number; discount?: number; paidAt: string; forMonth?: string }[],
-  waivers: { feeStructureId: string; amount: number; createdAt: string; forMonth?: string }[],
+  waivers: { feeStructureId: string; amount: number; createdAt: string; forMonth?: string; reason?: string; reasonBn?: string }[],
   _studentId: string,
   academicYear: string,
   advanceMonths: number,
@@ -83,7 +86,8 @@ function generateMonthRows(
     if (!struct.isActive) continue
     if (struct.type === 'onetime') {
       const paid = payments.filter((p) => p.feeStructureId === struct.id).reduce((sum, p) => sum + p.amount, 0)
-      const waived = waivers.filter((w) => w.feeStructureId === struct.id).reduce((sum, w) => sum + w.amount, 0)
+      const waivedEntries = waivers.filter((w) => w.feeStructureId === struct.id)
+      const waived = waivedEntries.reduce((sum, w) => sum + w.amount, 0)
       const receivable = struct.amount - paid - waived
       if (receivable <= 0) continue
         rows.push({
@@ -91,6 +95,7 @@ function generateMonthRows(
         dateRange: `${academicYear}`, dateRangeBn: `${academicYear}`,
         amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable,
         structureId: struct.id, isOnetime: true,
+        waivedAmount: waived, waiverReason: waivedEntries[0]?.reason || '', waiverReasonBn: waivedEntries[0]?.reasonBn || '',
       })
     } else {
       for (let i = 0; i < totalMonths; i++) {
@@ -102,7 +107,7 @@ function generateMonthRows(
           .filter((p) => { if (p.feeStructureId !== struct.id) return false; if (p.forMonth) return p.forMonth === `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}`; const d = new Date(p.paidAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
         const paid = monthPayments.reduce((sum, p) => sum + p.amount, 0)
         const discountFromPayments = monthPayments.reduce((sum, p) => sum + (p.discount || 0), 0)
-        const waived = waivers
+        const waivedEntries = waivers
           .filter((w) => {
             if (w.feeStructureId !== struct.id) return false
             if (w.forMonth) {
@@ -111,7 +116,7 @@ function generateMonthRows(
             const d = new Date(w.createdAt)
             return d.getFullYear() === currentYear && d.getMonth() === monthIdx
           })
-          .reduce((sum, w) => sum + w.amount, 0)
+        const waived = waivedEntries.reduce((sum, w) => sum + w.amount, 0)
         const receivable = struct.amount - paid - discountFromPayments - Math.min(waived, struct.amount)
         const isPastOrCurrentMonth = currentYear < currentYearNum || (currentYear === currentYearNum && monthIdx <= currentMonthIdx)
         if (isPastOrCurrentMonth && receivable <= 0) continue
@@ -124,6 +129,7 @@ function generateMonthRows(
           dateRange: `(${startDate} - ${endDate})`, dateRangeBn: `(${startDateBn} - ${endDateBn})`,
           amount: struct.amount, discount: 0, remarks: '', receivable: Math.max(0, receivable), receive: Math.max(0, receivable),
           structureId: struct.id, isOnetime: false,
+          waivedAmount: waived, waiverReason: waivedEntries[0]?.reason || '', waiverReasonBn: waivedEntries[0]?.reasonBn || '',
         })
       }
     }
@@ -139,7 +145,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
   const { structures, payments, generateWaivers, addPayment, deletePayment } = useFeeStore()
-  const waivers = useMemo(() => generateWaivers(), [generateWaivers, structures, payments])
+  const waivers = useMemo(() => generateWaivers(students), [generateWaivers, structures, payments, students])
 
   const [fSession, setFSession] = useState(institution?.currentSession || '')
   const [fClass, setFClass] = useState('')
@@ -320,6 +326,9 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         isOnetime: row.isOnetime,
         discount: edit.discount || undefined,
         remarks: edit.remarks || undefined,
+        waived: row.waivedAmount || undefined,
+        waiverReason: row.waiverReason || undefined,
+        waiverReasonBn: row.waiverReasonBn || undefined,
       }
       if (!row.isOnetime && forMonth) {
         const [yr, mo] = forMonth.split('-').map(Number)
@@ -384,8 +393,15 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const watermarkHtml = b.logo ? `<img src="${b.logo}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:350px;height:350px;opacity:0.05;pointer-events:none;object-fit:contain" />` : ''
     const feeRows = data.fees.map((f, i) => {
       const period = f.month ? `<span style="font-size:8px;color:#888;font-weight:400">(${f.month}-${f.year})</span>` : (f.year ? `<span style="font-size:8px;color:#888;font-weight:400">(${f.year})</span>` : '')
-      const rem = f.remarks ? `<div style="font-size:7px;color:#aaa;font-style:italic">${(f.discount ?? 0).toLocaleString()} amount discount for ${f.remarks}</div>` : ''
-      return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name} ${period}</div>${rem}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
+      let details = ''
+      if (f.waived && f.waived > 0) {
+        const reason = bn ? f.waiverReasonBn || f.waiverReason : f.waiverReason
+        details += `<div style="font-size:7px;color:#7c3aed;font-weight:500">${bn ? 'ছাড়' : 'Waiver'}: ${f.waived.toLocaleString()}${reason ? ` (${reason})` : ''}</div>`
+      }
+      if (f.discount && f.discount > 0) {
+        details += `<div style="font-size:7px;color:#f59e0b;font-weight:500">${bn ? 'ডিসকাউন্ট' : 'Discount'}: ${f.discount.toLocaleString()}${f.remarks ? ` - ${f.remarks}` : ''}</div>`
+      }
+      return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name} ${period}</div>${details}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
     }).join('')
     return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;height:100%;max-width:480px;padding:0 10px;display:flex;flex-direction:column;position:relative">
       ${watermarkHtml}
@@ -513,7 +529,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       const receivable = struct.amount - paid - waived
       if (receivable <= 0) continue
       const key = `${struct.id}-onetime-manual-${Date.now()}`
-      newRows.push({ key, feeName: struct.name, feeNameBn: struct.nameBn, dateRange: fSession, dateRangeBn: fSession, amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable, structureId: struct.id, isOnetime: true })
+      newRows.push({ key, feeName: struct.name, feeNameBn: struct.nameBn, dateRange: fSession, dateRangeBn: fSession, amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable, structureId: struct.id, isOnetime: true, waivedAmount: 0, waiverReason: '', waiverReasonBn: '' })
       newEditState[key] = { discount: 0, remarks: '', receive: receivable, checked: false }
     }
     setExtraRows((prev) => [...prev, ...newRows])
@@ -525,7 +541,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     if (!selectedStudent || !fineDesc || !fineAmount) return
     const amount = Number(fineAmount); if (amount <= 0) return
     const key = `fine-${Date.now()}`
-    setExtraRows((prev) => [...prev, { key, feeName: fineDesc, feeNameBn: fineDescBn || fineDesc, dateRange: fSession, dateRangeBn: fSession, amount, discount: 0, remarks: '', receivable: amount, receive: amount, structureId: '', isOnetime: true }])
+    setExtraRows((prev) => [...prev, { key, feeName: fineDesc, feeNameBn: fineDescBn || fineDesc, dateRange: fSession, dateRangeBn: fSession, amount, discount: 0, remarks: '', receivable: amount, receive: amount, structureId: '', isOnetime: true, waivedAmount: 0, waiverReason: '', waiverReasonBn: '' }])
     setEditState((prev) => ({ ...prev, [key]: { discount: 0, remarks: '', receive: amount, checked: false } }))
     setFineDesc(''); setFineDescBn(''); setFineAmount(''); setShowFineModal(false)
   }, [selectedStudent, fineDesc, fineDescBn, fineAmount, fSession])
@@ -727,7 +743,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     </th>
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'বিবরণ' : 'Particular'}</th>
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'ছাড়' : 'Discount'}</th>
+                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'ছাড়' : 'Waiver'}</th>
+                    <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'ডিসকাউন্ট' : 'Discount'}</th>
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'মন্তব্য' : 'Remarks'}</th>
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
                     <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'গ্রহণ' : 'Receive'}</th>
@@ -753,6 +770,20 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           <div className="text-[10px] text-[var(--text-muted)]">{bn ? row.dateRangeBn : row.dateRange}</div>
                         </td>
                         <td className="text-center px-2 py-2"><span className="font-semibold text-[var(--text-primary)] text-[12px]">{fmt(row.amount)}</span></td>
+                        <td className="text-center px-2 py-2">
+                          {row.waivedAmount > 0 ? (
+                            <div className="inline-flex flex-col items-center">
+                              <span className="text-[11px] font-bold text-[var(--purple)]">-{fmt(row.waivedAmount)}</span>
+                              {(row.waiverReason || row.waiverReasonBn) && (
+                                <span className="text-[8px] text-[var(--text-muted)] mt-0.5 max-w-[80px] truncate" title={bn ? row.waiverReasonBn || row.waiverReason : row.waiverReason}>
+                                  {bn ? row.waiverReasonBn || row.waiverReason : row.waiverReason}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-[var(--text-muted)]">—</span>
+                          )}
+                        </td>
                         <td className="text-center px-2 py-2">
                           <input type="number" value={edit.discount || ''} onChange={(e) => {
                             const discount = Math.min(Number(e.target.value) || 0, row.receivable)
@@ -887,7 +918,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
                               <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[8px] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
-                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">{(f.discount ?? 0).toLocaleString()} amount discount for {f.remarks}</div>}
+                              {f.waived && f.waived > 0 && <div className="text-[8px] text-[var(--purple)] font-medium">{bn ? `ছাড়: ${fmt(f.waived)}${f.waiverReasonBn ? ` (${f.waiverReasonBn})` : ''}` : `Waiver: ${fmt(f.waived)}${f.waiverReason ? ` (${f.waiverReason})` : ''}`}</div>}
+                              {f.discount && f.discount > 0 && <div className="text-[8px] text-[var(--amber)] font-medium">{bn ? `ডিসকাউন্ট: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}` : `Discount: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}`}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
@@ -936,7 +968,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
                               <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[8px] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
-                              {f.remarks && <div className="text-[8px] text-[var(--text-muted)]/60 italic">{(f.discount ?? 0).toLocaleString()} amount discount for {f.remarks}</div>}
+                              {f.waived && f.waived > 0 && <div className="text-[8px] text-[var(--purple)] font-medium">{bn ? `ছাড়: ${fmt(f.waived)}${f.waiverReasonBn ? ` (${f.waiverReasonBn})` : ''}` : `Waiver: ${fmt(f.waived)}${f.waiverReason ? ` (${f.waiverReason})` : ''}`}</div>}
+                              {f.discount && f.discount > 0 && <div className="text-[8px] text-[var(--amber)] font-medium">{bn ? `ডিসকাউন্ট: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}` : `Discount: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}`}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>

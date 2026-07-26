@@ -1,6 +1,6 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import React from 'react'
-import { Search, Trash2, Plus, Gift, ChevronDown, ChevronRight, Tag, Edit2, Check, X, Award, Heart, Briefcase, Users, Percent, HandCoins } from 'lucide-react'
+import { Search, Trash2, Plus, Gift, ChevronDown, ChevronRight, Tag, Edit2, Check, X, Award, Heart, Briefcase, Users, Percent, HandCoins, MoreVertical, FileSpreadsheet, FileText } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTabSlider } from '@/hooks/useTabSlider'
@@ -8,9 +8,15 @@ import { useSessionStudents } from '@/store/admissionStore'
 import { useFeeStore } from '@/store/feeStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { inputCls } from '@/lib/styles'
+import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsModal'
+import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
+import { openPrintWindow } from '@/lib/pdf'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { XLSX } from '@/lib/excelExport'
 
 interface Props {
   onAddWaiver: () => void
+  onAddStudentWaiver: () => void
 }
 
 const MONTH_LABELS = [
@@ -47,10 +53,10 @@ function getCategoryIcon(name: string, nameBn: string): LucideIcon {
   return Tag
 }
 
-export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props) {
+export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStudentWaiver }: Props) {
   const bn = useBn()
   const students = useSessionStudents()
-  const { waiverCategories, waiverEntries, structures, deleteWaiverCategory, deleteWaiverEntry, updateWaiverCategory } = useFeeStore()
+  const { waiverCategories, waiverEntries, structures, studentWaivers, deleteWaiverCategory, deleteWaiverEntry, deleteStudentWaiver, updateWaiverCategory } = useFeeStore()
   const { institution, classes } = useClassStore()
   const sessions = institution?.sessions || []
 
@@ -63,11 +69,15 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
   const [fCategory, setFCategory] = useState('')
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [showActionMenu, setShowActionMenu] = useState(false)
+  const actionMenuRef = useRef<HTMLDivElement>(null)
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
   const [editingCatId, setEditingCatId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editNameBn, setEditNameBn] = useState('')
   const [editDesc, setEditDesc] = useState('')
   const [editDescBn, setEditDescBn] = useState('')
+  const [showPdfModal, setShowPdfModal] = useState(false)
 
   useTabSlider({ activeTab: subTab, tabRefs, sliderRef, getContainer: (s) => s.parentElement })
 
@@ -92,10 +102,21 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
     return map
   }, [waiverCategories])
 
-  const generateWaivers = useFeeStore((s) => s.generateWaivers)
-  const allWaivers = useMemo(() => generateWaivers(), [generateWaivers, waiverEntries, structures])
-
   const fmt = (n: number) => `৳${n.toLocaleString()}`
+
+  const toggleRow = (id: string) => {
+    setSelectedRows((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleAllRows = () => {
+    if (selectedRows.size === groupedStudents.length) setSelectedRows(new Set())
+    else setSelectedRows(new Set(groupedStudents.map((g) => g.studentId)))
+  }
 
   const startEditCat = (cat: { id: string; name: string; nameBn: string; description: string; descriptionBn: string }) => {
     setEditingCatId(cat.id)
@@ -123,20 +144,45 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
   // Categories data
   const categoryStats = useMemo(() => {
     return waiverCategories.map((cat) => {
-      const entries = waiverEntries.filter((e) => e.categoryId === cat.id)
-      const entryCount = new Set(entries.map((e) => e.studentId)).size
-      const waivers = allWaivers.filter((w) => entries.some((e) => {
-        if (e.studentId !== w.studentId || e.feeStructureId !== w.feeStructureId) return false
-        if (e.months.length > 0 && w.forMonth) {
-          const mIdx = parseInt(w.forMonth.split('-')[1]) - 1
-          return e.months.includes(mIdx)
+      const legacyEntries = waiverEntries.filter((e) => e.categoryId === cat.id)
+      const legacyStudentIds = new Set(legacyEntries.map((e) => e.studentId))
+      const studentWaiversForCat = studentWaivers.filter((w) => w.waiverCategoryId === cat.id && w.isActive)
+      const swStudentIds = new Set(studentWaiversForCat.map((w) => w.studentId))
+      const allStudentIds = new Set([...legacyStudentIds, ...swStudentIds])
+      const entryCount = allStudentIds.size
+
+      let totalWaived = 0
+
+      for (const entry of legacyEntries) {
+        const struct = structures.find((s) => s.id === entry.feeStructureId)
+        if (!struct) continue
+        const perPeriod = entry.mode === 'percent' ? Math.round(struct.amount * entry.value / 100) : entry.value
+        if (entry.months.length > 0) {
+          totalWaived += perPeriod * entry.months.length
+        } else {
+          totalWaived += perPeriod
         }
-        return true
-      }))
-      const totalWaived = waivers.reduce((sum, w) => sum + w.amount, 0)
+      }
+
+      for (const sw of studentWaiversForCat) {
+        const student = students.find((s) => s.id === sw.studentId)
+        if (!student) continue
+        const matchingStructures = structures.filter(
+          (s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section) && s.categoryId === sw.feeCategoryId
+        )
+        for (const struct of matchingStructures) {
+          const perPeriod = sw.mode === 'percent' ? Math.round(struct.amount * sw.value / 100) : Math.min(sw.value, struct.amount)
+          if (struct.type === 'monthly') {
+            totalWaived += perPeriod * 12
+          } else {
+            totalWaived += perPeriod
+          }
+        }
+      }
+
       return { ...cat, entryCount, totalWaived }
     })
-  }, [waiverCategories, waiverEntries, allWaivers])
+  }, [waiverCategories, waiverEntries, studentWaivers, structures, students])
 
   // Students grouped data
   const groupedStudents = useMemo(() => {
@@ -214,28 +260,160 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
     return list
   }, [waiverEntries, studentMap, structures, fClass, fSection, fCategory, fSession, search])
 
+  const exportData = useMemo(() => {
+    if (selectedRows.size > 0) return groupedStudents.filter((g) => selectedRows.has(g.studentId))
+    return groupedStudents
+  }, [groupedStudents, selectedRows])
+
   const totalWaived = useMemo(() => groupedStudents.reduce((sum, g) => sum + g.totalWaived, 0), [groupedStudents])
+
+  const pdfColumns: PDFColumnDef[] = useMemo(() => [
+    { key: 'sn', label: 'S/N', labelBn: 'ক্রমিক', default: true },
+    { key: 'studentId', label: 'Student ID', labelBn: 'শিক্ষার্থী আইডি', default: true },
+    { key: 'student', label: 'Student', labelBn: 'শিক্ষার্থী', default: true },
+    { key: 'roll', label: 'Roll', labelBn: 'রোল', default: true },
+    { key: 'class', label: 'Class', labelBn: 'শ্রেণি', default: true },
+    { key: 'category', label: 'Category', labelBn: 'ক্যাটাগরি', default: true },
+    { key: 'fee', label: 'Fee', labelBn: 'ফি', default: true },
+    { key: 'perMonth', label: 'Per Month', labelBn: 'প্রতি মাসে', default: true },
+    { key: 'totalWaived', label: 'Total Waived', labelBn: 'মোট ছাড়', default: true },
+  ], [])
+
+  const buildPdfRow = useCallback((g: typeof groupedStudents[0], cols: string[], idx: number): Record<string, string | number> => {
+    const row: Record<string, string | number> = {}
+    const firstEntry = g.entries[0]
+    const catName = firstEntry ? categoryMap[firstEntry.categoryId] : null
+    const feeNames = [...new Set(g.entries.map((e) => {
+      const s = structureMap[e.feeStructureId]
+      return s ? (bn ? s.nameBn || s.name : s.name) : '—'
+    }))]
+
+    let perMonthTotal = 0
+    for (const entry of g.entries) {
+      const struct = structures.find((s) => s.id === entry.feeStructureId)
+      if (!struct) continue
+      const perPeriod = entry.mode === 'percent' ? Math.round(struct.amount * entry.value / 100) : entry.value
+      if (entry.months.length > 0) {
+        perMonthTotal += perPeriod
+      } else {
+        perMonthTotal += perPeriod
+      }
+    }
+
+    if (cols.includes('sn')) row[bn ? 'ক্রমিক' : 'S/N'] = idx + 1
+    if (cols.includes('studentId')) row[bn ? 'শিক্ষার্থী আইডি' : 'Student ID'] = g.studentId
+    if (cols.includes('student')) row[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? g.studentNameBn || g.studentName : g.studentName
+    if (cols.includes('roll')) row[bn ? 'রোল' : 'Roll'] = g.roll
+    if (cols.includes('class')) row[bn ? 'শ্রেণি' : 'Class'] = `${g.class} - ${g.section}`
+    if (cols.includes('category')) row[bn ? 'ক্যাটাগরি' : 'Category'] = catName ? (bn ? catName.nameBn || catName.name : catName.name) : '—'
+    if (cols.includes('fee')) row[bn ? 'ফি' : 'Fee'] = feeNames.join(', ')
+    if (cols.includes('perMonth')) row[bn ? 'প্রতি মাসে' : 'Per Month'] = fmt(perMonthTotal)
+    if (cols.includes('totalWaived')) row[bn ? 'মোট ছাড়' : 'Total Waived'] = fmt(g.totalWaived)
+    return row
+  }, [bn, categoryMap, structureMap, structures])
+
+  const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
+    const rows = exportData.map((g, i) => buildPdfRow(g, opts.selectedCols, i))
+    const summaryRow: Record<string, string | number> = {}
+    if (opts.selectedCols.includes('sn')) summaryRow[bn ? 'ক্রমিক' : 'S/N'] = ''
+    if (opts.selectedCols.includes('studentId')) summaryRow[bn ? 'শিক্ষার্থী আইডি' : 'Student ID'] = ''
+    summaryRow[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? 'মোট' : 'Total'
+    if (opts.selectedCols.includes('roll')) summaryRow[bn ? 'রোল' : 'Roll'] = ''
+    if (opts.selectedCols.includes('class')) summaryRow[bn ? 'শ্রেণি' : 'Class'] = ''
+    if (opts.selectedCols.includes('category')) summaryRow[bn ? 'ক্যাটাগরি' : 'Category'] = ''
+    if (opts.selectedCols.includes('fee')) summaryRow[bn ? 'ফি' : 'Fee'] = ''
+    if (opts.selectedCols.includes('perMonth')) summaryRow[bn ? 'প্রতি মাসে' : 'Per Month'] = ''
+    if (opts.selectedCols.includes('totalWaived')) summaryRow[bn ? 'মোট ছাড়' : 'Total Waived'] = fmt(exportData.reduce((s, g) => s + g.totalWaived, 0))
+    rows.push(summaryRow)
+    const pdfBranding = getPDFBranding()
+    const logoHtml = pdfLogoHTML(pdfBranding)
+    const css = `@page{size:${opts.orientation};margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}`
+    const headers = opts.selectedCols.map((c) => {
+      const col = pdfColumns.find((p) => p.key === c)
+      return col ? (opts.isBn ? col.labelBn : col.label) : c
+    })
+    const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${headers.map((h) => `<td>${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="ftr">Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>`
+    openPrintWindow(opts.title, bodyHTML, { css })
+  }, [exportData, pdfColumns, bn, buildPdfRow])
+
+  const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
+    const rows = exportData.map((g, i) => buildPdfRow(g, opts.selectedCols, i))
+    const summaryRow: Record<string, string | number> = {}
+    if (opts.selectedCols.includes('sn')) summaryRow[bn ? 'ক্রমিক' : 'S/N'] = ''
+    if (opts.selectedCols.includes('studentId')) summaryRow[bn ? 'শিক্ষার্থী আইডি' : 'Student ID'] = ''
+    summaryRow[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? 'মোট' : 'Total'
+    if (opts.selectedCols.includes('roll')) summaryRow[bn ? 'রোল' : 'Roll'] = ''
+    if (opts.selectedCols.includes('class')) summaryRow[bn ? 'শ্রেণি' : 'Class'] = ''
+    if (opts.selectedCols.includes('category')) summaryRow[bn ? 'ক্যাটাগরি' : 'Category'] = ''
+    if (opts.selectedCols.includes('fee')) summaryRow[bn ? 'ফি' : 'Fee'] = ''
+    if (opts.selectedCols.includes('perMonth')) summaryRow[bn ? 'প্রতি মাসে' : 'Per Month'] = ''
+    if (opts.selectedCols.includes('totalWaived')) summaryRow[bn ? 'মোট ছাড়' : 'Total Waived'] = fmt(exportData.reduce((s, g) => s + g.totalWaived, 0))
+    rows.push(summaryRow)
+    const pdfBranding = getPDFBranding()
+    const logoHtml = pdfLogoHTML(pdfBranding)
+    const headers = opts.selectedCols.map((c) => {
+      const col = pdfColumns.find((p) => p.key === c)
+      return col ? (opts.isBn ? col.labelBn : col.label) : c
+    })
+    return `<div style="display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px">${logoHtml}<div><div style="font-size:16px;font-weight:700;color:${pdfBranding.brandColor}">${pdfBranding.schoolName}</div><div style="font-size:10px;color:#666">${pdfBranding.address}</div></div></div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headers.map((h) => `<th style="background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center">${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${headers.map((h) => `<td style="padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center">${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+  }, [exportData, pdfColumns, bn, buildPdfRow])
+
+  const exportExcel = useCallback(() => {
+    const sheetData = exportData.map((g, idx) => {
+      let perMonthTotal = 0
+      for (const entry of g.entries) {
+        const struct = structures.find((s) => s.id === entry.feeStructureId)
+        if (!struct) continue
+        const perPeriod = entry.mode === 'percent' ? Math.round(struct.amount * entry.value / 100) : entry.value
+        perMonthTotal += perPeriod
+      }
+      const firstEntry = g.entries[0]
+      const catName = firstEntry ? categoryMap[firstEntry.categoryId] : null
+      const feeNames = [...new Set(g.entries.map((e) => {
+        const s = structureMap[e.feeStructureId]
+        return s ? (bn ? s.nameBn || s.name : s.name) : '—'
+      }))]
+      const row: Record<string, string | number> = {
+        [bn ? 'ক্রমিক' : 'S/N']: idx + 1,
+        [bn ? 'শিক্ষার্থী আইডি' : 'Student ID']: g.studentId,
+        [bn ? 'শিক্ষার্থী' : 'Student']: bn ? g.studentNameBn || g.studentName : g.studentName,
+        [bn ? 'রোল' : 'Roll']: g.roll,
+        [bn ? 'শ্রেণি' : 'Class']: `${g.class} - ${g.section}`,
+        [bn ? 'ক্যাটাগরি' : 'Category']: catName ? (bn ? catName.nameBn || catName.name : catName.name) : '—',
+        [bn ? 'ফি' : 'Fee']: feeNames.join(', '),
+        [bn ? 'প্রতি মাসে' : 'Per Month']: perMonthTotal,
+        [bn ? 'মোট ছাড়' : 'Total Waived']: g.totalWaived,
+      }
+      return row
+    })
+    const ws = XLSX.utils.json_to_sheet(sheetData)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, bn ? 'ছাড়' : 'Waivers')
+    XLSX.writeFile(wb, `waivers-${fSession || 'all'}.xlsx`)
+  }, [exportData, structures, categoryMap, structureMap, bn, fSession])
 
   return (
     <div>
       {/* Summary */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4">
         <div
-          className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+          className="glass rounded-[0.75rem] flex items-center justify-between p-[0.875rem] cursor-default transition-all duration-200"
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
         >
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--purple-light)' }}>
-            <Gift size={15} style={{ color: 'var(--purple)' }} />
+          <div className="flex items-center gap-[0.625rem]">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--purple-light)' }}>
+              <Gift size={15} style={{ color: 'var(--purple)' }} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalWaived)}</div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট ছাড়' : 'Total Waived'}</div>
+            </div>
           </div>
-          <div className="min-w-0">
-            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalWaived)}</div>
-            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট ছাড়' : 'Total Waived'}</div>
-          </div>
-        </div>
-        <button onClick={onAddWaiver} className="flex items-center gap-1 py-1.5 px-3 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer">
-          <Plus size={13} /> {bn ? 'ছাড় যোগ করুন' : 'Add Waiver'}
+        <button onClick={subTab === 'students' ? onAddStudentWaiver : onAddWaiver} className="flex items-center gap-1 py-1.5 px-3 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer">
+          <Plus size={13} /> {subTab === 'students' ? (bn ? 'শিক্ষার্থী যোগ করুন' : 'Add Student') : (bn ? 'ছাড় যোগ করুন' : 'Add Waiver')}
         </button>
+        </div>
       </div>
 
       {/* Sub-tab Bar */}
@@ -374,8 +552,48 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
             </div>
           </div>
 
+          {/* Action Bar */}
+          <div className="flex items-center justify-between px-3 py-2 mt-3">
+            <span className="text-[0.65rem] text-[var(--text-muted)]">
+              {selectedRows.size > 0
+                ? `${selectedRows.size} ${bn ? 'নির্বাচিত' : 'selected'} / ${groupedStudents.length} ${bn ? 'শিক্ষার্থী' : 'students'}`
+                : `${groupedStudents.length} ${bn ? 'শিক্ষার্থী' : 'students'}`}
+            </span>
+            {groupedStudents.length > 0 && (
+              <div className="relative" ref={actionMenuRef}>
+                <button
+                  onClick={() => setShowActionMenu(!showActionMenu)}
+                  className="flex items-center gap-1 py-1.5 px-3 rounded-lg bg-[var(--brand)] border-none text-white text-[0.65rem] font-medium cursor-pointer hover:opacity-90 transition-opacity"
+                >
+                  <MoreVertical size={12} />
+                  {bn ? 'অ্যাকশন' : 'Action'}
+                  <ChevronDown size={11} />
+                </button>
+                {showActionMenu && (
+                  <div className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-[100] overflow-hidden">
+                    <button
+                      onClick={() => { exportExcel(); setShowActionMenu(false) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
+                    >
+                      <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                      {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                    </button>
+                    <div className="h-px bg-[var(--border)] mx-2" />
+                    <button
+                      onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
+                    >
+                      <FileText size={14} className="text-[var(--red)]" />
+                      {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                    </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
           {/* Grouped Table */}
-          <div className="border border-[var(--border)] rounded-xl overflow-hidden">
+          <div className="border border-[var(--border)] rounded-xl overflow-hidden mt-2">
             {groupedStudents.length === 0 ? (
               <div className="text-center py-12 text-[var(--text-muted)] text-sm">
                 {bn ? 'কোনো ছাড় নেই' : 'No waivers found'}
@@ -385,11 +603,16 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-[var(--bg-secondary)]">
+                      <th className="w-8 px-2 py-2">
+                        <input type="checkbox" checked={groupedStudents.length > 0 && selectedRows.size === groupedStudents.length} onChange={toggleAllRows} className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer" />
+                      </th>
                       <th className="w-8 px-2 py-2"></th>
+                      <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
                       <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
                       <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'শ্রেণি' : 'Class'}</th>
                       <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
                       <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'ফি' : 'Fee'}</th>
+                      <th className="text-right px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'প্রতি মাসে' : 'Per Month'}</th>
                       <th className="text-right px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'মোট ছাড়' : 'Total Waived'}</th>
                       <th className="text-right px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'কাজ' : 'Actions'}</th>
                     </tr>
@@ -404,12 +627,24 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
                         return s ? (bn ? s.nameBn || s.name : s.name) : '—'
                       }))]
 
+                      let perMonthTotal = 0
+                      for (const entry of group.entries) {
+                        const struct = structures.find((s) => s.id === entry.feeStructureId)
+                        if (!struct) continue
+                        const perPeriod = entry.mode === 'percent' ? Math.round(struct.amount * entry.value / 100) : entry.value
+                        perMonthTotal += perPeriod
+                      }
+
                       return (
                         <React.Fragment key={group.studentId}>
-                          <tr className="border-t border-[var(--border)] hover:bg-[var(--bg-secondary)]/50 transition-colors cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : group.studentId)}>
+                          <tr className={`border-t border-[var(--border)] hover:bg-[var(--bg-secondary)]/50 transition-colors cursor-pointer ${selectedRows.has(group.studentId) ? 'bg-[var(--brand-light)]/20' : ''}`} onClick={() => setExpandedId(isExpanded ? null : group.studentId)}>
+                            <td className="px-2 py-2">
+                              <input type="checkbox" checked={selectedRows.has(group.studentId)} onChange={() => toggleRow(group.studentId)} onClick={(e) => e.stopPropagation()} className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer" />
+                            </td>
                             <td className="px-2 py-2 text-[var(--text-muted)]">
                               {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                             </td>
+                            <td className="px-3 py-2 text-[0.65rem] font-mono text-[var(--text-muted)]">{group.studentId.slice(-6).toUpperCase()}</td>
                             <td className="px-3 py-2">
                               <p className="font-medium text-[var(--text-primary)]">{bn ? group.studentNameBn || group.studentName : group.studentName}</p>
                               <p className="text-[0.65rem] text-[var(--text-muted)]">Roll: {group.roll}</p>
@@ -421,16 +656,17 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
                               </span>
                             </td>
                             <td className="px-3 py-2 text-[var(--text-secondary)]">{feeNames.join(', ')}</td>
+                            <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{fmt(perMonthTotal)}</td>
                             <td className="px-3 py-2 text-right font-semibold text-[var(--purple)]">{fmt(group.totalWaived)}</td>
                             <td className="px-3 py-2 text-right">
-                              <button onClick={(e) => { e.stopPropagation(); if (confirm(bn ? 'এই শিক্ষার্থীর সব ছাড় মুছে ফেলতে চান?' : 'Delete all waivers for this student?')) { group.entries.forEach((en) => deleteWaiverEntry(en.id)) } }} className="w-6 h-6 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer">
+                              <button onClick={(e) => { e.stopPropagation(); if (confirm(bn ? 'এই শিক্ষার্থীর সব ছাড় মুছে ফেলতে চান?' : 'Delete all waivers for this student?')) { group.entries.forEach((en) => deleteWaiverEntry(en.id)); const swForStudent = studentWaivers.filter((w) => w.studentId === group.studentId); swForStudent.forEach((w) => deleteStudentWaiver(w.id)) } }} className="w-6 h-6 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer">
                                 <Trash2 size={11} />
                               </button>
                             </td>
                           </tr>
                           {isExpanded && (
                             <tr>
-                              <td colSpan={7} className="px-4 py-3 bg-[var(--bg-secondary)]/50">
+                              <td colSpan={10} className="px-4 py-3 bg-[var(--bg-secondary)]/50">
                                 <div className="space-y-1.5">
                                   {group.entries.map((entry) => {
                                     const struct = structureMap[entry.feeStructureId]
@@ -477,6 +713,21 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver }: Props)
             )}
           </div>
         </>
+      )}
+
+      {showPdfModal && (
+        <GenericPDFOptionsModal
+          columns={pdfColumns}
+          defaultTitle={bn ? 'ছাড়ের তালিকা' : 'Waivers List'}
+          defaultTitleBn={bn ? 'ছাড়ের তালিকা' : 'Waivers List'}
+          recordLabel={bn ? 'শিক্ষার্থী' : 'student'}
+          recordLabelBn={bn ? 'শিক্ষার্থী' : 'student'}
+          count={exportData.length}
+          isBn={bn}
+          onDownload={handlePdfDownload}
+          onClose={() => setShowPdfModal(false)}
+          previewRenderer={pdfPreviewRenderer}
+        />
       )}
     </div>
   )

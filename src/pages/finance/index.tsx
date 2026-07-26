@@ -15,6 +15,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useFeeStore } from '@/store/feeStore'
 import { useAppStore } from '@/store/appStore'
+import { useSessionStudents } from '@/store/admissionStore'
 import type { LucideIcon } from 'lucide-react'
 import gsap from 'gsap'
 import { toBnNum } from '@/lib/i18n'
@@ -30,6 +31,7 @@ import { FeeCategoryModal } from './modals/FeeCategoryModal'
 import { CollectPaymentModal } from './modals/CollectPaymentModal'
 import { BulkAssignModal } from './modals/BulkAssignModal'
 import { WaiverModal } from './modals/WaiverModal'
+import { StudentWaiverModal } from './modals/StudentWaiverModal'
 import { PaymentReceiptModal } from './modals/PaymentReceiptModal'
 import type { FeeStructure, FeeDue, FeePayment } from '@/store/feeStore'
 
@@ -173,6 +175,7 @@ export default function FeeManagementPage() {
   const bn = useBn()
   const { isMobile, isTablet } = useWindowSize()
   const { structures, payments, addStructure, updateStructure, addPayment, bulkAddStructures } = useFeeStore()
+  const students = useSessionStudents()
   const { feeCardsOrder, setFeeCardsOrder, trackVisit } = useAppStore()
   const [searchParams, setSearchParams] = useSearchParams()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -189,6 +192,7 @@ export default function FeeManagementPage() {
   const [collectPayment, setCollectPayment] = useState<FeeDue | null>(null)
   const [showBulkAssign, setShowBulkAssign] = useState(false)
   const [showWaiverModal, setShowWaiverModal] = useState(false)
+  const [showStudentWaiverModal, setShowStudentWaiverModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [receiptData, setReceiptData] = useState<(FeePayment & { studentName: string; studentNameBn: string; feeName: string; feeNameBn: string }) | null>(null)
 
@@ -211,7 +215,7 @@ export default function FeeManagementPage() {
     }
   }, [setSearchParams])
 
-  const { totalCollected, totalPending, totalOverdue, totalWaived } = useFeeStore.getState().getCollectionSummary()
+  const { totalCollected, totalPending, totalOverdue, totalWaived } = useFeeStore.getState().getCollectionSummary(students)
 
   const defaultCardIds = STATIC_OPTIONS.map((o) => o.id)
 
@@ -369,7 +373,7 @@ export default function FeeManagementPage() {
           {activeView === 'dues' && <DuesTab onCollect={(d) => setCollectPayment(d)} />}
           {activeView === 'collect' && <CollectTab onCollect={(d) => setCollectPayment(d)} />}
           {activeView === 'payments' && <PaymentsTab />}
-          {activeView === 'waivers' && <WaiversTab onAddWaiver={() => setShowWaiverModal(true)} />}
+          {activeView === 'waivers' && <WaiversTab onAddWaiver={() => setShowWaiverModal(true)} onAddStudentWaiver={() => setShowStudentWaiverModal(true)} />}
           {activeView === 'reports' && <ReportsTab />}
           {activeView === 'inactive' && <InactiveDuesTab />}
         </div>
@@ -441,6 +445,13 @@ export default function FeeManagementPage() {
           <WaiverModal
             onSaved={() => setShowWaiverModal(false)}
             onClose={() => setShowWaiverModal(false)}
+          />
+        )}
+
+        {showStudentWaiverModal && (
+          <StudentWaiverModal
+            onSaved={() => setShowStudentWaiverModal(false)}
+            onClose={() => setShowStudentWaiverModal(false)}
           />
         )}
 

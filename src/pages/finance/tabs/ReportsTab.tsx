@@ -10,7 +10,7 @@ export const ReportsTab = React.memo(function ReportsTab() {
   const students = useSessionStudents()
   const { structures, getCollectionSummary, getClassWiseSummary } = useFeeStore()
 
-  const summary = useMemo(() => getCollectionSummary(), [structures])
+  const summary = useMemo(() => getCollectionSummary(students), [structures, students])
   const classSummary = useMemo(() => getClassWiseSummary(students), [students, structures])
 
   const fmt = (n: number) => n.toLocaleString()

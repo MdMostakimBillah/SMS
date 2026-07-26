@@ -62,7 +62,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const students = useSessionStudents()
   const { classes } = useClassStore()
   const { structures, payments, generateWaivers } = useFeeStore()
-  const waivers = useMemo(() => generateWaivers(), [generateWaivers, structures, payments])
+  const waivers = useMemo(() => generateWaivers(students), [generateWaivers, structures, payments, students])
 
   const [fType, setFType] = useState<'monthly' | 'onetime' | ''>('')
   const [fCategory, setFCategory] = useState('')

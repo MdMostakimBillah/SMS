@@ -75,6 +75,23 @@ export interface WaiverEntry {
   months: number[]
   reason: string
   reasonBn: string
+  notes?: string
+  approvedBy: string
+  createdAt: string
+}
+
+export interface StudentWaiver {
+  id: string
+  studentId: string
+  waiverCategoryId: string
+  feeCategoryId: string
+  mode: 'amount' | 'percent'
+  value: number
+  academicYear: string
+  isActive: boolean
+  reason: string
+  reasonBn: string
+  notes?: string
   approvedBy: string
   createdAt: string
 }
@@ -118,6 +135,7 @@ interface FeeState {
   feeCategories: FeeCategory[]
   waiverCategories: WaiverCategory[]
   waiverEntries: WaiverEntry[]
+  studentWaivers: StudentWaiver[]
 
   addFeeCategory: (c: FeeCategory) => void
   updateFeeCategory: (id: string, data: Partial<FeeCategory>) => void
@@ -144,11 +162,16 @@ interface FeeState {
   deleteWaiverEntry: (id: string) => void
   deleteWaiverEntriesByCategory: (categoryId: string) => void
 
-  generateWaivers: () => FeeWaiver[]
+  addStudentWaiver: (w: StudentWaiver) => void
+  updateStudentWaiver: (id: string, data: Partial<StudentWaiver>) => void
+  deleteStudentWaiver: (id: string) => void
+  toggleStudentWaiverActive: (id: string) => void
+
+  generateWaivers: (students?: StudentInfo[]) => FeeWaiver[]
   calculateDues: (students: StudentInfo[], classId?: string, sectionId?: string, onlyInactive?: boolean) => FeeDue[]
   getStudentPayments: (studentId: string) => FeePayment[]
   getPaymentsByStructure: (structureId: string) => FeePayment[]
-  getCollectionSummary: () => {
+  getCollectionSummary: (students?: StudentInfo[]) => {
     totalCollected: number
     totalPending: number
     totalOverdue: number
@@ -174,6 +197,7 @@ export const useFeeStore = create<FeeState>()(
       feeCategories: [],
       waiverCategories: [],
       waiverEntries: [],
+      studentWaivers: [],
 
       addFeeCategory: (c) => set((state) => ({ feeCategories: [...state.feeCategories, c] })),
 
@@ -259,8 +283,25 @@ export const useFeeStore = create<FeeState>()(
           waiverEntries: state.waiverEntries.filter((e) => e.categoryId !== categoryId),
         })),
 
-      generateWaivers: () => {
-        const { waiverEntries, structures } = get()
+      addStudentWaiver: (w) => set((state) => ({ studentWaivers: [...state.studentWaivers, w] })),
+
+      updateStudentWaiver: (id, data) =>
+        set((state) => ({
+          studentWaivers: state.studentWaivers.map((w) => (w.id === id ? { ...w, ...data } : w)),
+        })),
+
+      deleteStudentWaiver: (id) =>
+        set((state) => ({
+          studentWaivers: state.studentWaivers.filter((w) => w.id !== id),
+        })),
+
+      toggleStudentWaiverActive: (id) =>
+        set((state) => ({
+          studentWaivers: state.studentWaivers.map((w) => (w.id === id ? { ...w, isActive: !w.isActive } : w)),
+        })),
+
+      generateWaivers: (students?) => {
+        const { waiverEntries, structures, studentWaivers } = get()
         const result: FeeWaiver[] = []
         for (const entry of waiverEntries) {
           const structure = structures.find((s) => s.id === entry.feeStructureId)
@@ -297,12 +338,57 @@ export const useFeeStore = create<FeeState>()(
             })
           }
         }
+
+        if (students && students.length > 0) {
+          const activeSW = studentWaivers.filter((w) => w.isActive)
+          for (const sw of activeSW) {
+            const student = students.find((s) => s.id === sw.studentId)
+            if (!student) continue
+            const matchingStructures = structures.filter(
+              (s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section) && s.categoryId === sw.feeCategoryId
+            )
+            for (const structure of matchingStructures) {
+              const perPeriod = sw.mode === 'percent' ? Math.round(structure.amount * sw.value / 100) : Math.min(sw.value, structure.amount)
+              if (perPeriod <= 0) continue
+              if (structure.type === 'monthly') {
+                for (let m = 0; m < 12; m++) {
+                  const now = new Date()
+                  const year = now.getFullYear()
+                  const monthKey = `${year}-${String(m + 1).padStart(2, '0')}`
+                  result.push({
+                    id: `SWVR-${sw.id}-${structure.id}-${m}`,
+                    studentId: sw.studentId,
+                    feeStructureId: structure.id,
+                    amount: perPeriod,
+                    reason: sw.reason,
+                    reasonBn: sw.reasonBn,
+                    approvedBy: sw.approvedBy,
+                    createdAt: sw.createdAt,
+                    forMonth: monthKey,
+                  })
+                }
+              } else {
+                result.push({
+                  id: `SWVR-${sw.id}-${structure.id}`,
+                  studentId: sw.studentId,
+                  feeStructureId: structure.id,
+                  amount: perPeriod,
+                  reason: sw.reason,
+                  reasonBn: sw.reasonBn,
+                  approvedBy: sw.approvedBy,
+                  createdAt: sw.createdAt,
+                })
+              }
+            }
+          }
+        }
+
         return result
       },
 
       calculateDues: (students, classId, sectionId, onlyInactive) => {
         const { structures, payments, generateWaivers } = get()
-        const waivers = generateWaivers()
+        const waivers = generateWaivers(students)
         const dues: FeeDue[] = []
 
         const activeStructures = structures.filter((s) => {
@@ -366,9 +452,9 @@ export const useFeeStore = create<FeeState>()(
         return get().payments.filter((p) => p.feeStructureId === structureId)
       },
 
-      getCollectionSummary: () => {
+      getCollectionSummary: (students?: StudentInfo[]) => {
         const { structures, payments, generateWaivers } = get()
-        const waivers = generateWaivers()
+        const waivers = generateWaivers(students)
         const now = new Date()
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 
@@ -401,7 +487,7 @@ export const useFeeStore = create<FeeState>()(
 
       getClassWiseSummary: (students) => {
         const { structures, payments, generateWaivers } = get()
-        const waivers = generateWaivers()
+        const waivers = generateWaivers(students)
         const classMap = new Map<string, { totalDue: number; totalPaid: number; studentCount: Set<string> }>()
 
         for (const student of students) {
@@ -433,7 +519,7 @@ export const useFeeStore = create<FeeState>()(
     }),
     {
       name: 'edutech-fees',
-      version: 6,
+      version: 7,
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
           persistedState.waivers = persistedState.waivers || []
@@ -508,8 +594,11 @@ export const useFeeStore = create<FeeState>()(
         if (version < 6) {
           persistedState.feeCategories = persistedState.feeCategories || []
         }
+        if (version < 7) {
+          persistedState.studentWaivers = persistedState.studentWaivers || []
+        }
         return persistedState
       },
-    }
+        }
   )
 )
