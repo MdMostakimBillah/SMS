@@ -118,8 +118,7 @@ function generateMonthRows(
           })
         const waived = waivedEntries.reduce((sum, w) => sum + w.amount, 0)
         const receivable = struct.amount - paid - discountFromPayments - Math.min(waived, struct.amount)
-        const isPastOrCurrentMonth = currentYear < currentYearNum || (currentYear === currentYearNum && monthIdx <= currentMonthIdx)
-        if (isPastOrCurrentMonth && receivable <= 0) continue
+        if (receivable <= 0) continue
         const startDate = `01 ${m.label} ${currentYear}`
         const endDate = `${m.days} ${m.label} ${currentYear}`
         const startDateBn = `০১ ${m.labelBn} ${currentYear}`
@@ -249,7 +248,22 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
   const monthRows = useMemo(() => {
     if (!selectedStudent || findDueTrigger === 0) return []
-    return generateMonthRows(filteredStructures, payments.filter((p) => p.studentId === selectedStudent.id), waivers.filter((w) => w.studentId === selectedStudent.id), selectedStudent.id, fSession, monthCount, selectedStudent.billingDate)
+    // Count months after current month that already have payments — skip them when showing advance
+    const now = new Date()
+    const currentYr = now.getFullYear()
+    const currentMo = now.getMonth()
+    const studentPayments = payments.filter((p) => p.studentId === selectedStudent.id && p.forMonth)
+    const paidMonthKeys = new Set(studentPayments.map((p) => p.forMonth))
+    let alreadyPaidFuture = 0
+    for (let i = 1; i <= 12; i++) {
+      const futureMo = (currentMo + i) % 12
+      const futureYr = currentYr + Math.floor((currentMo + i) / 12)
+      const key = `${futureYr}-${String(futureMo + 1).padStart(2, '0')}`
+      if (paidMonthKeys.has(key)) alreadyPaidFuture++
+      else break
+    }
+    const effectiveAdvance = monthCount + alreadyPaidFuture
+    return generateMonthRows(filteredStructures, payments.filter((p) => p.studentId === selectedStudent.id), waivers.filter((w) => w.studentId === selectedStudent.id), selectedStudent.id, fSession, effectiveAdvance, selectedStudent.billingDate)
   }, [selectedStudent, filteredStructures, payments, waivers, fSession, monthCount, findDueTrigger])
 
   useEffect(() => {

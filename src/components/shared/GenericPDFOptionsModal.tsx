@@ -16,6 +16,7 @@ export interface GenericPDFOptionsResult {
   emptyColumns: string[]
   orientation: 'portrait' | 'landscape'
   isBn: boolean
+  includeImage: boolean
 }
 
 interface Props {
@@ -50,11 +51,12 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
   const [emptyRows, setEmptyRows] = useState(0)
   const [emptyColumns, setEmptyColumns] = useState<string[]>([])
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('landscape')
+  const [includeImage, setIncludeImage] = useState(true)
   const [showPreview, setShowPreview] = useState(true)
 
   const currentOpts: GenericPDFOptionsResult = useMemo(
-    () => ({ title, selectedCols: showColumns ? cols : [], emptyRows, emptyColumns, orientation, isBn }),
-    [title, cols, emptyRows, emptyColumns, orientation, isBn, showColumns]
+    () => ({ title, selectedCols: showColumns ? cols : [], emptyRows, emptyColumns, orientation, isBn, includeImage }),
+    [title, cols, emptyRows, emptyColumns, orientation, isBn, showColumns, includeImage]
   )
 
   const previewHtml = useMemo(() => {
@@ -245,6 +247,66 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
               </div>
             </div>
 
+            {/* Include Image Toggle */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.0313rem',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                ③ {isBn ? 'ছবি অন্তর্ভুক্ত করুন' : 'Include Image'}
+              </div>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.625rem 0.875rem',
+                  borderRadius: '0.625rem',
+                  border: `2px solid ${includeImage ? 'var(--brand)' : 'var(--border)'}`,
+                  background: includeImage ? 'var(--brand-light)' : 'var(--bg-secondary)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <span style={{ color: includeImage ? 'var(--brand)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: includeImage ? 600 : 400 }}>
+                  {isBn ? 'শিক্ষার্থী/শিক্ষকের ছবি দেখান' : 'Show student/teacher photo'}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={includeImage}
+                  onChange={(e) => setIncludeImage(e.target.checked)}
+                  style={{ display: 'none' }}
+                />
+                <span style={{
+                  width: '2.25rem',
+                  height: '1.25rem',
+                  borderRadius: '0.625rem',
+                  background: includeImage ? 'var(--brand)' : 'var(--border)',
+                  position: 'relative',
+                  transition: 'background 0.15s',
+                  flexShrink: 0,
+                }}>
+                  <span style={{
+                    width: '1rem',
+                    height: '1rem',
+                    borderRadius: '50%',
+                    background: '#fff',
+                    position: 'absolute',
+                    top: '0.125rem',
+                    left: includeImage ? '1rem' : '0.125rem',
+                    transition: 'left 0.15s',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  }} />
+                </span>
+              </label>
+            </div>
+
             {showColumns && columns.length > 0 && (
               <>
                 {/* Data Columns */}
@@ -259,7 +321,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
                         letterSpacing: '0.0313rem',
                       }}
                     >
-                      ③ {isBn ? 'ডাটা কলাম বেছে নিন' : 'Select Data Columns'} ({cols.length}/{columns.length})
+                      ④ {isBn ? 'ডাটা কলাম বেছে নিন' : 'Select Data Columns'} ({cols.length}/{columns.length})
                     </div>
                     <div style={{ display: 'flex', gap: '0.3125rem' }}>
                       <button
@@ -356,7 +418,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
                       letterSpacing: '0.0313rem',
                     }}
                   >
-                    {showColumns && columns.length > 0 ? '④' : '③'} {isBn ? 'অতিরিক্ত ফাঁকা কলাম' : 'Extra Empty Columns'}
+                    {showColumns && columns.length > 0 ? '⑤' : '④'} {isBn ? 'অতিরিক্ত ফাঁকা কলাম' : 'Extra Empty Columns'}
                   </div>
                   <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: '0.125rem' }}>
                     {isBn ? 'হাতে লেখার জন্য (যেমন: স্বাক্ষর, তারিখ)' : 'For handwriting (e.g. Signature, Date)'}
@@ -460,7 +522,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
                   marginBottom: '0.25rem',
                 }}
               >
-                {showColumns && columns.length > 0 ? '⑤' : '④'} {isBn ? 'অতিরিক্ত ফাঁকা সারি' : 'Extra Empty Rows'}
+                {showColumns && columns.length > 0 ? '⑥' : '⑤'} {isBn ? 'অতিরিক্ত ফাঁকা সারি' : 'Extra Empty Rows'}
               </div>
               <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
                 {isBn ? 'ডাটার পরে ফাঁকা সারি যোগ হবে' : 'Blank rows added after data'}
@@ -593,7 +655,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
             {isBn ? 'বাতিল' : 'Cancel'}
           </button>
           <button
-            onClick={() => onDownload({ title, selectedCols: showColumns ? cols : [], emptyRows, emptyColumns, orientation, isBn })}
+            onClick={() => onDownload(currentOpts)}
             disabled={showColumns && cols.length === 0}
             style={{
               display: 'flex',

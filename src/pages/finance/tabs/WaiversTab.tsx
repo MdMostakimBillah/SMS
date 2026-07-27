@@ -56,7 +56,7 @@ function getCategoryIcon(name: string, nameBn: string): LucideIcon {
 export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStudentWaiver }: Props) {
   const bn = useBn()
   const students = useSessionStudents()
-  const { waiverCategories, waiverEntries, structures, studentWaivers, deleteWaiverCategory, deleteWaiverEntry, deleteStudentWaiver, updateWaiverCategory } = useFeeStore()
+  const { waiverCategories, waiverEntries, structures, studentWaivers, deleteWaiverCategory, deleteWaiverEntry, deleteStudentWaiver, updateWaiverCategory, updateWaiverEntry, updateStudentWaiver } = useFeeStore()
   const { institution, classes } = useClassStore()
   const sessions = institution?.sessions || []
 
@@ -78,6 +78,11 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
   const [editDesc, setEditDesc] = useState('')
   const [editDescBn, setEditDescBn] = useState('')
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
+  const [editMode, setEditMode] = useState<'amount' | 'percent'>('amount')
+  const [editValue, setEditValue] = useState('')
+  const [editReason, setEditReason] = useState('')
+  const [editReasonBn, setEditReasonBn] = useState('')
 
   useTabSlider({ activeTab: subTab, tabRefs, sliderRef, getContainer: (s) => s.parentElement })
 
@@ -85,8 +90,8 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
   const studentMap = useMemo(() => {
-    const map: Record<string, { nameEn: string; nameBn: string; class: string; section: string; roll: string; academicYear: string }> = {}
-    students.forEach((s) => { map[s.id] = { nameEn: s.nameEn, nameBn: s.nameBn, class: s.class, section: s.section, roll: s.roll, academicYear: s.academicYear || '' } })
+    const map: Record<string, { nameEn: string; nameBn: string; class: string; section: string; roll: string; academicYear: string; photo: string }> = {}
+    students.forEach((s) => { map[s.id] = { nameEn: s.nameEn, nameBn: s.nameBn, class: s.class, section: s.section, roll: s.roll, academicYear: s.academicYear || '', photo: s.photo || '' } })
     return map
   }, [students])
 
@@ -141,6 +146,32 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
     setEditingCatId(null)
   }
 
+  const startEditEntry = (entry: { id: string; originalId: string; mode: 'amount' | 'percent'; value: number; reason: string; reasonBn: string; source: 'legacy' | 'student' }) => {
+    setEditingEntryId(entry.id)
+    setEditMode(entry.mode)
+    setEditValue(String(entry.value))
+    setEditReason(entry.reason)
+    setEditReasonBn(entry.reasonBn)
+  }
+
+  const saveEditEntry = () => {
+    if (!editingEntryId) return
+    const val = Number(editValue)
+    if (val <= 0) return
+    const entry = groupedStudents.flatMap((g) => g.entries).find((e) => e.id === editingEntryId)
+    if (!entry) return
+    if (entry.source === 'student') {
+      updateStudentWaiver(entry.originalId, { mode: editMode, value: val, reason: editReason, reasonBn: editReasonBn || editReason })
+    } else {
+      updateWaiverEntry(entry.originalId, { mode: editMode, value: val, reason: editReason, reasonBn: editReasonBn || editReason })
+    }
+    setEditingEntryId(null)
+  }
+
+  const cancelEditEntry = () => {
+    setEditingEntryId(null)
+  }
+
   // Categories data
   const categoryStats = useMemo(() => {
     return waiverCategories.map((cat) => {
@@ -184,8 +215,10 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
     })
   }, [waiverCategories, waiverEntries, studentWaivers, structures, students])
 
-  // Students grouped data
+  // Students grouped data — merge both waiverEntries (legacy) and studentWaivers (persistent)
   const groupedStudents = useMemo(() => {
+    type GroupEntry = { id: string; originalId: string; categoryId: string; studentId: string; feeStructureId: string; mode: 'amount' | 'percent'; value: number; months: number[]; reason: string; reasonBn: string; source: 'legacy' | 'student' }
+
     const groups = new Map<string, {
       studentId: string
       studentName: string
@@ -193,43 +226,63 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
       class: string
       section: string
       roll: string
-      entries: typeof waiverEntries
+      photo: string
+      entries: GroupEntry[]
       totalWaived: number
     }>()
 
-    let filtered = waiverEntries
-    if (fCategory) filtered = filtered.filter((e) => e.categoryId === fCategory)
-    if (fClass) filtered = filtered.filter((e) => {
-      const sn = studentMap[e.studentId]
-      return sn?.class === fClass
-    })
-    if (fSection) filtered = filtered.filter((e) => {
-      const sn = studentMap[e.studentId]
-      return sn?.section === fSection
-    })
-    if (fSession) filtered = filtered.filter((e) => {
-      const sn = studentMap[e.studentId]
-      return sn?.academicYear === fSession
-    })
+    const ensureGroup = (studentId: string) => {
+      if (groups.has(studentId)) return groups.get(studentId)!
+      const sn = studentMap[studentId]
+      if (!sn) return null
+      const group = { studentId, studentName: sn.nameEn, studentNameBn: sn.nameBn, class: sn.class, section: sn.section, roll: sn.roll, photo: sn.photo, entries: [] as GroupEntry[], totalWaived: 0 }
+      groups.set(studentId, group)
+      return group
+    }
 
-    for (const entry of filtered) {
-      const sn = studentMap[entry.studentId]
-      if (!sn) continue
-      const key = entry.studentId
-      if (!groups.has(key)) {
-        groups.set(key, {
-          studentId: entry.studentId,
-          studentName: sn.nameEn,
-          studentNameBn: sn.nameBn,
-          class: sn.class,
-          section: sn.section,
-          roll: sn.roll,
-          entries: [],
-          totalWaived: 0,
+    // Process legacy waiverEntries
+    let legacyFiltered = waiverEntries
+    if (fCategory) legacyFiltered = legacyFiltered.filter((e) => e.categoryId === fCategory)
+    if (fClass) legacyFiltered = legacyFiltered.filter((e) => studentMap[e.studentId]?.class === fClass)
+    if (fSection) legacyFiltered = legacyFiltered.filter((e) => studentMap[e.studentId]?.section === fSection)
+    if (fSession) legacyFiltered = legacyFiltered.filter((e) => studentMap[e.studentId]?.academicYear === fSession)
+
+    for (const entry of legacyFiltered) {
+      const group = ensureGroup(entry.studentId)
+      if (!group) continue
+      group.entries.push({ ...entry, originalId: entry.id, source: 'legacy' })
+    }
+
+    // Process studentWaivers — expand each to per-structure entries
+    let swFiltered = studentWaivers.filter((w) => w.isActive)
+    if (fCategory) swFiltered = swFiltered.filter((w) => w.waiverCategoryId === fCategory)
+    if (fClass) swFiltered = swFiltered.filter((w) => studentMap[w.studentId]?.class === fClass)
+    if (fSection) swFiltered = swFiltered.filter((w) => studentMap[w.studentId]?.section === fSection)
+    if (fSession) swFiltered = swFiltered.filter((w) => studentMap[w.studentId]?.academicYear === fSession)
+
+    for (const sw of swFiltered) {
+      const student = students.find((s) => s.id === sw.studentId)
+      if (!student) continue
+      const matchingStructures = structures.filter(
+        (s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section) && s.categoryId === sw.feeCategoryId
+      )
+      for (const struct of matchingStructures) {
+        const group = ensureGroup(sw.studentId)
+        if (!group) continue
+        group.entries.push({
+          id: `${sw.id}-${struct.id}`,
+          originalId: sw.id,
+          categoryId: sw.waiverCategoryId,
+          studentId: sw.studentId,
+          feeStructureId: struct.id,
+          mode: sw.mode,
+          value: sw.value,
+          months: struct.type === 'monthly' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] : [],
+          reason: sw.reason,
+          reasonBn: sw.reasonBn,
+          source: 'student',
         })
       }
-      const group = groups.get(key)!
-      group.entries.push(entry)
     }
 
     // Compute totalWaived for each group
@@ -237,7 +290,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
       for (const entry of group.entries) {
         const struct = structures.find((s) => s.id === entry.feeStructureId)
         if (!struct) continue
-        let perPeriod = entry.mode === 'percent' ? Math.round(struct.amount * entry.value / 100) : entry.value
+        const perPeriod = entry.mode === 'percent' ? Math.round(struct.amount * entry.value / 100) : Math.min(entry.value, struct.amount)
         if (entry.months.length > 0) {
           group.totalWaived += perPeriod * entry.months.length
         } else {
@@ -258,7 +311,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
     }
 
     return list
-  }, [waiverEntries, studentMap, structures, fClass, fSection, fCategory, fSession, search])
+  }, [waiverEntries, studentWaivers, studentMap, structures, students, fClass, fSection, fCategory, fSession, search])
 
   const exportData = useMemo(() => {
     if (selectedRows.size > 0) return groupedStudents.filter((g) => selectedRows.has(g.studentId))
@@ -309,6 +362,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
     if (cols.includes('fee')) row[bn ? 'ফি' : 'Fee'] = feeNames.join(', ')
     if (cols.includes('perMonth')) row[bn ? 'প্রতি মাসে' : 'Per Month'] = fmt(perMonthTotal)
     if (cols.includes('totalWaived')) row[bn ? 'মোট ছাড়' : 'Total Waived'] = fmt(g.totalWaived)
+    row.__photo = g.photo || ''
     return row
   }, [bn, categoryMap, structureMap, structures])
 
@@ -327,12 +381,13 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
     rows.push(summaryRow)
     const pdfBranding = getPDFBranding()
     const logoHtml = pdfLogoHTML(pdfBranding)
-    const css = `@page{size:${opts.orientation};margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}`
-    const headers = opts.selectedCols.map((c) => {
+    const css = `@page{size:${opts.orientation};margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}td img{width:28px;height:28px;border-radius:50%;object-fit:cover}`
+    const photoHeaders = opts.includeImage ? [bn ? 'ছবি' : 'Photo'] : []
+    const headers = [...photoHeaders, ...opts.selectedCols.map((c) => {
       const col = pdfColumns.find((p) => p.key === c)
       return col ? (opts.isBn ? col.labelBn : col.label) : c
-    })
-    const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${headers.map((h) => `<td>${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="ftr">Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>`
+    })]
+    const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${[...(opts.includeImage ? [`<td>${r.__photo ? `<img src="${r.__photo}" />` : ''}</td>`] : []), ...opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); const h = col ? (opts.isBn ? col.labelBn : col.label) : c; return `<td>${r[h] ?? ''}</td>` })].join('')}</tr>`).join('')}</tbody></table><div class="ftr">Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>`
     openPrintWindow(opts.title, bodyHTML, { css })
   }, [exportData, pdfColumns, bn, buildPdfRow])
 
@@ -351,11 +406,12 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
     rows.push(summaryRow)
     const pdfBranding = getPDFBranding()
     const logoHtml = pdfLogoHTML(pdfBranding)
-    const headers = opts.selectedCols.map((c) => {
+    const photoHeaders = opts.includeImage ? [bn ? 'ছবি' : 'Photo'] : []
+    const headers = [...photoHeaders, ...opts.selectedCols.map((c) => {
       const col = pdfColumns.find((p) => p.key === c)
       return col ? (opts.isBn ? col.labelBn : col.label) : c
-    })
-    return `<div style="display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px">${logoHtml}<div><div style="font-size:16px;font-weight:700;color:${pdfBranding.brandColor}">${pdfBranding.schoolName}</div><div style="font-size:10px;color:#666">${pdfBranding.address}</div></div></div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headers.map((h) => `<th style="background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center">${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${headers.map((h) => `<td style="padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center">${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+    })]
+    return `<div style="display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px">${logoHtml}<div><div style="font-size:16px;font-weight:700;color:${pdfBranding.brandColor}">${pdfBranding.schoolName}</div><div style="font-size:10px;color:#666">${pdfBranding.address}</div></div></div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headers.map((h) => `<th style="background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center">${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${[...(opts.includeImage ? [`<td style="padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center">${r.__photo ? `<img src="${r.__photo}" style="width:28px;height:28px;border-radius:50%;object-fit:cover" />` : ''}</td>`] : []), ...opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); const h = col ? (opts.isBn ? col.labelBn : col.label) : c; return `<td style="padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center">${r[h] ?? ''}</td>` })].join('')}</tr>`).join('')}</tbody></table>`
   }, [exportData, pdfColumns, bn, buildPdfRow])
 
   const exportExcel = useCallback(() => {
@@ -607,6 +663,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                         <input type="checkbox" checked={groupedStudents.length > 0 && selectedRows.size === groupedStudents.length} onChange={toggleAllRows} className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer" />
                       </th>
                       <th className="w-8 px-2 py-2"></th>
+                      <th className="w-10 px-2 py-2"></th>
                       <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
                       <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
                       <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'শ্রেণি' : 'Class'}</th>
@@ -644,6 +701,15 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                             <td className="px-2 py-2 text-[var(--text-muted)]">
                               {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                             </td>
+                            <td className="px-2 py-2">
+                              <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden flex items-center justify-center flex-shrink-0">
+                                {group.photo ? (
+                                  <img src={group.photo} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-[11px] font-bold text-[var(--brand)]">{group.studentName.charAt(0).toUpperCase()}</span>
+                                )}
+                              </div>
+                            </td>
                             <td className="px-3 py-2 text-[0.65rem] font-mono text-[var(--text-muted)]">{group.studentId.slice(-6).toUpperCase()}</td>
                             <td className="px-3 py-2">
                               <p className="font-medium text-[var(--text-primary)]">{bn ? group.studentNameBn || group.studentName : group.studentName}</p>
@@ -658,21 +724,56 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                             <td className="px-3 py-2 text-[var(--text-secondary)]">{feeNames.join(', ')}</td>
                             <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{fmt(perMonthTotal)}</td>
                             <td className="px-3 py-2 text-right font-semibold text-[var(--purple)]">{fmt(group.totalWaived)}</td>
-                            <td className="px-3 py-2 text-right">
-                              <button onClick={(e) => { e.stopPropagation(); if (confirm(bn ? 'এই শিক্ষার্থীর সব ছাড় মুছে ফেলতে চান?' : 'Delete all waivers for this student?')) { group.entries.forEach((en) => deleteWaiverEntry(en.id)); const swForStudent = studentWaivers.filter((w) => w.studentId === group.studentId); swForStudent.forEach((w) => deleteStudentWaiver(w.id)) } }} className="w-6 h-6 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer">
-                                <Trash2 size={11} />
+                            <td className="px-3 py-2">
+                              <div className="flex items-center justify-end">
+                              <button onClick={(e) => { e.stopPropagation(); if (confirm(bn ? 'এই শিক্ষার্থীর সব ছাড় মুছে ফেলতে চান?' : 'Delete all waivers for this student?')) { group.entries.forEach((en) => { if (en.source === 'legacy') deleteWaiverEntry(en.originalId) }); const swForStudent = studentWaivers.filter((w) => w.studentId === group.studentId); swForStudent.forEach((w) => deleteStudentWaiver(w.id)) } }} className="w-7 h-7 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer hover:bg-[var(--red)] hover:text-white transition-colors">
+                                <Trash2 size={13} />
                               </button>
+                              </div>
                             </td>
                           </tr>
                           {isExpanded && (
                             <tr>
-                              <td colSpan={10} className="px-4 py-3 bg-[var(--bg-secondary)]/50">
+                              <td colSpan={11} className="px-4 py-3 bg-[var(--bg-secondary)]/50">
                                 <div className="space-y-1.5">
                                   {group.entries.map((entry) => {
                                     const struct = structureMap[entry.feeStructureId]
                                     let perPeriod = entry.mode === 'amount' ? entry.value : (struct ? Math.round(struct.amount * entry.value / 100) : 0)
                                     const months = entry.months.length > 0 ? entry.months : []
                                     const totalForEntry = months.length > 0 ? perPeriod * months.length : perPeriod
+                                    const isEditing = editingEntryId === entry.id
+
+                                    if (isEditing) {
+                                      return (
+                                        <div key={entry.id} className="p-2.5 rounded-lg bg-[var(--purple-light)]/20 border border-[var(--purple)]/30 space-y-2">
+                                          <div className="flex items-center gap-3">
+                                            <p className="text-[0.7rem] font-medium text-[var(--text-primary)] flex-1">
+                                              {struct ? (bn ? struct.nameBn || struct.name : struct.name) : '—'}
+                                            </p>
+                                          </div>
+                                          <div className="flex gap-2 items-center">
+                                            <div className="flex gap-1">
+                                              <button type="button" onClick={() => setEditMode('amount')} className={`px-2 py-0.5 rounded text-[0.6rem] font-medium border cursor-pointer transition-all ${editMode === 'amount' ? 'bg-[var(--purple)] text-white border-[var(--purple)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
+                                                {bn ? 'পরিমাণ' : 'Amount'}
+                                              </button>
+                                              <button type="button" onClick={() => setEditMode('percent')} className={`px-2 py-0.5 rounded text-[0.6rem] font-medium border cursor-pointer transition-all ${editMode === 'percent' ? 'bg-[var(--purple)] text-white border-[var(--purple)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
+                                                {bn ? 'শতাংশ' : 'Percent'}
+                                              </button>
+                                            </div>
+                                            <input type="number" min="1" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="h-[26px] text-[0.65rem] px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--purple)] w-20" placeholder={editMode === 'percent' ? '%' : '৳'} />
+                                            {editMode === 'percent' && <span className="text-[0.65rem] text-[var(--text-muted)]">%</span>}
+                                          </div>
+                                          <div className="flex gap-2">
+                                            <input type="text" value={editReason} onChange={(e) => setEditReason(e.target.value)} className="h-[26px] text-[0.65rem] px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--purple)] flex-1" placeholder={bn ? 'কারণ (EN)' : 'Reason (EN)'} />
+                                            <input type="text" value={editReasonBn} onChange={(e) => setEditReasonBn(e.target.value)} className="h-[26px] text-[0.65rem] px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--purple)] flex-1" placeholder={bn ? 'কারণ (BN)' : 'Reason (BN)'} />
+                                          </div>
+                                          <div className="flex gap-1.5 justify-end">
+                                            <button type="button" onClick={cancelEditEntry} className="px-2 py-0.5 rounded text-[0.6rem] font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--bg-primary)]">{bn ? 'বাতিল' : 'Cancel'}</button>
+                                            <button type="button" onClick={saveEditEntry} disabled={!editValue || Number(editValue) <= 0 || !editReason} className="px-2 py-0.5 rounded text-[0.6rem] font-medium bg-[var(--purple)] text-white border-0 cursor-pointer disabled:opacity-50">{bn ? 'সংরক্ষণ' : 'Save'}</button>
+                                          </div>
+                                        </div>
+                                      )
+                                    }
 
                                     return (
                                       <div key={entry.id} className="flex items-center gap-3 p-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
@@ -686,6 +787,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                                               : `${entry.value}% = ${fmt(perPeriod)} ${bn ? 'প্রতি মাসে' : 'per month'}`
                                             }
                                           </p>
+                                          {entry.reason && <p className="text-[0.55rem] text-[var(--text-muted)] italic">{bn ? `কারণ: ${entry.reasonBn || entry.reason}` : `Reason: ${entry.reason}`}</p>}
                                         </div>
                                         {months.length > 0 && (
                                           <div className="flex flex-wrap gap-1">
@@ -697,6 +799,9 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                                           </div>
                                         )}
                                         <span className="text-[0.7rem] font-semibold text-[var(--purple)]">{fmt(totalForEntry)}</span>
+                                        <button onClick={(e) => { e.stopPropagation(); startEditEntry(entry) }} className="w-5 h-5 rounded flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--brand)] border-0 cursor-pointer transition-colors">
+                                          <Edit2 size={10} />
+                                        </button>
                                       </div>
                                     )
                                   })}
