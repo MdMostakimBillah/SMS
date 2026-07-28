@@ -7,8 +7,6 @@ import {
   Award,
   Download,
   Plus,
-  TrendingUp,
-  TrendingDown,
   CheckCircle2,
   Clock,
   UserCheck,
@@ -296,99 +294,66 @@ export default function DashboardPage() {
             labelBn: 'মোট ছাত্র',
             labelEn: 'Total Students',
             value: totalStudents,
-            icon: <Users size={16} />,
+            icon: <Users size={14} />,
             color: 'var(--brand)',
-            cardClass: 'stat-card-blue',
-            change: '+5%',
-            up: true,
           },
           {
             labelBn: 'শিক্ষক',
-            labelEn: 'Teachers',
+            labelEn: 'Active',
             value: totalTeachers,
-            icon: <GraduationCap size={16} />,
-            color: 'var(--amber)',
-            cardClass: 'stat-card-yellow',
-            change: '+2%',
-            up: true,
-          },
-          {
-            labelBn: 'অনুমোদিত',
-            labelEn: 'Approved',
-            value: approvedStudents,
-            icon: <CheckCircle2 size={16} />,
+            icon: <GraduationCap size={14} />,
             color: 'var(--green)',
-            cardClass: 'stat-card-green',
-            change: '+8%',
-            up: true,
           },
           {
-            labelBn: 'বিচারাধীন',
-            labelEn: 'Pending',
-            value: pendingStudents,
-            icon: <Clock size={16} />,
-            color: 'var(--purple)',
-            cardClass: 'stat-card-purple',
-            change: rejectedStudents > 0 ? `-${rejectedStudents}` : '0',
-            up: rejectedStudents === 0,
+            labelBn: 'ছাত্র/ছাত্রী',
+            labelEn: 'M/F',
+            value: `${maleStudents}/${femaleStudents}`,
+            icon: <Users size={14} />,
+            color: 'var(--teal)',
+          },
+          {
+            labelBn: 'মোট আয়',
+            labelEn: 'Salary',
+            value: financeStats.totalExpected,
+            icon: <Wallet size={14} />,
+            color: 'var(--amber)',
+            isCurrency: true,
           },
         ].map((s) => (
           <div
             key={s.labelEn}
-            className={`stat-card ${s.cardClass}`}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = 'var(--shadow-md)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = 'none'
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: isMobile ? '12px 14px' : '0.875rem 1rem',
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '0.625rem',
+              boxShadow: 'var(--shadow-xs)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <div
-                style={{
-                  width: '2.125rem',
-                  height: '2.125rem',
-                  borderRadius: '0.5rem',
-                  background: `${s.color}15`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: s.color,
-                }}
-              >
-                {s.icon}
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.1875rem',
-                  fontSize: '0.625rem',
-                  fontWeight: 600,
-                  color: s.up ? 'var(--green)' : 'var(--red)',
-                  background: s.up ? 'var(--green-light)' : 'var(--red-light)',
-                  padding: '2px 6px',
-                  borderRadius: '0.25rem',
-                }}
-              >
-                {s.up ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                {s.change}
-              </div>
-            </div>
             <div
               style={{
-                fontSize: isMobile ? '20px' : '1.5rem',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.3px',
-                lineHeight: 1,
+                width: '2rem',
+                height: '2rem',
+                borderRadius: '50%',
+                background: `${s.color}18`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: s.color,
+                flexShrink: 0,
               }}
             >
-              {s.value}
+              {s.icon}
             </div>
-            <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{isBn ? s.labelBn : s.labelEn}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: isMobile ? '1rem' : '1.125rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {'isCurrency' in s && s.isCurrency ? `৳${s.value.toLocaleString()}` : s.value}
+              </div>
+              <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{isBn ? s.labelBn : s.labelEn}</div>
+            </div>
           </div>
         ))}
       </div>
@@ -400,75 +365,65 @@ export default function DashboardPage() {
             labelBn: 'আজকের আয়',
             labelEn: "Today's Income",
             value: financeStats.todayIncome,
-            icon: <DollarSign size={16} />,
+            icon: <DollarSign size={14} />,
             color: 'var(--green)',
-            cardClass: 'stat-card-green',
           },
           {
             labelBn: 'প্রত্যাশিত আয়',
             labelEn: 'Expected Income',
             value: financeStats.totalExpected,
-            icon: <Wallet size={16} />,
+            icon: <Wallet size={14} />,
             color: 'var(--amber)',
-            cardClass: 'stat-card-yellow',
           },
           {
             labelBn: 'মাসের আয়',
             labelEn: 'Month Income',
             value: financeStats.monthIncome,
-            icon: <CalendarDays size={16} />,
+            icon: <CalendarDays size={14} />,
             color: 'var(--brand)',
-            cardClass: 'stat-card-blue',
           },
           {
             labelBn: 'মাসের বকেয়',
             labelEn: 'Month Due',
             value: financeStats.monthDue,
-            icon: <AlertTriangle size={16} />,
+            icon: <AlertTriangle size={14} />,
             color: 'var(--red)',
-            cardClass: 'stat-card-red',
           },
         ].map((s) => (
           <div
             key={s.labelEn}
-            className={`stat-card ${s.cardClass}`}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = 'var(--shadow-md)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = 'none'
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: isMobile ? '12px 14px' : '0.875rem 1rem',
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '0.625rem',
+              boxShadow: 'var(--shadow-xs)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <div
-                style={{
-                  width: '2.125rem',
-                  height: '2.125rem',
-                  borderRadius: '0.5rem',
-                  background: `${s.color}15`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: s.color,
-                }}
-              >
-                {s.icon}
-              </div>
-            </div>
             <div
               style={{
-                fontSize: isMobile ? '20px' : '1.5rem',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.3px',
-                lineHeight: 1,
+                width: '2rem',
+                height: '2rem',
+                borderRadius: '50%',
+                background: `${s.color}18`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: s.color,
+                flexShrink: 0,
               }}
             >
-              ৳{s.value.toLocaleString()}
+              {s.icon}
             </div>
-            <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{isBn ? s.labelBn : s.labelEn}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: isMobile ? '1rem' : '1.125rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                ৳{s.value.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{isBn ? s.labelBn : s.labelEn}</div>
+            </div>
           </div>
         ))}
       </div>
