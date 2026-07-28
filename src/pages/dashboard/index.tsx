@@ -164,14 +164,12 @@ export default function DashboardPage() {
 
   // Finance stats
   const financeStats = useMemo(() => {
-    const now = new Date()
-    const today = now.toISOString().split('T')[0]
-    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString().split('T')[0]
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+    const today = new Date().toISOString().split('T')[0]
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
     const waivers = generateWaivers(students)
 
     const todayIncome = payments
-      .filter((p) => p.paidAt >= today && p.paidAt < tomorrow)
+      .filter((p) => p.paidAt === today)
       .reduce((s, p) => s + p.amount, 0)
 
     const activeStructures = structures.filter((s) => s.isActive && s.type === 'monthly')
