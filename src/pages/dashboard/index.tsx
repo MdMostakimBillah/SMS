@@ -13,11 +13,16 @@ import {
   Clock,
   UserCheck,
   UserX,
+  DollarSign,
+  Wallet,
+  CalendarDays,
+  AlertTriangle,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useFeeStore } from '@/store/feeStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import CircularChart from '@/components/ui/CircularChart'
 import gsap from 'gsap'
@@ -65,6 +70,7 @@ export default function DashboardPage() {
   const isBn = useBn()
   const students = useSessionStudents()
   const teachers = useTeacherStore(useShallow((s) => s.teachers))
+  const { payments, structures, generateWaivers } = useFeeStore(useShallow((s) => ({ payments: s.payments, structures: s.structures, generateWaivers: s.generateWaivers })))
   const { isMobile, isTablet } = useWindowSize()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -142,6 +148,34 @@ export default function DashboardPage() {
     }
     return days
   }, [students, teachers, isBn])
+
+  // Finance stats
+  const financeStats = useMemo(() => {
+    const now = new Date()
+    const today = now.toISOString().split('T')[0]
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString().split('T')[0]
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+    const waivers = generateWaivers(students)
+
+    const todayIncome = payments
+      .filter((p) => p.paidAt >= today && p.paidAt < tomorrow)
+      .reduce((s, p) => s + p.amount, 0)
+
+    const activeStructures = structures.filter((s) => s.isActive && s.type === 'monthly')
+    const approvedStudents = students.filter((s) => s.status === 'approved' && s.active !== false)
+    const totalExpected = activeStructures.reduce((s, st) => s + st.amount, 0) * approvedStudents.length
+
+    const monthIncome = payments
+      .filter((p) => p.paidAt >= monthStart)
+      .reduce((s, p) => s + p.amount, 0)
+
+    const monthWaivers = waivers
+      .filter((w) => w.createdAt >= monthStart)
+      .reduce((s, w) => s + w.amount, 0)
+    const monthDue = Math.max(0, totalExpected - monthIncome - monthWaivers)
+
+    return { todayIncome, totalExpected, monthIncome, monthDue }
+  }, [payments, structures, students, generateWaivers])
 
   // Recent students (latest 4)
   const recentStudents = useMemo(() => [...students].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4), [students])
@@ -353,6 +387,86 @@ export default function DashboardPage() {
               }}
             >
               {s.value}
+            </div>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{isBn ? s.labelBn : s.labelEn}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Finance Stat Cards */}
+      <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col4, gap }}>
+        {[
+          {
+            labelBn: 'আজকের আয়',
+            labelEn: "Today's Income",
+            value: financeStats.todayIncome,
+            icon: <DollarSign size={16} />,
+            color: 'var(--green)',
+            cardClass: 'stat-card-green',
+          },
+          {
+            labelBn: 'প্রত্যাশিত আয়',
+            labelEn: 'Expected Income',
+            value: financeStats.totalExpected,
+            icon: <Wallet size={16} />,
+            color: 'var(--amber)',
+            cardClass: 'stat-card-yellow',
+          },
+          {
+            labelBn: 'মাসের আয়',
+            labelEn: 'Month Income',
+            value: financeStats.monthIncome,
+            icon: <CalendarDays size={16} />,
+            color: 'var(--brand)',
+            cardClass: 'stat-card-blue',
+          },
+          {
+            labelBn: 'মাসের বকেয়',
+            labelEn: 'Month Due',
+            value: financeStats.monthDue,
+            icon: <AlertTriangle size={16} />,
+            color: 'var(--red)',
+            cardClass: 'stat-card-red',
+          },
+        ].map((s) => (
+          <div
+            key={s.labelEn}
+            className={`stat-card ${s.cardClass}`}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = 'var(--shadow-md)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = 'none'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <div
+                style={{
+                  width: '2.125rem',
+                  height: '2.125rem',
+                  borderRadius: '0.5rem',
+                  background: `${s.color}15`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: s.color,
+                }}
+              >
+                {s.icon}
+              </div>
+            </div>
+            <div
+              style={{
+                fontSize: isMobile ? '20px' : '1.5rem',
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                letterSpacing: '-0.3px',
+                lineHeight: 1,
+              }}
+            >
+              ৳{s.value.toLocaleString()}
             </div>
             <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{isBn ? s.labelBn : s.labelEn}</div>
           </div>
