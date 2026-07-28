@@ -13,9 +13,10 @@ interface Props {
   onEdit: (s: FeeStructure) => void
   onBulkAssign: () => void
   onManageCategories: () => void
+  onBatchCreate: () => void
 }
 
-export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkAssign, onManageCategories }: Props) {
+export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkAssign, onManageCategories, onBatchCreate }: Props) {
   const bn = useBn()
   const { classes, institution } = useClassStore()
   const { structures, feeCategories, addStructure, deleteStructure, toggleStructureActive } = useFeeStore()
@@ -112,7 +113,7 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
           <button onClick={onBulkAssign} className={`${btnSecondary} text-xs`}>
             <Copy size={12} /> {bn ? 'বাল্ক' : 'Bulk'}
           </button>
-          <button onClick={() => setShowQuickAdd(!showQuickAdd)} className={`${btnPrimary} text-xs`}>
+          <button onClick={onBatchCreate} className={`${btnPrimary} text-xs`}>
             <Plus size={12} /> {bn ? 'ফি যোগ' : 'Add Fee'}
           </button>
         </div>

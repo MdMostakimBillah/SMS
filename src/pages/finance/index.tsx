@@ -30,6 +30,7 @@ import { FeeStructureModal } from './modals/FeeStructureModal'
 import { FeeCategoryModal } from './modals/FeeCategoryModal'
 import { CollectPaymentModal } from './modals/CollectPaymentModal'
 import { BulkAssignModal } from './modals/BulkAssignModal'
+import { FeeBatchCreateModal } from './modals/FeeBatchCreateModal'
 import { WaiverModal } from './modals/WaiverModal'
 import { StudentWaiverModal } from './modals/StudentWaiverModal'
 import { PaymentReceiptModal } from './modals/PaymentReceiptModal'
@@ -194,6 +195,7 @@ export default function FeeManagementPage() {
   const [showWaiverModal, setShowWaiverModal] = useState(false)
   const [showStudentWaiverModal, setShowStudentWaiverModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [showBatchCreate, setShowBatchCreate] = useState(false)
   const [receiptData, setReceiptData] = useState<(FeePayment & { studentName: string; studentNameBn: string; feeName: string; feeNameBn: string }) | null>(null)
 
   useEffect(() => {
@@ -362,14 +364,14 @@ export default function FeeManagementPage() {
             </div>
           </div>
           {activeView === 'structures' && (
-            <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity">
+            <button onClick={() => setShowBatchCreate(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity">
               {bn ? 'ফি যোগ করুন' : 'Add Fee'}
             </button>
           )}
         </div>
 
         <div className="gsap-fade-up">
-          {activeView === 'structures' && <StructuresTab onEdit={(s) => setEditStruct(s)} onBulkAssign={() => setShowBulkAssign(true)} onManageCategories={() => setShowCategoryModal(true)} />}
+          {activeView === 'structures' && <StructuresTab onEdit={(s) => setEditStruct(s)} onBulkAssign={() => setShowBulkAssign(true)} onManageCategories={() => setShowCategoryModal(true)} onBatchCreate={() => setShowBatchCreate(true)} />}
           {activeView === 'dues' && <DuesTab onCollect={(d) => setCollectPayment(d)} />}
           {activeView === 'collect' && <CollectTab onCollect={(d) => setCollectPayment(d)} />}
           {activeView === 'payments' && <PaymentsTab />}
@@ -438,6 +440,16 @@ export default function FeeManagementPage() {
               setShowBulkAssign(false)
             }}
             onClose={() => setShowBulkAssign(false)}
+          />
+        )}
+
+        {showBatchCreate && (
+          <FeeBatchCreateModal
+            onSaved={(newStructures) => {
+              bulkAddStructures(newStructures)
+              setShowBatchCreate(false)
+            }}
+            onClose={() => setShowBatchCreate(false)}
           />
         )}
 
