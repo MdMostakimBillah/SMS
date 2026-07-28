@@ -101,26 +101,29 @@ export default function DashboardPage() {
       if (s.status === 'approved') approved++
       else if (s.status === 'pending') pending++
       else if (s.status === 'rejected') rejected++
-      if (s.gender === 'Male') male++
-      else if (s.gender === 'Female') female++
+      if (s.gender?.includes('Male')) male++
+      else if (s.gender?.includes('Female')) female++
     }
     return { approved, pending, rejected, male, female }
   }, [students])
 
   const teacherStats = useMemo(() => {
-    let active = 0, onLeave = 0, inactive = 0
+    let active = 0, onLeave = 0, inactive = 0, male = 0, female = 0, totalSalary = 0
     for (const t of teachers) {
       if (t.status === 'active') active++
       else if (t.status === 'on-leave') onLeave++
       else if (t.status === 'inactive') inactive++
+      if (t.gender === 'Male') male++
+      else if (t.gender === 'Female') female++
+      if (t.status !== 'inactive') totalSalary += t.salary || 0
     }
-    return { active, onLeave, inactive }
+    return { active, onLeave, inactive, male, female, totalSalary }
   }, [teachers])
 
   const totalStudents = students.length
   const totalTeachers = teachers.length
   const { approved: approvedStudents, pending: pendingStudents, rejected: rejectedStudents, male: maleStudents, female: femaleStudents } = studentStats
-  const { active: activeTeachers } = teacherStats
+  const { active: activeTeachers, totalSalary: totalTeacherSalary } = teacherStats
 
   // Class distribution
   const classDist = useMemo(() => {
@@ -302,29 +305,29 @@ export default function DashboardPage() {
         {[
           {
             labelBn: 'মোট ছাত্র',
-            labelEn: 'Total',
+            labelEn: 'Total Students',
             value: totalStudents,
             icon: <Users size={14} />,
             color: 'var(--brand)',
           },
           {
-            labelBn: 'সক্রিয়',
-            labelEn: 'Active',
-            value: activeTeachers,
+            labelBn: 'সক্রিয় ছাত্র',
+            labelEn: 'Active Students',
+            value: approvedStudents,
             icon: <GraduationCap size={14} />,
             color: 'var(--green)',
           },
           {
-            labelBn: 'ছাত্র/ছাত্রী',
-            labelEn: 'M/F',
+            labelBn: 'ছাত্র (ছেলে/মেয়ে)',
+            labelEn: 'M/F Students',
             value: `${maleStudents}/${femaleStudents}`,
             icon: <Users size={14} />,
             color: 'var(--teal)',
           },
           {
-            labelBn: 'মোট আয়',
-            labelEn: 'Salary',
-            value: financeStats.totalExpected,
+            labelBn: 'কর্মচারী বেতন',
+            labelEn: 'Employee Salary',
+            value: totalTeacherSalary,
             icon: <Wallet size={14} />,
             color: 'var(--amber)',
             isCurrency: true,
