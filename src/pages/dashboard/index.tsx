@@ -15,16 +15,19 @@ import {
   Wallet,
   CalendarDays,
   AlertTriangle,
+  ChevronDown,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useFeeStore } from '@/store/feeStore'
+import { useTodoStore } from '@/store/todoStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import CircularChart from '@/components/ui/CircularChart'
 import gsap from 'gsap'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { CreateTaskModal } from './modals/CreateTaskModal'
 
 const COLORS = ['#6366f1', '#14b8a6', '#f59e0b', '#22c55e', '#a855f7', '#ef4444', '#ec4899', '#06b6d4']
 const STATUS_COLORS = { approved: '#22c55e', pending: '#f59e0b', rejected: '#ef4444' }
@@ -81,9 +84,13 @@ export default function DashboardPage() {
   const payments = useFeeStore((s) => s.payments)
   const structures = useFeeStore((s) => s.structures)
   const generateWaivers = useFeeStore((s) => s.generateWaivers)
+  const { todos, updateTodo } = useTodoStore(useShallow((s) => ({ todos: s.todos, updateTodo: s.updateTodo })))
   const { isMobile, isTablet } = useWindowSize()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [showCreateTask, setShowCreateTask] = useState(false)
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string>('all')
+  const [showTeacherPicker, setShowTeacherPicker] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 800)
@@ -248,10 +255,14 @@ export default function DashboardPage() {
       >
         <div>
           <h1 style={{ fontSize: isMobile ? '18px' : '1.25rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-            {isBn ? 'সুপ্রভাত, Admin 👋' : 'Good morning, Admin 👋'}
+            {(() => {
+              const hour = new Date().getHours()
+              const greet = hour < 12 ? (isBn ? 'সুপ্রভাত' : 'Good morning') : hour < 17 ? (isBn ? 'শুভ অপরাহ্ন' : 'Good afternoon') : hour < 21 ? (isBn ? 'শুভ সন্ধ্যা' : 'Good evening') : (isBn ? 'শুভ রাত্রি' : 'Good night')
+              return `${greet}, Admin 👋`
+            })()}
           </h1>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.1875rem' }}>
-            {isBn ? 'শুক্রবার, ৮ মে ২০২৬ · টার্ম ২' : 'Friday, 8 May 2026 · Term 2'}
+            {new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
         {!isMobile && (
@@ -259,7 +270,7 @@ export default function DashboardPage() {
             <button className="btn-minimal">
               <Download size={14} /> Export
             </button>
-            <button className="btn-minimal btn-brand">
+            <button className="btn-minimal btn-brand" onClick={() => setShowCreateTask(true)}>
               <Plus size={14} />
               {isBn ? 'নতুন' : 'Add New'}
             </button>
@@ -439,6 +450,206 @@ export default function DashboardPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Todo / Tasks Section */}
+      <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col2, gap }}>
+        {/* Tasks List */}
+        <div className="card--premium" style={card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {sectionHead('var(--brand)')}
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {isBn ? 'আমার কাজ' : 'My Tasks'}
+              </span>
+            </div>
+            {/* Teacher Selector */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowTeacherPicker(!showTeacherPicker)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.375rem',
+                  padding: '0.25rem 0.5rem', borderRadius: '0.375rem',
+                  background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                  color: 'var(--text-secondary)', fontSize: '0.625rem', cursor: 'pointer',
+                  fontWeight: 500,
+                }}
+              >
+                {selectedTeacherId === 'all'
+                  ? isBn ? 'সকল কর্মচারী' : 'All Staff'
+                  : teachers.find((t) => t.id === selectedTeacherId)?.nameEn || 'Teacher'}
+                <ChevronDown size={10} />
+              </button>
+              {showTeacherPicker && (
+                <div
+                  style={{
+                    position: 'absolute', top: '100%', right: 0, zIndex: 20,
+                    background: 'var(--surface)', border: '1px solid var(--border)',
+                    borderRadius: '0.5rem', maxHeight: '12rem', overflow: 'auto',
+                    boxShadow: 'var(--shadow-md)', marginTop: '0.25rem', minWidth: '10rem',
+                  }}
+                >
+                  <div
+                    style={{ padding: '0.4rem 0.625rem', fontSize: '0.625rem', cursor: 'pointer', color: selectedTeacherId === 'all' ? 'var(--brand)' : 'var(--text-secondary)', fontWeight: selectedTeacherId === 'all' ? 600 : 400, borderBottom: '1px solid var(--border)' }}
+                    onClick={() => { setSelectedTeacherId('all'); setShowTeacherPicker(false) }}
+                  >
+                    {isBn ? 'সকল কর্মচারী' : 'All Staff'}
+                  </div>
+                  {teachers.filter((t) => t.status === 'active').map((t) => (
+                    <div
+                      key={t.id}
+                      style={{ padding: '0.4rem 0.625rem', fontSize: '0.625rem', cursor: 'pointer', color: selectedTeacherId === t.id ? 'var(--brand)' : 'var(--text-primary)', fontWeight: selectedTeacherId === t.id ? 600 : 400, background: selectedTeacherId === t.id ? 'var(--brand-light)' : 'transparent' }}
+                      onClick={() => { setSelectedTeacherId(t.id); setShowTeacherPicker(false) }}
+                    >
+                      {t.nameEn}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', maxHeight: '16rem', overflow: 'auto' }}>
+            {todos.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '1.5rem 0', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                {isBn ? 'কোনো কাজ নেই' : 'No tasks yet'}
+              </div>
+            ) : (
+              (() => {
+                const filtered = selectedTeacherId === 'all'
+                  ? todos
+                  : todos.filter((t) => t.assignedTo.length === 0 || t.assignedTo.includes(selectedTeacherId))
+                if (filtered.length === 0) {
+                  return <div style={{ textAlign: 'center', padding: '1.5rem 0', color: 'var(--text-muted)', fontSize: '0.75rem' }}>{isBn ? 'এই শিক্ষকের জন্য কাজ নেই' : 'No tasks for this teacher'}</div>
+                }
+                return filtered.sort((a, b) => {
+                  const priorityOrder = { high: 0, medium: 1, low: 2 }
+                  return priorityOrder[a.priority] - priorityOrder[b.priority]
+                }).map((task) => {
+                  const isOverdue = task.dueDate && task.dueDate < new Date().toISOString().split('T')[0] && task.status !== 'completed'
+                  return (
+                    <div
+                      key={task.id}
+                      style={{
+                        display: 'flex', alignItems: 'flex-start', gap: '0.5rem',
+                        padding: '0.5rem 0.625rem', borderRadius: '0.5rem',
+                        background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={task.status === 'completed'}
+                        onChange={() => updateTodo(task.id, {
+                          status: task.status === 'completed' ? 'pending' : 'completed',
+                          completedAt: task.status === 'completed' ? undefined : new Date().toISOString(),
+                        })}
+                        style={{ marginTop: '0.125rem', accentColor: 'var(--brand)', cursor: 'pointer', flexShrink: 0 }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                          <span style={{
+                            fontSize: '0.6875rem', fontWeight: 500,
+                            color: task.status === 'completed' ? 'var(--text-muted)' : 'var(--text-primary)',
+                            textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                          }}>
+                            {isBn ? task.titleBn : task.title}
+                          </span>
+                          <span style={{
+                            fontSize: '0.5rem', fontWeight: 600, padding: '1px 4px', borderRadius: '0.25rem',
+                            color: task.priority === 'high' ? 'var(--red)' : task.priority === 'medium' ? 'var(--amber)' : 'var(--green)',
+                            background: task.priority === 'high' ? 'var(--red-light)' : task.priority === 'medium' ? 'var(--amber-light)' : 'var(--green-light)',
+                          }}>
+                            {task.priority === 'high' ? (isBn ? 'বেশি' : 'HIGH') : task.priority === 'medium' ? (isBn ? 'মাঝারি' : 'MED') : (isBn ? 'কম' : 'LOW')}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.1875rem' }}>
+                          <span style={{ fontSize: '0.5625rem', color: isOverdue ? 'var(--red)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.1875rem' }}>
+                            <CalendarDays size={9} />
+                            {task.dueDate ? new Date(task.dueDate).toLocaleDateString(isBn ? 'bn-BD' : 'en-US', { month: 'short', day: 'numeric' }) : '—'}
+                          </span>
+                          <span style={{
+                            fontSize: '0.5rem', fontWeight: 500, padding: '1px 4px', borderRadius: '0.25rem',
+                            color: task.status === 'completed' ? 'var(--green)' : task.status === 'in-progress' ? 'var(--brand)' : 'var(--text-muted)',
+                            background: task.status === 'completed' ? 'var(--green-light)' : task.status === 'in-progress' ? 'var(--brand-light)' : 'var(--bg-secondary)',
+                          }}>
+                            {task.status === 'completed' ? (isBn ? 'সম্পন্ন' : 'Done') : task.status === 'in-progress' ? (isBn ? 'চলমান' : 'In Progress') : (isBn ? 'বাকি' : 'Pending')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              })()
+            )}
+          </div>
+        </div>
+
+        {/* Task Summary */}
+        <div className="card--premium" style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            {sectionHead('var(--teal)')}
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              {isBn ? 'কাজের সারসংক্ষেপ' : 'Task Summary'}
+            </span>
+          </div>
+          {(() => {
+            const filtered = selectedTeacherId === 'all'
+              ? todos
+              : todos.filter((t) => t.assignedTo.length === 0 || t.assignedTo.includes(selectedTeacherId))
+            const total = filtered.length
+            const pending = filtered.filter((t) => t.status === 'pending').length
+            const inProgress = filtered.filter((t) => t.status === 'in-progress').length
+            const completed = filtered.filter((t) => t.status === 'completed').length
+            const overdue = filtered.filter((t) => t.dueDate && t.dueDate < new Date().toISOString().split('T')[0] && t.status !== 'completed').length
+            const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* Progress bar */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{isBn ? 'সম্পন্ন' : 'Completed'}</span>
+                    <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-primary)' }}>{pct}%</span>
+                  </div>
+                  <div style={{ height: '0.375rem', background: 'var(--border)', borderRadius: '0.1875rem', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: 'var(--green)', borderRadius: '0.1875rem', transition: 'width 0.6s ease' }} />
+                  </div>
+                </div>
+                {/* Stats grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  {[
+                    { label: isBn ? 'মোট' : 'Total', value: total, color: 'var(--brand)' },
+                    { label: isBn ? 'বাকি' : 'Pending', value: pending, color: 'var(--amber)' },
+                    { label: isBn ? 'চলমান' : 'In Progress', value: inProgress, color: 'var(--brand)' },
+                    { label: isBn ? 'সম্পন্ন' : 'Done', value: completed, color: 'var(--green)' },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.5rem', borderRadius: '0.375rem',
+                        background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                      }}
+                    >
+                      <div style={{ width: '0.5rem', height: '0.5rem', borderRadius: '0.125rem', background: item.color, flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{item.value}</div>
+                        <div style={{ fontSize: '0.5625rem', color: 'var(--text-muted)' }}>{item.label}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {overdue > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.5rem', borderRadius: '0.375rem', background: 'var(--red-light)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                    <AlertTriangle size={12} color="var(--red)" />
+                    <span style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--red)' }}>
+                      {overdue} {isBn ? 'টি কাজ বিলম্বিত' : 'overdue task(s)'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+        </div>
       </div>
 
       {/* Charts Row: Enrollment Trend + Class Distribution + Status Pie */}
@@ -1038,6 +1249,8 @@ export default function DashboardPage() {
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
       `}</style>
+
+      {showCreateTask && <CreateTaskModal onClose={() => setShowCreateTask(false)} />}
     </div>
   )
 }
