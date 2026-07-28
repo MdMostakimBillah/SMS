@@ -45,13 +45,23 @@ function DashboardSkeleton() {
       <div className="skeleton" style={{ width: '15.625rem', height: '2.25rem', borderRadius: '1.25rem' }} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="skeleton-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <div className="skeleton skeleton-circle" style={{ width: '2.25rem', height: '2.25rem' }} />
-              <div className="skeleton" style={{ width: '1.25rem', height: '1.25rem', borderRadius: '0.25rem' }} />
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.875rem 1rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.625rem' }}>
+            <div className="skeleton" style={{ width: '2rem', height: '2rem', borderRadius: '0.375rem' }} />
+            <div style={{ flex: 1 }}>
+              <div className="skeleton" style={{ width: '3rem', height: '1rem', marginBottom: '0.25rem' }} />
+              <div className="skeleton" style={{ width: '4rem', height: '0.625rem' }} />
             </div>
-            <div className="skeleton" style={{ width: '5rem', height: '1.5rem', marginBottom: '0.375rem' }} />
-            <div className="skeleton skeleton-text" style={{ width: '6.25rem' }} />
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.875rem 1rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.625rem' }}>
+            <div className="skeleton" style={{ width: '2rem', height: '2rem', borderRadius: '0.375rem' }} />
+            <div style={{ flex: 1 }}>
+              <div className="skeleton" style={{ width: '4rem', height: '1rem', marginBottom: '0.25rem' }} />
+              <div className="skeleton" style={{ width: '5rem', height: '0.625rem' }} />
+            </div>
           </div>
         ))}
       </div>
@@ -292,15 +302,15 @@ export default function DashboardPage() {
         {[
           {
             labelBn: 'মোট ছাত্র',
-            labelEn: 'Total Students',
+            labelEn: 'Total',
             value: totalStudents,
             icon: <Users size={14} />,
             color: 'var(--brand)',
           },
           {
-            labelBn: 'শিক্ষক',
+            labelBn: 'সক্রিয়',
             labelEn: 'Active',
-            value: totalTeachers,
+            value: activeTeachers,
             icon: <GraduationCap size={14} />,
             color: 'var(--green)',
           },
@@ -337,7 +347,7 @@ export default function DashboardPage() {
               style={{
                 width: '2rem',
                 height: '2rem',
-                borderRadius: '50%',
+                borderRadius: '0.375rem',
                 background: `${s.color}18`,
                 display: 'flex',
                 alignItems: 'center',
@@ -407,7 +417,7 @@ export default function DashboardPage() {
               style={{
                 width: '2rem',
                 height: '2rem',
-                borderRadius: '50%',
+                borderRadius: '0.375rem',
                 background: `${s.color}18`,
                 display: 'flex',
                 alignItems: 'center',
