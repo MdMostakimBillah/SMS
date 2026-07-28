@@ -12,11 +12,10 @@ import { inputCls, selectCls, btnSecondary, btnPrimary } from '@/lib/styles'
 interface Props {
   onEdit: (s: FeeStructure) => void
   onBulkAssign: () => void
-  onManageCategories: () => void
-  onBatchCreate: () => void
+  onManageCategories: (feeType: 'monthly' | 'onetime') => void
 }
 
-export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkAssign, onManageCategories, onBatchCreate }: Props) {
+export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkAssign, onManageCategories }: Props) {
   const bn = useBn()
   const { classes, institution } = useClassStore()
   const { structures, feeCategories, addStructure, deleteStructure, toggleStructureActive } = useFeeStore()
@@ -107,14 +106,11 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={onManageCategories} className={`${btnSecondary} text-xs`}>
+          <button onClick={() => onManageCategories(feeType)} className={`${btnSecondary} text-xs`}>
             <Tag size={12} /> {bn ? 'ক্যাটাগরি' : 'Categories'}
           </button>
           <button onClick={onBulkAssign} className={`${btnSecondary} text-xs`}>
-            <Copy size={12} /> {bn ? 'বাল্ক' : 'Bulk'}
-          </button>
-          <button onClick={onBatchCreate} className={`${btnPrimary} text-xs`}>
-            <Plus size={12} /> {bn ? 'ফি যোগ' : 'Add Fee'}
+            <Copy size={12} /> {bn ? 'বাল্ক আপডেট' : 'Bulk Update'}
           </button>
         </div>
       </div>
@@ -198,7 +194,7 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
               <label className="text-[0.65rem] font-medium text-[var(--text-muted)] block mb-0.5">{bn ? 'ক্যাটাগরি' : 'Category'}</label>
               <select value={qCategoryId} onChange={(e) => setQCategoryId(e.target.value)} className={`${selectCls} w-full h-8 text-xs`}>
                 <option value="">{bn ? 'নেই' : 'None'}</option>
-                {feeCategories.filter((c) => c.isActive).map((c) => (
+                {feeCategories.filter((c) => c.isActive && c.type === feeType).map((c) => (
                   <option key={c.id} value={c.id}>{bn && c.nameBn ? c.nameBn : c.name}</option>
                 ))}
               </select>
@@ -234,7 +230,7 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
         </select>
         <select value={fCategory} onChange={(e) => setFCategory(e.target.value)} className={`${selectCls} h-8 text-xs w-auto`}>
           <option value="">{bn ? 'সব ক্যাটাগরি' : 'All Categories'}</option>
-          {feeCategories.filter((c) => c.isActive).map((c) => (
+          {feeCategories.filter((c) => c.isActive && c.type === feeType).map((c) => (
             <option key={c.id} value={c.id}>{bn && c.nameBn ? c.nameBn : c.name}</option>
           ))}
         </select>

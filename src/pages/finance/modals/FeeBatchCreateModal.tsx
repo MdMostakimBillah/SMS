@@ -43,7 +43,7 @@ export function FeeBatchCreateModal({ onSaved, onClose }: Props) {
     return entries
   })
 
-  const activeCategories = useMemo(() => feeCategories.filter((c) => c.isActive), [feeCategories])
+  const activeCategories = useMemo(() => feeCategories.filter((c) => c.isActive && c.type === feeType), [feeCategories, feeType])
 
   // Existing structures grouped by name for copy dropdown
   const existingFees = useMemo(() => {

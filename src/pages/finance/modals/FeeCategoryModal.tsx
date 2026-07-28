@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { X, Edit2, Trash2, Tag, ToggleLeft, ToggleRight } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { X, Edit2, Trash2, Tag, ToggleLeft, ToggleRight, Repeat, Zap } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useFeeStore } from '@/store/feeStore'
 import type { FeeCategory } from '@/store/feeStore'
@@ -8,18 +8,22 @@ import { modalOverlayCls, modalStyleCls } from '@/pages/hr/utils'
 import { createPortal } from 'react-dom'
 
 interface Props {
+  feeType: 'monthly' | 'onetime'
   onClose: () => void
 }
 
-export function FeeCategoryModal({ onClose }: Props) {
+export function FeeCategoryModal({ feeType, onClose }: Props) {
   const bn = useBn()
   const { feeCategories, addFeeCategory, updateFeeCategory, deleteFeeCategory, toggleFeeCategoryActive } = useFeeStore()
+
+  const filteredCategories = useMemo(() => feeCategories.filter((c) => c.type === feeType), [feeCategories, feeType])
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [nameBn, setNameBn] = useState('')
   const [desc, setDesc] = useState('')
   const [descBn, setDescBn] = useState('')
+  const [newType, setNewType] = useState<'monthly' | 'onetime'>(feeType)
   const [saved, setSaved] = useState(false)
 
   const startEdit = (cat: FeeCategory) => {
@@ -36,6 +40,7 @@ export function FeeCategoryModal({ onClose }: Props) {
     setNameBn('')
     setDesc('')
     setDescBn('')
+    setNewType(feeType)
   }
 
   const handleSave = () => {
@@ -54,6 +59,7 @@ export function FeeCategoryModal({ onClose }: Props) {
         nameBn: nameBn || name,
         description: desc,
         descriptionBn: descBn || desc,
+        type: newType,
         isActive: true,
         createdAt: new Date().toISOString(),
       })
@@ -82,7 +88,7 @@ export function FeeCategoryModal({ onClose }: Props) {
             </div>
             <div>
               <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{bn ? 'ফি ক্যাটাগরি' : 'Fee Categories'}</h3>
-              <p className="text-[0.65rem] text-[var(--text-muted)]">{feeCategories.length} {bn ? 'টি ক্যাটাগরি' : 'categories'}</p>
+              <p className="text-[0.65rem] text-[var(--text-muted)]">{filteredCategories.length} {bn ? 'টি ক্যাটাগরি' : 'categories'} • {feeType === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-Time')}</p>
             </div>
           </div>
           <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] cursor-pointer">
@@ -91,7 +97,7 @@ export function FeeCategoryModal({ onClose }: Props) {
         </div>
 
         {/* Category List */}
-        {feeCategories.length === 0 ? (
+        {filteredCategories.length === 0 ? (
           <div className="text-center py-8">
             <div className="w-12 h-12 rounded-2xl bg-[var(--bg-secondary)] flex items-center justify-center mx-auto mb-2">
               <Tag size={20} className="text-[var(--text-muted)]" />
@@ -101,7 +107,7 @@ export function FeeCategoryModal({ onClose }: Props) {
           </div>
         ) : (
           <div className="space-y-2 mb-4 max-h-[240px] overflow-y-auto pr-1">
-            {feeCategories.map((cat) => (
+            {filteredCategories.map((cat) => (
               <div
                 key={cat.id}
                 className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all ${editingId === cat.id ? 'border-[var(--brand)] bg-[var(--brand-light)]/20' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/40'} ${!cat.isActive ? 'opacity-50' : ''}`}
@@ -110,9 +116,15 @@ export function FeeCategoryModal({ onClose }: Props) {
                   <p className="text-xs font-semibold text-[var(--text-primary)] truncate">
                     {bn && cat.nameBn ? cat.nameBn : cat.name}
                   </p>
-                  {cat.description && (
-                    <p className="text-[0.65rem] text-[var(--text-muted)] truncate mt-0.5">{cat.description}</p>
-                  )}
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {cat.description && (
+                      <p className="text-[0.65rem] text-[var(--text-muted)] truncate">{cat.description}</p>
+                    )}
+                    <span className={`inline-flex items-center gap-1 text-[0.55rem] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${cat.type === 'monthly' ? 'bg-[var(--brand-light)] text-[var(--brand)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'}`}>
+                      {cat.type === 'monthly' ? <Repeat size={8} /> : <Zap size={8} />}
+                      {cat.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-Time')}
+                    </span>
+                  </div>
                 </div>
                 <button
                   onClick={() => toggleFeeCategoryActive(cat.id)}
@@ -159,6 +171,29 @@ export function FeeCategoryModal({ onClose }: Props) {
               placeholder={bn ? 'নাম (BN)' : 'Name (BN)'}
             />
           </div>
+          {!editingId && (
+            <div className="mb-2">
+              <p className="text-[0.65rem] font-medium text-[var(--text-muted)] mb-1">{bn ? 'ক্যাটাগরির ধরন *' : 'Category Type *'}</p>
+              <div className="flex items-center gap-1 p-0.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]">
+                <button
+                  type="button"
+                  onClick={() => setNewType('monthly')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[0.65rem] font-semibold cursor-pointer border-none transition-all duration-200 ${newType === 'monthly' ? 'bg-[var(--brand)] text-white shadow-sm' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+                >
+                  <Repeat size={11} />
+                  {bn ? 'মাসিক' : 'Monthly'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewType('onetime')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[0.65rem] font-semibold cursor-pointer border-none transition-all duration-200 ${newType === 'onetime' ? 'bg-[var(--brand)] text-white shadow-sm' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+                >
+                  <Zap size={11} />
+                  {bn ? 'এককালীন' : 'One-Time'}
+                </button>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <input
               value={desc}

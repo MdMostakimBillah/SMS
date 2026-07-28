@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react'
-import { X, Copy, Check, Repeat, Zap } from 'lucide-react'
+import { X, Repeat, Zap, ArrowRight } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
 import type { FeeStructure } from '@/store/feeStore'
-import { inputCls, selectCls, btnPrimary } from '@/lib/styles'
-import { modalOverlayCls, modalStyleCls } from '@/pages/hr/utils'
+import { btnPrimary } from '@/lib/styles'
 import { createPortal } from 'react-dom'
 
 interface Props {
@@ -13,66 +12,176 @@ interface Props {
   onClose: () => void
 }
 
+interface ClassEntry {
+  selected: boolean
+  sections: string[]
+  amount: string
+}
+
 export function BulkAssignModal({ onSaved, onClose }: Props) {
   const bn = useBn()
   const { classes, institution } = useClassStore()
-  const { structures } = useFeeStore()
+  const { structures, feeCategories } = useFeeStore()
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
-  const [selectedClasses, setSelectedClasses] = useState<string[]>([])
-  const [selectedSections, setSelectedSections] = useState<Record<string, string[]>>({})
-  const [sourceStructure, setSourceStructure] = useState('')
-  const [customName, setCustomName] = useState('')
-  const [customAmount, setCustomAmount] = useState('')
-  const [customDesc, setCustomDesc] = useState('')
-  const [mode, setMode] = useState<'copy' | 'custom'>('custom')
   const [feeType, setFeeType] = useState<'monthly' | 'onetime'>('monthly')
+  const [sourceFeeId, setSourceFeeId] = useState('')
+  const [showFeeDropdown, setShowFeeDropdown] = useState(false)
 
-  const toggleClass = (cls: string) => {
-    setSelectedClasses((prev) => prev.includes(cls) ? prev.filter((c) => c !== cls) : [...prev, cls])
-  }
+  // Class grid state
+  const [classEntries, setClassEntries] = useState<Record<string, ClassEntry>>(() => {
+    const entries: Record<string, ClassEntry> = {}
+    for (const cls of classOptions) {
+      entries[cls] = { selected: false, sections: [], amount: '' }
+    }
+    return entries
+  })
 
-  const toggleSection = (cls: string, sec: string) => {
-    setSelectedSections((prev) => {
-      const current = prev[cls] || []
-      const updated = current.includes(sec) ? current.filter((s) => s !== sec) : [...current, sec]
-      return { ...prev, [cls]: updated }
+  const activeCategories = useMemo(() => feeCategories.filter((c) => c.isActive && c.type === feeType), [feeCategories, feeType])
+
+  // Group existing structures by name for the fee selector
+  const existingFees = useMemo(() => {
+    const map = new Map<string, { name: string; nameBn: string; structures: FeeStructure[] }>()
+    for (const s of structures) {
+      if (s.type !== feeType) continue
+      const key = s.name
+      if (!map.has(key)) map.set(key, { name: s.name, nameBn: s.nameBn, structures: [] })
+      map.get(key)!.structures.push(s)
+    }
+    return Array.from(map.values())
+  }, [structures, feeType])
+
+  const selectedFee = useMemo(() => existingFees.find((f) => f.name === sourceFeeId), [existingFees, sourceFeeId])
+
+  // When selecting a fee, pre-fill the class grid with existing amounts
+  const handleSelectFee = (feeName: string) => {
+    const fee = existingFees.find((f) => f.name === feeName)
+    if (!fee) return
+    setSourceFeeId(feeName)
+    setShowFeeDropdown(false)
+
+    // Pre-fill amounts from existing structures
+    setClassEntries((prev) => {
+      const next = { ...prev }
+      // Reset all
+      for (const cls of classOptions) {
+        next[cls] = { selected: false, sections: [], amount: '' }
+      }
+      // Fill from existing structures
+      for (const s of fee.structures) {
+        if (next[s.class]) {
+          next[s.class] = {
+            selected: true,
+            sections: s.section ? [s.section] : [],
+            amount: String(s.amount),
+          }
+        }
+      }
+      return next
     })
   }
 
-  const handleSave = () => {
-    const newStructures: FeeStructure[] = []
-    const today = new Date().toISOString().split('T')[0]
+  // Toggle class selection
+  const toggleClass = (cls: string) => {
+    setClassEntries((prev) => ({
+      ...prev,
+      [cls]: { ...prev[cls], selected: !prev[cls].selected },
+    }))
+  }
 
-    for (const cls of selectedClasses) {
-      const secs = selectedSections[cls]
-      if (secs && secs.length > 0) {
-        for (const sec of secs) {
-          if (mode === 'copy' && sourceStructure) {
-            const src = structures.find((s) => s.id === sourceStructure)
-            if (src) {
-              newStructures.push({
-                ...src,
-                id: `FEE-${Date.now()}-${cls}-${sec}`,
-                class: cls,
-                section: sec,
-                academicYear: institution.currentSession,
-                type: feeType,
-                createdAt: today,
-              })
-            }
-          } else if (mode === 'custom' && customName && customAmount) {
-            newStructures.push({
-              id: `FEE-${Date.now()}-${cls}-${sec}`,
-              name: customName,
-              nameBn: customName,
+  // Toggle all classes
+  const toggleAll = () => {
+    const allSelected = classOptions.every((c) => classEntries[c]?.selected)
+    setClassEntries((prev) => {
+      const next = { ...prev }
+      for (const c of classOptions) {
+        next[c] = { ...next[c], selected: !allSelected }
+      }
+      return next
+    })
+  }
+
+  // Toggle section for a class
+  const toggleSection = (cls: string, sec: string) => {
+    setClassEntries((prev) => {
+      const current = prev[cls].sections
+      const updated = current.includes(sec) ? current.filter((s) => s !== sec) : [...current, sec]
+      return { ...prev, [cls]: { ...prev[cls], sections: updated } }
+    })
+  }
+
+  // Toggle all sections for a class
+  const toggleAllSections = (cls: string) => {
+    const allSecs = sectionsMap[cls] || []
+    setClassEntries((prev) => {
+      const current = prev[cls].sections
+      const allSelected = allSecs.length > 0 && allSecs.every((s) => current.includes(s))
+      return { ...prev, [cls]: { ...prev[cls], sections: allSelected ? [] : [...allSecs] } }
+    })
+  }
+
+  // Update amount for a class
+  const setAmount = (cls: string, amount: string) => {
+    setClassEntries((prev) => ({ ...prev, [cls]: { ...prev[cls], amount } }))
+  }
+
+  // Apply same amount to all selected classes
+  const applySameAmount = () => {
+    const firstSelected = classOptions.find((c) => classEntries[c]?.selected && classEntries[c]?.amount)
+    if (!firstSelected) return
+    const amt = classEntries[firstSelected].amount
+    setClassEntries((prev) => {
+      const next = { ...prev }
+      for (const c of classOptions) {
+        if (next[c].selected) next[c] = { ...next[c], amount: amt }
+      }
+      return next
+    })
+  }
+
+  // Save — update existing structures
+  const handleSave = () => {
+    if (!selectedFee) return
+    const today = new Date().toISOString().split('T')[0]
+    const updated: FeeStructure[] = []
+
+    // Map existing structures by class+section for lookup
+    const structMap = new Map<string, FeeStructure>()
+    for (const s of selectedFee.structures) {
+      structMap.set(`${s.class}::${s.section || ''}`, s)
+    }
+
+    for (const cls of classOptions) {
+      const entry = classEntries[cls]
+      if (!entry.selected) continue
+      const amount = Number(entry.amount) || 0
+      if (amount <= 0) continue
+
+      if (entry.sections.length > 0) {
+        for (const sec of entry.sections) {
+          const key = `${cls}::${sec}`
+          const existing = structMap.get(key)
+          if (existing) {
+            // Update existing
+            updated.push({
+              ...existing,
+              amount,
+              categoryId: activeCategories[0]?.id || existing.categoryId,
+              updatedAt: today,
+            } as FeeStructure)
+          } else {
+            // Create new for this section
+            updated.push({
+              id: `FEE-${Date.now()}-${cls}-${sec}-${Math.random().toString(36).slice(2, 6)}`,
+              name: selectedFee.name,
+              nameBn: selectedFee.nameBn,
               class: cls,
               section: sec,
-              academicYear: institution.currentSession,
-              amount: Number(customAmount),
-              description: customDesc,
-              descriptionBn: customDesc,
+              academicYear: institution?.currentSession || '2025-26',
+              amount,
+              description: '',
+              descriptionBn: '',
               isActive: true,
               type: feeType,
               createdAt: today,
@@ -80,30 +189,25 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
           }
         }
       } else {
-        if (mode === 'copy' && sourceStructure) {
-          const src = structures.find((s) => s.id === sourceStructure)
-          if (src) {
-            newStructures.push({
-              ...src,
-              id: `FEE-${Date.now()}-${cls}`,
-              class: cls,
-              section: undefined,
-              academicYear: institution.currentSession,
-              type: feeType,
-              createdAt: today,
-            })
-          }
-        } else if (mode === 'custom' && customName && customAmount) {
-          newStructures.push({
-            id: `FEE-${Date.now()}-${cls}`,
-            name: customName,
-            nameBn: customName,
+        const key = `${cls}::`
+        const existing = structMap.get(key)
+        if (existing) {
+          updated.push({
+            ...existing,
+            amount,
+            categoryId: activeCategories[0]?.id || existing.categoryId,
+            updatedAt: today,
+          } as FeeStructure)
+        } else {
+          updated.push({
+            id: `FEE-${Date.now()}-${cls}-${Math.random().toString(36).slice(2, 6)}`,
+            name: selectedFee.name,
+            nameBn: selectedFee.nameBn,
             class: cls,
-            section: undefined,
-            academicYear: institution.currentSession,
-            amount: Number(customAmount),
-            description: customDesc,
-            descriptionBn: customDesc,
+            academicYear: institution?.currentSession || '2025-26',
+            amount,
+            description: '',
+            descriptionBn: '',
             isActive: true,
             type: feeType,
             createdAt: today,
@@ -112,123 +216,289 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
       }
     }
 
-    if (newStructures.length > 0) {
-      onSaved(newStructures)
+    if (updated.length > 0) {
+      onSaved(updated)
     }
   }
 
-  const canSave = selectedClasses.length > 0 && (
-    (mode === 'copy' && sourceStructure) ||
-    (mode === 'custom' && customName && customAmount)
-  )
+  const selectedCount = classOptions.filter((c) => classEntries[c]?.selected).length
+  const totalStructures = classOptions.reduce((sum, c) => {
+    const e = classEntries[c]
+    if (!e?.selected) return sum
+    return sum + (e.sections.length > 0 ? e.sections.length : 1)
+  }, 0)
+
+  const canSave = selectedFee && selectedCount > 0
 
   return createPortal(
-    <div className={modalOverlayCls} onClick={onClose}>
-      <div className={`modal-content ${modalStyleCls} max-w-[36rem]`} onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[var(--brand-light)] flex items-center justify-center">
-              <Copy size={16} className="text-[var(--brand)]" />
-            </div>
-            <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{bn ? 'বাল্ক ফি বরাদ্দ' : 'Bulk Fee Assignment'}</h3>
-          </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] cursor-pointer">
-            <X size={14} />
-          </button>
-        </div>
-
-        {/* Mode Toggle */}
-        <div className="flex gap-2 mb-3">
-          <button onClick={() => setMode('custom')} className={`flex-1 py-2 rounded-lg text-xs font-medium border cursor-pointer transition-all ${mode === 'custom' ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
-            {bn ? 'কাস্টম ফি' : 'Custom Fee'}
-          </button>
-          <button onClick={() => setMode('copy')} className={`flex-1 py-2 rounded-lg text-xs font-medium border cursor-pointer transition-all ${mode === 'copy' ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
-            {bn ? 'বিদ্যমান ফি কপি' : 'Copy Existing Fee'}
-          </button>
-        </div>
-
-        {/* Fee Type Toggle */}
-        <div className="flex gap-2 mb-4">
-          <button type="button" onClick={() => setFeeType('monthly')} className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium border cursor-pointer transition-all ${feeType === 'monthly' ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
-            <Repeat size={12} />
-            {bn ? 'মাসিক' : 'Monthly'}
-          </button>
-          <button type="button" onClick={() => setFeeType('onetime')} className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium border cursor-pointer transition-all ${feeType === 'onetime' ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
-            <Zap size={12} />
-            {bn ? 'এককালীন' : 'One-Time'}
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          {/* Fee Details */}
-          {mode === 'custom' ? (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'ফির নাম *' : 'Fee Name *'}</label>
-                  <input value={customName} onChange={(e) => setCustomName(e.target.value)} className={`${inputCls} w-full text-xs`} placeholder="Tuition Fee" />
-                </div>
-                <div>
-                  <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'পরিমাণ (৳) *' : 'Amount (৳) *'}</label>
-                  <input type="number" min="0" value={customAmount} onChange={(e) => setCustomAmount(e.target.value)} className={`${inputCls} w-full text-xs`} placeholder="5000" />
-                </div>
-              </div>
-              <div>
-                <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'বিবরণ' : 'Description'}</label>
-                <input value={customDesc} onChange={(e) => setCustomDesc(e.target.value)} className={`${inputCls} w-full text-xs`} placeholder={bn ? 'বিবরণ' : 'Description'} />
-              </div>
-            </>
-          ) : (
-            <div>
-              <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'ফি কাঠামো বাছাই *' : 'Select Fee Structure *'}</label>
-              <select value={sourceStructure} onChange={(e) => setSourceStructure(e.target.value)} className={`${selectCls} w-full text-xs`}>
-                <option value="">{bn ? 'বাছাই করুন' : 'Select...'}</option>
-                {structures.map((s) => <option key={s.id} value={s.id}>{s.name} — ৳{s.amount} ({s.class})</option>)}
-              </select>
-            </div>
-          )}
-
-          {/* Class Selection */}
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: '0.75rem',
+          width: '95vw',
+          maxWidth: '52rem',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: 'var(--shadow-lg)',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
           <div>
-            <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1.5">{bn ? 'শ্রেণি বাছাই *' : 'Select Classes *'}</label>
-            <div className="flex flex-wrap gap-1.5">
-              {classOptions.map((c) => (
-                <button key={c} onClick={() => toggleClass(c)} className={`px-3 py-1.5 rounded-lg text-[0.7rem] font-medium border cursor-pointer transition-all ${selectedClasses.includes(c) ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
-                  {selectedClasses.includes(c) && <Check size={10} className="inline mr-1" />}{c}
-                </button>
-              ))}
+            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+              {bn ? 'বাল্ক ফি আপডেট' : 'Bulk Fee Update'}
+            </h3>
+            <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)', margin: '0.125rem 0 0' }}>
+              {bn ? `${selectedCount}টি শ্রেণি নির্বাচিত • ${totalStructures}টি কাঠামো আপডেট হবে` : `${selectedCount} classes selected • ${totalStructures} structures will be updated`}
+            </p>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '2px' }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Body - scrollable */}
+        <div style={{ flex: 1, overflow: 'auto', padding: '1.25rem' }}>
+          {/* Fee Type Toggle */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+            <button
+              onClick={() => { setFeeType('monthly'); setSourceFeeId(''); setClassEntries((prev) => { const n = { ...prev }; for (const c of classOptions) n[c] = { selected: false, sections: [], amount: '' }; return n }) }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.375rem',
+                padding: '0.4375rem 0.875rem', borderRadius: '0.5rem',
+                background: feeType === 'monthly' ? 'var(--brand)' : 'var(--bg-secondary)',
+                border: `1px solid ${feeType === 'monthly' ? 'var(--brand)' : 'var(--border)'}`,
+                color: feeType === 'monthly' ? 'white' : 'var(--text-secondary)',
+                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              <Repeat size={12} /> {bn ? 'মাসিক' : 'Monthly'}
+            </button>
+            <button
+              onClick={() => { setFeeType('onetime'); setSourceFeeId(''); setClassEntries((prev) => { const n = { ...prev }; for (const c of classOptions) n[c] = { selected: false, sections: [], amount: '' }; return n }) }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.375rem',
+                padding: '0.4375rem 0.875rem', borderRadius: '0.5rem',
+                background: feeType === 'onetime' ? 'var(--brand)' : 'var(--bg-secondary)',
+                border: `1px solid ${feeType === 'onetime' ? 'var(--brand)' : 'var(--border)'}`,
+                color: feeType === 'onetime' ? 'white' : 'var(--text-secondary)',
+                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              <Zap size={12} /> {bn ? 'এককালীন' : 'One-Time'}
+            </button>
+          </div>
+
+          {/* Fee Selector */}
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>{bn ? 'ফি নির্বাচন করুন *' : 'Select Fee *'}</label>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowFeeDropdown(!showFeeDropdown)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.375rem', width: '100%',
+                  padding: '0.5rem 0.75rem', borderRadius: '0.5rem',
+                  background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                  color: selectedFee ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  fontSize: '0.75rem', cursor: 'pointer', textAlign: 'left', fontWeight: selectedFee ? 600 : 400,
+                }}
+              >
+                {selectedFee ? `${bn ? selectedFee.nameBn : selectedFee.name} (${selectedFee.structures.length} ${bn ? 'টি ক্লাস' : 'classes'})` : (bn ? 'ফি বাছাই করুন' : 'Select a fee')}
+                <ArrowRight size={10} style={{ marginLeft: 'auto', transform: showFeeDropdown ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+              </button>
+              {showFeeDropdown && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 30, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', maxHeight: '12rem', overflow: 'auto', boxShadow: 'var(--shadow-md)', marginTop: '0.25rem' }}>
+                  {existingFees.length === 0 ? (
+                    <div style={{ padding: '0.75rem', fontSize: '0.6875rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                      {bn ? 'কোনো ফি নেই' : 'No fees found'}
+                    </div>
+                  ) : (
+                    existingFees.map((f) => (
+                      <div
+                        key={f.name}
+                        onClick={() => handleSelectFee(f.name)}
+                        style={{
+                          padding: '0.5rem 0.75rem', fontSize: '0.6875rem', cursor: 'pointer',
+                          color: sourceFeeId === f.name ? 'var(--brand)' : 'var(--text-primary)',
+                          fontWeight: sourceFeeId === f.name ? 600 : 400,
+                          background: sourceFeeId === f.name ? 'var(--brand-light)' : 'transparent',
+                          borderBottom: '1px solid var(--border)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        }}
+                      >
+                        <span>{bn ? f.nameBn : f.name}</span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.625rem' }}>
+                          {f.structures.length} {bn ? 'টি' : ''}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Section Selection per Class */}
-          {selectedClasses.length > 0 && (
-            <div className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-              <p className="text-[0.65rem] font-semibold text-[var(--text-muted)] mb-2">{bn ? 'সেকশন বাছাই (ঐচ্ছিক)' : 'Select Sections (Optional)'}</p>
-              <div className="space-y-2">
-                {selectedClasses.map((cls) => {
-                  const secs = sectionsMap[cls] || []
-                  if (secs.length === 0) return null
-                  return (
-                    <div key={cls}>
-                      <p className="text-[0.65rem] font-medium text-[var(--text-secondary)] mb-1">{cls}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {secs.map((s) => (
-                          <button key={s} onClick={() => toggleSection(cls, s)} className={`px-2 py-1 rounded text-[0.6rem] font-medium border cursor-pointer transition-all ${(selectedSections[cls] || []).includes(s) ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
-                            {s}
+          {/* Apply Same Amount */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.875rem' }}>
+            <button
+              onClick={applySameAmount}
+              disabled={!classOptions.some((c) => classEntries[c]?.selected && classEntries[c]?.amount)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.375rem',
+                padding: '0.4375rem 0.75rem', borderRadius: '0.5rem',
+                background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                color: 'var(--text-secondary)', fontSize: '0.6875rem', cursor: 'pointer', whiteSpace: 'nowrap',
+                opacity: classOptions.some((c) => classEntries[c]?.selected && classEntries[c]?.amount) ? 1 : 0.5,
+              }}
+            >
+              {bn ? 'একই পরিমাণ প্রয়োগ' : 'Apply same amount'}
+            </button>
+          </div>
+
+          {/* Class Fee Table */}
+          <div style={{ border: '1px solid var(--border)', borderRadius: '0.5rem', overflow: 'hidden' }}>
+            {/* Table Header */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2rem 1fr 1fr 7rem', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', padding: '0.5rem 0.75rem', fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+              <div>
+                <input
+                  type="checkbox"
+                  checked={classOptions.length > 0 && classOptions.every((c) => classEntries[c]?.selected)}
+                  onChange={toggleAll}
+                  style={{ accentColor: 'var(--brand)', cursor: 'pointer' }}
+                />
+              </div>
+              <div>{bn ? 'শ্রেণি' : 'Class'}</div>
+              <div>{bn ? 'সেকশন' : 'Sections'}</div>
+              <div style={{ textAlign: 'right' }}>{bn ? 'পরিমাণ *' : 'Amount *'}</div>
+            </div>
+
+            {/* Table Rows */}
+            {classOptions.map((cls) => {
+              const entry = classEntries[cls] || { selected: false, sections: [], amount: '' }
+              const secs = sectionsMap[cls] || []
+              const allSecsSelected = secs.length > 0 && secs.every((s) => entry.sections.includes(s))
+
+              return (
+                <div
+                  key={cls}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '2rem 1fr 1fr 7rem',
+                    alignItems: 'center',
+                    padding: '0.5rem 0.75rem',
+                    borderBottom: '1px solid var(--border)',
+                    background: entry.selected ? 'var(--brand-light)' : 'transparent',
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  {/* Checkbox */}
+                  <div>
+                    <input
+                      type="checkbox"
+                      checked={entry.selected}
+                      onChange={() => toggleClass(cls)}
+                      style={{ accentColor: 'var(--brand)', cursor: 'pointer' }}
+                    />
+                  </div>
+
+                  {/* Class Name */}
+                  <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                    {bn ? `শ্রেণি ${cls}` : `Class ${cls}`}
+                  </div>
+
+                  {/* Section Buttons */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                    {secs.length > 0 ? (
+                      <>
+                        <button
+                          onClick={() => toggleAllSections(cls)}
+                          style={{
+                            padding: '0.1875rem 0.375rem', borderRadius: '0.25rem', fontSize: '0.5625rem',
+                            fontWeight: 600, cursor: 'pointer', border: `1px solid ${allSecsSelected ? 'var(--brand)' : 'var(--border)'}`,
+                            background: allSecsSelected ? 'var(--brand)' : 'transparent',
+                            color: allSecsSelected ? 'white' : 'var(--text-secondary)',
+                          }}
+                        >
+                          {bn ? 'সব' : 'All'}
+                        </button>
+                        {secs.map((sec) => (
+                          <button
+                            key={sec}
+                            onClick={() => toggleSection(cls, sec)}
+                            style={{
+                              padding: '0.1875rem 0.375rem', borderRadius: '0.25rem', fontSize: '0.5625rem',
+                              fontWeight: 600, cursor: 'pointer', border: `1px solid ${entry.sections.includes(sec) ? 'var(--brand)' : 'var(--border)'}`,
+                              background: entry.sections.includes(sec) ? 'var(--brand)' : 'transparent',
+                              color: entry.sections.includes(sec) ? 'white' : 'var(--text-secondary)',
+                            }}
+                          >
+                            {sec}
                           </button>
                         ))}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+                      </>
+                    ) : (
+                      <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>—</span>
+                    )}
+                  </div>
+
+                  {/* Amount */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginRight: '0.25rem' }}>৳</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={entry.amount}
+                      onChange={(e) => setAmount(cls, e.target.value)}
+                      disabled={!entry.selected}
+                      style={{
+                        width: '5rem', padding: '0.25rem 0.375rem', borderRadius: '0.25rem',
+                        border: '1px solid var(--border)', background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)', fontSize: '0.75rem', textAlign: 'right',
+                        opacity: entry.selected ? 1 : 0.5,
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
 
-        <div className="flex gap-2 justify-end mt-5">
-          <button onClick={onClose} className="py-2 px-4 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]">{bn ? 'বাতিল' : 'Cancel'}</button>
-          <button onClick={handleSave} disabled={!canSave} className={`${btnPrimary} disabled:opacity-50`}>{bn ? 'বরাদ্দ করুন' : 'Assign'}</button>
+        {/* Footer */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1.25rem', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
+            {totalStructures > 0 ? (bn ? `${totalStructures}টি কাঠামো আপডেট হবে` : `${totalStructures} structures will be updated`) : (bn ? 'কোনো কাঠামো নির্বাচিত হয়নি' : 'No structures selected')}
+          </span>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={onClose}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.3125rem',
+                padding: '0.4375rem 0.875rem', borderRadius: '0.5rem',
+                background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer',
+              }}
+            >
+              {bn ? 'বাতিল' : 'Cancel'}
+            </button>
+            <button
+              className={btnPrimary}
+              onClick={handleSave}
+              disabled={!canSave}
+              style={{ opacity: canSave ? 1 : 0.5 }}
+            >
+              {bn ? `সব আপডেট (${totalStructures})` : `Update All (${totalStructures})`}
+            </button>
+          </div>
         </div>
       </div>
     </div>,

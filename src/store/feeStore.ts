@@ -7,6 +7,7 @@ export interface FeeCategory {
   nameBn: string
   description: string
   descriptionBn: string
+  type: 'monthly' | 'onetime'
   isActive: boolean
   createdAt: string
 }
@@ -519,7 +520,7 @@ export const useFeeStore = create<FeeState>()(
     }),
     {
       name: 'edutech-fees',
-      version: 7,
+      version: 8,
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
           persistedState.waivers = persistedState.waivers || []
@@ -596,6 +597,12 @@ export const useFeeStore = create<FeeState>()(
         }
         if (version < 7) {
           persistedState.studentWaivers = persistedState.studentWaivers || []
+        }
+        if (version < 8) {
+          persistedState.feeCategories = (persistedState.feeCategories || []).map((c: any) => ({
+            ...c,
+            type: c.type || 'monthly',
+          }))
         }
         return persistedState
       },

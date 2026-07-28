@@ -195,6 +195,7 @@ export default function FeeManagementPage() {
   const [showWaiverModal, setShowWaiverModal] = useState(false)
   const [showStudentWaiverModal, setShowStudentWaiverModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [categoryFeeType, setCategoryFeeType] = useState<'monthly' | 'onetime'>('monthly')
   const [showBatchCreate, setShowBatchCreate] = useState(false)
   const [receiptData, setReceiptData] = useState<(FeePayment & { studentName: string; studentNameBn: string; feeName: string; feeNameBn: string }) | null>(null)
 
@@ -371,7 +372,7 @@ export default function FeeManagementPage() {
         </div>
 
         <div className="gsap-fade-up">
-          {activeView === 'structures' && <StructuresTab onEdit={(s) => setEditStruct(s)} onBulkAssign={() => setShowBulkAssign(true)} onManageCategories={() => setShowCategoryModal(true)} onBatchCreate={() => setShowBatchCreate(true)} />}
+          {activeView === 'structures' && <StructuresTab onEdit={(s) => setEditStruct(s)} onBulkAssign={() => setShowBulkAssign(true)} onManageCategories={(ft) => { setCategoryFeeType(ft); setShowCategoryModal(true) }} />}
           {activeView === 'dues' && <DuesTab onCollect={(d) => setCollectPayment(d)} />}
           {activeView === 'collect' && <CollectTab onCollect={(d) => setCollectPayment(d)} />}
           {activeView === 'payments' && <PaymentsTab />}
@@ -435,8 +436,14 @@ export default function FeeManagementPage() {
 
         {showBulkAssign && (
           <BulkAssignModal
-            onSaved={(newStructures) => {
-              bulkAddStructures(newStructures)
+            onSaved={(updatedStructures) => {
+              for (const s of updatedStructures) {
+                if (structures.some((existing) => existing.id === s.id)) {
+                  updateStructure(s.id, s)
+                } else {
+                  bulkAddStructures([s])
+                }
+              }
               setShowBulkAssign(false)
             }}
             onClose={() => setShowBulkAssign(false)}
@@ -468,7 +475,7 @@ export default function FeeManagementPage() {
         )}
 
         {showCategoryModal && (
-          <FeeCategoryModal onClose={() => setShowCategoryModal(false)} />
+          <FeeCategoryModal feeType={categoryFeeType} onClose={() => setShowCategoryModal(false)} />
         )}
 
         {receiptData && (
