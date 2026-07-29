@@ -10,6 +10,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Banknote,
+  Copy,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -366,7 +367,8 @@ export default function FeeManagementPage() {
           </div>
           {activeView === 'structures' && (
             <button onClick={() => setShowBatchCreate(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity">
-              {bn ? 'ফি যোগ করুন' : 'Add Fee'}
+              <Copy size={13} />
+              {bn ? 'বাল্ক আপডেট' : 'Bulk Update'}
             </button>
           )}
         </div>
