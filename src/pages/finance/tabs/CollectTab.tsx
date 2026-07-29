@@ -1059,18 +1059,18 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 </div>
               </div>
             </div>
-            <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-1.5">
+            <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
               <button onClick={() => setShowOneTimeModal(true)}
-                className="w-full flex items-center justify-center gap-1.5 h-7 rounded-md bg-[var(--brand)] text-white text-[11px] font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
-                <Plus size={12} />{bn ? 'এককালীন ফি' : 'One-time fee'}
+                className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg bg-[var(--brand)] text-white text-[12px] font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
+                <Plus size={13} />{bn ? 'এককালীন ফি' : 'One-time fee'}
               </button>
               <button onClick={() => setShowFineModal(true)}
-                className="w-full flex items-center justify-center gap-1.5 h-7 rounded-md border border-[var(--border)] text-[var(--text-primary)] text-[11px] font-semibold cursor-pointer bg-transparent hover:bg-[var(--bg-secondary)] transition-colors">
-                <Ban size={12} />{bn ? 'জরিমানা' : 'Add fine'}
+                className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-[var(--red)]/30 text-[var(--red)] text-[12px] font-semibold cursor-pointer bg-[var(--red-light)] hover:bg-[var(--red)]/20 transition-colors">
+                <Ban size={13} />{bn ? 'জরিমানা' : 'Add fine'}
               </button>
               <button onClick={() => setShowHistoryModal(true)}
-                className="w-full flex items-center justify-center gap-1.5 h-7 rounded-md border border-[var(--border)] text-[var(--text-primary)] text-[11px] font-semibold cursor-pointer bg-transparent hover:bg-[var(--bg-secondary)] transition-colors">
-                <History size={12} />{bn ? 'পেমেন্ট ইতিহাস' : 'Payment history'}
+                className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-[var(--border)] text-[var(--text-primary)] text-[12px] font-semibold cursor-pointer bg-transparent hover:bg-[var(--bg-secondary)] transition-colors">
+                <History size={13} />{bn ? 'পেমেন্ট ইতিহাস' : 'Payment history'}
               </button>
             </div>
           </div>
