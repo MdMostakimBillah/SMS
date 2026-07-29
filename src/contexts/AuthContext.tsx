@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 import { authApi, setAuthToken, getAuthToken, ApiError } from '@/lib/api'
 import { validateAdminCredentials, createSuperAdminToken, createSuperAdminUser } from '@/lib/adminAuth'
 
@@ -240,8 +240,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), [])
 
+  const ctxValue = useMemo(() => ({
+    user, token, loading, login, register, logout, error, clearError, isLockedOut, lockoutRemaining
+  }), [user, token, loading, login, register, logout, error, clearError, isLockedOut, lockoutRemaining])
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, error, clearError, isLockedOut, lockoutRemaining }}>
+    <AuthContext.Provider value={ctxValue}>
       {children}
     </AuthContext.Provider>
   )

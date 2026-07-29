@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AppLayout from '@/components/layouts/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
@@ -8,16 +7,6 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute, RoleProtectedRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
 import { LOGIN_PATH } from '@/lib/constants'
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-})
 
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
@@ -65,9 +54,8 @@ const F = ({ children }: { children: React.ReactNode }) => (
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Routes>
+    <AuthProvider>
+      <Routes>
         <Route element={<AuthRoute />}>
           <Route path={LOGIN_PATH} element={<F><LoginPage /></F>} />
           <Route path="/register" element={<F><RegisterPage /></F>} />
@@ -129,7 +117,6 @@ export default function App() {
           </Route>
         </Route>
       </Routes>
-      </AuthProvider>
-    </QueryClientProvider>
+    </AuthProvider>
   )
 }

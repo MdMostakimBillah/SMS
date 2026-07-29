@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { ArrowLeft, Plus, Radio, PlayCircle, Search } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -35,10 +35,10 @@ export default function OnlineClassesPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  useState(() => {
+  useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 600)
     return () => clearTimeout(t)
-  })
+  }, [])
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)

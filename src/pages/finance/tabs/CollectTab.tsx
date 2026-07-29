@@ -1058,6 +1058,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     <button onClick={() => setMonthCount((c) => Math.min(12, c + 1))} className="w-5 h-4 rounded-sm border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[8px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)]">&#9650;</button>
                     <button onClick={() => setMonthCount((c) => Math.max(0, c - 1))} className="w-5 h-4 rounded-sm border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[8px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)]">&#9660;</button>
                   </div>
+                </div>
               </div>
             </div>
             <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
