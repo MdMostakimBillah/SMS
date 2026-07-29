@@ -286,7 +286,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
   const totalAmount = useMemo(() => displayRows.reduce((sum, r) => sum + r.amount, 0), [displayRows])
   const totalDiscount = useMemo(() => displayRows.reduce((sum, r) => sum + getRowEdit(r.key).discount, 0), [displayRows, getRowEdit])
-  const totalReceivable = useMemo(() => displayRows.filter((r) => getRowEdit(r.key).checked).reduce((sum, r) => sum + r.amount - getRowEdit(r.key).discount, 0), [displayRows, getRowEdit])
   const totalReceive = useMemo(() => displayRows.filter((r) => getRowEdit(r.key).checked).reduce((sum, r) => sum + getRowEdit(r.key).receive, 0), [displayRows, getRowEdit])
 
   const studentPayments = useMemo(() => {
@@ -763,8 +762,9 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'পরিমাণ' : 'Amount'}</th>
                     <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'ছাড়' : 'Waiver'}</th>
                     <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'ডিসকাউন্ট' : 'Discount'}</th>
-                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[14%]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
-                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[14%]">{bn ? 'গ্রহণ' : 'Receive'}</th>
+                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
+                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
+                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'গ্রহণ' : 'Receive'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -815,6 +815,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           <input type="text" value={edit.remarks} onChange={(e) => updateRow(row.key, 'remarks', e.target.value)}
                             className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder={bn ? '...' : '...'} />
                         </td>
+                        <td className="text-center px-3 py-3"><span className="font-semibold text-[var(--text-primary)]">{fmt(row.receivable)}</span></td>
                         <td className="text-center px-3 py-3">
                           <input type="number" value={edit.receive} onChange={(e) => updateRow(row.key, 'receive', Number(e.target.value) || 0)}
                             className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--brand-light)] bg-[var(--bg-primary)] text-[var(--brand)] font-bold outline-none focus:border-[var(--brand)]" placeholder="0" />
@@ -840,10 +841,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 <span className="font-bold text-sm text-[var(--amber)]">{fmt(totalDiscount)}</span>
               </div>
               <div className="w-px h-4 bg-[var(--border)]" />
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'প্রাপ্য:' : 'Receivable:'}</span>
-                <span className="font-bold text-sm text-[var(--green)]">{fmt(totalReceivable)}</span>
-              </div>
               <div className="ml-auto flex items-center gap-1.5 bg-[var(--brand-light)] rounded-lg px-3 py-1.5">
                 <span className="text-[11px] text-[var(--brand)] font-semibold">{bn ? 'গ্রহণ:' : 'Receiving:'}</span>
                 <span className="font-extrabold text-base text-[var(--brand)]">{fmt(totalReceive)}</span>
@@ -864,10 +861,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 {bn ? 'এসএমএস' : 'SMS'}
               </label>
               <div className="ml-auto flex items-center gap-3">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'প্রাপ্য:' : 'Receivable:'}</span>
-                  <span className="font-bold text-sm text-[var(--green)]">{fmt(totalReceivable)}</span>
-                </div>
                 <button onClick={handleReceiveFee} disabled={!displayRows.some((r) => { const e = getRowEdit(r.key); return e.checked && (e.receive > 0 || e.discount > 0) })}
                   className="h-10 px-6 rounded-full bg-[var(--green)] text-white font-bold text-[13px] border-0 cursor-pointer flex items-center gap-2 shadow-[0_2px_8px_rgba(34,197,94,0.3)] hover:shadow-[0_4px_12px_rgba(34,197,94,0.4)] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                   <CircleCheck size={16} />{bn ? 'প্রাপ্ত' : 'Receive'}
