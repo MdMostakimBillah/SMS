@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
-import { Gift, Plus, Search, ChevronRight } from 'lucide-react'
+import { Gift, Search, ChevronRight } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
-import { useFeeStore, type WaiverCategory, type StudentWaiver } from '@/store/feeStore'
+import { useFeeStore, type StudentWaiver } from '@/store/feeStore'
 import { inputCls, selectCls, btnPrimary } from '@/lib/styles'
 import { modalOverlayCls } from '@/pages/hr/utils'
 import { createPortal } from 'react-dom'
@@ -23,7 +23,7 @@ const MONTH_LABELS = [
 export function StudentWaiverModal({ onSaved, onClose }: Props) {
   const bn = useBn()
   const students = useSessionStudents()
-  const { structures, feeCategories: feeCategoriesAll, waiverCategories, addWaiverCategory, addStudentWaiver } = useFeeStore()
+  const { structures, feeCategories: feeCategoriesAll, waiverCategories, addStudentWaiver } = useFeeStore()
   const { institution, classes } = useClassStore()
   const sessions = institution?.sessions || []
 
@@ -37,11 +37,6 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
 
   const [step, setStep] = useState<'category' | 'details'>('category')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
-  const [showNewCategory, setShowNewCategory] = useState(false)
-  const [newCatName, setNewCatName] = useState('')
-  const [newCatNameBn, setNewCatNameBn] = useState('')
-  const [newCatDesc, setNewCatDesc] = useState('')
-  const [newCatDescBn, setNewCatDescBn] = useState('')
 
   const [fSession, setFSession] = useState(() => institution?.currentSession || '')
   const [fClass, setFClass] = useState('')
@@ -131,27 +126,6 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
   const totalPerStudent = perPeriodAmount * monthCount
   const totalWaiver = totalPerStudent * selectedStudentIds.size
 
-  const handleCreateCategory = () => {
-    if (!newCatName) return
-    const cat: WaiverCategory = {
-      id: `WCAT-${Date.now()}`,
-      name: newCatName,
-      nameBn: newCatNameBn || newCatName,
-      description: newCatDesc,
-      descriptionBn: newCatDescBn || newCatDesc,
-      isActive: true,
-      createdAt: new Date().toISOString().split('T')[0],
-    }
-    addWaiverCategory(cat)
-    setSelectedCategoryId(cat.id)
-    setShowNewCategory(false)
-    setNewCatName('')
-    setNewCatNameBn('')
-    setNewCatDesc('')
-    setNewCatDescBn('')
-    setStep('details')
-  }
-
   const handleSelectCategory = (id: string) => {
     setSelectedCategoryId(id)
     setStep('details')
@@ -239,44 +213,6 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                   </button>
                 ))}
               </div>
-            )}
-
-            {showNewCategory ? (
-              <div className="p-3 rounded-xl border border-[var(--purple)] bg-[var(--purple-light)]/30 space-y-2">
-                <p className="text-[0.7rem] font-semibold text-[var(--purple)]">{bn ? 'নতুন ক্যাটাগরি তৈরি' : 'Create New Category'}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[0.65rem] text-[var(--text-muted)] block mb-0.5">Name *</label>
-                    <input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} className={`${inputCls} w-full text-xs h-8`} placeholder="e.g. Orphan" />
-                  </div>
-                  <div>
-                    <label className="text-[0.65rem] text-[var(--text-muted)] block mb-0.5">নাম</label>
-                    <input value={newCatNameBn} onChange={(e) => setNewCatNameBn(e.target.value)} className={`${inputCls} w-full text-xs h-8`} placeholder="e.g. এতিম" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[0.65rem] text-[var(--text-muted)] block mb-0.5">Description</label>
-                    <input value={newCatDesc} onChange={(e) => setNewCatDesc(e.target.value)} className={`${inputCls} w-full text-xs h-8`} placeholder="Optional" />
-                  </div>
-                  <div>
-                    <label className="text-[0.65rem] text-[var(--text-muted)] block mb-0.5">বিবরণ</label>
-                    <input value={newCatDescBn} onChange={(e) => setNewCatDescBn(e.target.value)} className={`${inputCls} w-full text-xs h-8`} placeholder="ঐচ্ছিক" />
-                  </div>
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <button onClick={() => setShowNewCategory(false)} className="text-[0.7rem] text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-pointer bg-transparent border-0">{bn ? 'বাতিল' : 'Cancel'}</button>
-                  <button onClick={handleCreateCategory} disabled={!newCatName} className={`${btnPrimary} text-xs py-1.5 px-3 disabled:opacity-50`}>{bn ? 'তৈরি করুন' : 'Create'}</button>
-                </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowNewCategory(true)}
-                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[var(--purple)] text-[var(--purple)] text-xs font-medium cursor-pointer hover:bg-[var(--purple-light)]/30 transition-all"
-              >
-                <Plus size={13} /> {bn ? 'নতুন ক্যাটাগরি তৈরি করুন' : 'Create New Category'}
-              </button>
             )}
           </div>
         ) : (
