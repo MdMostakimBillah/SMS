@@ -194,6 +194,7 @@ export default function FeeManagementPage() {
   const [collectPayment, setCollectPayment] = useState<FeeDue | null>(null)
   const [showBulkAssign, setShowBulkAssign] = useState(false)
   const [showWaiverModal, setShowWaiverModal] = useState(false)
+  const [waiverModalMode, setWaiverModalMode] = useState<'category' | 'full'>('full')
   const [showStudentWaiverModal, setShowStudentWaiverModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [categoryFeeType, setCategoryFeeType] = useState<'monthly' | 'onetime'>('monthly')
@@ -378,7 +379,7 @@ export default function FeeManagementPage() {
           {activeView === 'dues' && <DuesTab onCollect={(d) => setCollectPayment(d)} />}
           {activeView === 'collect' && <CollectTab onCollect={(d) => setCollectPayment(d)} />}
           {activeView === 'payments' && <PaymentsTab />}
-          {activeView === 'waivers' && <WaiversTab onAddWaiver={() => setShowWaiverModal(true)} onAddStudentWaiver={() => setShowStudentWaiverModal(true)} />}
+          {activeView === 'waivers' && <WaiversTab onAddWaiver={(mode) => { setWaiverModalMode(mode); setShowWaiverModal(true) }} onAddStudentWaiver={() => setShowStudentWaiverModal(true)} />}
           {activeView === 'reports' && <ReportsTab />}
           {activeView === 'inactive' && <InactiveDuesTab />}
         </div>
@@ -460,6 +461,7 @@ export default function FeeManagementPage() {
 
         {showWaiverModal && (
           <WaiverModal
+            mode={waiverModalMode}
             onSaved={() => setShowWaiverModal(false)}
             onClose={() => setShowWaiverModal(false)}
           />

@@ -9,6 +9,7 @@ import { modalOverlayCls, modalStyleCls } from '@/pages/hr/utils'
 import { createPortal } from 'react-dom'
 
 interface Props {
+  mode?: 'category' | 'full'
   onSaved: () => void
   onClose: () => void
 }
@@ -20,7 +21,7 @@ const MONTH_LABELS = [
   { en: 'Oct', bn: 'অক্টো' }, { en: 'Nov', bn: 'নভে' }, { en: 'Dec', bn: 'ডিসে' },
 ]
 
-export function WaiverModal({ onSaved, onClose }: Props) {
+export function WaiverModal({ mode = 'full', onSaved, onClose }: Props) {
   const bn = useBn()
   const students = useSessionStudents()
   const { structures, waiverCategories, addWaiverCategory, addWaiverEntries } = useFeeStore()
@@ -33,7 +34,7 @@ export function WaiverModal({ onSaved, onClose }: Props) {
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
-  const [step, setStep] = useState<'category' | 'details'>('category')
+  const [step, setStep] = useState<'category' | 'details'>(mode === 'category' ? 'category' : 'category')
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
@@ -114,6 +115,10 @@ export function WaiverModal({ onSaved, onClose }: Props) {
       createdAt: new Date().toISOString().split('T')[0],
     }
     addWaiverCategory(cat)
+    if (mode === 'category') {
+      onSaved()
+      return
+    }
     setSelectedCategoryId(cat.id)
     setShowNewCategory(false)
     setNewCatName('')
@@ -161,33 +166,37 @@ export function WaiverModal({ onSaved, onClose }: Props) {
             <Gift size={18} className="text-[var(--purple)]" />
           </div>
           <div>
-            <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{bn ? 'ফি ছাড় যোগ করুন' : 'Add Fee Waiver'}</h3>
+            <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{mode === 'category' ? (bn ? 'ছাড়ের ক্যাটাগরি যোগ করুন' : 'Add Waiver Category') : (bn ? 'ফি ছাড় যোগ করুন' : 'Add Fee Waiver')}</h3>
             <p className="text-[0.7rem] text-[var(--text-secondary)]">
-              {step === 'category'
-                ? (bn ? 'একটি ক্যাটাগরি বাছাই বা তৈরি করুন' : 'Select or create a category')
-                : (bn ? 'শিক্ষার্থী এবং ফি নির্বাচন করুন' : 'Select students and fee')
+              {mode === 'category'
+                ? (bn ? 'নতুন ছাড়ের ক্যাটাগরি তৈরি করুন' : 'Create a new waiver category')
+                : step === 'category'
+                  ? (bn ? 'একটি ক্যাটাগরি বাছাই বা তৈরি করুন' : 'Select or create a category')
+                  : (bn ? 'শিক্ষার্থী এবং ফি নির্বাচন করুন' : 'Select students and fee')
               }
             </p>
           </div>
         </div>
 
         {/* Step Indicator */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className={`flex items-center gap-1.5 text-[0.7rem] font-semibold ${step === 'category' ? 'text-[var(--purple)]' : 'text-[var(--text-muted)]'}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[0.6rem] font-bold ${step === 'category' ? 'bg-[var(--purple)] text-white' : 'bg-[var(--purple-light)] text-[var(--purple)]'}`}>1</span>
-            {bn ? 'ক্যাটাগরি' : 'Category'}
+        {mode === 'full' && (
+          <div className="flex items-center gap-2 mb-4">
+            <div className={`flex items-center gap-1.5 text-[0.7rem] font-semibold ${step === 'category' ? 'text-[var(--purple)]' : 'text-[var(--text-muted)]'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[0.6rem] font-bold ${step === 'category' ? 'bg-[var(--purple)] text-white' : 'bg-[var(--purple-light)] text-[var(--purple)]'}`}>1</span>
+              {bn ? 'ক্যাটাগরি' : 'Category'}
+            </div>
+            <div className="flex-1 h-px bg-[var(--border)]" />
+            <div className={`flex items-center gap-1.5 text-[0.7rem] font-semibold ${step === 'details' ? 'text-[var(--purple)]' : 'text-[var(--text-muted)]'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[0.6rem] font-bold ${step === 'details' ? 'bg-[var(--purple)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>2</span>
+              {bn ? 'বিবরণ' : 'Details'}
+            </div>
           </div>
-          <div className="flex-1 h-px bg-[var(--border)]" />
-          <div className={`flex items-center gap-1.5 text-[0.7rem] font-semibold ${step === 'details' ? 'text-[var(--purple)]' : 'text-[var(--text-muted)]'}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[0.6rem] font-bold ${step === 'details' ? 'bg-[var(--purple)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>2</span>
-            {bn ? 'বিবরণ' : 'Details'}
-          </div>
-        </div>
+        )}
 
         {step === 'category' ? (
           <div className="space-y-3">
-            {/* Existing Categories */}
-            {activeCategories.length > 0 && (
+            {/* Existing Categories - only show in full mode */}
+            {mode === 'full' && activeCategories.length > 0 && (
               <div className="space-y-1.5">
                 {activeCategories.map((cat) => {
                   const entryCount = /* will be computed from store */ 0

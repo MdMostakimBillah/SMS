@@ -15,7 +15,7 @@ import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { XLSX } from '@/lib/excelExport'
 
 interface Props {
-  onAddWaiver: () => void
+  onAddWaiver: (mode: 'category' | 'full') => void
   onAddStudentWaiver: () => void
 }
 
@@ -466,8 +466,8 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
               <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট ছাড়' : 'Total Waived'}</div>
             </div>
           </div>
-        <button onClick={subTab === 'students' ? onAddStudentWaiver : onAddWaiver} className="flex items-center gap-1 py-1.5 px-3 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer">
-          <Plus size={13} /> {subTab === 'students' ? (bn ? 'শিক্ষার্থী যোগ করুন' : 'Add Student') : (bn ? 'ছাড় যোগ করুন' : 'Add Waiver')}
+        <button onClick={() => subTab === 'students' ? onAddStudentWaiver() : onAddWaiver('category')} className="flex items-center gap-1 py-1.5 px-3 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer">
+          <Plus size={13} /> {subTab === 'students' ? (bn ? 'শিক্ষার্থী যোগ করুন' : 'Add Student') : (bn ? 'ক্যাটাগরি যোগ করুন' : 'Add Category')}
         </button>
         </div>
       </div>
