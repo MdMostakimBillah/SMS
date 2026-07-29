@@ -265,10 +265,10 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
               </tr>
             </thead>
             <tbody>
-              {filtered.map((s) => (
+              {filtered.map((s, idx) => (
                 <tr
                   key={s.id}
-                  className={`border-t border-[var(--border)] transition-colors duration-150 ${s.isActive ? 'hover:bg-[var(--bg-secondary)]/60' : 'opacity-50'}`}
+                  className={`border-t border-[var(--border)] transition-colors duration-150 ${idx % 2 === 0 ? 'bg-[var(--bg-primary)]' : 'bg-[var(--bg-secondary)]/40'} ${s.isActive ? 'hover:bg-[var(--brand-light)]/50 hover:shadow-[inset_0_0_0_1px_var(--brand)]/10' : 'opacity-50'}`}
                 >
                   <td className="px-4 py-2">
                     <p className="font-medium text-[var(--text-primary)] truncate">{bn && s.nameBn ? s.nameBn : s.name}</p>
