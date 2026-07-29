@@ -415,6 +415,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       }
       if (f.discount && f.discount > 0) {
         details += `<div style="font-size:7px;color:#d97706;font-weight:500">${bn ? 'ডিসকাউন্ট' : 'Discount'}: ${f.discount.toLocaleString()}${f.remarks ? ` - ${f.remarks}` : ''}</div>`
+      } else if (f.remarks) {
+        details += `<div style="font-size:7px;color:#555;font-weight:500">${bn ? 'মন্তব্য' : 'Note'}: ${f.remarks}</div>`
       }
       return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name} ${period}</div>${details}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
     }).join('')
@@ -1122,12 +1124,13 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 <table className="w-full text-[12px]" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '4%' }} />
-                    <col style={{ width: '28%' }} />
+                    <col style={{ width: '22%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '8%' }} />
                     <col style={{ width: '12%' }} />
                     <col style={{ width: '10%' }} />
+                    <col style={{ width: '18%' }} />
                     <col style={{ width: '16%' }} />
-                    <col style={{ width: '12%' }} />
-                    <col style={{ width: '10%' }} />
                   </colgroup>
                   <thead>
                     <tr className="bg-[var(--bg-secondary)] sticky top-0 z-10">
@@ -1137,6 +1140,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                       <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পদ্ধতি' : 'Method'}</th>
                       <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ইনভয়েস' : 'Invoice'}</th>
                       <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'মন্তব্য' : 'Comment'}</th>
                       <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold"></th>
                     </tr>
                   </thead>
@@ -1161,6 +1165,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           <td className="text-center px-2 py-2.5"><span className="inline-block px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] font-medium text-[11px]">{batch.method}</span></td>
                           <td className="text-center px-2 py-2.5"><span className="text-[11px] text-[var(--text-muted)]">{batch.invoiceNo}</span></td>
                           <td className="text-center px-2 py-2.5"><span className="font-bold text-[var(--brand)]">{fmt(batch.totalAmount)}</span></td>
+                          <td className="text-center px-2 py-2.5">
+                            <span className="text-[11px] text-[var(--text-muted)] truncate block" title={batch.payments.map((p) => p.note).filter(Boolean).join(', ')}>
+                              {batch.payments.map((p) => p.note).filter(Boolean).join(', ') || '—'}
+                            </span>
+                          </td>
                           <td className="text-center px-2 py-2.5">
                             <div className="flex items-center justify-center gap-1">
                               <button onClick={() => generateBatchReceipt(batch)} className="w-7 h-7 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center cursor-pointer border-0 hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'ডাউনলোড' : 'Download'}>
