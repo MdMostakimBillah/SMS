@@ -26,6 +26,7 @@ interface ReceiptData {
   totalReceived: number
   totalDue: number
   paymentMethod: string
+  comment?: string
 }
 
 interface Props {
@@ -378,6 +379,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       totalReceived: totalReceive,
       totalDue,
       paymentMethod: 'cash',
+      comment: checkedRows.map((r) => { const e = getRowEdit(r.key); return e.remarks }).filter(Boolean).join(', ') || undefined,
     })
     setShowSuccess(true)
     const receivedKeys = new Set(checkedRows.map((r) => r.key))
@@ -446,6 +448,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       </div>
       <div style="font-size:9px;color:#666;margin-bottom:3px"><b>${bn ? 'অর্থের পরিমাণ' : 'Amt in words'}:</b> ${numberToWords(data.totalReceived)} Only.</div>
       <div style="display:flex;justify-content:space-between;font-size:9px;color:#666;margin-bottom:3px"><span><b>${bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Mode'}:</b> ${data.paymentMethod.toUpperCase()}</span><span><b>BALANCE:</b> ${data.totalDue.toLocaleString()}</span></div>
+      ${data.comment ? `<div style="font-size:9px;color:#666;margin-bottom:3px"><b>${bn ? 'মন্তব্য' : 'Comment'}:</b> ${data.comment}</div>` : ''}
       <div style="display:flex;justify-content:space-between;margin-top:25px;padding-top:10px">
         <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#666">${bn ? 'ফি আদায়কারী' : 'Fee Collected by'}</div></div>
         <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#666">${bn ? 'অভিভাবক' : 'Parent/Guardian'}</div></div>
@@ -499,6 +502,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       totalReceived,
       totalDue: 0,
       paymentMethod: batch.payments[0]?.method || 'cash',
+      comment: batch.payments.map((p) => p.note).filter(Boolean).join(', ') || undefined,
     }
     const leftCopy = buildReceiptHTML(bn ? 'শিক্ষার্থী কপি' : 'Student Copy', receiptData)
     const rightCopy = buildReceiptHTML(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy', receiptData)
@@ -946,6 +950,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">{fmt(receiptData.discount)}</span></div>}
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--green)]">{fmt(receiptData.totalReceived)}</span></div>
                         {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়:' : 'Balance:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
+                        {receiptData.comment && <div className="flex justify-between gap-4 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মন্তব্য:' : 'Comment:'}</span><span className="text-[var(--text-secondary)]">{receiptData.comment}</span></div>}
                       </div>
                     </div>
                   </div>
@@ -996,6 +1001,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">{fmt(receiptData.discount)}</span></div>}
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--green)]">{fmt(receiptData.totalReceived)}</span></div>
                         {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়:' : 'Due:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
+                        {receiptData.comment && <div className="flex justify-between gap-4 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মন্তব্য:' : 'Comment:'}</span><span className="text-[var(--text-secondary)]">{receiptData.comment}</span></div>}
                       </div>
                     </div>
                   </div>
