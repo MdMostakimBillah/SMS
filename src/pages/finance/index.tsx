@@ -438,11 +438,7 @@ export default function FeeManagementPage() {
           <BulkAssignModal
             onSaved={(updatedStructures) => {
               for (const s of updatedStructures) {
-                if (structures.some((existing) => existing.id === s.id)) {
-                  updateStructure(s.id, s)
-                } else {
-                  bulkAddStructures([s])
-                }
+                updateStructure(s.id, s)
               }
               setShowBulkAssign(false)
             }}

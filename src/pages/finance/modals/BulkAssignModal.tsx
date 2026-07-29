@@ -20,8 +20,8 @@ interface ClassEntry {
 
 export function BulkAssignModal({ onSaved, onClose }: Props) {
   const bn = useBn()
-  const { classes, institution } = useClassStore()
-  const { structures, feeCategories } = useFeeStore()
+  const { classes } = useClassStore()
+  const { structures } = useFeeStore()
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
@@ -49,8 +49,6 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
     }
     return entries
   })
-
-  const activeCategories = useMemo(() => feeCategories.filter((c) => c.isActive && c.type === feeType), [feeCategories, feeType])
 
   // Group existing structures by name for the fee selector
   const existingFees = useMemo(() => {
@@ -80,12 +78,16 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
       for (const cls of classOptions) {
         next[cls] = { selected: false, sections: [], amount: '' }
       }
-      // Fill from existing structures
+      // Fill from existing structures — merge sections per class
       for (const s of fee.structures) {
         if (next[s.class]) {
+          const existing = next[s.class]
+          const mergedSections = s.section
+            ? (existing.sections.includes(s.section) ? existing.sections : [...existing.sections, s.section])
+            : existing.sections
           next[s.class] = {
             selected: true,
-            sections: s.section ? [s.section] : [],
+            sections: mergedSections,
             amount: String(s.amount),
           }
         }
@@ -152,10 +154,9 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
     })
   }
 
-  // Save — update existing structures
+  // Save — update existing structures only
   const handleSave = () => {
     if (!selectedFee) return
-    const today = new Date().toISOString().split('T')[0]
     const updated: FeeStructure[] = []
 
     // Map existing structures by class+section for lookup
@@ -174,56 +175,15 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
         for (const sec of entry.sections) {
           const key = `${cls}::${sec}`
           const existing = structMap.get(key)
-          if (existing) {
-            // Update existing
-            updated.push({
-              ...existing,
-              amount,
-              categoryId: activeCategories[0]?.id || existing.categoryId,
-              updatedAt: today,
-            } as FeeStructure)
-          } else {
-            // Create new for this section
-            updated.push({
-              id: `FEE-${Date.now()}-${cls}-${sec}-${Math.random().toString(36).slice(2, 6)}`,
-              name: selectedFee.name,
-              nameBn: selectedFee.nameBn,
-              class: cls,
-              section: sec,
-              academicYear: institution?.currentSession || '2025-26',
-              amount,
-              description: '',
-              descriptionBn: '',
-              isActive: true,
-              type: feeType,
-              createdAt: today,
-            })
+          if (existing && existing.amount !== amount) {
+            updated.push({ ...existing, amount })
           }
         }
       } else {
         const key = `${cls}::`
         const existing = structMap.get(key)
-        if (existing) {
-          updated.push({
-            ...existing,
-            amount,
-            categoryId: activeCategories[0]?.id || existing.categoryId,
-            updatedAt: today,
-          } as FeeStructure)
-        } else {
-          updated.push({
-            id: `FEE-${Date.now()}-${cls}-${Math.random().toString(36).slice(2, 6)}`,
-            name: selectedFee.name,
-            nameBn: selectedFee.nameBn,
-            class: cls,
-            academicYear: institution?.currentSession || '2025-26',
-            amount,
-            description: '',
-            descriptionBn: '',
-            isActive: true,
-            type: feeType,
-            createdAt: today,
-          })
+        if (existing && existing.amount !== amount) {
+          updated.push({ ...existing, amount })
         }
       }
     }
