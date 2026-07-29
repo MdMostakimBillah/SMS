@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
-import { User, Search, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2, Download, CircleCheck } from 'lucide-react'
+import { User, Search, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2, Download } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -144,7 +144,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const bn = useBn()
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
-  const { structures, payments, generateWaivers, addPayment, deletePayment } = useFeeStore()
+  const { structures, payments, generateWaivers, deletePayment } = useFeeStore()
   const waivers = useMemo(() => generateWaivers(students), [generateWaivers, structures, payments, students])
 
   const [fSession, setFSession] = useState(institution?.currentSession || '')
@@ -163,8 +163,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [editState, setEditState] = useState<Record<string, { discount: number; remarks: string; receive: number; checked: boolean }>>({})
-  const [receivedDate, setReceivedDate] = useState(() => new Date().toISOString().split('T')[0])
-  const [sendSms, setSendSms] = useState(true)
 
   const [showOneTimeModal, setShowOneTimeModal] = useState(false)
   const [selectedOneTimeFees, setSelectedOneTimeFees] = useState<Set<string>>(new Set())
@@ -175,7 +173,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const [showHistoryModal, setShowHistoryModal] = useState(false)
 
   const [extraRows, setExtraRows] = useState<MonthRow[]>([])
-  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
+  const [receiptData] = useState<ReceiptData | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
 
   useEffect(() => {
@@ -286,6 +284,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
   const totalAmount = useMemo(() => displayRows.reduce((sum, r) => sum + r.amount, 0), [displayRows])
   const totalDiscount = useMemo(() => displayRows.reduce((sum, r) => sum + getRowEdit(r.key).discount, 0), [displayRows, getRowEdit])
+  const totalReceivable = useMemo(() => displayRows.filter((r) => getRowEdit(r.key).checked).reduce((sum, r) => sum + r.amount - getRowEdit(r.key).discount, 0), [displayRows, getRowEdit])
   const totalReceive = useMemo(() => displayRows.filter((r) => getRowEdit(r.key).checked).reduce((sum, r) => sum + getRowEdit(r.key).receive, 0), [displayRows, getRowEdit])
 
   const studentPayments = useMemo(() => {
@@ -316,76 +315,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const todayDiscount = useMemo(() => payments.filter((p) => p.paidAt === todayStr).reduce((s, p) => s + (p.discount || 0), 0), [payments, todayStr])
   const todayWaiver = useMemo(() => waivers.filter((w) => w.createdAt?.startsWith(todayStr)).reduce((s, w) => s + w.amount, 0), [waivers, todayStr])
 
-
-  const handleReceiveFee = useCallback(() => {
-    const hasCheckedWithAmount = displayRows.some((r) => { const e = getRowEdit(r.key); return e.checked && (e.receive > 0 || e.discount > 0) })
-    if (!selectedStudent || !hasCheckedWithAmount) return
-    const checkedRows = displayRows.filter((r) => { const e = getRowEdit(r.key); return e.checked && (e.receive > 0 || e.discount > 0) })
-    if (checkedRows.length === 0) return
-    const batchId = `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    const receiptFees: ReceiptData['fees'] = []
-    let totalDiscount = 0
-    for (const row of checkedRows) {
-      const edit = getRowEdit(row.key)
-      const lastDash = row.key.lastIndexOf('-')
-      const secondLastDash = row.key.lastIndexOf('-', lastDash - 1)
-      const forMonth = row.isOnetime ? undefined : `${row.key.substring(secondLastDash + 1, lastDash)}-${String(Number(row.key.substring(lastDash + 1)) + 1).padStart(2, '0')}`
-      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
-      addPayment(payment)
-      const feeItem: ReceiptData['fees'][number] = {
-        name: row.feeName,
-        nameBn: row.feeNameBn,
-        amount: edit.receive,
-        due: Math.max(0, row.receivable - edit.receive - edit.discount),
-        isOnetime: row.isOnetime,
-        discount: edit.discount || undefined,
-        remarks: edit.remarks || undefined,
-        waived: row.waivedAmount || undefined,
-        waiverReason: row.waiverReason || undefined,
-        waiverReasonBn: row.waiverReasonBn || undefined,
-      }
-      if (!row.isOnetime && forMonth) {
-        const [yr, mo] = forMonth.split('-').map(Number)
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        feeItem.month = monthNames[mo - 1]
-        feeItem.year = String(yr).slice(-2)
-      } else if (row.isOnetime) {
-        feeItem.year = row.dateRange || fSession
-      }
-      receiptFees.push(feeItem)
-      totalDiscount += edit.discount
-    }
-    const rn = `RCP-${Date.now().toString(36).toUpperCase()}`
-    const ds = new Date(receivedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    const totalDue = displayRows.reduce((s, r) => {
-      const edit = getRowEdit(r.key)
-      if (edit.checked) return s + Math.max(0, r.receivable - edit.receive - edit.discount)
-      return s + Math.max(0, r.receivable - edit.discount)
-    }, 0)
-    setReceiptData({
-      receiptNo: rn,
-      date: ds,
-      session: fSession,
-      feePeriod: receiptFees.length === 1 ? receiptFees[0].name : `${checkedRows.length} fees`,
-      studentName: selectedStudent.nameEn,
-      studentNameBn: selectedStudent.nameBn || selectedStudent.nameEn,
-      admissionNo: selectedStudent.id,
-      class: selectedStudent.class,
-      section: selectedStudent.section || '-',
-      fees: receiptFees,
-      totalAmount: receiptFees.reduce((s, f) => s + f.amount, 0) + totalDiscount,
-      discount: totalDiscount,
-      totalReceived: totalReceive,
-      totalDue,
-      paymentMethod: 'cash',
-      comment: checkedRows.map((r) => { const e = getRowEdit(r.key); return e.remarks }).filter(Boolean).join(', ') || undefined,
-    })
-    setShowSuccess(true)
-    const receivedKeys = new Set(checkedRows.map((r) => r.key))
-    setExtraRows((prev) => prev.filter((r) => !receivedKeys.has(r.key)))
-    setEditState({})
-    setFindDueTrigger((t) => t + 1)
-  }, [selectedStudent, displayRows, getRowEdit, receivedDate, addPayment, fSession])
 
   const numberToWords = useCallback((n: number): string => {
     if (n === 0) return 'Zero'
@@ -841,30 +770,13 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 <span className="font-bold text-sm text-[var(--amber)]">{fmt(totalDiscount)}</span>
               </div>
               <div className="w-px h-4 bg-[var(--border)]" />
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'প্রাপ্য:' : 'Receivable:'}</span>
+                <span className="font-bold text-sm text-[var(--green)]">{fmt(totalReceivable)}</span>
+              </div>
               <div className="ml-auto flex items-center gap-1.5 bg-[var(--brand-light)] rounded-lg px-3 py-1.5">
                 <span className="text-[11px] text-[var(--brand)] font-semibold">{bn ? 'গ্রহণ:' : 'Receiving:'}</span>
                 <span className="font-extrabold text-base text-[var(--brand)]">{fmt(totalReceive)}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Action Bar */}
-          {displayRows.length > 0 && (
-            <div className="flex items-center gap-4 py-3 border-t border-[var(--border)]">
-              <div className="flex items-center gap-2">
-                <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'তারিখ' : 'Date'}</label>
-                <input type="date" value={receivedDate} onChange={(e) => setReceivedDate(e.target.value)}
-                  className="h-8 w-[140px] text-[12px] px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" />
-              </div>
-              <label className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)] cursor-pointer">
-                <input type="checkbox" checked={sendSms} onChange={(e) => setSendSms(e.target.checked)} className="w-3.5 h-3.5 accent-[var(--brand)]" />
-                {bn ? 'এসএমএস' : 'SMS'}
-              </label>
-              <div className="ml-auto flex items-center gap-3">
-                <button onClick={handleReceiveFee} disabled={!displayRows.some((r) => { const e = getRowEdit(r.key); return e.checked && (e.receive > 0 || e.discount > 0) })}
-                  className="h-10 px-6 rounded-full bg-[var(--green)] text-white font-bold text-[13px] border-0 cursor-pointer flex items-center gap-2 shadow-[0_2px_8px_rgba(34,197,94,0.3)] hover:shadow-[0_4px_12px_rgba(34,197,94,0.4)] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-                  <CircleCheck size={16} />{bn ? 'প্রাপ্ত' : 'Receive'}
-                </button>
               </div>
             </div>
           )}
