@@ -60,7 +60,7 @@ function generateMonthRows(
   waivers: { feeStructureId: string; amount: number; createdAt: string; forMonth?: string; reason?: string; reasonBn?: string }[],
   _studentId: string,
   academicYear: string,
-  advanceMonths: number,
+  advanceMonths: number | Record<string, number>,
   billingDate?: string
 ): MonthRow[] {
   const rows: MonthRow[] = []
@@ -84,10 +84,11 @@ function generateMonthRows(
   const now = new Date()
   const currentMonthIdx = now.getMonth()
   const currentYearNum = now.getFullYear()
-  const totalMonths = (currentYearNum - year) * 12 + (currentMonthIdx - startMonth) + 1 + advanceMonths
 
   for (const struct of structures) {
     if (!struct.isActive) continue
+    const structAdvance = typeof advanceMonths === 'number' ? advanceMonths : (advanceMonths[struct.id] || 0)
+    const totalMonths = (currentYearNum - year) * 12 + (currentMonthIdx - startMonth) + 1 + structAdvance
     if (struct.type === 'onetime') {
       const paid = payments.filter((p) => p.feeStructureId === struct.id).reduce((sum, p) => sum + p.amount, 0)
       const waivedEntries = waivers.filter((w) => w.feeStructureId === struct.id)
@@ -155,7 +156,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const [fSection, setFSection] = useState('')
   const [fStatus, setFStatus] = useState('active')
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
-  const [monthCount, setMonthCount] = useState(0)
+  const [feeAdvanceMap, setFeeAdvanceMap] = useState<Record<string, number>>({})
   const [findDueTrigger, setFindDueTrigger] = useState(0)
 
   const [studentSearch, setStudentSearch] = useState('')
@@ -260,23 +261,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
   const monthRows = useMemo(() => {
     if (!selectedStudent || findDueTrigger === 0) return []
-    // Count months after current month that already have payments — skip them when showing advance
-    const now = new Date()
-    const currentYr = now.getFullYear()
-    const currentMo = now.getMonth()
-    const studentPayments = payments.filter((p) => p.studentId === selectedStudent.id && p.forMonth)
-    const paidMonthKeys = new Set(studentPayments.map((p) => p.forMonth))
-    let alreadyPaidFuture = 0
-    for (let i = 1; i <= 12; i++) {
-      const futureMo = (currentMo + i) % 12
-      const futureYr = currentYr + Math.floor((currentMo + i) / 12)
-      const key = `${futureYr}-${String(futureMo + 1).padStart(2, '0')}`
-      if (paidMonthKeys.has(key)) alreadyPaidFuture++
-      else break
-    }
-    const effectiveAdvance = monthCount + alreadyPaidFuture
-    return generateMonthRows(filteredStructures, payments.filter((p) => p.studentId === selectedStudent.id), waivers.filter((w) => w.studentId === selectedStudent.id), selectedStudent.id, fSession, effectiveAdvance, selectedStudent.billingDate)
-  }, [selectedStudent, filteredStructures, payments, waivers, fSession, monthCount, findDueTrigger])
+    return generateMonthRows(filteredStructures, payments.filter((p) => p.studentId === selectedStudent.id), waivers.filter((w) => w.studentId === selectedStudent.id), selectedStudent.id, fSession, feeAdvanceMap, selectedStudent.billingDate)
+  }, [selectedStudent, filteredStructures, payments, waivers, fSession, feeAdvanceMap, findDueTrigger])
 
   useEffect(() => {
     if (monthRows.length > 0) {
@@ -1034,16 +1020,21 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
         {/* Right Sidebar */}
           <div className="space-y-2">
-            <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]">
-              <div className="flex items-center justify-between">
-                <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'অগ্রিম' : 'Advance'}</label>
-                <div className="flex items-center gap-1.5">
-                  <button onClick={() => setMonthCount((c) => Math.max(0, c - 1))} className="w-6 h-6 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[10px] text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition-colors">&#9660;</button>
-                  <span className="w-7 text-center text-[12px] font-bold text-[var(--text-primary)]">{monthCount}</span>
-                  <button onClick={() => setMonthCount((c) => Math.min(12, c + 1))} className="w-6 h-6 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[10px] text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition-colors">&#9650;</button>
-                </div>
+            {monthlyStructures.length > 0 && (
+              <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
+                <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'অগ্রিম' : 'Advance'}</div>
+                {monthlyStructures.map((s) => (
+                  <div key={s.id} className="flex items-center justify-between">
+                    <span className="text-[11px] font-medium text-[var(--text-primary)] truncate flex-1 mr-2">{bn ? s.nameBn : s.name}</span>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setFeeAdvanceMap((prev) => ({ ...prev, [s.id]: Math.max(0, (prev[s.id] || 0) - 1) }))} className="w-5 h-5 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[9px] text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition-colors">&#9660;</button>
+                      <span className="w-5 text-center text-[11px] font-bold text-[var(--text-primary)]">{feeAdvanceMap[s.id] || 0}</span>
+                      <button onClick={() => setFeeAdvanceMap((prev) => ({ ...prev, [s.id]: Math.min(12, (prev[s.id] || 0) + 1) }))} className="w-5 h-5 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[9px] text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition-colors">&#9650;</button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
             <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
               <button onClick={() => setShowOneTimeModal(true)}
                 className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg bg-[var(--brand)] text-white text-[12px] font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
