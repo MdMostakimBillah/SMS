@@ -1065,7 +1065,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 <Plus size={13} />{bn ? 'এককালীন ফি' : 'One-time fee'}
               </button>
               <button onClick={() => setShowFineModal(true)}
-                className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-[var(--red)]/30 text-[var(--red)] text-[12px] font-semibold cursor-pointer bg-[var(--red-light)] hover:bg-[var(--red)]/20 transition-colors">
+                className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-[var(--red)]/20 text-[var(--red)] text-[12px] font-semibold cursor-pointer bg-[var(--red-light)] hover:bg-[var(--red)]/15 transition-colors">
                 <Ban size={13} />{bn ? 'জরিমানা' : 'Add fine'}
               </button>
               <button onClick={() => setShowHistoryModal(true)}
