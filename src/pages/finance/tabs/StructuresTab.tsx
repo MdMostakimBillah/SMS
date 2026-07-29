@@ -32,6 +32,7 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
   const [qDesc, setQDesc] = useState('')
   const [qCategoryId, setQCategoryId] = useState('')
   const [saved, setSaved] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
@@ -60,6 +61,32 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
   const fmt = (n: number) => `৳${n.toLocaleString()}`
 
   const canQuickAdd = qName && qClass && qAmount
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      if (prev.size === filtered.length) return new Set()
+      return new Set(filtered.map((s) => s.id))
+    })
+  }
+
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return
+    const msg = bn
+      ? `আপনি কি ${selectedIds.size}টি ফি মুছে ফেলতে চান? এটি পূর্বাবস্থায় ফেরানো যাবে না।`
+      : `Delete ${selectedIds.size} fee structure(s)? This cannot be undone.`
+    if (!confirm(msg)) return
+    for (const id of selectedIds) deleteStructure(id)
+    setSelectedIds(new Set())
+  }
 
   const handleQuickAdd = () => {
     if (!canQuickAdd) return
@@ -112,6 +139,15 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
           <button onClick={onBulkAssign} className={`${btnSecondary} text-xs`}>
             <Copy size={12} /> {bn ? 'বাল্ক আপডেট' : 'Bulk Update'}
           </button>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--red)] text-white border-0 cursor-pointer hover:bg-[var(--red)]/80 transition-colors"
+            >
+              <Trash2 size={12} />
+              {bn ? `মুছুন (${toBnNum(selectedIds.size)})` : `Delete (${selectedIds.size})`}
+            </button>
+          )}
         </div>
       </div>
 
@@ -256,7 +292,15 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-[var(--bg-secondary)]">
-                <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'নাম' : 'Name'}</th>
+                <th className="w-10 px-2 py-2.5">
+                  <input
+                    type="checkbox"
+                    checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                    onChange={toggleSelectAll}
+                    className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer"
+                  />
+                </th>
+                <th className="text-left px-3 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'নাম' : 'Name'}</th>
                 <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'শ্রেণি' : 'Class'}</th>
                 <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
                 <th className="text-right px-4 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
@@ -268,18 +312,26 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
               {filtered.map((s, idx) => (
                 <tr
                   key={s.id}
-                  className={`border-t border-[var(--border)] transition-colors duration-150 ${idx % 2 === 0 ? 'bg-[var(--bg-primary)]' : 'bg-[var(--bg-secondary)]/40'} ${s.isActive ? 'hover:bg-[var(--brand-light)]/50 hover:shadow-[inset_0_0_0_1px_var(--brand)]/10' : 'opacity-50'}`}
+                  className={`border-t border-[var(--border)] transition-colors duration-150 ${idx % 2 === 0 ? 'bg-[var(--bg-primary)]' : 'bg-[var(--bg-secondary)]/40'} ${selectedIds.has(s.id) ? 'bg-[var(--brand-light)]/30' : ''} ${s.isActive ? 'hover:bg-[var(--brand-light)]/50 hover:shadow-[inset_0_0_0_1px_var(--brand)]/10' : 'opacity-50'}`}
                 >
-                  <td className="px-4 py-2">
+                  <td className="px-2 py-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(s.id)}
+                      onChange={() => toggleSelect(s.id)}
+                      className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
                     <p className="font-medium text-[var(--text-primary)] truncate">{bn && s.nameBn ? s.nameBn : s.name}</p>
                     {s.description && <p className="text-[0.65rem] text-[var(--text-muted)] truncate mt-0.5">{s.description}</p>}
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-3 py-2">
                     <span className="text-[var(--text-secondary)] bg-[var(--bg-secondary)] px-2 py-0.5 rounded-md text-[0.7rem]">
                       {s.class}{s.section ? ` - ${s.section}` : ''}
                     </span>
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-3 py-2">
                     {s.categoryId ? (
                       <span className="text-[var(--brand)] bg-[var(--brand-light)] px-2 py-0.5 rounded-md text-[0.7rem] font-medium">
                         {(() => {
@@ -291,13 +343,13 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
                       <span className="text-[var(--text-muted)] text-[0.7rem]">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-2 text-right font-semibold text-[var(--text-primary)]">{fmt(s.amount)}</td>
-                  <td className="px-4 py-2 text-center">
+                  <td className="px-3 py-2 text-right font-semibold text-[var(--text-primary)]">{fmt(s.amount)}</td>
+                  <td className="px-3 py-2 text-center">
                     <span className={`inline-block text-[0.65rem] font-semibold px-2.5 py-0.5 rounded-full ${s.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
                       {s.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-3 py-2 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => toggleStructureActive(s.id)}
