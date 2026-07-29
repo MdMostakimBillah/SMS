@@ -215,7 +215,7 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
             </div>
             <div>
               <h3 className="text-sm font-bold text-[var(--text-primary)]">{bn ? 'শিক্ষার্থীর জন্য ছাড় যোগ করুন' : 'Add Student Waiver'}</h3>
-              <p className="text-[0.65rem] text-[var(--text-muted)]">
+              <p className="text-[0.75rem] text-[var(--text-muted)]">
                 {step === 'category'
                   ? (bn ? 'একটি ক্যাটাগরি বাছাই করুন' : 'Select a category')
                   : (bn ? 'শিক্ষার্থী খুঁজুন, মাস ও পরিমাণ সেট করুন' : 'Find students, set months and amount')
@@ -232,19 +232,19 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
         <div className="px-5 py-2.5 border-b border-[var(--border)] bg-[var(--bg-secondary)]/30">
           <div className="flex items-center gap-2.5 max-w-xs">
             <div className="flex items-center gap-1.5">
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[0.6rem] font-bold transition-all ${step === 'category' ? 'bg-[var(--purple)] text-white shadow-sm shadow-[var(--purple)]/30' : 'bg-[var(--purple-light)] text-[var(--purple)]'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[0.8rem] font-bold transition-all ${step === 'category' ? 'bg-[var(--purple)] text-white shadow-sm shadow-[var(--purple)]/30' : 'bg-[var(--purple-light)] text-[var(--purple)]'}`}>
                 {step === 'details' ? <Check size={10} /> : '1'}
               </span>
-              <span className={`text-[0.7rem] font-semibold ${step === 'category' ? 'text-[var(--purple)]' : 'text-[var(--text-muted)]'}`}>
+              <span className={`text-[0.8rem] font-semibold ${step === 'category' ? 'text-[var(--purple)]' : 'text-[var(--text-muted)]'}`}>
                 {bn ? 'ক্যাটাগরি' : 'Category'}
               </span>
             </div>
             <div className={`flex-1 h-0.5 rounded-full transition-colors ${step === 'details' ? 'bg-[var(--purple)]' : 'bg-[var(--border)]'}`} />
             <div className="flex items-center gap-1.5">
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[0.6rem] font-bold transition-all ${step === 'details' ? 'bg-[var(--purple)] text-white shadow-sm shadow-[var(--purple)]/30' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[0.8rem] font-bold transition-all ${step === 'details' ? 'bg-[var(--purple)] text-white shadow-sm shadow-[var(--purple)]/30' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
                 2
               </span>
-              <span className={`text-[0.7rem] font-semibold ${step === 'details' ? 'text-[var(--purple)]' : 'text-[var(--text-muted)]'}`}>
+              <span className={`text-[0.8rem] font-semibold ${step === 'details' ? 'text-[var(--purple)]' : 'text-[var(--text-muted)]'}`}>
                 {bn ? 'বিবরণ' : 'Details'}
               </span>
             </div>
@@ -268,8 +268,8 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                         <Gift size={14} className="text-[var(--purple)]" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[0.7rem] font-semibold text-[var(--text-primary)] truncate">{bn ? cat.nameBn || cat.name : cat.name}</p>
-                        {cat.description && <p className="text-[0.6rem] text-[var(--text-muted)] mt-0.5 truncate">{bn ? cat.descriptionBn || cat.description : cat.description}</p>}
+                        <p className="text-[0.8rem] font-semibold text-[var(--text-primary)] truncate">{bn ? cat.nameBn || cat.name : cat.name}</p>
+                        {cat.description && <p className="text-[0.8rem] text-[var(--text-muted)] mt-0.5 truncate">{bn ? cat.descriptionBn || cat.description : cat.description}</p>}
                       </div>
                       <ChevronRight size={14} className="text-[var(--text-muted)] group-hover:text-[var(--purple)] transition-colors" />
                     </button>
@@ -281,14 +281,14 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                     <Gift size={24} className="text-[var(--text-muted)]" />
                   </div>
                   <p className="text-xs text-[var(--text-muted)]">{bn ? 'কোনো ক্যাটাগরি নেই' : 'No categories found'}</p>
-                  <p className="text-[0.65rem] text-[var(--text-muted)] mt-1">{bn ? 'প্রথমে ক্যাটাগরি তৈরি করুন' : 'Create a category first'}</p>
+                  <p className="text-[0.75rem] text-[var(--text-muted)] mt-1">{bn ? 'প্রথমে ক্যাটাগরি তৈরি করুন' : 'Create a category first'}</p>
                 </div>
               )}
             </div>
           ) : (
             <div className="space-y-3">
               {/* Back button */}
-              <button type="button" onClick={() => setStep('category')} className="flex items-center gap-1 text-[0.7rem] text-[var(--brand)] hover:text-[var(--brand)]/80 cursor-pointer bg-transparent border-0 p-0 font-semibold transition-colors">
+              <button type="button" onClick={() => setStep('category')} className="flex items-center gap-1 text-[0.8rem] text-[var(--brand)] hover:text-[var(--brand)]/80 cursor-pointer bg-transparent border-0 p-0 font-semibold transition-colors">
                 <span className="text-sm leading-none">←</span> {bn ? 'ক্যাটাগরি পরিবর্তন' : 'Change category'}
               </button>
 
@@ -297,27 +297,27 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                 {/* Left: Student Picker */}
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[0.7rem] font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                    <label className="text-[0.8rem] font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
                       <Users size={12} className="text-[var(--purple)]" />
                       {bn ? 'শিক্ষার্থী নির্বাচন করুন' : 'Select Students'}
                     </label>
-                    <button type="button" onClick={toggleAllStudents} className="text-[0.65rem] text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0 font-semibold">
+                    <button type="button" onClick={toggleAllStudents} className="text-[0.75rem] text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0 font-semibold">
                       {selectedStudentIds.size === filteredStudents.length ? (bn ? 'পরিষ্কার' : 'Clear') : (bn ? 'সব নির্বাচন' : 'Select all')}
                     </button>
                   </div>
 
                   {/* Filters row */}
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <select value={fSession} onChange={(e) => setFSession(e.target.value)} className={`${selectCls} !h-[28px] !text-[0.65rem]`}>
+                    <select value={fSession} onChange={(e) => setFSession(e.target.value)} className={`${selectCls} !h-[28px] !text-[0.75rem]`}>
                       <option value="">{bn ? 'সব সেশন' : 'All Sessions'}</option>
                       {sessions.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
-                    <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); setSelectedStudentIds(new Set()) }} className={`${selectCls} !h-[28px] !text-[0.65rem]`}>
+                    <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); setSelectedStudentIds(new Set()) }} className={`${selectCls} !h-[28px] !text-[0.75rem]`}>
                       <option value="">{bn ? 'সব শ্রেণি' : 'All Classes'}</option>
                       {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                     {fClass && (
-                      <select value={fSection} onChange={(e) => { setFSection(e.target.value); setSelectedStudentIds(new Set()) }} className={`${selectCls} !h-[28px] !text-[0.65rem]`}>
+                      <select value={fSection} onChange={(e) => { setFSection(e.target.value); setSelectedStudentIds(new Set()) }} className={`${selectCls} !h-[28px] !text-[0.75rem]`}>
                         <option value="">{bn ? 'সব সেকশন' : 'All Sections'}</option>
                         {(sectionsMap[fClass] || []).map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
@@ -332,22 +332,22 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder={bn ? 'নাম বা রোল দিয়ে খুঁজুন...' : 'Search by name or roll...'}
-                      className={`${inputCls} w-full !h-[28px] !text-[0.65rem] pl-7`}
+                      className={`${inputCls} w-full !h-[28px] !text-[0.75rem] pl-7`}
                     />
                   </div>
 
                   {/* Selected count */}
                   {selectedStudentIds.size > 0 && (
                     <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--purple-light)]/30 border border-[var(--purple)]/20">
-                      <span className="text-[0.65rem] font-semibold text-[var(--purple)]">{selectedStudentIds.size}</span>
-                      <span className="text-[0.6rem] text-[var(--purple)]/70">{bn ? 'জন শিক্ষার্থী নির্বাচিত' : 'students selected'}</span>
+                      <span className="text-[0.75rem] font-semibold text-[var(--purple)]">{selectedStudentIds.size}</span>
+                      <span className="text-[0.8rem] text-[var(--purple)]/70">{bn ? 'জন শিক্ষার্থী নির্বাচিত' : 'students selected'}</span>
                     </div>
                   )}
 
                   {/* Student list */}
                   <div className="max-h-[260px] overflow-y-auto border border-[var(--border)] rounded-lg divide-y divide-[var(--border)]">
                     {filteredStudents.length === 0 ? (
-                      <p className="text-[0.65rem] text-[var(--text-muted)] py-6 text-center">{bn ? 'কোনো শিক্ষার্থী নেই' : 'No students found'}</p>
+                      <p className="text-[0.75rem] text-[var(--text-muted)] py-6 text-center">{bn ? 'কোনো শিক্ষার্থী নেই' : 'No students found'}</p>
                     ) : (
                       filteredStudents.map((s) => {
                         const isSelected = selectedStudentIds.has(s.id)
@@ -361,8 +361,8 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                               {isSelected && <Check size={10} className="text-white" />}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-[0.7rem] font-medium text-[var(--text-primary)] truncate">{bn ? s.nameBn || s.nameEn : s.nameEn}</p>
-                              <p className="text-[0.6rem] text-[var(--text-muted)]">{s.class}-{s.section} · Roll: {s.roll}</p>
+                              <p className="text-[0.8rem] font-medium text-[var(--text-primary)] truncate">{bn ? s.nameBn || s.nameEn : s.nameEn}</p>
+                              <p className="text-[0.8rem] text-[var(--text-muted)]">{s.class}-{s.section} · Roll: {s.roll}</p>
                             </div>
                           </label>
                         )
@@ -375,15 +375,15 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                 <div className="w-[45%] space-y-3">
                   {/* Fee Structure — Category-first flow */}
                   <div>
-                    <label className="text-[0.7rem] font-semibold text-[var(--text-primary)] flex items-center gap-1.5 mb-1.5">
+                    <label className="text-[0.8rem] font-semibold text-[var(--text-primary)] flex items-center gap-1.5 mb-1.5">
                       <DollarSign size={12} className="text-[var(--purple)]" />
                       {bn ? 'ফি কাঠামো' : 'Fee Structure'}
                     </label>
 
                     {effectiveClass && (
                       <div className="flex items-center gap-1.5 mb-1.5 px-2.5 py-1 rounded-md bg-[var(--bg-secondary)]/50 border border-[var(--border)]">
-                        <span className="text-[0.6rem] text-[var(--text-muted)]">{bn ? 'শ্রেণি' : 'Class'}:</span>
-                        <span className="text-[0.65rem] font-semibold text-[var(--text-primary)]">{effectiveClass}{effectiveSection ? ` - ${effectiveSection}` : ''}</span>
+                        <span className="text-[0.8rem] text-[var(--text-muted)]">{bn ? 'শ্রেণি' : 'Class'}:</span>
+                        <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">{effectiveClass}{effectiveSection ? ` - ${effectiveSection}` : ''}</span>
                       </div>
                     )}
 
@@ -392,12 +392,12 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                         <button
                           type="button"
                           onClick={() => { setSelectedFeeCategoryId(''); setFeeStructureId(''); setAmount(''); setPercent(''); setSelectedMonths(new Set()) }}
-                          className="text-[0.65rem] text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0 font-semibold"
+                          className="text-[0.75rem] text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0 font-semibold"
                         >
                           ← {bn ? 'ফি ক্যাটাগরি পরিবর্তন' : 'Change fee category'}
                         </button>
                         {filteredStructures.length === 0 ? (
-                          <p className="text-[0.65rem] text-[var(--text-muted)] py-2 text-center rounded-lg bg-[var(--bg-secondary)]/30">
+                          <p className="text-[0.75rem] text-[var(--text-muted)] py-2 text-center rounded-lg bg-[var(--bg-secondary)]/30">
                             {effectiveClass
                               ? (bn ? `এই শ্রেণির জন্য কোনো ফি কাঠামো নেই` : 'No structures for this class')
                               : (bn ? 'কোনো ফি কাঠামো নেই' : 'No fee structures found')
@@ -412,7 +412,7 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                                   key={s.id}
                                   type="button"
                                   onClick={() => { setFeeStructureId(s.id); setAmount(''); setPercent(''); setSelectedMonths(new Set()) }}
-                                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg border text-[0.65rem] cursor-pointer transition-all ${isSelected ? 'border-[var(--purple)] bg-[var(--purple-light)] shadow-sm' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--purple)]/50'}`}
+                                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg border text-[0.75rem] cursor-pointer transition-all ${isSelected ? 'border-[var(--purple)] bg-[var(--purple-light)] shadow-sm' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--purple)]/50'}`}
                                 >
                                   <div className="flex items-center gap-1.5">
                                     <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-[var(--purple)]' : 'border-[var(--text-muted)]'}`}>
@@ -437,7 +437,7 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                     ) : (
                       <div className="space-y-1.5">
                         {feeCategoriesForClass.length === 0 ? (
-                          <p className="text-[0.65rem] text-[var(--text-muted)] py-2 text-center rounded-lg bg-[var(--bg-secondary)]/30">
+                          <p className="text-[0.75rem] text-[var(--text-muted)] py-2 text-center rounded-lg bg-[var(--bg-secondary)]/30">
                             {effectiveClass
                               ? (bn ? 'এই শ্রেণির জন্য কোনো ফি ক্যাটাগরি নেই' : 'No fee categories for this class')
                               : (bn ? 'শিক্ষার্থী নির্বাচন করুন বা শ্রেণি বাছাই করুন' : 'Select students or choose a class')
@@ -457,7 +457,7 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                                     <Gift size={12} className="text-[var(--purple)]" />
                                   </div>
                                   <div>
-                                    <p className="text-[0.65rem] font-medium text-[var(--text-primary)]">{bn ? cat.nameBn || cat.name : cat.name}</p>
+                                    <p className="text-[0.75rem] font-medium text-[var(--text-primary)]">{bn ? cat.nameBn || cat.name : cat.name}</p>
                                     {cat.description && <p className="text-[0.55rem] text-[var(--text-muted)] mt-0.5">{bn ? cat.descriptionBn || cat.description : cat.description}</p>}
                                   </div>
                                 </div>
@@ -474,11 +474,11 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                   {isMonthly && selectedFee && (
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-[0.7rem] font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                        <label className="text-[0.8rem] font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
                           <Calendar size={12} className="text-[var(--purple)]" />
                           {bn ? 'মাস বাছাই' : 'Select Months'}
                         </label>
-                        <button type="button" onClick={toggleAllMonths} className="text-[0.6rem] text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0 font-semibold">
+                        <button type="button" onClick={toggleAllMonths} className="text-[0.8rem] text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0 font-semibold">
                           {selectedMonths.size === 12 ? (bn ? 'পরিষ্কার' : 'Clear') : (bn ? 'সব নির্বাচন' : 'Select all')}
                         </button>
                       </div>
@@ -486,14 +486,14 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                         {MONTH_LABELS.map((label, m) => {
                           const isActive = selectedMonths.has(m)
                           return (
-                            <button key={m} type="button" onClick={() => toggleMonth(m)} className={`px-1 py-1.5 rounded-md text-[0.6rem] font-semibold border cursor-pointer transition-all ${isActive ? 'bg-[var(--purple)] text-white border-[var(--purple)] shadow-sm shadow-[var(--purple)]/20' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--purple)]/50'}`}>
+                            <button key={m} type="button" onClick={() => toggleMonth(m)} className={`px-1 py-1.5 rounded-md text-[0.8rem] font-semibold border cursor-pointer transition-all ${isActive ? 'bg-[var(--purple)] text-white border-[var(--purple)] shadow-sm shadow-[var(--purple)]/20' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--purple)]/50'}`}>
                               {bn ? label.bn : label.en}
                             </button>
                           )
                         })}
                       </div>
                       {selectedMonths.size > 0 && (
-                        <p className="text-[0.6rem] text-[var(--purple)] mt-1 font-medium">
+                        <p className="text-[0.8rem] text-[var(--purple)] mt-1 font-medium">
                           {selectedMonths.size} {bn ? 'মাস নির্বাচিত' : 'months selected'}
                         </p>
                       )}
@@ -503,30 +503,30 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                   {/* Waiver Mode */}
                   {selectedFee && (
                     <div>
-                      <label className="text-[0.7rem] font-semibold text-[var(--text-primary)] block mb-1.5">{bn ? 'ছাড়ের ধরন' : 'Waiver Type'}</label>
+                      <label className="text-[0.8rem] font-semibold text-[var(--text-primary)] block mb-1.5">{bn ? 'ছাড়ের ধরন' : 'Waiver Type'}</label>
                       <div className="flex gap-1.5 mb-2">
                         <button
                           type="button"
                           onClick={() => { setWaiverMode('amount'); setPercent('') }}
-                          className={`flex-1 py-1.5 rounded-lg text-[0.65rem] font-semibold border cursor-pointer transition-all ${waiverMode === 'amount' ? 'bg-[var(--purple)] text-white border-[var(--purple)] shadow-sm shadow-[var(--purple)]/20' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--purple)]/50'}`}
+                          className={`flex-1 py-1.5 rounded-lg text-[0.75rem] font-semibold border cursor-pointer transition-all ${waiverMode === 'amount' ? 'bg-[var(--purple)] text-white border-[var(--purple)] shadow-sm shadow-[var(--purple)]/20' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--purple)]/50'}`}
                         >
                           {bn ? 'পরিমাণ (৳)' : 'Amount (৳)'}
                         </button>
                         <button
                           type="button"
                           onClick={() => { setWaiverMode('percent'); setAmount('') }}
-                          className={`flex-1 py-1.5 rounded-lg text-[0.65rem] font-semibold border cursor-pointer transition-all ${waiverMode === 'percent' ? 'bg-[var(--purple)] text-white border-[var(--purple)] shadow-sm shadow-[var(--purple)]/20' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--purple)]/50'}`}
+                          className={`flex-1 py-1.5 rounded-lg text-[0.75rem] font-semibold border cursor-pointer transition-all ${waiverMode === 'percent' ? 'bg-[var(--purple)] text-white border-[var(--purple)] shadow-sm shadow-[var(--purple)]/20' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--purple)]/50'}`}
                         >
                           {bn ? 'শতাংশ (%)' : 'Percent (%)'}
                         </button>
                       </div>
 
                       {waiverMode === 'amount' ? (
-                        <input type="number" min="1" max={selectedFee.amount} value={amount} onChange={(e) => setAmount(e.target.value)} className={`${inputCls} w-full !h-[28px] !text-[0.65rem]`} placeholder={bn ? `সর্বোচ্চ ${fmt(selectedFee.amount)}` : `Max ${fmt(selectedFee.amount)}`} />
+                        <input type="number" min="1" max={selectedFee.amount} value={amount} onChange={(e) => setAmount(e.target.value)} className={`${inputCls} w-full !h-[28px] !text-[0.75rem]`} placeholder={bn ? `সর্বোচ্চ ${fmt(selectedFee.amount)}` : `Max ${fmt(selectedFee.amount)}`} />
                       ) : (
                         <div className="relative">
-                          <input type="number" min="1" max="100" value={percent} onChange={(e) => setPercent(e.target.value)} className={`${inputCls} w-full !h-[28px] !text-[0.65rem] pr-6`} placeholder="10" />
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[0.65rem] text-[var(--text-muted)] font-semibold">%</span>
+                          <input type="number" min="1" max="100" value={percent} onChange={(e) => setPercent(e.target.value)} className={`${inputCls} w-full !h-[28px] !text-[0.75rem] pr-6`} placeholder="10" />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[0.75rem] text-[var(--text-muted)] font-semibold">%</span>
                         </div>
                       )}
                     </div>
@@ -534,24 +534,24 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
 
                   {/* Reason */}
                   <div>
-                    <label className="text-[0.7rem] font-semibold text-[var(--text-primary)] block mb-1.5">{bn ? 'কারণ' : 'Reason'}</label>
-                    <input value={reason} onChange={(e) => setReason(e.target.value)} className={`${inputCls} w-full !h-[28px] !text-[0.65rem]`} placeholder={bn ? 'যেমন: বৃত্তি, এতিম' : 'e.g. Scholarship, Orphan'} />
+                    <label className="text-[0.8rem] font-semibold text-[var(--text-primary)] block mb-1.5">{bn ? 'কারণ' : 'Reason'}</label>
+                    <input value={reason} onChange={(e) => setReason(e.target.value)} className={`${inputCls} w-full !h-[28px] !text-[0.75rem]`} placeholder={bn ? 'যেমন: বৃত্তি, এতিম' : 'e.g. Scholarship, Orphan'} />
                   </div>
 
                   {/* Notes */}
                   <div>
-                    <label className="text-[0.7rem] font-semibold text-[var(--text-primary)] block mb-1.5">{bn ? 'নোট (ঐচ্ছিক)' : 'Notes (optional)'}</label>
-                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={`${inputCls} w-full !text-[0.65rem] min-h-[40px] resize-none`} placeholder={bn ? 'অতিরিক্ত তথ্য...' : 'Additional info...'} rows={2} />
+                    <label className="text-[0.8rem] font-semibold text-[var(--text-primary)] block mb-1.5">{bn ? 'নোট (ঐচ্ছিক)' : 'Notes (optional)'}</label>
+                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={`${inputCls} w-full !text-[0.75rem] min-h-[40px] resize-none`} placeholder={bn ? 'অতিরিক্ত তথ্য...' : 'Additional info...'} rows={2} />
                   </div>
 
                   {/* Summary */}
                   {selectedFee && totalWaiver > 0 && (
                     <div className="p-2.5 rounded-lg bg-gradient-to-r from-[var(--purple-light)] to-[var(--purple)]/10 border border-[var(--purple)]/20">
                       <div className="flex justify-between items-center">
-                        <span className="text-[0.65rem] font-semibold text-[var(--purple)]">{bn ? 'মোট ছাড়' : 'Total Waiver'}</span>
+                        <span className="text-[0.75rem] font-semibold text-[var(--purple)]">{bn ? 'মোট ছাড়' : 'Total Waiver'}</span>
                         <span className="font-bold text-[var(--purple)] text-sm">{fmt(totalWaiver)}</span>
                       </div>
-                      <p className="text-[0.6rem] text-[var(--purple)]/60 text-right mt-0.5">
+                      <p className="text-[0.8rem] text-[var(--purple)]/60 text-right mt-0.5">
                         {fmt(perPeriodAmount)} × {selectedStudentIds.size} {bn ? 'শিক্ষার্থী' : 'students'}
                         {isMonthly && selectedMonths.size > 1 && ` × ${selectedMonths.size} ${bn ? 'মাস' : 'months'}`}
                       </p>
