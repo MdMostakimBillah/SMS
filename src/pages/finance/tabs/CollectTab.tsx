@@ -862,7 +862,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
               </label>
               <div className="ml-auto flex items-center gap-3">
                 <button onClick={handleReceiveFee} disabled={!displayRows.some((r) => { const e = getRowEdit(r.key); return e.checked && (e.receive > 0 || e.discount > 0) })}
-                  className="h-10 px-6 rounded-full bg-[var(--green)] text-white font-bold text-[13px] border-0 cursor-pointer flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                  className="h-10 px-6 rounded-full bg-[var(--brand)] text-white font-bold text-[13px] border-0 cursor-pointer flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                   <CircleCheck size={16} />{bn ? 'প্রাপ্ত' : 'Receive'}
                 </button>
               </div>
