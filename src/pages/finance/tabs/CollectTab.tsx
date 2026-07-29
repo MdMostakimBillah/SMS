@@ -1024,12 +1024,16 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
               <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
                 <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'অগ্রিম' : 'Advance'}</div>
                 {monthlyStructures.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between">
-                    <span className="text-[11px] font-medium text-[var(--text-primary)] truncate flex-1 mr-2">{bn ? s.nameBn : s.name}</span>
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => setFeeAdvanceMap((prev) => ({ ...prev, [s.id]: Math.max(0, (prev[s.id] || 0) - 1) }))} className="w-5 h-5 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[9px] text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition-colors">&#9660;</button>
-                      <span className="w-5 text-center text-[11px] font-bold text-[var(--text-primary)]">{feeAdvanceMap[s.id] || 0}</span>
-                      <button onClick={() => setFeeAdvanceMap((prev) => ({ ...prev, [s.id]: Math.min(12, (prev[s.id] || 0) + 1) }))} className="w-5 h-5 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[9px] text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition-colors">&#9650;</button>
+                  <div key={s.id} className="flex items-center gap-2">
+                    <span className="text-[11px] font-medium text-[var(--text-primary)] truncate flex-1">{bn ? s.nameBn : s.name}</span>
+                    <div className="flex items-center">
+                      <input type="number" value={feeAdvanceMap[s.id] || 0} min={0} max={12}
+                        onChange={(e) => setFeeAdvanceMap((prev) => ({ ...prev, [s.id]: Math.max(0, Math.min(12, Number(e.target.value) || 0)) }))}
+                        className="w-8 h-7 text-[11px] text-center rounded-l-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                      <div className="flex flex-col">
+                        <button onClick={() => setFeeAdvanceMap((prev) => ({ ...prev, [s.id]: Math.min(12, (prev[s.id] || 0) + 1) }))} className="w-5 h-3.5 rounded-tr-md border border-l-0 border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[8px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)] transition-colors">&#9650;</button>
+                        <button onClick={() => setFeeAdvanceMap((prev) => ({ ...prev, [s.id]: Math.max(0, (prev[s.id] || 0) - 1) }))} className="w-5 h-3.5 rounded-br-md border border-l-0 border-t-0 border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[8px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)] transition-colors">&#9660;</button>
+                      </div>
                     </div>
                   </div>
                 ))}
