@@ -517,7 +517,7 @@ ${photoHtml}
         </div>
 
         <div className="sticky top-0 z-50 pt-0.5 pb-1 bg-transparent">
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-[0.875rem] mb-2.5">
+          <div className="glass rounded-[0.75rem] p-[0.875rem] mb-2.5">
             <div
               className="grid gap-2"
               style={{ gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(160px, 1fr))' }}
