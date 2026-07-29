@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Banknote,
   Copy,
+  Plus,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -366,10 +367,16 @@ export default function FeeManagementPage() {
             </div>
           </div>
           {activeView === 'structures' && (
-            <button onClick={() => setShowBatchCreate(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity">
-              <Copy size={13} />
-              {bn ? 'বাল্ক আপডেট' : 'Bulk Update'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowBatchCreate(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity">
+                <Copy size={13} />
+                {bn ? 'বাল্ক আপডেট' : 'Bulk Update'}
+              </button>
+              <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--brand)] text-[var(--brand)] hover:bg-[var(--brand-light)] transition-colors">
+                <Plus size={13} />
+                {bn ? 'ফি যোগ করুন' : 'Add Fee'}
+              </button>
+            </div>
           )}
         </div>
 
