@@ -416,7 +416,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       if (f.discount && f.discount > 0) {
         details += `<div style="font-size:7px;color:#d97706;font-weight:500">${bn ? 'ডিসকাউন্ট' : 'Discount'}: ${f.discount.toLocaleString()}${f.remarks ? ` - ${f.remarks}` : ''}</div>`
       } else if (f.remarks) {
-        details += `<div style="font-size:7px;color:#555;font-weight:500">${bn ? 'মন্তব্য' : 'Note'}: ${f.remarks}</div>`
+        details += `<div style="font-size:9px;color:#555;font-weight:500">${bn ? 'মন্তব্য' : 'Note'}: ${f.remarks}</div>`
       }
       return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name} ${period}</div>${details}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
     }).join('')
@@ -447,9 +447,9 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
           ${data.totalDue > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333;border-top:2px solid #dc2626">${bn ? 'বকেয়' : 'Balance'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#dc2626;border-top:2px solid #dc2626">${data.totalDue.toLocaleString()}</td></tr>` : ''}
         </table>
       </div>
-      <div style="font-size:9px;color:#333;margin-bottom:3px"><b>${bn ? 'অর্থের পরিমাণ' : 'Amt in words'}:</b> ${numberToWords(data.totalReceived)} Only.</div>
-      <div style="display:flex;justify-content:space-between;font-size:9px;color:#333;margin-bottom:3px"><span><b>${bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Mode'}:</b> ${data.paymentMethod.toUpperCase()}</span><span><b>BALANCE:</b> ${data.totalDue.toLocaleString()}</span></div>
-      ${data.comment ? `<div style="font-size:9px;color:#333;margin-bottom:3px"><b>${bn ? 'মন্তব্য' : 'Comment'}:</b> ${data.comment}</div>` : ''}
+      <div style="font-size:11px;color:#333;margin-bottom:5px"><b>${bn ? 'অর্থের পরিমাণ' : 'Amt in words'}:</b> ${numberToWords(data.totalReceived)} Only.</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#333;margin-bottom:5px"><span><b>${bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Mode'}:</b> ${data.paymentMethod.toUpperCase()}</span><span><b>BALANCE:</b> ${data.totalDue.toLocaleString()}</span></div>
+      ${data.comment ? `<div style="font-size:11px;color:#333;margin-bottom:5px"><b>${bn ? 'মন্তব্য' : 'Comment'}:</b> ${data.comment}</div>` : ''}
       <div style="display:flex;justify-content:space-between;margin-top:25px;padding-top:10px">
         <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#333">${bn ? 'ফি আদায়কারী' : 'Fee Collected by'}</div></div>
         <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#333">${bn ? 'অভিভাবক' : 'Parent/Guardian'}</div></div>

@@ -299,6 +299,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
       totalReceived: batch.totalAmount,
       totalDue: 0,
       paymentMethod: batch.method,
+      comment: batch.payments.map((p) => p.note).filter(Boolean).join(', ') || undefined,
     }
     const copyHtml = (copyLabel: string) => `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;height:100%;padding:0 10px;display:flex;flex-direction:column;position:relative">
       ${watermarkHtml}
@@ -327,8 +328,9 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
           ${receiptData.totalDue > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333;border-top:2px solid #dc2626">${bn ? 'বকেয়' : 'Balance'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#dc2626;border-top:2px solid #dc2626">${receiptData.totalDue.toLocaleString()}</td></tr>` : ''}
         </table>
       </div>
-      <div style="font-size:9px;color:#333;margin-bottom:3px"><b>${bn ? 'অর্থের পরিমাণ' : 'Amt in words'}:</b> ${numberToWords(receiptData.totalReceived)} Only.</div>
-      <div style="display:flex;justify-content:space-between;font-size:9px;color:#333;margin-bottom:3px"><span><b>${bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Mode'}:</b> ${receiptData.paymentMethod.toUpperCase()}</span><span><b>BALANCE:</b> ${receiptData.totalDue.toLocaleString()}</span></div>
+      <div style="font-size:11px;color:#333;margin-bottom:5px"><b>${bn ? 'অর্থের পরিমাণ' : 'Amt in words'}:</b> ${numberToWords(receiptData.totalReceived)} Only.</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#333;margin-bottom:5px"><span><b>${bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Mode'}:</b> ${receiptData.paymentMethod.toUpperCase()}</span><span><b>BALANCE:</b> ${receiptData.totalDue.toLocaleString()}</span></div>
+      ${receiptData.comment ? `<div style="font-size:11px;color:#333;margin-bottom:5px"><b>${bn ? 'মন্তব্য' : 'Comment'}:</b> ${receiptData.comment}</div>` : ''}
       <div style="display:flex;justify-content:space-between;margin-top:25px;padding-top:10px">
         <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#333">${bn ? 'ফি আদায়কারী' : 'Fee Collected by'}</div></div>
         <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#333">${bn ? 'অভিভাবক' : 'Parent/Guardian'}</div></div>
