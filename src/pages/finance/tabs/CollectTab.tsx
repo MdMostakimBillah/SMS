@@ -31,6 +31,9 @@ interface ReceiptData {
 
 interface Props {
   onCollect: (due: FeeDue) => void
+  initialStudentId?: string | null
+  initialFeeStructureId?: string | null
+  onClearCollectFromDue?: () => void
 }
 
 interface MonthRow {
@@ -140,7 +143,7 @@ function generateMonthRows(
 const labelCls = 'block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.03em] mb-[5px]'
 const fieldInputCls = 'w-full border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] text-[var(--text-primary)] bg-[var(--bg-primary)] outline-none transition-colors focus:border-[var(--brand)]'
 
-export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect }: Props) {
+export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect, initialStudentId, initialFeeStructureId, onClearCollectFromDue }: Props) {
   const bn = useBn()
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
@@ -201,6 +204,20 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const selectedStudent = useMemo(() =>
     students.find((s) => s.id === selectedStudentId) || null,
   [students, selectedStudentId])
+
+  useEffect(() => {
+    if (initialStudentId && students.length > 0) {
+      const student = students.find((s) => s.id === initialStudentId)
+      if (student) {
+        setFSession(student.academicYear || institution?.currentSession || '')
+        setFClass(student.class || '')
+        setFSection(student.section || '')
+        setSelectedStudentId(student.id)
+        setFindDueTrigger((t) => t + 1)
+        onClearCollectFromDue?.()
+      }
+    }
+  }, [initialStudentId, students, institution, onClearCollectFromDue])
 
   const dropdownStudents = useMemo(() => {
     if (!studentSearch) return sessionStudents.slice(0, 20)
@@ -279,6 +296,18 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const getRowEdit = useCallback((key: string) => editState[key] || { discount: 0, remarks: '', receive: 0, checked: false }, [editState])
 
   const displayRows = useMemo(() => [...monthRows, ...extraRows], [monthRows, extraRows])
+
+  useEffect(() => {
+    if (initialFeeStructureId && displayRows.length > 0) {
+      const matchingRow = displayRows.find((r) => r.structureId === initialFeeStructureId)
+      if (matchingRow && !getRowEdit(matchingRow.key).checked) {
+        setEditState((prev) => ({
+          ...prev,
+          [matchingRow.key]: { discount: 0, remarks: '', receive: Math.max(0, matchingRow.receivable), checked: true },
+        }))
+      }
+    }
+  }, [initialFeeStructureId, displayRows])
 
   const updateRow = useCallback((key: string, field: 'discount' | 'remarks' | 'receive' | 'checked', value: number | string | boolean) => {
     setEditState((prev) => { const c = prev[key] || { discount: 0, remarks: '', receive: 0, checked: true }; return { ...prev, [key]: { ...c, [field]: value } } })

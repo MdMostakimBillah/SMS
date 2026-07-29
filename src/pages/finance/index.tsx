@@ -200,6 +200,7 @@ export default function FeeManagementPage() {
   const [categoryFeeType, setCategoryFeeType] = useState<'monthly' | 'onetime'>('monthly')
   const [showBatchCreate, setShowBatchCreate] = useState(false)
   const [receiptData, setReceiptData] = useState<(FeePayment & { studentName: string; studentNameBn: string; feeName: string; feeNameBn: string }) | null>(null)
+  const [collectFromDue, setCollectFromDue] = useState<{ studentId: string; feeStructureId: string } | null>(null)
 
   useEffect(() => {
     trackVisit('/finance', bn ? 'ফি ব্যবস্থাপনা' : 'Fee Management', 'Wallet')
@@ -376,8 +377,12 @@ export default function FeeManagementPage() {
 
         <div className="gsap-fade-up">
           {activeView === 'structures' && <StructuresTab onEdit={(s) => setEditStruct(s)} onBulkAssign={() => setShowBulkAssign(true)} onManageCategories={(ft) => { setCategoryFeeType(ft); setShowCategoryModal(true) }} />}
-          {activeView === 'dues' && <DuesTab onCollect={(d) => setCollectPayment(d)} />}
-          {activeView === 'collect' && <CollectTab onCollect={(d) => setCollectPayment(d)} />}
+          {activeView === 'dues' && <DuesTab onCollect={(d) => {
+            setCollectFromDue({ studentId: d.studentId, feeStructureId: d.feeStructureId })
+            setActiveView('collect')
+            setSearchParams({ view: 'collect' })
+          }} />}
+          {activeView === 'collect' && <CollectTab initialStudentId={collectFromDue?.studentId || null} initialFeeStructureId={collectFromDue?.feeStructureId || null} onClearCollectFromDue={() => setCollectFromDue(null)} onCollect={(d) => setCollectPayment(d)} />}
           {activeView === 'payments' && <PaymentsTab />}
           {activeView === 'waivers' && <WaiversTab onAddWaiver={(mode) => { setWaiverModalMode(mode); setShowWaiverModal(true) }} onAddStudentWaiver={() => setShowStudentWaiverModal(true)} />}
           {activeView === 'reports' && <ReportsTab />}
