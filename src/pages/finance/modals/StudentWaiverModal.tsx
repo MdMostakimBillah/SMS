@@ -535,13 +535,13 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                   {/* Reason */}
                   <div>
                     <label className="text-[0.8rem] font-semibold text-[var(--text-primary)] block mb-1.5">{bn ? 'কারণ' : 'Reason'}</label>
-                    <input value={reason} onChange={(e) => setReason(e.target.value)} className={`${inputCls} w-full !h-[28px] !text-[0.75rem]`} placeholder={bn ? 'যেমন: বৃত্তি, এতিম' : 'e.g. Scholarship, Orphan'} />
+                    <input value={reason} onChange={(e) => setReason(e.target.value)} className={`${inputCls} w-full !h-[36px] !text-[0.8rem] px-3`} placeholder={bn ? 'যেমন: বৃত্তি, এতিম' : 'e.g. Scholarship, Orphan'} />
                   </div>
 
                   {/* Notes */}
                   <div>
                     <label className="text-[0.8rem] font-semibold text-[var(--text-primary)] block mb-1.5">{bn ? 'নোট (ঐচ্ছিক)' : 'Notes (optional)'}</label>
-                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={`${inputCls} w-full !text-[0.75rem] min-h-[40px] resize-none`} placeholder={bn ? 'অতিরিক্ত তথ্য...' : 'Additional info...'} rows={2} />
+                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={`${inputCls} w-full !text-[0.8rem] min-h-[60px] px-3 py-2 resize-none`} placeholder={bn ? 'অতিরিক্ত তথ্য...' : 'Additional info...'} rows={3} />
                   </div>
 
                   {/* Summary */}
