@@ -465,6 +465,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const fees: ReceiptData['fees'] = batch.payments.map((p) => {
       const struct = structures.find((s) => s.id === p.feeStructureId)
       const isOnetime = struct?.type === 'onetime'
+      const wEntry = waivers.find((w) => w.studentId === selectedStudent.id && w.feeStructureId === p.feeStructureId && (!p.forMonth || w.forMonth === p.forMonth))
       const item: ReceiptData['fees'][number] = {
         name: struct?.name || '-',
         nameBn: struct?.nameBn || '-',
@@ -473,6 +474,9 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         isOnetime,
         discount: p.discount || undefined,
         remarks: p.note || undefined,
+        waived: wEntry?.amount || undefined,
+        waiverReason: wEntry?.reason || undefined,
+        waiverReasonBn: wEntry?.reasonBn || undefined,
       }
       if (!isOnetime && p.forMonth) {
         const [yr, mo] = p.forMonth.split('-').map(Number)
