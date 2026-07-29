@@ -675,7 +675,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                     </tr>
                   </thead>
                   <tbody>
-                    {groupedStudents.map((group) => {
+                    {groupedStudents.map((group, idx) => {
                       const isExpanded = expandedId === group.studentId
                       const firstEntry = group.entries[0]
                       const catName = firstEntry ? categoryMap[firstEntry.categoryId] : null
@@ -694,7 +694,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
 
                       return (
                         <React.Fragment key={group.studentId}>
-                          <tr className={`border-t border-[var(--border)] hover:bg-[var(--bg-secondary)]/50 transition-colors cursor-pointer ${selectedRows.has(group.studentId) ? 'bg-[var(--brand-light)]/20' : ''}`} onClick={() => setExpandedId(isExpanded ? null : group.studentId)}>
+                          <tr className={`border-t border-[var(--border)] transition-colors cursor-pointer ${idx % 2 === 0 ? 'bg-[var(--bg-primary)]' : 'bg-[var(--bg-secondary)]/40'} hover:bg-[var(--brand-light)]/50 ${selectedRows.has(group.studentId) ? 'bg-[var(--brand-light)]/20' : ''}`} onClick={() => setExpandedId(isExpanded ? null : group.studentId)}>
                             <td className="px-2 py-2">
                               <input type="checkbox" checked={selectedRows.has(group.studentId)} onChange={() => toggleRow(group.studentId)} onClick={(e) => e.stopPropagation()} className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer" />
                             </td>
