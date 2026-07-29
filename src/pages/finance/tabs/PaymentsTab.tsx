@@ -280,8 +280,8 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     const watermarkHtml = b.logo ? `<img src="${b.logo}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:350px;height:350px;opacity:0.05;pointer-events:none;object-fit:contain" />` : ''
     const feeRows = batch.payments.map((p, i) => {
       const fn = structureMap[p.feeStructureId]
-      const period = p.forMonth ? (() => { const [yr, mo] = p.forMonth.split('-').map(Number); return `<span style="font-size:8px;color:#888;font-weight:400">(${MONTH_LABELS[(mo || 1) - 1]}-${String(yr).slice(-2)})</span>` })() : (fn?.type === 'onetime' ? `<span style="font-size:8px;color:#888;font-weight:400">(One-time)</span>` : '')
-      const rem = p.note ? `<div style="font-size:7px;color:#aaa;font-style:italic">${(p.discount || 0).toLocaleString()} amount discount for ${p.note}</div>` : ''
+      const period = p.forMonth ? (() => { const [yr, mo] = p.forMonth.split('-').map(Number); return `<span style="font-size:8px;color:#555;font-weight:400">(${MONTH_LABELS[(mo || 1) - 1]}-${String(yr).slice(-2)})</span>` })() : (fn?.type === 'onetime' ? `<span style="font-size:8px;color:#555;font-weight:400">(One-time)</span>` : '')
+      const rem = p.note ? `<div style="font-size:7px;color:#555;font-style:italic">${(p.discount || 0).toLocaleString()} amount discount for ${p.note}</div>` : ''
       return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? fn?.nameBn || fn?.name || '-' : fn?.name || '-'} ${period}</div>${rem}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${p.amount.toLocaleString()}</td></tr>`
     }).join('')
     const ds = new Date(batch.paidAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -306,7 +306,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
         ${logoHtml}
         <div style="flex:1;text-align:center">
           <div style="font-size:15px;font-weight:700;color:${b.brandColor}">${b.schoolName}</div>
-          <div style="font-size:9px;color:#666;margin-top:2px">${b.address}</div>
+          <div style="font-size:9px;color:#444;margin-top:2px">${b.address}</div>
         </div>
       </div>
       <div style="text-align:center;font-size:13px;font-weight:700;color:${b.brandColor};background:${b.brandColor}11;border:1px solid ${b.brandColor}33;border-radius:4px;padding:6px;margin-bottom:12px">${bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [${copyLabel}]</div>
@@ -321,19 +321,19 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
       <div style="flex:1"></div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
         <table style="width:220px;border-collapse:collapse;font-size:10px">
-          <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555">${bn ? 'মোট' : 'Total'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:${b.brandColor}">${receiptData.totalAmount.toLocaleString()}</td></tr>
-          ${receiptData.discount > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555">${bn ? 'ছাড়' : 'Discount'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#f59e0b">${receiptData.discount.toLocaleString()}</td></tr>` : ''}
-          <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555;border-top:2px solid ${b.brandColor}">${bn ? 'পরিশোধিত' : 'Paid'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#22c55e;border-top:2px solid ${b.brandColor}">${receiptData.totalReceived.toLocaleString()}</td></tr>
-          ${receiptData.totalDue > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#555;border-top:2px solid #ef4444">${bn ? 'বকেয়' : 'Balance'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#ef4444;border-top:2px solid #ef4444">${receiptData.totalDue.toLocaleString()}</td></tr>` : ''}
+          <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333">${bn ? 'মোট' : 'Total'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:${b.brandColor}">${receiptData.totalAmount.toLocaleString()}</td></tr>
+          ${receiptData.discount > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333">${bn ? 'ছাড়' : 'Discount'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#d97706">${receiptData.discount.toLocaleString()}</td></tr>` : ''}
+          <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333;border-top:2px solid ${b.brandColor}">${bn ? 'পরিশোধিত' : 'Paid'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#16a34a;border-top:2px solid ${b.brandColor}">${receiptData.totalReceived.toLocaleString()}</td></tr>
+          ${receiptData.totalDue > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333;border-top:2px solid #dc2626">${bn ? 'বকেয়' : 'Balance'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#dc2626;border-top:2px solid #dc2626">${receiptData.totalDue.toLocaleString()}</td></tr>` : ''}
         </table>
       </div>
-      <div style="font-size:9px;color:#666;margin-bottom:3px"><b>${bn ? 'অর্থের পরিমাণ' : 'Amt in words'}:</b> ${numberToWords(receiptData.totalReceived)} Only.</div>
-      <div style="display:flex;justify-content:space-between;font-size:9px;color:#666;margin-bottom:3px"><span><b>${bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Mode'}:</b> ${receiptData.paymentMethod.toUpperCase()}</span><span><b>BALANCE:</b> ${receiptData.totalDue.toLocaleString()}</span></div>
+      <div style="font-size:9px;color:#333;margin-bottom:3px"><b>${bn ? 'অর্থের পরিমাণ' : 'Amt in words'}:</b> ${numberToWords(receiptData.totalReceived)} Only.</div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:#333;margin-bottom:3px"><span><b>${bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Mode'}:</b> ${receiptData.paymentMethod.toUpperCase()}</span><span><b>BALANCE:</b> ${receiptData.totalDue.toLocaleString()}</span></div>
       <div style="display:flex;justify-content:space-between;margin-top:25px;padding-top:10px">
-        <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#666">${bn ? 'ফি আদায়কারী' : 'Fee Collected by'}</div></div>
-        <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#666">${bn ? 'অভিভাবক' : 'Parent/Guardian'}</div></div>
+        <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#333">${bn ? 'ফি আদায়কারী' : 'Fee Collected by'}</div></div>
+        <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#333">${bn ? 'অভিভাবক' : 'Parent/Guardian'}</div></div>
       </div>
-      <div style="text-align:center;font-size:8px;color:#999;margin-top:10px;padding-top:8px;border-top:1px dashed #ddd">${bn ? 'একবার ফি পরিশোধ হলে ফেরত দেওয়া হবে না' : 'Fee Once paid will not be refunded'}</div>
+      <div style="text-align:center;font-size:8px;color:#555;margin-top:10px;padding-top:8px;border-top:1px dashed #ccc">${bn ? 'একবার ফি পরিশোধ হলে ফেরত দেওয়া হবে না' : 'Fee Once paid will not be refunded'}</div>
     </div>`
     const leftCopy = copyHtml(bn ? 'শিক্ষার্থী কপি' : 'Student Copy')
     const rightCopy = copyHtml(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy')
