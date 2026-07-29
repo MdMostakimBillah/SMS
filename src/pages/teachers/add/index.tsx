@@ -260,12 +260,18 @@ export default function AddTeacherPage() {
         </div>
       </div>
 
-      <div className={card + ' flex items-center justify-between flex-wrap gap-[0.625rem]'}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-[2.5rem] rounded-[0.625rem] bg-[var(--brand-light)] flex items-center justify-center"><IdCard size={20} className="text-[var(--brand)]" /></div>
-          <div>
-            <div className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'স্বয়ংক্রিয় শিক্ষক আইডি' : 'Auto Teacher ID'}</div>
-            <div className="text-xl font-bold text-[var(--brand)] tracking-[0.125rem]">{getNextTeacherId()}</div>
+      <div
+        className="glass rounded-[0.75rem] flex items-center justify-between flex-wrap gap-[0.625rem] mb-[0.875rem] p-[0.875rem] cursor-default transition-all duration-200"
+        onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+      >
+        <div className="flex items-center gap-[0.625rem]">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand-light)' }}>
+            <IdCard size={15} style={{ color: 'var(--brand)' }} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{getNextTeacherId()}</div>
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{isBn ? 'স্বয়ংক্রিয় শিক্ষক আইডি' : 'Auto Teacher ID'}</div>
           </div>
         </div>
       </div>
@@ -390,12 +396,18 @@ export default function AddTeacherPage() {
         </div>
       </div>
 
-      <div className={card + ' flex items-center justify-between flex-wrap gap-[0.625rem]'}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-[2.5rem] rounded-[0.625rem] bg-[var(--brand-light)] flex items-center justify-center"><IdCard size={20} className="text-[var(--brand)]" /></div>
-          <div>
-            <div className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'স্বয়ংক্রিয় শিক্ষক আইডি' : 'Auto Teacher ID'}</div>
-            <div className="text-xl font-bold text-[var(--brand)] tracking-[0.125rem]">{getNextTeacherId()}</div>
+      <div
+        className="glass rounded-[0.75rem] flex items-center justify-between flex-wrap gap-[0.625rem] mb-[0.875rem] p-[0.875rem] cursor-default transition-all duration-200"
+        onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+      >
+        <div className="flex items-center gap-[0.625rem]">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand-light)' }}>
+            <IdCard size={15} style={{ color: 'var(--brand)' }} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{getNextTeacherId()}</div>
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{isBn ? 'স্বয়ংক্রিয় শিক্ষক আইডি' : 'Auto Teacher ID'}</div>
           </div>
         </div>
       </div>
