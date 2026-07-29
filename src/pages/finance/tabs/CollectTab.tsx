@@ -156,7 +156,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const [fStatus, setFStatus] = useState('active')
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [monthCount, setMonthCount] = useState(0)
-  const [selectedFeeType, setSelectedFeeType] = useState('')
   const [findDueTrigger, setFindDueTrigger] = useState(0)
 
   const [studentSearch, setStudentSearch] = useState('')
@@ -257,12 +256,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     structures.filter((s) => s.type === 'monthly' && s.isActive && s.class === selectedStudent?.class && (!s.section || s.section === selectedStudent?.section)),
   [structures, selectedStudent])
 
-  const feeTypes = useMemo(() => Array.from(new Set(monthlyStructures.map((s) => s.name))), [monthlyStructures])
-
-  const filteredStructures = useMemo(() => {
-    if (!selectedFeeType) return monthlyStructures
-    return monthlyStructures.filter((s) => s.name === selectedFeeType)
-  }, [monthlyStructures, selectedFeeType])
+  const filteredStructures = monthlyStructures
 
   const monthRows = useMemo(() => {
     if (!selectedStudent || findDueTrigger === 0) return []
@@ -1040,24 +1034,13 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
         {/* Right Sidebar */}
           <div className="space-y-2">
-            <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2.5">
-              <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'ফি ধরন' : 'Fee'}</label>
-                <select value={selectedFeeType} onChange={(e) => setSelectedFeeType(e.target.value)}
-                  className="w-full h-8 text-[11px] px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]">
-                  <option value="">{bn ? 'সব' : 'All'}</option>
-                  {feeTypes.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'অগ্রিম' : 'Advance'}</label>
+            <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'অগ্রিম' : 'Advance'}</label>
                 <div className="flex items-center gap-1.5">
-                  <input type="number" value={monthCount} onChange={(e) => setMonthCount(Math.max(0, Math.min(12, Number(e.target.value) || 0)))} min={0} max={12}
-                    className="flex-1 h-8 text-[11px] text-center rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" />
-                  <div className="flex flex-col">
-                    <button onClick={() => setMonthCount((c) => Math.min(12, c + 1))} className="w-5 h-4 rounded-sm border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[8px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)]">&#9650;</button>
-                    <button onClick={() => setMonthCount((c) => Math.max(0, c - 1))} className="w-5 h-4 rounded-sm border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[8px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)]">&#9660;</button>
-                  </div>
+                  <button onClick={() => setMonthCount((c) => Math.max(0, c - 1))} className="w-6 h-6 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[10px] text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition-colors">&#9660;</button>
+                  <span className="w-7 text-center text-[12px] font-bold text-[var(--text-primary)]">{monthCount}</span>
+                  <button onClick={() => setMonthCount((c) => Math.min(12, c + 1))} className="w-6 h-6 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[10px] text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition-colors">&#9650;</button>
                 </div>
               </div>
             </div>
