@@ -208,7 +208,7 @@ export default function TeacherBulkUpdatePage() {
         </div>
       </div>
 
-      <div className="glass rounded-[0.75rem] py-[0.875rem] px-[1rem] mb-[0.75rem]">
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] py-[0.875rem] px-[1rem] mb-[0.75rem]">
         <div className="text-[0.75rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-[0.625rem]">
           ① {isBn ? 'কোন তথ্য পরিবর্তন করতে চান?' : 'What do you want to update?'}
         </div>
@@ -222,20 +222,12 @@ export default function TeacherBulkUpdatePage() {
                 setPhotoMap({})
                 setBatchVal('')
               }}
-              className={`glass rounded-[0.75rem] flex flex-col items-center gap-[0.3125rem] py-[0.625rem] px-[0.375rem] cursor-pointer font-[inherit] transition-all duration-200 ${op === o.id ? 'ring-1' : ''}`}
-              style={{ '--ring-color': o.color, borderColor: op === o.id ? o.color : undefined, background: op === o.id ? o.bg : undefined } as React.CSSProperties}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+              className={`flex flex-col items-center gap-[0.3125rem] py-[0.625rem] px-[0.375rem] rounded-[0.625rem] border-2 ${op === o.id ? 'border-[color:var(--o-color)]' : 'border-[var(--border)]'} ${op === o.id ? 'bg-[color:var(--o-bg)]' : 'bg-[var(--bg-secondary)]'} cursor-pointer font-[inherit] transition-all duration-150`}
+              style={{ '--o-color': o.color, '--o-bg': o.bg } as React.CSSProperties}
             >
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: op === o.id ? `${o.color}20` : 'var(--bg-secondary)' }}
-              >
-                <o.Icon size={15} style={{ color: op === o.id ? o.color : 'var(--text-muted)' }} />
-              </div>
+              <o.Icon size={18} style={{ color: op === o.id ? o.color : undefined }} />
               <span
-                className={`text-[0.625rem] ${op === o.id ? 'font-semibold' : 'font-normal'} text-center leading-[1.2]`}
-                style={{ color: op === o.id ? o.color : 'var(--text-secondary)' }}
+                className={`text-[0.625rem] ${op === o.id ? 'font-semibold' : 'font-normal'} ${op === o.id ? 'text-[color:var(--o-color)]' : 'text-[var(--text-secondary)]'} text-center leading-[1.2]`}
               >
                 {isBn ? o.bn : o.en}
               </span>

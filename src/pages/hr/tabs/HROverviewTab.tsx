@@ -189,19 +189,20 @@ export const HROverviewTab = React.memo(function HROverviewTab({
       </div>
 
       {/* Quick Stats */}
-      <div className={`grid gap-2 mb-[0.875rem] ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
+      <div className={`grid gap-[0.625rem] mb-[0.875rem] ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
         {quickStats.map((s) => (
-          <div key={s.labelEn} className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3">
-            <div className="flex items-center gap-[0.625rem]">
-              <div className={`w-8 h-8 rounded-lg ${s.bgCls} flex items-center justify-center shrink-0`}>
-                <s.icon size={15} className={s.colorCls} />
-              </div>
-              <div>
-                <div className={`font-bold text-[var(--text-primary)] ${isMobile ? 'text-[0.9375rem]' : 'text-[1.0625rem]'}`}>
-                  {isBn ? s.valueBn : s.valueEn}
-                </div>
-                <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? s.labelBn : s.labelEn}</div>
-              </div>
+          <div
+            key={s.labelEn}
+            className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+          >
+            <div className={`w-8 h-8 rounded-lg ${s.bgCls} flex items-center justify-center shrink-0`}>
+              <s.icon size={15} className={s.colorCls} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{isBn ? s.valueBn : s.valueEn}</div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{isBn ? s.labelBn : s.labelEn}</div>
             </div>
           </div>
         ))}
