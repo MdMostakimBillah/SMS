@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { X, Repeat, Zap, Copy, ArrowRight } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -33,6 +33,18 @@ export function FeeBatchCreateModal({ onSaved, onClose }: Props) {
   const [descriptionBn, setDescriptionBn] = useState('')
   const [copyFromId, setCopyFromId] = useState('')
   const [showCopyDropdown, setShowCopyDropdown] = useState(false)
+  const copyDropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showCopyDropdown) return
+    const handleClick = (e: MouseEvent) => {
+      if (copyDropdownRef.current && !copyDropdownRef.current.contains(e.target as Node)) {
+        setShowCopyDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showCopyDropdown])
 
   // Class grid state
   const [classEntries, setClassEntries] = useState<Record<string, ClassEntry>>(() => {
@@ -296,7 +308,7 @@ export function FeeBatchCreateModal({ onSaved, onClose }: Props) {
 
           {/* Copy From + Apply Same Amount */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.875rem' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
+            <div ref={copyDropdownRef} style={{ position: 'relative', flex: 1 }}>
               <button
                 onClick={() => setShowCopyDropdown(!showCopyDropdown)}
                 style={{

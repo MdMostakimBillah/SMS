@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { X, Repeat, Zap, ArrowRight } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -28,6 +28,18 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
   const [feeType, setFeeType] = useState<'monthly' | 'onetime'>('monthly')
   const [sourceFeeId, setSourceFeeId] = useState('')
   const [showFeeDropdown, setShowFeeDropdown] = useState(false)
+  const feeDropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showFeeDropdown) return
+    const handleClick = (e: MouseEvent) => {
+      if (feeDropdownRef.current && !feeDropdownRef.current.contains(e.target as Node)) {
+        setShowFeeDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showFeeDropdown])
 
   // Class grid state
   const [classEntries, setClassEntries] = useState<Record<string, ClassEntry>>(() => {
@@ -300,7 +312,7 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
           {/* Fee Selector */}
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>{bn ? 'ফি নির্বাচন করুন *' : 'Select Fee *'}</label>
-            <div style={{ position: 'relative' }}>
+            <div ref={feeDropdownRef} style={{ position: 'relative' }}>
               <button
                 onClick={() => setShowFeeDropdown(!showFeeDropdown)}
                 style={{
