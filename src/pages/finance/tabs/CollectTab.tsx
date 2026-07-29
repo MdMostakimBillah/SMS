@@ -1065,11 +1065,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 <Plus size={13} />{bn ? 'এককালীন ফি' : 'One-time fee'}
               </button>
               <button onClick={() => setShowFineModal(true)}
-                className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-[var(--red)]/20 text-[var(--red)] text-[12px] font-semibold cursor-pointer bg-[var(--red-light)] hover:bg-[var(--red)]/15 transition-colors">
+                className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-transparent text-[var(--red)] text-[12px] font-semibold cursor-pointer bg-[var(--red-light)] hover:bg-[var(--red)]/15 transition-colors">
                 <Ban size={13} />{bn ? 'জরিমানা' : 'Add fine'}
               </button>
               <button onClick={() => setShowHistoryModal(true)}
-                className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-[var(--border)] text-[var(--text-primary)] text-[12px] font-semibold cursor-pointer bg-transparent hover:bg-[var(--bg-secondary)] transition-colors">
+                className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-transparent text-[var(--text-primary)] text-[12px] font-semibold cursor-pointer bg-[var(--bg-secondary)] hover:bg-[var(--border)] transition-colors">
                 <History size={13} />{bn ? 'পেমেন্ট ইতিহাস' : 'Payment history'}
               </button>
             </div>
