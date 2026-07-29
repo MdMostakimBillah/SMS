@@ -366,7 +366,7 @@ export default function FeeManagementPage() {
             </div>
           </div>
           {activeView === 'structures' && (
-            <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity">
+            <button onClick={() => setShowBatchCreate(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity">
               <Plus size={13} />
               {bn ? 'ফি যোগ করুন' : 'Add Fee'}
             </button>
