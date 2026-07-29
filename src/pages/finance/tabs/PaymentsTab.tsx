@@ -26,6 +26,7 @@ interface PaymentBatch {
   totalAmount: number
   totalDiscount: number
   receiptNo: string
+  collectedBy: string
 }
 
 interface Props {
@@ -39,6 +40,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const { payments, structures, deletePayment } = useFeeStore()
   const [search, setSearch] = useState('')
   const [fMethod, setFMethod] = useState('')
+  const [fCollector, setFCollector] = useState('')
   const [dateFrom, setDateFrom] = useState(new Date().toISOString().split('T')[0])
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0])
   const [showActionMenu, setShowActionMenu] = useState(false)
@@ -63,6 +65,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const batches = useMemo(() => {
     let list = [...payments].sort((a, b) => b.paidAt.localeCompare(a.paidAt) || b.createdAt.localeCompare(a.createdAt))
     if (fMethod) list = list.filter((p) => p.method === fMethod)
+    if (fCollector) list = list.filter((p) => p.collectedBy === fCollector)
     if (dateFrom) list = list.filter((p) => p.paidAt >= dateFrom)
     if (dateTo) list = list.filter((p) => p.paidAt <= dateTo)
     if (search) {
@@ -96,10 +99,11 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
         totalAmount: group.reduce((s, p) => s + p.amount, 0),
         totalDiscount: group.reduce((s, p) => s + (p.discount || 0), 0),
         receiptNo: `RCP-${key.slice(-10).toUpperCase()}`,
+        collectedBy: first.collectedBy || '',
       }
     })
     return result
-  }, [payments, search, fMethod, dateFrom, dateTo, studentMap, structureMap])
+  }, [payments, search, fMethod, fCollector, dateFrom, dateTo, studentMap, structureMap])
 
   const totalCollected = useMemo(() => batches.reduce((sum, b) => sum + b.totalAmount, 0), [batches])
   const totalDiscount = useMemo(() => batches.reduce((sum, b) => sum + b.totalDiscount, 0), [batches])
@@ -112,11 +116,17 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
 
   const methodColor = (m: string) => m === 'cash' ? 'var(--green)' : m === 'bank' ? 'var(--brand)' : m === 'mobile' ? 'var(--teal)' : 'var(--text-muted)'
 
-  const hasFilter = search || fMethod || dateFrom || dateTo
+  const uniqueCollectors = useMemo(() => {
+    const set = new Set(payments.map((p) => p.collectedBy).filter(Boolean))
+    return Array.from(set).sort()
+  }, [payments])
+
+  const hasFilter = search || fMethod || fCollector || dateFrom || dateTo
 
   const clearFilters = useCallback(() => {
     setSearch('')
     setFMethod('')
+    setFCollector('')
     setDateFrom('')
     setDateTo('')
     setSelectedRows(new Set())
@@ -149,6 +159,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     { key: 'amount', label: 'Amount', labelBn: 'পরিমাণ', default: true },
     { key: 'discount', label: 'Discount', labelBn: 'ছাড়', default: true },
     { key: 'method', label: 'Method', labelBn: 'পদ্ধতি', default: true },
+    { key: 'collectedBy', label: 'Receipted By', labelBn: 'সংগ্রাহক', default: true },
   ], [])
 
   const buildPdfRow = useCallback((b: PaymentBatch, selectedCols: string[]): Record<string, string | number> => {
@@ -166,6 +177,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     if (selectedCols.includes('amount')) row[bn ? 'পরিমাণ' : 'Amount'] = b.totalAmount
     if (selectedCols.includes('discount')) row[bn ? 'ছাড়' : 'Discount'] = b.totalDiscount
     if (selectedCols.includes('method')) row[bn ? 'পদ্ধতি' : 'Method'] = methodLabel(b.method)
+    if (selectedCols.includes('collectedBy')) row[bn ? 'সংগ্রাহক' : 'Receipted By'] = b.collectedBy || '—'
     return row
   }, [bn, structureMap])
 
@@ -417,6 +429,15 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
               </button>
             ))}
           </div>
+          {uniqueCollectors.length > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-[0.65rem] text-[var(--text-muted)]">{bn ? 'সংগ্রাহক:' : 'Collector:'}</span>
+              <select value={fCollector} onChange={(e) => setFCollector(e.target.value)} className={`${inputCls} h-7 text-[0.65rem] px-2 min-w-[100px]`}>
+                <option value="">{bn ? 'সব' : 'All'}</option>
+                {uniqueCollectors.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          )}
           <div className="flex-1" />
           {batches.length > 0 && (
             <div className="relative">
@@ -462,6 +483,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
                   <th className="text-right px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পরিমাণ' : 'Amount'}</th>
                   <th className="text-right px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ছাড়' : 'Disc.'}</th>
                   <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                  <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'সংগ্রাহক' : 'Receipted By'}</th>
                   <th className="text-right px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'কাজ' : 'Actions'}</th>
                 </tr>
               </thead>
@@ -487,6 +509,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
                         {methodLabel(b.method)}
                       </span>
                     </td>
+                    <td className="px-3 py-2 text-[11px] text-[var(--text-secondary)]">{b.collectedBy || '—'}</td>
                     <td className="px-3 py-2 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => generateReceipt(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'রসিদ দেখুন' : 'View Receipt'}>
@@ -502,14 +525,15 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold">
-                  <td className="px-2 py-2" />
-                  <td className="px-2 py-2" />
-                  <td className="px-3 py-2 text-[10px] uppercase text-[var(--text-muted)]" colSpan={2}>{bn ? 'মোট' : 'Total'} ({batches.length})</td>
-                  <td className="px-3 py-2" />
-                  <td className="px-3 py-2 text-right text-sm text-[var(--green)]">{fmt(totalCollected)}</td>
-                  <td className="px-3 py-2 text-right text-sm text-[var(--amber)]">{totalDiscount ? fmt(totalDiscount) : '-'}</td>
-                  <td className="px-3 py-2" />
-                  <td className="px-3 py-2" />
+                  <td className="px-2 py-1.5" />
+                  <td className="px-2 py-1.5" />
+                  <td className="px-3 py-1.5 text-[9px] uppercase text-[var(--text-muted)]" colSpan={2}>{bn ? 'মোট' : 'Total'} ({batches.length})</td>
+                  <td className="px-3 py-1.5" />
+                  <td className="px-3 py-1.5 text-right text-[11px] text-[var(--green)]">{fmt(totalCollected)}</td>
+                  <td className="px-3 py-1.5 text-right text-[11px] text-[var(--amber)]">{totalDiscount ? fmt(totalDiscount) : '-'}</td>
+                  <td className="px-3 py-1.5" />
+                  <td className="px-3 py-1.5" />
+                  <td className="px-3 py-1.5" />
                 </tr>
               </tfoot>
             </table>
