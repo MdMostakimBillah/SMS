@@ -11,8 +11,13 @@ import CommandPalette from '@/components/shared/CommandPalette'
 import QuickAccessFAB from '@/components/shared/QuickAccessFAB'
 
 export default function AppLayout() {
-  const { theme, language, sidebarCollapsed, sidebarOpen, sidebarPosition, toggleSidebar } = useAppStore()
-  const { institution } = useClassStore()
+  const theme = useAppStore((s) => s.theme)
+  const language = useAppStore((s) => s.language)
+  const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed)
+  const sidebarOpen = useAppStore((s) => s.sidebarOpen)
+  const sidebarPosition = useAppStore((s) => s.sidebarPosition)
+  const toggleSidebar = useAppStore((s) => s.toggleSidebar)
+  const institution = useClassStore((s) => s.institution)
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
 

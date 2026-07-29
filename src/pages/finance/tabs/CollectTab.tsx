@@ -1040,23 +1040,24 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
         {/* Right Sidebar */}
           <div className="space-y-2">
-            <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
-              <div className="flex items-center gap-2">
-                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase whitespace-nowrap">{bn ? 'ফি ধরন' : 'Fee'}</label>
+            <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2.5">
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'ফি ধরন' : 'Fee'}</label>
                 <select value={selectedFeeType} onChange={(e) => setSelectedFeeType(e.target.value)}
-                  className="flex-1 h-7 text-[11px] px-1.5 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]">
+                  className="w-full h-8 text-[11px] px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]">
                   <option value="">{bn ? 'সব' : 'All'}</option>
                   {feeTypes.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
-              <div className="flex items-center gap-2">
-                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase whitespace-nowrap">{bn ? 'অগ্রিম' : 'Advance'}</label>
-                <input type="number" value={monthCount} onChange={(e) => setMonthCount(Math.max(0, Math.min(12, Number(e.target.value) || 0)))} min={0} max={12}
-                  className="w-[40px] h-7 text-[11px] text-center rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" />
-                <div className="flex flex-col">
-                  <button onClick={() => setMonthCount((c) => Math.min(12, c + 1))} className="w-4 h-3 rounded-sm border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[7px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)]">&#9650;</button>
-                  <button onClick={() => setMonthCount((c) => Math.max(0, c - 1))} className="w-4 h-3 rounded-sm border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[7px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)]">&#9660;</button>
-                </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'অগ্রিম' : 'Advance'}</label>
+                <div className="flex items-center gap-1.5">
+                  <input type="number" value={monthCount} onChange={(e) => setMonthCount(Math.max(0, Math.min(12, Number(e.target.value) || 0)))} min={0} max={12}
+                    className="flex-1 h-8 text-[11px] text-center rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" />
+                  <div className="flex flex-col">
+                    <button onClick={() => setMonthCount((c) => Math.min(12, c + 1))} className="w-5 h-4 rounded-sm border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[8px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)]">&#9650;</button>
+                    <button onClick={() => setMonthCount((c) => Math.max(0, c - 1))} className="w-5 h-4 rounded-sm border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[8px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)]">&#9660;</button>
+                  </div>
               </div>
             </div>
             <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
