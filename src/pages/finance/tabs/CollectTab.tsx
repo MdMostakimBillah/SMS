@@ -763,9 +763,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'পরিমাণ' : 'Amount'}</th>
                     <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'ছাড়' : 'Waiver'}</th>
                     <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'ডিসকাউন্ট' : 'Discount'}</th>
-                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
-                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
-                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'গ্রহণ' : 'Receive'}</th>
+                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[14%]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
+                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[14%]">{bn ? 'গ্রহণ' : 'Receive'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -816,7 +815,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           <input type="text" value={edit.remarks} onChange={(e) => updateRow(row.key, 'remarks', e.target.value)}
                             className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder={bn ? '...' : '...'} />
                         </td>
-                        <td className="text-center px-3 py-3"><span className="font-semibold text-[var(--text-primary)]">{fmt(row.receivable)}</span></td>
                         <td className="text-center px-3 py-3">
                           <input type="number" value={edit.receive} onChange={(e) => updateRow(row.key, 'receive', Number(e.target.value) || 0)}
                             className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--brand-light)] bg-[var(--bg-primary)] text-[var(--brand)] font-bold outline-none focus:border-[var(--brand)]" placeholder="0" />
