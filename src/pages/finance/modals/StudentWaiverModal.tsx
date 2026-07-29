@@ -206,7 +206,7 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
 
   return createPortal(
     <div className={modalOverlayCls} onClick={onClose}>
-      <div className="modal-content w-[min(85vw,85rem)] max-h-[92vh] overflow-hidden flex flex-col rounded-2xl bg-[var(--bg-primary)] border border-[var(--glass-border)] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content w-[min(85vw,85rem)] h-[70vh] overflow-hidden flex flex-col rounded-2xl bg-[var(--bg-primary)] border border-[var(--glass-border)] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
           <div className="flex items-center gap-2.5">
