@@ -387,49 +387,55 @@ export default function PayrollPage() {
       )}
 
       {monthSelected && (
-        <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} gap-2.5 mb-3.5`}>
+        <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} gap-[0.625rem] mb-3.5`}>
           {[
             {
               label: isBn ? 'মোট বেতন' : 'Total Payroll',
               value: `৳${stats.total.toLocaleString()}`,
               icon: Wallet,
-              colorClass: 'text-[var(--brand)]',
-              bgClass: 'bg-[var(--brand-light)]',
+              color: 'var(--brand)',
+              bg: 'var(--brand-light)',
             },
             {
               label: isBn ? 'গড় বেতন' : 'Avg Salary',
               value: `৳${Math.round(stats.avg).toLocaleString()}`,
               icon: Calculator,
-              colorClass: 'text-[var(--teal)]',
-              bgClass: 'bg-[var(--teal-light)]',
+              color: 'var(--teal)',
+              bg: 'var(--teal-light)',
             },
             {
               label: isBn ? 'সর্বোচ্চ' : 'Highest',
               value: `৳${stats.max.toLocaleString()}`,
               icon: TrendingUp,
-              colorClass: 'text-[var(--green)]',
-              bgClass: 'bg-[var(--green-light)]',
+              color: 'var(--green)',
+              bg: 'var(--green-light)',
             },
             {
               label: isBn ? 'সর্বনিম্ন' : 'Lowest',
               value: `৳${stats.min.toLocaleString()}`,
               icon: TrendingDown,
-              colorClass: 'text-[var(--red)]',
-              bgClass: 'bg-[var(--red-light)]',
+              color: 'var(--red)',
+              bg: 'var(--red-light)',
             },
-          ].map((s) => (
-            <div key={s.label} className={card}>
-              <div className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-lg ${s.bgClass} flex items-center justify-center shrink-0`}>
-                  <s.icon size={15} className={s.colorClass} />
+          ].map((s) => {
+            const IconComp = s.icon
+            return (
+              <div
+                key={s.label}
+                className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: s.bg }}>
+                  <IconComp size={15} style={{ color: s.color }} />
                 </div>
-                <div>
-                  <div className={`${isMobile ? 'text-[0.9375rem]' : 'text-[1.0625rem]'} font-bold text-[var(--text-primary)]`}>{s.value}</div>
-                  <div className="text-[0.625rem] text-[var(--text-muted)]">{s.label}</div>
+                <div className="min-w-0">
+                  <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{s.value}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{s.label}</div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
