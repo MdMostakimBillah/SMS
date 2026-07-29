@@ -300,7 +300,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
       totalDue: 0,
       paymentMethod: batch.method,
     }
-    const copyHtml = (copyLabel: string) => `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;height:100%;max-width:480px;padding:0 10px;display:flex;flex-direction:column;position:relative">
+    const copyHtml = (copyLabel: string) => `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;height:100%;padding:0 10px;display:flex;flex-direction:column;position:relative">
       ${watermarkHtml}
       <div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid ${b.brandColor};padding-bottom:10px;margin-bottom:12px">
         ${logoHtml}
@@ -337,8 +337,8 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     </div>`
     const leftCopy = copyHtml(bn ? 'শিক্ষার্থী কপি' : 'Student Copy')
     const rightCopy = copyHtml(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy')
-    const css = `@page{size:A4 landscape;margin:10mm}html,body{height:100%;margin:0;padding:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:10mm}.container{display:flex;gap:20px;height:100%}.copy{flex:1;max-width:50%;height:100%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:20px}th{background:${b.brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600}@media print{html,body{height:100%!important;margin:0!important;padding:0!important}body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;padding:10mm!important}}`
-    const bodyHTML = `<div class="container"><div class="copy">${leftCopy}</div><div class="copy">${rightCopy}</div></div>`
+    const css = `@page{size:A4 landscape;margin:8mm}html,body{height:100%;margin:0;padding:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:8mm}.container{display:flex;gap:16px;height:100%}.copy{flex:1;height:100%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:16px}th{background:${b.brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600}@media print{html,body{height:100%!important;margin:0!important;padding:0!important}body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;padding:8mm!important}}`
+    const bodyHTML = `<div class="container" style="width:100%"><div class="copy">${leftCopy}</div><div class="copy">${rightCopy}</div></div>`
     openPrintWindow(batch.receiptNo, bodyHTML, { css })
   }, [bn, structureMap, numberToWords, fSession])
 
