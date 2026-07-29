@@ -230,7 +230,7 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
 
         {/* Step Indicator */}
         <div className="px-5 py-2.5 border-b border-[var(--border)] bg-[var(--bg-secondary)]/30">
-          <div className="flex items-center gap-2.5 max-w-xs">
+          <div className="flex items-center gap-2.5 w-full">
             <div className="flex items-center gap-1.5">
               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[0.8rem] font-bold transition-all ${step === 'category' ? 'bg-[var(--purple)] text-white shadow-sm shadow-[var(--purple)]/30' : 'bg-[var(--purple-light)] text-[var(--purple)]'}`}>
                 {step === 'details' ? <Check size={10} /> : '1'}
