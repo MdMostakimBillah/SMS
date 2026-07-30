@@ -764,7 +764,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '5%' }}>{bn ? 'ধরন' : 'Type'}</th>
                 <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '10%' }}>{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
                 {showMonthPicker && sortedMonths.map((m) => (
-                  <th key={m} className="text-center px-2 py-2 text-[10px] uppercase font-bold bg-[var(--bg-secondary)] whitespace-nowrap"                     style={{ color: 'var(--brand)', minWidth: '85px' }}>
+                  <th key={m} className="text-center px-2 py-2 text-[10px] uppercase font-bold bg-[var(--bg-secondary)] whitespace-nowrap"                     style={{ color: 'var(--brand)', minWidth: '100px' }}>
                     {bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}
                   </th>
                 ))}
@@ -823,7 +823,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                       if (!cell) return <td key={m} className="text-center px-2 py-2 text-[var(--text-muted)]">—</td>
                       if (fStatus === 'paiddue') {
                         return (
-                          <td key={m} className="text-center px-2 py-3" style={{ minWidth: '85px' }}>
+                          <td key={m} className="text-center px-2 py-3" style={{ minWidth: '100px' }}>
                             {cell.paidAmount > 0 && <span className="font-bold text-[12px] text-[var(--green)]">{fmt(cell.paidAmount)}</span>}
                             {cell.paidAmount > 0 && cell.amount > 0 && <span className="text-[var(--text-muted)] text-[10px]"> / </span>}
                             {cell.amount > 0 && (
@@ -882,7 +882,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="text-right px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]">{fmt(totalPaid)}</td>
                     {sortedMonths.map((m) => (
-                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]" style={{ minWidth: '85px' }}>
+                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]" style={{ minWidth: '100px' }}>
                         {monthPaidSums[m] > 0 ? fmt(monthPaidSums[m]) : '—'}
                       </td>
                     ))}
@@ -900,7 +900,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
                     {sortedMonths.map((m) => (
-                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]" style={{ minWidth: '85px' }}>
+                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]" style={{ minWidth: '100px' }}>
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
                       </td>
                     ))}
@@ -923,7 +923,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2" />
                     <td className="text-right px-2 py-2 text-[12px]">{fmt(results.reduce((s, r) => s + r.totalAmount, 0))}</td>
                     {sortedMonths.map((m) => (
-                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)]" style={{ minWidth: '85px' }}>
+                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)]" style={{ minWidth: '100px' }}>
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
                       </td>
                     ))}
