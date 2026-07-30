@@ -36,6 +36,7 @@ const selectCls = 'h-[34px] text-[13px] px-2.5 rounded-lg border border-[var(--b
 interface MonthCell {
   paid: boolean
   amount: number
+  paidAmount: number
 }
 
 interface DueMatrixRow {
@@ -68,7 +69,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const [fCategory, setFCategory] = useState('')
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
-  const [fStatus, setFStatus] = useState<'all' | 'paid' | 'due'>('all')
+  const [fStatus, setFStatus] = useState<'all' | 'paid' | 'due' | 'paiddue'>('all')
   const { institution } = useClassStore()
   const sessions = institution?.sessions || []
   const [fSession, setFSession] = useState(() => institution?.currentSession || '')
@@ -225,7 +226,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             const isBeforeBilling = billingYear > 0 && (fYear < billingYear || (fYear === billingYear && m < billingMonthIdx))
 
             if (isBeforeBilling) {
-              monthCells[m] = { paid: true, amount: 0 }
+              monthCells[m] = { paid: true, amount: 0, paidAmount: 0 }
               continue
             }
 
@@ -248,7 +249,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             })
             const waived = monthWaivers.reduce((sum, w) => sum + w.amount, 0)
             const receivable = fee.amount - paid - discount - waived
-            monthCells[m] = { paid: receivable <= 0, amount: Math.max(0, receivable) }
+            monthCells[m] = { paid: receivable <= 0, amount: Math.max(0, receivable), paidAmount: paid }
           }
 
           const totalDueAmount = Object.values(monthCells).reduce((sum, c) => sum + c.amount, 0)
@@ -286,6 +287,17 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   }, [allResults, fStatus])
 
   const totalDue = useMemo(() => results.reduce((sum, r) => sum + r.totalDue, 0), [results])
+  const totalPaid = useMemo(() => {
+    if (fStatus !== 'paiddue') return 0
+    return results.reduce((sum, r) => {
+      let paid = 0
+      for (const m of sortedMonths) {
+        const cell = r.months[m]
+        if (cell) paid += cell.paidAmount
+      }
+      return sum + paid
+    }, 0)
+  }, [results, sortedMonths, fStatus])
   const monthSums = useMemo(() => {
     if (!showMonthPicker || sortedMonths.length === 0) return {} as Record<number, number>
     const sums: Record<number, number> = {}
@@ -298,6 +310,18 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     }
     return sums
   }, [results, sortedMonths, showMonthPicker])
+  const monthPaidSums = useMemo(() => {
+    if (fStatus !== 'paiddue' || !showMonthPicker || sortedMonths.length === 0) return {} as Record<number, number>
+    const sums: Record<number, number> = {}
+    for (const m of sortedMonths) sums[m] = 0
+    for (const r of results) {
+      for (const m of sortedMonths) {
+        const cell = r.months[m]
+        if (cell) sums[m] += cell.paidAmount
+      }
+    }
+    return sums
+  }, [results, sortedMonths, fStatus, showMonthPicker])
   const studentCount = useMemo(() => new Set(results.map((r) => r.studentId)).size, [results])
 
   const handleFindDue = useCallback(() => {
@@ -531,12 +555,13 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         </select>
         <select
           value={fStatus}
-          onChange={(e) => { setFStatus(e.target.value as 'all' | 'paid' | 'due'); setSelectedRows(new Set()) }}
+          onChange={(e) => { setFStatus(e.target.value as 'all' | 'paid' | 'due' | 'paiddue'); setSelectedRows(new Set()) }}
           className={selectCls}
         >
           <option value="all">{bn ? 'সব' : 'All'}</option>
           <option value="paid">{bn ? 'পরিশোধিত' : 'Paid'}</option>
           <option value="due">{bn ? 'বকেয়' : 'Due'}</option>
+          <option value="paiddue">{bn ? 'পরিশোধিত ও বকেয়' : 'Paid & Due'}</option>
         </select>
         {showMonthPicker && (
           <div className="relative" ref={monthDropdownRef}>
@@ -609,27 +634,42 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
       {/* Stats — only shown after Find Due */}
       {showResults && results.length > 0 && (
-        <div className="grid grid-cols-2 gap-[0.625rem]">
-          <div
-            className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
-          >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand-light)' }}>
-              <DollarSign size={15} style={{ color: 'var(--brand)' }} />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalDue)}</div>
-              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট বকেয়' : 'Total Due'}</div>
-            </div>
-          </div>
+        <div className={fStatus === 'paiddue' ? 'grid grid-cols-3 gap-[0.625rem]' : 'grid grid-cols-2 gap-[0.625rem]'}>
           <div
             className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
           >
             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--amber-light)' }}>
-              <Users size={15} style={{ color: 'var(--amber)' }} />
+              <DollarSign size={15} style={{ color: 'var(--amber)' }} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalDue)}</div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট বকেয়' : 'Total Due'}</div>
+            </div>
+          </div>
+          {fStatus === 'paiddue' && (
+            <div
+              className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+            >
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--green-light)' }}>
+                <DollarSign size={15} style={{ color: 'var(--green)' }} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalPaid)}</div>
+                <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট পরিশোধিত' : 'Total Paid'}</div>
+              </div>
+            </div>
+          )}
+          <div
+            className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+          >
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand-light)' }}>
+              <Users size={15} style={{ color: 'var(--brand)' }} />
             </div>
             <div className="min-w-0">
               <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{studentCount}</div>
@@ -781,6 +821,28 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     {showMonthPicker && sortedMonths.map((m) => {
                       const cell = row.months[m]
                       if (!cell) return <td key={m} className="text-center px-2 py-2 text-[var(--text-muted)]">—</td>
+                      if (fStatus === 'paiddue') {
+                        return (
+                          <td key={m} className="text-center px-2 py-2" style={{ minWidth: '70px' }}>
+                            {cell.paidAmount > 0 && <span className="font-bold text-[12px] text-[var(--green)]">{fmt(cell.paidAmount)}</span>}
+                            {cell.paidAmount > 0 && cell.amount > 0 && <span className="text-[var(--text-muted)] text-[10px]"> / </span>}
+                            {cell.amount > 0 && (
+                              <button
+                                onClick={() => { const due = buildCollectDue(row, m); if (due) onCollect(due) }}
+                                className="font-bold text-[12px] text-[var(--amber)] hover:text-[var(--brand)] cursor-pointer bg-transparent border-0 p-0 transition-colors"
+                                title={bn ? 'পরিশোধ করুন' : 'Collect'}
+                              >
+                                {fmt(cell.amount)}
+                              </button>
+                            )}
+                            {cell.paidAmount === 0 && cell.amount === 0 && (
+                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--green-light)]">
+                                <CircleCheck size={14} className="text-[var(--green)]" />
+                              </span>
+                            )}
+                          </td>
+                        )
+                      }
                       return (
                         <td key={m} className="text-center px-2 py-2">
                           {cell.paid ? (
@@ -809,24 +871,65 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             </tbody>
             {showMonthPicker && sortedMonths.length > 0 && (
               <tfoot>
-                <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold sticky bottom-0 z-10">
-                  <td className="px-2 py-2 sticky left-0 bg-[var(--bg-secondary)] z-10" />
-                  <td className="px-2 py-2" />
-                  <td className="px-2 py-2" />
-                  <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--text-primary)]">{bn ? 'মোট' : 'Total'}</td>
-                  <td className="px-2 py-2" />
-                  <td className="px-2 py-2" />
-                  <td className="px-2 py-2" />
-                  <td className="px-2 py-2" />
-                  <td className="px-2 py-2" />
-                  <td className="text-right px-2 py-2 text-[12px]">{fmt(results.reduce((s, r) => s + r.totalAmount, 0))}</td>
-                  {sortedMonths.map((m) => (
-                    <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)]" style={{ minWidth: '70px' }}>
-                      {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
-                    </td>
-                  ))}
-                  <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)]">{fmt(totalDue)}</td>
-                </tr>
+                {fStatus === 'paiddue' ? (
+                  <>
+                    <tr className="border-t-2 border-[var(--green)] bg-[var(--green-light)]/30 font-bold sticky bottom-[40px] z-10">
+                      <td className="px-2 py-2 sticky left-0 bg-[var(--bg-secondary)] z-10" />
+                      <td className="px-2 py-2" />
+                      <td className="px-2 py-2" />
+                      <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--green)]">{bn ? 'মোট পরিশোধিত' : 'Total Paid'}</td>
+                      <td className="px-2 py-2" />
+                      <td className="px-2 py-2" />
+                      <td className="px-2 py-2" />
+                      <td className="px-2 py-2" />
+                      <td className="px-2 py-2" />
+                      <td className="text-right px-2 py-2 text-[12px] text-[var(--green)]">{fmt(totalPaid)}</td>
+                      {sortedMonths.map((m) => (
+                        <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--green)]" style={{ minWidth: '70px' }}>
+                          {monthPaidSums[m] > 0 ? fmt(monthPaidSums[m]) : '—'}
+                        </td>
+                      ))}
+                      <td className="text-right px-2 py-2 text-[12px] text-[var(--green)]">{fmt(totalPaid)}</td>
+                    </tr>
+                    <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold sticky bottom-0 z-10">
+                      <td className="px-2 py-2 sticky left-0 bg-[var(--bg-secondary)] z-10" />
+                      <td className="px-2 py-2" />
+                      <td className="px-2 py-2" />
+                      <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--amber)]">{bn ? 'মোট বকেয়' : 'Total Due'}</td>
+                      <td className="px-2 py-2" />
+                      <td className="px-2 py-2" />
+                      <td className="px-2 py-2" />
+                      <td className="px-2 py-2" />
+                      <td className="px-2 py-2" />
+                      <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)]">{fmt(totalDue)}</td>
+                      {sortedMonths.map((m) => (
+                        <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)]" style={{ minWidth: '70px' }}>
+                          {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
+                        </td>
+                      ))}
+                      <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)]">{fmt(totalDue)}</td>
+                    </tr>
+                  </>
+                ) : (
+                  <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold sticky bottom-0 z-10">
+                    <td className="px-2 py-2 sticky left-0 bg-[var(--bg-secondary)] z-10" />
+                    <td className="px-2 py-2" />
+                    <td className="px-2 py-2" />
+                    <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--text-primary)]">{bn ? 'মোট' : 'Total'}</td>
+                    <td className="px-2 py-2" />
+                    <td className="px-2 py-2" />
+                    <td className="px-2 py-2" />
+                    <td className="px-2 py-2" />
+                    <td className="px-2 py-2" />
+                    <td className="text-right px-2 py-2 text-[12px]">{fmt(results.reduce((s, r) => s + r.totalAmount, 0))}</td>
+                    {sortedMonths.map((m) => (
+                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)]" style={{ minWidth: '70px' }}>
+                        {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
+                      </td>
+                    ))}
+                    <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)]">{fmt(totalDue)}</td>
+                  </tr>
+                )}
               </tfoot>
             )}
           </table>
