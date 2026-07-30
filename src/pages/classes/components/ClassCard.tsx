@@ -14,25 +14,24 @@ interface ClassCardProps {
   isBn: boolean
   isMobile: boolean
   editingClassName: string | null
-  setEditingClassName: (v: string | null) => void
+  setEditingClassName: React.Dispatch<React.SetStateAction<string | null>>
   classNameForm: { name: string; nameBn: string }
-  setClassNameForm: (v: { name: string; nameBn: string }) => void
+  setClassNameForm: React.Dispatch<React.SetStateAction<{ name: string; nameBn: string }>>
   editingClassTime: string | null
-  setEditingClassTime: (v: string | null) => void
+  setEditingClassTime: React.Dispatch<React.SetStateAction<string | null>>
   classTimeForm: { startTime: string; endTime: string }
-  setClassTimeForm: (v: { startTime: string; endTime: string }) => void
+  setClassTimeForm: React.Dispatch<React.SetStateAction<{ startTime: string; endTime: string }>>
   editingSection: string | null
-  setEditingSection: (v: string | null) => void
+  setEditingSection: React.Dispatch<React.SetStateAction<string | null>>
   secForm: { name: string; seatQuantity: number; classTeacherId: string }
-  setSecForm: (v: { name: string; seatQuantity: number; classTeacherId: string }) => void
+  setSecForm: React.Dispatch<React.SetStateAction<{ name: string; seatQuantity: number; classTeacherId: string }>>
   handleSaveClassName: (classId: string) => void
   handleSaveClassTime: (classId: string) => void
   handleAddSection: (classId: string) => void
   deleteClass: (id: string) => void
   toggleSelectClass: (classId: string) => void
-  setExpandedClass: (v: string | null) => void
+  setExpandedClass: React.Dispatch<React.SetStateAction<string | null>>
   teachers: Teacher[]
-  subjects: Subject[]
   institution: InstitutionSettings
   getTeacher: (id: string) => Teacher | undefined
   getStudentCount: (classNum: string, sectionName: string) => number
@@ -41,8 +40,8 @@ interface ClassCardProps {
   deleteSection: (classId: string, sectionId: string) => void
   setCopySectionModal: (v: { fromClassId: string; fromSectionId: string }) => void
   setCopyTarget: (v: { classId: string; sectionId: string }) => void
-  setTempSelectedSubjects: (v: string[]) => void
-  setShowSubjectModal: (v: { classId: string; sectionId: string }) => void
+  setTempSelectedSubjects: React.Dispatch<React.SetStateAction<string[]>>
+  setShowSubjectModal: React.Dispatch<React.SetStateAction<{ classId: string; sectionId: string } | null>>
 }
 
 export const ClassCard = React.memo(function ClassCard({
@@ -71,7 +70,6 @@ export const ClassCard = React.memo(function ClassCard({
   toggleSelectClass,
   setExpandedClass,
   teachers,
-  subjects,
   institution,
   getTeacher,
   getStudentCount,
@@ -233,13 +231,11 @@ export const ClassCard = React.memo(function ClassCard({
                   sec={sec}
                   isEditing={editingSection === sec.id}
                   isBn={isBn}
-                  isMobile={isMobile}
                   getTeacher={getTeacher}
                   getStudentCount={getStudentCount}
                   subjectMap={subjectMap}
                   teachers={teachers}
                   institution={institution}
-                  editingSection={editingSection}
                   setEditingSection={setEditingSection}
                   secForm={secForm}
                   setSecForm={setSecForm}

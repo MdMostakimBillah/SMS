@@ -6,9 +6,9 @@ interface BulkSubjectModalProps {
   subjects: Subject[]
   selectedClasses: string[]
   bulkSubjectIds: string[]
-  setBulkSubjectIds: (v: string[]) => void
+  setBulkSubjectIds: React.Dispatch<React.SetStateAction<string[]>>
   handleBulkSubjectApply: () => void
-  setShowBulkSubject: (v: boolean) => void
+  setShowBulkSubject: React.Dispatch<React.SetStateAction<boolean>>
   isBn: boolean
 }
 

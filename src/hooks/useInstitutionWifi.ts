@@ -58,7 +58,7 @@ export function useInstitutionWifi() {
       // Not on same network
     }
 
-    const nav = navigator as Record<string, unknown>
+    const nav = navigator as unknown as Record<string, unknown>
     const conn = (nav.connection as Record<string, string> | undefined)
     if (conn) {
       if (conn.type === 'wifi' || conn.type === 'ethernet') {

@@ -1,10 +1,9 @@
-import React from 'react'
 import { MoreVertical, ChevronDown, FileSpreadsheet, FileText } from 'lucide-react'
 
 interface ActionMenuProps {
   showActionMenu: boolean
   setShowActionMenu: (v: boolean) => void
-  actionMenuRef: React.RefObject<HTMLDivElement>
+  actionMenuRef: React.RefObject<HTMLDivElement | null>
   exportExcel: () => void
   setShowPDFModal: (v: boolean) => void
   isBn: boolean

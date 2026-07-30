@@ -8,9 +8,9 @@ import type { ClassSection } from '@/store/classStore'
 interface SubjectSelectionModalProps {
   subjects: Subject[]
   showSubjectModal: { classId: string; sectionId: string }
-  setShowSubjectModal: (v: { classId: string; sectionId: string } | null) => void
+  setShowSubjectModal: React.Dispatch<React.SetStateAction<{ classId: string; sectionId: string } | null>>
   tempSelectedSubjects: string[]
-  setTempSelectedSubjects: (v: string[]) => void
+  setTempSelectedSubjects: React.Dispatch<React.SetStateAction<string[]>>
   updateSection: (classId: string, sectionId: string, data: Partial<ClassSection>) => void
   isBn: boolean
 }

@@ -1,28 +1,27 @@
-import { Trash2, Save, Copy, BookOpen, Phone, Signature, X } from 'lucide-react'
+import { Trash2, Save, Copy, BookOpen, X } from 'lucide-react'
 import type { ClassInfo, ClassSection, InstitutionSettings } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
+import { TeacherPreviewCard } from './TeacherPreviewCard'
 
 interface SectionCardProps {
   cls: ClassInfo
   sec: ClassSection
   isEditing: boolean
   isBn: boolean
-  isMobile: boolean
   getTeacher: (id: string) => Teacher | undefined
   getStudentCount: (classNum: string, sectionName: string) => number
   subjectMap: Map<string, Subject>
   teachers: Teacher[]
   institution: InstitutionSettings
-  editingSection: string | null
-  setEditingSection: (v: string | null) => void
+  setEditingSection: React.Dispatch<React.SetStateAction<string | null>>
   secForm: { name: string; seatQuantity: number; classTeacherId: string }
-  setSecForm: (v: { name: string; seatQuantity: number; classTeacherId: string }) => void
+  setSecForm: React.Dispatch<React.SetStateAction<{ name: string; seatQuantity: number; classTeacherId: string }>>
   updateSection: (classId: string, sectionId: string, data: Partial<ClassSection>) => void
   deleteSection: (classId: string, sectionId: string) => void
   setCopySectionModal: (v: { fromClassId: string; fromSectionId: string }) => void
   setCopyTarget: (v: { classId: string; sectionId: string }) => void
-  setTempSelectedSubjects: (v: string[]) => void
-  setShowSubjectModal: (v: { classId: string; sectionId: string }) => void
+  setTempSelectedSubjects: React.Dispatch<React.SetStateAction<string[]>>
+  setShowSubjectModal: React.Dispatch<React.SetStateAction<{ classId: string; sectionId: string } | null>>
 }
 
 export function SectionCard({
@@ -30,13 +29,11 @@ export function SectionCard({
   sec,
   isEditing,
   isBn,
-  isMobile,
   getTeacher,
   getStudentCount,
   subjectMap,
   teachers,
   institution,
-  editingSection,
   setEditingSection,
   secForm,
   setSecForm,
@@ -177,51 +174,20 @@ export function SectionCard({
         <div style={{ padding: '0 12px 12px', borderTop: '1px solid var(--border)', background: 'var(--bg-primary)' }}>
           <div style={{ paddingTop: '0.625rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
             <div>
-              <label style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}>
-                {isBn ? 'সেকশন নাম' : 'Section Name'}
-              </label>
-              <input
-                value={secForm.name}
-                onChange={(e) => setSecForm((p) => ({ ...p, name: e.target.value }))}
-                style={{
-                  width: '100%', padding: '7px 9px', borderRadius: '0.4375rem',
-                  border: '1px solid var(--border)', background: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)', fontSize: '0.75rem', fontFamily: 'inherit',
-                  fontWeight: 500, textTransform: 'capitalize',
-                }}
-                placeholder={isBn ? 'যেমন: বিজ্ঞান, মানবিক' : 'e.g. Science, Humanity'}
-              />
+              <label style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}>{isBn ? 'সেকশন নাম' : 'Section Name'}</label>
+              <input value={secForm.name} onChange={(e) => setSecForm((p) => ({ ...p, name: e.target.value }))}
+                style={{ width: '100%', padding: '7px 9px', borderRadius: '0.4375rem', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.75rem', fontFamily: 'inherit', fontWeight: 500, textTransform: 'capitalize' }}
+                placeholder={isBn ? 'যেমন: বিজ্ঞান, মানবিক' : 'e.g. Science, Humanity'} />
             </div>
             <div>
-              <label style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}>
-                {isBn ? 'আসন সংখ্যা' : 'Seat Quantity'}
-              </label>
-              <input
-                type="number"
-                value={secForm.seatQuantity}
-                min={1}
-                onChange={(e) => setSecForm((p) => ({ ...p, seatQuantity: Number(e.target.value) || 1 }))}
-                style={{
-                  width: '100%', padding: '7px 9px', borderRadius: '0.4375rem',
-                  border: '1px solid var(--border)', background: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)', fontSize: '0.75rem', fontFamily: 'inherit',
-                  textAlign: 'center',
-                }}
-              />
+              <label style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}>{isBn ? 'আসন সংখ্যা' : 'Seat Quantity'}</label>
+              <input type="number" value={secForm.seatQuantity} min={1} onChange={(e) => setSecForm((p) => ({ ...p, seatQuantity: Number(e.target.value) || 1 }))}
+                style={{ width: '100%', padding: '7px 9px', borderRadius: '0.4375rem', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.75rem', fontFamily: 'inherit', textAlign: 'center' }} />
             </div>
             <div>
-              <label style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}>
-                {isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher'}
-              </label>
-              <select
-                value={secForm.classTeacherId}
-                onChange={(e) => setSecForm((p) => ({ ...p, classTeacherId: e.target.value }))}
-                style={{
-                  width: '100%', padding: '7px 9px', borderRadius: '0.4375rem',
-                  border: '1px solid var(--border)', background: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)', fontSize: '0.6875rem', fontFamily: 'inherit',
-                }}
-              >
+              <label style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}>{isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher'}</label>
+              <select value={secForm.classTeacherId} onChange={(e) => setSecForm((p) => ({ ...p, classTeacherId: e.target.value }))}
+                style={{ width: '100%', padding: '7px 9px', borderRadius: '0.4375rem', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.6875rem', fontFamily: 'inherit' }}>
                 <option value="">{isBn ? 'নির্বাচন করুন' : 'Select'}</option>
                 {teachers.filter((t) => t.status === 'active').map((t) => (
                   <option key={t.id} value={t.id}>{t.nameEn} ({t.id})</option>
@@ -234,41 +200,7 @@ export function SectionCard({
           {(() => {
             const t = secForm.classTeacherId ? getTeacher(secForm.classTeacherId) : teacher
             if (!t) return null
-            return (
-              <div style={{ marginTop: '0.5rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{
-                    width: '1.75rem', height: '1.75rem', borderRadius: '0.375rem', overflow: 'hidden',
-                    background: 'var(--bg-primary)', border: '1px solid var(--border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>
-                    {t.photo ? (
-                      <img src={t.photo} alt={t.nameEn || 'Teacher'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>
-                        {t.nameEn.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {t.nameEn}
-                    </div>
-                    <div style={{ fontSize: '0.5625rem', color: 'var(--text-muted)' }}>{t.designation || ''}</div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>
-                    <Phone size={9} style={{ color: 'var(--text-muted)' }} />
-                    <span style={{ fontSize: '0.5625rem', color: 'var(--text-secondary)' }}>{institution.phone}</span>
-                  </div>
-                </div>
-                {t.signature && (
-                  <div style={{ marginTop: '0.375rem', padding: '4px 6px', borderRadius: '0.3125rem', background: 'var(--bg-primary)', border: '1px dashed var(--border)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <Signature size={10} style={{ color: 'var(--text-muted)' }} />
-                    <img src={t.signature} alt="Sig" style={{ height: '1rem', objectFit: 'contain' }} />
-                  </div>
-                )}
-              </div>
-            )
+            return <TeacherPreviewCard teacher={t} institution={institution} />
           })()}
 
           {/* Assigned subjects */}

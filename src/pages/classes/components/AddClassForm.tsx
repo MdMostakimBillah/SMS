@@ -7,13 +7,13 @@ interface AddClassFormProps {
   isBn: boolean
   isMobile: boolean
   newClassName: string
-  setNewClassName: (v: string) => void
+  setNewClassName: React.Dispatch<React.SetStateAction<string>>
   newClassNameBn: string
-  setNewClassNameBn: (v: string) => void
+  setNewClassNameBn: React.Dispatch<React.SetStateAction<string>>
   copyFromClassId: string
-  setCopyFromClassId: (v: string) => void
+  setCopyFromClassId: React.Dispatch<React.SetStateAction<string>>
   handleAddClass: () => void
-  setShowAddClass: (v: boolean) => void
+  setShowAddClass: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export function AddClassForm({

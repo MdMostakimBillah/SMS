@@ -1,15 +1,15 @@
 import { createPortal } from 'react-dom'
 import { Copy } from 'lucide-react'
-import type { ClassInfo, ClassSection } from '@/store/classStore'
+import type { ClassInfo } from '@/store/classStore'
 
 interface CopySectionModalProps {
   classes: ClassInfo[]
   copySectionModal: { fromClassId: string; fromSectionId: string }
-  setCopySectionModal: (v: { fromClassId: string; fromSectionId: string } | null) => void
+  setCopySectionModal: React.Dispatch<React.SetStateAction<{ fromClassId: string; fromSectionId: string } | null>>
   copyTarget: { classId: string; sectionId: string }
-  setCopyTarget: (v: { classId: string; sectionId: string }) => void
+  setCopyTarget: (v: { classId: string; sectionId: string } | ((prev: { classId: string; sectionId: string }) => { classId: string; sectionId: string })) => void
   showCopyConfirm: boolean
-  setShowCopyConfirm: (v: boolean) => void
+  setShowCopyConfirm: React.Dispatch<React.SetStateAction<boolean>>
   handleCopySection: () => void
   isBn: boolean
 }

@@ -6,11 +6,11 @@ interface BulkSectionModalProps {
   classes: ClassInfo[]
   selectedClasses: string[]
   bulkSectionCount: number
-  setBulkSectionCount: (v: number) => void
+  setBulkSectionCount: React.Dispatch<React.SetStateAction<number>>
   bulkSeatQuantity: number
-  setBulkSeatQuantity: (v: number) => void
+  setBulkSeatQuantity: React.Dispatch<React.SetStateAction<number>>
   handleBulkSectionApply: () => void
-  setShowBulkSection: (v: boolean) => void
+  setShowBulkSection: React.Dispatch<React.SetStateAction<boolean>>
   isBn: boolean
 }
 

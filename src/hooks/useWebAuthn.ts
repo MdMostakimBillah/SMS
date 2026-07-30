@@ -57,8 +57,8 @@ export async function authenticateWebAuthnDevice(options: {
 }): Promise<boolean> {
   const credential = (await navigator.credentials.get({
     publicKey: {
-      challenge: generateChallenge(),
-      allowCredentials: [{ id: base64ToBuffer(options.credentialId), type: 'public-key' }],
+      challenge: generateChallenge().buffer as unknown as ArrayBuffer,
+      allowCredentials: [{ id: base64ToBuffer(options.credentialId) as unknown as ArrayBuffer, type: 'public-key' }],
       userVerification: 'required',
       timeout: 60000,
     },

@@ -294,7 +294,6 @@ export default function ClassesTab({
           toggleSelectClass={toggleSelectClass}
           setExpandedClass={setExpandedClass}
           teachers={teachers}
-          subjects={subjects}
           institution={institution}
           getTeacher={getTeacher}
           getStudentCount={getStudentCount}

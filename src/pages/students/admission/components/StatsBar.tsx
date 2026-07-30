@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface StatsBarProps {
   stats: { total: number; pending: number; approved: number; rejected: number; male: number; female: number }
   isBn: boolean

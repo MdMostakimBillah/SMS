@@ -1,12 +1,11 @@
-import { useState } from 'react'
 import { Clock, Save } from 'lucide-react'
 
 interface ClassTimeEditFormProps {
   classId: string
   classTimeForm: { startTime: string; endTime: string }
-  setClassTimeForm: (v: { startTime: string; endTime: string }) => void
+  setClassTimeForm: React.Dispatch<React.SetStateAction<{ startTime: string; endTime: string }>>
   handleSaveClassTime: (classId: string) => void
-  setEditingClassTime: (v: string | null) => void
+  setEditingClassTime: React.Dispatch<React.SetStateAction<string | null>>
   isBn: boolean
   isMobile: boolean
 }

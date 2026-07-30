@@ -4,13 +4,13 @@ import type { ClassInfo } from '@/store/classStore'
 interface TopBarProps {
   classes: ClassInfo[]
   bulkMode: boolean
-  setBulkMode: (v: boolean) => void
+  setBulkMode: React.Dispatch<React.SetStateAction<boolean>>
   selectedClasses: string[]
-  setShowBulkTime: (v: boolean) => void
-  setShowBulkSubject: (v: boolean) => void
-  setShowBulkSection: (v: boolean) => void
-  setShowAddClass: (v: boolean) => void
-  setSelectedClasses: (v: string[]) => void
+  setShowBulkTime: React.Dispatch<React.SetStateAction<boolean>>
+  setShowBulkSubject: React.Dispatch<React.SetStateAction<boolean>>
+  setShowBulkSection: React.Dispatch<React.SetStateAction<boolean>>
+  setShowAddClass: React.Dispatch<React.SetStateAction<boolean>>
+  setSelectedClasses: React.Dispatch<React.SetStateAction<string[]>>
   isBn: boolean
 }
 

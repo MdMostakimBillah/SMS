@@ -6,9 +6,9 @@ interface BulkTimeModalProps {
   classes: ClassInfo[]
   selectedClasses: string[]
   bulkTimeForm: { startTime: string; endTime: string }
-  setBulkTimeForm: (v: { startTime: string; endTime: string }) => void
+  setBulkTimeForm: React.Dispatch<React.SetStateAction<{ startTime: string; endTime: string }>>
   handleBulkTimeApply: () => void
-  setShowBulkTime: (v: boolean) => void
+  setShowBulkTime: React.Dispatch<React.SetStateAction<boolean>>
   isBn: boolean
 }
 

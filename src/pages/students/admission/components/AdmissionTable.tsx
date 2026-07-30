@@ -1,11 +1,19 @@
 
-import { User, Users, Eye, Edit2, Check, XCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react'
+import { User, Users, Eye, Edit2, Check, XCircle } from 'lucide-react'
 import { StatusBadge } from './StatusBadge'
+import { Pagination } from './Pagination'
 import type { StudentAdmission } from '../types'
+
+const actBtn = (bg: string, color: string): React.CSSProperties => ({
+  width: '1.625rem', height: '1.625rem', borderRadius: '0.375rem',
+  background: bg, border: 'none', cursor: 'pointer',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', color,
+})
 
 interface AdmissionTableProps {
   paginated: StudentAdmission[]
   sp: number
+  page: number
   perPage: number
   filtered: StudentAdmission[]
   selected: string[]
@@ -21,7 +29,7 @@ interface AdmissionTableProps {
   isBn: boolean
 }
 export function AdmissionTable({
-  paginated, sp, perPage, filtered, selected, allSel, totalPages,
+  paginated, sp, page, perPage, filtered, selected, allSel, totalPages,
   toggleAll, toggleOne, setPage,
   setViewingStudent, setEditingStudent, setApprovingStudent, setRejectingStudent,
   isBn,
@@ -210,36 +218,14 @@ export function AdmissionTable({
                       <button
                         onClick={() => setViewingStudent(s)}
                         title={isBn ? 'দেখুন' : 'View'}
-                        style={{
-                          width: '1.625rem',
-                          height: '1.625rem',
-                          borderRadius: '0.375rem',
-                          background: 'var(--brand-light)',
-                          border: 'none',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'var(--brand)',
-                        }}
+                        style={actBtn('var(--brand-light)', 'var(--brand)')}
                       >
                         <Eye size={12} />
                       </button>
                       <button
                         onClick={() => setEditingStudent(s)}
                         title={isBn ? 'এডিট' : 'Edit'}
-                        style={{
-                          width: '1.625rem',
-                          height: '1.625rem',
-                          borderRadius: '0.375rem',
-                          background: 'var(--amber-light)',
-                          border: 'none',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'var(--amber)',
-                        }}
+                        style={actBtn('var(--amber-light)', 'var(--amber)')}
                       >
                         <Edit2 size={12} />
                       </button>
@@ -248,36 +234,14 @@ export function AdmissionTable({
                           <button
                             onClick={() => setApprovingStudent(s)}
                             title={isBn ? 'অনুমোদন' : 'Approve'}
-                            style={{
-                              width: '1.625rem',
-                              height: '1.625rem',
-                              borderRadius: '0.375rem',
-                              background: 'var(--green-light)',
-                              border: 'none',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: 'var(--green)',
-                            }}
+                            style={actBtn('var(--green-light)', 'var(--green)')}
                           >
                             <Check size={12} />
                           </button>
                           <button
                             onClick={() => setRejectingStudent(s)}
                             title={isBn ? 'প্রত্যাখ্যান' : 'Reject'}
-                            style={{
-                              width: '1.625rem',
-                              height: '1.625rem',
-                              borderRadius: '0.375rem',
-                              background: 'var(--red-light)',
-                              border: 'none',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: 'var(--red)',
-                            }}
+                            style={actBtn('var(--red-light)', 'var(--red)')}
                           >
                             <XCircle size={12} />
                           </button>
@@ -293,96 +257,15 @@ export function AdmissionTable({
       </div>
 
       {/* Pagination */}
-      <div
-        style={{
-          padding: '10px 16px',
-          borderTop: '1px solid var(--border)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'var(--bg-secondary)',
-          flexWrap: 'wrap',
-          gap: '0.5rem',
-        }}
-      >
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          {isBn
-            ? `${(sp - 1) * perPage + 1}–${Math.min(sp * perPage, filtered.length)} / মোট ${filtered.length}`
-            : `${(sp - 1) * perPage + 1}–${Math.min(sp * perPage, filtered.length)} of ${filtered.length}`}
-        </span>
-        <div style={{ display: 'flex', gap: '0.1875rem', flexWrap: 'wrap' }}>
-          {[
-            { icon: <ChevronsLeft size={12} />, action: () => setPage(1), disabled: sp === 1 },
-            { icon: <ChevronLeft size={12} />, action: () => setPage((p) => Math.max(1, p - 1)), disabled: sp === 1 },
-          ].map((b, i) => (
-            <button
-              key={i}
-              onClick={b.action}
-              disabled={b.disabled}
-              style={{
-                width: '1.75rem',
-                height: '1.75rem',
-                borderRadius: '0.375rem',
-                border: '1px solid var(--border)',
-                background: 'var(--bg-primary)',
-                color: b.disabled ? 'var(--text-muted)' : 'var(--text-secondary)',
-                cursor: b.disabled ? 'default' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {b.icon}
-            </button>
-          ))}
-          {(() => {
-            const start = Math.max(1, Math.min(sp - 2, totalPages - 4))
-            return Array.from({ length: Math.min(5, totalPages) }, (_, i) => start + i).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                style={{
-                  width: '1.75rem',
-                  height: '1.75rem',
-                  borderRadius: '0.375rem',
-                  border: `1px solid ${p === sp ? 'var(--brand)' : 'var(--border)'}`,
-                  background: p === sp ? 'var(--brand)' : 'var(--bg-primary)',
-                  color: p === sp ? '#fff' : 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  fontSize: '0.75rem',
-                  fontWeight: p === sp ? 600 : 400,
-                }}
-              >
-                {p}
-              </button>
-            ))
-          })()}
-          {[
-            { icon: <ChevronRight size={12} />, action: () => setPage((p) => Math.min(totalPages, p + 1)), disabled: sp === totalPages },
-            { icon: <ChevronsRight size={12} />, action: () => setPage(totalPages), disabled: sp === totalPages },
-          ].map((b, i) => (
-            <button
-              key={i}
-              onClick={b.action}
-              disabled={b.disabled}
-              style={{
-                width: '1.75rem',
-                height: '1.75rem',
-                borderRadius: '0.375rem',
-                border: '1px solid var(--border)',
-                background: 'var(--bg-primary)',
-                color: b.disabled ? 'var(--text-muted)' : 'var(--text-secondary)',
-                cursor: b.disabled ? 'default' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {b.icon}
-            </button>
-          ))}
-        </div>
-      </div>
+      <Pagination
+        sp={sp}
+        page={page}
+        perPage={perPage}
+        filteredLength={filtered.length}
+        totalPages={totalPages}
+        setPage={setPage}
+        isBn={isBn}
+      />
     </div>
   )
 }
