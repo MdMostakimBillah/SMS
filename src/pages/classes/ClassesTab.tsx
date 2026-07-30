@@ -1,29 +1,19 @@
 import { useState, useCallback, useMemo } from 'react'
-import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import {
-  Clock,
-  Plus,
-  Trash2,
-  Save,
-  Check,
-  Phone,
-  CalendarDays,
-  Download,
-  BookOpen,
-  Copy,
-  ListChecks,
-  ChevronDown,
-  ChevronUp,
-  X,
-  Signature,
-  Pencil,
-} from 'lucide-react'
+import { CalendarDays, Download, Check } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useNavChain } from '@/hooks/useNavChain'
 import type { ClassSection, ClassInfo, InstitutionSettings } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
 import type { StudentAdmission } from '@/pages/students/admission/types'
+import { TopBar } from './components/TopBar'
+import { AddClassForm } from './components/AddClassForm'
+import { ClassCard } from './components/ClassCard'
+import { BulkTimeModal } from './modals/BulkTimeModal'
+import { BulkSubjectModal } from './modals/BulkSubjectModal'
+import { BulkSectionModal } from './modals/BulkSectionModal'
+import { SubjectSelectionModal } from './modals/SubjectSelectionModal'
+import { CopySectionModal } from './modals/CopySectionModal'
 
 interface ClassesTabProps {
   institution: InstitutionSettings
@@ -78,7 +68,6 @@ export default function ClassesTab({
   const [copySectionModal, setCopySectionModal] = useState<{ fromClassId: string; fromSectionId: string } | null>(null)
   const [copyTarget, setCopyTarget] = useState({ classId: '', sectionId: '' })
   const [showCopyConfirm, setShowCopyConfirm] = useState(false)
-
   const [bulkMode, setBulkMode] = useState(false)
   const [selectedClasses, setSelectedClasses] = useState<string[]>([])
   const [showBulkTime, setShowBulkTime] = useState(false)
@@ -93,7 +82,6 @@ export default function ClassesTab({
 
   const teacherMap = useMemo(() => new Map(teachers.map((t) => [t.id, t])), [teachers])
   const subjectMap = useMemo(() => new Map(subjects.map((s) => [s.id, s])), [subjects])
-
   const getTeacher = useCallback((id: string) => teacherMap.get(id), [teacherMap])
 
   const getStudentCount = useCallback(
@@ -109,37 +97,17 @@ export default function ClassesTab({
     if (!newClassName.trim()) return
     const id = `CLS-${String(classes.length + 1).padStart(2, '0')}`
     const now = new Date().toISOString().split('T')[0]
-
     let sections: ClassSection[] = []
     let subjectIds: string[] = []
-
     if (copyFromClassId) {
       const sourceClass = classes.find((c) => c.id === copyFromClassId)
       if (sourceClass) {
-        sections = sourceClass.sections.map((sec: ClassSection) => ({
-          ...sec,
-          id: `SEC-${id}-${sec.name}`,
-          classTeacherId: '',
-        }))
+        sections = sourceClass.sections.map((sec: ClassSection) => ({ ...sec, id: `SEC-${id}-${sec.name}`, classTeacherId: '' }))
         subjectIds = [...sourceClass.subjectIds]
       }
     }
-
-    addClass({
-      id,
-      name: newClassName.trim(),
-      nameBn: newClassNameBn.trim() || newClassName.trim(),
-      startTime: institution.startTime,
-      endTime: institution.endTime,
-      sections,
-      subjectIds,
-      createdAt: now,
-      updatedAt: now,
-    })
-    setNewClassName('')
-    setNewClassNameBn('')
-    setCopyFromClassId('')
-    setShowAddClass(false)
+    addClass({ id, name: newClassName.trim(), nameBn: newClassNameBn.trim() || newClassName.trim(), startTime: institution.startTime, endTime: institution.endTime, sections, subjectIds, createdAt: now, updatedAt: now })
+    setNewClassName(''); setNewClassNameBn(''); setCopyFromClassId(''); setShowAddClass(false)
   }
 
   const handleAddSection = (classId: string) => {
@@ -162,24 +130,13 @@ export default function ClassesTab({
     const sourceClass = classes.find((c) => c.id === copySectionModal.fromClassId)
     const sourceSection = sourceClass?.sections.find((s) => s.id === copySectionModal.fromSectionId)
     if (!sourceClass || !sourceSection) return
-
     const targetClass = classes.find((c) => c.id === copyTarget.classId)
     if (!targetClass) return
-
     const secLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     const nextLetter = secLetters[targetClass.sections.length] || 'A'
     const newSecId = `SEC-${copyTarget.classId}-${nextLetter}`
-
-    addSection(copyTarget.classId, {
-      id: newSecId,
-      name: nextLetter,
-      seatQuantity: sourceSection.seatQuantity,
-      classTeacherId: '',
-      subjectIds: [...(sourceSection.subjectIds || [])],
-    })
-
-    setCopySectionModal(null)
-    setCopyTarget({ classId: '', sectionId: '' })
+    addSection(copyTarget.classId, { id: newSecId, name: nextLetter, seatQuantity: sourceSection.seatQuantity, classTeacherId: '', subjectIds: [...(sourceSection.subjectIds || [])] })
+    setCopySectionModal(null); setCopyTarget({ classId: '', sectionId: '' })
   }
 
   const handleSaveClassTime = (classId: string) => {
@@ -188,11 +145,7 @@ export default function ClassesTab({
   }
 
   const toggleSelectAll = () => {
-    if (selectedClasses.length === classes.length) {
-      setSelectedClasses([])
-    } else {
-      setSelectedClasses(classes.map((c) => c.id))
-    }
+    if (selectedClasses.length === classes.length) { setSelectedClasses([]) } else { setSelectedClasses(classes.map((c) => c.id)) }
   }
 
   const toggleSelectClass = (classId: string) => {
@@ -200,12 +153,8 @@ export default function ClassesTab({
   }
 
   const handleBulkTimeApply = () => {
-    selectedClasses.forEach((classId) => {
-      updateClass(classId, { startTime: bulkTimeForm.startTime, endTime: bulkTimeForm.endTime })
-    })
-    setShowBulkTime(false)
-    setSelectedClasses([])
-    setBulkMode(false)
+    selectedClasses.forEach((classId) => { updateClass(classId, { startTime: bulkTimeForm.startTime, endTime: bulkTimeForm.endTime }) })
+    setShowBulkTime(false); setSelectedClasses([]); setBulkMode(false)
   }
 
   const handleBulkSubjectApply = () => {
@@ -218,9 +167,7 @@ export default function ClassesTab({
         updateSection(classId, sec.id, { subjectIds: merged })
       })
     })
-    setShowBulkSubject(false)
-    setSelectedClasses([])
-    setBulkMode(false)
+    setShowBulkSubject(false); setSelectedClasses([]); setBulkMode(false)
   }
 
   const handleBulkSectionApply = () => {
@@ -235,19 +182,8 @@ export default function ClassesTab({
         addSection(classId, { id: secId, name: letter, seatQuantity: bulkSeatQuantity, classTeacherId: '', subjectIds: [] })
       }
     })
-    setShowBulkSection(false)
-    setSelectedClasses([])
-    setBulkMode(false)
+    setShowBulkSection(false); setSelectedClasses([]); setBulkMode(false)
   }
-
-  const toggleTempSubject = (subId: string) => {
-    setBulkSubjectIds((prev) => (prev.includes(subId) ? prev.filter((s) => s !== subId) : [...prev, subId]))
-  }
-
-  const inputClass =
-    'w-full py-[0.5625rem] px-[0.6875rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none'
-  const labelClass = 'text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem] block'
-  const sectionClass = 'bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-4 mb-[0.875rem]'
 
   return (
     <>
@@ -258,17 +194,11 @@ export default function ClassesTab({
         <span className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'বর্তমান সেশন' : 'Current Session'}</span>
         <div className="flex-1" />
         <div className="flex gap-1">
-          {institution.sessions
-            .filter((s) => s !== institution.currentSession)
-            .map((s) => (
-              <button
-                key={s}
-                onClick={() => switchSession(s)}
-                className="text-[0.625rem] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] cursor-pointer font-[inherit] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
-              >
-                {isBn ? 'পরিবর্তন' : 'Switch to'} {s}
-              </button>
-            ))}
+          {institution.sessions.filter((s) => s !== institution.currentSession).map((s) => (
+            <button key={s} onClick={() => switchSession(s)} className="text-[0.625rem] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] cursor-pointer font-[inherit] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all">
+              {isBn ? 'পরিবর্তন' : 'Switch to'} {s}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -279,176 +209,54 @@ export default function ClassesTab({
             <Download size={16} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[0.8125rem] font-semibold text-[var(--purple)]">
-              {isBn ? 'আগের বছর থেকে আমদানি করুন' : 'Import from Previous Session'}
-            </div>
-            <div className="text-[0.6875rem] text-[var(--text-muted)]">
-              {isBn
-                ? 'এই সেশনে কোনো শ্রেণি নেই। আগের সেশন থেকে শ্রেণি ও রুটিন আমদানি করুন।'
-                : 'No classes in this session. Import classes and routines from a previous session.'}
-            </div>
+            <div className="text-[0.8125rem] font-semibold text-[var(--purple)]">{isBn ? 'আগের বছর থেকে আমদানি করুন' : 'Import from Previous Session'}</div>
+            <div className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'এই সেশনে কোনো শ্রেণি নেই। আগের সেশন থেকে শ্রেণি ও রুটিন আমদানি করুন।' : 'No classes in this session. Import classes and routines from a previous session.'}</div>
           </div>
           <div className="flex gap-1.5 shrink-0">
-            {institution.sessions
-              .filter((s) => s !== institution.currentSession)
-              .map((s) => (
-                <button
-                  key={s}
-                  onClick={() => {
-                    if (window.confirm(isBn ? `"${s}" থেকে সব শ্রেণি ও রুটিন আমদানি করবেন?` : `Import all classes and routines from "${s}"?`)) {
-                      importFromSession(s)
-                    }
-                  }}
-                  className="flex items-center gap-[0.25rem] py-[0.375rem] px-3 rounded-lg bg-[var(--purple)] border-none text-white text-[0.6875rem] font-medium cursor-pointer font-[inherit] hover:opacity-90 transition-all"
-                >
-                  <Download size={11} />
-                  {isBn ? `${s} থেকে আমদানি` : `Import from ${s}`}
-                </button>
-              ))}
+            {institution.sessions.filter((s) => s !== institution.currentSession).map((s) => (
+              <button key={s} onClick={() => { if (window.confirm(isBn ? `"${s}" থেকে সব শ্রেণি ও রুটিন আমদানি করবেন?` : `Import all classes and routines from "${s}"?`)) { importFromSession(s) } }} className="flex items-center gap-[0.25rem] py-[0.375rem] px-3 rounded-lg bg-[var(--purple)] border-none text-white text-[0.6875rem] font-medium cursor-pointer font-[inherit] hover:opacity-90 transition-all">
+                <Download size={11} />
+                {isBn ? `${s} থেকে আমদানি` : `Import from ${s}`}
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Top bar */}
-      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <div className="text-[0.75rem] text-[var(--text-muted)]">
-          {classes.length} {isBn ? 'টি শ্রেণি' : 'classes'} · {classes.reduce((s, c) => s + c.sections.length, 0)}{' '}
-          {isBn ? 'টি সেকশন' : 'sections'}
-          {bulkMode && selectedClasses.length > 0 && (
-            <span className="ml-2 text-[var(--teal)] font-semibold">
-              · {selectedClasses.length} {isBn ? 'নির্বাচিত' : 'selected'}
-            </span>
-          )}
-        </div>
-        <div className="flex gap-[0.375rem] flex-wrap">
-          {bulkMode && selectedClasses.length > 0 && (
-            <>
-              <button
-                onClick={() => setShowBulkTime(true)}
-                className="flex items-center gap-[0.25rem] py-[0.3125rem] px-2.5 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer font-[inherit] hover:border-[var(--amber)] hover:text-[var(--amber)] transition-all"
-              >
-                <Clock size={11} />
-                {isBn ? 'সময়' : 'Time'}
-              </button>
-              <button
-                onClick={() => setShowBulkSubject(true)}
-                className="flex items-center gap-[0.25rem] py-[0.3125rem] px-2.5 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer font-[inherit] hover:border-[var(--teal)] hover:text-[var(--teal)] transition-all"
-              >
-                <BookOpen size={11} />
-                {isBn ? 'বিষয়' : 'Subject'}
-              </button>
-              <button
-                onClick={() => setShowBulkSection(true)}
-                className="flex items-center gap-[0.25rem] py-[0.3125rem] px-2.5 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer font-[inherit] hover:border-[var(--purple)] hover:text-[var(--purple)] transition-all"
-              >
-                <ListChecks size={11} />
-                {isBn ? 'সেকশন' : 'Section'}
-              </button>
-            </>
-          )}
-          <button
-            onClick={() => {
-              setBulkMode(!bulkMode)
-              if (bulkMode) setSelectedClasses([])
-            }}
-            className={`flex items-center gap-[0.25rem] py-[0.3125rem] px-2.5 rounded-md border text-[0.6875rem] font-medium cursor-pointer font-[inherit] transition-all ${bulkMode ? 'bg-[var(--text-primary)] border-[var(--text-primary)] text-[var(--bg-primary)]' : 'bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]'}`}
-          >
-            <ListChecks size={11} />
-            {bulkMode ? (isBn ? 'বন্ধ' : 'Done') : isBn ? 'বাল্ক' : 'Bulk'}
-          </button>
-          <button
-            onClick={() => setShowAddClass(true)}
-            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5rem] bg-[var(--brand)] border-none text-white text-[0.75rem] font-medium cursor-pointer font-[inherit]"
-          >
-            <Plus size={14} />
-            {isBn ? 'নতুন শ্রেণি' : 'Add Class'}
-          </button>
-        </div>
-      </div>
+      <TopBar
+        classes={classes}
+        bulkMode={bulkMode}
+        setBulkMode={setBulkMode}
+        selectedClasses={selectedClasses}
+        setShowBulkTime={setShowBulkTime}
+        setShowBulkSubject={setShowBulkSubject}
+        setShowBulkSection={setShowBulkSection}
+        setShowAddClass={setShowAddClass}
+        setSelectedClasses={setSelectedClasses}
+        isBn={isBn}
+      />
 
-      {/* Add class form */}
       {showAddClass && (
-        <div className={sectionClass} style={{ borderColor: 'var(--brand)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.625rem' }}>
-            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--brand)' }}>{isBn ? 'নতুন শ্রেণি যোগ' : 'Add New Class'}</div>
-            <button
-              onClick={() => setShowAddClass(false)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
-            >
-              <X size={16} />
-            </button>
-          </div>
-          <div style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.3125rem' }}>
-            <Copy size={12} />
-            {isBn ? 'আগের শ্রেণি থেকে কপি করুন (ঐচ্ছিক)' : 'Copy from existing class (optional)'}
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'end', marginBottom: '0.625rem' }}>
-            <div style={{ flex: 1 }}>
-              <select
-                value={copyFromClassId}
-                onChange={(e) => setCopyFromClassId(e.target.value)}
-                className={inputClass}
-                style={{ width: '100%' }}
-              >
-                <option value="">{isBn ? '-- কোনো শ্রেণি নয় --' : '-- None --'}</option>
-                {classes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.nameBn}) — {c.sections.length} {isBn ? 'সেকশন' : 'sections'}, {c.subjectIds.length} {isBn ? 'বিষয়' : 'subjects'}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr auto', gap: '0.5rem', alignItems: 'end' }}>
-            <div>
-              <label className={labelClass}>{isBn ? 'শ্রেণির নাম (ইং)' : 'Class Name (EN)'}</label>
-              <input
-                value={newClassName}
-                onChange={(e) => setNewClassName(e.target.value)}
-                className={inputClass}
-                placeholder="Class 11"
-              />
-            </div>
-            <div>
-              <label className={labelClass}>{isBn ? 'শ্রেণির নাম (বাং)' : 'Class Name (BN)'}</label>
-              <input
-                value={newClassNameBn}
-                onChange={(e) => setNewClassNameBn(e.target.value)}
-                className={inputClass}
-                placeholder="শ্রেণি ১১"
-              />
-            </div>
-            <button
-              onClick={handleAddClass}
-              style={{
-                padding: '9px 18px',
-                borderRadius: '0.5rem',
-                background: 'var(--brand)',
-                border: 'none',
-                color: '#fff',
-                fontSize: '0.8125rem',
-                fontWeight: 500,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {isBn ? 'যোগ করুন' : 'Add'}
-            </button>
-          </div>
-        </div>
+        <AddClassForm
+          classes={classes}
+          isBn={isBn}
+          isMobile={isMobile}
+          newClassName={newClassName}
+          setNewClassName={setNewClassName}
+          newClassNameBn={newClassNameBn}
+          setNewClassNameBn={setNewClassNameBn}
+          copyFromClassId={copyFromClassId}
+          setCopyFromClassId={setCopyFromClassId}
+          handleAddClass={handleAddClass}
+          setShowAddClass={setShowAddClass}
+        />
       )}
 
       {/* Bulk mode: select all bar */}
       {bulkMode && (
         <div className="flex items-center gap-3 py-2 px-3 mb-3">
-          <button
-            onClick={toggleSelectAll}
-            className="flex items-center gap-2 cursor-pointer bg-transparent border-none font-[inherit] text-[0.75rem] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-          >
-            <div
-              className={`w-[1.125rem] h-[1.125rem] rounded-[0.25rem] border-[0.0938rem] flex items-center justify-center transition-all ${selectedClasses.length === classes.length ? 'bg-[var(--brand)] border-[var(--brand)]' : 'border-[var(--border)]'}`}
-            >
+          <button onClick={toggleSelectAll} className="flex items-center gap-2 cursor-pointer bg-transparent border-none font-[inherit] text-[0.75rem] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+            <div className={`w-[1.125rem] h-[1.125rem] rounded-[0.25rem] border-[0.0938rem] flex items-center justify-center transition-all ${selectedClasses.length === classes.length ? 'bg-[var(--brand)] border-[var(--brand)]' : 'border-[var(--border)]'}`}>
               {selectedClasses.length === classes.length && <Check size={11} className="text-white" />}
             </div>
             {isBn ? 'সব নির্বাচন' : 'Select All'}
@@ -462,1367 +270,111 @@ export default function ClassesTab({
       )}
 
       {/* Class cards */}
-      {classes.map((cls) => {
-        const isExpanded = expandedClass === cls.id
-        const totalSeats = cls.sections.reduce((s, sec) => s + sec.seatQuantity, 0)
-        const isSelected = selectedClasses.includes(cls.id)
-        return (
-          <div
-            key={cls.id}
-            className={`mb-[0.625rem] rounded-[0.625rem] border bg-[var(--bg-primary)] p-[0.75rem] transition-all duration-150 ${bulkMode && isSelected ? 'border-[var(--brand)]' : 'border-[var(--border)]'}`}
-          >
-            {/* Class header */}
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}
-              onClick={() => {
-                if (bulkMode) {
-                  toggleSelectClass(cls.id)
-                } else {
-                  setExpandedClass(isExpanded ? null : cls.id)
-                }
-              }}
-            >
-              {bulkMode && (
-                <div
-                  className={`w-[1.125rem] h-[1.125rem] rounded-[0.25rem] border-[0.0938rem] flex items-center justify-center flex-shrink-0 transition-all cursor-pointer ${isSelected ? 'bg-[var(--brand)] border-[var(--brand)]' : 'border-[var(--border)] hover:border-[var(--brand)]'}`}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    toggleSelectClass(cls.id)
-                  }}
-                >
-                  {isSelected && <Check size={10} className="text-white" />}
-                </div>
-              )}
-              <div
-                style={{
-                  width: '2.25rem',
-                  height: '2.25rem',
-                  borderRadius: '0.5rem',
-                  background: 'var(--brand-light)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--brand)' }}>{cls.id.replace('CLS-', '')}</span>
-              </div>
-              <div style={{ flex: 1 }}>
-                {editingClassName === cls.id ? (
-                  <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-                    <input
-                      value={classNameForm.name}
-                      onChange={(e) => setClassNameForm((p) => ({ ...p, name: e.target.value }))}
-                      className={inputClass}
-                      style={{ fontSize: '0.8125rem', padding: '0.4375rem 0.6875rem', flex: 1 }}
-                      placeholder="Class Name"
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleSaveClassName(cls.id); if (e.key === 'Escape') setEditingClassName(null) }}
-                    />
-                    <input
-                      value={classNameForm.nameBn}
-                      onChange={(e) => setClassNameForm((p) => ({ ...p, nameBn: e.target.value }))}
-                      className={inputClass}
-                      style={{ fontSize: '0.8125rem', padding: '0.4375rem 0.6875rem', flex: 1 }}
-                      placeholder="নাম (বাং)"
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleSaveClassName(cls.id); if (e.key === 'Escape') setEditingClassName(null) }}
-                    />
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleSaveClassName(cls.id) }}
-                      style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: 'var(--brand)', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '0.8125rem', fontFamily: 'inherit', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.375rem', fontWeight: 500 }}
-                    >
-                      <Save size={14} />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setEditingClassName(null) }}
-                      style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8125rem', fontFamily: 'inherit', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.375rem' }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                    {isBn ? cls.nameBn : cls.name}
-                    {!bulkMode && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setEditingClassName(cls.id)
-                          setClassNameForm({ name: cls.name, nameBn: cls.nameBn })
-                        }}
-                        style={{ padding: '2px', borderRadius: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}
-                        title={isBn ? 'নাম পরিবর্তন' : 'Rename'}
-                      >
-                        <Pencil size={11} />
-                      </button>
-                    )}
-                  </div>
-                )}
-                <div
-                  style={{
-                    fontSize: '0.6875rem',
-                    color: 'var(--text-muted)',
-                    display: 'flex',
-                    gap: '0.625rem',
-                    flexWrap: 'wrap',
-                    marginTop: '0.125rem',
-                  }}
-                >
-                  <span>
-                    {cls.sections.length} {isBn ? 'সেকশন' : 'sections'}
-                  </span>
-                  <span>
-                    {totalSeats} {isBn ? 'আসন' : 'seats'}
-                  </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.1875rem' }}>
-                    <Clock size={10} />
-                    {cls.startTime} - {cls.endTime}
-                  </span>
-                </div>
-              </div>
-              {!bulkMode && (
-                <>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setEditingClassTime(cls.id)
-                      setClassTimeForm({ startTime: cls.startTime, endTime: cls.endTime })
-                    }}
-                    style={{
-                      padding: '4px 8px',
-                      borderRadius: '0.375rem',
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border)',
-                      cursor: 'pointer',
-                      fontSize: '0.625rem',
-                      color: 'var(--text-secondary)',
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    <Clock size={11} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (confirm(isBn ? 'এই শ্রেণি মুছে ফেলতে চান?' : 'Delete this class?')) deleteClass(cls.id)
-                    }}
-                    style={{
-                      padding: '4px 8px',
-                      borderRadius: '0.375rem',
-                      background: 'var(--red-light)',
-                      border: '1px solid var(--red)',
-                      cursor: 'pointer',
-                      fontSize: '0.625rem',
-                      color: 'var(--red)',
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    <Trash2 size={11} />
-                  </button>
-                </>
-              )}
-              {!bulkMode && (
-                <div className="text-[var(--text-muted)] ml-1">{isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</div>
-              )}
-            </div>
+      {classes.map((cls) => (
+        <ClassCard
+          key={cls.id}
+          cls={cls}
+          isExpanded={expandedClass === cls.id}
+          bulkMode={bulkMode}
+          isSelected={selectedClasses.includes(cls.id)}
+          isBn={isBn}
+          isMobile={isMobile}
+          editingClassName={editingClassName}
+          setEditingClassName={setEditingClassName}
+          classNameForm={classNameForm}
+          setClassNameForm={setClassNameForm}
+          editingClassTime={editingClassTime}
+          setEditingClassTime={setEditingClassTime}
+          classTimeForm={classTimeForm}
+          setClassTimeForm={setClassTimeForm}
+          editingSection={editingSection}
+          setEditingSection={setEditingSection}
+          secForm={secForm}
+          setSecForm={setSecForm}
+          handleSaveClassName={handleSaveClassName}
+          handleSaveClassTime={handleSaveClassTime}
+          handleAddSection={handleAddSection}
+          deleteClass={deleteClass}
+          toggleSelectClass={toggleSelectClass}
+          setExpandedClass={setExpandedClass}
+          teachers={teachers}
+          subjects={subjects}
+          institution={institution}
+          getTeacher={getTeacher}
+          getStudentCount={getStudentCount}
+          subjectMap={subjectMap}
+          updateSection={updateSection}
+          deleteSection={deleteSection}
+          setCopySectionModal={setCopySectionModal}
+          setCopyTarget={setCopyTarget}
+          setTempSelectedSubjects={setTempSelectedSubjects}
+          setShowSubjectModal={setShowSubjectModal}
+        />
+      ))}
 
-            {/* Edit class time */}
-            {editingClassTime === cls.id && (
-              <div
-                style={{
-                  marginTop: '0.625rem',
-                  padding: '0.875rem',
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--brand)',
-                  borderRadius: '0.625rem',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: 'var(--brand)',
-                    marginBottom: '0.625rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.375rem',
-                  }}
-                >
-                  <Clock size={14} />
-                  {isBn ? 'ক্লাস সময় পরিবর্তন' : 'Change Class Time'}
-                </div>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr auto',
-                    gap: '0.625rem',
-                    alignItems: 'end',
-                  }}
-                >
-                  <div>
-                    <label
-                      style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}
-                    >
-                      {isBn ? 'শুরুর সময়' : 'Start Time'}
-                    </label>
-                    <input
-                      type="time"
-                      value={classTimeForm.startTime}
-                      onChange={(e) => setClassTimeForm((p) => ({ ...p, startTime: e.target.value }))}
-                      style={{
-                        width: '100%',
-                        padding: '8px 10px',
-                        borderRadius: '0.4375rem',
-                        border: '1px solid var(--border)',
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.75rem',
-                        fontFamily: 'inherit',
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label
-                      style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}
-                    >
-                      {isBn ? 'শেষের সময়' : 'End Time'}
-                    </label>
-                    <input
-                      type="time"
-                      value={classTimeForm.endTime}
-                      onChange={(e) => setClassTimeForm((p) => ({ ...p, endTime: e.target.value }))}
-                      style={{
-                        width: '100%',
-                        padding: '8px 10px',
-                        borderRadius: '0.4375rem',
-                        border: '1px solid var(--border)',
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.75rem',
-                        fontFamily: 'inherit',
-                      }}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.375rem' }}>
-                    <button
-                      onClick={() => handleSaveClassTime(cls.id)}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: '0.4375rem',
-                        background: 'var(--brand)',
-                        border: 'none',
-                        color: '#fff',
-                        fontSize: '0.75rem',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                      }}
-                    >
-                      <Save size={12} />
-                      {isBn ? 'সেভ' : 'Save'}
-                    </button>
-                    <button
-                      onClick={() => setEditingClassTime(null)}
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: '0.4375rem',
-                        background: 'var(--bg-secondary)',
-                        border: '1px solid var(--border)',
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      {isBn ? 'বাতিল' : 'Cancel'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Sections */}
-            {isExpanded && !bulkMode && (
-              <div style={{ marginTop: '0.75rem', borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
-                  <div
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: 'var(--text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.0313rem',
-                    }}
-                  >
-                    {isBn ? 'সেকশন সমূহ' : 'Sections'}
-                  </div>
-                  <button
-                    onClick={() => handleAddSection(cls.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      padding: '5px 10px',
-                      borderRadius: '0.375rem',
-                      background: 'var(--teal-light)',
-                      border: '1px solid var(--teal)',
-                      color: 'var(--teal)',
-                      fontSize: '0.6875rem',
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    <Plus size={12} />
-                    {isBn ? 'সেকশন যোগ' : 'Add Section'}
-                  </button>
-                </div>
-
-                {cls.sections.length === 0 ? (
-                  <div style={{ padding: '1.25rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                    {isBn ? 'কোনো সেকশন নেই' : 'No sections yet'}
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
-                      gap: '0.625rem',
-                    }}
-                  >
-                    {cls.sections.map((sec) => {
-                      const teacher = sec.classTeacherId ? getTeacher(sec.classTeacherId) : undefined
-                      const isEditing = editingSection === sec.id
-                      return (
-                        <div
-                          key={sec.id}
-                          style={{
-                            borderRadius: '0.625rem',
-                            border: `1px solid ${isEditing ? 'var(--brand)' : 'var(--border)'}`,
-                            background: isEditing ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-                            overflow: 'hidden',
-                            transition: 'all 0.2s',
-                          }}
-                        >
-                          {/* Compact header — always visible */}
-                          <div
-                            style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}
-                            onClick={() => {
-                              if (isEditing) {
-                                setEditingSection(null)
-                                return
-                              }
-                              setEditingSection(sec.id)
-                              setSecForm({ name: sec.name, seatQuantity: sec.seatQuantity, classTeacherId: sec.classTeacherId })
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: '2rem',
-                                height: '2rem',
-                                borderRadius: '0.5rem',
-                                background: isEditing ? 'var(--brand)' : 'var(--brand-light)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flexShrink: 0,
-                                transition: 'all 0.2s',
-                              }}
-                            >
-                              <span style={{ color: isEditing ? '#fff' : 'var(--brand)', fontSize: '0.6875rem', fontWeight: 700 }}>
-                                {cls.id.replace('CLS-', '')}
-                                {sec.name.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                                {isBn ? 'সেকশন' : 'Section'} {sec.name}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: '0.625rem',
-                                  color: 'var(--text-muted)',
-                                  display: 'flex',
-                                  gap: '0.5rem',
-                                  flexWrap: 'wrap',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                {(() => {
-                                  const count = getStudentCount(cls.id.replace('CLS-', '').replace(/^0/, ''), sec.name)
-                                  const available = sec.seatQuantity - count
-                                  const isFull = available <= 0
-                                  return (
-                                    <>
-                                      <span style={{ color: isFull ? 'var(--red)' : 'var(--green)', fontWeight: 600 }}>
-                                        {count}/{sec.seatQuantity}
-                                      </span>
-                                      <span style={{ color: isFull ? 'var(--red)' : 'var(--text-muted)' }}>
-                                        {isBn
-                                          ? isFull
-                                            ? 'ফুল'
-                                            : `${available} আসন বাকি`
-                                          : isFull
-                                            ? 'Full'
-                                            : `${available} seats left`}
-                                      </span>
-                                    </>
-                                  )
-                                })()}
-                                {teacher && <span style={{ color: 'var(--brand)' }}>{teacher.nameEn.split(' ')[0]}</span>}
-                                {sec.subjectIds && sec.subjectIds.length > 0 && (
-                                  <span style={{ color: 'var(--teal)', fontWeight: 500 }}>
-                                    {sec.subjectIds.length} {isBn ? 'বিষয়' : 'subjects'}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setCopySectionModal({ fromClassId: cls.id, fromSectionId: sec.id })
-                                  setCopyTarget({ classId: '', sectionId: '' })
-                                }}
-                                style={{
-                                  padding: '0.25rem',
-                                  borderRadius: '0.3125rem',
-                                  background: 'var(--brand-light)',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  color: 'var(--brand)',
-                                }}
-                                title={isBn ? 'সেকশন কপি করুন' : 'Copy Section'}
-                              >
-                                <Copy size={11} />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  deleteSection(cls.id, sec.id)
-                                }}
-                                style={{
-                                  padding: '0.25rem',
-                                  borderRadius: '0.3125rem',
-                                  background: 'var(--red-light)',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  color: 'var(--red)',
-                                }}
-                              >
-                                <Trash2 size={11} />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Expanded edit form */}
-                          {isEditing && (
-                            <div
-                              style={{ padding: '0 12px 12px', borderTop: '1px solid var(--border)', background: 'var(--bg-primary)' }}
-                            >
-                              <div style={{ paddingTop: '0.625rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
-                                <div>
-                                  <label
-                                    style={{
-                                      fontSize: '0.625rem',
-                                      fontWeight: 500,
-                                      color: 'var(--text-muted)',
-                                      marginBottom: '0.25rem',
-                                      display: 'block',
-                                    }}
-                                  >
-                                    {isBn ? 'সেকশন নাম' : 'Section Name'}
-                                  </label>
-                                  <input
-                                    value={secForm.name}
-                                    onChange={(e) => setSecForm((p) => ({ ...p, name: e.target.value }))}
-                                    style={{
-                                      width: '100%',
-                                      padding: '7px 9px',
-                                      borderRadius: '0.4375rem',
-                                      border: '1px solid var(--border)',
-                                      background: 'var(--bg-secondary)',
-                                      color: 'var(--text-primary)',
-                                      fontSize: '0.75rem',
-                                      fontFamily: 'inherit',
-                                      fontWeight: 500,
-                                      textTransform: 'capitalize',
-                                    }}
-                                    placeholder={isBn ? 'যেমন: বিজ্ঞান, মানবিক' : 'e.g. Science, Humanity'}
-                                  />
-                                </div>
-                                <div>
-                                  <label
-                                    style={{
-                                      fontSize: '0.625rem',
-                                      fontWeight: 500,
-                                      color: 'var(--text-muted)',
-                                      marginBottom: '0.25rem',
-                                      display: 'block',
-                                    }}
-                                  >
-                                    {isBn ? 'আসন সংখ্যা' : 'Seat Quantity'}
-                                  </label>
-                                  <input
-                                    type="number"
-                                    value={secForm.seatQuantity}
-                                    min={1}
-                                    onChange={(e) => setSecForm((p) => ({ ...p, seatQuantity: Number(e.target.value) || 1 }))}
-                                    style={{
-                                      width: '100%',
-                                      padding: '7px 9px',
-                                      borderRadius: '0.4375rem',
-                                      border: '1px solid var(--border)',
-                                      background: 'var(--bg-secondary)',
-                                      color: 'var(--text-primary)',
-                                      fontSize: '0.75rem',
-                                      fontFamily: 'inherit',
-                                      textAlign: 'center',
-                                    }}
-                                  />
-                                </div>
-                                <div>
-                                  <label
-                                    style={{
-                                      fontSize: '0.625rem',
-                                      fontWeight: 500,
-                                      color: 'var(--text-muted)',
-                                      marginBottom: '0.25rem',
-                                      display: 'block',
-                                    }}
-                                  >
-                                    {isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher'}
-                                  </label>
-                                  <select
-                                    value={secForm.classTeacherId}
-                                    onChange={(e) => setSecForm((p) => ({ ...p, classTeacherId: e.target.value }))}
-                                    style={{
-                                      width: '100%',
-                                      padding: '7px 9px',
-                                      borderRadius: '0.4375rem',
-                                      border: '1px solid var(--border)',
-                                      background: 'var(--bg-secondary)',
-                                      color: 'var(--text-primary)',
-                                      fontSize: '0.6875rem',
-                                      fontFamily: 'inherit',
-                                    }}
-                                  >
-                                    <option value="">{isBn ? 'নির্বাচন করুন' : 'Select'}</option>
-                                    {teachers
-                                      .filter((t) => t.status === 'active')
-                                      .map((t) => (
-                                        <option key={t.id} value={t.id}>
-                                          {t.nameEn} ({t.id})
-                                        </option>
-                                      ))}
-                                  </select>
-                                </div>
-                              </div>
-
-                              {/* Teacher preview */}
-                              {(() => {
-                                const t = secForm.classTeacherId ? getTeacher(secForm.classTeacherId) : teacher
-                                if (!t) return null
-                                return (
-                                  <div
-                                    style={{
-                                      marginTop: '0.5rem',
-                                      padding: '0.5rem',
-                                      borderRadius: '0.5rem',
-                                      background: 'var(--bg-secondary)',
-                                      border: '1px solid var(--border)',
-                                    }}
-                                  >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                      <div
-                                        style={{
-                                          width: '1.75rem',
-                                          height: '1.75rem',
-                                          borderRadius: '0.375rem',
-                                          overflow: 'hidden',
-                                          background: 'var(--bg-primary)',
-                                          border: '1px solid var(--border)',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          flexShrink: 0,
-                                        }}
-                                      >
-                                        {t.photo ? (
-                                          <img src={t.photo} alt={t.nameEn || 'Teacher'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        ) : (
-                                          <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>
-                                            {t.nameEn
-                                              .split(' ')
-                                              .map((n: string) => n[0])
-                                              .slice(0, 2)
-                                              .join('')}
-                                          </span>
-                                        )}
-                                      </div>
-                                      <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div
-                                          style={{
-                                            fontSize: '0.6875rem',
-                                            fontWeight: 600,
-                                            color: 'var(--text-primary)',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap',
-                                          }}
-                                        >
-                                          {t.nameEn}
-                                        </div>
-                                        <div style={{ fontSize: '0.5625rem', color: 'var(--text-muted)' }}>{t.designation || ''}</div>
-                                      </div>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>
-                                        <Phone size={9} style={{ color: 'var(--text-muted)' }} />
-                                        <span style={{ fontSize: '0.5625rem', color: 'var(--text-secondary)' }}>{institution.phone}</span>
-                                      </div>
-                                    </div>
-                                    {t.signature && (
-                                      <div
-                                        style={{
-                                          marginTop: '0.375rem',
-                                          padding: '4px 6px',
-                                          borderRadius: '0.3125rem',
-                                          background: 'var(--bg-primary)',
-                                          border: '1px dashed var(--border)',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          gap: '0.25rem',
-                                        }}
-                                      >
-                                        <Signature size={10} style={{ color: 'var(--text-muted)' }} />
-                                        <img src={t.signature} alt="Sig" style={{ height: '1rem', objectFit: 'contain' }} />
-                                      </div>
-                                    )}
-                                  </div>
-                                )
-                              })()}
-
-                              {/* Assigned subjects */}
-                              {sec.subjectIds && sec.subjectIds.length > 0 && (
-                                <div
-                                  style={{
-                                    marginTop: '0.5rem',
-                                    padding: '0.5rem',
-                                    borderRadius: '0.5rem',
-                                    background: 'var(--teal-light)',
-                                    border: '1px solid var(--teal-border)',
-                                  }}
-                                >
-                                  <div style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--teal)', marginBottom: '0.375rem' }}>
-                                    {isBn ? 'নির্ধারিত বিষয়সমূহ' : 'Assigned Subjects'}
-                                  </div>
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                                    {sec.subjectIds.map((sid: string) => {
-                                      const sub = subjectMap.get(sid)
-                                      if (!sub) return null
-                                      return (
-                                        <span
-                                          key={sid}
-                                          style={{
-                                            padding: '3px 8px',
-                                            borderRadius: '0.625rem',
-                                            background: 'var(--bg-primary)',
-                                            border: '1px solid var(--border)',
-                                            fontSize: '0.625rem',
-                                            fontWeight: 500,
-                                            color: 'var(--text-primary)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.25rem',
-                                          }}
-                                        >
-                                          {isBn ? sub.nameBn : sub.name}
-                                          <button
-                                            onClick={() => {
-                                              const updated = sec.subjectIds.filter((s) => s !== sid)
-                                              updateSection(cls.id, sec.id, { subjectIds: updated })
-                                              setSecForm((p) => ({ ...p, subjectIds: updated }))
-                                            }}
-                                            style={{
-                                              background: 'none',
-                                              border: 'none',
-                                              padding: 0,
-                                              cursor: 'pointer',
-                                              color: 'var(--text-muted)',
-                                              display: 'flex',
-                                            }}
-                                          >
-                                            <X size={10} />
-                                          </button>
-                                        </span>
-                                      )
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-
-                              <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.375rem' }}>
-                                <button
-                                  onClick={() => {
-                                    setTempSelectedSubjects(sec.subjectIds || [])
-                                    setShowSubjectModal({ classId: cls.id, sectionId: sec.id })
-                                  }}
-                                  style={{
-                                    flex: 1,
-                                    padding: '0.4375rem',
-                                    borderRadius: '0.4375rem',
-                                    background: 'var(--teal)',
-                                    border: 'none',
-                                    color: '#fff',
-                                    fontSize: '0.6875rem',
-                                    fontWeight: 500,
-                                    cursor: 'pointer',
-                                    fontFamily: 'inherit',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '0.25rem',
-                                  }}
-                                >
-                                  <BookOpen size={11} />
-                                  {isBn ? 'বিষয় যোগ করুন' : 'Add Subject'}
-                                </button>
-                              </div>
-
-                              {/* Save button */}
-                              <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.375rem' }}>
-                                <button
-                                  onClick={() => {
-                                    updateSection(cls.id, sec.id, {
-                                      name: secForm.name || sec.name,
-                                      seatQuantity: secForm.seatQuantity,
-                                      classTeacherId: secForm.classTeacherId,
-                                    })
-                                    setEditingSection(null)
-                                  }}
-                                  style={{
-                                    flex: 1,
-                                    padding: '0.4375rem',
-                                    borderRadius: '0.4375rem',
-                                    background: 'var(--brand)',
-                                    border: 'none',
-                                    color: '#fff',
-                                    fontSize: '0.6875rem',
-                                    fontWeight: 500,
-                                    cursor: 'pointer',
-                                    fontFamily: 'inherit',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '0.25rem',
-                                  }}
-                                >
-                                  <Save size={11} />
-                                  {isBn ? 'সেভ' : 'Save'}
-                                </button>
-                                <button
-                                  onClick={() => setEditingSection(null)}
-                                  style={{
-                                    padding: '7px 12px',
-                                    borderRadius: '0.4375rem',
-                                    background: 'var(--bg-secondary)',
-                                    border: '1px solid var(--border)',
-                                    color: 'var(--text-secondary)',
-                                    fontSize: '0.6875rem',
-                                    cursor: 'pointer',
-                                    fontFamily: 'inherit',
-                                  }}
-                                >
-                                  {isBn ? 'বাতিল' : 'Cancel'}
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )
-      })}
-
-      {/* ===== BULK TIME MODAL ===== */}
-      {showBulkTime && createPortal(
-        <div
-          onClick={() => setShowBulkTime(false)}
-          className="modal-overlay"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="modal-box modal-content"
-            style={{ maxWidth: '25rem' }}
-          >
-            <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[var(--amber-light)] flex items-center justify-center">
-                  <Clock size={18} className="text-[var(--amber)]" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-[var(--text-primary)] m-0">{isBn ? 'বাল্ক সময় সেট' : 'Bulk Set Time'}</h3>
-                  <p className="text-[0.625rem] text-[var(--text-muted)] m-0">
-                    {selectedClasses.length} {isBn ? 'টি শ্রেণিতে সময় পরিবর্তন হবে' : 'classes will be updated'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowBulkTime(false)}
-                className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)]"
-              >
-                <X size={14} />
-              </button>
-            </div>
-            <div className="p-4">
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
-                    {isBn ? 'শুরুর সময়' : 'Start Time'}
-                  </label>
-                  <input
-                    type="time"
-                    value={bulkTimeForm.startTime}
-                    onChange={(e) => setBulkTimeForm((p) => ({ ...p, startTime: e.target.value }))}
-                    className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--amber)]"
-                  />
-                </div>
-                <div>
-                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
-                    {isBn ? 'শেষের সময়' : 'End Time'}
-                  </label>
-                  <input
-                    type="time"
-                    value={bulkTimeForm.endTime}
-                    onChange={(e) => setBulkTimeForm((p) => ({ ...p, endTime: e.target.value }))}
-                    className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--amber)]"
-                  />
-                </div>
-              </div>
-              <div className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] mb-4">
-                <div className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-2">
-                  {isBn ? 'প্রভাবিত শ্রেণি' : 'Affected Classes'}
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {selectedClasses.map((id) => {
-                    const c = classes.find((cl) => cl.id === id)
-                    return c ? (
-                      <span key={id} className="text-[0.625rem] py-1 px-2 rounded bg-[var(--amber-light)] text-[var(--amber)] font-medium">
-                        {isBn ? c.nameBn : c.name}
-                      </span>
-                    ) : null
-                  })}
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowBulkTime(false)}
-                  className="flex-1 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] font-medium cursor-pointer font-[inherit]"
-                >
-                  {isBn ? 'বাতিল' : 'Cancel'}
-                </button>
-                <button
-                  onClick={handleBulkTimeApply}
-                  className="flex-1 py-2 rounded-lg bg-[var(--amber)] border-none text-white text-[0.75rem] font-semibold cursor-pointer font-[inherit] flex items-center justify-center gap-2"
-                >
-                  <Save size={13} />
-                  {isBn ? 'প্রয়োগ করুন' : 'Apply'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {/* Bulk modals */}
+      {showBulkTime && (
+        <BulkTimeModal
+          classes={classes}
+          selectedClasses={selectedClasses}
+          bulkTimeForm={bulkTimeForm}
+          setBulkTimeForm={setBulkTimeForm}
+          handleBulkTimeApply={handleBulkTimeApply}
+          setShowBulkTime={setShowBulkTime}
+          isBn={isBn}
+        />
       )}
 
-      {/* ===== BULK SUBJECT MODAL ===== */}
-      {showBulkSubject && createPortal(
-        <div
-          onClick={() => setShowBulkSubject(false)}
-          className="modal-overlay"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="modal-box modal-content"
-            style={{ maxWidth: '26.25rem' }}
-          >
-            <div className="p-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[var(--teal-light)] flex items-center justify-center">
-                  <BookOpen size={18} className="text-[var(--teal)]" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-[var(--text-primary)] m-0">
-                    {isBn ? 'বাল্ক বিষয় নির্ধারণ' : 'Bulk Assign Subjects'}
-                  </h3>
-                  <p className="text-[0.625rem] text-[var(--text-muted)] m-0">
-                    {selectedClasses.length} {isBn ? 'টি শ্রেণির সব সেকশনে যোগ হবে' : 'classes, all sections will get these subjects'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowBulkSubject(false)}
-                className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)]"
-              >
-                <X size={14} />
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto flex-1">
-              {subjects.length === 0 ? (
-                <div className="text-center py-5 text-[var(--text-muted)] text-[0.75rem]">
-                  {isBn
-                    ? 'কোনো বিষয় পাওয়া যায়নি। প্রথমে শিক্ষক ব্যবস্থাপনায় বিষয় যোগ করুন।'
-                    : 'No subjects found. Add subjects in Teacher Management first.'}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-[0.375rem]">
-                  {subjects.map((sub) => {
-                    const isSelected = bulkSubjectIds.includes(sub.id)
-                    return (
-                      <button
-                        key={sub.id}
-                        onClick={() => toggleTempSubject(sub.id)}
-                        className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer text-left transition-all duration-150 font-[inherit]"
-                        style={{
-                          borderColor: isSelected ? 'var(--teal)' : 'var(--border)',
-                          background: isSelected ? 'var(--teal-light)' : 'var(--bg-secondary)',
-                        }}
-                      >
-                        <div
-                          className="w-[1.125rem] h-[1.125rem] rounded-[0.3125rem] border-2 flex items-center justify-center flex-shrink-0 transition-all"
-                          style={{
-                            borderColor: isSelected ? 'var(--teal)' : 'var(--border)',
-                            background: isSelected ? 'var(--teal)' : 'transparent',
-                          }}
-                        >
-                          {isSelected && <Check size={11} className="text-white" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">{isBn ? sub.nameBn : sub.name}</div>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-            <div className="p-4 border-t border-[var(--border)] flex gap-2 shrink-0">
-              <button
-                onClick={() => setShowBulkSubject(false)}
-                className="flex-1 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] font-medium cursor-pointer font-[inherit]"
-              >
-                {isBn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button
-                onClick={handleBulkSubjectApply}
-                disabled={bulkSubjectIds.length === 0}
-                className="flex-1 py-2 rounded-lg border-none text-white text-[0.75rem] font-semibold cursor-pointer font-[inherit] flex items-center justify-center gap-2"
-                style={{ background: bulkSubjectIds.length > 0 ? 'var(--teal)' : 'var(--border)' }}
-              >
-                <Save size={13} />
-                {isBn ? 'সেভ' : 'Save'} ({bulkSubjectIds.length})
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {showBulkSubject && (
+        <BulkSubjectModal
+          subjects={subjects}
+          selectedClasses={selectedClasses}
+          bulkSubjectIds={bulkSubjectIds}
+          setBulkSubjectIds={setBulkSubjectIds}
+          handleBulkSubjectApply={handleBulkSubjectApply}
+          setShowBulkSubject={setShowBulkSubject}
+          isBn={isBn}
+        />
       )}
 
-      {/* ===== BULK SECTION MODAL ===== */}
-      {showBulkSection && createPortal(
-        <div
-          onClick={() => setShowBulkSection(false)}
-          className="modal-overlay"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="modal-box modal-content"
-            style={{ maxWidth: '25rem' }}
-          >
-            <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[var(--purple-light)] flex items-center justify-center">
-                  <ListChecks size={18} className="text-[var(--purple)]" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-[var(--text-primary)] m-0">{isBn ? 'বাল্ক সেকশন যোগ' : 'Bulk Add Sections'}</h3>
-                  <p className="text-[0.625rem] text-[var(--text-muted)] m-0">
-                    {selectedClasses.length} {isBn ? 'টি শ্রেণিতে সেকশন যোগ হবে' : 'classes will get new sections'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowBulkSection(false)}
-                className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)]"
-              >
-                <X size={14} />
-              </button>
-            </div>
-            <div className="p-4">
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
-                    {isBn ? 'সেকশন সংখ্যা' : 'Number of Sections'}
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={bulkSectionCount}
-                    onChange={(e) => setBulkSectionCount(Number(e.target.value) || 1)}
-                    className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none text-center focus:border-[var(--purple)]"
-                  />
-                </div>
-                <div>
-                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
-                    {isBn ? 'প্রতি সেকশন আসন' : 'Seats per Section'}
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={bulkSeatQuantity}
-                    onChange={(e) => setBulkSeatQuantity(Number(e.target.value) || 1)}
-                    className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none text-center focus:border-[var(--purple)]"
-                  />
-                </div>
-              </div>
-              <div className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] mb-4">
-                <div className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-2">
-                  {isBn ? 'প্রভাবিত শ্রেণি' : 'Affected Classes'}
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {selectedClasses.map((id) => {
-                    const c = classes.find((cl) => cl.id === id)
-                    return c ? (
-                      <span key={id} className="text-[0.625rem] py-1 px-2 rounded bg-[var(--purple-light)] text-[var(--purple)] font-medium">
-                        {isBn ? c.nameBn : c.name}
-                      </span>
-                    ) : null
-                  })}
-                </div>
-                <div className="text-[0.625rem] text-[var(--text-muted)] mt-2">
-                  {isBn
-                    ? `মোট ${selectedClasses.length * bulkSectionCount} টি নতুন সেকশন তৈরি হবে`
-                    : `${selectedClasses.length * bulkSectionCount} new sections will be created`}
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowBulkSection(false)}
-                  className="flex-1 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] font-medium cursor-pointer font-[inherit]"
-                >
-                  {isBn ? 'বাতিল' : 'Cancel'}
-                </button>
-                <button
-                  onClick={handleBulkSectionApply}
-                  className="flex-1 py-2 rounded-lg bg-[var(--purple)] border-none text-white text-[0.75rem] font-semibold cursor-pointer font-[inherit] flex items-center justify-center gap-2"
-                >
-                  <Plus size={13} />
-                  {isBn ? 'যোগ করুন' : 'Add Sections'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {showBulkSection && (
+        <BulkSectionModal
+          classes={classes}
+          selectedClasses={selectedClasses}
+          bulkSectionCount={bulkSectionCount}
+          setBulkSectionCount={setBulkSectionCount}
+          bulkSeatQuantity={bulkSeatQuantity}
+          setBulkSeatQuantity={setBulkSeatQuantity}
+          handleBulkSectionApply={handleBulkSectionApply}
+          setShowBulkSection={setShowBulkSection}
+          isBn={isBn}
+        />
       )}
 
-      {/* Subject Selection Modal */}
-      {showSubjectModal && createPortal(
-        <div
-          onClick={() => setShowSubjectModal(null)}
-          className="modal-overlay"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="modal-box modal-content"
-            style={{ maxWidth: '25rem' }}
-          >
-            <div
-              style={{
-                padding: '16px 20px',
-                borderBottom: '1px solid var(--border)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div>
-                <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-                  {isBn ? 'বিষয় নির্বাচন করুন' : 'Select Subjects'}
-                </h3>
-                <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                  {isBn ? 'শিক্ষক ব্যবস্থাপনা থেকে বিষয় নির্বাচন করুন' : 'Select subjects from Teacher Management'}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowSubjectModal(null)}
-                style={{
-                  width: '1.75rem',
-                  height: '1.75rem',
-                  borderRadius: '0.5rem',
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: 'var(--text-muted)',
-                }}
-              >
-                <X size={14} />
-              </button>
-            </div>
-            <div style={{ padding: '12px 20px', overflowY: 'auto', flex: 1 }}>
-              {subjects.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '1.25rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                  <BookOpen size={32} style={{ margin: '0 auto 0.75rem', opacity: 0.3 }} />
-                  <p style={{ margin: '0 0 0.75rem', fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                    {isBn ? 'কোনো বিষয় পাওয়া যায়নি' : 'No subjects found'}
-                  </p>
-                  <p style={{ margin: '0 0 1rem', fontSize: '0.6875rem' }}>
-                    {isBn ? 'শিক্ষক ব্যবস্থাপনায় বিষয় যোগ করুন' : 'Add subjects in Teacher Management'}
-                  </p>
-                  <button
-                    onClick={() => {
-                      setShowSubjectModal(null)
-                      pushToChain({ path: '/classes', label: isBn ? 'শ্রেণী ব্যবস্থাপনা' : 'Classes Management' })
-                      setRedirectTimestamp()
-                      navigate('/teachers/subjects')
-                    }}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      borderRadius: '0.5rem',
-                      background: 'var(--brand)',
-                      border: 'none',
-                      color: '#fff',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem',
-                      fontFamily: 'inherit',
-                      fontWeight: 500,
-                    }}
-                  >
-                    {isBn ? 'বিষয় যোগ করুন →' : 'Add Subjects →'}
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                  {subjects.map((sub) => {
-                    const isSelected = tempSelectedSubjects.includes(sub.id)
-                    return (
-                      <button
-                        key={sub.id}
-                        onClick={() =>
-                          setTempSelectedSubjects((prev) => (isSelected ? prev.filter((s) => s !== sub.id) : [...prev, sub.id]))
-                        }
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.625rem',
-                          padding: '10px 12px',
-                          borderRadius: '0.625rem',
-                          border: `1px solid ${isSelected ? 'var(--teal)' : 'var(--border)'}`,
-                          background: isSelected ? 'var(--teal-light)' : 'var(--bg-secondary)',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          transition: 'all 0.15s',
-                          fontFamily: 'inherit',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: '1.125rem',
-                            height: '1.125rem',
-                            borderRadius: '0.3125rem',
-                            border: `2px solid ${isSelected ? 'var(--teal)' : 'var(--border)'}`,
-                            background: isSelected ? 'var(--teal)' : 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                            transition: 'all 0.15s',
-                          }}
-                        >
-                          {isSelected && <Check size={11} style={{ color: '#fff' }} />}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>
-                            {isBn ? sub.nameBn : sub.name}
-                          </div>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-            <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.5rem' }}>
-              <button
-                onClick={() => setShowSubjectModal(null)}
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  borderRadius: '0.5rem',
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.6875rem',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                {isBn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button
-                onClick={() => {
-                  if (showSubjectModal) {
-                    updateSection(showSubjectModal.classId, showSubjectModal.sectionId, { subjectIds: tempSelectedSubjects })
-                  }
-                  setShowSubjectModal(null)
-                }}
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  borderRadius: '0.5rem',
-                  background: 'var(--teal)',
-                  border: 'none',
-                  color: '#fff',
-                  fontSize: '0.6875rem',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                {isBn ? 'সেভ করুন' : 'Save'} ({tempSelectedSubjects.length})
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {showSubjectModal && (
+        <SubjectSelectionModal
+          subjects={subjects}
+          showSubjectModal={showSubjectModal}
+          setShowSubjectModal={setShowSubjectModal}
+          tempSelectedSubjects={tempSelectedSubjects}
+          setTempSelectedSubjects={setTempSelectedSubjects}
+          updateSection={updateSection}
+          isBn={isBn}
+        />
       )}
 
-      {/* Copy Section Modal */}
-      {copySectionModal && createPortal(
-        <div className="modal-overlay">
-          <div className="modal-content modal-box" style={{ maxWidth: '25rem' }}>
-            <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-[0.875rem]">
-              {isBn ? 'সেকশন কপি করুন' : 'Copy Section'}
-            </h3>
-            <p className="text-[0.75rem] text-[var(--text-muted)] mb-4">
-              {isBn ? 'একটি সেকশন অন্য সেকশনে কপি করুন' : 'Copy a section to another class/section'}
-            </p>
-
-            {/* Source info */}
-            <div className="p-2.5 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] mb-4">
-              <div className="text-[0.625rem] text-[var(--brand)] font-semibold mb-1">
-                {isBn ? 'উৎস' : 'Source'}
-              </div>
-              <div className="text-[0.75rem] text-[var(--text-primary)] font-medium">
-                {classes.find((c) => c.id === copySectionModal.fromClassId)?.name} → Section {classes.find((c) => c.id === copySectionModal.fromClassId)?.sections.find((s) => s.id === copySectionModal.fromSectionId)?.name}
-              </div>
-            </div>
-
-            {/* Target class */}
-            <div className="mb-3">
-              <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
-                {isBn ? 'টার্গেট শ্রেণি' : 'Target Class'}
-              </label>
-              <select
-                value={copyTarget.classId}
-                onChange={(e) => setCopyTarget({ classId: e.target.value, sectionId: '' })}
-                className="w-full h-[2.5rem] px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-[inherit]"
-              >
-                <option value="">{isBn ? '-- শ্রেণি নির্বাচন করুন --' : '-- Select class --'}</option>
-                {classes.filter((c) => c.id !== copySectionModal.fromClassId).map((c) => (
-                  <option key={c.id} value={c.id}>{c.name} ({c.nameBn}) — {c.sections.length} {isBn ? 'সেকশন' : 'sections'}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Target section */}
-            {copyTarget.classId && (
-              <div className="mb-4">
-                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
-                  {isBn ? 'টার্গেট সেকশন' : 'Target Section'}
-                </label>
-                <select
-                  value={copyTarget.sectionId}
-                  onChange={(e) => setCopyTarget((p) => ({ ...p, sectionId: e.target.value }))}
-                  className="w-full h-[2.5rem] px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-[inherit]"
-                >
-                  <option value="">{isBn ? '-- সেকশন নির্বাচন করুন --' : '-- Select section --'}</option>
-                  {classes.find((c) => c.id === copyTarget.classId)?.sections.map((s) => (
-                    <option key={s.id} value={s.id}>{isBn ? 'সেকশন' : 'Section'} {s.name} — {s.seatQuantity} {isBn ? 'আসন' : 'seats'}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setCopySectionModal(null)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]"
-              >
-                {isBn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button
-                onClick={() => setShowCopyConfirm(true)}
-                disabled={!copyTarget.classId || !copyTarget.sectionId}
-                className="px-3.5 py-2 rounded-lg border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
-                style={{
-                  background: copyTarget.classId && copyTarget.sectionId ? 'var(--brand)' : 'var(--border)',
-                  cursor: copyTarget.classId && copyTarget.sectionId ? 'pointer' : 'not-allowed',
-                }}
-              >
-                {isBn ? 'কপি করুন' : 'Copy Section'}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* Copy Section Confirm Alert */}
-      {showCopyConfirm && createPortal(
-        <div className="modal-overlay" style={{ zIndex: 9999 }}>
-          <div className="modal-content modal-box" style={{ maxWidth: '22rem', textAlign: 'center' }}>
-            <div className="w-12 h-12 rounded-full bg-[var(--amber-light)] flex items-center justify-center mx-auto mb-4">
-              <Copy size={22} className="text-[var(--amber)]" />
-            </div>
-            <h3 className="text-base font-semibold text-[var(--text-primary)] mb-2">
-              {isBn ? 'সেকশন কপি করতে চান?' : 'Copy Section?'}
-            </h3>
-            <p className="text-[0.8125rem] text-[var(--text-secondary)] mb-5 leading-relaxed">
-              {isBn
-                ? `আপনি ${classes.find((c) => c.id === copySectionModal?.fromClassId)?.name} থেকে সেকশন কপি করতে চলেছেন। এই কাজটি একটি নতুন সেকশন তৈরি করবে।`
-                : `You are about to copy a section from ${classes.find((c) => c.id === copySectionModal?.fromClassId)?.name}. This will create a new section.`}
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowCopyConfirm(false)}
-                className="flex-1 px-3.5 py-2.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium cursor-pointer font-[inherit]"
-              >
-                {isBn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button
-                onClick={() => { setShowCopyConfirm(false); handleCopySection() }}
-                autoFocus
-                className="flex-1 px-3.5 py-2.5 rounded-lg bg-[var(--amber)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit]"
-              >
-                {isBn ? 'হ্যাঁ, কপি করুন' : 'Yes, Copy'}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {copySectionModal && (
+        <CopySectionModal
+          classes={classes}
+          copySectionModal={copySectionModal}
+          setCopySectionModal={setCopySectionModal}
+          copyTarget={copyTarget}
+          setCopyTarget={setCopyTarget}
+          showCopyConfirm={showCopyConfirm}
+          setShowCopyConfirm={setShowCopyConfirm}
+          handleCopySection={handleCopySection}
+          isBn={isBn}
+        />
       )}
     </>
   )
