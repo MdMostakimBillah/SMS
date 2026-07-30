@@ -83,7 +83,7 @@ export default function RegisteredFacesTable({
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-[var(--border)] shrink-0 bg-[var(--bg-secondary)]">
                         {f.photo ? (
-                          <img src={f.photo} alt="" className="w-full h-full object-cover" />
+                           <img src={f.photo} alt={f.staffName || 'Person'} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <User size={14} className="text-[var(--text-muted)]" />

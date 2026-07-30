@@ -370,6 +370,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
           {isMobile && !collapsed && (
             <button
               onClick={toggleSidebar}
+              aria-label={isBn ? 'বন্ধ করুন' : 'Close'}
               className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-colors"
             >
               <X size={16} />
@@ -516,6 +517,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                             e.stopPropagation()
                             toggleBookmark(item.page)
                           }}
+                          aria-label={isBookmarked ? (isBn ? 'বুকমার্ক সরান' : 'Remove bookmark') : (isBn ? 'বুকমার্ক যোগ করুন' : 'Add bookmark')}
                           className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-[var(--bg-primary)] shrink-0 ${
                             isBookmarked ? '!opacity-100' : ''
                           } ${atMaxBookmarks ? 'cursor-not-allowed' : ''}`}
@@ -590,6 +592,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
               {quickAccess.length > 0 && <div className="w-px h-5 bg-[var(--border)] mx-0.5" />}
               <button
                 onClick={toggleSidebarPosition}
+                aria-label={isBn ? 'সাইডবার পজিশন পরিবর্তন' : 'Toggle sidebar position'}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--brand-light)] transition-colors text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer ml-auto"
                 title={isBn ? (sidebarPosition === 'left' ? 'সাইডবার ডানে সরান' : 'সাইডবার বামে সরান') : (sidebarPosition === 'left' ? 'Move sidebar to right' : 'Move sidebar to left')}
               >
@@ -629,6 +632,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
               {quickAccess.length > 0 && <div className="w-5 h-px bg-[var(--border)]" />}
               <button
                 onClick={toggleSidebarPosition}
+                aria-label={isBn ? 'সাইডবার পজিশন পরিবর্তন' : 'Toggle sidebar position'}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--brand-light)] transition-colors text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer"
                 title={isBn ? (sidebarPosition === 'left' ? 'সাইডবার ডানে সরান' : 'সাইডবার বামে সরান') : (sidebarPosition === 'left' ? 'Move sidebar to right' : 'Move sidebar to left')}
               >

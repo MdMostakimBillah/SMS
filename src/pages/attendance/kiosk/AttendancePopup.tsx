@@ -246,7 +246,7 @@ export default function AttendancePopup({ isBn, date: _date, registeredFaces, in
           <div className="max-w-xl mx-auto animate-[slideUp_0.3s_ease-out]">
             <div className="bg-white/10 backdrop-blur-xl rounded-2xl px-4 py-3 flex items-center gap-4 border border-white/15">
               <div className="relative shrink-0">
-                <img src={identified.photo} alt="" className="w-14 h-14 rounded-xl object-cover border-2 border-[var(--green)]/60" />
+                 <img src={identified.photo} alt={identified.staffName || 'Person'} className="w-14 h-14 rounded-xl object-cover border-2 border-[var(--green)]/60" />
                 <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[var(--green)] flex items-center justify-center border-2 border-gray-900">
                   <CheckCircle size={11} className="text-white" />
                 </div>

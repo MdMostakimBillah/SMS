@@ -43,6 +43,7 @@ const SyllabusPage = lazy(() => import('@/pages/syllabus'))
 const AssignmentsPage = lazy(() => import('@/pages/assignments'))
 const OnlineClassesPage = lazy(() => import('@/pages/online'))
 const FinancePage = lazy(() => import('@/pages/finance'))
+const NotFoundPage = lazy(() => import('@/pages/NotFound'))
 
 function P({ name }: { name: string }) {
   return <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 500, padding: '1.25rem' }}>{name}</div>
@@ -116,6 +117,7 @@ export default function App() {
             <Route path="/super-admin/:subpage" element={<F><SuperAdminPage /></F>} />
           </Route>
         </Route>
+        <Route path="*" element={<F><NotFoundPage /></F>} />
       </Routes>
     </AuthProvider>
   )

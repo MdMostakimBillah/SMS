@@ -175,7 +175,7 @@ ${photoHtml}
         <div className="p-5 bg-[var(--brand-light)] border-b border-[var(--border)] flex gap-5 items-start flex-wrap">
           <div className="w-[6.25rem] h-[7.5rem] rounded-[0.625rem] border-2 border-[var(--brand)] overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center shrink-0">
             {teacher.photo ? (
-              <img src={teacher.photo} alt="" className="w-full h-full object-cover" />
+               <img src={teacher.photo} alt={teacher.nameEn || 'Teacher'} className="w-full h-full object-cover" />
             ) : (
               <User size={36} className="text-[var(--text-muted)]" />
             )}

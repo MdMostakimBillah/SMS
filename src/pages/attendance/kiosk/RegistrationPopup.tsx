@@ -299,7 +299,7 @@ export default function RegistrationPopup({ isBn, person, existingFaces, onEnrol
           <div className="bg-white/10 backdrop-blur-xl rounded-2xl px-4 py-3 flex items-center gap-4 border border-white/15">
             <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/10 shrink-0 flex items-center justify-center">
               {person.photo ? (
-                <img src={person.photo} alt="" className="w-full h-full object-cover" />
+                 <img src={person.photo} alt={person.nameEn || 'Person'} className="w-full h-full object-cover" />
               ) : person.type === 'staff' ? (
                 <User size={18} className="text-white/50" />
               ) : (

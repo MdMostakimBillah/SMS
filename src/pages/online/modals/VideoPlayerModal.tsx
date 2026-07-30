@@ -35,7 +35,7 @@ export function VideoPlayerModal({ item, onClose }: Props) {
         style={{ background: 'var(--bg-primary)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <button onClick={onClose} className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center cursor-pointer text-white hover:bg-black/70 transition-colors">
+        <button onClick={onClose} aria-label={isBn ? 'বন্ধ করুন' : 'Close'} className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center cursor-pointer text-white hover:bg-black/70 transition-colors">
           <X size={18} />
         </button>
 

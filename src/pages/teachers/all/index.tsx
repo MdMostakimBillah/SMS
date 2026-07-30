@@ -28,6 +28,7 @@ import { useClassStore } from '@/store/classStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { openPrintWindow } from '@/lib/pdf'
+import { escapeHtml } from '@/lib/sanitize'
 import { TeacherPDFOptionsModal } from '@/components/shared/TeacherPDFOptionsModal'
 import { generateTeacherListPDF } from '@/pages/teachers/listPdfTemplate'
 import type { TeacherListPDFOptions } from '@/pages/teachers/listPdfTemplate'
@@ -248,42 +249,42 @@ export default function AllTeachersPage() {
     (t: Teacher) => {
       const brand = getPDFBranding()
       const photoHtml = t.photo
-        ? `<div style="text-align:center;margin-bottom:10px"><img src="${t.photo}" alt="${t.nameEn}" style="width:100px;height:120px;border-radius:8px;border:2px solid ${brand.brandColor};object-fit:cover" /></div>`
+        ? `<div style="text-align:center;margin-bottom:10px"><img src="${escapeHtml(t.photo)}" alt="${escapeHtml(t.nameEn)}" style="width:100px;height:120px;border-radius:8px;border:2px solid ${brand.brandColor};object-fit:cover" /></div>`
         : ''
-      const html = `<div class="hdr">${pdfLogoHTML(brand, 36)}<div><div style="font-size:14px;font-weight:700;color:${brand.brandColor}">${brand.schoolName}</div><div style="font-size:9px;color:#888">Employee Profile</div></div></div>
+      const html = `<div class="hdr">${pdfLogoHTML(brand, 36)}<div><div style="font-size:14px;font-weight:700;color:${brand.brandColor}">${escapeHtml(brand.schoolName)}</div><div style="font-size:9px;color:#888">Employee Profile</div></div></div>
 ${photoHtml}
-<div class="ttl">${t.nameEn}</div>
-<div class="sub">${t.nameBn} · ${t.id}</div>
+<div class="ttl">${escapeHtml(t.nameEn)}</div>
+<div class="sub">${escapeHtml(t.nameBn)} · ${escapeHtml(t.id)}</div>
 <div class="info">
-  <div><span class="lbl">${isBn ? 'পদবি' : 'Designation'}</span><span class="val">${t.designation || '—'}</span></div>
-  <div><span class="lbl">${isBn ? 'বিভাগ' : 'Department'}</span><span class="val">${getDeptName(t.departmentId)}</span></div>
-  <div><span class="lbl">${isBn ? 'বিষয়' : 'Subjects'}</span><span class="val">${getSubjectNames(t.subjectIds)}</span></div>
+  <div><span class="lbl">${isBn ? 'পদবি' : 'Designation'}</span><span class="val">${escapeHtml(t.designation) || '—'}</span></div>
+  <div><span class="lbl">${isBn ? 'বিভাগ' : 'Department'}</span><span class="val">${escapeHtml(getDeptName(t.departmentId))}</span></div>
+  <div><span class="lbl">${isBn ? 'বিষয়' : 'Subjects'}</span><span class="val">${escapeHtml(getSubjectNames(t.subjectIds))}</span></div>
   <div><span class="lbl">${isBn ? 'লিঙ্গ' : 'Gender'}</span><span class="val">${t.gender === 'Male' ? (isBn ? 'পুরুষ' : 'Male') : isBn ? 'মহিলা' : 'Female'}</span></div>
-  <div><span class="lbl">${isBn ? 'মোবাইল' : 'Phone'}</span><span class="val">${t.phone}</span></div>
-  <div><span class="lbl">Email</span><span class="val">${t.email}</span></div>
-  <div><span class="lbl">${isBn ? 'ঠিকানা' : 'Address'}</span><span class="val">${t.address}</span></div>
-  <div><span class="lbl">${isBn ? 'জন্ম তারিখ' : 'DOB'}</span><span class="val">${t.dob}</span></div>
-  <div><span class="lbl">${isBn ? 'রক্তের গ্রুপ' : 'Blood'}</span><span class="val">${t.bloodGroup}</span></div>
-  <div><span class="lbl">${isBn ? 'ধর্ম' : 'Religion'}</span><span class="val">${t.religion}</span></div>
-  <div><span class="lbl">${isBn ? 'যোগ্যতা' : 'Qualification'}</span><span class="val">${t.qualification}</span></div>
-  <div><span class="lbl">${isBn ? 'অভিজ্ঞতা' : 'Experience'}</span><span class="val">${t.experience}</span></div>
-  <div><span class="lbl">${isBn ? 'যোগদানের তারিখ' : 'Joining Date'}</span><span class="val">${t.joiningDate}</span></div>
+  <div><span class="lbl">${isBn ? 'মোবাইল' : 'Phone'}</span><span class="val">${escapeHtml(t.phone)}</span></div>
+  <div><span class="lbl">Email</span><span class="val">${escapeHtml(t.email)}</span></div>
+  <div><span class="lbl">${isBn ? 'ঠিকানা' : 'Address'}</span><span class="val">${escapeHtml(t.address)}</span></div>
+  <div><span class="lbl">${isBn ? 'জন্ম তারিখ' : 'DOB'}</span><span class="val">${escapeHtml(t.dob)}</span></div>
+  <div><span class="lbl">${isBn ? 'রক্তের গ্রুপ' : 'Blood'}</span><span class="val">${escapeHtml(t.bloodGroup)}</span></div>
+  <div><span class="lbl">${isBn ? 'ধর্ম' : 'Religion'}</span><span class="val">${escapeHtml(t.religion)}</span></div>
+  <div><span class="lbl">${isBn ? 'যোগ্যতা' : 'Qualification'}</span><span class="val">${escapeHtml(t.qualification)}</span></div>
+  <div><span class="lbl">${isBn ? 'অভিজ্ঞতা' : 'Experience'}</span><span class="val">${escapeHtml(t.experience)}</span></div>
+  <div><span class="lbl">${isBn ? 'যোগদানের তারিখ' : 'Joining Date'}</span><span class="val">${escapeHtml(t.joiningDate)}</span></div>
   <div><span class="lbl">${isBn ? 'বেতন' : 'Salary'}</span><span class="val">৳${t.salary.toLocaleString()}</span></div>
-  <div><span class="lbl">${isBn ? 'ইন টাইম' : 'In Time'}</span><span class="val">${t.inTime}</span></div>
-  <div><span class="lbl">${isBn ? 'আউট টাইম' : 'Out Time'}</span><span class="val">${t.outTime}</span></div>
-  <div><span class="lbl">${isBn ? 'জাতীয় পরিচয়' : 'NID'}</span><span class="val">${t.nid}</span></div>
+  <div><span class="lbl">${isBn ? 'ইন টাইম' : 'In Time'}</span><span class="val">${escapeHtml(t.inTime)}</span></div>
+  <div><span class="lbl">${isBn ? 'আউট টাইম' : 'Out Time'}</span><span class="val">${escapeHtml(t.outTime)}</span></div>
+  <div><span class="lbl">${isBn ? 'জাতীয় পরিচয়' : 'NID'}</span><span class="val">${escapeHtml(t.nid)}</span></div>
   <div><span class="lbl">${isBn ? 'অবস্থা' : 'Status'}</span><span class="val"><b style="color:${t.status === 'active' ? '#10b981' : t.status === 'inactive' ? '#ef4444' : '#f59e0b'}">${t.status === 'active' ? (isBn ? 'সক্রিয়' : 'Active') : t.status === 'inactive' ? (isBn ? 'নিষ্ক্রিয়' : 'Inactive') : isBn ? 'ছুটিতে' : 'On Leave'}</b></span></div>
 </div>
 <div style="margin-top:10px;padding-top:8px;border-top:1px solid #e5e7eb">
   <div style="font-size:11px;font-weight:600;margin-bottom:6px">${isBn ? 'অভিভাবক তথ্য' : 'Parent/Guardian Info'}</div>
   <div class="info">
-    <div><span class="lbl">${isBn ? 'পিতার নাম' : 'Father'}</span><span class="val">${t.fatherNameEn}</span></div>
-    <div><span class="lbl">${isBn ? 'পিতার মোবাইল' : 'Father Phone'}</span><span class="val">${t.fatherPhone}</span></div>
-    <div><span class="lbl">${isBn ? 'মাতার নাম' : 'Mother'}</span><span class="val">${t.motherNameEn}</span></div>
-    <div><span class="lbl">${isBn ? 'মাতার মোবাইল' : 'Mother Phone'}</span><span class="val">${t.motherPhone}</span></div>
+    <div><span class="lbl">${isBn ? 'পিতার নাম' : 'Father'}</span><span class="val">${escapeHtml(t.fatherNameEn)}</span></div>
+    <div><span class="lbl">${isBn ? 'পিতার মোবাইল' : 'Father Phone'}</span><span class="val">${escapeHtml(t.fatherPhone)}</span></div>
+    <div><span class="lbl">${isBn ? 'মাতার নাম' : 'Mother'}</span><span class="val">${escapeHtml(t.motherNameEn)}</span></div>
+    <div><span class="lbl">${isBn ? 'মাতার মোবাইল' : 'Mother Phone'}</span><span class="val">${escapeHtml(t.motherPhone)}</span></div>
   </div>
 </div>
-<div class="ftr"><span>${brand.schoolName}</span><div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div>`
+<div class="ftr"><span>${escapeHtml(brand.schoolName)}</span><div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div>`
       openPrintWindow(t.nameEn, html, {
         css: `@page{size:A4 portrait;margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:12px;padding-bottom:7px;border-bottom:2px solid ${brand.brandColor};margin-bottom:12px}.ttl{text-align:center;font-size:14px;font-weight:700;margin:10px 0 4px}.sub{text-align:center;font-size:10px;color:#666;margin-bottom:12px}.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:12px}.info div{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0}.info .lbl{font-size:10px;color:#888;width:100px;flex-shrink:0}.info .val{font-size:11px;font-weight:500;color:#1a1a1a}.ftr{margin-top:14px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`,
       })
@@ -325,6 +326,7 @@ ${photoHtml}
                 {statusBadge(viewT.status)}
                 <button
                   onClick={() => setViewT(null)}
+                  aria-label={isBn ? 'বন্ধ করুন' : 'Close'}
                   className="w-7 h-7 rounded-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center"
                 >
                   <X size={14} className="text-[var(--text-secondary)]" />
@@ -335,7 +337,7 @@ ${photoHtml}
               <div className="flex gap-[0.875rem] mb-[0.875rem]">
                 <div className="w-[5rem] h-[5.9375rem] rounded-lg border border-[var(--border)] overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center shrink-0">
                   {viewT.photo ? (
-                    <img src={viewT.photo} alt="" className="w-full h-full object-cover" />
+                     <img src={viewT.photo} alt={viewT.nameEn || 'Teacher'} className="w-full h-full object-cover" />
                   ) : (
                     <User size={28} className="text-[var(--text-muted)]" />
                   )}
@@ -406,7 +408,7 @@ ${photoHtml}
                   >
                     <span className="text-[0.6875rem] text-[var(--text-muted)] w-[7.5rem] shrink-0">{l}</span>
                     {String(l) === (isBn ? 'সিগনেচার' : 'Signature') ? (
-                      <img src={v as string} alt="" className="h-[2.5rem] max-w-[10rem] object-contain" />
+                       <img src={v as string} alt={isBn ? 'সিগনেচার' : 'Signature'} className="h-[2.5rem] max-w-[10rem] object-contain" />
                     ) : (
                       <span className="text-xs font-medium text-[var(--text-primary)]">{v as string}</span>
                     )}
@@ -534,7 +536,7 @@ ${photoHtml}
                   className="flex-1 min-w-0 border-none bg-transparent outline-none text-[0.8125rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] placeholder:text-[0.75rem] truncate"
                 />
                 {search && (
-                  <button onClick={() => setSearch('')} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)] flex">
+                  <button onClick={() => setSearch('')} aria-label={isBn ? 'পরিষ্কার করুন' : 'Clear search'} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)] flex">
                     <X size={12} />
                   </button>
                 )}
@@ -795,7 +797,7 @@ ${photoHtml}
                     <td className="p-2" style={sc('72px')}>
                       <div className="w-[1.875rem] h-[2.25rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
                         {t.photo ? (
-                          <img src={t.photo} alt="" className="w-full h-full object-cover" />
+                           <img src={t.photo} alt={t.nameEn || 'Teacher'} className="w-full h-full object-cover" />
                         ) : (
                           <User size={13} className="text-[var(--text-muted)]" />
                         )}

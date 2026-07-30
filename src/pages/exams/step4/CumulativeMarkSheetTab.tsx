@@ -248,7 +248,7 @@ export const CumulativeMarkSheetTab = React.memo(function CumulativeMarkSheetTab
                   </div>
                 </div>
                 <div className="w-14 h-[4.5rem] rounded flex items-center justify-center flex-shrink-0 border border-dashed" style={{ borderColor: `${brand}30`, background: `${brand}06` }}>
-                  {admission?.photo ? <img src={admission.photo} alt="" className="w-14 h-[4.5rem] rounded object-cover" /> : <span className="text-[0.55rem] text-[var(--text-muted)] text-center">Photo</span>}
+                   {admission?.photo ? <img src={admission.photo} alt={student.student.nameEn || 'Student'} className="w-14 h-[4.5rem] rounded object-cover" /> : <span className="text-[0.55rem] text-[var(--text-muted)] text-center">Photo</span>}
                 </div>
               </div>
             </div>

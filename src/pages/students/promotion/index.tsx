@@ -406,7 +406,7 @@ export default function ClassPromotionPage() {
                       <td className="p-[0.375rem]">
                         <div className="w-[1.75rem] h-[2.125rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
                           {s.photo ? (
-                            <img src={s.photo} alt="" className="w-full h-full object-cover" />
+                             <img src={s.photo} alt={s.nameEn || 'Student'} className="w-full h-full object-cover" />
                           ) : (
                             <User size={12} className="text-[var(--text-muted)]" />
                           )}

@@ -47,6 +47,7 @@ export const PersonDetailModal = React.memo(function PersonDetailModal({
           </div>
           <button
             onClick={() => setViewPerson(null)}
+            aria-label={isBn ? 'বন্ধ করুন' : 'Close'}
             className="w-7 h-7 rounded-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center"
           >
             <X size={14} className="text-[var(--text-secondary)]" />

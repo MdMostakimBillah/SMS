@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
-import { authApi, setAuthToken, getAuthToken, ApiError } from '@/lib/api'
-import { validateAdminCredentials, createSuperAdminToken, createSuperAdminUser } from '@/lib/adminAuth'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
+import { authApi, setAuthToken, ApiError } from '@/lib/api'
+import { createSuperAdminToken, createSuperAdminUser } from '@/lib/adminAuth'
 
 interface User {
   id: string
@@ -27,18 +27,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-const SESSION_KEY = 'edutech_session_start'
-const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
 const ATTEMPTS_KEY = 'edutech_login_attempts'
 const LOCKOUT_KEY = 'edutech_lockout_until'
 const MAX_ATTEMPTS = 3
 const LOCKOUT_DURATION = 5 * 60 * 1000 // 5 minutes
-
-function isSessionValid(): boolean {
-  const start = localStorage.getItem(SESSION_KEY)
-  if (!start) return false
-  return Date.now() - Number(start) < SESSION_DURATION
-}
 
 function getAttempts(): number {
   return Number(localStorage.getItem(ATTEMPTS_KEY) || '0')
@@ -72,11 +64,13 @@ function clearLoginAttempts(): void {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(getAuthToken())
+  const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isLockedOut, setIsLockedOut] = useState(isCurrentlyLockedOut)
   const [lockoutRemaining, setLockoutRemaining] = useState(getLockoutRemaining)
+  const loginTimestampRef = useRef<number | null>(null)
+  const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
 
   // Lockout countdown timer
   useEffect(() => {
@@ -100,52 +94,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthToken(null)
     setToken(null)
     setUser(null)
-    localStorage.removeItem(SESSION_KEY)
-    localStorage.removeItem('edutech_login_email')
+    loginTimestampRef.current = null
   }, [])
 
+  // Token lives in memory only — no localStorage persistence
+  // On page reload, user must re-login (acceptable for admin panel)
   useEffect(() => {
-    const storedToken = getAuthToken()
-    if (storedToken && isSessionValid()) {
-      try {
-        const payload = JSON.parse(atob(storedToken.split('.')[1]))
-        if (payload.exp * 1000 > Date.now()) {
-          setUser({
-            id: payload.userId,
-            email: '',
-            name: null,
-            role: payload.role,
-            schoolId: payload.schoolId,
-            schoolName: null,
-            avatar: null,
-          })
-          setToken(storedToken)
-        } else {
-          setAuthToken(null)
-          setToken(null)
-          localStorage.removeItem(SESSION_KEY)
-        }
-      } catch {
-        setAuthToken(null)
-        setToken(null)
-        localStorage.removeItem(SESSION_KEY)
-      }
-    } else if (storedToken) {
-      setAuthToken(null)
-      setToken(null)
-      localStorage.removeItem(SESSION_KEY)
-    }
     setLoading(false)
   }, [])
 
   // Auto-logout timer
   useEffect(() => {
-    if (!user) return
+    if (!user || !loginTimestampRef.current) return
 
-    const start = localStorage.getItem(SESSION_KEY)
-    if (!start) return
-
-    const elapsed = Date.now() - Number(start)
+    const elapsed = Date.now() - loginTimestampRef.current
     const remaining = SESSION_DURATION - elapsed
 
     if (remaining <= 0) {
@@ -158,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, remaining)
 
     return () => clearTimeout(timer)
-  }, [user, logout])
+  }, [user, logout, SESSION_DURATION])
 
   const login = useCallback(async (email: string, password: string) => {
     setError(null)
@@ -180,24 +142,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthToken(token)
         setToken(token)
         setUser(user)
-        localStorage.setItem(SESSION_KEY, String(Date.now()))
+        loginTimestampRef.current = Date.now()
         clearLoginAttempts()
         return
       }
     } catch {
-      // API not available, fall back to local check
-    }
-
-    // Fallback: check local credentials (localStorage overrides + .env defaults)
-    if (validateAdminCredentials(email, password)) {
-      const token = await createSuperAdminToken(password)
-      const user = createSuperAdminUser()
-      setAuthToken(token)
-      setToken(token)
-      setUser(user)
-      localStorage.setItem(SESSION_KEY, String(Date.now()))
-      clearLoginAttempts()
-      return
+      // API not available
     }
 
     // Try regular API login
@@ -206,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthToken(res.token)
       setToken(res.token)
       setUser(res.user)
-      localStorage.setItem(SESSION_KEY, String(Date.now()))
+      loginTimestampRef.current = Date.now()
       clearLoginAttempts()
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : 'Invalid credentials'
@@ -230,7 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthToken(res.token)
       setToken(res.token)
       setUser(res.user)
-      localStorage.setItem(SESSION_KEY, String(Date.now()))
+      loginTimestampRef.current = Date.now()
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : 'Registration failed'
       setError(msg)

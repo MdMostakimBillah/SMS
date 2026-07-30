@@ -72,7 +72,7 @@ export function RecordingsTab({ filterClassId, filterSectionId, filterSubjectId,
             {/* Thumbnail */}
             <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
               {item.thumbnailUrl || getThumbnail(item.url) ? (
-                <img src={item.thumbnailUrl || getThumbnail(item.url)} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                 <img src={item.thumbnailUrl || getThumbnail(item.url)} alt={item.title || 'Thumbnail'} className="absolute inset-0 w-full h-full object-cover" />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${platformColors[item.platform]}20, ${platformColors[item.platform]}08)` }}>
                   <Play size={40} className="text-[var(--text-muted)]" />

@@ -386,7 +386,7 @@ export const HROverviewTab = React.memo(function HROverviewTab({
                     style={{ background: t.photo ? 'transparent' : getAvatarGradient(t.id) }}
                   >
                     {t.photo ? (
-                      <img src={t.photo} alt="" className="w-full h-full object-cover" />
+                       <img src={t.photo} alt={t.nameEn || 'Teacher'} className="w-full h-full object-cover" />
                     ) : (
                       getInitials(t.nameEn)
                     )}
@@ -472,7 +472,7 @@ export const HROverviewTab = React.memo(function HROverviewTab({
                           style={{ background: t.photo ? 'transparent' : getAvatarGradient(t.id) }}
                         >
                           {t.photo ? (
-                            <img src={t.photo} alt="" className="w-full h-full object-cover" />
+                             <img src={t.photo} alt={t.nameEn || 'Teacher'} className="w-full h-full object-cover" />
                           ) : (
                             getInitials(t.nameEn)
                           )}

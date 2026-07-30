@@ -704,7 +704,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                             <td className="px-2 py-2">
                               <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden flex items-center justify-center flex-shrink-0">
                                 {group.photo ? (
-                                  <img src={group.photo} alt="" className="w-full h-full object-cover" />
+                                   <img src={group.photo} alt={group.studentName || 'Student'} className="w-full h-full object-cover" />
                                 ) : (
                                   <span className="text-[11px] font-bold text-[var(--brand)]">{group.studentName.charAt(0).toUpperCase()}</span>
                                 )}

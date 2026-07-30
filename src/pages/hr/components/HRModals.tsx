@@ -148,6 +148,7 @@ export default function HRModals({
               </h2>
               <button
                 onClick={() => setModalType(null)}
+                aria-label={isBn ? 'বন্ধ করুন' : 'Close'}
                 className="p-[0.375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer text-[var(--text-muted)] flex"
               >
                 <X size={16} />
@@ -466,6 +467,7 @@ export default function HRModals({
                   setFacModalType(null)
                   setEditFac(null)
                 }}
+                aria-label={isBn ? 'বন্ধ করুন' : 'Close'}
                 className="p-[0.375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer text-[var(--text-muted)] flex"
               >
                 <X size={16} />
@@ -548,6 +550,7 @@ export default function HRModals({
                   setFacModalType(null)
                   setEditAssign(null)
                 }}
+                aria-label={isBn ? 'বন্ধ করুন' : 'Close'}
                 className="p-[0.375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] cursor-pointer text-[var(--text-muted)] flex"
               >
                 <X size={16} />

@@ -282,7 +282,7 @@ export default function GeneralAdmission() {
           </div>
           <div className="bg-[var(--bg-secondary)] rounded-[0.5rem] p-3">
             <div className="flex gap-4">
-              {form.photo && <img src={form.photo} alt="" className="w-[4.5rem] h-[5.625rem] rounded-[0.5rem] object-cover border border-[var(--border)]" />}
+              {form.photo && <img src={form.photo} alt={isBn ? 'ছবি' : 'Photo'} className="w-[4.5rem] h-[5.625rem] rounded-[0.5rem] object-cover border border-[var(--border)]" />}
               <div className="flex-1">
                 <SummaryRow labelBn="নাম (EN)" labelEn="Name (EN)" value={form.nameEn} isBn={isBn} />
                 <SummaryRow labelBn="নাম (BN)" labelEn="Name (BN)" value={form.nameBn} isBn={isBn} />
@@ -412,7 +412,7 @@ export default function GeneralAdmission() {
             <div>
               <div className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem]">{isBn ? 'ছবি (সর্বোচ্চ ২ MB)' : 'Photo (max 2MB)'}</div>
               <div onClick={() => fileRef.current?.click()} className="w-[5.625rem] h-[6.875rem] rounded-[0.625rem] flex items-center justify-center cursor-pointer overflow-hidden bg-[var(--bg-secondary)] relative" style={{ border: `2px dashed ${form.photo ? 'var(--brand)' : 'var(--border-2)'}` }}>
-                {form.photo ? <img src={form.photo} alt="" className="w-full h-full object-cover" /> : <div className="text-center text-[var(--text-muted)] pointer-events-none"><Camera size={22} className="block mx-auto mb-1" /><div className="text-[0.625rem]">{isBn ? 'ছবি' : 'Photo'}</div></div>}
+                {form.photo ? <img src={form.photo} alt={isBn ? 'ছবি' : 'Photo'} className="w-full h-full object-cover" /> : <div className="text-center text-[var(--text-muted)] pointer-events-none"><Camera size={22} className="block mx-auto mb-1" /><div className="text-[0.625rem]">{isBn ? 'ছবি' : 'Photo'}</div></div>}
                 {form.photo && <button type="button" onClick={(e) => { e.stopPropagation(); set('photo', '') }} className="absolute top-[0.1875rem] right-[0.1875rem] w-[1.125rem] h-[1.125rem] rounded-full bg-[var(--red)] border-none cursor-pointer flex items-center justify-center text-white"><X size={10} /></button>}
               </div>
               <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} className="hidden" />

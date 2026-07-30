@@ -1365,7 +1365,7 @@ export default function Step4Results() {
                     placeholder={isBn ? 'নাম বা আইডি দিয়ে খুঁজুন...' : 'Search by name or ID...'}
                   />
                   {extraForm.studentSearch && (
-                    <button onClick={() => setExtraForm((p) => ({ ...p, studentSearch: '', studentId: '' }))} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', width: '1.25rem', height: '1.25rem', borderRadius: '50%', background: 'var(--border)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <button onClick={() => setExtraForm((p) => ({ ...p, studentSearch: '', studentId: '' }))} aria-label={isBn ? 'পরিষ্কার করুন' : 'Clear search'} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', width: '1.25rem', height: '1.25rem', borderRadius: '50%', background: 'var(--border)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <X size={10} style={{ color: 'var(--text-primary)' }} />
                     </button>
                   )}

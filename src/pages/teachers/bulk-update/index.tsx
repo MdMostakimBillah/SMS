@@ -480,7 +480,7 @@ export default function TeacherBulkUpdatePage() {
                     <td className="py-[0.4375rem] px-[0.5rem]">
                       <div className="w-[2rem] h-[2.375rem] rounded-[0.375rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
                         {t.photo ? (
-                          <img src={t.photo} alt="" className="w-full h-full object-cover" />
+                           <img src={t.photo} alt={t.nameEn || 'Teacher'} className="w-full h-full object-cover" />
                         ) : (
                           <span className="text-[0.625rem] text-[var(--text-muted)]">
                             {t.nameEn

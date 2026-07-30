@@ -60,7 +60,7 @@ export function LiveNowTab({ filterClassId, filterSectionId, filterSubjectId, se
             {/* Thumbnail — clickable to play */}
             <div className="relative w-full cursor-pointer" style={{ paddingBottom: '56.25%' }} onClick={() => onPlay(item)}>
               {item.thumbnailUrl || getThumbnail(item.url) ? (
-                <img src={item.thumbnailUrl || getThumbnail(item.url)} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                 <img src={item.thumbnailUrl || getThumbnail(item.url)} alt={item.title || 'Thumbnail'} className="absolute inset-0 w-full h-full object-cover" />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${platformColors[item.platform]}30, ${platformColors[item.platform]}10)` }}>
                   <Play size={48} className="text-white/70" />

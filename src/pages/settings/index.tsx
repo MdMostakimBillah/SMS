@@ -4,7 +4,6 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
-import { getAdminCredentials } from '@/lib/adminAuth'
 import { authApi } from '@/lib/api'
 
 export default function Page() {
@@ -32,25 +31,18 @@ export default function Page() {
 }
 
 function SettingsContent({ isBn }: { isBn: boolean }) {
-  const creds = getAdminCredentials()
-
-  const [email, setEmail] = useState(creds.email)
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
-  const [apiAvailable, setApiAvailable] = useState(true)
 
   useEffect(() => {
-    // Try to load from API
     authApi.getSuperAdmin()
-      .then((data) => {
-        setEmail(data.email)
-        setApiAvailable(true)
-      })
-      .catch(() => setApiAvailable(false))
-  }, [])
+      .then((data) => setEmail(data.email))
+      .catch(() => setError(isBn ? 'সার্ভার থেকে তথ্য আনতে ব্যর্থ' : 'Failed to load from server'))
+  }, [isBn])
 
   const handleSave = async () => {
     if (!email) {
@@ -66,25 +58,16 @@ function SettingsContent({ isBn }: { isBn: boolean }) {
     setError('')
 
     try {
-      if (apiAvailable) {
-        // Save to database via API
-        const update: { email?: string; password?: string } = {}
-        if (email !== creds.email) update.email = email
-        if (password) update.password = password
-        if (Object.keys(update).length > 0) {
-          await authApi.updateSuperAdmin(update)
-        }
-      } else {
-        // Fallback to localStorage
-        const stored = { email, password: password || creds.password }
-        localStorage.setItem('edutech_admin_credentials', JSON.stringify(stored))
+      const update: { email?: string; password?: string } = {}
+      if (password) update.password = password
+      if (Object.keys(update).length > 0) {
+        await authApi.updateSuperAdmin(update)
       }
-
       setSaved(true)
       setPassword('')
       setTimeout(() => setSaved(false), 2000)
-    } catch (err) {
-      setError(isBn ? 'সংরক্ষণ ব্যর্থ' : 'Save failed')
+    } catch {
+      setError(isBn ? 'সংরক্ষণ ব্যর্থ — সার্ভারে সংযোগ করুন' : 'Save failed — connect to server')
     } finally {
       setSaving(false)
     }
@@ -101,9 +84,7 @@ function SettingsContent({ isBn }: { isBn: boolean }) {
             {isBn ? 'সেটিংস' : 'Settings'}
           </h1>
           <p className="text-[0.75rem] text-[var(--text-muted)]">
-            {apiAvailable
-              ? (isBn ? 'ডাটাবেজে সংরক্ষিত' : 'Saved to database')
-              : (isBn ? 'ব্রাউজারে সংরক্ষিত' : 'Saved to browser')}
+            {isBn ? 'ডাটাবেজে সংরক্ষিত' : 'Saved to database'}
           </p>
         </div>
       </div>
@@ -117,11 +98,6 @@ function SettingsContent({ isBn }: { isBn: boolean }) {
             <h2 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'ইমেইল ও পাসওয়ার্ড' : 'Email & Password'}</h2>
             <p className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'লগইন তথ্য পরিবর্তন করুন' : 'Change login credentials'}</p>
           </div>
-          {!apiAvailable && (
-            <span className="ml-auto px-2 py-1 rounded text-[0.625rem] font-medium bg-[var(--amber)]/10 text-[var(--amber)]">
-              {isBn ? 'অফলাইন' : 'Offline'}
-            </span>
-          )}
         </div>
         <div className="p-5 space-y-4">
           {/* Email */}

@@ -122,7 +122,7 @@ function PersonSearchInput({ value, onChange, placeholder, isBn: lang, people }:
             >
               <div className="w-7 h-7 rounded-lg overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] shrink-0 flex items-center justify-center">
                 {p.photo ? (
-                  <img src={p.photo} alt="" className="w-full h-full object-cover" />
+                   <img src={p.photo} alt={p.name || 'Person'} className="w-full h-full object-cover" />
                 ) : p.type === 'staff' ? (
                   <User size={11} className="text-[var(--text-muted)]" />
                 ) : (

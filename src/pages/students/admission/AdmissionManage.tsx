@@ -502,6 +502,7 @@ const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave
           </div>
           <button
             onClick={onClose}
+            aria-label={isBn ? 'বন্ধ করুন' : 'Close'}
             style={{
               width: '1.875rem',
               height: '1.875rem',
@@ -753,6 +754,7 @@ const ViewModal = React.memo(function ViewModal({
             </span>
             <button
               onClick={onClose}
+              aria-label={isBn ? 'বন্ধ করুন' : 'Close'}
               style={{
                 width: '1.875rem',
                 height: '1.875rem',
@@ -786,7 +788,7 @@ const ViewModal = React.memo(function ViewModal({
               }}
             >
               {student.photo ? (
-                <img src={student.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={student.photo} alt={student.nameEn || 'Student'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <User size={28} style={{ color: 'var(--text-muted)' }} />
               )}
@@ -1635,7 +1637,7 @@ export default function AdmissionManage() {
                         }}
                       >
                         {s.photo ? (
-                          <img src={s.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                           <img src={s.photo} alt={s.nameEn || 'Student'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
                           <User size={13} style={{ color: 'var(--text-muted)' }} />
                         )}

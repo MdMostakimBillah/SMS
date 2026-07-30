@@ -680,12 +680,12 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             {/* Photo with hover zoom */}
             <div className="relative group flex-shrink-0">
               <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden flex items-center justify-center cursor-pointer">
-                {selectedStudent.photo ? <img src={selectedStudent.photo} alt="" className="w-full h-full object-cover" /> : <span className="text-[12px] font-bold text-[var(--brand)]">{initials(selectedStudent.nameEn)}</span>}
+                {selectedStudent.photo ? <img src={selectedStudent.photo} alt={selectedStudent.nameEn || 'Student'} className="w-full h-full object-cover" /> : <span className="text-[12px] font-bold text-[var(--brand)]">{initials(selectedStudent.nameEn)}</span>}
               </div>
               {selectedStudent.photo && (
                 <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 pointer-events-none">
                   <div className="w-[180px] h-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_30px_rgba(0,0,0,0.25)] overflow-hidden">
-                    <img src={selectedStudent.photo} alt="" className="w-full h-full object-cover" />
+                     <img src={selectedStudent.photo} alt={selectedStudent.nameEn || 'Student'} className="w-full h-full object-cover" />
                   </div>
                 </div>
               )}
@@ -723,7 +723,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   <button key={s.id} data-index={i} onClick={() => selectStudent(s.id)} onMouseEnter={() => setHighlightedIndex(i)}
                     className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left border-0 border-b border-[var(--border)] last:border-b-0 cursor-pointer transition-colors ${i === highlightedIndex ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--brand-light)]'}`}>
                     <div className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-muted)] flex items-center justify-center text-[10px] font-bold flex-shrink-0 overflow-hidden">
-                      {s.photo ? <img src={s.photo} alt="" className="w-full h-full object-cover" /> : initials(s.nameEn)}
+                       {s.photo ? <img src={s.photo} alt={s.nameEn || 'Student'} className="w-full h-full object-cover" /> : initials(s.nameEn)}
                     </div>
                     <div className="min-w-0">
                       <p className="text-[13px] font-semibold text-[var(--text-primary)]">{s.nameEn}</p>
@@ -913,7 +913,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   {/* Student Copy */}
                   <div className="flex-1 border-r border-dashed border-[var(--border)] pr-5">
                     <div className="flex items-center gap-3 pb-2 mb-2 border-b-2 border-[var(--brand)]">
-                      {institution?.logo ? <img src={institution.logo} alt="" className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-[14px] font-bold">ET</div>}
+                       {institution?.logo ? <img src={institution.logo} alt={institution?.name || 'School logo'} className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-[14px] font-bold">ET</div>}
                       <div className="text-center flex-1">
                         <div className="text-[13px] font-bold text-[var(--brand)]">{institution?.name || 'EduTech'}</div>
                         <div className="text-[9px] text-[var(--text-muted)]">{institution?.address}</div>
@@ -964,7 +964,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   {/* Institute Copy */}
                   <div className="flex-1 pl-5">
                     <div className="flex items-center gap-3 pb-2 mb-2 border-b-2 border-[var(--brand)]">
-                      {institution?.logo ? <img src={institution.logo} alt="" className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-[14px] font-bold">ET</div>}
+                       {institution?.logo ? <img src={institution.logo} alt={institution?.name || 'School logo'} className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-[14px] font-bold">ET</div>}
                       <div className="text-center flex-1">
                         <div className="text-[13px] font-bold text-[var(--brand)]">{institution?.name || 'EduTech'}</div>
                         <div className="text-[9px] text-[var(--text-muted)]">{institution?.address}</div>

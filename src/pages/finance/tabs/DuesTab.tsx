@@ -703,7 +703,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         </div>
       ) : (
         <div className="border border-[var(--border)] rounded-xl overflow-auto max-h-[400px] bg-[var(--bg-primary)]">
-          <table className="w-full text-[12.5px]">
+          <table className="w-full text-[12.5px]" style={{ tableLayout: 'fixed' }}>
             <thead>
               <tr className="bg-[var(--bg-secondary)]">
                 <th className="text-center px-2 py-2 w-[36px] sticky left-0 bg-[var(--bg-secondary)] z-20">
@@ -717,12 +717,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ক্রমিক' : 'S/N'}</th>
                 <th className="w-10 px-2 py-2"></th>
                 <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky left-[36px] bg-[var(--bg-secondary)] z-20">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'রোল' : 'Roll'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'শ্রেণি' : 'Class'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ফি' : 'Fee'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ধরন' : 'Type'}</th>
-                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold" style={{ width: '5%' }}>{bn ? 'রোল' : 'Roll'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold" style={{ width: '7%' }}>{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold" style={{ width: '6%' }}>{bn ? 'শ্রেণি' : 'Class'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold" style={{ width: '12%' }}>{bn ? 'ফি' : 'Fee'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold" style={{ width: '5%' }}>{bn ? 'ধরন' : 'Type'}</th>
+                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold" style={{ width: '10%' }}>{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
                 {showMonthPicker && sortedMonths.map((m) => (
                   <th key={m} className="text-center px-2 py-2 text-[10px] uppercase font-bold sticky top-0 z-10" style={{ background: 'var(--bg-secondary)', color: 'var(--brand)', minWidth: '70px' }}>
                     {bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}
@@ -752,7 +752,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2">
                       <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden flex items-center justify-center flex-shrink-0">
                         {row.photo ? (
-                          <img src={row.photo} alt="" className="w-full h-full object-cover" />
+                           <img src={row.photo} alt={row.studentName || 'Student'} className="w-full h-full object-cover" />
                         ) : (
                           <span className="text-[11px] font-bold text-[var(--brand)]">{(row.studentName || '?').charAt(0).toUpperCase()}</span>
                         )}
@@ -811,8 +811,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
               <tfoot>
                 <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold sticky bottom-0 z-10">
                   <td className="px-2 py-2 sticky left-0 bg-[var(--bg-secondary)] z-10" />
-                  <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--text-primary)]">{bn ? 'মোট' : 'Total'}</td>
                   <td className="px-2 py-2" />
+                  <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--text-primary)]">{bn ? 'মোট' : 'Total'}</td>
                   <td className="px-2 py-2" />
                   <td className="px-2 py-2" />
                   <td className="px-2 py-2" />

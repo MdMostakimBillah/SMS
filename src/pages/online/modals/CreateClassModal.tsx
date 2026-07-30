@@ -88,7 +88,7 @@ export function CreateClassModal({ open, onClose, editItem }: Props) {
           <h3 className="text-base font-semibold text-[var(--text-primary)]">
             {editItem ? (isBn ? 'আপডেট করুন' : 'Update') : (isBn ? 'নতুন অনলাইন ক্লাস' : 'New Online Class')}
           </h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+          <button onClick={onClose} aria-label={isBn ? 'বন্ধ করুন' : 'Close'} className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
             <X size={16} />
           </button>
         </div>
@@ -119,7 +119,7 @@ export function CreateClassModal({ open, onClose, editItem }: Props) {
             )}
             {form.url && getThumbnail(form.url) && (
               <div className="mt-2 rounded-lg overflow-hidden border border-[var(--border)]">
-                <img src={getThumbnail(form.url)} alt="" className="w-full h-auto object-cover" style={{ maxHeight: '12rem' }} />
+                 <img src={getThumbnail(form.url)} alt={form.title || 'Thumbnail'} className="w-full h-auto object-cover" style={{ maxHeight: '12rem' }} />
               </div>
             )}
           </div>

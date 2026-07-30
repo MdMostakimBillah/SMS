@@ -212,7 +212,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
                           className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors cursor-pointer border-none ${idx === highlightedIdx ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--bg-secondary)]'}`}
                         >
                           <div className="w-8 h-8 rounded-lg overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] shrink-0 flex items-center justify-center">
-                            {p.photo ? <img src={p.photo} alt="" className="w-full h-full object-cover" />
+                             {p.photo ? <img src={p.photo} alt={p.nameEn || 'Person'} className="w-full h-full object-cover" />
                               : p.type === 'staff' ? <User size={12} className="text-[var(--text-muted)]" />
                                 : <GraduationCap size={12} className="text-[var(--text-muted)]" />}
                           </div>

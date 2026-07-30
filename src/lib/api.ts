@@ -1,14 +1,9 @@
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
-let authToken: string | null = localStorage.getItem('edutech_token')
+let authToken: string | null = null
 
 export function setAuthToken(token: string | null) {
   authToken = token
-  if (token) {
-    localStorage.setItem('edutech_token', token)
-  } else {
-    localStorage.removeItem('edutech_token')
-  }
 }
 
 export function getAuthToken(): string | null {

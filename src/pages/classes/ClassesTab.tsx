@@ -1052,7 +1052,7 @@ export default function ClassesTab({
                                         }}
                                       >
                                         {t.photo ? (
-                                          <img src={t.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                          <img src={t.photo} alt={t.nameEn || 'Teacher'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                         ) : (
                                           <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>
                                             {t.nameEn

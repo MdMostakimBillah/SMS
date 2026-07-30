@@ -1,11 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogIn, Eye, EyeOff, GraduationCap, Mail, Lock, Check, X, ShieldAlert, Clock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
-
-const EMAIL_KEY = 'edutech_login_email'
 
 interface PasswordRule {
   label: string
@@ -37,7 +35,7 @@ function getInitialTheme(): 'light' | 'dark' {
 export default function LoginPage() {
   const { login, error, clearError, isLockedOut, lockoutRemaining } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY) || '')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -45,10 +43,6 @@ export default function LoginPage() {
   const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme)
   const isDark = theme === 'dark'
   const setAppTheme = useAppStore((s) => s.setTheme)
-
-  useEffect(() => {
-    localStorage.setItem(EMAIL_KEY, email)
-  }, [email])
 
   const toggleTheme = () => {
     const next = isDark ? 'light' : 'dark'
@@ -94,6 +88,7 @@ export default function LoginPage() {
       {/* Theme toggle */}
       <button
         onClick={toggleTheme}
+        aria-label={isBn ? 'থিম পরিবর্তন' : 'Toggle theme'}
         className={`fixed top-4 right-4 z-50 w-9 h-9 flex items-center justify-center cursor-pointer border-none transition-colors ${
           isDark ? 'text-white/40 hover:text-white/70' : 'text-black/30 hover:text-black/60'
         }`}
@@ -190,7 +185,7 @@ export default function LoginPage() {
                 <X size={12} className="text-[var(--red)]" />
               </div>
               <span className="text-[0.8125rem] text-[var(--red)] flex-1">{error}</span>
-              <button onClick={clearError} className="text-[var(--red)]/60 hover:text-[var(--red)] cursor-pointer bg-transparent border-none">
+              <button onClick={clearError} aria-label={isBn ? 'বন্ধ করুন' : 'Close'} className="text-[var(--red)]/60 hover:text-[var(--red)] cursor-pointer bg-transparent border-none">
                 <X size={14} />
               </button>
             </div>
@@ -244,6 +239,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={isBn ? (showPassword ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখুন') : (showPassword ? 'Hide password' : 'Show password')}
                   className={`absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer bg-transparent border-none transition-colors ${isDark ? 'text-white/30 hover:text-white/60' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}

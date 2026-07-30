@@ -286,6 +286,7 @@ export default function AllStudentsPage() {
                 {statusBadge(viewSt.status, viewSt.active)}
                 <button
                   onClick={() => setViewSt(null)}
+                  aria-label={isBn ? 'বন্ধ করুন' : 'Close'}
                   className="w-7 h-7 rounded-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] cursor-pointer flex items-center justify-center"
                 >
                   <X size={14} className="text-[var(--text-secondary)]" />
@@ -296,7 +297,7 @@ export default function AllStudentsPage() {
               <div className="flex gap-[0.875rem] mb-[0.875rem]">
                 <div className="w-[5rem] h-[5.9375rem] rounded-lg border border-[var(--border)] overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center shrink-0">
                   {viewSt.photo ? (
-                    <img src={viewSt.photo} alt="" className="w-full h-full object-cover" />
+                    <img src={viewSt.photo} alt={viewSt.nameEn || 'Student'} className="w-full h-full object-cover" />
                   ) : (
                     <User size={28} className="text-[var(--text-muted)]" />
                   )}
@@ -460,7 +461,7 @@ export default function AllStudentsPage() {
                   className="flex-1 min-w-0 border-none bg-transparent outline-none text-[0.8125rem] text-[var(--text-primary)]"
                 />
                 {search && (
-                  <button onClick={() => setSearch('')} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)] flex">
+                  <button onClick={() => setSearch('')} aria-label={isBn ? 'পরিষ্কার করুন' : 'Clear search'} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)] flex">
                     <X size={12} />
                   </button>
                 )}
@@ -758,7 +759,7 @@ export default function AllStudentsPage() {
                     <td className="p-2" style={sc('72px')}>
                       <div className="w-[1.875rem] h-[2.25rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
                         {s.photo ? (
-                          <img src={s.photo} alt="" className="w-full h-full object-cover" />
+                          <img src={s.photo} alt={s.nameEn || 'Student'} className="w-full h-full object-cover" />
                         ) : (
                           <User size={13} className="text-[var(--text-muted)]" />
                         )}

@@ -333,7 +333,7 @@ export const StudentTab = React.memo(function StudentTab({
                   <td className="p-[0.375rem] text-center">
                     <div className="w-[1.875rem] h-[2.25rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto">
                       {s.photo ? (
-                        <img src={s.photo} alt="" className="w-full h-full object-cover" />
+                         <img src={s.photo} alt={s.nameEn || 'Student'} className="w-full h-full object-cover" />
                       ) : (
                         <User size={13} className="text-[var(--text-muted)]" />
                       )}

@@ -543,7 +543,7 @@ export default function BulkUpdatePage() {
                         style={{ borderColor: photoMap[s.id] ? opInfo.color : 'var(--border)' }}
                       >
                         {photoMap[s.id] || s.photo ? (
-                          <img src={photoMap[s.id] || s.photo} alt="" className="w-full h-full object-cover rounded-[0.3125rem]" />
+                           <img src={photoMap[s.id] || s.photo} alt={s.nameEn || 'Student'} className="w-full h-full object-cover rounded-[0.3125rem]" />
                         ) : (
                           <User size={14} className="text-[var(--text-muted)]" />
                         )}

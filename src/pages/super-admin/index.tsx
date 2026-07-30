@@ -1,14 +1,12 @@
-import { useState } from 'react'
 import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import {
-  Crown, Building2, Users, Mail, Lock, Eye, EyeOff,
-  CheckCircle, AlertTriangle, Plus, Database, CreditCard, MessageSquare, FileText, Globe,
+  Crown, Building2, Users, Mail, Lock,
+  CheckCircle, Plus, Database, CreditCard, MessageSquare, FileText, Globe,
   Bell,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCardReveal } from '@/hooks/useCardReveal'
-import { getAdminCredentials, isDefaultCredentials } from '@/lib/adminAuth'
 import { SUPER_ADMIN_ROUTES, SUPER_ADMIN_PATH_MAP, SUPER_ADMIN_REVERSE_MAP } from '@/lib/superAdminRoutes'
 import { Placeholder } from '@/components/shared/Placeholder'
 
@@ -73,13 +71,8 @@ export default function SuperAdminPage() {
               </div>
               <div className="flex-1">
                 <h1 className="text-[1.25rem] font-bold text-white">{isBn ? 'সুপার অ্যাডমিন' : 'Super Admin'}</h1>
-                <p className="text-[0.8125rem] text-white/60 mt-0.5">{getAdminCredentials().email}</p>
+                <p className="text-[0.8125rem] text-white/60 mt-0.5">{user?.email || 'admin'}</p>
               </div>
-              {isDefaultCredentials() && (
-                <span className="px-3 py-1.5 rounded-full text-[0.6875rem] font-semibold bg-amber-400/20 text-amber-300 backdrop-blur-sm">
-                  {isBn ? 'ডিফল্ট পাসওয়ার্ড' : 'Default Password'}
-                </span>
-              )}
             </div>
           </div>
 
@@ -116,9 +109,7 @@ export default function SuperAdminPage() {
 }
 
 function AccountSettings({ isBn }: { isBn: boolean }) {
-  const creds = getAdminCredentials()
-  const isDefault = isDefaultCredentials()
-  const [showPw, setShowPw] = useState(false)
+  const { user } = useAuth()
 
   return (
     <div className="max-w-xl mx-auto space-y-4">
@@ -129,7 +120,7 @@ function AccountSettings({ isBn }: { isBn: boolean }) {
           </div>
           <div>
             <h2 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'সুপার অ্যাডমিন ইমেইল' : 'Super Admin Email'}</h2>
-            <p className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? '.env ফাইল থেকে পড়া হচ্ছে' : 'Read from .env file'}</p>
+            <p className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'ডাটাবেজ থেকে পড়া হচ্ছে' : 'Read from database'}</p>
           </div>
         </div>
         <div className="p-5 space-y-4">
@@ -139,7 +130,7 @@ function AccountSettings({ isBn }: { isBn: boolean }) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-[0.6875rem] text-[var(--text-muted)] mb-0.5">{isBn ? 'ইমেইল' : 'Email'}</div>
-              <div className="text-[0.9375rem] font-semibold text-[var(--text-primary)] truncate">{creds.email}</div>
+              <div className="text-[0.9375rem] font-semibold text-[var(--text-primary)] truncate">{user?.email || 'admin'}</div>
             </div>
             <CheckCircle size={18} className="text-[var(--green)] shrink-0" />
           </div>
@@ -170,37 +161,14 @@ function AccountSettings({ isBn }: { isBn: boolean }) {
           </div>
         </div>
         <div className="p-5 space-y-4">
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#8b5cf615' }}>
-              <Lock size={16} className="text-[#8b5cf6]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[0.6875rem] text-[var(--text-muted)] mb-0.5">{isBn ? 'পাসওয়ার্ড' : 'Password'}</div>
-              <div className="text-[0.9375rem] font-semibold text-[var(--text-primary)] font-mono">
-                {showPw ? creds.password : '\u2022'.repeat(creds.password.length)}
-              </div>
-            </div>
-            <button onClick={() => setShowPw(!showPw)}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] cursor-pointer border-none bg-transparent transition-colors">
-              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-
-          {isDefault && (
-            <div className="px-4 py-3 rounded-xl bg-[var(--amber)]/8 border border-[var(--amber)]/20 flex items-center gap-2">
-              <AlertTriangle size={14} className="text-[var(--amber)] shrink-0" />
-              <div className="text-[0.75rem] text-[var(--amber)]">{isBn ? 'ডিফল্ট পাসওয়ার্ড ব্যবহার করছেন — নিরাপত্তার জন্য পরিবর্তন করুন' : 'Using default password — change for security'}</div>
-            </div>
-          )}
-
           <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/15">
             <div className="flex items-start gap-3">
               <FileText size={16} className="text-blue-500 shrink-0 mt-0.5" />
               <div className="text-[0.75rem] text-[var(--text-secondary)]">
                 {isBn ? (
-                  <>পাসওয়ার্ড পরিবর্তন করতে <code className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.6875rem] font-mono">.env</code> ফাইলে <code className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.6875rem] font-mono">VITE_SUPER_ADMIN_PASSWORD</code> আপডেট করুন এবং পুনর্নির্মাণ করুন।</>
+                  <>পাসওয়ার্ড পরিবর্তন করতে <code className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.6875rem] font-mono">সেটিংস</code> পৃষ্ঠায় যান।</>
                 ) : (
-                  <>To change password, update <code className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.6875rem] font-mono">VITE_SUPER_ADMIN_PASSWORD</code> in <code className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.6875rem] font-mono">.env</code> and rebuild.</>
+                  <>To change password, go to the <code className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.6875rem] font-mono">Settings</code> page.</>
                 )}
               </div>
             </div>

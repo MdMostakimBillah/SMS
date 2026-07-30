@@ -78,7 +78,7 @@ function IDCard({
             style={{ borderColor: t.primary }}
           >
             {student.photo ? (
-              <img src={student.photo} alt="" className="w-full h-full object-cover" />
+               <img src={student.photo} alt={student.nameEn || 'Student'} className="w-full h-full object-cover" />
             ) : (
               <User size={24} className="opacity-40" style={{ color: t.primary }} />
             )}

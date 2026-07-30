@@ -257,16 +257,18 @@ export default React.memo(function Topbar() {
       {!isMobile ? (
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-secondary)] relative shrink-0 transition-all duration-150 hover:bg-[var(--bg-secondary)]"
+          aria-label={sidebarCollapsed ? (isBn ? 'সাইডবার প্রসারিত করুন' : 'Expand sidebar') : (isBn ? 'সাইডবার সংকুচিত করুন' : 'Collapse sidebar')}
           title={sidebarCollapsed ? (isBn ? 'সাইডবার প্রসারিত করুন' : 'Expand sidebar') : (isBn ? 'সাইডবার সংকুচিত করুন' : 'Collapse sidebar')}
+          className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-secondary)] relative shrink-0 transition-all duration-150 hover:bg-[var(--bg-secondary)]"
         >
           {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
         </button>
       ) : (
         <button
           onClick={toggleSidebar}
-          className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-secondary)] relative shrink-0 transition-all duration-150 hover:bg-[var(--bg-secondary)]"
+          aria-label={isBn ? 'মেনু' : 'Menu'}
           title={isBn ? 'মেনু' : 'Menu'}
+          className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-secondary)] relative shrink-0 transition-all duration-150 hover:bg-[var(--bg-secondary)]"
         >
           <Menu size={16} />
         </button>
@@ -274,7 +276,7 @@ export default React.memo(function Topbar() {
 
       {/* Search */}
       {isMobile ? (
-        <button style={{ ...ICON_BTN, flexShrink: 0 }} onClick={() => setCommandPaletteOpen(true)}>
+        <button style={{ ...ICON_BTN, flexShrink: 0 }} aria-label={isBn ? 'অনুসন্ধান' : 'Search'} onClick={() => setCommandPaletteOpen(true)}>
           <Search size={16} />
         </button>
       ) : (
@@ -326,6 +328,7 @@ export default React.memo(function Topbar() {
         <div ref={notifRef} style={{ position: 'relative' }}>
           <button
             style={ICON_BTN}
+            aria-label={isBn ? 'নোটিফিকেশন' : 'Notifications'}
             onClick={() => {
               setNotifOpen(!notifOpen)
               setMsgOpen(false)
@@ -467,6 +470,7 @@ export default React.memo(function Topbar() {
         <div ref={msgRef} style={{ position: 'relative' }}>
           <button
             style={ICON_BTN}
+            aria-label={isBn ? 'বার্তা' : 'Messages'}
             onClick={() => {
               setMsgOpen(!msgOpen)
               setNotifOpen(false)
@@ -627,6 +631,7 @@ export default React.memo(function Topbar() {
         {!isMobile && (
           <button
             onClick={toggleFullscreen}
+            aria-label={isFullscreen ? (isBn ? 'ফুলস্ক্রিন বন্ধ' : 'Exit Fullscreen') : (isBn ? 'ফুলস্ক্রিন' : 'Fullscreen')}
             title={isFullscreen ? (isBn ? 'ফুলস্ক্রিন বন্ধ' : 'Exit Fullscreen') : (isBn ? 'ফুলস্ক্রিন' : 'Fullscreen')}
             style={{
               display: 'flex',

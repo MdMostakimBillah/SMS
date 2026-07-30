@@ -91,7 +91,7 @@ export function FeeCategoryModal({ feeType, onClose }: Props) {
               <p className="text-[0.65rem] text-[var(--text-muted)]">{filteredCategories.length} {bn ? 'টি ক্যাটাগরি' : 'categories'} • {feeType === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-Time')}</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] cursor-pointer">
+          <button onClick={onClose} aria-label={bn ? 'বন্ধ করুন' : 'Close'} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] cursor-pointer">
             <X size={14} />
           </button>
         </div>

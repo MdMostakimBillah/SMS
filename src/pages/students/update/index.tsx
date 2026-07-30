@@ -203,7 +203,7 @@ export default function UpdateStudentPage() {
                   className="flex-1 border-none bg-transparent outline-none text-[0.8125rem] text-[var(--text-primary)] font-[inherit]"
                 />
                 {search && (
-                  <button onClick={() => setSearch('')} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)] flex">
+                  <button onClick={() => setSearch('')} aria-label={isBn ? 'পরিষ্কার করুন' : 'Clear search'} className="border-none bg-transparent cursor-pointer text-[var(--text-muted)] flex">
                     <X size={12} />
                   </button>
                 )}
@@ -221,7 +221,7 @@ export default function UpdateStudentPage() {
                     >
                       <div className="w-[1.875rem] h-[2.1875rem] rounded-[0.3125rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center shrink-0">
                         {s.photo ? (
-                          <img src={s.photo} alt="" className="w-full h-full object-cover" />
+                           <img src={s.photo} alt={s.nameEn || 'Student'} className="w-full h-full object-cover" />
                         ) : (
                           <User size={13} className="text-[var(--text-muted)]" />
                         )}
@@ -246,7 +246,7 @@ export default function UpdateStudentPage() {
                 <div className="flex gap-2 items-center">
                   <div className="w-9 h-[2.75rem] rounded-md overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center shrink-0">
                     {form.photo ? (
-                      <img src={form.photo} alt="" className="w-full h-full object-cover" />
+                       <img src={form.photo} alt={form.nameEn || 'Student'} className="w-full h-full object-cover" />
                     ) : (
                       <User size={16} className="text-[var(--text-muted)]" />
                     )}
@@ -315,7 +315,7 @@ export default function UpdateStudentPage() {
                     style={{ borderColor: form.photo ? 'var(--brand)' : 'var(--border-2)' }}
                   >
                     {form.photo ? (
-                      <img src={form.photo} alt="" className="w-full h-full object-cover" />
+                                             <img src={form.photo} alt={isBn ? 'ছবি' : 'Photo'} className="w-full h-full object-cover" />
                     ) : (
                       <div className="text-center text-[var(--text-muted)]">
                         <Camera size={20} className="block mx-auto mb-[0.1875rem]" />
@@ -329,6 +329,7 @@ export default function UpdateStudentPage() {
                           e.stopPropagation()
                           set('photo', '')
                         }}
+                        aria-label={isBn ? 'ছবি সরান' : 'Remove photo'}
                         className="absolute top-0.5 right-0.5 w-[1.125rem] h-[1.125rem] rounded-full bg-[var(--red)] border-none cursor-pointer flex items-center justify-center text-white"
                       >
                         <X size={10} />

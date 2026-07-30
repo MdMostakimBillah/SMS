@@ -370,7 +370,7 @@ export default function EditTeacherPage() {
               className={`w-[5.625rem] h-[6.875rem] rounded-[0.625rem] border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden bg-[var(--bg-secondary)] relative ${photo ? 'border-[var(--brand)]' : 'border-[var(--border-2)]'}`}
             >
               {photo ? (
-                <img src={photo} alt="" className="w-full h-full object-cover" />
+                 <img src={photo} alt={isBn ? 'ছবি' : 'Photo'} className="w-full h-full object-cover" />
               ) : (
                 <div className="text-center text-[var(--text-muted)] pointer-events-none">
                   <Camera size={22} className="block mx-auto mb-1" />
@@ -562,7 +562,7 @@ export default function EditTeacherPage() {
               className={`w-[10rem] h-[3.5rem] rounded-[0.5rem] border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden bg-[var(--bg-secondary)] relative ${signature ? 'border-[var(--brand)]' : 'border-[var(--border-2)]'}`}
             >
               {signature ? (
-                <img src={signature} alt="" className="w-full h-full object-contain" />
+                 <img src={signature} alt={isBn ? 'সিগনেচার' : 'Signature'} className="w-full h-full object-contain" />
               ) : (
                 <div className="text-center text-[var(--text-muted)] pointer-events-none">
                   <div className="text-[0.625rem]">{isBn ? 'সিগনেচার' : 'Signature'}</div>
@@ -575,6 +575,7 @@ export default function EditTeacherPage() {
                     e.stopPropagation()
                     setSignature('')
                   }}
+                  aria-label={isBn ? 'সিগনেচার সরান' : 'Remove signature'}
                   className="absolute top-[0.1875rem] right-[0.1875rem] w-[1.125rem] h-[1.125rem] rounded-full bg-[var(--red)] border-0 cursor-pointer flex items-center justify-center text-white"
                 >
                   <X size={10} />
