@@ -870,25 +870,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
               })}
               {fStatus === 'paiddue' && showMonthPicker && sortedMonths.length > 0 && (
                 <>
-                  <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold">
-                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--amber)]">{bn ? 'মোট বকেয়' : 'Total Due'}</td>
-                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
-                    {sortedMonths.map((m) => (
-                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]" style={{ minWidth: '70px' }}>
-                        {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
-                      </td>
-                    ))}
-                    <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
-                  </tr>
-                  <tr className="border-t-2 border-[var(--green)] bg-[var(--bg-secondary)] font-bold">
+                  <tr className="border-t border-[var(--border)] bg-[var(--bg-secondary)] font-bold">
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
@@ -905,6 +887,24 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                       </td>
                     ))}
                     <td className="text-right px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]">{fmt(totalPaid)}</td>
+                  </tr>
+                  <tr className="border-t border-[var(--border)] bg-[var(--bg-secondary)] font-bold">
+                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
+                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
+                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
+                    <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--amber)]">{bn ? 'মোট বকেয়' : 'Total Due'}</td>
+                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
+                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
+                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
+                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
+                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
+                    <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
+                    {sortedMonths.map((m) => (
+                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]" style={{ minWidth: '70px' }}>
+                        {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
+                      </td>
+                    ))}
+                    <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
                   </tr>
                 </>
               )}
