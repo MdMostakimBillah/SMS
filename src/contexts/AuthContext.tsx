@@ -2,6 +2,9 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo, u
 import { authApi, setAuthToken, ApiError } from '@/lib/api'
 import { createSuperAdminToken, createSuperAdminUser } from '@/lib/adminAuth'
 
+const VITE_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL as string | undefined
+const VITE_PASSWORD = import.meta.env.VITE_SUPER_ADMIN_PASSWORD as string | undefined
+
 interface User {
   id: string
   email: string
@@ -133,9 +136,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    let apiReachable = false
+
     // Try API verification first (database credentials)
     try {
       const result = await authApi.verifySuperAdmin(email, password)
+      apiReachable = true
       if (result.valid) {
         const token = await createSuperAdminToken(password)
         const user = createSuperAdminUser()
@@ -146,31 +152,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearLoginAttempts()
         return
       }
-    } catch {
-      // API not available
+    } catch (err) {
+      // Distinguish network error from API error
+      if (err instanceof ApiError) apiReachable = true
     }
 
     // Try regular API login
     try {
       const res = await authApi.login(email, password)
+      apiReachable = true
       setAuthToken(res.token)
       setToken(res.token)
       setUser(res.user)
       loginTimestampRef.current = Date.now()
       clearLoginAttempts()
+      return
     } catch (err) {
-      const msg = err instanceof ApiError ? err.message : 'Invalid credentials'
-      recordFailedAttempt()
-      const attempts = getAttempts()
-      if (attempts >= MAX_ATTEMPTS) {
-        setIsLockedOut(true)
-        setLockoutRemaining(LOCKOUT_DURATION)
-        setError(`Too many failed attempts. Locked out for 5 minutes.`)
-      } else {
-        setError(`${msg}. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`)
+      if (err instanceof ApiError) apiReachable = true
+      // If API responded with a real error, don't try fallback
+      if (apiReachable) {
+        const msg = err instanceof ApiError ? err.message : 'Invalid credentials'
+        recordFailedAttempt()
+        const attempts = getAttempts()
+        if (attempts >= MAX_ATTEMPTS) {
+          setIsLockedOut(true)
+          setLockoutRemaining(LOCKOUT_DURATION)
+          setError(`Too many failed attempts. Locked out for 5 minutes.`)
+        } else {
+          setError(`${msg}. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`)
+        }
+        throw err
       }
-      throw err
     }
+
+    // Fallback: client-side credential check (only when API is completely unreachable)
+    if (!apiReachable && VITE_EMAIL && VITE_PASSWORD) {
+      if (email === VITE_EMAIL && password === VITE_PASSWORD) {
+        const token = await createSuperAdminToken(password)
+        const user = createSuperAdminUser()
+        setAuthToken(token)
+        setToken(token)
+        setUser(user)
+        loginTimestampRef.current = Date.now()
+        clearLoginAttempts()
+        return
+      }
+    }
+
+    // All checks failed
+    recordFailedAttempt()
+    const attempts = getAttempts()
+    if (attempts >= MAX_ATTEMPTS) {
+      setIsLockedOut(true)
+      setLockoutRemaining(LOCKOUT_DURATION)
+      setError(`Too many failed attempts. Locked out for 5 minutes.`)
+    } else {
+      setError(`Invalid credentials. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`)
+    }
+    throw new Error('Invalid credentials')
   }, [])
 
   const register = useCallback(async (email: string, password: string, name: string, role?: string) => {
