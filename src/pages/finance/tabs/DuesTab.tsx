@@ -764,14 +764,14 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '5%' }}>{bn ? 'ধরন' : 'Type'}</th>
                 <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '10%' }}>{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
                 {showMonthPicker && sortedMonths.map((m) => (
-                  <th key={m} className="text-center px-2 py-2 text-[10px] uppercase font-bold bg-[var(--bg-secondary)]" style={{ color: 'var(--brand)', minWidth: '70px' }}>
+                  <th key={m} className="text-center px-2 py-2 text-[10px] uppercase font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ color: 'var(--brand)', minWidth: '70px' }}>
                     {bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}
                   </th>
                 ))}
                 {!showMonthPicker && (
                   <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'বকেয়' : 'Due'}</th>
                 )}
-                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'মোট বকেয়' : 'Total Due'}</th>
+                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold whitespace-nowrap">{bn ? 'মোট বকেয়' : 'Total Due'}</th>
               </tr>
             </thead>
             <tbody>
@@ -874,7 +874,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--green)]">{bn ? 'মোট পরিশোধিত' : 'Total Paid'}</td>
+                    <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--green)] whitespace-nowrap">{bn ? 'মোট পরিশোধিত' : 'Total Paid'}</td>
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
@@ -892,7 +892,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--amber)]">{bn ? 'মোট বকেয়' : 'Total Due'}</td>
+                    <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--amber)] whitespace-nowrap">{bn ? 'মোট বকেয়' : 'Total Due'}</td>
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
