@@ -780,7 +780,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 const isChecked = selectedRows.has(rowKey)
                 return (
                   <tr key={`${rowKey}-${i}`} className={`border-t border-[var(--border)] transition-colors ${isChecked ? 'bg-[var(--brand-light)]/60' : 'hover:bg-[var(--brand-light)]/40'}`}>
-                    <td className="text-center px-2 py-2 sticky left-0 bg-[var(--bg-primary)] z-10" style={{ background: isChecked ? 'var(--brand-light)' : 'var(--bg-primary)' }}>
+                    <td className="text-center px-2 py-3 sticky left-0 bg-[var(--bg-primary)] z-10" style={{ background: isChecked ? 'var(--brand-light)' : 'var(--bg-primary)' }}>
                       <input
                         type="checkbox"
                         checked={isChecked}
@@ -788,8 +788,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                         className="w-3.5 h-3.5 accent-[var(--brand)] cursor-pointer"
                       />
                     </td>
-                    <td className="text-center px-2 py-2 text-[var(--text-secondary)] text-[12px]">{i + 1}</td>
-                    <td className="px-2 py-2">
+                    <td className="text-center px-2 py-3 text-[var(--text-secondary)] text-[12px]">{i + 1}</td>
+                    <td className="px-2 py-3">
                       <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden flex items-center justify-center flex-shrink-0">
                         {row.photo ? (
                            <img src={row.photo} alt={row.studentName || 'Student'} className="w-full h-full object-cover" />
@@ -798,16 +798,16 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-primary)] z-10" style={{ background: isChecked ? 'var(--brand-light)' : 'var(--bg-primary)' }}>
+                    <td className="px-3 py-3 sticky left-[36px] bg-[var(--bg-primary)] z-10" style={{ background: isChecked ? 'var(--brand-light)' : 'var(--bg-primary)' }}>
                       <p className="font-semibold text-[var(--text-primary)] text-[12px]">{bn ? row.studentNameBn || row.studentName : row.studentName}</p>
                     </td>
-                    <td className="text-center px-2 py-2 text-[var(--text-secondary)]">{row.roll}</td>
-                    <td className="text-center px-2 py-2 text-[var(--text-secondary)] text-[12px]">{row.studentId}</td>
-                    <td className="text-center px-2 py-2 text-[var(--text-secondary)]">{row.class}{row.section ? `-${row.section}` : ''}</td>
-                    <td className="text-center px-2 py-2">
+                    <td className="text-center px-2 py-3 text-[var(--text-secondary)]">{row.roll}</td>
+                    <td className="text-center px-2 py-3 text-[var(--text-secondary)] text-[12px]">{row.studentId}</td>
+                    <td className="text-center px-2 py-3 text-[var(--text-secondary)]">{row.class}{row.section ? `-${row.section}` : ''}</td>
+                    <td className="text-center px-2 py-3">
                       <span className="font-semibold text-[var(--text-primary)] text-[11px]">{bn ? row.feeNameBn : row.feeName}</span>
                     </td>
-                    <td className="text-center px-2 py-2">
+                    <td className="text-center px-2 py-3">
                       <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded" style={{
                         background: row.feeType === 'onetime' ? 'var(--amber-light)' : 'var(--brand-light)',
                         color: row.feeType === 'onetime' ? 'var(--amber)' : 'var(--brand)',
@@ -817,13 +817,13 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                           : (bn ? 'মাসিক' : 'Monthly')}
                       </span>
                     </td>
-                    <td className="text-right px-2 py-2 text-[var(--text-secondary)]">{fmt(row.totalAmount)}</td>
+                    <td className="text-right px-2 py-3 text-[var(--text-secondary)]">{fmt(row.totalAmount)}</td>
                     {showMonthPicker && sortedMonths.map((m) => {
                       const cell = row.months[m]
                       if (!cell) return <td key={m} className="text-center px-2 py-2 text-[var(--text-muted)]">—</td>
                       if (fStatus === 'paiddue') {
                         return (
-                          <td key={m} className="text-center px-2 py-2" style={{ minWidth: '70px' }}>
+                          <td key={m} className="text-center px-2 py-3" style={{ minWidth: '70px' }}>
                             {cell.paidAmount > 0 && <span className="font-bold text-[12px] text-[var(--green)]">{fmt(cell.paidAmount)}</span>}
                             {cell.paidAmount > 0 && cell.amount > 0 && <span className="text-[var(--text-muted)] text-[10px]"> / </span>}
                             {cell.amount > 0 && (
@@ -844,7 +844,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                         )
                       }
                       return (
-                        <td key={m} className="text-center px-2 py-2">
+                        <td key={m} className="text-center px-2 py-3">
                           {cell.paid ? (
                             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--green-light)]">
                               <CircleCheck size={14} className="text-[var(--green)]" />
@@ -862,9 +862,9 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                       )
                     })}
                     {!showMonthPicker && (
-                      <td className="text-center px-2 py-2 font-bold text-[var(--amber)]">{fmt(row.totalDue)}</td>
+                      <td className="text-center px-2 py-3 font-bold text-[var(--amber)]">{fmt(row.totalDue)}</td>
                     )}
-                    <td className="text-right px-2 py-2 font-semibold text-[var(--amber)]">{fmt(row.totalDue)}</td>
+                    <td className="text-right px-2 py-3 font-semibold text-[var(--amber)]">{fmt(row.totalDue)}</td>
                   </tr>
                 )
               })}
