@@ -1,8 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { CalendarDays, Download, Check } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
-import { useNavChain } from '@/hooks/useNavChain'
 import type { ClassSection, ClassInfo, InstitutionSettings } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
 import type { StudentAdmission } from '@/pages/students/admission/types'
@@ -50,8 +48,6 @@ export default function ClassesTab({
   isBn,
   isMobile,
 }: ClassesTabProps) {
-  const navigate = useNavigate()
-  const { pushToChain, setRedirectTimestamp } = useNavChain()
   const [expandedClass, setExpandedClass] = useState<string | null>(null)
   const [showAddClass, setShowAddClass] = useState(false)
   const [newClassName, setNewClassName] = useState('')

@@ -1,5 +1,3 @@
-import { logger } from '@/lib/logger'
-
 export function generateChallenge(): Uint8Array {
   const arr = new Uint8Array(32)
   crypto.getRandomValues(arr)
@@ -34,7 +32,7 @@ export async function registerWebAuthnDevice(options: {
   const challenge = generateChallenge()
   const credential = (await navigator.credentials.create({
     publicKey: {
-      challenge,
+      challenge: challenge.buffer as unknown as ArrayBuffer,
       rp: { name: 'EduTech Attendance', id: window.location.hostname },
       user: {
         id: new TextEncoder().encode(options.teacherId),

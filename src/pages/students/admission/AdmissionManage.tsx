@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
@@ -219,7 +219,7 @@ export default function AdmissionManage() {
     setDateTo('')
     setPage(1)
   }, [])
-  const hasFilter = search || fClass || fSection || fGender || fReligion || fStatus || fDate
+  const hasFilter = Boolean(search || fClass || fSection || fGender || fReligion || fStatus || fDate)
 
   return (
     <div>

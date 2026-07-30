@@ -1,4 +1,4 @@
-import React from 'react'
+
 import { User, Users, Eye, Edit2, Check, XCircle, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react'
 import { StatusBadge } from './StatusBadge'
 import type { StudentAdmission } from '../types'
