@@ -175,12 +175,17 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle }: {
 
 function MiniStat({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
-    <div className="p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-      <div className="flex items-center gap-1.5 mb-1.5" style={{ color }}>
+    <div className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)]">
+      <div
+        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+        style={{ background: `${color}18`, color }}
+      >
         {icon}
-        <span className="text-[0.625rem] font-medium text-[var(--text-muted)]">{label}</span>
       </div>
-      <div className="text-[0.8125rem] font-bold text-[var(--text-primary)] truncate">{value}</div>
+      <div className="min-w-0">
+        <div className="text-[0.9375rem] font-bold text-[var(--text-primary)] leading-tight truncate">{value}</div>
+        <div className="text-[0.6875rem] text-[var(--text-secondary)] whitespace-nowrap">{label}</div>
+      </div>
     </div>
   )
 }
