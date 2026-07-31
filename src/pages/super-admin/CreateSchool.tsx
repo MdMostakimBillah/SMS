@@ -676,7 +676,7 @@ function PackagePicker({ value, onChange, isBn }: { value: InstitutionPackage; o
             <div className="flex gap-3 text-[0.625rem] text-[var(--text-secondary)]">
               <span>{pkg.maxStudents} students</span>
               <span>{pkg.maxTeachers} teachers</span>
-              <span>{pkg.maxClasses} classes</span>
+              <span>{pkg.maxClasses >= 999 ? 'Unlimited' : pkg.maxClasses} classes</span>
             </div>
           </button>
         )
