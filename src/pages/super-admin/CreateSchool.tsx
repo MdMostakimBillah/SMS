@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   Building2, MapPin, Phone, Clock, Globe, CalendarDays,
@@ -135,8 +136,8 @@ export default function CreateSchool() {
   }
 
   if (created) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div className="bg-[var(--bg-primary)] rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
           <div className="w-16 h-16 rounded-2xl bg-[var(--green)] flex items-center justify-center mx-auto mb-4">
             <Check size={32} className="text-white" />
@@ -152,12 +153,13 @@ export default function CreateSchool() {
             </button>
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     )
   }
 
-  return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${exiting ? 'opacity-0' : 'opacity-100'}`}>
+  return createPortal(
+    <div className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${exiting ? 'opacity-0' : 'opacity-100'}`}>
       {/* Popup Window - 95vw x 98vh */}
       <div className={`w-[95vw] h-[98vh] bg-[var(--bg-primary)] rounded-2xl shadow-2xl flex overflow-hidden transition-all duration-300 ${exiting ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
 
@@ -250,7 +252,8 @@ export default function CreateSchool() {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
