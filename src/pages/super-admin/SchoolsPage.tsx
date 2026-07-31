@@ -3,7 +3,7 @@ import {
   Building2, Search, Filter, ChevronDown, ChevronUp,
   Users, GraduationCap, HardDrive, Calendar, Mail, Phone, Globe,
   MapPin, CheckCircle, XCircle, Pause, Clock,
-  CreditCard, Shield, Trash2, TrendingUp,
+  CreditCard, Shield, Trash2,
 } from 'lucide-react'
 import { useSuperAdminStore, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 
@@ -102,45 +102,53 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle }: {
       </button>
 
       {isSelected && (
-        <div className="px-4 pb-4 space-y-4 border-t border-[var(--border)]">
-          <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatBox icon={<GraduationCap size={15} />} label={isBn ? 'শিক্ষার্থী' : 'Students'} value={inst.package.maxStudents.toLocaleString()} color="#6366f1" />
-            <StatBox icon={<Users size={15} />} label={isBn ? 'শিক্ষক' : 'Teachers'} value={inst.package.maxTeachers.toLocaleString()} color="#3b82f6" />
-            <StatBox icon={<Building2 size={15} />} label={isBn ? 'শ্রেণি' : 'Classes'} value={inst.package.maxClasses.toString()} color="#8b5cf6" />
-            <StatBox icon={<CreditCard size={15} />} label={isBn ? 'প্যাকেজ' : 'Package'} value={isBn ? inst.package.nameBn : inst.package.name} color="#ec4899" />
+        <div className="px-5 pb-5 space-y-4 border-t border-[var(--border)]">
+          {/* Stats Row */}
+          <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <MiniStat icon={<GraduationCap size={14} />} label={isBn ? 'শিক্ষার্থী' : 'Students'} value={inst.package.maxStudents.toLocaleString()} color="#6366f1" />
+            <MiniStat icon={<Users size={14} />} label={isBn ? 'শিক্ষক' : 'Teachers'} value={inst.package.maxTeachers.toLocaleString()} color="#3b82f6" />
+            <MiniStat icon={<Building2 size={14} />} label={isBn ? 'শ্রেণি' : 'Classes'} value={inst.package.maxClasses.toString()} color="#8b5cf6" />
+            <MiniStat icon={<Clock size={14} />} label={isBn ? 'শেষ লগইন' : 'Last Login'} value={inst.lastLogin} color="#f59e0b" />
           </div>
 
-          <div className="p-3 rounded-xl bg-[var(--bg-secondary)]">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1.5 text-[0.75rem] text-[var(--text-secondary)]">
-                <HardDrive size={13} />
-                {isBn ? 'স্টোরেজ' : 'Storage'}
+          {/* Storage */}
+          <div className="p-3.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-2 text-[0.75rem] font-medium text-[var(--text-primary)]">
+                <div className="w-6 h-6 rounded-md flex items-center justify-center bg-[var(--brand-light)]">
+                  <HardDrive size={12} className="text-[var(--brand)]" />
+                </div>
+                {isBn ? 'স্টোরেজ ব্যবহার' : 'Storage Usage'}
               </div>
-              <span className="text-[0.6875rem] font-medium text-[var(--text-primary)]">
-                {formatMB(inst.usedStorageMB)} / {formatMB(inst.package.storageMB)}
+              <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">
+                {pct.toFixed(1)}%
               </span>
             </div>
             <StorageBar used={inst.usedStorageMB} total={inst.package.storageMB} />
-            <div className="text-[0.625rem] text-[var(--text-muted)] mt-1.5 text-right">{pct.toFixed(1)}% used</div>
+            <div className="flex justify-between mt-2 text-[0.6875rem] text-[var(--text-muted)]">
+              <span>{formatMB(inst.usedStorageMB)} {isBn ? 'ব্যবহৃত' : 'used'}</span>
+              <span>{formatMB(inst.package.storageMB)} {isBn ? 'মোট' : 'total'}</span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Info Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 px-1">
             <InfoRow icon={<Mail size={13} />} label={isBn ? 'ইমেইল' : 'Email'} value={inst.email} />
             <InfoRow icon={<Phone size={13} />} label={isBn ? 'ফোন' : 'Phone'} value={inst.phone} />
             <InfoRow icon={<MapPin size={13} />} label={isBn ? 'ঠিকানা' : 'Address'} value={isBn ? inst.addressBn : inst.address} />
-            <InfoRow icon={<Globe size={13} />} label={isBn? 'ওয়েবসাইট' : 'Website'} value={inst.website} />
+            <InfoRow icon={<Globe size={13} />} label={isBn ? 'ওয়েবসাইট' : 'Website'} value={inst.website} />
             <InfoRow icon={<Shield size={13} />} label="EIIN" value={inst.eiin} />
-            <InfoRow icon={<Calendar size={13} />} label={isBn ? 'নিবন্ধন' : 'Created'} value={inst.createdAt} />
-            <InfoRow icon={<TrendingUp size={13} />} label={isBn ? 'শেষ লগইন' : 'Last Login'} value={inst.lastLogin} />
             <InfoRow icon={<CreditCard size={13} />} label={isBn ? 'মূল্য' : 'Price'} value={inst.package.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${inst.package.price}/${isBn ? 'মাস' : 'mo'}`} />
+            <InfoRow icon={<Calendar size={13} />} label={isBn ? 'নিবন্ধন' : 'Created'} value={inst.createdAt} />
           </div>
 
-          <div className="flex gap-2 pt-1">
+          {/* Actions */}
+          <div className="flex items-center gap-2 pt-1">
             <button
-              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[0.75rem] font-medium border transition-colors cursor-pointer ${
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold transition-all cursor-pointer border-none ${
                 inst.status === 'active'
-                  ? 'border-red-500/20 text-red-500 hover:bg-red-500/5 bg-transparent'
-                  : 'border-green-500/20 text-green-500 hover:bg-green-500/5 bg-transparent'
+                  ? 'bg-red-500/10 text-red-500 hover:bg-red-500/15'
+                  : 'bg-green-500/10 text-green-500 hover:bg-green-500/15'
               }`}
               onClick={(e) => {
                 e.stopPropagation()
@@ -150,7 +158,7 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle }: {
               {inst.status === 'active' ? <><Pause size={13} /> {isBn ? 'বন্ধ করুন' : 'Suspend'}</> : <><CheckCircle size={13} /> {isBn ? 'সক্রিয় করুন' : 'Activate'}</>}
             </button>
             <button
-              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[0.75rem] font-medium border border-[var(--border)] text-[var(--text-muted)] hover:text-red-500 hover:border-red-500/20 transition-colors cursor-pointer bg-transparent"
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-red-500/10 text-red-500 hover:bg-red-500/15 transition-all cursor-pointer border-none"
               onClick={(e) => {
                 e.stopPropagation()
                 useSuperAdminStore.getState().deleteInstitution(inst.id)
@@ -165,24 +173,24 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle }: {
   )
 }
 
-function StatBox({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
+function MiniStat({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
-    <div className="p-2.5 rounded-xl bg-[var(--bg-secondary)]">
-      <div className="flex items-center gap-1.5 mb-1" style={{ color }}>
+    <div className="p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+      <div className="flex items-center gap-1.5 mb-1.5" style={{ color }}>
         {icon}
         <span className="text-[0.625rem] font-medium text-[var(--text-muted)]">{label}</span>
       </div>
-      <div className="text-[0.8125rem] font-bold text-[var(--text-primary)]">{value}</div>
+      <div className="text-[0.8125rem] font-bold text-[var(--text-primary)] truncate">{value}</div>
     </div>
   )
 }
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-2 text-[0.75rem]">
-      <span className="text-[var(--text-muted)]">{icon}</span>
-      <span className="text-[var(--text-muted)] shrink-0">{label}:</span>
-      <span className="text-[var(--text-primary)] truncate font-medium">{value}</span>
+    <div className="flex items-center gap-2.5 py-1.5">
+      <span className="text-[var(--text-muted)] shrink-0">{icon}</span>
+      <span className="text-[0.6875rem] text-[var(--text-muted)] shrink-0 w-16">{label}</span>
+      <span className="text-[0.75rem] text-[var(--text-primary)] font-medium truncate">{value}</span>
     </div>
   )
 }
