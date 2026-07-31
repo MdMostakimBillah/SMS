@@ -127,17 +127,18 @@ function generateFaviconSVG(color: string): string {
 
 function updateFavicon(color: string) {
   const svg = generateFaviconSVG(color)
-  const dataUrl = `data:image/svg+xml;base64,${btoa(svg)}`
-  let faviconLink = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
-  if (faviconLink) {
-    faviconLink.href = dataUrl
-  } else {
-    faviconLink = document.createElement('link')
-    faviconLink.rel = 'icon'
-    faviconLink.type = 'image/svg+xml'
-    faviconLink.href = dataUrl
-    document.head.appendChild(faviconLink)
+  const dataUrl = `data:image/svg+xml,${encodeURIComponent(svg)}`
+
+  const oldLink = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+  if (oldLink) {
+    oldLink.remove()
   }
+
+  const link = document.createElement('link')
+  link.rel = 'icon'
+  link.type = 'image/svg+xml'
+  link.href = dataUrl
+  document.head.appendChild(link)
 }
 
 export function clearThemeColors() {
