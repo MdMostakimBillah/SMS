@@ -772,7 +772,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 {!showMonthPicker && (
                   <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'বকেয়' : 'Due'}</th>
                 )}
-                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold whitespace-nowrap" style={{ width: '100px', minWidth: '100px' }}>{bn ? 'মোট বকেয়' : 'Total Due'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold whitespace-nowrap" style={{ width: '100px', minWidth: '100px', background: 'var(--amber-light)', color: 'var(--amber)' }}>{bn ? 'মোট বকেয়' : 'Total Due'}</th>
               </tr>
             </thead>
             <tbody>
@@ -865,7 +865,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     {!showMonthPicker && (
                       <td className="text-center px-2 py-3 font-bold text-[var(--amber)]">{fmt(row.totalDue)}</td>
                     )}
-                    <td className="text-right px-2 py-3 font-semibold text-[var(--amber)]">{fmt(row.totalDue)}</td>
+                    <td className="text-center px-2 py-3 font-semibold text-[var(--amber)]" style={{ width: '100px', minWidth: '100px', background: 'var(--amber-light)' }}>{fmt(row.totalDue)}</td>
                   </tr>
                 )
               })}
@@ -905,7 +905,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
                       </td>
                     ))}
-                    <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
+                    <td className="text-center px-2 py-2 text-[12px] text-[var(--amber)] font-bold" style={{ background: 'var(--amber-light)' }}>{fmt(totalDue)}</td>
                   </tr>
                 </>
               )}
@@ -927,7 +927,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
                       </td>
                     ))}
-                    <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)]">{fmt(totalDue)}</td>
+                    <td className="text-center px-2 py-2 text-[12px] text-[var(--amber)] font-bold" style={{ background: 'var(--amber-light)' }}>{fmt(totalDue)}</td>
                   </tr>
               </tfoot>
             )}
