@@ -87,11 +87,22 @@ function updateManifestThemeColor(color: string) {
     .then((res) => res.json())
     .then((manifest) => {
       manifest.theme_color = color
+
+      const svg = generateFaviconSVG(color)
+      const svgBlob = new Blob([svg], { type: 'image/svg+xml' })
+      const svgUrl = URL.createObjectURL(svgBlob)
+      manifest.icons = [
+        {
+          src: svgUrl,
+          sizes: 'any',
+          type: 'image/svg+xml',
+        },
+      ]
+
       const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' })
       const manifestURL = URL.createObjectURL(blob)
       let manifestLink = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
       if (manifestLink) {
-        // Revoke previous blob URL to avoid memory leak
         if (manifestLink.dataset.blobUrl) {
           URL.revokeObjectURL(manifestLink.dataset.blobUrl)
         }
@@ -116,15 +127,16 @@ function generateFaviconSVG(color: string): string {
 
 function updateFavicon(color: string) {
   const svg = generateFaviconSVG(color)
-  const blob = new Blob([svg], { type: 'image/svg+xml' })
-  const url = URL.createObjectURL(blob)
+  const dataUrl = `data:image/svg+xml;base64,${btoa(svg)}`
   let faviconLink = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
   if (faviconLink) {
-    if (faviconLink.dataset.blobUrl) {
-      URL.revokeObjectURL(faviconLink.dataset.blobUrl)
-    }
-    faviconLink.href = url
-    faviconLink.dataset.blobUrl = url
+    faviconLink.href = dataUrl
+  } else {
+    faviconLink = document.createElement('link')
+    faviconLink.rel = 'icon'
+    faviconLink.type = 'image/svg+xml'
+    faviconLink.href = dataUrl
+    document.head.appendChild(faviconLink)
   }
 }
 
