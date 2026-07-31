@@ -34,6 +34,7 @@ const cssVarMap: Record<keyof import('@/store/classStore').ThemeColors, string> 
 }
 
 const STYLE_ID = 'edutech-custom-colors'
+let lastAppliedColor = ''
 
 export function applyThemeColors(colors: ThemeColors) {
   let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement
@@ -65,7 +66,8 @@ export function applyThemeColors(colors: ThemeColors) {
 
   // Update <meta name="theme-color"> dynamically
   const brandColor = colors.brand
-  if (brandColor) {
+  if (brandColor && brandColor !== lastAppliedColor) {
+    lastAppliedColor = brandColor
     let metaThemeColor = document.querySelector('meta[name="theme-color"]')
     if (!metaThemeColor) {
       metaThemeColor = document.createElement('meta')
@@ -160,14 +162,18 @@ export function clearThemeColors() {
 
 export function useThemeColors() {
   const theme = useAppStore((s) => s.theme)
-  const institution = useClassStore((s) => s.institution)
+  const lightColors = useClassStore((s) => s.institution.lightColors)
+  const darkColors = useClassStore((s) => s.institution.darkColors)
+
+  const lightColorsKey = JSON.stringify(lightColors)
+  const darkColorsKey = JSON.stringify(darkColors)
 
   useEffect(() => {
     const isDark =
       theme === 'dark' ||
       (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
-    const colors = isDark ? institution.darkColors : institution.lightColors
+    const colors = isDark ? darkColors : lightColors
     if (colors) {
       applyThemeColors(colors)
     }
@@ -175,11 +181,11 @@ export function useThemeColors() {
     if (theme === 'system') {
       const mq = window.matchMedia('(prefers-color-scheme: dark)')
       const handler = (e: MediaQueryListEvent) => {
-        const c = e.matches ? institution.darkColors : institution.lightColors
+        const c = e.matches ? darkColors : lightColors
         if (c) applyThemeColors(c)
       }
       mq.addEventListener('change', handler)
       return () => mq.removeEventListener('change', handler)
     }
-  }, [theme, institution.lightColors, institution.darkColors])
+  }, [theme, lightColorsKey, darkColorsKey])
 }

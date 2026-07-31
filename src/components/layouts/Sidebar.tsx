@@ -77,7 +77,6 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
   const language = useAppStore((s) => s.language)
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const trackVisit = useAppStore((s) => s.trackVisit)
-  const pageVisits = useAppStore((s) => s.pageVisits)
   const bookmarks = useAppStore((s) => s.bookmarks)
   const toggleBookmark = useAppStore((s) => s.toggleBookmark)
   const reorderBookmarks = useAppStore((s) => s.reorderBookmarks)
@@ -314,12 +313,13 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
 
   // Only manually bookmarked pages (max 5) — ordered by bookmarks array
   const quickAccess = useMemo(() => {
+    const pageVisits = useAppStore.getState().pageVisits
     const visited = new Map(pageVisits.map((v) => [v.path, v]))
     return bookmarks
       .map((path) => visited.get(path))
       .filter((v): v is NonNullable<typeof v> => Boolean(v))
       .slice(0, 5)
-  }, [pageVisits, bookmarks])
+  }, [bookmarks])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {

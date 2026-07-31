@@ -206,7 +206,7 @@ export default function DashboardPage() {
       .map((s, i) => ({
         name: s.nameEn,
         cls: `Class ${s.class} ${s.section}`,
-        score: `${85 + Math.floor(Math.random() * 15)}%`,
+        score: `${85 + ((s.nameEn.charCodeAt(0) || 0) % 15)}%`,
         initials: s.nameEn
           .split(' ')
           .map((n) => n[0])
