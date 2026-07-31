@@ -157,6 +157,7 @@ interface SuperAdminState {
   searchQuery: string
   statusFilter: InstitutionStatus | 'all'
   packageFilter: string
+  viewingInstitutionId: string | null
   setSelectedId: (id: string | null) => void
   setSearchQuery: (q: string) => void
   setStatusFilter: (s: InstitutionStatus | 'all') => void
@@ -165,6 +166,8 @@ interface SuperAdminState {
   addInstitution: (inst: Institution) => void
   deleteInstitution: (id: string) => void
   toggleStatus: (id: string) => void
+  startViewing: (id: string) => void
+  stopViewing: () => void
 }
 
 export const useSuperAdminStore = create<SuperAdminState>()(
@@ -175,10 +178,13 @@ export const useSuperAdminStore = create<SuperAdminState>()(
       searchQuery: '',
       statusFilter: 'all',
       packageFilter: 'all',
+      viewingInstitutionId: null,
       setSelectedId: (id) => set({ selectedId: id }),
       setSearchQuery: (q) => set({ searchQuery: q }),
       setStatusFilter: (s) => set({ statusFilter: s }),
       setPackageFilter: (p) => set({ packageFilter: p }),
+      startViewing: (id) => set({ viewingInstitutionId: id }),
+      stopViewing: () => set({ viewingInstitutionId: null }),
       updateInstitution: (id, data) =>
         set((state) => ({
           institutions: state.institutions.map((i) =>

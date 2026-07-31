@@ -1,11 +1,13 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Building2, Search, Filter, ChevronDown, ChevronUp,
   Users, GraduationCap, HardDrive, Calendar, Mail, Phone, Globe,
   MapPin, CheckCircle, XCircle, Pause, Clock,
-  CreditCard, Shield, Trash2,
+  CreditCard, Shield, Trash2, ExternalLink,
 } from 'lucide-react'
 import { useSuperAdminStore, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
+import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 
 function statusConfig(status: InstitutionStatus, isBn: boolean) {
   const map: Record<InstitutionStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -32,11 +34,12 @@ function formatMB(mb: number): string {
   return `${mb} MB`
 }
 
-function InstitutionCard({ inst, isBn, isSelected, onToggle }: {
+function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
   inst: Institution
   isBn: boolean
   isSelected: boolean
   onToggle: () => void
+  onOpen: () => void
 }) {
   const status = statusConfig(inst.status, isBn)
   const pct = Math.min((inst.usedStorageMB / inst.package.storageMB) * 100, 100)
@@ -145,7 +148,17 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle }: {
           {/* Actions */}
           <div className="flex items-center gap-2 pt-1">
             <button
-              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold transition-all cursor-pointer border-none ${
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-[var(--brand)] text-white hover:opacity-90 transition-all cursor-pointer border-none"
+              onClick={(e) => {
+                e.stopPropagation()
+                onOpen()
+              }}
+            >
+              <ExternalLink size={13} />
+              {isBn ? 'ওপেন করুন' : 'Open Institution'}
+            </button>
+            <button
+              className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold transition-all cursor-pointer border-none ${
                 inst.status === 'active'
                   ? 'bg-red-500/10 text-red-500 hover:bg-red-500/15'
                   : 'bg-green-500/10 text-green-500 hover:bg-green-500/15'
@@ -155,7 +168,7 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle }: {
                 useSuperAdminStore.getState().toggleStatus(inst.id)
               }}
             >
-              {inst.status === 'active' ? <><Pause size={13} /> {isBn ? 'বন্ধ করুন' : 'Suspend'}</> : <><CheckCircle size={13} /> {isBn ? 'সক্রিয় করুন' : 'Activate'}</>}
+              {inst.status === 'active' ? <><Pause size={13} /></> : <><CheckCircle size={13} /></>}
             </button>
             <button
               className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-red-500/10 text-red-500 hover:bg-red-500/15 transition-all cursor-pointer border-none"
@@ -201,12 +214,43 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 }
 
 export default function SchoolsPage({ isBn }: { isBn: boolean }) {
+  const navigate = useNavigate()
   const {
     institutions, selectedId, searchQuery, statusFilter, packageFilter,
     setSelectedId, setSearchQuery, setStatusFilter, setPackageFilter,
+    startViewing,
   } = useSuperAdminStore()
 
   const [showFilters, setShowFilters] = useState(false)
+
+  const openInstitution = (inst: Institution) => {
+    startViewing(inst.id)
+    const updateInstitution = useClassStore.getState().updateInstitution
+    updateInstitution({
+      name: inst.name,
+      nameBn: inst.nameBn,
+      logo: inst.logo,
+      banner: '',
+      bannerPosition: { x: 0, y: 0 },
+      brandName: 'EduTech',
+      motto: '',
+      mottoBn: '',
+      eiin: inst.eiin,
+      phone: inst.phone,
+      email: inst.email,
+      address: inst.address,
+      website: inst.website,
+      subjects: [],
+      startTime: '07:30',
+      endTime: '14:30',
+      breaks: [],
+      currentSession: '2025-26',
+      sessions: ['2024-25', '2025-26'],
+      lightColors: { ...defaultThemeColors, brand: inst.brandColor },
+      darkColors: { ...defaultThemeColorsDark },
+    })
+    navigate('/dashboard')
+  }
 
   const filtered = institutions.filter((i) => {
     if (searchQuery) {
@@ -322,6 +366,7 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
               isBn={isBn}
               isSelected={selectedId === inst.id}
               onToggle={() => setSelectedId(selectedId === inst.id ? null : inst.id)}
+              onOpen={() => openInstitution(inst)}
             />
           ))
         )}

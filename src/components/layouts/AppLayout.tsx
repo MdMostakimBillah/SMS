@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
 import { useClassStore } from '@/store/classStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useThemeColors } from '@/hooks/useThemeColors'
+import { useSuperAdminStore } from '@/store/superAdminStore'
 import { gsap } from 'gsap'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import CommandPalette from '@/components/shared/CommandPalette'
 import QuickAccessFAB from '@/components/shared/QuickAccessFAB'
+import { Crown, X } from 'lucide-react'
 
 export default function AppLayout() {
   const theme = useAppStore((s) => s.theme)
@@ -18,6 +20,10 @@ export default function AppLayout() {
   const sidebarPosition = useAppStore((s) => s.sidebarPosition)
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const institution = useClassStore((s) => s.institution)
+  const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
+  const institutions = useSuperAdminStore((s) => s.institutions)
+  const stopViewing = useSuperAdminStore((s) => s.stopViewing)
+  const navigate = useNavigate()
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
 
@@ -103,6 +109,25 @@ export default function AppLayout() {
 
       <div className="flex-1 flex flex-col min-w-0 relative">
         <Topbar />
+        {viewingInstitutionId && (() => {
+          const viewedInst = institutions.find((i) => i.id === viewingInstitutionId)
+          if (!viewedInst) return null
+          return (
+            <div className="flex items-center justify-between px-4 py-2 bg-amber-500/10 border-b border-amber-500/20">
+              <div className="flex items-center gap-2 text-[0.75rem] text-amber-600 font-medium">
+                <Crown size={14} />
+                <span>Viewing as: <strong>{viewedInst.name}</strong></span>
+              </div>
+              <button
+                onClick={() => { stopViewing(); navigate('/super-admin/schools') }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.6875rem] font-semibold text-amber-700 bg-amber-500/15 hover:bg-amber-500/25 transition-colors cursor-pointer border-none"
+              >
+                <X size={12} />
+                Exit
+              </button>
+            </div>
+          )
+        })()}
         <main
           className={`flex-1 overflow-y-auto bg-[var(--bg-tertiary)] ${
             isMobile ? 'p-3.5' : isTablet ? 'px-4 pt-[18px] pb-[18px]' : 'p-6'
