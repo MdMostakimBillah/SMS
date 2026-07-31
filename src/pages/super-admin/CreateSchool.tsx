@@ -110,7 +110,7 @@ export default function CreateSchool() {
 
   const handleClose = () => {
     setExiting(true)
-    setTimeout(() => navigate('/super-admin/schools'), 200)
+    setTimeout(() => navigate('/super-admin/schools'), 300)
   }
 
   const handleCreate = () => {
@@ -160,40 +160,50 @@ export default function CreateSchool() {
 
   return (
     <div className={`fixed inset-0 z-50 flex bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${exiting ? 'opacity-0' : 'opacity-100'}`}>
-      {/* Left - Input Panel (1/3) */}
-      <div className={`w-full lg:w-[380px] xl:w-[420px] bg-[var(--bg-primary)] flex flex-col shadow-2xl transition-transform duration-200 ${exiting ? '-translate-x-full' : 'translate-x-0'}`}>
+      {/* Left - Live Preview (1/2) */}
+      <div className="hidden lg:flex w-1/2 flex-col p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Eye size={16} className="text-white/60" />
+          <span className="text-sm font-semibold text-white/80">{isBn ? 'লাইভ প্রিভিউ' : 'Live Preview'}</span>
+        </div>
+        <div className="flex-1 rounded-3xl overflow-hidden shadow-2xl bg-[var(--bg-primary)]">
+          <PreviewPanel form={form} isBn={isBn} activeSection={currentStep?.section} />
+        </div>
+      </div>
+
+      {/* Right - Input Panel (1/2) */}
+      <div className={`w-full lg:w-1/2 bg-[var(--bg-primary)] flex flex-col shadow-2xl transition-transform duration-200 ${exiting ? 'translate-x-full' : 'translate-x-0'}`}>
         {/* Header */}
-        <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--brand-light)]">
-              <Sparkles size={16} className="text-[var(--brand)]" />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--brand-light)]">
+              <Sparkles size={18} className="text-[var(--brand)]" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[var(--text-primary)]">{isBn ? 'নতুন স্কুল' : 'New School'}</h2>
+              <h2 className="text-sm font-bold text-[var(--text-primary)]">{isBn ? 'নতুন স্কুল তৈরি করুন' : 'Create New School'}</h2>
               <p className="text-[0.6875rem] text-[var(--text-muted)]">{step + 1}/{FIELD_STEPS.length} — {isBn ? currentStep?.labelBn : currentStep?.labelEn}</p>
             </div>
           </div>
-          <button onClick={handleClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] cursor-pointer border-none bg-transparent transition-colors">
+          <button onClick={handleClose} className="w-9 h-9 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] cursor-pointer border-none bg-transparent transition-colors">
             <X size={18} />
           </button>
         </div>
 
-        {/* Progress Bar */}
-        <div className="px-5 py-3">
-          <div className="h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
-            <div className="h-full rounded-full bg-[var(--brand)] transition-all duration-300" style={{ width: `${((step + 1) / FIELD_STEPS.length) * 100}%` }} />
-          </div>
-          <div className="flex justify-between mt-1.5">
-            {FIELD_STEPS.map((s, i) => (
-              <div key={s.key} className={`w-1.5 h-1.5 rounded-full transition-colors ${i < step ? 'bg-[var(--brand)]' : i === step ? 'bg-[var(--brand)]' : 'bg-[var(--bg-secondary)]'}`} />
-            ))}
+        {/* Progress */}
+        <div className="px-6 py-3">
+          <div className="h-1 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-to-r from-[var(--brand)] to-[var(--brand)] transition-all duration-500 ease-out" style={{ width: `${((step + 1) / FIELD_STEPS.length) * 100}%` }} />
           </div>
         </div>
 
         {/* Field Input */}
-        <div className="flex-1 px-5 py-4 overflow-y-auto">
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-[var(--text-primary)] mb-1">
+        <div className="flex-1 px-6 py-5 overflow-y-auto">
+          <div className="mb-5">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.6875rem] font-medium text-[var(--text-muted)] mb-3">
+              {getSectionIcon(currentStep?.section || 'basic')}
+              {getSectionLabel(currentStep?.section || 'basic', isBn)}
+            </div>
+            <label className="block text-base font-bold text-[var(--text-primary)] mb-1">
               {isBn ? currentStep?.labelBn : currentStep?.labelEn}
               {currentStep?.required && <span className="text-[var(--red)] ml-1">*</span>}
             </label>
@@ -215,11 +225,11 @@ export default function CreateSchool() {
         </div>
 
         {/* Navigation */}
-        <div className="px-5 py-4 border-t border-[var(--border)] flex items-center gap-3">
+        <div className="px-6 py-4 border-t border-[var(--border)] flex items-center gap-3">
           <button
             onClick={() => setStep((s) => s - 1)}
             disabled={step === 0}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer border border-[var(--border)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-[var(--bg-tertiary)]"
+            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer border border-[var(--border)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-[var(--bg-tertiary)]"
           >
             <ChevronLeft size={14} />
             {isBn ? 'আগে' : 'Back'}
@@ -244,17 +254,6 @@ export default function CreateSchool() {
               <ChevronRight size={14} />
             </button>
           )}
-        </div>
-      </div>
-
-      {/* Right - Live Preview (2/3) */}
-      <div className="hidden lg:flex flex-1 flex-col p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Eye size={16} className="text-white/60" />
-          <span className="text-sm font-semibold text-white/80">{isBn ? 'লাইভ প্রিভিউ' : 'Live Preview'}</span>
-        </div>
-        <div className="flex-1 rounded-3xl overflow-hidden shadow-2xl bg-[var(--bg-primary)]">
-          <PreviewPanel form={form} isBn={isBn} activeSection={currentStep?.section} />
         </div>
       </div>
 
@@ -371,6 +370,27 @@ function getHint(key: string, isBn: boolean): string {
   }
   const h = hints[key]
   return h ? (isBn ? h.bn : h.en) : ''
+}
+
+function getSectionIcon(section: string): string {
+  const icons: Record<string, string> = {
+    basic: '🏫', contact: '📞', extra: '📋', brand: '🎨', academic: '📚', package: '💳', admin: '🔑',
+  }
+  return icons[section] || '📝'
+}
+
+function getSectionLabel(section: string, isBn: boolean): string {
+  const labels: Record<string, { en: string; bn: string }> = {
+    basic: { en: 'Basic Info', bn: 'মৌলিক তথ্য' },
+    contact: { en: 'Contact', bn: 'যোগাযোগ' },
+    extra: { en: 'Extra Details', bn: 'অতিরিক্ত তথ্য' },
+    brand: { en: 'Branding', bn: 'ব্র্যান্ডিং' },
+    academic: { en: 'Academic', bn: 'একাডেমিক' },
+    package: { en: 'Package', bn: 'প্যাকেজ' },
+    admin: { en: 'Admin Account', bn: 'অ্যাডমিন অ্যাকাউন্ট' },
+  }
+  const l = labels[section]
+  return l ? (isBn ? l.bn : l.en) : section
 }
 
 /* ─── Shared Components ─── */
