@@ -873,6 +873,17 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                           </td>
                         )
                       }
+                      if (fStatus === 'paid') {
+                        return (
+                          <td key={m} className="text-center px-2 py-3" style={{ minWidth: '90px' }}>
+                            {cell.paidAmount > 0 ? (
+                              <span className="font-bold text-[12px] text-[var(--green)]">{fmt(cell.paidAmount)}</span>
+                            ) : (
+                              <span className="text-[var(--text-muted)] text-[12px]">—</span>
+                            )}
+                          </td>
+                        )
+                      }
                       return (
                         <td key={m} className="text-center px-2 py-3">
                           {cell.paid ? (
