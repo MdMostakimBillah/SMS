@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useCardReveal } from '@/hooks/useCardReveal'
 import { SUPER_ADMIN_ROUTES, SUPER_ADMIN_PATH_MAP, SUPER_ADMIN_REVERSE_MAP } from '@/lib/superAdminRoutes'
 import { Placeholder } from '@/components/shared/Placeholder'
+import SchoolsPage from './SchoolsPage'
 
 const iconMap: Record<string, React.ReactNode> = {
   lock: <Lock size={20} />,
@@ -99,7 +100,9 @@ export default function SuperAdminPage() {
 
       {currentPage === 'account' && <AccountSettings isBn={isBn} />}
 
-      {currentPage !== 'home' && currentPage !== 'account' && (() => {
+      {currentPage === 'schools' && <SchoolsPage isBn={isBn} />}
+
+      {currentPage !== 'home' && currentPage !== 'account' && currentPage !== 'schools' && (() => {
         const route = SUPER_ADMIN_ROUTES.find((r) => r.id === currentPage)
         if (!route) return null
         return <Placeholder title={isBn ? route.labelBn : route.label} icon={iconMapLg[route.icon]} color={route.color} isBn={isBn} />
