@@ -181,63 +181,65 @@ export default function CreateSchool() {
 
           {/* Field */}
           <div className="flex-1 px-5 py-5 overflow-y-auto">
-          <div className="mb-4">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.625rem] font-medium text-[var(--text-muted)] mb-2.5">
-              <span className="text-[var(--brand)]">{currentSection?.icon}</span>
-              {isBn ? currentSection?.labelBn : currentSection?.labelEn}
-            </div>
-          </div>
+            <div className="min-h-full flex flex-col justify-center">
+              <div className="mb-4">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.625rem] font-medium text-[var(--text-muted)] mb-2.5">
+                  <span className="text-[var(--brand)]">{currentSection?.icon}</span>
+                  {isBn ? currentSection?.labelBn : currentSection?.labelEn}
+                </div>
+              </div>
 
-          <div className="space-y-4">
-            {currentSection?.key === 'basic' && (
-              <>
-                <FieldInput ref={inputRef} label={isBn ? 'স্কুলের নাম *' : 'School Name *'} value={form.name} onChange={(v) => set('name', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} hint={isBn ? 'স্কুলের আনুষ্ঠানিক নাম' : 'The official name of the school'} />
-                <FieldInput label={isBn ? 'বাংলায় নাম' : 'Bengali Name'} value={form.nameBn} onChange={(v) => set('nameBn', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} hint={isBn ? 'বাংলা লিপিতে স্কুলের নাম' : 'School name in Bengali script'} />
-              </>
-            )}
-            {currentSection?.key === 'contact' && (
-              <>
-                <FieldInput ref={inputRef} label={isBn ? 'ইমেইল' : 'Email'} type="email" value={form.email} onChange={(v) => set('email', v)} placeholder="info@school.edu.bd" hint={isBn ? 'যোগাযোগের ইমেইল' : 'General contact email'} />
-                <FieldInput label={isBn ? 'ফোন' : 'Phone'} value={form.phone} onChange={(v) => set('phone', v)} placeholder="+880-2-1234567" hint={isBn ? 'স্কুলের ফোন নম্বর' : 'School phone number'} />
-                <FieldInput label={isBn ? 'ঠিকানা' : 'Address'} value={form.address} onChange={(v) => set('address', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'House, Road, City'} hint={isBn ? 'স্কুলের সম্পূর্ণ ঠিকানা' : 'Full address of the school'} />
-                <FieldInput label={isBn ? 'ঠিকানা (বাংলা)' : 'Address (Bengali)'} value={form.addressBn} onChange={(v) => set('addressBn', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'বাসা নং, রাস্তা, শহর'} hint={isBn ? 'বাংলায় ঠিকানা' : 'Address in Bengali'} />
-              </>
-            )}
-            {currentSection?.key === 'extra' && (
-              <>
-                <FieldInput ref={inputRef} label="EIIN" value={form.eiin} onChange={(v) => set('eiin', v)} placeholder="123456" hint={isBn ? 'শিক্ষা প্রতিষ্ঠান শনাক্তকরণ নম্বর' : 'Education Institution Identification Number'} />
-                <FieldInput label={isBn ? 'ওয়েবসাইট' : 'Website'} value={form.website} onChange={(v) => set('website', v)} placeholder="www.school.edu.bd" hint={isBn ? 'স্কুলের ওয়েবসাইট' : 'School website URL'} />
-              </>
-            )}
-            {currentSection?.key === 'brand' && (
-              <>
-                <FieldInput ref={inputRef} label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName} onChange={(v) => set('brandName', v)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} hint={isBn ? 'সিস্টেমের জন্য ছোট ব্র্যান্ড নাম' : 'Short brand name for the system'} />
-                <FieldInput label={isBn ? 'মোটো (ইংরেজি)' : 'Motto (English)'} value={form.motto} onChange={(v) => set('motto', v)} placeholder="Knowledge is Power" hint={isBn ? 'ইংরেজিতে স্কুলের মোটো' : 'School motto in English'} />
-                <FieldInput label={isBn ? 'মোটো (বাংলা)' : 'Motto (Bengali)'} value={form.mottoBn} onChange={(v) => set('mottoBn', v)} placeholder="জ্ঞাই হলো শক্তি" hint={isBn ? 'বাংলায় স্কুলের মোটো' : 'School motto in Bengali'} />
-                <FieldInput label={isBn ? 'লোগো URL' : 'Logo URL'} value={form.logo} onChange={(v) => set('logo', v)} placeholder="https://..." hint={isBn ? 'স্কুল লোগোর URL' : 'URL to the school logo image'} />
-                <ColorPicker value={form.brandColor} onChange={(v) => set('brandColor', v)} />
-              </>
-            )}
-            {currentSection?.key === 'academic' && (
-              <>
-                <TagInput ref={inputRef} tags={form.subjects} onAdd={(t) => set('subjects', [...form.subjects, t])} onRemove={(t) => set('subjects', form.subjects.filter((x) => x !== t))} newTag={newSubject} setNewTag={setNewSubject} placeholder={isBn ? 'বিষয় যোগ করুন' : 'Add subject'} label={isBn ? 'বিষয়সমূহ *' : 'Subjects *'} hint={isBn ? 'এন্টার চাপুন বা যোগ ক্লিক করুন' : 'Press Enter or click Add to insert'} />
-                <TagInput tags={form.sessions} onAdd={(t) => set('sessions', [...form.sessions, t])} onRemove={(t) => set('sessions', form.sessions.filter((x) => x !== t))} newTag={newSession} setNewTag={setNewSession} placeholder="2026-27" label={isBn ? 'একাডেমিক সেশন *' : 'Academic Sessions *'} hint={isBn ? 'একাডেমিক সেশন (যেমন: 2025-26)' : 'Academic sessions (e.g. 2025-26)'} />
-                <ScheduleInput form={form} set={set} isBn={isBn} />
-              </>
-            )}
-            {currentSection?.key === 'package' && (
-              <PackagePicker value={form.package} onChange={(v) => set('package', v)} isBn={isBn} />
-            )}
-            {currentSection?.key === 'admin' && (
-              <>
-                <FieldInput ref={inputRef} label={isBn ? 'অ্যাডমিন ইমেইল *' : 'Admin Email *'} type="email" value={form.adminEmail} onChange={(v) => set('adminEmail', v)} placeholder="admin@school.edu.bd" hint={isBn ? 'স্কুল অ্যাডমিনের লগইন ইমেইল' : 'Login email for the school admin'} />
-                <PasswordInput ref={inputRef} value={form.adminPassword} onChange={(v) => set('adminPassword', v)} showPassword={showPassword} setShowPassword={setShowPassword} isBn={isBn} />
-                {form.adminPassword && form.adminPassword.length < 4 && (
-                  <p className="text-[0.6875rem] text-[var(--red)]">{isBn ? 'কমপক্ষে ৪ অক্ষর প্রয়োজন' : 'Minimum 4 characters required'}</p>
+              <div className="space-y-4">
+                {currentSection?.key === 'basic' && (
+                  <>
+                    <FieldInput ref={inputRef} label={isBn ? 'স্কুলের নাম *' : 'School Name *'} value={form.name} onChange={(v) => set('name', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} hint={isBn ? 'স্কুলের আনুষ্ঠানিক নাম' : 'The official name of the school'} />
+                    <FieldInput label={isBn ? 'বাংলায় নাম' : 'Bengali Name'} value={form.nameBn} onChange={(v) => set('nameBn', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} hint={isBn ? 'বাংলা লিপিতে স্কুলের নাম' : 'School name in Bengali script'} />
+                  </>
                 )}
-              </>
-            )}
-          </div>
+                {currentSection?.key === 'contact' && (
+                  <>
+                    <FieldInput ref={inputRef} label={isBn ? 'ইমেইল' : 'Email'} type="email" value={form.email} onChange={(v) => set('email', v)} placeholder="info@school.edu.bd" hint={isBn ? 'যোগাযোগের ইমেইল' : 'General contact email'} />
+                    <FieldInput label={isBn ? 'ফোন' : 'Phone'} value={form.phone} onChange={(v) => set('phone', v)} placeholder="+880-2-1234567" hint={isBn ? 'স্কুলের ফোন নম্বর' : 'School phone number'} />
+                    <FieldInput label={isBn ? 'ঠিকানা' : 'Address'} value={form.address} onChange={(v) => set('address', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'House, Road, City'} hint={isBn ? 'স্কুলের সম্পূর্ণ ঠিকানা' : 'Full address of the school'} />
+                    <FieldInput label={isBn ? 'ঠিকানা (বাংলা)' : 'Address (Bengali)'} value={form.addressBn} onChange={(v) => set('addressBn', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'বাসা নং, রাস্তা, শহর'} hint={isBn ? 'বাংলায় ঠিকানা' : 'Address in Bengali'} />
+                  </>
+                )}
+                {currentSection?.key === 'extra' && (
+                  <>
+                    <FieldInput ref={inputRef} label="EIIN" value={form.eiin} onChange={(v) => set('eiin', v)} placeholder="123456" hint={isBn ? 'শিক্ষা প্রতিষ্ঠান শনাক্তকরণ নম্বর' : 'Education Institution Identification Number'} />
+                    <FieldInput label={isBn ? 'ওয়েবসাইট' : 'Website'} value={form.website} onChange={(v) => set('website', v)} placeholder="www.school.edu.bd" hint={isBn ? 'স্কুলের ওয়েবসাইট' : 'School website URL'} />
+                  </>
+                )}
+                {currentSection?.key === 'brand' && (
+                  <>
+                    <FieldInput ref={inputRef} label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName} onChange={(v) => set('brandName', v)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} hint={isBn ? 'সিস্টেমের জন্য ছোট ব্র্যান্ড নাম' : 'Short brand name for the system'} />
+                    <FieldInput label={isBn ? 'মোটো (ইংরেজি)' : 'Motto (English)'} value={form.motto} onChange={(v) => set('motto', v)} placeholder="Knowledge is Power" hint={isBn ? 'ইংরেজিতে স্কুলের মোটো' : 'School motto in English'} />
+                    <FieldInput label={isBn ? 'মোটো (বাংলা)' : 'Motto (Bengali)'} value={form.mottoBn} onChange={(v) => set('mottoBn', v)} placeholder="জ্ঞাই হলো শক্তি" hint={isBn ? 'বাংলায় স্কুলের মোটো' : 'School motto in Bengali'} />
+                    <FieldInput label={isBn ? 'লোগো URL' : 'Logo URL'} value={form.logo} onChange={(v) => set('logo', v)} placeholder="https://..." hint={isBn ? 'স্কুল লোগোর URL' : 'URL to the school logo image'} />
+                    <ColorPicker value={form.brandColor} onChange={(v) => set('brandColor', v)} />
+                  </>
+                )}
+                {currentSection?.key === 'academic' && (
+                  <>
+                    <TagInput ref={inputRef} tags={form.subjects} onAdd={(t) => set('subjects', [...form.subjects, t])} onRemove={(t) => set('subjects', form.subjects.filter((x) => x !== t))} newTag={newSubject} setNewTag={setNewSubject} placeholder={isBn ? 'বিষয় যোগ করুন' : 'Add subject'} label={isBn ? 'বিষয়সমূহ *' : 'Subjects *'} hint={isBn ? 'এন্টার চাপুন বা যোগ ক্লিক করুন' : 'Press Enter or click Add to insert'} />
+                    <TagInput tags={form.sessions} onAdd={(t) => set('sessions', [...form.sessions, t])} onRemove={(t) => set('sessions', form.sessions.filter((x) => x !== t))} newTag={newSession} setNewTag={setNewSession} placeholder="2026-27" label={isBn ? 'একাডেমিক সেশন *' : 'Academic Sessions *'} hint={isBn ? 'একাডেমিক সেশন (যেমন: 2025-26)' : 'Academic sessions (e.g. 2025-26)'} />
+                    <ScheduleInput form={form} set={set} isBn={isBn} />
+                  </>
+                )}
+                {currentSection?.key === 'package' && (
+                  <PackagePicker value={form.package} onChange={(v) => set('package', v)} isBn={isBn} />
+                )}
+                {currentSection?.key === 'admin' && (
+                  <>
+                    <FieldInput ref={inputRef} label={isBn ? 'অ্যাডমিন ইমেইল *' : 'Admin Email *'} type="email" value={form.adminEmail} onChange={(v) => set('adminEmail', v)} placeholder="admin@school.edu.bd" hint={isBn ? 'স্কুল অ্যাডমিনের লগইন ইমেইল' : 'Login email for the school admin'} />
+                    <PasswordInput ref={inputRef} value={form.adminPassword} onChange={(v) => set('adminPassword', v)} showPassword={showPassword} setShowPassword={setShowPassword} isBn={isBn} />
+                    {form.adminPassword && form.adminPassword.length < 4 && (
+                      <p className="text-[0.6875rem] text-[var(--red)]">{isBn ? 'কমপক্ষে ৪ অক্ষর প্রয়োজন' : 'Minimum 4 characters required'}</p>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Navigation */}
