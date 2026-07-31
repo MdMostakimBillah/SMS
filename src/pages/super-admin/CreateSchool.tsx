@@ -564,26 +564,32 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
     <div>
       <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'ওয়েবসাইট URL' : 'Website URL'}</label>
       <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'ইন্সটিটিউশনের ইউনিক সাবডোমেইন' : 'Unique subdomain for this institution'}</p>
-      <div className="flex items-center rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] overflow-hidden focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand)]/10 transition-all">
-        <input
-          type="text"
-          value={slug}
-          onChange={(e) => checkAvailability(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-          placeholder={isBn ? 'সাবডোমেইন' : 'subdomain'}
-          className="flex-1 px-3.5 py-2.5 bg-transparent text-sm text-[var(--text-primary)] outline-none"
-        />
-        <span className="px-2 text-xs text-[var(--text-muted)] shrink-0">.{BASE_URL}</span>
-      </div>
-      <div className="mt-1.5">
-        <p className="text-[0.625rem] text-[var(--text-muted)] font-mono truncate">{displayUrl}</p>
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand)]/10 transition-all overflow-hidden">
+        <div className="flex items-center">
+          <input
+            type="text"
+            value={slug}
+            onChange={(e) => checkAvailability(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+            placeholder={isBn ? 'সাবডোমেইন' : 'subdomain'}
+            className="flex-1 min-w-0 px-3.5 py-2.5 bg-transparent text-sm text-[var(--text-primary)] outline-none"
+          />
+          <div className="px-3 py-2.5 bg-[var(--bg-primary)] border-l border-[var(--border)] text-xs text-[var(--text-muted)] shrink-0">
+            .smsappbd.vercel.app
+          </div>
+        </div>
         {slug && (
-          <p className={`text-[0.625rem] mt-0.5 ${available === false ? 'text-[var(--red)]' : available === true ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>
-            {available === false ? (isBn ? 'এই URL ইতিমধ্যে ব্যবহৃত' : 'This URL is already taken') :
-             available === true ? (isBn ? 'URL পাওয়া যাচ্ছে' : 'URL is available') :
-             (isBn ? 'URL চেক করা হচ্ছে...' : 'Checking availability...')}
-          </p>
+          <div className="px-3.5 py-2 border-t border-[var(--border)] bg-[var(--bg-primary)]">
+            <p className="text-[0.625rem] text-[var(--brand)] font-mono truncate">{displayUrl}</p>
+          </div>
         )}
       </div>
+      {slug && (
+        <p className={`text-[0.625rem] mt-1.5 ${available === false ? 'text-[var(--red)]' : available === true ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>
+          {available === false ? (isBn ? 'এই URL ইতিমধ্যে ব্যবহৃত' : 'This URL is already taken') :
+           available === true ? (isBn ? 'URL পাওয়া যাচ্ছে' : 'URL is available') :
+           (isBn ? 'URL চেক করা হচ্ছে...' : 'Checking availability...')}
+        </p>
+      )}
     </div>
   )
 }
