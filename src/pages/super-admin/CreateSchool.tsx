@@ -165,7 +165,7 @@ export default function CreateSchool() {
 
         {/* Left Column - Live Preview (70%) */}
         <div className="hidden lg:flex w-[70%] flex-col bg-[var(--bg-secondary)] overflow-hidden">
-          <PreviewPanel form={form} isBn={isBn} activeSection={currentStep?.section} />
+          <PreviewPanel form={form} isBn={isBn} />
         </div>
 
         {/* Right Column - Input (30%) */}
@@ -258,13 +258,11 @@ export default function CreateSchool() {
 }
 
 /* ─── Preview Panel — matches InstitutionTab view mode ─── */
-function PreviewPanel({ form, isBn, activeSection }: { form: SchoolForm; isBn: boolean; activeSection?: string }) {
-  const hl = (section: string) => activeSection === section ? 'ring-2 ring-[var(--brand)] ring-offset-2 rounded-xl' : ''
-
+function PreviewPanel({ form, isBn }: { form: SchoolForm; isBn: boolean }) {
   return (
     <div className="h-full overflow-y-auto">
       {/* Banner */}
-      <div className={`relative h-44 ${hl('brand')}`} style={{ background: `linear-gradient(135deg, ${form.brandColor} 0%, ${form.brandColor}aa 100%)` }}>
+      <div className="relative h-44" style={{ background: `linear-gradient(135deg, ${form.brandColor} 0%, ${form.brandColor}aa 100%)` }}>
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
       </div>
@@ -273,7 +271,7 @@ function PreviewPanel({ form, isBn, activeSection }: { form: SchoolForm; isBn: b
       <div className="relative px-5 pb-6">
         {/* Logo */}
         <div className="absolute -top-14 left-5">
-          <div className={`w-28 h-28 rounded-2xl border-4 border-[var(--bg-secondary)] bg-[var(--bg-primary)] shadow-xl overflow-hidden transition-all duration-300 ${hl('basic')}`}>
+          <div className="w-28 h-28 rounded-2xl border-4 border-[var(--bg-secondary)] bg-[var(--bg-primary)] shadow-xl overflow-hidden">
             {form.logo ? (
               <img src={form.logo} alt="Logo" className="w-full h-full object-cover" />
             ) : (
@@ -286,7 +284,7 @@ function PreviewPanel({ form, isBn, activeSection }: { form: SchoolForm; isBn: b
 
         {/* Institution Info */}
         <div className="pt-16">
-          <div className={`p-2 -mx-2 rounded-xl transition-all duration-300 ${hl('basic')}`}>
+          <div className="p-2 -mx-2 rounded-xl">
             <h2 className="text-base font-bold text-[var(--text-primary)] m-0 leading-tight">
               {form.name || (isBn ? 'আপনার স্কুলের নাম' : 'Your School Name')}
             </h2>
@@ -296,19 +294,19 @@ function PreviewPanel({ form, isBn, activeSection }: { form: SchoolForm; isBn: b
           </div>
 
           {form.brandName && (
-            <div className={`mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--brand-light)] transition-all duration-300 ${hl('brand')}`}>
+            <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--brand-light)]">
               <span className="text-[0.6875rem] font-semibold text-[var(--brand)]">{isBn ? 'ব্র্যান্ড' : 'Brand'}: {form.brandName}</span>
             </div>
           )}
 
           {form.motto && (
-            <p className={`text-[0.6875rem] text-[var(--text-muted)] italic m-0 mt-1.5 transition-all duration-300 ${hl('brand')}`}>
+            <p className="text-[0.6875rem] text-[var(--text-muted)] italic m-0 mt-1.5">
               "{form.motto}"{form.mottoBn ? ` / "${form.mottoBn}"` : ''}
             </p>
           )}
 
           {/* Contact Card */}
-          <div className={`mt-4 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] transition-all duration-300 ${hl('contact')}`}>
+          <div className="mt-4 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {form.phone && (
                 <div className="flex items-center gap-2.5">
@@ -351,7 +349,7 @@ function PreviewPanel({ form, isBn, activeSection }: { form: SchoolForm; isBn: b
           {/* Bottom Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
             {/* Schedule Card */}
-            <div className={`p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] transition-all duration-300 ${hl('academic')}`}>
+            <div className={`p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]`}>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${form.brandColor}15` }}>
                   <Clock size={12} style={{ color: form.brandColor }} />
@@ -371,7 +369,7 @@ function PreviewPanel({ form, isBn, activeSection }: { form: SchoolForm; isBn: b
             </div>
 
             {/* Session & Subjects Card */}
-            <div className={`p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] transition-all duration-300 ${hl('academic')}`}>
+            <div className={`p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]`}>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${form.brandColor}15` }}>
                   <CalendarDays size={12} style={{ color: form.brandColor }} />
@@ -401,7 +399,7 @@ function PreviewPanel({ form, isBn, activeSection }: { form: SchoolForm; isBn: b
           </div>
 
           {/* Package Badge */}
-          <div className={`mt-3 flex items-center gap-3 transition-all duration-300 ${hl('package')}`}>
+          <div className="mt-3 flex items-center gap-3">
             <div className="px-3 py-1.5 rounded-lg bg-[var(--brand-light)] text-[0.6875rem] font-semibold text-[var(--brand)]">
               {isBn ? form.package.nameBn : form.package.name}
             </div>
