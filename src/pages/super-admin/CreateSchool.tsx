@@ -24,7 +24,7 @@ interface SchoolForm {
   banner: string
   motto: string
   mottoBn: string
-  subjects: string[]
+  optionalSubjects: string[]
   sessions: string[]
   startTime: string
   endTime: string
@@ -40,8 +40,7 @@ const BASE_URL = 'smsappbd.vercel.app'
 const defaultForm: SchoolForm = {
   name: '', nameBn: '', email: '', phone: '', address: '', addressBn: '',
   eiin: '', website: '', brandName: '', logo: '', banner: '', motto: '', mottoBn: '',
-  subjects: ['Bangla', 'English', 'Mathematics'],
-  sessions: ['2025-26'], startTime: '07:30', endTime: '14:30',
+  optionalSubjects: [], sessions: ['2025-26'], startTime: '07:30', endTime: '14:30',
   package: PACKAGES[0], adminEmail: '', adminPassword: '',
   brandColor: defaultThemeColors.brand, subdomain: '',
 }
@@ -88,7 +87,7 @@ export default function CreateSchool() {
     if (!currentSection) return true
     switch (currentSection.key) {
       case 'basic': return form.name.trim().length > 0
-      case 'academic': return form.subjects.length > 0 && form.sessions.length > 0
+      case 'academic': return form.sessions.length > 0
       case 'admin': return form.adminEmail.trim().length > 0 && form.adminPassword.trim().length >= 4
       default: return true
     }
@@ -230,7 +229,7 @@ export default function CreateSchool() {
                 )}
                 {currentSection?.key === 'academic' && (
                   <>
-                    <TagInput ref={inputRef} tags={form.subjects} onAdd={(t) => set('subjects', [...form.subjects, t])} onRemove={(t) => set('subjects', form.subjects.filter((x) => x !== t))} newTag={newSubject} setNewTag={setNewSubject} placeholder={isBn ? 'বিষয় যোগ করুন' : 'Add subject'} label={isBn ? 'বিষয়সমূহ *' : 'Subjects *'} hint={isBn ? 'এন্টার চাপুন বা যোগ ক্লিক করুন' : 'Press Enter or click Add to insert'} />
+                    <TagInput ref={inputRef} tags={form.optionalSubjects} onAdd={(t) => set('optionalSubjects', [...form.optionalSubjects, t])} onRemove={(t) => set('optionalSubjects', form.optionalSubjects.filter((x) => x !== t))} newTag={newSubject} setNewTag={setNewSubject} placeholder={isBn ? 'ঐচ্ছিক বিষয় যোগ করুন' : 'Add optional subject'} label={isBn ? 'ঐচ্ছিক বিষয়সমূহ' : 'Optional Subjects'} hint={isBn ? 'যেমন: উচ্চতর গণিত, কৃষি, আইসিটি' : 'e.g. Higher Math, Agriculture, ICT'} />
                     <TagInput tags={form.sessions} onAdd={(t) => set('sessions', [...form.sessions, t])} onRemove={(t) => set('sessions', form.sessions.filter((x) => x !== t))} newTag={newSession} setNewTag={setNewSession} placeholder="2026-27" label={isBn ? 'একাডেমিক সেশন *' : 'Academic Sessions *'} hint={isBn ? 'একাডেমিক সেশন (যেমন: 2025-26)' : 'Academic sessions (e.g. 2025-26)'} />
                     <ScheduleInput form={form} set={set} isBn={isBn} />
                   </>
@@ -426,11 +425,11 @@ function PreviewPanel({ form, isBn }: { form: SchoolForm; isBn: boolean }) {
                   {form.sessions.length} {isBn ? 'টি সেশন সংরক্ষিত' : 'sessions saved'}
                 </div>
               </div>
-              {form.subjects.length > 0 && (
+              {form.optionalSubjects.length > 0 && (
                 <div>
-                  <div className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'প্রধান বিষয়' : 'Main Subjects'}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'ঐচ্ছিক বিষয়' : 'Optional Subjects'}</div>
                   <div className="flex flex-wrap gap-1">
-                    {form.subjects.map((s) => (
+                    {form.optionalSubjects.map((s) => (
                       <span key={s} className="text-[0.625rem] px-2 py-0.5 rounded-full font-medium" style={{ background: `${form.brandColor}15`, color: form.brandColor }}>{s}</span>
                     ))}
                   </div>
