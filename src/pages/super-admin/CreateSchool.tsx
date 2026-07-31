@@ -422,7 +422,7 @@ function renderField(key: string, form: SchoolForm, set: <K extends keyof School
 }) {
   const { newSubject, setNewSubject, newSession, setNewSession, showPassword, setShowPassword, isBn, inputRef } = opts
 
-  const inputCls = "w-full px-4 py-3 rounded-xl border border-[var(--border)]/60 bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/5 transition-all placeholder:text-[var(--text-muted)]/50"
+  const inputCls = "w-full px-4 py-3 rounded-xl border border-transparent bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all placeholder:text-[var(--text-muted)]/50"
 
   switch (key) {
     case 'name':
