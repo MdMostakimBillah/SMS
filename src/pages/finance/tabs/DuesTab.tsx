@@ -70,6 +70,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
   const [fStatus, setFStatus] = useState<'all' | 'paid' | 'due' | 'paiddue'>('all')
+  const [searchText, setSearchText] = useState('')
   const { institution } = useClassStore()
   const sessions = institution?.sessions || []
   const [fSession, setFSession] = useState(() => institution?.currentSession || '')
@@ -281,10 +282,22 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   }, [showResults, feeStructuresForCategory, activeStudents, fClass, fSection, payments, waivers, fYear, sortedMonths, showMonthPicker, fSession])
 
   const results = useMemo(() => {
-    if (fStatus === 'due') return allResults.filter((r) => r.totalDue > 0)
-    if (fStatus === 'paid') return allResults.filter((r) => r.allPaid)
-    return allResults
-  }, [allResults, fStatus])
+    let list = allResults
+    if (fStatus === 'due') list = list.filter((r) => r.totalDue > 0)
+    else if (fStatus === 'paid') list = list.filter((r) => r.allPaid)
+    if (searchText.trim()) {
+      const q = searchText.toLowerCase()
+      list = list.filter((r) =>
+        r.studentName.toLowerCase().includes(q) ||
+        r.studentNameBn.includes(q) ||
+        r.studentId.toLowerCase().includes(q) ||
+        r.roll.includes(q) ||
+        (r.feeName.toLowerCase().includes(q)) ||
+        (r.feeNameBn.includes(q))
+      )
+    }
+    return list
+  }, [allResults, fStatus, searchText])
 
   const totalDue = useMemo(() => results.reduce((sum, r) => sum + r.totalDue, 0), [results])
   const totalPaid = useMemo(() => {
@@ -622,7 +635,16 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         )}
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          {showResults && results.length > 0 && (
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder={bn ? 'শিক্ষার্থী খুঁজুন...' : 'Search student...'}
+              className="h-[34px] px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] outline-none focus:border-[var(--brand)] w-[180px]"
+            />
+          )}
           <button
             onClick={handleFindDue}
             className="h-[34px] px-4 rounded-lg bg-[var(--brand)] text-white font-semibold text-[13px] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity"
@@ -743,7 +765,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         </div>
       ) : (
         <div className="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--bg-primary)]">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 320px)', overflowY: 'auto' }}>
           <table className="w-full text-[12.5px]" style={{ tableLayout: 'auto' }}>
             <thead>
               <tr className="bg-[var(--bg-secondary)] sticky top-0 z-20">
