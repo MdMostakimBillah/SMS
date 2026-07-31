@@ -169,9 +169,9 @@ export default function CreateSchool() {
         </div>
 
         {/* Right Column - Input (30%) */}
-        <div className="w-full lg:w-[30%] flex flex-col border-l border-[var(--border)]/50">
+        <div className="w-full lg:w-[30%] flex flex-col border-l border-[var(--border)]">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-[var(--border)]/50 flex items-center justify-between shrink-0">
+          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--brand-light)]">
                 <Sparkles size={16} className="text-[var(--brand)]" />
@@ -187,20 +187,20 @@ export default function CreateSchool() {
           </div>
 
           {/* Progress */}
-          <div className="px-6 py-3 shrink-0">
+          <div className="px-5 py-2.5 border-b border-[var(--border)] shrink-0">
             <div className="h-1 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
               <div className="h-full rounded-full bg-[var(--brand)] transition-all duration-500" style={{ width: `${((step + 1) / FIELD_STEPS.length) * 100}%` }} />
             </div>
           </div>
 
           {/* Field */}
-          <div className="flex-1 px-6 py-6 overflow-y-auto">
-            <div className="mb-5">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.625rem] font-medium text-[var(--text-muted)] mb-3">
+          <div className="flex-1 px-5 py-5 overflow-y-auto">
+            <div className="mb-4">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.625rem] font-medium text-[var(--text-muted)] mb-2.5">
                 {getSectionIcon(currentStep?.section || 'basic')}
                 {getSectionLabel(currentStep?.section || 'basic', isBn)}
               </div>
-              <label className="block text-sm font-bold text-[var(--text-primary)] mb-1.5">
+              <label className="block text-sm font-bold text-[var(--text-primary)] mb-1">
                 {isBn ? currentStep?.labelBn : currentStep?.labelEn}
                 {currentStep?.required && <span className="text-[var(--red)] ml-1">*</span>}
               </label>
@@ -220,7 +220,7 @@ export default function CreateSchool() {
           </div>
 
           {/* Navigation */}
-          <div className="px-6 py-4 border-t border-[var(--border)]/50 flex items-center gap-3 shrink-0">
+          <div className="px-5 py-4 border-t border-[var(--border)] flex items-center gap-3 shrink-0">
             <button
               onClick={() => setStep((s) => s - 1)}
               disabled={step === 0}
@@ -259,87 +259,89 @@ export default function CreateSchool() {
 
 /* ─── Preview Panel — matches InstitutionTab view mode ─── */
 function PreviewPanel({ form, isBn, activeSection }: { form: SchoolForm; isBn: boolean; activeSection?: string }) {
-  const hl = (section: string) => activeSection === section ? 'bg-[var(--brand)]/5 ring-1 ring-[var(--brand)]/20' : ''
+  const hl = (section: string) => activeSection === section ? 'ring-2 ring-[var(--brand)] ring-offset-2 rounded-xl' : ''
 
   return (
-    <div className="h-full overflow-y-auto p-6">
+    <div className="h-full overflow-y-auto">
       {/* Banner */}
-      <div className="relative h-40 rounded-2xl overflow-hidden" style={{ background: `linear-gradient(135deg, ${form.brandColor} 0%, ${form.brandColor}aa 100%)` }}>
+      <div className={`relative h-44 ${hl('brand')}`} style={{ background: `linear-gradient(135deg, ${form.brandColor} 0%, ${form.brandColor}aa 100%)` }}>
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
       </div>
 
       {/* Profile */}
-      <div className="relative px-2 pb-4">
+      <div className="relative px-5 pb-6">
         {/* Logo */}
-        <div className="absolute -top-12 left-2">
-          <div className="w-24 h-24 rounded-2xl border-[3px] border-[var(--bg-secondary)] bg-[var(--bg-primary)] shadow-lg overflow-hidden">
+        <div className="absolute -top-14 left-5">
+          <div className={`w-28 h-28 rounded-2xl border-4 border-[var(--bg-secondary)] bg-[var(--bg-primary)] shadow-xl overflow-hidden transition-all duration-300 ${hl('basic')}`}>
             {form.logo ? (
               <img src={form.logo} alt="Logo" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center" style={{ background: `${form.brandColor}12` }}>
-                <Building2 size={30} style={{ color: form.brandColor }} />
+              <div className="w-full h-full flex items-center justify-center" style={{ background: `${form.brandColor}15` }}>
+                <Building2 size={36} className="text-[var(--brand)]" />
               </div>
             )}
           </div>
         </div>
 
         {/* Institution Info */}
-        <div className="pt-14">
-          <h2 className="text-sm font-bold text-[var(--text-primary)] m-0 leading-tight">
-            {form.name || (isBn ? 'আপনার স্কুলের নাম' : 'Your School Name')}
-          </h2>
-          <p className="text-[0.6875rem] text-[var(--text-muted)] m-0 mt-0.5">
-            {form.nameBn || (isBn ? 'বাংলায় নাম' : 'Bengali name')}
-          </p>
+        <div className="pt-16">
+          <div className={`p-2 -mx-2 rounded-xl transition-all duration-300 ${hl('basic')}`}>
+            <h2 className="text-base font-bold text-[var(--text-primary)] m-0 leading-tight">
+              {form.name || (isBn ? 'আপনার স্কুলের নাম' : 'Your School Name')}
+            </h2>
+            <p className="text-[0.6875rem] text-[var(--text-muted)] m-0 mt-0.5">
+              {form.nameBn || (isBn ? 'বাংলায় নাম' : 'Bengali name')}
+            </p>
+          </div>
 
           {form.brandName && (
-            <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full" style={{ background: `${form.brandColor}12` }}>
-              <span className="text-[0.625rem] font-semibold" style={{ color: form.brandColor }}>{form.brandName}</span>
+            <div className={`mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--brand-light)] transition-all duration-300 ${hl('brand')}`}>
+              <span className="text-[0.6875rem] font-semibold text-[var(--brand)]">{isBn ? 'ব্র্যান্ড' : 'Brand'}: {form.brandName}</span>
             </div>
           )}
 
           {form.motto && (
-            <p className="text-[0.625rem] text-[var(--text-muted)] italic m-0 mt-1">
+            <p className={`text-[0.6875rem] text-[var(--text-muted)] italic m-0 mt-1.5 transition-all duration-300 ${hl('brand')}`}>
               "{form.motto}"{form.mottoBn ? ` / "${form.mottoBn}"` : ''}
             </p>
           )}
 
           {/* Contact Card */}
-          <div className={`mt-4 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]/60 transition-all duration-200 ${hl('contact')}`}>
+          <div className={`mt-4 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] transition-all duration-300 ${hl('contact')}`}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {form.phone && (
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}10` }}>
-                    <Phone size={13} style={{ color: form.brandColor }} />
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
+                    <Phone size={14} style={{ color: form.brandColor }} />
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-[0.5625rem] text-[var(--text-muted)]">{isBn ? 'ফোন' : 'Phone'}</div>
-                    <div className="text-[0.6875rem] font-semibold text-[var(--text-primary)] truncate">{form.phone}</div>
-                    {form.eiin && <div className="text-[0.5625rem] text-[var(--text-muted)]">EIIN: {form.eiin}</div>}
+                  <div>
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ফোন' : 'Phone'}</div>
+                    <div className="text-xs font-semibold text-[var(--text-primary)]">{form.phone}</div>
+                    {form.eiin && <div className="text-[0.625rem] text-[var(--text-muted)]">EIIN: {form.eiin}</div>}
                   </div>
                 </div>
               )}
               {(form.email || form.website) && (
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}10` }}>
-                    <Globe size={13} style={{ color: form.brandColor }} />
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
+                    <Globe size={14} style={{ color: form.brandColor }} />
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-[0.5625rem] text-[var(--text-muted)]">{isBn ? 'ইমেইল / ওয়েবসাইট' : 'Email / Website'}</div>
-                    <div className="text-[0.6875rem] font-semibold text-[var(--text-primary)] truncate">{form.email}</div>
-                    {form.website && <div className="text-[0.5625rem] text-[var(--text-muted)] truncate">{form.website}</div>}
+                  <div>
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ইমেইল / ওয়েবসাইট' : 'Email / Website'}</div>
+                    <div className="text-xs font-semibold text-[var(--text-primary)]">{form.email}</div>
+                    {form.website && <div className="text-[0.625rem] text-[var(--text-muted)]">{form.website}</div>}
                   </div>
                 </div>
               )}
               {form.address && (
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}10` }}>
-                    <MapPin size={13} style={{ color: form.brandColor }} />
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
+                    <MapPin size={14} style={{ color: form.brandColor }} />
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-[0.5625rem] text-[var(--text-muted)]">{isBn ? 'ঠিকানা' : 'Address'}</div>
-                    <div className="text-[0.6875rem] font-semibold text-[var(--text-primary)] truncate">{form.address}{form.addressBn ? ` / ${form.addressBn}` : ''}</div>
+                  <div>
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ঠিকানা' : 'Address'}</div>
+                    <div className="text-xs font-semibold text-[var(--text-primary)]">{form.address}{form.addressBn ? ` / ${form.addressBn}` : ''}</div>
                   </div>
                 </div>
               )}
@@ -349,48 +351,48 @@ function PreviewPanel({ form, isBn, activeSection }: { form: SchoolForm; isBn: b
           {/* Bottom Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
             {/* Schedule Card */}
-            <div className={`p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]/60 transition-all duration-200 ${hl('academic')}`}>
-              <div className="flex items-center gap-2 mb-2.5">
-                <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: `${form.brandColor}10` }}>
-                  <Clock size={11} style={{ color: form.brandColor }} />
+            <div className={`p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] transition-all duration-300 ${hl('academic')}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${form.brandColor}15` }}>
+                  <Clock size={12} style={{ color: form.brandColor }} />
                 </div>
-                <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'সময়সূচি' : 'Schedule'}</span>
+                <span className="text-xs font-semibold text-[var(--text-primary)]">{isBn ? 'সময়সূচি' : 'Schedule'}</span>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-2 rounded-lg bg-[var(--bg-secondary)]">
-                  <div className="text-[0.5625rem] text-[var(--text-muted)] mb-0.5">{isBn ? 'শুরু' : 'Start'}</div>
-                  <div className="text-xs font-bold" style={{ color: form.brandColor }}>{form.startTime || '--:--'}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)] mb-0.5">{isBn ? 'শুরু' : 'Start'}</div>
+                  <div className="text-sm font-bold" style={{ color: form.brandColor }}>{form.startTime || '--:--'}</div>
                 </div>
                 <div className="p-2 rounded-lg bg-[var(--bg-secondary)]">
-                  <div className="text-[0.5625rem] text-[var(--text-muted)] mb-0.5">{isBn ? 'শেষ' : 'End'}</div>
-                  <div className="text-xs font-bold" style={{ color: form.brandColor }}>{form.endTime || '--:--'}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)] mb-0.5">{isBn ? 'শেষ' : 'End'}</div>
+                  <div className="text-sm font-bold" style={{ color: form.brandColor }}>{form.endTime || '--:--'}</div>
                 </div>
               </div>
             </div>
 
             {/* Session & Subjects Card */}
-            <div className={`p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]/60 transition-all duration-200 ${hl('academic')}`}>
-              <div className="flex items-center gap-2 mb-2.5">
-                <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: `${form.brandColor}10` }}>
-                  <CalendarDays size={11} style={{ color: form.brandColor }} />
+            <div className={`p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] transition-all duration-300 ${hl('academic')}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${form.brandColor}15` }}>
+                  <CalendarDays size={12} style={{ color: form.brandColor }} />
                 </div>
-                <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'একাডেমিক সেশন' : 'Academic Session'}</span>
+                <span className="text-xs font-semibold text-[var(--text-primary)]">{isBn ? 'একাডেমিক সেশন' : 'Academic Session'}</span>
               </div>
-              <div className="p-2 rounded-lg bg-[var(--bg-secondary)] mb-2">
+              <div className="p-2.5 rounded-lg bg-[var(--bg-secondary)] mb-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold" style={{ color: form.brandColor }}>{form.sessions[0] || '—'}</span>
-                  <span className="text-[0.5625rem] text-[var(--text-muted)]">({isBn ? 'বর্তমান' : 'Current'})</span>
+                  <span className="text-base font-bold" style={{ color: form.brandColor }}>{form.sessions[0] || '—'}</span>
+                  <span className="text-[0.625rem] text-[var(--text-muted)]">({isBn ? 'বর্তমান' : 'Current'})</span>
                 </div>
-                <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
-                  {form.sessions.length} {isBn ? 'টি সেশন' : 'sessions'}
+                <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
+                  {form.sessions.length} {isBn ? 'টি সেশন সংরক্ষিত' : 'sessions saved'}
                 </div>
               </div>
               {form.subjects.length > 0 && (
                 <div>
-                  <div className="text-[0.5625rem] text-[var(--text-muted)] mb-1">{isBn ? 'বিষয়' : 'Subjects'}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'প্রধান বিষয়' : 'Main Subjects'}</div>
                   <div className="flex flex-wrap gap-1">
                     {form.subjects.map((s) => (
-                      <span key={s} className="text-[0.5625rem] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${form.brandColor}10`, color: form.brandColor }}>{s}</span>
+                      <span key={s} className="text-[0.625rem] px-2 py-0.5 rounded-full font-medium" style={{ background: `${form.brandColor}15`, color: form.brandColor }}>{s}</span>
                     ))}
                   </div>
                 </div>
@@ -399,12 +401,12 @@ function PreviewPanel({ form, isBn, activeSection }: { form: SchoolForm; isBn: b
           </div>
 
           {/* Package Badge */}
-          <div className="mt-3 flex items-center gap-2">
-            <div className="px-2 py-1 rounded-lg bg-[var(--brand-light)] text-[0.625rem] font-semibold text-[var(--brand)]">
+          <div className={`mt-3 flex items-center gap-3 transition-all duration-300 ${hl('package')}`}>
+            <div className="px-3 py-1.5 rounded-lg bg-[var(--brand-light)] text-[0.6875rem] font-semibold text-[var(--brand)]">
               {isBn ? form.package.nameBn : form.package.name}
             </div>
-            <div className="text-[0.5625rem] text-[var(--text-muted)]">
-              {form.package.maxStudents} students · {form.package.maxTeachers} teachers · {form.package.maxClasses} classes
+            <div className="text-[0.625rem] text-[var(--text-muted)]">
+              {form.package.maxStudents} {isBn ? 'জন ছাত্র' : 'students'} · {form.package.maxTeachers} {isBn ? 'জন শিক্ষক' : 'teachers'} · {form.package.maxClasses} {isBn ? 'টি ক্লাস' : 'classes'}
             </div>
           </div>
         </div>
@@ -422,7 +424,7 @@ function renderField(key: string, form: SchoolForm, set: <K extends keyof School
 }) {
   const { newSubject, setNewSubject, newSession, setNewSession, showPassword, setShowPassword, isBn, inputRef } = opts
 
-  const inputCls = "w-full px-4 py-3 rounded-xl border border-transparent bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all placeholder:text-[var(--text-muted)]/50"
+  const inputCls = "w-full px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all"
 
   switch (key) {
     case 'name':
