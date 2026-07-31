@@ -76,6 +76,9 @@ export function applyThemeColors(colors: ThemeColors) {
 
     // Update PWA manifest theme_color dynamically
     updateManifestThemeColor(brandColor)
+
+    // Update favicon with brand color
+    updateFavicon(brandColor)
   }
 }
 
@@ -99,6 +102,30 @@ function updateManifestThemeColor(color: string) {
     .catch(() => {
       // Silently fail - manifest is static fallback
     })
+}
+
+function generateFaviconSVG(color: string): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+  <rect width="48" height="48" rx="10" fill="${color}"/>
+  <path d="M24 10L8 20L24 30L40 20L24 10Z" fill="white" opacity="0.9"/>
+  <path d="M12 22V32L24 38L36 32V22" stroke="white" stroke-width="2" fill="none" opacity="0.7"/>
+  <path d="M36 22V32" stroke="white" stroke-width="2" opacity="0.7"/>
+  <circle cx="36" cy="34" r="2" fill="white" opacity="0.7"/>
+</svg>`
+}
+
+function updateFavicon(color: string) {
+  const svg = generateFaviconSVG(color)
+  const blob = new Blob([svg], { type: 'image/svg+xml' })
+  const url = URL.createObjectURL(blob)
+  let faviconLink = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+  if (faviconLink) {
+    if (faviconLink.dataset.blobUrl) {
+      URL.revokeObjectURL(faviconLink.dataset.blobUrl)
+    }
+    faviconLink.href = url
+    faviconLink.dataset.blobUrl = url
+  }
 }
 
 export function clearThemeColors() {
