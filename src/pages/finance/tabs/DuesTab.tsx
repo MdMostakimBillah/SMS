@@ -271,7 +271,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             totalAmount: fee.amount,
             months: monthCells,
             totalDue: totalDueAmount,
-            totalPaid: 0,
+            totalPaid: Object.values(monthCells).reduce((s, c) => s + c.paidAmount, 0),
             allPaid,
           })
         }
@@ -284,7 +284,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const results = useMemo(() => {
     let list = allResults
     if (fStatus === 'due') list = list.filter((r) => r.totalDue > 0)
-    else if (fStatus === 'paid') list = list.filter((r) => r.allPaid)
+    else if (fStatus === 'paid') list = list.filter((r) => r.totalPaid > 0)
     if (searchText.trim()) {
       const q = searchText.toLowerCase()
       list = list.filter((r) =>
@@ -301,16 +301,18 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
   const totalDue = useMemo(() => results.reduce((sum, r) => sum + r.totalDue, 0), [results])
   const totalPaid = useMemo(() => {
-    if (fStatus !== 'paiddue') return 0
     return results.reduce((sum, r) => {
-      let paid = 0
-      for (const m of sortedMonths) {
-        const cell = r.months[m]
-        if (cell) paid += cell.paidAmount
+      let paid = r.totalPaid
+      if (showMonthPicker) {
+        paid = 0
+        for (const m of sortedMonths) {
+          const cell = r.months[m]
+          if (cell) paid += cell.paidAmount
+        }
       }
       return sum + paid
     }, 0)
-  }, [results, sortedMonths, fStatus])
+  }, [results, sortedMonths, showMonthPicker])
   const monthSums = useMemo(() => {
     if (!showMonthPicker || sortedMonths.length === 0) return {} as Record<number, number>
     const sums: Record<number, number> = {}
@@ -324,7 +326,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     return sums
   }, [results, sortedMonths, showMonthPicker])
   const monthPaidSums = useMemo(() => {
-    if (fStatus !== 'paiddue' || !showMonthPicker || sortedMonths.length === 0) return {} as Record<number, number>
+    if (!showMonthPicker || sortedMonths.length === 0) return {} as Record<number, number>
     const sums: Record<number, number> = {}
     for (const m of sortedMonths) sums[m] = 0
     for (const r of results) {
@@ -334,7 +336,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
       }
     }
     return sums
-  }, [results, sortedMonths, fStatus, showMonthPicker])
+  }, [results, sortedMonths, showMonthPicker])
   const studentCount = useMemo(() => new Set(results.map((r) => r.studentId)).size, [results])
 
   const handleFindDue = useCallback(() => {
@@ -657,6 +659,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
       {/* Stats — only shown after Find Due */}
       {showResults && results.length > 0 && (
         <div className={fStatus === 'paiddue' ? 'grid grid-cols-3 gap-[0.625rem]' : 'grid grid-cols-2 gap-[0.625rem]'}>
+          {(fStatus === 'due' || fStatus === 'paiddue' || fStatus === 'all') && (
           <div
             className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
@@ -670,7 +673,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
               <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট বকেয়' : 'Total Due'}</div>
             </div>
           </div>
-          {fStatus === 'paiddue' && (
+          )}
+          {(fStatus === 'paid' || fStatus === 'paiddue') && (
             <div
               className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
