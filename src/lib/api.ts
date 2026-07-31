@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || ''
+export const API_BASE = import.meta.env.VITE_API_URL || ''
 
 let authToken: string | null = null
 
@@ -47,12 +47,16 @@ export async function apiRequest<T = unknown>(
       signal: controller.signal,
     })
 
-    const data = await res.json()
-
     if (!res.ok) {
-      throw new ApiError(data.error || `Request failed (${res.status})`, res.status)
+      let errorMsg = `Request failed (${res.status})`
+      try {
+        const data = await res.json()
+        if (data.error) errorMsg = data.error
+      } catch { /* non-JSON response */ }
+      throw new ApiError(errorMsg, res.status)
     }
 
+    const data = await res.json()
     return data as T
   } finally {
     clearTimeout(timer)

@@ -22,7 +22,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   handleGoBack = () => {
-    window.history.back()
+    window.location.href = '/login'
   }
 
   handleTryAgain = () => {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogIn, Eye, EyeOff, GraduationCap, Mail, Lock, Check, X, ShieldAlert, Clock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -33,8 +33,13 @@ function getInitialTheme(): 'light' | 'dark' {
 }
 
 export default function LoginPage() {
-  const { login, error, clearError, isLockedOut, lockoutRemaining } = useAuth()
+  const { login, error, clearError, isLockedOut, lockoutRemaining, user } = useAuth()
   const navigate = useNavigate()
+
+  // Navigate to dashboard AFTER user state commits (avoids race condition with ProtectedRoute)
+  useEffect(() => {
+    if (user) navigate('/dashboard', { replace: true })
+  }, [user, navigate])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -75,7 +80,7 @@ export default function LoginPage() {
     setSubmitting(true)
     try {
       await login(email, password)
-      navigate('/dashboard')
+      // Navigation happens via useEffect when user state is set
     } catch {
       // error is set in AuthContext
     } finally {
