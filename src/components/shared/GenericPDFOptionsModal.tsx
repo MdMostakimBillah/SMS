@@ -64,7 +64,19 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
     return previewRenderer(currentOpts)
   }, [previewRenderer, currentOpts])
 
-  const toggleCol = useCallback((key: string) => setCols((p) => (p.includes(key) ? p.filter((k) => k !== key) : [...p, key])), [])
+  const toggleCol = useCallback((key: string) => setCols((p) => {
+    if (p.includes(key)) return p.filter((k) => k !== key)
+    const masterIdx = columns.findIndex((c) => c.key === key)
+    if (masterIdx === -1) return [...p, key]
+    let insertAt = 0
+    for (const c of columns) {
+      if (c.key === key) break
+      if (p.includes(c.key)) insertAt++
+    }
+    const next = [...p]
+    next.splice(insertAt, 0, key)
+    return next
+  }), [columns])
   const selectAll = useCallback(() => setCols(columns.map((c) => c.key)), [columns])
   const clearAll = useCallback(() => setCols(['serial']), [])
   const addEmptyCol = useCallback(() => setEmptyColumns((p) => [...p, '']), [])
