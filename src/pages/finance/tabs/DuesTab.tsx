@@ -744,7 +744,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
       ) : (
         <div className="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--bg-primary)]">
           <div className="overflow-x-auto">
-          <table className="text-[12.5px]" style={{ tableLayout: 'auto' }}>
+          <table className="w-full text-[12.5px]" style={{ tableLayout: 'auto' }}>
             <thead>
               <tr className="bg-[var(--bg-secondary)] sticky top-0 z-20">
                 <th className="text-center px-2 py-2 bg-[var(--bg-secondary)] z-20" style={{ width: '36px', minWidth: '36px' }}>
@@ -809,7 +809,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                       <span className="font-semibold text-[var(--text-primary)] text-[11px] whitespace-nowrap">{bn ? row.feeNameBn : row.feeName}</span>
                     </td>
                     <td className="text-center px-2 py-3">
-                      <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded" style={{
+                      <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded whitespace-nowrap" style={{
                         background: row.feeType === 'onetime' ? 'var(--amber-light)' : 'var(--brand-light)',
                         color: row.feeType === 'onetime' ? 'var(--amber)' : 'var(--brand)',
                       }}>
