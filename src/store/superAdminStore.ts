@@ -24,6 +24,7 @@ export interface Institution {
   addressBn: string
   eiin: string
   website: string
+  subdomain: string
   status: InstitutionStatus
   package: InstitutionPackage
   usedStorageMB: number
@@ -86,7 +87,8 @@ const demoInstitutions: Institution[] = [
     address: 'Banani, Dhaka 1213',
     addressBn: 'বনানী, ঢাকা-১২১৩',
     eiin: '123456',
-    website: 'www.sunrise.edu.bd',
+    website: 'sunrise.smsappbd.vercel.app',
+    subdomain: 'sunrise',
     status: 'active',
     package: PACKAGES[2],
     usedStorageMB: 4520,
@@ -104,7 +106,8 @@ const demoInstitutions: Institution[] = [
     address: 'Gulshan, Dhaka 1212',
     addressBn: 'গুলশান, ঢাকা-১২১২',
     eiin: '234567',
-    website: 'www.dis.edu.bd',
+    website: 'dis.smsappbd.vercel.app',
+    subdomain: 'dis',
     status: 'active',
     package: PACKAGES[3],
     usedStorageMB: 18750,
@@ -122,7 +125,8 @@ const demoInstitutions: Institution[] = [
     address: 'Uttara, Dhaka 1230',
     addressBn: 'উত্তরা, ঢাকা-১২৩০',
     eiin: '345678',
-    website: 'www.greenvalley.edu.bd',
+    website: 'greenvalley.smsappbd.vercel.app',
+    subdomain: 'greenvalley',
     status: 'trial',
     package: PACKAGES[1],
     usedStorageMB: 340,
@@ -140,7 +144,8 @@ const demoInstitutions: Institution[] = [
     address: 'Boalia, Rajshahi 6205',
     addressBn: 'বোয়ালিয়া, রাজশাহী-৬২০৫',
     eiin: '456789',
-    website: 'www.rajshahi-cs.edu.bd',
+    website: 'rajshahi-cs.smsappbd.vercel.app',
+    subdomain: 'rajshahi-cs',
     status: 'suspended',
     package: PACKAGES[0],
     usedStorageMB: 120,

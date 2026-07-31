@@ -31,7 +31,10 @@ interface SchoolForm {
   adminEmail: string
   adminPassword: string
   brandColor: string
+  subdomain: string
 }
+
+const BASE_URL = 'smsappbd.vercel.app'
 
 const defaultForm: SchoolForm = {
   name: '', nameBn: '', email: '', phone: '', address: '', addressBn: '',
@@ -39,7 +42,7 @@ const defaultForm: SchoolForm = {
   subjects: ['Bangla', 'English', 'Mathematics'],
   sessions: ['2025-26'], startTime: '07:30', endTime: '14:30',
   package: PACKAGES[0], adminEmail: '', adminPassword: '',
-  brandColor: defaultThemeColors.brand,
+  brandColor: defaultThemeColors.brand, subdomain: '',
 }
 
 interface SectionStep {
@@ -65,6 +68,7 @@ export default function CreateSchool() {
   const isBn = useBn()
   const navigate = useNavigate()
   const addInstitution = useSuperAdminStore((s) => s.addInstitution)
+  const institutions = useSuperAdminStore((s) => s.institutions)
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<SchoolForm>(defaultForm)
   const [newSubject, setNewSubject] = useState('')
@@ -99,6 +103,7 @@ export default function CreateSchool() {
   }
 
   const handleCreate = () => {
+    const subdomain = form.subdomain.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')
     const inst: Institution = {
       id: `INST-${Date.now()}`,
       name: form.name,
@@ -108,7 +113,8 @@ export default function CreateSchool() {
       address: form.address,
       addressBn: form.addressBn || form.address,
       eiin: form.eiin,
-      website: form.website,
+      website: subdomain ? `${subdomain}.${BASE_URL}` : `www.${BASE_URL}`,
+      subdomain: subdomain || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       status: 'active',
       package: form.package,
       usedStorageMB: 0,
@@ -204,12 +210,12 @@ export default function CreateSchool() {
                     <FieldInput label={isBn ? 'ঠিকানা (বাংলা)' : 'Address (Bengali)'} value={form.addressBn} onChange={(v) => set('addressBn', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'বাসা নং, রাস্তা, শহর'} hint={isBn ? 'বাংলায় ঠিকানা' : 'Address in Bengali'} />
                   </>
                 )}
-                {currentSection?.key === 'extra' && (
-                  <>
-                    <FieldInput ref={inputRef} label="EIIN" value={form.eiin} onChange={(v) => set('eiin', v)} placeholder="123456" hint={isBn ? 'শিক্ষা প্রতিষ্ঠান শনাক্তকরণ নম্বর' : 'Education Institution Identification Number'} />
-                    <FieldInput label={isBn ? 'ওয়েবসাইট' : 'Website'} value={form.website} onChange={(v) => set('website', v)} placeholder="www.school.edu.bd" hint={isBn ? 'স্কুলের ওয়েবসাইট' : 'School website URL'} />
-                  </>
-                )}
+            {currentSection?.key === 'extra' && (
+              <>
+                <FieldInput ref={inputRef} label="EIIN" value={form.eiin} onChange={(v) => set('eiin', v)} placeholder="123456" hint={isBn ? 'শিক্ষা প্রতিষ্ঠান শনাক্তকরণ নম্বর' : 'Education Institution Identification Number'} />
+                <SubdomainInput value={form.subdomain} onChange={(v) => set('subdomain', v)} institutions={institutions} isBn={isBn} />
+              </>
+            )}
                 {currentSection?.key === 'brand' && (
                   <>
                     <FieldInput ref={inputRef} label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName} onChange={(v) => set('brandName', v)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} hint={isBn ? 'সিস্টেমের জন্য ছোট ব্র্যান্ড নাম' : 'Short brand name for the system'} />
@@ -344,7 +350,7 @@ function PreviewPanel({ form, isBn }: { form: SchoolForm; isBn: boolean }) {
                     </div>
                   </div>
                 )}
-                {(form.email || form.website) && (
+                {(form.email || form.subdomain) && (
                   <div className="flex items-center gap-2.5">
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
                       <Globe size={14} style={{ color: form.brandColor }} />
@@ -352,7 +358,7 @@ function PreviewPanel({ form, isBn }: { form: SchoolForm; isBn: boolean }) {
                     <div>
                       <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ইমেইল / ওয়েবসাইট' : 'Email / Website'}</div>
                       <div className="text-xs font-semibold text-[var(--text-primary)]">{form.email}</div>
-                      {form.website && <div className="text-[0.625rem] text-[var(--text-muted)]">{form.website}</div>}
+                      {form.subdomain && <div className="text-[0.625rem] text-[var(--text-muted)]">{form.subdomain}.{BASE_URL}</div>}
                     </div>
                   </div>
                 )}
@@ -536,6 +542,50 @@ function TagInput({ ref, tags, onAdd, onRemove, newTag, setNewTag, placeholder, 
 
 function isBnShort() {
   try { return document.documentElement.lang === 'bn' } catch { return false }
+}
+
+function SubdomainInput({ value, onChange, institutions, isBn }: {
+  value: string; onChange: (v: string) => void; institutions: Institution[]; isBn: boolean
+}) {
+  const [slug, setSlug] = useState(value)
+  const [available, setAvailable] = useState<boolean | null>(null)
+
+  const checkAvailability = (v: string) => {
+    setSlug(v)
+    onChange(v)
+    if (!v.trim()) { setAvailable(null); return }
+    const taken = institutions.some((inst) => inst.subdomain === v.toLowerCase())
+    setAvailable(!taken)
+  }
+
+  const displayUrl = slug ? `${slug}.${BASE_URL}` : `${BASE_URL}`
+
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'ওয়েবসাইট URL' : 'Website URL'}</label>
+      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'ইন্সটিটিউশনের ইউনিক সাবডোমেইন' : 'Unique subdomain for this institution'}</p>
+      <div className="flex items-center rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] overflow-hidden focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand)]/10 transition-all">
+        <input
+          type="text"
+          value={slug}
+          onChange={(e) => checkAvailability(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+          placeholder={isBn ? 'সাবডোমেইন' : 'subdomain'}
+          className="flex-1 px-3.5 py-2.5 bg-transparent text-sm text-[var(--text-primary)] outline-none"
+        />
+        <span className="px-2 text-xs text-[var(--text-muted)] shrink-0">.{BASE_URL}</span>
+      </div>
+      <div className="mt-1.5">
+        <p className="text-[0.625rem] text-[var(--text-muted)] font-mono truncate">{displayUrl}</p>
+        {slug && (
+          <p className={`text-[0.625rem] mt-0.5 ${available === false ? 'text-[var(--red)]' : available === true ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>
+            {available === false ? (isBn ? 'এই URL ইতিমধ্যে ব্যবহৃত' : 'This URL is already taken') :
+             available === true ? (isBn ? 'URL পাওয়া যাচ্ছে' : 'URL is available') :
+             (isBn ? 'URL চেক করা হচ্ছে...' : 'Checking availability...')}
+          </p>
+        )}
+      </div>
+    </div>
+  )
 }
 
 function PackagePicker({ value, onChange, isBn }: { value: InstitutionPackage; onChange: (v: InstitutionPackage) => void; isBn: boolean }) {

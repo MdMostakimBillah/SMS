@@ -217,7 +217,7 @@ const defaultInstitution: InstitutionSettings = {
   phone: '+880-2-1234567',
   email: 'info@sunrise.edu.bd',
   address: 'Sunrise Academy, Dhaka, Bangladesh',
-  website: 'www.sunrise.edu.bd',
+  website: 'sunrise.smsappbd.vercel.app',
   subjects: ['Bangla', 'English', 'Mathematics'],
   startTime: '07:30',
   endTime: '14:30',

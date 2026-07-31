@@ -7,9 +7,11 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute, RoleProtectedRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
 import { LOGIN_PATH } from '@/lib/constants'
+import { useSubdomain } from '@/hooks/useSubdomain'
 
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
+const InstitutionLogin = lazy(() => import('@/pages/auth/InstitutionLogin'))
 const DashboardPage = lazy(() => import('@/pages/dashboard'))
 const SuperAdminPage = lazy(() => import('@/pages/super-admin'))
 const StudentsPage = lazy(() => import('@/pages/students'))
@@ -53,7 +55,17 @@ const F = ({ children }: { children: React.ReactNode }) => (
   <ErrorBoundary><Suspense fallback={<LoadingSpinner />}>{children}</Suspense></ErrorBoundary>
 )
 
-export default function App() {
+function AppContent() {
+  const { isSubdomain, institution } = useSubdomain()
+
+  if (isSubdomain && institution) {
+    return (
+      <Suspense fallback={<LoadingSpinner />}>
+        <InstitutionLogin institution={institution} />
+      </Suspense>
+    )
+  }
+
   return (
     <AuthProvider>
       <Routes>
@@ -121,4 +133,8 @@ export default function App() {
       </Routes>
     </AuthProvider>
   )
+}
+
+export default function App() {
+  return <AppContent />
 }

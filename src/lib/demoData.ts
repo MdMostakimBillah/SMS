@@ -59,7 +59,7 @@ const sunriseData: InstitutionData = {
     phone: '+880-1712-345678',
     email: 'admin@sunrise.edu.bd',
     address: 'Banani, Dhaka 1213',
-    website: 'www.sunrise.edu.bd',
+    website: 'sunrise.smsappbd.vercel.app',
     subjects: ['Bangla', 'English', 'Mathematics', 'Science', 'ICT'],
     startTime: '07:30',
     endTime: '14:30',
