@@ -747,7 +747,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
           <table className="text-[12.5px]" style={{ tableLayout: 'auto' }}>
             <thead>
               <tr className="bg-[var(--bg-secondary)] sticky top-0 z-20">
-                <th className="text-center px-2 py-2 w-[36px] bg-[var(--bg-secondary)] z-20">
+                <th className="text-center px-2 py-2 bg-[var(--bg-secondary)] z-20" style={{ width: '36px', minWidth: '36px' }}>
                   <input
                     type="checkbox"
                     checked={results.length > 0 && selectedRows.size === results.length}
@@ -755,15 +755,15 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     className="w-3.5 h-3.5 accent-[var(--brand)] cursor-pointer"
                   />
                 </th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '40px' }}>{bn ? 'ক্রমিক' : 'S/N'}</th>
-                <th className="px-2 py-2 bg-[var(--bg-secondary)]" style={{ width: '40px' }}></th>
-                <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky left-[76px] bg-[var(--bg-secondary)] z-20 whitespace-nowrap" style={{ width: '160px' }}>{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '45px' }}>{bn ? 'রোল' : 'Roll'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '95px' }}>{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '110px' }}>{bn ? 'শ্রেণি' : 'Class'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '110px' }}>{bn ? 'ফি' : 'Fee'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '70px' }}>{bn ? 'ধরন' : 'Type'}</th>
-                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '90px' }}>{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '40px', minWidth: '40px' }}>{bn ? 'ক্রমিক' : 'S/N'}</th>
+                <th className="px-2 py-2 bg-[var(--bg-secondary)]" style={{ width: '40px', minWidth: '40px' }}></th>
+                <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky left-[76px] bg-[var(--bg-secondary)] z-20 whitespace-nowrap" style={{ width: '160px', minWidth: '160px' }}>{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>{bn ? 'রোল' : 'Roll'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '95px', minWidth: '95px' }}>{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '110px', minWidth: '110px' }}>{bn ? 'শ্রেণি' : 'Class'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '110px', minWidth: '110px' }}>{bn ? 'ফি' : 'Fee'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '70px', minWidth: '70px' }}>{bn ? 'ধরন' : 'Type'}</th>
+                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '90px', minWidth: '90px' }}>{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
                 {showMonthPicker && sortedMonths.map((m) => (
                   <th key={m} className="text-center px-3 py-2 text-[10px] uppercase font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ color: 'var(--brand)', width: '90px', minWidth: '90px', maxWidth: '90px' }}>
                     {bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}
@@ -772,7 +772,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 {!showMonthPicker && (
                   <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'বকেয়' : 'Due'}</th>
                 )}
-                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold whitespace-nowrap" style={{ width: '100px' }}>{bn ? 'মোট বকেয়' : 'Total Due'}</th>
+                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold whitespace-nowrap" style={{ width: '100px', minWidth: '100px' }}>{bn ? 'মোট বকেয়' : 'Total Due'}</th>
               </tr>
             </thead>
             <tbody>
@@ -806,7 +806,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="text-center px-2 py-3 text-[var(--text-secondary)] text-[12px]">{row.studentId}</td>
                     <td className="text-center px-2 py-3 text-[var(--text-secondary)]">{row.class}{row.section ? `-${row.section}` : ''}</td>
                     <td className="text-center px-2 py-3">
-                      <span className="font-semibold text-[var(--text-primary)] text-[11px]">{bn ? row.feeNameBn : row.feeName}</span>
+                      <span className="font-semibold text-[var(--text-primary)] text-[11px] whitespace-nowrap">{bn ? row.feeNameBn : row.feeName}</span>
                     </td>
                     <td className="text-center px-2 py-3">
                       <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded" style={{
