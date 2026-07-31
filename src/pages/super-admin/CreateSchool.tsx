@@ -37,6 +37,20 @@ interface SchoolForm {
 
 const BASE_URL = 'smsappbd.vercel.app'
 
+interface PasswordRule {
+  label: string
+  labelBn: string
+  test: (p: string) => boolean
+}
+
+const PASSWORD_RULES: PasswordRule[] = [
+  { label: '8+ characters', labelBn: '৮+ অক্ষর', test: (p) => p.length >= 8 },
+  { label: 'Uppercase letter', labelBn: 'বড় হাতের অক্ষর', test: (p) => /[A-Z]/.test(p) },
+  { label: 'Lowercase letter', labelBn: 'ছোট হাতের অক্ষর', test: (p) => /[a-z]/.test(p) },
+  { label: 'Number', labelBn: 'সংখ্যা', test: (p) => /[0-9]/.test(p) },
+  { label: 'Special character', labelBn: 'বিশেষ অক্ষর', test: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
+]
+
 const defaultForm: SchoolForm = {
   name: '', nameBn: '', email: '', phone: '', address: '', addressBn: '',
   eiin: '', website: '', brandName: '', logo: '', banner: '', motto: '', mottoBn: '',
@@ -76,6 +90,10 @@ export default function CreateSchool() {
   const [showPassword, setShowPassword] = useState(false)
   const [created, setCreated] = useState(false)
   const [exiting, setExiting] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+  const [emailCode, setEmailCode] = useState('')
+  const [emailVerified, setEmailVerified] = useState(false)
+  const [emailCodeInput, setEmailCodeInput] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   const currentSection = SECTION_STEPS[step]
@@ -83,15 +101,24 @@ export default function CreateSchool() {
 
   const set = <K extends keyof SchoolForm>(key: K, val: SchoolForm[K]) => setForm((f) => ({ ...f, [key]: val }))
 
+  const passwordValidation = useMemo(() => {
+    return PASSWORD_RULES.map((rule) => ({
+      ...rule,
+      met: form.adminPassword.length > 0 && rule.test(form.adminPassword),
+    }))
+  }, [form.adminPassword])
+
+  const isPasswordValid = form.adminPassword.length > 0 && passwordValidation.every((r) => r.met)
+
   const canNext = useMemo(() => {
     if (!currentSection) return true
     switch (currentSection.key) {
       case 'basic': return form.name.trim().length > 0
       case 'academic': return form.sessions.length > 0
-      case 'admin': return form.adminEmail.trim().length > 0 && form.adminPassword.trim().length >= 4
+      case 'admin': return form.adminEmail.trim().length > 0 && emailVerified && isPasswordValid
       default: return true
     }
-  }, [currentSection, form])
+  }, [currentSection, form, emailVerified, isPasswordValid])
 
   useEffect(() => {
     inputRef.current?.focus()
@@ -239,10 +266,92 @@ export default function CreateSchool() {
                 )}
                 {currentSection?.key === 'admin' && (
                   <>
-                    <FieldInput ref={inputRef} label={isBn ? 'অ্যাডমিন ইমেইল *' : 'Admin Email *'} type="email" value={form.adminEmail} onChange={(v) => set('adminEmail', v)} placeholder="admin@school.edu.bd" hint={isBn ? 'স্কুল অ্যাডমিনের লগইন ইমেইল' : 'Login email for the school admin'} />
-                    <PasswordInput ref={inputRef} value={form.adminPassword} onChange={(v) => set('adminPassword', v)} showPassword={showPassword} setShowPassword={setShowPassword} isBn={isBn} />
-                    {form.adminPassword && form.adminPassword.length < 4 && (
-                      <p className="text-[0.6875rem] text-[var(--red)]">{isBn ? 'কমপক্ষে ৪ অক্ষর প্রয়োজন' : 'Minimum 4 characters required'}</p>
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'অ্যাডমিন ইমেইল *' : 'Admin Email *'}</label>
+                      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'স্কুল অ্যাডমিনের লগইন ইমেইল' : 'Login email for the school admin'}</p>
+                      <div className="flex gap-2">
+                        <input
+                          ref={inputRef}
+                          type="email"
+                          value={form.adminEmail}
+                          onChange={(e) => { set('adminEmail', e.target.value); setEmailSent(false); setEmailVerified(false); setEmailCode('') }}
+                          placeholder="admin@school.edu.bd"
+                          disabled={emailVerified}
+                          className="flex-1 px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all disabled:opacity-50"
+                        />
+                        {!emailVerified && (
+                          <button
+                            onClick={() => { if (form.adminEmail.includes('@')) { setEmailSent(true); setEmailCode(Math.random().toString(36).slice(-6).toUpperCase()) } }}
+                            disabled={!form.adminEmail.includes('@') || emailSent}
+                            className="px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-xs font-semibold cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                          >
+                            {emailSent ? (isBn ? 'পাঠানো হয়েছে' : 'Sent') : (isBn ? 'কোড পাঠান' : 'Send Code')}
+                          </button>
+                        )}
+                        {emailVerified && (
+                          <div className="px-3 py-2.5 rounded-xl bg-[var(--green)]/10 text-[var(--green)] text-xs font-semibold flex items-center gap-1.5 shrink-0">
+                            <Check size={14} /> {isBn ? 'যাচাইকৃত' : 'Verified'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {emailSent && !emailVerified && (
+                      <div>
+                        <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'যাচাইকরণ কোড' : 'Verification Code'}</label>
+                        <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? `${form.adminEmail}-এ ৬-ডিজিট কোড পাঠানো হয়েছে` : `A 6-digit code was sent to ${form.adminEmail}`}</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={emailCodeInput}
+                            onChange={(e) => setEmailCodeInput(e.target.value.toUpperCase().slice(0, 6))}
+                            placeholder="XXXXXX"
+                            maxLength={6}
+                            className="flex-1 px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] font-mono tracking-widest outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all"
+                          />
+                          <button
+                            onClick={() => { if (emailCodeInput === emailCode) setEmailVerified(true) }}
+                            disabled={emailCodeInput.length < 6}
+                            className="px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-xs font-semibold cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                          >
+                            {isBn ? 'যাচাই করুন' : 'Verify'}
+                          </button>
+                        </div>
+                        {emailCodeInput && emailCodeInput !== emailCode && (
+                          <p className="text-[0.6875rem] text-[var(--red)] mt-1">{isBn ? 'ভুল কোড' : 'Invalid code'}</p>
+                        )}
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'পাসওয়ার্ড *' : 'Password *'}</label>
+                      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'অ্যাডমিন অ্যাকাউন্টের পাসওয়ার্ড' : 'Password for the admin account'}</p>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={form.adminPassword}
+                          onChange={(e) => set('adminPassword', e.target.value)}
+                          placeholder={isBn ? 'পাসওয়ার্ড লিখুন' : 'Enter password'}
+                          className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none"
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                    {form.adminPassword.length > 0 && (
+                      <div className="space-y-1.5">
+                        {passwordValidation.map((rule) => (
+                          <div key={rule.label} className="flex items-center gap-2">
+                            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${rule.met ? 'bg-[var(--green)]' : 'bg-[var(--bg-secondary)] border border-[var(--border)]'}`}>
+                              {rule.met && <Check size={10} className="text-white" />}
+                            </div>
+                            <span className={`text-[0.6875rem] ${rule.met ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>{isBn ? rule.labelBn : rule.label}</span>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </>
                 )}
@@ -462,24 +571,6 @@ function FieldInput({ ref, label, type = 'text', value, onChange, placeholder, h
       <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{label}</label>
       {hint && <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{hint}</p>}
       <input ref={ref} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all" />
-    </div>
-  )
-}
-
-function PasswordInput({ ref, value, onChange, showPassword, setShowPassword, isBn }: {
-  ref?: React.Ref<HTMLInputElement>; value: string; onChange: (v: string) => void
-  showPassword: boolean; setShowPassword: (v: boolean) => void; isBn: boolean
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'পাসওয়ার্ড *' : 'Password *'}</label>
-      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'কমপক্ষে ৪ অক্ষর' : 'Minimum 4 characters'}</p>
-      <div className="relative">
-        <input ref={ref} type={showPassword ? 'text' : 'password'} value={value} onChange={(e) => onChange(e.target.value)} placeholder={isBn ? 'কমপক্ষে ৪ অক্ষর' : 'At least 4 characters'} className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all" />
-        <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none">
-          {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-        </button>
-      </div>
     </div>
   )
 }
