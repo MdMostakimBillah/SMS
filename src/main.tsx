@@ -33,3 +33,24 @@ createRoot(document.getElementById('root')!).render(
     </Sentry.ErrorBoundary>
   </StrictMode>
 )
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      const onSWReady = () => {
+        import('./store/classStore').then(({ useClassStore }) => {
+          const { institution } = useClassStore.getState()
+          const brandColor = institution.lightColors?.brand || '#6366f1'
+          reg.active?.postMessage({ type: 'SET_BRAND_COLOR', color: brandColor })
+        })
+      }
+      if (reg.active) {
+        onSWReady()
+      } else {
+        reg.installing?.addEventListener('statechange', (e) => {
+          if ((e.target as ServiceWorker).state === 'activated') onSWReady()
+        })
+      }
+    })
+  })
+}

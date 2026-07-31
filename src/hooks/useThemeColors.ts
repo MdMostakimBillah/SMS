@@ -79,6 +79,9 @@ export function applyThemeColors(colors: ThemeColors) {
 
     // Update favicon with brand color
     updateFavicon(brandColor)
+
+    // Notify service worker of brand color change
+    sendBrandColorToSW(brandColor)
   }
 }
 
@@ -139,6 +142,13 @@ function updateFavicon(color: string) {
   link.type = 'image/svg+xml'
   link.href = dataUrl
   document.head.appendChild(link)
+}
+
+function sendBrandColorToSW(color: string) {
+  if (!navigator.serviceWorker) return
+  navigator.serviceWorker.ready.then((reg) => {
+    reg.active?.postMessage({ type: 'SET_BRAND_COLOR', color })
+  })
 }
 
 export function clearThemeColors() {
