@@ -160,7 +160,7 @@ export function generateTabulationPDF(
   const academicYear = rows[0]?.student?.academicYear || ''
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Tabulation</title><style>
-    @page{size:${orientation};margin:5mm}
+    @page{size:${orientation};margin:${'5mm'}}
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#1e293b;background:#fff;font-size:10px}
     .header{text-align:center;margin-bottom:12px;padding-bottom:8px;border-bottom:3px solid ${brand}}

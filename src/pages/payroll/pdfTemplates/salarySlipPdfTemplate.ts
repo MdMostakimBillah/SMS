@@ -117,7 +117,7 @@ export function generateSingleSalarySlipPDF(
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Payslip - ${escapeHtml(employee.id)}</title>
 <style>
-  @page{size:${orientation};margin:10mm}
+  @page{size:${orientation};margin:${'5mm'}}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:11px;background:#fff;padding:10px}
   .slip{border:1.5px solid #c7d2fe;border-radius:8px;padding:12px;max-width:190mm;margin:0 auto}
@@ -165,7 +165,7 @@ export function generateAllSalarySlipsPDF(
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Salary Slips - ${escapeHtml(month)}</title>
 <style>
-  @page{size:portrait;margin:10mm}
+  @page{size:portrait;margin:${'5mm'}}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:11px;background:#fff;padding:10px}
   .slip-wrap{margin-bottom:12px}
@@ -233,7 +233,7 @@ export function generatePayrollSummaryPDF(
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Payroll - ${escapeHtml(String(employees.length))} employees</title>
 <style>
-  @page{size:${orientation};margin:6mm}
+  @page{size:${orientation};margin:${'5mm'}}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Arial',sans-serif;color:#1e293b;background:#fff;font-size:10px;padding:10px}
   .header{text-align:center;margin-bottom:12px;padding-bottom:8px;border-bottom:3px solid ${brand}}

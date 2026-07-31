@@ -330,7 +330,7 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
             {/* ③ Students */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <div style={sectionLabel}>④ {isBn ? 'শিক্ষার্থী নির্বাচন' : 'Select Students'} ({selectedIds.length}/{students.length})</div>
+                <div style={sectionLabel}>③ {isBn ? 'শিক্ষার্থী নির্বাচন' : 'Select Students'} ({selectedIds.length}/{students.length})</div>
                 <div style={{ display: 'flex', gap: '0.3125rem' }}>
                   <button
                     onClick={toggleSelectAll}

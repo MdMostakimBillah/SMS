@@ -136,7 +136,7 @@ export function generateInvigilatorGuardListPDF(
 <meta charset="UTF-8">
 <title>${escapeHtml(title)} — ${escapeHtml(schoolName)}</title>
 <style>
-  @page { size: A4 ${orientation}; margin: 8mm; }
+  @page { size: A4 ${orientation}; margin: ${'5mm'}; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:Arial,sans-serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
   .page { page-break-after:always; padding:10px; }

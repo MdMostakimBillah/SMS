@@ -32,7 +32,7 @@ export const PDFOptionsModal = React.memo(function PDFOptionsModal({ count, isBn
       isBn={isBn}
       previewRenderer={previewRenderer}
       onClose={onClose}
-      onDownload={(opts) =>
+        onDownload={(opts) =>
         onDownload({
           title: opts.title,
           selectedCols: opts.selectedCols,

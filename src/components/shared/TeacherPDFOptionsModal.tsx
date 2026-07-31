@@ -31,7 +31,7 @@ export const TeacherPDFOptionsModal = React.memo(function TeacherPDFOptionsModal
       isBn={isBn}
       previewRenderer={previewRenderer}
       onClose={onClose}
-      onDownload={(opts) =>
+        onDownload={(opts) =>
         onDownload({
           title: opts.title,
           selectedCols: opts.selectedCols,

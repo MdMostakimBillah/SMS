@@ -71,7 +71,7 @@ export function generateSyllabusPDFHTML(
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${isBn ? 'সিলেবাস' : 'Syllabus'}</title>
 <style>
-  @page { size: A4 ${isLandscape ? 'landscape' : 'portrait'}; margin: 12mm; }
+  @page { size: A4 ${isLandscape ? 'landscape' : 'portrait'}; margin: ${'5mm'}; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; font-size: 11px; padding: 8mm; }
   @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; padding: 8mm; } }

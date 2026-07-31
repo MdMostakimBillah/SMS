@@ -127,7 +127,7 @@ export function generateRoutineGridPDF(
 <meta charset="UTF-8">
 <title>Routine — ${escapeHtml(schoolName)}</title>
 <style>
-  @page { size: A4 ${orientation}; margin: 8mm; }
+  @page { size: A4 ${orientation}; margin: ${'5mm'}; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:Arial,sans-serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
   .hdr  { display:flex; align-items:center; justify-content:space-between; padding-bottom:7px; border-bottom:2px solid ${brand.brandColor}; margin-bottom:7px; }

@@ -43,7 +43,7 @@ export const InvigilatorPDFOptionsModal = React.memo(function InvigilatorPDFOpti
       isBn={isBn}
       previewRenderer={previewRenderer}
       onClose={onClose}
-      onDownload={(opts) =>
+        onDownload={(opts) =>
         onDownload({
           title: opts.title,
           selectedCols: opts.selectedCols,

@@ -110,7 +110,7 @@ export const HRPDFOptionsModal = React.memo(function HRPDFOptionsModal({
       isBn={isBn}
       previewRenderer={previewRenderer}
       onClose={onClose}
-      onDownload={(opts) =>
+        onDownload={(opts) =>
         onDownload({
           title: opts.title,
           selectedCols: opts.selectedCols,

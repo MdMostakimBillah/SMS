@@ -29,7 +29,7 @@ export const RoutinePDFOptionsModal = React.memo(function RoutinePDFOptionsModal
       isBn={isBn}
       previewRenderer={previewRenderer}
       onClose={onClose}
-      onDownload={(opts) =>
+        onDownload={(opts) =>
         onDownload({
           title: opts.title,
           selectedCols: opts.selectedCols,
