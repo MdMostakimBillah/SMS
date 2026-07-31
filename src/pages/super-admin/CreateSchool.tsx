@@ -9,6 +9,7 @@ import {
 import { useBn } from '@/hooks/useBn'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
 import { defaultThemeColors } from '@/store/classStore'
+import { sendVerificationCode } from '@/lib/emailService'
 
 interface SchoolForm {
   name: string
@@ -94,6 +95,7 @@ export default function CreateSchool() {
   const [emailCode, setEmailCode] = useState('')
   const [emailVerified, setEmailVerified] = useState(false)
   const [emailCodeInput, setEmailCodeInput] = useState('')
+  const [sendingCode, setSendingCode] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const currentSection = SECTION_STEPS[step]
@@ -281,11 +283,20 @@ export default function CreateSchool() {
                         />
                         {!emailVerified && (
                           <button
-                            onClick={() => { if (form.adminEmail.includes('@')) { setEmailSent(true); setEmailCode(Math.random().toString(36).slice(-6).toUpperCase()) } }}
-                            disabled={!form.adminEmail.includes('@') || emailSent}
+                            onClick={async () => {
+                              if (form.adminEmail.includes('@')) {
+                                setSendingCode(true)
+                                const code = Math.random().toString(36).slice(-6).toUpperCase()
+                                await sendVerificationCode(form.adminEmail, code)
+                                setEmailCode(code)
+                                setEmailSent(true)
+                                setSendingCode(false)
+                              }
+                            }}
+                            disabled={!form.adminEmail.includes('@') || emailSent || sendingCode}
                             className="px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-xs font-semibold cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                           >
-                            {emailSent ? (isBn ? 'পাঠানো হয়েছে' : 'Sent') : (isBn ? 'কোড পাঠান' : 'Send Code')}
+                            {sendingCode ? (isBn ? 'পাঠানো হচ্ছে...' : 'Sending...') : emailSent ? (isBn ? 'পাঠানো হয়েছে' : 'Sent') : (isBn ? 'কোড পাঠান' : 'Send Code')}
                           </button>
                         )}
                         {emailVerified && (

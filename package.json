@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@hookform/resolvers": "^5.4.0",
     "@iconify/react": "^6.0.2",
     "@sentry/react": "^10.69.0",
