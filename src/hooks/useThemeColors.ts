@@ -62,6 +62,43 @@ export function applyThemeColors(colors: ThemeColors) {
     .join('; ')
 
   styleEl.textContent = `${selector} { ${cssVars} }`
+
+  // Update <meta name="theme-color"> dynamically
+  const brandColor = colors.brand
+  if (brandColor) {
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]')
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement('meta')
+      metaThemeColor.setAttribute('name', 'theme-color')
+      document.head.appendChild(metaThemeColor)
+    }
+    metaThemeColor.setAttribute('content', brandColor)
+
+    // Update PWA manifest theme_color dynamically
+    updateManifestThemeColor(brandColor)
+  }
+}
+
+function updateManifestThemeColor(color: string) {
+  fetch('/manifest.json')
+    .then((res) => res.json())
+    .then((manifest) => {
+      manifest.theme_color = color
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' })
+      const manifestURL = URL.createObjectURL(blob)
+      let manifestLink = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
+      if (manifestLink) {
+        // Revoke previous blob URL to avoid memory leak
+        if (manifestLink.dataset.blobUrl) {
+          URL.revokeObjectURL(manifestLink.dataset.blobUrl)
+        }
+        manifestLink.href = manifestURL
+        manifestLink.dataset.blobUrl = manifestURL
+      }
+    })
+    .catch(() => {
+      // Silently fail - manifest is static fallback
+    })
 }
 
 export function clearThemeColors() {
