@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Building2, MapPin, Phone, Clock, Globe, CalendarDays,
   ChevronRight, ChevronLeft, Check, X, Eye, EyeOff, Sparkles,
-  FileText, Palette, GraduationCap, CreditCard, Shield,
+  FileText, Palette, GraduationCap, CreditCard, Shield, Copy, Upload,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
@@ -21,6 +21,7 @@ interface SchoolForm {
   website: string
   brandName: string
   logo: string
+  banner: string
   motto: string
   mottoBn: string
   subjects: string[]
@@ -38,7 +39,7 @@ const BASE_URL = 'smsappbd.vercel.app'
 
 const defaultForm: SchoolForm = {
   name: '', nameBn: '', email: '', phone: '', address: '', addressBn: '',
-  eiin: '', website: '', brandName: '', logo: '', motto: '', mottoBn: '',
+  eiin: '', website: '', brandName: '', logo: '', banner: '', motto: '', mottoBn: '',
   subjects: ['Bangla', 'English', 'Mathematics'],
   sessions: ['2025-26'], startTime: '07:30', endTime: '14:30',
   package: PACKAGES[0], adminEmail: '', adminPassword: '',
@@ -121,6 +122,7 @@ export default function CreateSchool() {
       createdAt: new Date().toISOString().split('T')[0],
       lastLogin: '-',
       logo: form.logo,
+      banner: form.banner,
       brandColor: form.brandColor,
     }
     addInstitution(inst)
@@ -221,7 +223,8 @@ export default function CreateSchool() {
                     <FieldInput ref={inputRef} label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName} onChange={(v) => set('brandName', v)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} hint={isBn ? 'সিস্টেমের জন্য ছোট ব্র্যান্ড নাম' : 'Short brand name for the system'} />
                     <FieldInput label={isBn ? 'মোটো (ইংরেজি)' : 'Motto (English)'} value={form.motto} onChange={(v) => set('motto', v)} placeholder="Knowledge is Power" hint={isBn ? 'ইংরেজিতে স্কুলের মোটো' : 'School motto in English'} />
                     <FieldInput label={isBn ? 'মোটো (বাংলা)' : 'Motto (Bengali)'} value={form.mottoBn} onChange={(v) => set('mottoBn', v)} placeholder="জ্ঞাই হলো শক্তি" hint={isBn ? 'বাংলায় স্কুলের মোটো' : 'School motto in Bengali'} />
-                    <FieldInput label={isBn ? 'লোগো URL' : 'Logo URL'} value={form.logo} onChange={(v) => set('logo', v)} placeholder="https://..." hint={isBn ? 'স্কুল লোগোর URL' : 'URL to the school logo image'} />
+                    <FileUpload label={isBn ? 'লোগো' : 'Logo'} value={form.logo} onChange={(v) => set('logo', v)} accept="image/*" isBn={isBn} />
+                    <FileUpload label={isBn ? 'ব্যানার' : 'Banner'} value={form.banner} onChange={(v) => set('banner', v)} accept="image/*" isBn={isBn} aspect="banner" />
                     <ColorPicker value={form.brandColor} onChange={(v) => set('brandColor', v)} />
                   </>
                 )}
@@ -291,8 +294,15 @@ function PreviewPanel({ form, isBn }: { form: SchoolForm; isBn: boolean }) {
   return (
     <div className="h-full overflow-y-auto">
       {/* Banner */}
-      <div className="relative h-44" style={{ background: `linear-gradient(135deg, ${form.brandColor} 0%, ${form.brandColor}aa 100%)` }}>
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+      <div className="relative h-44 overflow-hidden">
+        {form.banner ? (
+          <img src={form.banner} alt="Banner" className="w-full h-full object-cover" />
+        ) : (
+          <>
+            <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${form.brandColor} 0%, ${form.brandColor}aa 100%)` }} />
+            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+          </>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
       </div>
 
@@ -512,6 +522,56 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (v: string)
   )
 }
 
+function FileUpload({ label, value, onChange, accept, isBn, aspect = 'logo' }: {
+  label: string; value: string; onChange: (v: string) => void; accept: string; isBn: boolean; aspect?: 'logo' | 'banner'
+}) {
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => onChange(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const isBanner = aspect === 'banner'
+
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{label}</label>
+      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'ফাইল থেকে ছবি নির্বাচন করুন' : 'Select image from file'}</p>
+      <input ref={fileRef} type="file" accept={accept} onChange={handleFile} className="hidden" />
+      <div
+        onClick={() => fileRef.current?.click()}
+        className={`relative group cursor-pointer rounded-xl border-2 border-dashed border-[var(--border)] hover:border-[var(--brand)] transition-colors overflow-hidden ${isBanner ? 'h-32' : 'h-28'}`}
+      >
+        {value ? (
+          <>
+            <img src={value} alt={label} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="text-xs text-white font-medium">{isBn ? 'পরিবর্তন করুন' : 'Change'}</span>
+            </div>
+          </>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 bg-[var(--bg-secondary)]">
+            <Upload size={20} className="text-[var(--text-muted)]" />
+            <span className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ক্লিক করুন' : 'Click to upload'}</span>
+          </div>
+        )}
+      </div>
+      {value && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onChange('') }}
+          className="mt-1.5 text-[0.625rem] text-[var(--red)] hover:underline cursor-pointer bg-transparent border-none"
+        >
+          {isBn ? 'মুছুন' : 'Remove'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 function TagInput({ ref, tags, onAdd, onRemove, newTag, setNewTag, placeholder, label, hint }: {
   ref?: React.Ref<HTMLInputElement>; tags: string[]; onAdd: (t: string) => void; onRemove: (t: string) => void
   newTag: string; setNewTag: (v: string) => void; placeholder: string; label: string; hint?: string
@@ -549,6 +609,7 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
 }) {
   const [slug, setSlug] = useState(value)
   const [available, setAvailable] = useState<boolean | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const checkAvailability = (v: string) => {
     setSlug(v)
@@ -576,6 +637,13 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
           <div className="px-3 py-2.5 bg-[var(--bg-primary)] border-l border-[var(--border)] text-xs text-[var(--text-muted)] shrink-0">
             .smsappbd.vercel.app
           </div>
+          <button
+            onClick={() => { navigator.clipboard.writeText(displayUrl); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+            className="px-3 py-2.5 bg-[var(--bg-primary)] border-l border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer border-none transition-colors"
+            title={isBn ? 'কপি করুন' : 'Copy URL'}
+          >
+            {copied ? <Check size={14} className="text-[var(--green)]" /> : <Copy size={14} />}
+          </button>
         </div>
         {slug && (
           <div className="px-3.5 py-2 border-t border-[var(--border)] bg-[var(--bg-primary)]">

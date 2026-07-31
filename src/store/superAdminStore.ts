@@ -31,6 +31,7 @@ export interface Institution {
   createdAt: string
   lastLogin: string
   logo: string
+  banner: string
   brandColor: string
 }
 
@@ -95,6 +96,7 @@ const demoInstitutions: Institution[] = [
     createdAt: '2024-08-15',
     lastLogin: '2026-07-30',
     logo: '',
+    banner: '',
     brandColor: '#6366f1',
   },
   {
@@ -114,6 +116,7 @@ const demoInstitutions: Institution[] = [
     createdAt: '2024-06-20',
     lastLogin: '2026-07-31',
     logo: '',
+    banner: '',
     brandColor: '#3b82f6',
   },
   {
@@ -133,6 +136,7 @@ const demoInstitutions: Institution[] = [
     createdAt: '2026-07-01',
     lastLogin: '2026-07-28',
     logo: '',
+    banner: '',
     brandColor: '#22c55e',
   },
   {
@@ -152,6 +156,7 @@ const demoInstitutions: Institution[] = [
     createdAt: '2025-11-10',
     lastLogin: '2026-05-15',
     logo: '',
+    banner: '',
     brandColor: '#f59e0b',
   },
 ]
