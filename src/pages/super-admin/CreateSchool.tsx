@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Building2, MapPin, Phone, Clock, Globe, CalendarDays,
   ChevronRight, ChevronLeft, Check, X, Eye, EyeOff, Sparkles,
+  FileText, Palette, GraduationCap, CreditCard, Shield,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
@@ -45,17 +46,17 @@ interface SectionStep {
   key: string
   labelEn: string
   labelBn: string
-  icon: string
+  icon: React.ReactNode
 }
 
 const SECTION_STEPS: SectionStep[] = [
-  { key: 'basic', labelEn: 'Basic Info', labelBn: 'মৌলিক তথ্য', icon: '🏫' },
-  { key: 'contact', labelEn: 'Contact', labelBn: 'যোগাযোগ', icon: '📞' },
-  { key: 'extra', labelEn: 'Extra Details', labelBn: 'অতিরিক্ত তথ্য', icon: '📋' },
-  { key: 'brand', labelEn: 'Branding', labelBn: 'ব্র্যান্ডিং', icon: '🎨' },
-  { key: 'academic', labelEn: 'Academic', labelBn: 'একাডেমিক', icon: '📚' },
-  { key: 'package', labelEn: 'Package', labelBn: 'প্যাকেজ', icon: '💳' },
-  { key: 'admin', labelEn: 'Admin Account', labelBn: 'অ্যাডমিন', icon: '🔑' },
+  { key: 'basic', labelEn: 'Basic Info', labelBn: 'মৌলিক তথ্য', icon: <Building2 size={14} /> },
+  { key: 'contact', labelEn: 'Contact', labelBn: 'যোগাযোগ', icon: <Phone size={14} /> },
+  { key: 'extra', labelEn: 'Extra Details', labelBn: 'অতিরিক্ত তথ্য', icon: <FileText size={14} /> },
+  { key: 'brand', labelEn: 'Branding', labelBn: 'ব্র্যান্ডিং', icon: <Palette size={14} /> },
+  { key: 'academic', labelEn: 'Academic', labelBn: 'একাডেমিক', icon: <GraduationCap size={14} /> },
+  { key: 'package', labelEn: 'Package', labelBn: 'প্যাকেজ', icon: <CreditCard size={14} /> },
+  { key: 'admin', labelEn: 'Admin Account', labelBn: 'অ্যাডমিন', icon: <Shield size={14} /> },
 ]
 
 const PRESET_COLORS = ['#6366f1', '#3b82f6', '#14b8a6', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#a855f7', '#06b6d4', '#f97316']
@@ -182,7 +183,7 @@ export default function CreateSchool() {
           <div className="flex-1 px-5 py-5 overflow-y-auto">
           <div className="mb-4">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.625rem] font-medium text-[var(--text-muted)] mb-2.5">
-              {currentSection?.icon}
+              <span className="text-[var(--brand)]">{currentSection?.icon}</span>
               {isBn ? currentSection?.labelBn : currentSection?.labelEn}
             </div>
           </div>
@@ -548,9 +549,9 @@ function PackagePicker({ value, onChange, isBn }: { value: InstitutionPackage; o
             </div>
             <div className="text-sm font-bold text-[var(--brand)] mb-1">{pkg.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${pkg.price}/${isBn ? 'মাস' : 'mo'}`}</div>
             <div className="flex gap-3 text-[0.625rem] text-[var(--text-secondary)]">
-              <span>👥 {pkg.maxStudents}</span>
-              <span>👨‍🏫 {pkg.maxTeachers}</span>
-              <span>🏫 {pkg.maxClasses}</span>
+              <span>{pkg.maxStudents} students</span>
+              <span>{pkg.maxTeachers} teachers</span>
+              <span>{pkg.maxClasses} classes</span>
             </div>
           </button>
         )
