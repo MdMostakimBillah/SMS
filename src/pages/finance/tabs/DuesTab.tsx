@@ -763,7 +763,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '110px', minWidth: '110px' }}>{bn ? 'শ্রেণি' : 'Class'}</th>
                 <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '110px', minWidth: '110px' }}>{bn ? 'ফি' : 'Fee'}</th>
                 <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '70px', minWidth: '70px' }}>{bn ? 'ধরন' : 'Type'}</th>
-                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '90px', minWidth: '90px' }}>{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '90px', minWidth: '90px' }}>{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
                 {showMonthPicker && sortedMonths.map((m) => (
                   <th key={m} className="text-center px-3 py-2 text-[10px] uppercase font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ color: 'var(--brand)', width: '90px', minWidth: '90px', maxWidth: '90px' }}>
                     {bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}
@@ -899,7 +899,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
+                    <td className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
                     {sortedMonths.map((m) => (
                       <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]" style={{ minWidth: '90px' }}>
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
@@ -921,7 +921,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2" />
                     <td className="px-2 py-2" />
                     <td className="px-2 py-2" />
-                    <td className="text-right px-2 py-2 text-[12px]" style={{ width: '90px' }}>{fmt(results.reduce((s, r) => s + r.totalAmount, 0))}</td>
+                    <td className="text-center px-2 py-2 text-[12px]" style={{ width: '90px' }}>{fmt(results.reduce((s, r) => s + r.totalAmount, 0))}</td>
                     {sortedMonths.map((m) => (
                       <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)]" style={{ minWidth: '90px' }}>
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
