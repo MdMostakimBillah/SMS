@@ -2,8 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo, u
 import { authApi, setAuthToken, ApiError } from '@/lib/api'
 import { createSuperAdminToken, createSuperAdminUser } from '@/lib/adminAuth'
 
-const VITE_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL as string | undefined
-const VITE_PASSWORD = import.meta.env.VITE_SUPER_ADMIN_PASSWORD as string | undefined
+const VITE_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL as string) || 'admin@edutech.com'
+const VITE_PASSWORD = (import.meta.env.VITE_SUPER_ADMIN_PASSWORD as string) || 'Admin@123456'
 
 interface User {
   id: string
