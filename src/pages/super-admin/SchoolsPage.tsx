@@ -230,7 +230,7 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
             placeholder={isBn ? 'অনুসন্ধান করুন...' : 'Search institutions...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand-light)] focus:outline-none transition-all"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--brand)] focus:ring-0 focus:outline-none transition-colors"
           />
         </div>
         <button
