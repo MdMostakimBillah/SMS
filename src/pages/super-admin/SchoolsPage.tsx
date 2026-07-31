@@ -297,17 +297,17 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
 
 function SummaryCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
-    <div className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)]">
-      <div className="flex items-center gap-2 mb-2">
-        <div
-          className="w-8 h-8 rounded-xl flex items-center justify-center"
-          style={{ background: `${color}12`, color }}
-        >
-          {icon}
-        </div>
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)]">
+      <div
+        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+        style={{ background: `${color}18`, color }}
+      >
+        {icon}
       </div>
-      <div className="text-[1rem] font-bold text-[var(--text-primary)]">{value}</div>
-      <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">{label}</div>
+      <div className="min-w-0">
+        <div className="text-[1rem] font-bold text-[var(--text-primary)] leading-tight">{value}</div>
+        <div className="text-[0.6875rem] text-[var(--text-secondary)] whitespace-nowrap">{label}</div>
+      </div>
     </div>
   )
 }
