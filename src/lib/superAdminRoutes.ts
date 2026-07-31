@@ -17,7 +17,7 @@ export const SUPER_ADMIN_ROUTES: SuperAdminRoute[] = [
   { id: 'subscriptions', path: '/super-admin/subscriptions', label: 'Packages', labelBn: 'প্যাকেজ', icon: 'credit-card', color: '#ec4899', desc: 'Subscriptions', descBn: 'সাবস্ক্রিপশন', functional: false },
   { id: 'sms', path: '/super-admin/sms', label: 'SMS', labelBn: 'SMS', icon: 'message-square', color: '#06b6d4', desc: 'Provider', descBn: 'প্রোভাইডার', functional: false },
   { id: 'database', path: '/super-admin/database', label: 'Database', labelBn: 'ডাটাবেজ', icon: 'database', color: '#22c55e', desc: 'Backup', descBn: 'ব্যাকআপ', functional: false },
-  { id: 'add-school', path: '/super-admin/add-school', label: 'Add School', labelBn: 'নতুন স্কুল', icon: 'crown', color: '#3b82f6', desc: 'Register', descBn: 'যোগ', functional: false },
+  { id: 'add-school', path: '/super-admin/add-school', label: 'Add School', labelBn: 'নতুন স্কুল', icon: 'crown', color: '#3b82f6', desc: 'Register', descBn: 'যোগ', functional: true },
   { id: 'notices', path: '/super-admin/notices', label: 'Notices', labelBn: 'নোটিশ', icon: 'bell', color: '#f97316', desc: 'System', descBn: 'বার্তা', functional: false },
   { id: 'status', path: '/super-admin/status', label: 'Status', labelBn: 'স্ট্যাটাস', icon: 'globe', color: '#10b981', desc: 'App', descBn: 'সিস্টেম', functional: false },
   { id: 'payments', path: '/super-admin/payments', label: 'Payments', labelBn: 'পেমেন্ট', icon: 'file-text', color: '#a855f7', desc: 'Institution', descBn: 'প্রতিষ্ঠান', functional: false },
