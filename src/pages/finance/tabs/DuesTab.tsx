@@ -869,7 +869,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                   </tr>
                 )
               })}
-              {fStatus === 'paiddue' && showMonthPicker && sortedMonths.length > 0 && (
+              {fStatus === 'paiddue' && (
                 <>
                   <tr className="border-t border-[var(--border)] bg-[var(--bg-secondary)] font-bold">
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
@@ -882,7 +882,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="text-center px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]">{fmt(totalPaid)}</td>
-                    {sortedMonths.map((m) => (
+                    {showMonthPicker && sortedMonths.map((m) => (
                       <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]" style={{ minWidth: '90px' }}>
                         {monthPaidSums[m] > 0 ? fmt(monthPaidSums[m]) : '—'}
                       </td>
@@ -900,7 +900,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
-                    {sortedMonths.map((m) => (
+                    {showMonthPicker && sortedMonths.map((m) => (
                       <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]" style={{ minWidth: '90px' }}>
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
                       </td>
