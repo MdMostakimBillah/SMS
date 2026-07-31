@@ -136,12 +136,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    let apiReachable = false
+    let apiResponded = false
 
     // Try API verification first (database credentials)
     try {
       const result = await authApi.verifySuperAdmin(email, password)
-      apiReachable = true
+      apiResponded = true
       if (result.valid) {
         const token = await createSuperAdminToken(password)
         const user = createSuperAdminUser()
@@ -153,14 +153,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
     } catch (err) {
-      // Distinguish network error from API error
-      if (err instanceof ApiError) apiReachable = true
+      // 404 = endpoint not found (no backend deployed)
+      // Other ApiError = API is live but rejected the request
+      if (err instanceof ApiError && err.status !== 404) apiResponded = true
     }
 
     // Try regular API login
     try {
       const res = await authApi.login(email, password)
-      apiReachable = true
+      apiResponded = true
       setAuthToken(res.token)
       setToken(res.token)
       setUser(res.user)
@@ -168,9 +169,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearLoginAttempts()
       return
     } catch (err) {
-      if (err instanceof ApiError) apiReachable = true
+      if (err instanceof ApiError && err.status !== 404) apiResponded = true
       // If API responded with a real error, don't try fallback
-      if (apiReachable) {
+      if (apiResponded) {
         const msg = err instanceof ApiError ? err.message : 'Invalid credentials'
         recordFailedAttempt()
         const attempts = getAttempts()
@@ -186,7 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // Fallback: client-side credential check (only when API is completely unreachable)
-    if (!apiReachable && VITE_EMAIL && VITE_PASSWORD) {
+    if (!apiResponded && VITE_EMAIL && VITE_PASSWORD) {
       if (email === VITE_EMAIL && password === VITE_PASSWORD) {
         const token = await createSuperAdminToken(password)
         const user = createSuperAdminUser()
