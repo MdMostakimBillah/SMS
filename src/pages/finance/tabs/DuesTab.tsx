@@ -744,7 +744,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
       ) : (
         <div className="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--bg-primary)]">
           <div className="overflow-x-auto">
-          <table className="w-full text-[12.5px]" style={{ tableLayout: 'fixed' }}>
+          <table className="text-[12.5px]" style={{ tableLayout: 'auto' }}>
             <thead>
               <tr className="bg-[var(--bg-secondary)] sticky top-0 z-20">
                 <th className="text-center px-2 py-2 w-[36px] bg-[var(--bg-secondary)] z-20">
@@ -765,7 +765,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '70px' }}>{bn ? 'ধরন' : 'Type'}</th>
                 <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '90px' }}>{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
                 {showMonthPicker && sortedMonths.map((m) => (
-                  <th key={m} className="text-center px-2 py-2 text-[10px] uppercase font-bold bg-[var(--bg-secondary)] whitespace-nowrap"                     style={{ color: 'var(--brand)', minWidth: '85px' }}>
+                  <th key={m} className="text-center px-3 py-2 text-[10px] uppercase font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ color: 'var(--brand)', width: '90px', minWidth: '90px', maxWidth: '90px' }}>
                     {bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}
                   </th>
                 ))}
@@ -824,7 +824,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                       if (!cell) return <td key={m} className="text-center px-2 py-2 text-[var(--text-muted)]">—</td>
                       if (fStatus === 'paiddue') {
                         return (
-                          <td key={m} className="text-center px-2 py-3" style={{ minWidth: '85px' }}>
+                          <td key={m} className="text-center px-2 py-3" style={{ minWidth: '90px' }}>
                             {cell.paidAmount > 0 && <span className="font-bold text-[12px] text-[var(--green)]">{fmt(cell.paidAmount)}</span>}
                             {cell.paidAmount > 0 && cell.amount > 0 && <span className="text-[var(--text-muted)] text-[10px]"> / </span>}
                             {cell.amount > 0 && (
@@ -883,7 +883,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="text-right px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]">{fmt(totalPaid)}</td>
                     {sortedMonths.map((m) => (
-                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]" style={{ minWidth: '85px' }}>
+                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]" style={{ minWidth: '90px' }}>
                         {monthPaidSums[m] > 0 ? fmt(monthPaidSums[m]) : '—'}
                       </td>
                     ))}
@@ -901,7 +901,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="text-right px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
                     {sortedMonths.map((m) => (
-                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]" style={{ minWidth: '85px' }}>
+                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]" style={{ minWidth: '90px' }}>
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
                       </td>
                     ))}
@@ -923,7 +923,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2" />
                     <td className="text-right px-2 py-2 text-[12px]" style={{ width: '90px' }}>{fmt(results.reduce((s, r) => s + r.totalAmount, 0))}</td>
                     {sortedMonths.map((m) => (
-                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)]" style={{ minWidth: '85px' }}>
+                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)]" style={{ minWidth: '90px' }}>
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
                       </td>
                     ))}
