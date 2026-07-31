@@ -818,7 +818,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                           : (bn ? 'মাসিক' : 'Monthly')}
                       </span>
                     </td>
-                    <td className="text-right px-2 py-3 text-[var(--text-secondary)]">{fmt(row.totalAmount)}</td>
+                    <td className="text-center px-2 py-3 text-[var(--text-secondary)]">{fmt(row.totalAmount)}</td>
                     {showMonthPicker && sortedMonths.map((m) => {
                       const cell = row.months[m]
                       if (!cell) return <td key={m} className="text-center px-2 py-2 text-[var(--text-muted)]">—</td>
