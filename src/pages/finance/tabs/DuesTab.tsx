@@ -881,13 +881,13 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="text-right px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]">{fmt(totalPaid)}</td>
+                    <td className="text-center px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]">{fmt(totalPaid)}</td>
                     {sortedMonths.map((m) => (
                       <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]" style={{ minWidth: '90px' }}>
                         {monthPaidSums[m] > 0 ? fmt(monthPaidSums[m]) : '—'}
                       </td>
                     ))}
-                    <td className="text-right px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]">{fmt(totalPaid)}</td>
+                    <td className="text-center px-2 py-2 text-[12px] text-[var(--green)] font-bold" style={{ background: 'var(--green-light)' }}>{fmt(totalPaid)}</td>
                   </tr>
                   <tr className="border-t border-[var(--border)] bg-[var(--bg-secondary)] font-bold">
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
