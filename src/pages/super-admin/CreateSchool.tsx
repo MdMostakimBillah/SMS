@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Building2, MapPin, Phone, Mail, Clock,
+  Building2, MapPin, Phone, Clock, Globe, CalendarDays,
   ChevronRight, ChevronLeft, Check, X, Eye, EyeOff, Sparkles,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -103,9 +103,7 @@ export default function CreateSchool() {
   }, [currentStep, form])
 
   useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus()
-    }
+    inputRef.current?.focus()
   }, [step])
 
   const handleClose = () => {
@@ -159,109 +157,254 @@ export default function CreateSchool() {
   }
 
   return (
-    <div className={`fixed inset-0 z-50 flex bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${exiting ? 'opacity-0' : 'opacity-100'}`}>
-      {/* Left - Live Preview (1/2) */}
-      <div className="hidden lg:flex w-1/2 flex-col p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Eye size={16} className="text-white/60" />
-          <span className="text-sm font-semibold text-white/80">{isBn ? 'লাইভ প্রিভিউ' : 'Live Preview'}</span>
-        </div>
-        <div className="flex-1 rounded-3xl overflow-hidden shadow-2xl bg-[var(--bg-primary)]">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${exiting ? 'opacity-0' : 'opacity-100'}`}>
+      {/* Popup Window - 95vw x 98vh */}
+      <div className={`w-[95vw] h-[98vh] bg-[var(--bg-primary)] rounded-2xl shadow-2xl flex overflow-hidden transition-all duration-300 ${exiting ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
+
+        {/* Left Column - Live Preview (70%) */}
+        <div className="hidden lg:flex w-[70%] flex-col bg-[var(--bg-secondary)] overflow-hidden">
           <PreviewPanel form={form} isBn={isBn} activeSection={currentStep?.section} />
         </div>
-      </div>
 
-      {/* Right - Input Panel (1/2) */}
-      <div className={`w-full lg:w-1/2 bg-[var(--bg-primary)] flex flex-col shadow-2xl transition-transform duration-200 ${exiting ? 'translate-x-full' : 'translate-x-0'}`}>
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--brand-light)]">
-              <Sparkles size={18} className="text-[var(--brand)]" />
+        {/* Right Column - Input (30%) */}
+        <div className="w-full lg:w-[30%] flex flex-col border-l border-[var(--border)]">
+          {/* Header */}
+          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--brand-light)]">
+                <Sparkles size={16} className="text-[var(--brand)]" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-[var(--text-primary)]">{isBn ? 'নতুন স্কুল' : 'New School'}</h2>
+                <p className="text-[0.6875rem] text-[var(--text-muted)]">{step + 1}/{FIELD_STEPS.length}</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm font-bold text-[var(--text-primary)]">{isBn ? 'নতুন স্কুল তৈরি করুন' : 'Create New School'}</h2>
-              <p className="text-[0.6875rem] text-[var(--text-muted)]">{step + 1}/{FIELD_STEPS.length} — {isBn ? currentStep?.labelBn : currentStep?.labelEn}</p>
-            </div>
-          </div>
-          <button onClick={handleClose} className="w-9 h-9 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] cursor-pointer border-none bg-transparent transition-colors">
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Progress */}
-        <div className="px-6 py-3">
-          <div className="h-1 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-[var(--brand)] to-[var(--brand)] transition-all duration-500 ease-out" style={{ width: `${((step + 1) / FIELD_STEPS.length) * 100}%` }} />
-          </div>
-        </div>
-
-        {/* Field Input */}
-        <div className="flex-1 px-6 py-5 overflow-y-auto">
-          <div className="mb-5">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.6875rem] font-medium text-[var(--text-muted)] mb-3">
-              {getSectionIcon(currentStep?.section || 'basic')}
-              {getSectionLabel(currentStep?.section || 'basic', isBn)}
-            </div>
-            <label className="block text-base font-bold text-[var(--text-primary)] mb-1">
-              {isBn ? currentStep?.labelBn : currentStep?.labelEn}
-              {currentStep?.required && <span className="text-[var(--red)] ml-1">*</span>}
-            </label>
-            <p className="text-xs text-[var(--text-muted)]">
-              {getHint(currentStep?.key || '', isBn)}
-            </p>
+            <button onClick={handleClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] cursor-pointer border-none bg-transparent transition-colors">
+              <X size={16} />
+            </button>
           </div>
 
-          <div className="space-y-4">
+          {/* Progress */}
+          <div className="px-5 py-2.5 border-b border-[var(--border)] shrink-0">
+            <div className="h-1 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
+              <div className="h-full rounded-full bg-[var(--brand)] transition-all duration-500" style={{ width: `${((step + 1) / FIELD_STEPS.length) * 100}%` }} />
+            </div>
+          </div>
+
+          {/* Field */}
+          <div className="flex-1 px-5 py-5 overflow-y-auto">
+            <div className="mb-4">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.625rem] font-medium text-[var(--text-muted)] mb-2.5">
+                {getSectionIcon(currentStep?.section || 'basic')}
+                {getSectionLabel(currentStep?.section || 'basic', isBn)}
+              </div>
+              <label className="block text-sm font-bold text-[var(--text-primary)] mb-1">
+                {isBn ? currentStep?.labelBn : currentStep?.labelEn}
+                {currentStep?.required && <span className="text-[var(--red)] ml-1">*</span>}
+              </label>
+              <p className="text-[0.6875rem] text-[var(--text-muted)] leading-relaxed">
+                {getHint(currentStep?.key || '', isBn)}
+              </p>
+            </div>
+
             {currentStep && renderField(currentStep.key, form, set, {
               newSubject, setNewSubject, newSession, setNewSession,
               showPassword, setShowPassword, isBn, inputRef,
             })}
+
+            {currentStep?.key === 'adminPassword' && form.adminPassword && form.adminPassword.length < 4 && (
+              <p className="text-[0.6875rem] text-[var(--red)] mt-2">{isBn ? 'কমপক্ষে ৪ অক্ষর প্রয়োজন' : 'Minimum 4 characters required'}</p>
+            )}
           </div>
 
-          {currentStep?.key === 'adminPassword' && form.adminPassword && form.adminPassword.length < 4 && (
-            <p className="text-xs text-[var(--red)] mt-2">{isBn ? 'কমপক্ষে ৪ অক্ষর প্রয়োজন' : 'Minimum 4 characters required'}</p>
-          )}
-        </div>
-
-        {/* Navigation */}
-        <div className="px-6 py-4 border-t border-[var(--border)] flex items-center gap-3">
-          <button
-            onClick={() => setStep((s) => s - 1)}
-            disabled={step === 0}
-            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer border border-[var(--border)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-[var(--bg-tertiary)]"
-          >
-            <ChevronLeft size={14} />
-            {isBn ? 'আগে' : 'Back'}
-          </button>
-
-          {isLastStep ? (
+          {/* Navigation */}
+          <div className="px-5 py-4 border-t border-[var(--border)] flex items-center gap-3 shrink-0">
             <button
-              onClick={handleCreate}
-              disabled={!canNext}
-              className="flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[var(--green)] text-white cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:opacity-90"
+              onClick={() => setStep((s) => s - 1)}
+              disabled={step === 0}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer border border-[var(--border)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-[var(--bg-tertiary)]"
             >
-              <Check size={14} />
-              {isBn ? 'স্কুল তৈরি করুন' : 'Create School'}
+              <ChevronLeft size={13} />
+              {isBn ? 'আগে' : 'Back'}
             </button>
-          ) : (
-            <button
-              onClick={() => setStep((s) => s + 1)}
-              disabled={!canNext}
-              className="flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[var(--brand)] text-white cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:opacity-90"
-            >
-              {isBn ? 'পরবর্তী' : 'Next'}
-              <ChevronRight size={14} />
-            </button>
-          )}
+
+            {isLastStep ? (
+              <button
+                onClick={handleCreate}
+                disabled={!canNext}
+                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--green)] text-white cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:opacity-90"
+              >
+                <Check size={13} />
+                {isBn ? 'তৈরি করুন' : 'Create'}
+              </button>
+            ) : (
+              <button
+                onClick={() => setStep((s) => s + 1)}
+                disabled={!canNext}
+                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--brand)] text-white cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:opacity-90"
+              >
+                {isBn ? 'পরবর্তী' : 'Next'}
+                <ChevronRight size={13} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
+    </div>
+  )
+}
 
-      {/* Mobile Preview Toggle */}
-      <div className="lg:hidden fixed bottom-20 right-4 z-50">
-        <button className="w-14 h-14 rounded-full bg-[var(--brand)] text-white shadow-lg flex items-center justify-center cursor-pointer border-none">
-          <Eye size={20} />
-        </button>
+/* ─── Preview Panel — matches InstitutionTab view mode ─── */
+function PreviewPanel({ form, isBn, activeSection }: { form: SchoolForm; isBn: boolean; activeSection?: string }) {
+  const hl = (section: string) => activeSection === section ? 'ring-2 ring-[var(--brand)] ring-offset-2 rounded-xl' : ''
+
+  return (
+    <div className="h-full overflow-y-auto">
+      {/* Banner */}
+      <div className={`relative h-44 ${hl('brand')}`} style={{ background: `linear-gradient(135deg, ${form.brandColor} 0%, ${form.brandColor}aa 100%)` }}>
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+      </div>
+
+      {/* Profile */}
+      <div className="relative px-5 pb-6">
+        {/* Logo */}
+        <div className="absolute -top-14 left-5">
+          <div className={`w-28 h-28 rounded-2xl border-4 border-[var(--bg-secondary)] bg-[var(--bg-primary)] shadow-xl overflow-hidden transition-all duration-300 ${hl('basic')}`} style={{ borderWidth: '4px' }}>
+            {form.logo ? (
+              <img src={form.logo} alt="Logo" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center" style={{ background: `${form.brandColor}15` }}>
+                <Building2 size={36} className="text-[var(--brand)]" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Institution Info */}
+        <div className="pt-16">
+          <h2 className={`text-base font-bold text-[var(--text-primary)] m-0 leading-tight transition-all duration-300 ${hl('basic')}`}>
+            {form.name || (isBn ? 'আপনার স্কুলের নাম' : 'Your School Name')}
+          </h2>
+          <p className={`text-[0.6875rem] text-[var(--text-muted)] m-0 mt-0.5 transition-all duration-300 ${hl('basic')}`}>
+            {form.nameBn || (isBn ? 'বাংলায় নাম' : 'Bengali name')}
+          </p>
+
+          {form.brandName && (
+            <div className={`mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--brand-light)] transition-all duration-300 ${hl('brand')}`}>
+              <span className="text-[0.6875rem] font-semibold text-[var(--brand)]">{isBn ? 'ব্র্যান্ড' : 'Brand'}: {form.brandName}</span>
+            </div>
+          )}
+
+          {form.motto && (
+            <p className={`text-[0.6875rem] text-[var(--text-muted)] italic m-0 mt-1.5 transition-all duration-300 ${hl('brand')}`}>
+              "{form.motto}"{form.mottoBn ? ` / "${form.mottoBn}"` : ''}
+            </p>
+          )}
+
+          {/* Contact Card */}
+          <div className={`mt-4 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] transition-all duration-300 ${hl('contact')}`}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {form.phone && (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
+                    <Phone size={14} style={{ color: form.brandColor }} />
+                  </div>
+                  <div>
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ফোন' : 'Phone'}</div>
+                    <div className="text-xs font-semibold text-[var(--text-primary)]">{form.phone}</div>
+                    {form.eiin && <div className="text-[0.625rem] text-[var(--text-muted)]">EIIN: {form.eiin}</div>}
+                  </div>
+                </div>
+              )}
+              {(form.email || form.website) && (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
+                    <Globe size={14} style={{ color: form.brandColor }} />
+                  </div>
+                  <div>
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ইমেইল / ওয়েবসাইট' : 'Email / Website'}</div>
+                    <div className="text-xs font-semibold text-[var(--text-primary)]">{form.email}</div>
+                    {form.website && <div className="text-[0.625rem] text-[var(--text-muted)]">{form.website}</div>}
+                  </div>
+                </div>
+              )}
+              {form.address && (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
+                    <MapPin size={14} style={{ color: form.brandColor }} />
+                  </div>
+                  <div>
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ঠিকানা' : 'Address'}</div>
+                    <div className="text-xs font-semibold text-[var(--text-primary)]">{form.address}{form.addressBn ? ` / ${form.addressBn}` : ''}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+            {/* Schedule Card */}
+            <div className={`p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] transition-all duration-300 ${hl('academic')}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${form.brandColor}15` }}>
+                  <Clock size={12} style={{ color: form.brandColor }} />
+                </div>
+                <span className="text-xs font-semibold text-[var(--text-primary)]">{isBn ? 'সময়সূচি' : 'Schedule'}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2 rounded-lg bg-[var(--bg-secondary)]">
+                  <div className="text-[0.625rem] text-[var(--text-muted)] mb-0.5">{isBn ? 'শুরু' : 'Start'}</div>
+                  <div className="text-sm font-bold" style={{ color: form.brandColor }}>{form.startTime || '--:--'}</div>
+                </div>
+                <div className="p-2 rounded-lg bg-[var(--bg-secondary)]">
+                  <div className="text-[0.625rem] text-[var(--text-muted)] mb-0.5">{isBn ? 'শেষ' : 'End'}</div>
+                  <div className="text-sm font-bold" style={{ color: form.brandColor }}>{form.endTime || '--:--'}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Session & Subjects Card */}
+            <div className={`p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] transition-all duration-300 ${hl('academic')}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${form.brandColor}15` }}>
+                  <CalendarDays size={12} style={{ color: form.brandColor }} />
+                </div>
+                <span className="text-xs font-semibold text-[var(--text-primary)]">{isBn ? 'একাডেমিক সেশন' : 'Academic Session'}</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-[var(--bg-secondary)] mb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-bold" style={{ color: form.brandColor }}>{form.sessions[0] || '—'}</span>
+                  <span className="text-[0.625rem] text-[var(--text-muted)]">({isBn ? 'বর্তমান' : 'Current'})</span>
+                </div>
+                <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
+                  {form.sessions.length} {isBn ? 'টি সেশন সংরক্ষিত' : 'sessions saved'}
+                </div>
+              </div>
+              {form.subjects.length > 0 && (
+                <div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'প্রধান বিষয়' : 'Main Subjects'}</div>
+                  <div className="flex flex-wrap gap-1">
+                    {form.subjects.map((s) => (
+                      <span key={s} className="text-[0.625rem] px-2 py-0.5 rounded-full font-medium" style={{ background: `${form.brandColor}15`, color: form.brandColor }}>{s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Package Badge */}
+          <div className={`mt-3 flex items-center gap-3 transition-all duration-300 ${hl('package')}`}>
+            <div className="px-3 py-1.5 rounded-lg bg-[var(--brand-light)] text-[0.6875rem] font-semibold text-[var(--brand)]">
+              {isBn ? form.package.nameBn : form.package.name}
+            </div>
+            <div className="text-[0.625rem] text-[var(--text-muted)]">
+              {form.package.maxStudents} {isBn ? 'জন ছাত্র' : 'students'} · {form.package.maxTeachers} {isBn ? 'জন শিক্ষক' : 'teachers'} · {form.package.maxClasses} {isBn ? 'টি ক্লাস' : 'classes'}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -276,67 +419,62 @@ function renderField(key: string, form: SchoolForm, set: <K extends keyof School
 }) {
   const { newSubject, setNewSubject, newSession, setNewSession, showPassword, setShowPassword, isBn, inputRef } = opts
 
+  const inputCls = "w-full px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all"
+
   switch (key) {
     case 'name':
-      return <InputField ref={inputRef} value={form.name} onChange={(v) => set('name', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} />
+      return <input ref={inputRef} type="text" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} className={inputCls} />
     case 'nameBn':
-      return <InputField ref={inputRef} value={form.nameBn} onChange={(v) => set('nameBn', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} />
+      return <input ref={inputRef} type="text" value={form.nameBn} onChange={(e) => set('nameBn', e.target.value)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} className={inputCls} />
     case 'email':
-      return <InputField ref={inputRef} type="email" value={form.email} onChange={(v) => set('email', v)} placeholder="info@school.edu.bd" />
+      return <input ref={inputRef} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="info@school.edu.bd" className={inputCls} />
     case 'phone':
-      return <InputField ref={inputRef} value={form.phone} onChange={(v) => set('phone', v)} placeholder="+880-2-1234567" />
+      return <input ref={inputRef} type="text" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+880-2-1234567" className={inputCls} />
     case 'address':
-      return <InputField ref={inputRef} value={form.address} onChange={(v) => set('address', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'House, Road, City'} />
+      return <input ref={inputRef} type="text" value={form.address} onChange={(e) => set('address', e.target.value)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'House, Road, City'} className={inputCls} />
     case 'addressBn':
-      return <InputField ref={inputRef} value={form.addressBn} onChange={(v) => set('addressBn', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'বাসা নং, রাস্তা, শহর'} />
+      return <input ref={inputRef} type="text" value={form.addressBn} onChange={(e) => set('addressBn', e.target.value)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'বাসা নং, রাস্তা, শহর'} className={inputCls} />
     case 'eiin':
-      return <InputField ref={inputRef} value={form.eiin} onChange={(v) => set('eiin', v)} placeholder="123456" />
+      return <input ref={inputRef} type="text" value={form.eiin} onChange={(e) => set('eiin', e.target.value)} placeholder="123456" className={inputCls} />
     case 'website':
-      return <InputField ref={inputRef} value={form.website} onChange={(v) => set('website', v)} placeholder="www.school.edu.bd" />
+      return <input ref={inputRef} type="text" value={form.website} onChange={(e) => set('website', e.target.value)} placeholder="www.school.edu.bd" className={inputCls} />
     case 'brandName':
-      return <InputField ref={inputRef} value={form.brandName} onChange={(v) => set('brandName', v)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} />
+      return <input ref={inputRef} type="text" value={form.brandName} onChange={(e) => set('brandName', e.target.value)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} className={inputCls} />
     case 'motto':
-      return <InputField ref={inputRef} value={form.motto} onChange={(v) => set('motto', v)} placeholder="Knowledge is Power" />
+      return <input ref={inputRef} type="text" value={form.motto} onChange={(e) => set('motto', e.target.value)} placeholder="Knowledge is Power" className={inputCls} />
     case 'mottoBn':
-      return <InputField ref={inputRef} value={form.mottoBn} onChange={(v) => set('mottoBn', v)} placeholder="জ্ঞাই হলো শক্তি" />
+      return <input ref={inputRef} type="text" value={form.mottoBn} onChange={(e) => set('mottoBn', e.target.value)} placeholder="জ্ঞাই হলো শক্তি" className={inputCls} />
     case 'logo':
-      return <InputField ref={inputRef} value={form.logo} onChange={(v) => set('logo', v)} placeholder="https://..." />
+      return <input ref={inputRef} type="text" value={form.logo} onChange={(e) => set('logo', e.target.value)} placeholder="https://..." className={inputCls} />
     case 'brandColor':
       return <ColorPicker value={form.brandColor} onChange={(v) => set('brandColor', v)} />
     case 'subjects':
-      return <TagInput ref={inputRef} tags={form.subjects} onAdd={(t) => set('subjects', [...form.subjects, t])} onRemove={(t) => set('subjects', form.subjects.filter((x) => x !== t))} newTag={newSubject} setNewTag={setNewSubject} placeholder={isBn ? 'বিষয় যোগ করুন' : 'Add subject'} color="brand" />
+      return <TagInput ref={inputRef} tags={form.subjects} onAdd={(t) => set('subjects', [...form.subjects, t])} onRemove={(t) => set('subjects', form.subjects.filter((x) => x !== t))} newTag={newSubject} setNewTag={setNewSubject} placeholder={isBn ? 'বিষয় যোগ করুন' : 'Add subject'} />
     case 'sessions':
-      return <TagInput ref={inputRef} tags={form.sessions} onAdd={(t) => set('sessions', [...form.sessions, t])} onRemove={(t) => set('sessions', form.sessions.filter((x) => x !== t))} newTag={newSession} setNewTag={setNewSession} placeholder="2026-27" color="green" />
+      return <TagInput ref={inputRef} tags={form.sessions} onAdd={(t) => set('sessions', [...form.sessions, t])} onRemove={(t) => set('sessions', form.sessions.filter((x) => x !== t))} newTag={newSession} setNewTag={setNewSession} placeholder="2026-27" />
     case 'schedule':
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-xs text-[var(--text-muted)] mb-1.5">{isBn ? 'শুরুর সময়' : 'Start Time'}</label>
-            <input type="time" value={form.startTime} onChange={(e) => set('startTime', e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
+            <label className="block text-[0.6875rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'শুরুর সময়' : 'Start Time'}</label>
+            <input type="time" value={form.startTime} onChange={(e) => set('startTime', e.target.value)} className={inputCls} />
           </div>
           <div>
-            <label className="block text-xs text-[var(--text-muted)] mb-1.5">{isBn ? 'শেষের সময়' : 'End Time'}</label>
-            <input type="time" value={form.endTime} onChange={(e) => set('endTime', e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
+            <label className="block text-[0.6875rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'শেষের সময়' : 'End Time'}</label>
+            <input type="time" value={form.endTime} onChange={(e) => set('endTime', e.target.value)} className={inputCls} />
           </div>
         </div>
       )
     case 'package':
       return <PackagePicker value={form.package} onChange={(v) => set('package', v)} isBn={isBn} />
     case 'adminEmail':
-      return <InputField ref={inputRef} type="email" value={form.adminEmail} onChange={(v) => set('adminEmail', v)} placeholder="admin@school.edu.bd" />
+      return <input ref={inputRef} type="email" value={form.adminEmail} onChange={(e) => set('adminEmail', e.target.value)} placeholder="admin@school.edu.bd" className={inputCls} />
     case 'adminPassword':
       return (
         <div className="relative">
-          <input
-            ref={inputRef as React.RefObject<HTMLInputElement>}
-            type={showPassword ? 'text' : 'password'}
-            value={form.adminPassword}
-            onChange={(e) => set('adminPassword', e.target.value)}
-            placeholder={isBn ? 'কমপক্ষে ৪ অক্ষর' : 'At least 4 characters'}
-            className="w-full px-3 py-2 pr-10 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors"
-          />
+          <input ref={inputRef} type={showPassword ? 'text' : 'password'} value={form.adminPassword} onChange={(e) => set('adminPassword', e.target.value)} placeholder={isBn ? 'কমপক্ষে ৪ অক্ষর' : 'At least 4 characters'} className={`${inputCls} pr-10`} />
           <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none">
-            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
         </div>
       )
@@ -394,63 +532,43 @@ function getSectionLabel(section: string, isBn: boolean): string {
 }
 
 /* ─── Shared Components ─── */
-const InputField = ({ ref, type = 'text', value, onChange, placeholder }: {
-  ref?: React.Ref<HTMLInputElement>; type?: string; value: string; onChange: (v: string) => void; placeholder?: string
-}) => (
-  <input
-    ref={ref}
-    type={type}
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    placeholder={placeholder}
-    className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all"
-  />
-)
-
 function ColorPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         {PRESET_COLORS.map((c) => (
-          <button
-            key={c}
-            onClick={() => onChange(c)}
-            className={`w-10 h-10 rounded-xl cursor-pointer border-2 transition-all ${value === c ? 'border-[var(--text-primary)] scale-110 shadow-lg' : 'border-transparent hover:scale-105'}`}
-            style={{ background: c }}
-          />
+          <button key={c} onClick={() => onChange(c)} className={`w-9 h-9 rounded-xl cursor-pointer border-2 transition-all ${value === c ? 'border-[var(--text-primary)] scale-110 shadow-lg' : 'border-transparent hover:scale-105'}`} style={{ background: c }} />
         ))}
       </div>
       <div className="flex items-center gap-3">
-        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="w-10 h-10 rounded-xl cursor-pointer border border-[var(--border)]" />
-        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] font-mono outline-none focus:border-[var(--brand)]" />
+        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="w-9 h-9 rounded-xl cursor-pointer border border-[var(--border)]" />
+        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className="flex-1 px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] font-mono outline-none focus:border-[var(--brand)]" />
       </div>
     </div>
   )
 }
 
-function TagInput({ ref, tags, onAdd, onRemove, newTag, setNewTag, placeholder, color }: {
+function TagInput({ ref, tags, onAdd, onRemove, newTag, setNewTag, placeholder }: {
   ref?: React.Ref<HTMLInputElement>; tags: string[]; onAdd: (t: string) => void; onRemove: (t: string) => void
-  newTag: string; setNewTag: (v: string) => void; placeholder: string; color: 'brand' | 'green'
+  newTag: string; setNewTag: (v: string) => void; placeholder: string
 }) {
   const add = () => {
     const t = newTag.trim()
     if (t && !tags.includes(t)) { onAdd(t); setNewTag('') }
   }
-  const colorClass = color === 'brand' ? 'bg-[var(--brand-light)] text-[var(--brand)]' : 'bg-[var(--green-light)] text-[var(--green)]'
-  const hoverClass = color === 'brand' ? 'hover:bg-[var(--brand)]' : 'hover:bg-[var(--green)]'
   return (
     <div>
       <div className="flex flex-wrap gap-1.5 mb-3">
         {tags.map((t) => (
-          <span key={t} className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${colorClass}`}>
+          <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--brand-light)] text-[var(--brand)]">
             {t}
-            <button onClick={() => onRemove(t)} className={`ml-0.5 rounded-full hover:text-white transition-colors cursor-pointer border-none bg-transparent p-0 ${colorClass.split(' ')[1]} ${hoverClass}`}><X size={10} /></button>
+            <button onClick={() => onRemove(t)} className="ml-0.5 rounded-full hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border-none bg-transparent p-0 text-[var(--brand)]"><X size={10} /></button>
           </span>
         ))}
       </div>
       <div className="flex gap-2">
-        <input ref={ref} value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder={placeholder} className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
-        <button onClick={add} className="px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-semibold cursor-pointer border-none">{isBnShort() ? 'যোগ' : 'Add'}</button>
+        <input ref={ref} value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder={placeholder} className="flex-1 px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
+        <button onClick={add} className="px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-xs font-semibold cursor-pointer border-none">{isBnShort() ? 'যোগ' : 'Add'}</button>
       </div>
     </div>
   )
@@ -466,19 +584,13 @@ function PackagePicker({ value, onChange, isBn }: { value: InstitutionPackage; o
       {PACKAGES.map((pkg) => {
         const selected = value.name === pkg.name
         return (
-          <button
-            key={pkg.name}
-            onClick={() => onChange(pkg)}
-            className={`w-full p-4 rounded-xl border-2 text-left cursor-pointer transition-all ${
-              selected ? 'border-[var(--brand)] bg-[var(--brand-light)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/40'
-            }`}
-          >
+          <button key={pkg.name} onClick={() => onChange(pkg)} className={`w-full p-3.5 rounded-xl border-2 text-left cursor-pointer transition-all ${selected ? 'border-[var(--brand)] bg-[var(--brand-light)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/40'}`}>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-bold text-[var(--text-primary)]">{isBn ? pkg.nameBn : pkg.name}</span>
-              {selected && <div className="w-5 h-5 rounded-full bg-[var(--brand)] flex items-center justify-center"><Check size={12} className="text-white" /></div>}
+              <span className="text-xs font-bold text-[var(--text-primary)]">{isBn ? pkg.nameBn : pkg.name}</span>
+              {selected && <div className="w-4 h-4 rounded-full bg-[var(--brand)] flex items-center justify-center"><Check size={10} className="text-white" /></div>}
             </div>
-            <div className="text-base font-bold text-[var(--brand)] mb-1">{pkg.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${pkg.price}/${isBn ? 'মাস' : 'mo'}`}</div>
-            <div className="flex gap-3 text-[0.6875rem] text-[var(--text-secondary)]">
+            <div className="text-sm font-bold text-[var(--brand)] mb-1">{pkg.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${pkg.price}/${isBn ? 'মাস' : 'mo'}`}</div>
+            <div className="flex gap-3 text-[0.625rem] text-[var(--text-secondary)]">
               <span>👥 {pkg.maxStudents}</span>
               <span>👨‍🏫 {pkg.maxTeachers}</span>
               <span>🏫 {pkg.maxClasses}</span>
@@ -486,120 +598,6 @@ function PackagePicker({ value, onChange, isBn }: { value: InstitutionPackage; o
           </button>
         )
       })}
-    </div>
-  )
-}
-
-/* ─── Preview Panel ─── */
-function PreviewPanel({ form, isBn, activeSection }: { form: SchoolForm; isBn: boolean; activeSection?: string }) {
-  const highlight = (section: string) => activeSection === section ? 'ring-2 ring-[var(--brand)] ring-offset-2 rounded-xl' : ''
-
-  return (
-    <div className="h-full overflow-y-auto">
-      {/* Banner */}
-      <div className={`relative h-32 sm:h-40 transition-all duration-300 ${highlight('brand')}`} style={{ background: `linear-gradient(135deg, ${form.brandColor} 0%, ${form.brandColor}99 100%)` }}>
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-      </div>
-
-      {/* Profile */}
-      <div className="relative px-6 pb-6">
-        <div className="absolute -top-10 left-6">
-          <div className={`w-20 h-20 rounded-2xl border-4 border-[var(--bg-primary)] bg-[var(--bg-secondary)] shadow-lg overflow-hidden transition-all duration-300 ${highlight('basic')}`} style={{ borderWidth: '4px' }}>
-            {form.logo ? (
-              <img src={form.logo} alt="Logo" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center" style={{ background: `${form.brandColor}15` }}>
-                <Building2 size={28} className="text-[var(--brand)]" />
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="pt-12">
-          <h3 className={`text-lg sm:text-xl font-bold text-[var(--text-primary)] m-0 leading-tight transition-all duration-300 ${highlight('basic')}`}>
-            {form.name || (isBn ? 'আপনার স্কুলের নাম' : 'Your School Name')}
-          </h3>
-          {form.nameBn && <p className={`text-sm text-[var(--text-muted)] m-0 mt-1 transition-all duration-300 ${highlight('basic')}`}>{form.nameBn}</p>}
-
-          {form.brandName && (
-            <div className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full transition-all duration-300 ${highlight('brand')}`} style={{ background: `${form.brandColor}12` }}>
-              <span className="text-xs font-semibold" style={{ color: form.brandColor }}>{form.brandName}</span>
-            </div>
-          )}
-
-          {form.motto && (
-            <p className={`text-xs text-[var(--text-muted)] italic m-0 mt-2 transition-all duration-300 ${highlight('brand')}`}>"{form.motto}"{form.mottoBn ? ` / "${form.mottoBn}"` : ''}</p>
-          )}
-
-          {/* Contact */}
-          <div className={`mt-4 p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] transition-all duration-300 ${highlight('contact')}`}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {form.phone && (
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}12` }}>
-                    <Phone size={14} style={{ color: form.brandColor }} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ফোন' : 'Phone'}</div>
-                    <div className="text-xs font-semibold text-[var(--text-primary)] truncate">{form.phone}</div>
-                  </div>
-                </div>
-              )}
-              {form.email && (
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}12` }}>
-                    <Mail size={14} style={{ color: form.brandColor }} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ইমেইল' : 'Email'}</div>
-                    <div className="text-xs font-semibold text-[var(--text-primary)] truncate">{form.email}</div>
-                  </div>
-                </div>
-              )}
-              {form.address && (
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}12` }}>
-                    <MapPin size={14} style={{ color: form.brandColor }} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ঠিকানা' : 'Address'}</div>
-                    <div className="text-xs font-semibold text-[var(--text-primary)] truncate">{form.address}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Schedule */}
-          <div className={`mt-3 p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] transition-all duration-300 ${highlight('academic')}`}>
-            <div className="flex items-center gap-2 mb-3">
-              <Clock size={14} style={{ color: form.brandColor }} />
-              <span className="text-xs font-semibold text-[var(--text-primary)]">{isBn ? 'সময়সূচি' : 'Schedule'}</span>
-            </div>
-            <div className="flex gap-3">
-              <div className="flex-1 p-2.5 rounded-xl bg-[var(--bg-primary)] text-center">
-                <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'শুরু' : 'Start'}</div>
-                <div className="text-sm font-bold" style={{ color: form.brandColor }}>{form.startTime || '--:--'}</div>
-              </div>
-              <div className="flex-1 p-2.5 rounded-xl bg-[var(--bg-primary)] text-center">
-                <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'শেষ' : 'End'}</div>
-                <div className="text-sm font-bold" style={{ color: form.brandColor }}>{form.endTime || '--:--'}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Package */}
-          <div className={`mt-3 flex items-center gap-3 transition-all duration-300 ${highlight('package')}`}>
-            <div className="px-3 py-1.5 rounded-xl bg-[var(--brand-light)] text-xs font-semibold text-[var(--brand)]">
-              {isBn ? form.package.nameBn : form.package.name}
-            </div>
-            <div className="text-[0.6875rem] text-[var(--text-muted)]">
-              {form.package.maxStudents} {isBn ? 'জন ছাত্র' : 'students'} · {form.package.maxTeachers} {isBn ? 'জন শিক্ষক' : 'teachers'}
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
