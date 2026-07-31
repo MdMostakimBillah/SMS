@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogIn, Eye, EyeOff, GraduationCap, Mail, Lock, Check, X, ShieldAlert, Clock } from 'lucide-react'
+import { LogIn, Eye, EyeOff, GraduationCap, Mail, Lock, Check, X, Clock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
@@ -171,27 +171,23 @@ export default function LoginPage() {
 
           {/* Lockout banner */}
           {isLockedOut && (
-            <div className="mb-5 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3">
-              <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
-                <ShieldAlert size={12} className="text-amber-500" />
-              </div>
-              <span className="text-[0.8125rem] text-amber-500 flex-1">
+            <div className="mb-4 px-3 py-2 rounded-lg bg-amber-500/8 border border-amber-500/15 flex items-center gap-2">
+              <Clock size={13} className="text-amber-500/80 shrink-0" />
+              <span className="text-[0.75rem] text-amber-500/90">
                 {isBn
-                  ? `অনেক ব্যর্থ চেষ্টা। আবার চেষ্টা করুন ${formatTime(lockoutRemaining)} মিনিটে।`
-                  : `Too many failed attempts. Try again in ${formatTime(lockoutRemaining)}.`}
+                  ? `আবার চেষ্টা করুন ${formatTime(lockoutRemaining)}`
+                  : `Try again in ${formatTime(lockoutRemaining)}`}
               </span>
             </div>
           )}
 
           {/* Error */}
-          {error && (
-            <div className="mb-5 px-4 py-3 rounded-xl bg-[var(--red)]/10 border border-[var(--red)]/20 flex items-center gap-3">
-              <div className="w-5 h-5 rounded-full bg-[var(--red)]/20 flex items-center justify-center shrink-0">
-                <X size={12} className="text-[var(--red)]" />
-              </div>
-              <span className="text-[0.8125rem] text-[var(--red)] flex-1">{error}</span>
-              <button onClick={clearError} aria-label={isBn ? 'বন্ধ করুন' : 'Close'} className="text-[var(--red)]/60 hover:text-[var(--red)] cursor-pointer bg-transparent border-none">
-                <X size={14} />
+          {error && !isLockedOut && (
+            <div className="mb-4 px-3 py-2 rounded-lg bg-[var(--red)]/8 border border-[var(--red)]/15 flex items-center gap-2">
+              <X size={13} className="text-[var(--red)]/70 shrink-0" />
+              <span className="text-[0.75rem] text-[var(--red)]/90 flex-1">{error}</span>
+              <button onClick={clearError} aria-label={isBn ? 'বন্ধ করুন' : 'Close'} className="text-[var(--red)]/30 hover:text-[var(--red)]/60 cursor-pointer bg-transparent border-none p-0">
+                <X size={12} />
               </button>
             </div>
           )}
@@ -254,7 +250,7 @@ export default function LoginPage() {
 
             {/* Password rules */}
             {password.length > 0 && (
-              <div className="grid grid-cols-1 gap-1.5 mt-2">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2">
                 {passwordValidation.map((rule) => (
                   <div key={rule.label} className="flex items-center gap-2">
                     <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${

@@ -10,19 +10,22 @@ export function openPrintWindow(
   bodyHTML: string,
   opts?: { css?: string; delay?: number }
 ): Window | null {
+  const printRules = `
+    @media print {
+      body { print-color-adjust: exact; -webkit-print-color-adjust: exact; color-adjust: exact; padding: 10mm; }
+      html, body { margin: 0 !important; }
+    }
+  `
+
   const defaultCss = `
     @page { size: A4 portrait; margin: 0; }
     @page :first { margin-top: 0; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; background: #fff; font-size: 12px; padding: 10mm; }
-    @media print {
-      body { print-color-adjust: exact; -webkit-print-color-adjust: exact; color-adjust: exact; padding: 10mm; }
-      html, body { margin: 0 !important; padding: 0 !important; }
-      @page { margin: 0 !important; }
-    }
   `
 
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title><style>${opts?.css || defaultCss}</style></head><body>${bodyHTML}<script>setTimeout(()=>window.print(),${opts?.delay || 600})</script></body></html>`
+  const css = opts?.css ? `${opts.css}\n${printRules}` : `${defaultCss}\n${printRules}`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title><style>${css}</style></head><body>${bodyHTML}<script>setTimeout(()=>window.print(),${opts?.delay || 600})</script></body></html>`
 
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
   const url = URL.createObjectURL(blob)
