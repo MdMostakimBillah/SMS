@@ -928,6 +928,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold sticky bottom-0 z-10">
                     <td className="px-2 py-2 sticky left-0 bg-[var(--bg-secondary)] z-10" />
                     <td className="px-2 py-2" />
+                    <td className="px-2 py-2" />
                     <td className="px-3 py-2 sticky left-[76px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--text-primary)] whitespace-nowrap">{bn ? 'মোট' : 'Total'}</td>
                     <td className="px-2 py-2" />
                     <td className="px-2 py-2" />
