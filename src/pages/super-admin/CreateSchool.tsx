@@ -122,8 +122,8 @@ export default function CreateSchool() {
 
   return (
     <div className="flex gap-4 min-h-[calc(100vh-6rem)]">
-      {/* Left - Live Preview */}
-      <div className="hidden lg:flex flex-1 flex-col sticky top-0 h-[calc(100vh-6rem)]">
+      {/* Left - Live Preview (2/3 width) */}
+      <div className="hidden lg:flex w-2/3 flex-col sticky top-0 h-[calc(100vh-6rem)]">
         <div className="flex items-center gap-2 mb-3">
           <Eye size={16} className="text-[var(--brand)]" />
           <span className="text-sm font-semibold text-[var(--text-primary)]">{isBn ? 'লাইভ প্রিভিউ' : 'Live Preview'}</span>
@@ -133,8 +133,8 @@ export default function CreateSchool() {
         </div>
       </div>
 
-      {/* Right - Form */}
-      <div className="flex-1 lg:max-w-lg flex flex-col">
+      {/* Right - Form (1/3 width) */}
+      <div className="flex-1 lg:w-1/3 flex flex-col">
         {/* Step Indicator */}
         <div className="flex items-center gap-1 mb-5 overflow-x-auto pb-1">
           {STEPS.map((s, i) => {
