@@ -46,6 +46,7 @@ import {
   generateAssignmentPDF,
   generateSalaryPDF,
 } from '@/pages/hr/listPdfTemplate'
+import { printRawHTML } from '@/lib/pdf'
 import { toBnNum } from '@/lib/i18n'
 
 function HRPageSkeleton() {
@@ -888,8 +889,6 @@ export default function HRPage() {
 
   const handlePDFDownload = useCallback(
     (type: 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary', opts: HRListPDFOptions) => {
-      const win = window.open('', '_blank')
-      if (!win) return
       let html = ''
       if (type === 'increment') {
         const list = selectedInc.length > 0 ? increments.filter((i) => selectedInc.includes(i.id)) : increments
@@ -926,9 +925,7 @@ export default function HRPage() {
         })
         html = generateSalaryPDF(salaryData, { ...opts, institutionName: institution.name })
       }
-      win.document.write(html)
-      win.document.close()
-      setTimeout(() => win.print(), 800)
+      printRawHTML(html, 800)
       setShowPDFModal(null)
     },
     [

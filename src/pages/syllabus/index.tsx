@@ -26,6 +26,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useSyllabusStore } from '@/store/syllabusStore'
 import type { SyllabusEntry, SyllabusChapter, SyllabusTopic } from '@/store/syllabusStore'
 import { SyllabusPDFOptionsModal } from './SyllabusPDFOptionsModal'
+import { printRawHTML } from '@/lib/pdf'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import { Skeleton, SkeletonCard, SkeletonLine } from '@/components/ui/Skeleton'
 
@@ -414,12 +415,7 @@ export default function SyllabusPage() {
   }
 
   const handleDownloadPDF = (html: string, _filename: string) => {
-    const w = window.open('', '_blank')
-    if (w) {
-      w.document.write(html)
-      w.document.close()
-      setTimeout(() => w.print(), 500)
-    }
+    printRawHTML(html, 500)
   }
 
   const statusIcon = (s: string) => {

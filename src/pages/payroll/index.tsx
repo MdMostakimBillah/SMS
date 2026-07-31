@@ -22,7 +22,7 @@ import { useClassStore } from '@/store/classStore'
 import { useHRStore } from '@/store/hrStore'
 import { SalarySlipPDFOptionsModal } from '@/components/shared/SalarySlipPDFOptionsModal'
 import type { SalarySlipEmployee } from '@/pages/payroll/pdfTemplates/salarySlipPdfTemplate'
-import { downloadHTML } from '@/lib/pdf'
+import { downloadHTML, printRawHTML } from '@/lib/pdf'
 import { escapeHtml } from '@/lib/sanitize'
 
 type SortKey = 'name' | 'salary' | 'department' | 'designation'
@@ -232,9 +232,7 @@ export default function PayrollPage() {
       })
       .join('')
 
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(`<!DOCTYPE html><html><head><title>Payroll Report - ${escapeHtml(month)}</title>
+    printRawHTML(`<!DOCTYPE html><html><head><title>Payroll Report - ${escapeHtml(month)}</title>
 <style>
   @page{size:A4 landscape;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:12px;background:#fff;padding:15px}
@@ -286,9 +284,7 @@ export default function PayrollPage() {
         .toLocaleString()}</td>
     </tr>
   </tbody>
-</table></body></html>`)
-    win.document.close()
-    setTimeout(() => win.print(), 600)
+</table></body></html>`, 600)
   }
 
   const card = `bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.75rem] ${isMobile ? 'p-3' : 'p-[0.875rem]'}`

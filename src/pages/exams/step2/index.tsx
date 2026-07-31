@@ -19,6 +19,7 @@ import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
 import { format, parseISO, eachDayOfInterval, isBefore, isSameDay, startOfDay } from 'date-fns'
 import { selectCls } from '@/lib/styles'
+import { printRawHTML } from '@/lib/pdf'
 import { generateScheduleReportHTML } from './pdfTemplates/scheduleReport'
 import AdmitCardsTab from './AdmitCardsTab'
 import RoutineTab from './tabs/RoutineTab'
@@ -201,9 +202,7 @@ export default function Step2Schedule() {
       schoolNameBn: inst.nameBn,
       schoolAddress: inst.address,
     })
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(`<!DOCTYPE html><html><head>
+    printRawHTML(`<!DOCTYPE html><html><head>
       <meta charset="utf-8"/>
       <title>${isBn ? 'পরীক্ষার সময়সূচি প্রতিবেদন' : 'Exam Schedule Report'}</title>
       <style>
@@ -216,9 +215,7 @@ export default function Step2Schedule() {
         }
       </style>
     </head><body>${html}
-      <script>setTimeout(()=>window.print(),600)</script>
-    </body></html>`)
-    win.document.close()
+    </body></html>`, 600)
   }
 
   return (

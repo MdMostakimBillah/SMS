@@ -14,6 +14,7 @@ import { useExamStore, type OMRTemplate } from '@/store/examStore'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { generateOMRHtml, generateOMRSheet, generateOMRSheetMultiCopy, type OMRConfig, type PaperSize } from '@/pages/exams/omrTemplate'
+import { printRawHTML } from '@/lib/pdf'
 import { logger } from '@/lib/logger'
 
 const THEME_PRESETS = [
@@ -294,22 +295,14 @@ export default function OMRSheetPage() {
       generateOMRSheet(omrConfig, sheetIsBn, 1)
     } else {
       const html = await generateOMRSheetMultiCopy(omrConfig, sheetIsBn, pdfCopyCount)
-      const w = window.open('', '_blank')
-      if (w) {
-        w.document.write(html)
-        w.document.close()
-        setTimeout(() => w.print(), 600)
-      }
+      printRawHTML(html, 600)
     }
     logger.info(isBn ? `${pdfCopyCount} কপি জেনারেট হচ্ছে...` : `Generating ${pdfCopyCount} copies...`)
   }
 
   const handlePrint = () => {
-    const w = window.open('', '_blank')
-    if (w && previewHtml) {
-      w.document.write(previewHtml)
-      w.document.close()
-      setTimeout(() => w.print(), 300)
+    if (previewHtml) {
+      printRawHTML(previewHtml, 300)
     }
   }
 

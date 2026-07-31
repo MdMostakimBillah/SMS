@@ -8,6 +8,7 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import QRCode from 'qrcode'
 import { getPDFBranding } from '@/lib/pdfBranding'
+import { printRawHTML } from '@/lib/pdf'
 import { escapeHtml } from '@/lib/sanitize'
 
 const TEMPLATES = [
@@ -254,9 +255,6 @@ export default function IDCardsPage() {
   }, [filtered])
 
   const printCards = useCallback(async () => {
-    const win = window.open('', '_blank')
-    if (!win) return
-
     // Generate QR codes for print
     const qrUrls: Record<string, string> = {}
     await Promise.all(
@@ -303,10 +301,10 @@ export default function IDCardsPage() {
       })
       .join('')
 
-    win.document.write(
-      `<!DOCTYPE html><html><head><title>ID Cards</title><style>@page{size:auto;margin:10mm}body{margin:0;padding:0;font-family:Arial,sans-serif}.cards{display:flex;flex-wrap:wrap;justify-content:center;gap:0}</style></head><body><div class="cards">${cards}</div><script>setTimeout(()=>window.print(),500)</script></body></html>`
+    printRawHTML(
+      `<!DOCTYPE html><html><head><title>ID Cards</title><style>@page{size:auto;margin:10mm}body{margin:0;padding:0;font-family:Arial,sans-serif}.cards{display:flex;flex-wrap:wrap;justify-content:center;gap:0}</style></head><body><div class="cards">${cards}</div></body></html>`,
+      500
     )
-    win.document.close()
   }, [displayList, template, fields, institutionName])
 
   const inp =

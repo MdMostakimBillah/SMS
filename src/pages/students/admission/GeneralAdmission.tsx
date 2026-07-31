@@ -9,6 +9,7 @@ import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { StudentAdmission } from './types'
 import { generateA4HTML } from './a4Template'
+import { printRawHTML } from '@/lib/pdf'
 import QRCode from 'qrcode'
 import { RELIGION_OPTIONS, DISTRICT_OPTIONS } from '@/lib/constants'
 import { FormField } from '@/components/ui/FormField'
@@ -172,10 +173,7 @@ export default function GeneralAdmission() {
     if (!s) return
     const qrDataUrl = await QRCode.toDataURL(s.id, { width: 120, margin: 1 })
     const tName = s.teacherId ? useTeacherStore.getState().teachers.find((t) => t.id === s.teacherId)?.nameEn : ''
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(generateA4HTML(s, isBn, qrDataUrl, tName, institution.name))
-    win.document.close(); setTimeout(() => win.print(), 800)
+    printRawHTML(generateA4HTML(s, isBn, qrDataUrl, tName, institution.name), 800)
   }, [doneId, isBn])
 
   const tabKeys = tabs.map((t) => t.key)

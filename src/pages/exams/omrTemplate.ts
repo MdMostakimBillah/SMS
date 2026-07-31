@@ -1,5 +1,6 @@
 import QRCode from 'qrcode'
 import { escapeHtml } from '@/lib/sanitize'
+import { printRawHTML } from '@/lib/pdf'
 
 const bn = (n: number): string => {
   const d = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
@@ -449,12 +450,7 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
 
 export function generateOMRSheet(cfg: OMRConfig, isBn: boolean = true, copyNumber: number = 1) {
   generateOMRHtml(cfg, isBn, copyNumber).then((html) => {
-    const w = window.open('', '_blank')
-    if (w) {
-      w.document.write(html)
-      w.document.close()
-      setTimeout(() => w.print(), 600)
-    }
+    printRawHTML(html, 600)
   })
 }
 

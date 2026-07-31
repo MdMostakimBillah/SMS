@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { generateListPDF } from '../listPdfTemplate'
+import { printRawHTML } from '@/lib/pdf'
 import type { ListPDFOptions } from '../listPdfTemplate'
 import type { StudentAdmission } from '../types'
 
@@ -79,11 +80,7 @@ export function useAdmissionActions() {
     (selected: string[], filtered: StudentAdmission[], opts: ListPDFOptions, onDone: () => void) => {
       const list = selected.length > 0 ? filtered.filter((s) => selected.includes(s.id)) : filtered
       const html = generateListPDF(list, { ...opts, institutionName: institution.name })
-      const win = window.open('', '_blank')
-      if (!win) return
-      win.document.write(html)
-      win.document.close()
-      setTimeout(() => win.print(), 800)
+      printRawHTML(html, 800)
       onDone()
     },
     [institution]

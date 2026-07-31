@@ -27,6 +27,7 @@ import { AttendancePDFOptionsModal } from '@/components/shared/AttendancePDFOpti
 import type { AttendancePDFOptions } from '@/components/shared/AttendancePDFOptionsModal'
 import type { AttendanceStatus, DayAttendance } from '@/store/teacherStore'
 import { genSinglePDF, genStudentSinglePDF } from './pdfTemplates'
+import { printRawHTML } from '@/lib/pdf'
 import { Skeleton, SkeletonCard, SkeletonLine } from '@/components/ui/Skeleton'
 const DeviceTab = lazy(() => import('./DeviceTab'))
 import { today, twentyDaysAgo, getDaysBetween, isFriday, setGlobalBn } from './helpers'
@@ -312,9 +313,7 @@ export default function AttendancePage() {
     (personId: string, personName: string) => {
       const teacher = teachers.find((t) => t.id === personId)
       const data = getPersonMonthData(personId)
-      const win = window.open('', '_blank')
-      if (!win) return
-      win.document.write(
+      printRawHTML(
         genSinglePDF({
           name: personName,
           id: personId,
@@ -326,10 +325,9 @@ export default function AttendancePage() {
           rows: data,
           isBn,
           institutionName: institution.name,
-        })
+        }),
+        800
       )
-      win.document.close()
-      setTimeout(() => win.print(), 800)
     },
     [teachers, getPersonMonthData, getDeptName, isBn]
   )
@@ -356,11 +354,7 @@ export default function AttendancePage() {
   const downloadStudentSinglePDF = useCallback(
     (studentId: string, studentName: string, className: string, section: string) => {
       const data = getStudentMonthData(studentId)
-      const win = window.open('', '_blank')
-      if (!win) return
-      win.document.write(genStudentSinglePDF({ name: studentName, id: studentId, className, section, rows: data, isBn, institutionName: institution.name }))
-      win.document.close()
-      setTimeout(() => win.print(), 800)
+      printRawHTML(genStudentSinglePDF({ name: studentName, id: studentId, className, section, rows: data, isBn, institutionName: institution.name }), 800)
     },
     [getStudentMonthData, isBn]
   )
@@ -472,11 +466,7 @@ export default function AttendancePage() {
   ${dayHeaders}
 </tr></thead><tbody>${rowsHtml}</tbody></table>
 <div class="ftr"><span>EduTech School Management System</span><div>${optsIsBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div></body></html>`
-      const win = window.open('', '_blank')
-      if (!win) return
-      win.document.write(html)
-      win.document.close()
-      setTimeout(() => win.print(), 800)
+      printRawHTML(html, 800)
       setShowStudentPDF(false)
     },
     [filteredStudents, selectedStudents, getStudentMonthData, dateFrom, dateTo, rangeDays]
@@ -549,11 +539,7 @@ export default function AttendancePage() {
   ${dayHeaders}
 </tr></thead><tbody>${rowsHtml}</tbody></table>
 <div class="ftr"><span>EduTech School Management System</span><div>${optsIsBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div></body></html>`
-      const win = window.open('', '_blank')
-      if (!win) return
-      win.document.write(html)
-      win.document.close()
-      setTimeout(() => win.print(), 800)
+      printRawHTML(html, 800)
       setShowEmployeePDF(false)
     },
     [filteredEmployees, selectedEmployees, getPersonMonthData, getDeptName, dateFrom, dateTo, rangeDays]

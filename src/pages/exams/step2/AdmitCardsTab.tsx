@@ -7,6 +7,7 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import type { ExamConfig, SubjectMarkConfig, ExamRoutine } from '@/store/examStore'
 import { sectionCls, sectionTitleCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
 import { generateAdmitCardHTML } from './pdfTemplates/admitCard'
+import { printRawHTML } from '@/lib/pdf'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 
 interface AdmitCardsTabProps {
@@ -73,16 +74,13 @@ export default function AdmitCardsTab({
 
     const cardsHTML = generateAdmitCardHTML(selectedStudents, exam, inst, subjectMap, subjectMarkConfigs, routines, qrUrls, isBn, brandColor)
 
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Admit Cards - ${isBn ? exam.nameBn : exam.name}</title>
+    printRawHTML(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Admit Cards - ${isBn ? exam.nameBn : exam.name}</title>
 <style>
   @page{size:A4 portrait;margin:8mm}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f1f5f9;padding:10px}
   @media print{body{background:#fff;padding:0} *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}}
-</style></head><body>${cardsHTML}<script>setTimeout(()=>window.print(),600)</script></body></html>`)
-    win.document.close()
+</style></head><body>${cardsHTML}</body></html>`, 600)
   }, [selectedExamId, acSelected, students, examConfigs, routines, subjectMarkConfigs, subjectMap, isBn])
 
   return (

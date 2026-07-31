@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Plus, Trash2, Edit2, X, ScanLine, Printer, Palette } from 'lucide-react'
 import { useExamStore, type OMRConfig as OMRExamConfig } from '@/store/examStore'
 import { generateOMRSheetMultiCopy, type OMRConfig } from '@/pages/exams/omrTemplate'
+import { printRawHTML } from '@/lib/pdf'
 import { sectionCls, inputCls, btnPrimary } from '@/lib/styles'
 import type { Subject } from '@/pages/teachers/types'
 
@@ -629,12 +630,7 @@ export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs, classe
                         paperSize: 'A4' as const,
                       }
                       const html = await generateOMRSheetMultiCopy(cfg, isBn, omrQuantity)
-                      const w = window.open('', '_blank')
-                      if (w) {
-                        w.document.write(html)
-                        w.document.close()
-                        setTimeout(() => w.print(), 600)
-                      }
+                      printRawHTML(html, 600)
                       setShowOMRDownload(false)
                     } finally {
                       setOmrPrinting(false)

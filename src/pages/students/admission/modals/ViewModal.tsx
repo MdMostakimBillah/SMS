@@ -4,6 +4,7 @@ import { X, Download, User } from 'lucide-react'
 import { useClassStore } from '@/store/classStore'
 import QRCode from 'qrcode'
 import { generateA4HTML } from '../a4Template'
+import { printRawHTML } from '@/lib/pdf'
 import type { StudentAdmission } from '../types'
 
 export const ViewModal = React.memo(function ViewModal({
@@ -20,11 +21,7 @@ export const ViewModal = React.memo(function ViewModal({
   const download = useCallback(async () => {
     const qrDataUrl = await QRCode.toDataURL(student.id, { width: 120, margin: 1 })
     const tName = student.teacherId ? teacherMap.get(student.teacherId)?.nameEn : ''
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(generateA4HTML(student, isBn, qrDataUrl, tName, useClassStore.getState().institution.name))
-    win.document.close()
-    setTimeout(() => win.print(), 800)
+    printRawHTML(generateA4HTML(student, isBn, qrDataUrl, tName, useClassStore.getState().institution.name), 800)
   }, [student, isBn, teacherMap])
 
   const sc = student.status === 'approved' ? 'var(--green)' : student.status === 'rejected' ? 'var(--red)' : 'var(--amber)'

@@ -32,6 +32,7 @@ import { InactivationModal } from '@/components/shared/InactivationModal'
 import { ReactivationModal } from '@/components/shared/ReactivationModal'
 import { generateListPDF } from '@/pages/students/admission/listPdfTemplate'
 import { generateA4HTML } from '@/pages/students/admission/a4Template'
+import { printRawHTML } from '@/lib/pdf'
 import type { ListPDFOptions } from '@/pages/students/admission/listPdfTemplate'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { BLOOD_GROUPS } from '@/lib/constants'
@@ -208,11 +209,7 @@ export default function AllStudentsPage() {
   const handlePDF = useCallback(
     (opts: ListPDFOptions) => {
       const list = selected.length > 0 ? filtered.filter((s) => selected.includes(s.id)) : filtered
-      const win = window.open('', '_blank')
-      if (!win) return
-      win.document.write(generateListPDF(list, opts))
-      win.document.close()
-      setTimeout(() => win.print(), 800)
+      printRawHTML(generateListPDF(list, opts), 800)
       setShowPDF(false)
     },
     [selected, filtered]
@@ -353,13 +350,7 @@ export default function AllStudentsPage() {
             <div className="flex gap-2 justify-end flex-wrap px-[1.125rem] py-3 border-t border-[var(--border)]">
               <button
                 onClick={() => {
-                  const win = window.open('', '_blank')
-                  if (!win) return
-                  win.document.write(generateA4HTML(viewSt, isBn))
-                  win.document.close()
-                  setTimeout(() => {
-                    win.print()
-                  }, 600)
+                  printRawHTML(generateA4HTML(viewSt, isBn), 600)
                 }}
                 className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.8125rem] font-medium cursor-pointer"
               >

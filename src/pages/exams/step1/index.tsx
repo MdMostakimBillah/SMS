@@ -27,6 +27,7 @@ import { useClassStore, getClassOptions } from '@/store/classStore'
 import { useExamStore } from '@/store/examStore'
 import type { ExamConfig, ExamType, SubjectMarkConfig } from '@/store/examStore'
 import { sectionCls, sectionTitleCls, inputCls, btnPrimary } from '@/lib/styles'
+import { printRawHTML } from '@/lib/pdf'
 import OMRTab from './OMRTab'
 import { generatePlanningReportHTML } from './pdfTemplates/planningReport'
 
@@ -325,9 +326,7 @@ export default function Step1Planning() {
       schoolNameBn: inst.nameBn,
       schoolAddress: inst.address,
     })
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(`<!DOCTYPE html><html><head>
+    printRawHTML(`<!DOCTYPE html><html><head>
       <meta charset="utf-8"/>
       <title>${isBn ? 'পরীক্ষা পরিকল্পনা প্রতিবেদন' : 'Exam Planning Report'}</title>
       <style>
@@ -340,9 +339,7 @@ export default function Step1Planning() {
         }
       </style>
     </head><body>${html}
-      <script>setTimeout(()=>window.print(),600)</script>
-    </body></html>`)
-    win.document.close()
+    </body></html>`, 600)
   }
 
   const handleSaveExam = () => {

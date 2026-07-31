@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react'
 import { sectionCls, sectionTitleCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
+import { printRawHTML } from '@/lib/pdf'
 import { logger } from '@/lib/logger'
 import { generateAttendanceSheetHTML } from '../pdfTemplates/attendanceSheet'
 
@@ -384,11 +385,7 @@ export const AttendanceTab = React.memo(function AttendanceTab({
                       absent: absentList,
                       totalStudents: total,
                     })
-                    const win = window.open('', '_blank')
-                    if (!win) return
-                    win.document.write(html)
-                    win.document.close()
-                    setTimeout(() => win.print(), 500)
+                    printRawHTML(html, 500)
                   }}
                   className="flex items-center gap-1 text-[0.625rem] text-[var(--brand)] hover:text-[var(--brand-dark)] cursor-pointer"
                 >
