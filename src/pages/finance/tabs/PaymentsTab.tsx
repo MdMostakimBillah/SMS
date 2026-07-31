@@ -43,6 +43,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const [fCollector, setFCollector] = useState('')
   const [dateFrom, setDateFrom] = useState(new Date().toISOString().split('T')[0])
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0])
+  const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc'>('date-desc')
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
@@ -83,7 +84,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
       group.push(p)
       grouped.set(key, group)
     }
-    const result: PaymentBatch[] = Array.from(grouped.entries()).map(([key, group]) => {
+    let result: PaymentBatch[] = Array.from(grouped.entries()).map(([key, group]) => {
       const first = group[0]
       const sn = studentMap[first.studentId]
       return {
@@ -102,8 +103,14 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
         collectedBy: first.collectedBy || '',
       }
     })
+    result.sort((a, b) => {
+      if (sortBy === 'amount-desc') return b.totalAmount - a.totalAmount
+      if (sortBy === 'amount-asc') return a.totalAmount - b.totalAmount
+      if (sortBy === 'date-asc') return a.paidAt.localeCompare(b.paidAt)
+      return b.paidAt.localeCompare(a.paidAt)
+    })
     return result
-  }, [payments, search, fMethod, fCollector, dateFrom, dateTo, studentMap, structureMap])
+  }, [payments, search, fMethod, fCollector, dateFrom, dateTo, sortBy, studentMap, structureMap])
 
   const totalCollected = useMemo(() => batches.reduce((sum, b) => sum + b.totalAmount, 0), [batches])
   const totalDiscount = useMemo(() => batches.reduce((sum, b) => sum + b.totalDiscount, 0), [batches])
@@ -129,6 +136,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     setFCollector('')
     setDateFrom('')
     setDateTo('')
+    setSortBy('date-desc')
     setSelectedRows(new Set())
   }, [])
 
@@ -438,6 +446,30 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
               </select>
             </div>
           )}
+          <div className="h-4 w-px bg-[var(--border)]" />
+          <div className="flex items-center gap-1">
+            <Calendar size={11} className="text-[var(--text-muted)]" />
+            {([
+              { val: 'date-desc', en: 'New → Old', bn: 'নতুন → পুরাতন' },
+              { val: 'date-asc', en: 'Old → New', bn: 'পুরাতন → নতুন' },
+            ] as const).map((o) => (
+              <button key={o.val} onClick={() => setSortBy(o.val)} className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${sortBy === o.val ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'}`}>
+                {bn ? o.bn : o.en}
+              </button>
+            ))}
+          </div>
+          <div className="h-4 w-px bg-[var(--border)]" />
+          <div className="flex items-center gap-1">
+            <DollarSign size={11} className="text-[var(--text-muted)]" />
+            {([
+              { val: 'amount-desc', en: 'High → Low', bn: 'বেশি → কম' },
+              { val: 'amount-asc', en: 'Low → High', bn: 'কম → বেশি' },
+            ] as const).map((o) => (
+              <button key={o.val} onClick={() => setSortBy(o.val)} className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${sortBy === o.val ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'}`}>
+                {bn ? o.bn : o.en}
+              </button>
+            ))}
+          </div>
           <div className="flex-1" />
           {batches.length > 0 && (
             <div className="relative">
@@ -447,12 +479,15 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
               {showActionMenu && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg shadow-lg py-1 min-w-[140px]">
-                    <button onClick={() => { setShowActionMenu(false); setShowPdfModal(true) }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] cursor-pointer">
-                      <FileText size={13} />{bn ? 'ডাউনলোড PDF' : 'Download PDF'}
+                  <div className="absolute right-0 top-full mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-[100] overflow-hidden">
+                    <button onClick={() => { setShowActionMenu(false); exportExcel() }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
+                      <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                      {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
                     </button>
-                    <button onClick={() => { setShowActionMenu(false); exportExcel() }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] cursor-pointer">
-                      <FileSpreadsheet size={13} />{bn ? 'ডাউনলোড Excel' : 'Download Excel'}
+                    <div className="h-px bg-[var(--border)] mx-2" />
+                    <button onClick={() => { setShowActionMenu(false); setShowPdfModal(true) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
+                      <FileText size={14} className="text-[var(--red)]" />
+                      {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
                     </button>
                   </div>
                 </>

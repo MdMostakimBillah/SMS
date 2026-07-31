@@ -180,7 +180,7 @@ interface FeeState {
     collectedThisMonth: number
     paymentCount: number
   }
-  getClassWiseSummary: (students: StudentInfo[]) => { className: string; totalDue: number; totalPaid: number; studentCount: number }[]
+  getClassWiseSummary: (students: StudentInfo[]) => { className: string; section: string; totalDue: number; totalPaid: number; studentCount: number }[]
 }
 
 function computeWaiverAmount(entry: WaiverEntry, feeAmount: number): number {
@@ -496,10 +496,11 @@ export const useFeeStore = create<FeeState>()(
           const studentStructures = structures.filter((s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section))
 
           for (const fee of studentStructures) {
-            if (!classMap.has(student.class)) {
-              classMap.set(student.class, { totalDue: 0, totalPaid: 0, studentCount: new Set() })
+            const key = `${student.class}__${student.section || ''}`
+            if (!classMap.has(key)) {
+              classMap.set(key, { totalDue: 0, totalPaid: 0, studentCount: new Set() })
             }
-            const entry = classMap.get(student.class)!
+            const entry = classMap.get(key)!
             entry.studentCount.add(student.id)
             const paid = payments.filter((p) => p.studentId === student.id && p.feeStructureId === fee.id).reduce((sum, p) => sum + p.amount, 0)
             const waived = waivers.filter((w) => w.studentId === student.id && w.feeStructureId === fee.id).reduce((sum, w) => sum + w.amount, 0)
@@ -509,13 +510,17 @@ export const useFeeStore = create<FeeState>()(
         }
 
         return Array.from(classMap.entries())
-          .map(([className, data]) => ({
-            className,
-            totalDue: data.totalDue,
-            totalPaid: data.totalPaid,
-            studentCount: data.studentCount.size,
-          }))
-          .sort((a, b) => a.className.localeCompare(b.className))
+          .map(([key, data]) => {
+            const [className, section] = key.split('__')
+            return {
+              className,
+              section,
+              totalDue: data.totalDue,
+              totalPaid: data.totalPaid,
+              studentCount: data.studentCount.size,
+            }
+          })
+          .sort((a, b) => a.className.localeCompare(b.className) || a.section.localeCompare(b.section))
       },
     }),
     {
