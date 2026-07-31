@@ -25,16 +25,18 @@ export function openPrintWindow(
   `
 
   const css = opts?.css ? `${opts.css}\n${printRules}` : `${defaultCss}\n${printRules}`
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title><style>${css}</style></head><body>${bodyHTML}<script>setTimeout(()=>window.print(),${opts?.delay || 600})</script></body></html>`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title><style>${css}</style></head><body>${bodyHTML}</body></html>`
 
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const win = window.open(url, '_blank', 'noopener,noreferrer')
-  if (!win) {
-    URL.revokeObjectURL(url)
+  const win = window.open('about:blank', '_blank', 'noopener,noreferrer')
+  if (!win) return null
+  try {
+    win.document.write(html)
+    win.document.close()
+    setTimeout(() => { try { win.print() } catch (_) { /* ignore */ } }, opts?.delay || 600)
+  } catch (_) {
+    win.close()
     return null
   }
-  setTimeout(() => URL.revokeObjectURL(url), 5000)
   return win
 }
 
