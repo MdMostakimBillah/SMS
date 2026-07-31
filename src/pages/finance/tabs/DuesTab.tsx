@@ -769,6 +769,9 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     {bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}
                   </th>
                 ))}
+                {!showMonthPicker && fStatus === 'paiddue' && (
+                  <th className="text-center px-2 py-2 text-[10px] uppercase font-bold whitespace-nowrap" style={{ width: '90px', minWidth: '90px', background: 'var(--green-light)', color: 'var(--green)' }}>{bn ? 'পরিশোধিত' : 'Paid'}</th>
+                )}
                 {!showMonthPicker && (
                   <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'বকেয়' : 'Due'}</th>
                 )}
@@ -862,6 +865,9 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                         </td>
                       )
                     })}
+                    {!showMonthPicker && fStatus === 'paiddue' && (
+                      <td className="text-center px-2 py-3 font-semibold text-[var(--green)]">{row.totalPaid > 0 ? fmt(row.totalPaid) : '—'}</td>
+                    )}
                     {!showMonthPicker && (
                       <td className="text-center px-2 py-3 font-bold text-[var(--amber)]">{fmt(row.totalDue)}</td>
                     )}
@@ -869,8 +875,9 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                   </tr>
                 )
               })}
-              {fStatus === 'paiddue' && (
+              {fStatus !== 'all' && (
                 <>
+                  {(fStatus === 'paid' || fStatus === 'paiddue') && (
                   <tr className="border-t border-[var(--border)] bg-[var(--bg-secondary)] font-bold">
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
@@ -889,6 +896,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     ))}
                     <td className="text-center px-2 py-2 text-[12px] text-[var(--green)] font-bold" style={{ background: 'var(--green-light)' }}>{fmt(totalPaid)}</td>
                   </tr>
+                  )}
+                  {(fStatus === 'due' || fStatus === 'paiddue') && (
                   <tr className="border-t border-[var(--border)] bg-[var(--bg-secondary)] font-bold">
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
@@ -907,6 +916,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     ))}
                     <td className="text-center px-2 py-2 text-[12px] text-[var(--amber)] font-bold" style={{ background: 'var(--amber-light)' }}>{fmt(totalDue)}</td>
                   </tr>
+                  )}
                 </>
               )}
             </tbody>
