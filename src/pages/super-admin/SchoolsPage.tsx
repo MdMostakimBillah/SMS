@@ -8,6 +8,10 @@ import {
 } from 'lucide-react'
 import { useSuperAdminStore, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
+import { useTeacherStore } from '@/store/teacherStore'
+import { useAdmissionStore } from '@/store/admissionStore'
+import { useFeeStore } from '@/store/feeStore'
+import { institutionDataMap } from '@/lib/demoData'
 
 function statusConfig(status: InstitutionStatus, isBn: boolean) {
   const map: Record<InstitutionStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -225,30 +229,23 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
 
   const openInstitution = (inst: Institution) => {
     startViewing(inst.id)
-    const updateInstitution = useClassStore.getState().updateInstitution
-    updateInstitution({
-      name: inst.name,
-      nameBn: inst.nameBn,
-      logo: inst.logo,
-      banner: '',
-      bannerPosition: { x: 0, y: 0 },
-      brandName: 'EduTech',
-      motto: '',
-      mottoBn: '',
-      eiin: inst.eiin,
-      phone: inst.phone,
-      email: inst.email,
-      address: inst.address,
-      website: inst.website,
-      subjects: [],
-      startTime: '07:30',
-      endTime: '14:30',
-      breaks: [],
-      currentSession: '2025-26',
-      sessions: ['2024-25', '2025-26'],
-      lightColors: { ...defaultThemeColors, brand: inst.brandColor },
-      darkColors: { ...defaultThemeColorsDark },
-    })
+    const demoData = institutionDataMap[inst.id]
+    if (demoData) {
+      const { institution: instSettings, classes, teachers, departments, subjects, designations, students, feeCategories, feeStructures, feePayments } = demoData
+
+      useClassStore.setState({ institution: instSettings, classes, routines: [], sessionClasses: { '2025-26': classes }, sessionRoutines: { '2025-26': [] } })
+      useTeacherStore.setState({ teachers, departments, subjects, designations, attendance: {} })
+      useAdmissionStore.setState({ students })
+      useFeeStore.setState({ feeCategories, structures: feeStructures, payments: feePayments })
+    } else {
+      useClassStore.getState().updateInstitution({
+        name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: '', bannerPosition: { x: 0, y: 0 },
+        brandName: 'EduTech', motto: '', mottoBn: '', eiin: inst.eiin, phone: inst.phone, email: inst.email,
+        address: inst.address, website: inst.website, subjects: [], startTime: '07:30', endTime: '14:30',
+        breaks: [], currentSession: '2025-26', sessions: ['2024-25', '2025-26'],
+        lightColors: { ...defaultThemeColors, brand: inst.brandColor }, darkColors: { ...defaultThemeColorsDark },
+      })
+    }
     navigate('/dashboard')
   }
 
