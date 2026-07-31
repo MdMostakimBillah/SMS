@@ -74,6 +74,28 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle }: {
           </div>
           <div className="text-[0.75rem] text-[var(--text-muted)] mt-0.5 truncate">{inst.email}</div>
         </div>
+        <div className="hidden sm:flex items-center gap-4 shrink-0">
+          <div className="text-right">
+            <div className="flex items-center gap-1.5 text-[0.6875rem] text-[var(--text-muted)]">
+              <CreditCard size={11} />
+              {isBn ? inst.package.nameBn : inst.package.name}
+            </div>
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
+              {inst.package.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${inst.package.price}/${isBn ? 'মাস' : 'mo'}`}
+            </div>
+          </div>
+          <div className="w-20">
+            <div className="flex items-center justify-between text-[0.625rem] text-[var(--text-muted)] mb-1">
+              <span>{formatMB(inst.usedStorageMB)}</span>
+              <span>{formatMB(inst.package.storageMB)}</span>
+            </div>
+            <StorageBar used={inst.usedStorageMB} total={inst.package.storageMB} />
+          </div>
+          <div className="text-[0.625rem] text-[var(--text-muted)] whitespace-nowrap">
+            <Clock size={10} className="inline mr-1" />
+            {inst.lastLogin}
+          </div>
+        </div>
         <div className="shrink-0 text-[var(--text-muted)]">
           {isSelected ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </div>
