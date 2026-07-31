@@ -41,34 +41,21 @@ const defaultForm: SchoolForm = {
   brandColor: defaultThemeColors.brand,
 }
 
-interface FieldStep {
+interface SectionStep {
   key: string
-  section: string
   labelEn: string
   labelBn: string
-  required?: boolean
+  icon: string
 }
 
-const FIELD_STEPS: FieldStep[] = [
-  { key: 'name', section: 'basic', labelEn: 'School Name', labelBn: 'স্কুলের নাম', required: true },
-  { key: 'nameBn', section: 'basic', labelEn: 'Bengali Name', labelBn: 'বাংলায় নাম' },
-  { key: 'email', section: 'contact', labelEn: 'Email', labelBn: 'ইমেইল' },
-  { key: 'phone', section: 'contact', labelEn: 'Phone', labelBn: 'ফোন' },
-  { key: 'address', section: 'contact', labelEn: 'Address', labelBn: 'ঠিকানা' },
-  { key: 'addressBn', section: 'contact', labelEn: 'Address (Bengali)', labelBn: 'ঠিকানা (বাংলা)' },
-  { key: 'eiin', section: 'extra', labelEn: 'EIIN', labelBn: 'EIIN' },
-  { key: 'website', section: 'extra', labelEn: 'Website', labelBn: 'ওয়েবসাইট' },
-  { key: 'brandName', section: 'brand', labelEn: 'Brand Name', labelBn: 'ব্র্যান্ড নাম' },
-  { key: 'motto', section: 'brand', labelEn: 'Motto (English)', labelBn: 'মোটো (ইংরেজি)' },
-  { key: 'mottoBn', section: 'brand', labelEn: 'Motto (Bengali)', labelBn: 'মোটো (বাংলা)' },
-  { key: 'logo', section: 'brand', labelEn: 'Logo URL', labelBn: 'লোগো URL' },
-  { key: 'brandColor', section: 'brand', labelEn: 'Brand Color', labelBn: 'ব্র্যান্ড রং' },
-  { key: 'subjects', section: 'academic', labelEn: 'Subjects', labelBn: 'বিষয়সমূহ', required: true },
-  { key: 'sessions', section: 'academic', labelEn: 'Sessions', labelBn: 'সেশন', required: true },
-  { key: 'schedule', section: 'academic', labelEn: 'Class Schedule', labelBn: 'ক্লাস সময়সূচি' },
-  { key: 'package', section: 'package', labelEn: 'Package', labelBn: 'প্যাকেজ' },
-  { key: 'adminEmail', section: 'admin', labelEn: 'Admin Email', labelBn: 'অ্যাডমিন ইমেইল', required: true },
-  { key: 'adminPassword', section: 'admin', labelEn: 'Admin Password', labelBn: 'পাসওয়ার্ড', required: true },
+const SECTION_STEPS: SectionStep[] = [
+  { key: 'basic', labelEn: 'Basic Info', labelBn: 'মৌলিক তথ্য', icon: '🏫' },
+  { key: 'contact', labelEn: 'Contact', labelBn: 'যোগাযোগ', icon: '📞' },
+  { key: 'extra', labelEn: 'Extra Details', labelBn: 'অতিরিক্ত তথ্য', icon: '📋' },
+  { key: 'brand', labelEn: 'Branding', labelBn: 'ব্র্যান্ডিং', icon: '🎨' },
+  { key: 'academic', labelEn: 'Academic', labelBn: 'একাডেমিক', icon: '📚' },
+  { key: 'package', labelEn: 'Package', labelBn: 'প্যাকেজ', icon: '💳' },
+  { key: 'admin', labelEn: 'Admin Account', labelBn: 'অ্যাডমিন', icon: '🔑' },
 ]
 
 const PRESET_COLORS = ['#6366f1', '#3b82f6', '#14b8a6', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#a855f7', '#06b6d4', '#f97316']
@@ -86,22 +73,20 @@ export default function CreateSchool() {
   const [exiting, setExiting] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const currentStep = FIELD_STEPS[step]
-  const isLastStep = step === FIELD_STEPS.length - 1
+  const currentSection = SECTION_STEPS[step]
+  const isLastStep = step === SECTION_STEPS.length - 1
 
   const set = <K extends keyof SchoolForm>(key: K, val: SchoolForm[K]) => setForm((f) => ({ ...f, [key]: val }))
 
   const canNext = useMemo(() => {
-    if (!currentStep) return true
-    switch (currentStep.key) {
-      case 'name': return form.name.trim().length > 0
-      case 'subjects': return form.subjects.length > 0
-      case 'sessions': return form.sessions.length > 0
-      case 'adminEmail': return form.adminEmail.trim().length > 0
-      case 'adminPassword': return form.adminPassword.trim().length >= 4
+    if (!currentSection) return true
+    switch (currentSection.key) {
+      case 'basic': return form.name.trim().length > 0
+      case 'academic': return form.subjects.length > 0 && form.sessions.length > 0
+      case 'admin': return form.adminEmail.trim().length > 0 && form.adminPassword.trim().length >= 4
       default: return true
     }
-  }, [currentStep, form])
+  }, [currentSection, form])
 
   useEffect(() => {
     inputRef.current?.focus()
@@ -177,8 +162,8 @@ export default function CreateSchool() {
                 <Sparkles size={16} className="text-[var(--brand)]" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-[var(--text-primary)]">{isBn ? 'নতুন স্কুল' : 'New School'}</h2>
-                <p className="text-[0.6875rem] text-[var(--text-muted)]">{step + 1}/{FIELD_STEPS.length}</p>
+              <h2 className="text-sm font-bold text-[var(--text-primary)]">{isBn ? 'নতুন স্কুল' : 'New School'}</h2>
+              <p className="text-[0.6875rem] text-[var(--text-muted)]">{step + 1}/{SECTION_STEPS.length} — {isBn ? currentSection?.labelBn : currentSection?.labelEn}</p>
               </div>
             </div>
             <button onClick={handleClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] cursor-pointer border-none bg-transparent transition-colors">
@@ -189,34 +174,69 @@ export default function CreateSchool() {
           {/* Progress */}
           <div className="px-5 py-2.5 border-b border-[var(--border)] shrink-0">
             <div className="h-1 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
-              <div className="h-full rounded-full bg-[var(--brand)] transition-all duration-500" style={{ width: `${((step + 1) / FIELD_STEPS.length) * 100}%` }} />
+              <div className="h-full rounded-full bg-[var(--brand)] transition-all duration-500" style={{ width: `${((step + 1) / SECTION_STEPS.length) * 100}%` }} />
             </div>
           </div>
 
           {/* Field */}
           <div className="flex-1 px-5 py-5 overflow-y-auto">
-            <div className="mb-4">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.625rem] font-medium text-[var(--text-muted)] mb-2.5">
-                {getSectionIcon(currentStep?.section || 'basic')}
-                {getSectionLabel(currentStep?.section || 'basic', isBn)}
-              </div>
-              <label className="block text-sm font-bold text-[var(--text-primary)] mb-1">
-                {isBn ? currentStep?.labelBn : currentStep?.labelEn}
-                {currentStep?.required && <span className="text-[var(--red)] ml-1">*</span>}
-              </label>
-              <p className="text-[0.6875rem] text-[var(--text-muted)] leading-relaxed">
-                {getHint(currentStep?.key || '', isBn)}
-              </p>
+          <div className="mb-4">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.625rem] font-medium text-[var(--text-muted)] mb-2.5">
+              {currentSection?.icon}
+              {isBn ? currentSection?.labelBn : currentSection?.labelEn}
             </div>
+          </div>
 
-            {currentStep && renderField(currentStep.key, form, set, {
-              newSubject, setNewSubject, newSession, setNewSession,
-              showPassword, setShowPassword, isBn, inputRef,
-            })}
-
-            {currentStep?.key === 'adminPassword' && form.adminPassword && form.adminPassword.length < 4 && (
-              <p className="text-[0.6875rem] text-[var(--red)] mt-2">{isBn ? 'কমপক্ষে ৪ অক্ষর প্রয়োজন' : 'Minimum 4 characters required'}</p>
+          <div className="space-y-4">
+            {currentSection?.key === 'basic' && (
+              <>
+                <FieldInput ref={inputRef} label={isBn ? 'স্কুলের নাম *' : 'School Name *'} value={form.name} onChange={(v) => set('name', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} hint={isBn ? 'স্কুলের আনুষ্ঠানিক নাম' : 'The official name of the school'} />
+                <FieldInput label={isBn ? 'বাংলায় নাম' : 'Bengali Name'} value={form.nameBn} onChange={(v) => set('nameBn', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} hint={isBn ? 'বাংলা লিপিতে স্কুলের নাম' : 'School name in Bengali script'} />
+              </>
             )}
+            {currentSection?.key === 'contact' && (
+              <>
+                <FieldInput ref={inputRef} label={isBn ? 'ইমেইল' : 'Email'} type="email" value={form.email} onChange={(v) => set('email', v)} placeholder="info@school.edu.bd" hint={isBn ? 'যোগাযোগের ইমেইল' : 'General contact email'} />
+                <FieldInput label={isBn ? 'ফোন' : 'Phone'} value={form.phone} onChange={(v) => set('phone', v)} placeholder="+880-2-1234567" hint={isBn ? 'স্কুলের ফোন নম্বর' : 'School phone number'} />
+                <FieldInput label={isBn ? 'ঠিকানা' : 'Address'} value={form.address} onChange={(v) => set('address', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'House, Road, City'} hint={isBn ? 'স্কুলের সম্পূর্ণ ঠিকানা' : 'Full address of the school'} />
+                <FieldInput label={isBn ? 'ঠিকানা (বাংলা)' : 'Address (Bengali)'} value={form.addressBn} onChange={(v) => set('addressBn', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'বাসা নং, রাস্তা, শহর'} hint={isBn ? 'বাংলায় ঠিকানা' : 'Address in Bengali'} />
+              </>
+            )}
+            {currentSection?.key === 'extra' && (
+              <>
+                <FieldInput ref={inputRef} label="EIIN" value={form.eiin} onChange={(v) => set('eiin', v)} placeholder="123456" hint={isBn ? 'শিক্ষা প্রতিষ্ঠান শনাক্তকরণ নম্বর' : 'Education Institution Identification Number'} />
+                <FieldInput label={isBn ? 'ওয়েবসাইট' : 'Website'} value={form.website} onChange={(v) => set('website', v)} placeholder="www.school.edu.bd" hint={isBn ? 'স্কুলের ওয়েবসাইট' : 'School website URL'} />
+              </>
+            )}
+            {currentSection?.key === 'brand' && (
+              <>
+                <FieldInput ref={inputRef} label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName} onChange={(v) => set('brandName', v)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} hint={isBn ? 'সিস্টেমের জন্য ছোট ব্র্যান্ড নাম' : 'Short brand name for the system'} />
+                <FieldInput label={isBn ? 'মোটো (ইংরেজি)' : 'Motto (English)'} value={form.motto} onChange={(v) => set('motto', v)} placeholder="Knowledge is Power" hint={isBn ? 'ইংরেজিতে স্কুলের মোটো' : 'School motto in English'} />
+                <FieldInput label={isBn ? 'মোটো (বাংলা)' : 'Motto (Bengali)'} value={form.mottoBn} onChange={(v) => set('mottoBn', v)} placeholder="জ্ঞাই হলো শক্তি" hint={isBn ? 'বাংলায় স্কুলের মোটো' : 'School motto in Bengali'} />
+                <FieldInput label={isBn ? 'লোগো URL' : 'Logo URL'} value={form.logo} onChange={(v) => set('logo', v)} placeholder="https://..." hint={isBn ? 'স্কুল লোগোর URL' : 'URL to the school logo image'} />
+                <ColorPicker value={form.brandColor} onChange={(v) => set('brandColor', v)} />
+              </>
+            )}
+            {currentSection?.key === 'academic' && (
+              <>
+                <TagInput ref={inputRef} tags={form.subjects} onAdd={(t) => set('subjects', [...form.subjects, t])} onRemove={(t) => set('subjects', form.subjects.filter((x) => x !== t))} newTag={newSubject} setNewTag={setNewSubject} placeholder={isBn ? 'বিষয় যোগ করুন' : 'Add subject'} label={isBn ? 'বিষয়সমূহ *' : 'Subjects *'} hint={isBn ? 'এন্টার চাপুন বা যোগ ক্লিক করুন' : 'Press Enter or click Add to insert'} />
+                <TagInput tags={form.sessions} onAdd={(t) => set('sessions', [...form.sessions, t])} onRemove={(t) => set('sessions', form.sessions.filter((x) => x !== t))} newTag={newSession} setNewTag={setNewSession} placeholder="2026-27" label={isBn ? 'একাডেমিক সেশন *' : 'Academic Sessions *'} hint={isBn ? 'একাডেমিক সেশন (যেমন: 2025-26)' : 'Academic sessions (e.g. 2025-26)'} />
+                <ScheduleInput form={form} set={set} isBn={isBn} />
+              </>
+            )}
+            {currentSection?.key === 'package' && (
+              <PackagePicker value={form.package} onChange={(v) => set('package', v)} isBn={isBn} />
+            )}
+            {currentSection?.key === 'admin' && (
+              <>
+                <FieldInput ref={inputRef} label={isBn ? 'অ্যাডমিন ইমেইল *' : 'Admin Email *'} type="email" value={form.adminEmail} onChange={(v) => set('adminEmail', v)} placeholder="admin@school.edu.bd" hint={isBn ? 'স্কুল অ্যাডমিনের লগইন ইমেইল' : 'Login email for the school admin'} />
+                <PasswordInput ref={inputRef} value={form.adminPassword} onChange={(v) => set('adminPassword', v)} showPassword={showPassword} setShowPassword={setShowPassword} isBn={isBn} />
+                {form.adminPassword && form.adminPassword.length < 4 && (
+                  <p className="text-[0.6875rem] text-[var(--red)]">{isBn ? 'কমপক্ষে ৪ অক্ষর প্রয়োজন' : 'Minimum 4 characters required'}</p>
+                )}
+              </>
+            )}
+          </div>
           </div>
 
           {/* Navigation */}
@@ -306,45 +326,47 @@ function PreviewPanel({ form, isBn }: { form: SchoolForm; isBn: boolean }) {
           )}
 
           {/* Contact Card */}
-          <div className="mt-4 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {form.phone && (
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
-                    <Phone size={14} style={{ color: form.brandColor }} />
+          {(form.phone || form.email || form.website || form.address) && (
+            <div className="mt-4 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {form.phone && (
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
+                      <Phone size={14} style={{ color: form.brandColor }} />
+                    </div>
+                    <div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ফোন' : 'Phone'}</div>
+                      <div className="text-xs font-semibold text-[var(--text-primary)]">{form.phone}</div>
+                      {form.eiin && <div className="text-[0.625rem] text-[var(--text-muted)]">EIIN: {form.eiin}</div>}
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ফোন' : 'Phone'}</div>
-                    <div className="text-xs font-semibold text-[var(--text-primary)]">{form.phone}</div>
-                    {form.eiin && <div className="text-[0.625rem] text-[var(--text-muted)]">EIIN: {form.eiin}</div>}
+                )}
+                {(form.email || form.website) && (
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
+                      <Globe size={14} style={{ color: form.brandColor }} />
+                    </div>
+                    <div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ইমেইল / ওয়েবসাইট' : 'Email / Website'}</div>
+                      <div className="text-xs font-semibold text-[var(--text-primary)]">{form.email}</div>
+                      {form.website && <div className="text-[0.625rem] text-[var(--text-muted)]">{form.website}</div>}
+                    </div>
                   </div>
-                </div>
-              )}
-              {(form.email || form.website) && (
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
-                    <Globe size={14} style={{ color: form.brandColor }} />
+                )}
+                {form.address && (
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
+                      <MapPin size={14} style={{ color: form.brandColor }} />
+                    </div>
+                    <div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ঠিকানা' : 'Address'}</div>
+                      <div className="text-xs font-semibold text-[var(--text-primary)]">{form.address}{form.addressBn ? ` / ${form.addressBn}` : ''}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ইমেইল / ওয়েবসাইট' : 'Email / Website'}</div>
-                    <div className="text-xs font-semibold text-[var(--text-primary)]">{form.email}</div>
-                    {form.website && <div className="text-[0.625rem] text-[var(--text-muted)]">{form.website}</div>}
-                  </div>
-                </div>
-              )}
-              {form.address && (
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${form.brandColor}15` }}>
-                    <MapPin size={14} style={{ color: form.brandColor }} />
-                  </div>
-                  <div>
-                    <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ঠিকানা' : 'Address'}</div>
-                    <div className="text-xs font-semibold text-[var(--text-primary)]">{form.address}{form.addressBn ? ` / ${form.addressBn}` : ''}</div>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Bottom Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
@@ -413,147 +435,77 @@ function PreviewPanel({ form, isBn }: { form: SchoolForm; isBn: boolean }) {
   )
 }
 
-/* ─── Field Renderer ─── */
-function renderField(key: string, form: SchoolForm, set: <K extends keyof SchoolForm>(k: K, v: SchoolForm[K]) => void, opts: {
-  newSubject: string; setNewSubject: (v: string) => void
-  newSession: string; setNewSession: (v: string) => void
-  showPassword: boolean; setShowPassword: (v: boolean) => void
-  isBn: boolean; inputRef: React.RefObject<HTMLInputElement | null>
-}) {
-  const { newSubject, setNewSubject, newSession, setNewSession, showPassword, setShowPassword, isBn, inputRef } = opts
-
-  const inputCls = "w-full px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all"
-
-  switch (key) {
-    case 'name':
-      return <input ref={inputRef} type="text" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} className={inputCls} />
-    case 'nameBn':
-      return <input ref={inputRef} type="text" value={form.nameBn} onChange={(e) => set('nameBn', e.target.value)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} className={inputCls} />
-    case 'email':
-      return <input ref={inputRef} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="info@school.edu.bd" className={inputCls} />
-    case 'phone':
-      return <input ref={inputRef} type="text" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+880-2-1234567" className={inputCls} />
-    case 'address':
-      return <input ref={inputRef} type="text" value={form.address} onChange={(e) => set('address', e.target.value)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'House, Road, City'} className={inputCls} />
-    case 'addressBn':
-      return <input ref={inputRef} type="text" value={form.addressBn} onChange={(e) => set('addressBn', e.target.value)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'বাসা নং, রাস্তা, শহর'} className={inputCls} />
-    case 'eiin':
-      return <input ref={inputRef} type="text" value={form.eiin} onChange={(e) => set('eiin', e.target.value)} placeholder="123456" className={inputCls} />
-    case 'website':
-      return <input ref={inputRef} type="text" value={form.website} onChange={(e) => set('website', e.target.value)} placeholder="www.school.edu.bd" className={inputCls} />
-    case 'brandName':
-      return <input ref={inputRef} type="text" value={form.brandName} onChange={(e) => set('brandName', e.target.value)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} className={inputCls} />
-    case 'motto':
-      return <input ref={inputRef} type="text" value={form.motto} onChange={(e) => set('motto', e.target.value)} placeholder="Knowledge is Power" className={inputCls} />
-    case 'mottoBn':
-      return <input ref={inputRef} type="text" value={form.mottoBn} onChange={(e) => set('mottoBn', e.target.value)} placeholder="জ্ঞাই হলো শক্তি" className={inputCls} />
-    case 'logo':
-      return <input ref={inputRef} type="text" value={form.logo} onChange={(e) => set('logo', e.target.value)} placeholder="https://..." className={inputCls} />
-    case 'brandColor':
-      return <ColorPicker value={form.brandColor} onChange={(v) => set('brandColor', v)} />
-    case 'subjects':
-      return <TagInput ref={inputRef} tags={form.subjects} onAdd={(t) => set('subjects', [...form.subjects, t])} onRemove={(t) => set('subjects', form.subjects.filter((x) => x !== t))} newTag={newSubject} setNewTag={setNewSubject} placeholder={isBn ? 'বিষয় যোগ করুন' : 'Add subject'} />
-    case 'sessions':
-      return <TagInput ref={inputRef} tags={form.sessions} onAdd={(t) => set('sessions', [...form.sessions, t])} onRemove={(t) => set('sessions', form.sessions.filter((x) => x !== t))} newTag={newSession} setNewTag={setNewSession} placeholder="2026-27" />
-    case 'schedule':
-      return (
-        <div className="space-y-3">
-          <div>
-            <label className="block text-[0.6875rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'শুরুর সময়' : 'Start Time'}</label>
-            <input type="time" value={form.startTime} onChange={(e) => set('startTime', e.target.value)} className={inputCls} />
-          </div>
-          <div>
-            <label className="block text-[0.6875rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'শেষের সময়' : 'End Time'}</label>
-            <input type="time" value={form.endTime} onChange={(e) => set('endTime', e.target.value)} className={inputCls} />
-          </div>
-        </div>
-      )
-    case 'package':
-      return <PackagePicker value={form.package} onChange={(v) => set('package', v)} isBn={isBn} />
-    case 'adminEmail':
-      return <input ref={inputRef} type="email" value={form.adminEmail} onChange={(e) => set('adminEmail', e.target.value)} placeholder="admin@school.edu.bd" className={inputCls} />
-    case 'adminPassword':
-      return (
-        <div className="relative">
-          <input ref={inputRef} type={showPassword ? 'text' : 'password'} value={form.adminPassword} onChange={(e) => set('adminPassword', e.target.value)} placeholder={isBn ? 'কমপক্ষে ৪ অক্ষর' : 'At least 4 characters'} className={`${inputCls} pr-10`} />
-          <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none">
-            {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-          </button>
-        </div>
-      )
-    default:
-      return null
-  }
-}
-
-/* ─── Hint Text ─── */
-function getHint(key: string, isBn: boolean): string {
-  const hints: Record<string, { en: string; bn: string }> = {
-    name: { en: 'The official name of the school', bn: 'স্কুলের আনুষ্ঠানিক নাম' },
-    nameBn: { en: 'School name in Bengali script', bn: 'বাংলা লিপিতে স্কুলের নাম' },
-    email: { en: 'General contact email', bn: 'যোগাযোগের ইমেইল' },
-    phone: { en: 'School phone number', bn: 'স্কুলের ফোন নম্বর' },
-    address: { en: 'Full address of the school', bn: 'স্কুলের সম্পূর্ণ ঠিকানা' },
-    addressBn: { en: 'Address in Bengali', bn: 'বাংলায় ঠিকানা' },
-    eiin: { en: 'Education Institution Identification Number', bn: 'শিক্ষা প্রতিষ্ঠান শনাক্তকরণ নম্বর' },
-    website: { en: 'School website URL', bn: 'স্কুলের ওয়েবসাইট' },
-    brandName: { en: 'Short brand name for the system', bn: 'সিস্টেমের জন্য ছোট ব্র্যান্ড নাম' },
-    motto: { en: 'School motto in English', bn: 'ইংরেজিতে স্কুলের মোটো' },
-    mottoBn: { en: 'School motto in Bengali', bn: 'বাংলায় স্কুলের মোটো' },
-    logo: { en: 'URL to the school logo image', bn: 'স্কুল লোগোর URL' },
-    brandColor: { en: 'Primary brand color for the UI', bn: 'ইউআই-এর প্রাথমিক ব্র্যান্ড রং' },
-    subjects: { en: 'Press Enter or click Add to insert', bn: 'এন্টার চাপুন বা যোগ ক্লিক করুন' },
-    sessions: { en: 'Academic sessions (e.g. 2025-26)', bn: 'একাডেমিক সেশন (যেমন: 2025-26)' },
-    schedule: { en: 'Daily class start and end time', bn: 'দৈনিক ক্লাসের শুরু ও শেষের সময়' },
-    package: { en: 'Storage and limit plan', bn: 'স্টোরেজ ও লিমিট প্ল্যান' },
-    adminEmail: { en: 'Login email for the school admin', bn: 'স্কুল অ্যাডমিনের লগইন ইমেইল' },
-    adminPassword: { en: 'Minimum 4 characters', bn: 'কমপক্ষে ৪ অক্ষর' },
-  }
-  const h = hints[key]
-  return h ? (isBn ? h.bn : h.en) : ''
-}
-
-function getSectionIcon(section: string): string {
-  const icons: Record<string, string> = {
-    basic: '🏫', contact: '📞', extra: '📋', brand: '🎨', academic: '📚', package: '💳', admin: '🔑',
-  }
-  return icons[section] || '📝'
-}
-
-function getSectionLabel(section: string, isBn: boolean): string {
-  const labels: Record<string, { en: string; bn: string }> = {
-    basic: { en: 'Basic Info', bn: 'মৌলিক তথ্য' },
-    contact: { en: 'Contact', bn: 'যোগাযোগ' },
-    extra: { en: 'Extra Details', bn: 'অতিরিক্ত তথ্য' },
-    brand: { en: 'Branding', bn: 'ব্র্যান্ডিং' },
-    academic: { en: 'Academic', bn: 'একাডেমিক' },
-    package: { en: 'Package', bn: 'প্যাকেজ' },
-    admin: { en: 'Admin Account', bn: 'অ্যাডমিন অ্যাকাউন্ট' },
-  }
-  const l = labels[section]
-  return l ? (isBn ? l.bn : l.en) : section
-}
-
 /* ─── Shared Components ─── */
-function ColorPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function FieldInput({ ref, label, type = 'text', value, onChange, placeholder, hint }: {
+  ref?: React.Ref<HTMLInputElement>; label: string; type?: string; value: string; onChange: (v: string) => void; placeholder?: string; hint?: string
+}) {
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        {PRESET_COLORS.map((c) => (
-          <button key={c} onClick={() => onChange(c)} className={`w-9 h-9 rounded-xl cursor-pointer border-2 transition-all ${value === c ? 'border-[var(--text-primary)] scale-110 shadow-lg' : 'border-transparent hover:scale-105'}`} style={{ background: c }} />
-        ))}
-      </div>
-      <div className="flex items-center gap-3">
-        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="w-9 h-9 rounded-xl cursor-pointer border border-[var(--border)]" />
-        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className="flex-1 px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] font-mono outline-none focus:border-[var(--brand)]" />
+    <div>
+      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{label}</label>
+      {hint && <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{hint}</p>}
+      <input ref={ref} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all" />
+    </div>
+  )
+}
+
+function PasswordInput({ ref, value, onChange, showPassword, setShowPassword, isBn }: {
+  ref?: React.Ref<HTMLInputElement>; value: string; onChange: (v: string) => void
+  showPassword: boolean; setShowPassword: (v: boolean) => void; isBn: boolean
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'পাসওয়ার্ড *' : 'Password *'}</label>
+      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'কমপক্ষে ৪ অক্ষর' : 'Minimum 4 characters'}</p>
+      <div className="relative">
+        <input ref={ref} type={showPassword ? 'text' : 'password'} value={value} onChange={(e) => onChange(e.target.value)} placeholder={isBn ? 'কমপক্ষে ৪ অক্ষর' : 'At least 4 characters'} className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all" />
+        <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none">
+          {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+        </button>
       </div>
     </div>
   )
 }
 
-function TagInput({ ref, tags, onAdd, onRemove, newTag, setNewTag, placeholder }: {
+function ScheduleInput({ form, set, isBn }: { form: SchoolForm; set: <K extends keyof SchoolForm>(k: K, v: SchoolForm[K]) => void; isBn: boolean }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'ক্লাস সময়সূচি' : 'Class Schedule'}</label>
+      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'দৈনিক ক্লাসের শুরু ও শেষের সময়' : 'Daily class start and end time'}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-[0.625rem] text-[var(--text-muted)] mb-1">{isBn ? 'শুরুর সময়' : 'Start Time'}</label>
+          <input type="time" value={form.startTime} onChange={(e) => set('startTime', e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
+        </div>
+        <div>
+          <label className="block text-[0.625rem] text-[var(--text-muted)] mb-1">{isBn ? 'শেষের সময়' : 'End Time'}</label>
+          <input type="time" value={form.endTime} onChange={(e) => set('endTime', e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ColorPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBnShort() ? 'ব্র্যান্ড রং' : 'Brand Color'}</label>
+      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBnShort() ? 'ইউআই-এর প্রাথমিক ব্র্যান্ড রং' : 'Primary brand color for the UI'}</p>
+      <div className="flex flex-wrap gap-2 mb-2">
+        {PRESET_COLORS.map((c) => (
+          <button key={c} onClick={() => onChange(c)} className={`w-8 h-8 rounded-lg cursor-pointer border-2 transition-all ${value === c ? 'border-[var(--text-primary)] scale-110' : 'border-transparent hover:scale-105'}`} style={{ background: c }} />
+        ))}
+      </div>
+      <div className="flex items-center gap-3">
+        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="w-8 h-8 rounded-lg cursor-pointer border border-[var(--border)]" />
+        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className="flex-1 px-3.5 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] font-mono outline-none focus:border-[var(--brand)]" />
+      </div>
+    </div>
+  )
+}
+
+function TagInput({ ref, tags, onAdd, onRemove, newTag, setNewTag, placeholder, label, hint }: {
   ref?: React.Ref<HTMLInputElement>; tags: string[]; onAdd: (t: string) => void; onRemove: (t: string) => void
-  newTag: string; setNewTag: (v: string) => void; placeholder: string
+  newTag: string; setNewTag: (v: string) => void; placeholder: string; label: string; hint?: string
 }) {
   const add = () => {
     const t = newTag.trim()
@@ -561,7 +513,9 @@ function TagInput({ ref, tags, onAdd, onRemove, newTag, setNewTag, placeholder }
   }
   return (
     <div>
-      <div className="flex flex-wrap gap-1.5 mb-3">
+      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{label}</label>
+      {hint && <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{hint}</p>}
+      <div className="flex flex-wrap gap-1.5 mb-2">
         {tags.map((t) => (
           <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--brand-light)] text-[var(--brand)]">
             {t}
