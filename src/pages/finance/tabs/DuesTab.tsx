@@ -755,15 +755,15 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     className="w-3.5 h-3.5 accent-[var(--brand)] cursor-pointer"
                   />
                 </th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]">{bn ? 'ক্রমিক' : 'S/N'}</th>
-                <th className="w-10 px-2 py-2 bg-[var(--bg-secondary)]"></th>
-                <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky left-[36px] bg-[var(--bg-secondary)] z-20">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '5%' }}>{bn ? 'রোল' : 'Roll'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '7%' }}>{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '6%' }}>{bn ? 'শ্রেণি' : 'Class'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '12%' }}>{bn ? 'ফি' : 'Fee'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '5%' }}>{bn ? 'ধরন' : 'Type'}</th>
-                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '10%' }}>{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '40px' }}>{bn ? 'ক্রমিক' : 'S/N'}</th>
+                <th className="px-2 py-2 bg-[var(--bg-secondary)]" style={{ width: '40px' }}></th>
+                <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky left-[76px] bg-[var(--bg-secondary)] z-20 whitespace-nowrap" style={{ width: '160px' }}>{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '45px' }}>{bn ? 'রোল' : 'Roll'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '95px' }}>{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '110px' }}>{bn ? 'শ্রেণি' : 'Class'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '110px' }}>{bn ? 'ফি' : 'Fee'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '70px' }}>{bn ? 'ধরন' : 'Type'}</th>
+                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '90px' }}>{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
                 {showMonthPicker && sortedMonths.map((m) => (
                   <th key={m} className="text-center px-2 py-2 text-[10px] uppercase font-bold bg-[var(--bg-secondary)] whitespace-nowrap"                     style={{ color: 'var(--brand)', minWidth: '85px' }}>
                     {bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}
@@ -772,7 +772,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 {!showMonthPicker && (
                   <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'বকেয়' : 'Due'}</th>
                 )}
-                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold whitespace-nowrap">{bn ? 'মোট বকেয়' : 'Total Due'}</th>
+                <th className="text-right px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold whitespace-nowrap" style={{ width: '100px' }}>{bn ? 'মোট বকেয়' : 'Total Due'}</th>
               </tr>
             </thead>
             <tbody>
@@ -799,8 +799,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-3 sticky left-[36px] bg-[var(--bg-primary)] z-10" style={{ background: isChecked ? 'var(--brand-light)' : 'var(--bg-primary)' }}>
-                      <p className="font-semibold text-[var(--text-primary)] text-[12px]">{bn ? row.studentNameBn || row.studentName : row.studentName}</p>
+                    <td className="px-3 py-3 sticky left-[76px] bg-[var(--bg-primary)] z-10" style={{ background: isChecked ? 'var(--brand-light)' : 'var(--bg-primary)', width: '160px' }}>
+                      <p className="font-semibold text-[var(--text-primary)] text-[12px] whitespace-nowrap overflow-hidden text-ellipsis">{bn ? row.studentNameBn || row.studentName : row.studentName}</p>
                     </td>
                     <td className="text-center px-2 py-3 text-[var(--text-secondary)]">{row.roll}</td>
                     <td className="text-center px-2 py-3 text-[var(--text-secondary)] text-[12px]">{row.studentId}</td>
@@ -875,7 +875,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--green)] whitespace-nowrap">{bn ? 'মোট পরিশোধিত' : 'Total Paid'}</td>
+                    <td className="px-3 py-2 sticky left-[76px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--green)] whitespace-nowrap">{bn ? 'মোট পরিশোধিত' : 'Total Paid'}</td>
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
@@ -893,7 +893,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--amber)] whitespace-nowrap">{bn ? 'মোট বকেয়' : 'Total Due'}</td>
+                    <td className="px-3 py-2 sticky left-[76px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--amber)] whitespace-nowrap">{bn ? 'মোট বকেয়' : 'Total Due'}</td>
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
@@ -915,14 +915,13 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold sticky bottom-0 z-10">
                     <td className="px-2 py-2 sticky left-0 bg-[var(--bg-secondary)] z-10" />
                     <td className="px-2 py-2" />
-                    <td className="px-2 py-2" />
-                    <td className="px-3 py-2 sticky left-[36px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--text-primary)]">{bn ? 'মোট' : 'Total'}</td>
-                    <td className="px-2 py-2" />
+                    <td className="px-3 py-2 sticky left-[76px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--text-primary)] whitespace-nowrap">{bn ? 'মোট' : 'Total'}</td>
                     <td className="px-2 py-2" />
                     <td className="px-2 py-2" />
                     <td className="px-2 py-2" />
                     <td className="px-2 py-2" />
-                    <td className="text-right px-2 py-2 text-[12px]">{fmt(results.reduce((s, r) => s + r.totalAmount, 0))}</td>
+                    <td className="px-2 py-2" />
+                    <td className="text-right px-2 py-2 text-[12px]" style={{ width: '90px' }}>{fmt(results.reduce((s, r) => s + r.totalAmount, 0))}</td>
                     {sortedMonths.map((m) => (
                       <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)]" style={{ minWidth: '85px' }}>
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
@@ -953,6 +952,6 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
           onDownload={handlePdfDownload}
         />
       )}
-    </div>
+        </div>
   )
 })
