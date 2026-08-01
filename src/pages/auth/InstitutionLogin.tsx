@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Building2, Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import type { Institution } from '@/store/superAdminStore'
+import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 
 interface InstitutionLoginProps {
   institution: Institution
@@ -16,6 +17,16 @@ export default function InstitutionLogin({ institution }: InstitutionLoginProps)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const loadInstitutionData = (inst: Institution) => {
+    useClassStore.getState().updateInstitution({
+      name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: inst.banner, bannerPosition: { x: 0, y: 0 },
+      brandName: inst.brandName || 'EduTech', motto: inst.motto, mottoBn: inst.mottoBn, eiin: inst.eiin, phone: inst.phone, email: inst.email,
+      address: inst.address, website: inst.website, subjects: inst.optionalSubjects || [], startTime: inst.startTime || '07:30', endTime: inst.endTime || '14:30',
+      breaks: [], currentSession: inst.sessions?.[1] || '2025-26', sessions: inst.sessions || ['2024-25', '2025-26'],
+      lightColors: { ...defaultThemeColors, brand: inst.brandColor }, darkColors: { ...defaultThemeColorsDark },
+    })
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,6 +49,7 @@ export default function InstitutionLogin({ institution }: InstitutionLoginProps)
 
       // Check if it's the institution admin
       if (email === institution.email && password === 'admin123') {
+        loadInstitutionData(institution)
         localStorage.setItem('edutech_user', JSON.stringify({
           email, role: 'admin', name: institution.name, institutionId: institution.id
         }))
