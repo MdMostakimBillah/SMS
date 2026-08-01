@@ -736,14 +736,15 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
     setAvailable(!taken)
   }
 
-  const displayUrl = slug ? `${slug}.${BASE_URL}` : `${BASE_URL}`
+  const displayUrl = slug ? `${BASE_URL}/i/${slug}` : `${BASE_URL}`
 
   return (
     <div>
-      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'ওয়েবসাইট URL' : 'Website URL'}</label>
-      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'ইন্সটিটিউশনের ইউনিক সাবডোমেইন' : 'Unique subdomain for this institution'}</p>
+      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'ইনস্টিটিউশন লগইন URL' : 'Institution Login URL'}</label>
+      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'ইন্সটিটিউশনের ইউনিক পাথ' : 'Unique path for this institution'}</p>
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand)]/10 transition-all overflow-hidden">
         <div className="flex items-center">
+          <span className="px-3.5 py-2.5 text-xs text-[var(--text-muted)] bg-[var(--bg-primary)] border-r border-[var(--border)] shrink-0">{BASE_URL}/i/</span>
           <input
             type="text"
             value={slug}
@@ -751,9 +752,6 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
             placeholder={isBn ? 'সাবডোমেইন' : 'subdomain'}
             className="flex-1 min-w-0 px-3.5 py-2.5 bg-transparent text-sm text-[var(--text-primary)] outline-none"
           />
-          <div className="px-3 py-2.5 bg-[var(--bg-primary)] border-l border-[var(--border)] text-xs text-[var(--text-muted)] shrink-0">
-            .smsappbd.vercel.app
-          </div>
           <button
             onClick={() => { navigator.clipboard.writeText(displayUrl); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
             className="px-3 py-2.5 bg-[var(--bg-primary)] border-l border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer border-none transition-colors"
