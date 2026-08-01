@@ -189,19 +189,19 @@ export default function CreateSchool() {
   }
 
   return createPortal(
-    <div className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${exiting ? 'opacity-0' : 'opacity-100'}`}>
-      {/* Popup Window - 95vw x 98vh */}
-      <div className={`w-[95vw] h-[98vh] bg-[var(--bg-primary)] rounded-2xl shadow-2xl flex overflow-hidden transition-all duration-300 ${exiting ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
+    <div className={`fixed inset-0 z-[9999] flex bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${exiting ? 'opacity-0' : 'opacity-100'}`}>
+      {/* Popup Window - Full Width x Full Height */}
+      <div className={`w-full h-full bg-[var(--bg-primary)] shadow-2xl flex overflow-hidden transition-all duration-300 ${exiting ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
 
-        {/* Left Column - Live Preview (70%) */}
-        <div className="hidden lg:flex w-[70%] flex-col bg-[var(--bg-secondary)] overflow-hidden">
+        {/* Left Column - Live Preview */}
+        <div className="hidden lg:flex flex-1 flex-col overflow-hidden rounded-r-3xl">
           <PreviewPanel form={form} isBn={isBn} />
         </div>
 
-        {/* Right Column - Input (30%) */}
-        <div className="w-full lg:w-[30%] flex flex-col border-l border-[var(--border)]">
+        {/* Right Column - Input */}
+        <div className="w-full lg:w-[420px] flex flex-col border-l border-[var(--border)] rounded-l-3xl overflow-hidden shrink-0">
           {/* Header */}
-          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
+          <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--brand-light)]">
                 <Sparkles size={16} className="text-[var(--brand)]" />
@@ -217,14 +217,14 @@ export default function CreateSchool() {
           </div>
 
           {/* Progress */}
-          <div className="px-5 py-2.5 border-b border-[var(--border)] shrink-0">
+          <div className="px-6 py-2.5 border-b border-[var(--border)] shrink-0">
             <div className="h-1 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
               <div className="h-full rounded-full bg-[var(--brand)] transition-all duration-500" style={{ width: `${((step + 1) / SECTION_STEPS.length) * 100}%` }} />
             </div>
           </div>
 
           {/* Field */}
-          <div className="flex-1 px-5 py-5 overflow-y-auto">
+          <div className="flex-1 px-6 py-5 overflow-y-auto">
             <div className="min-h-full flex flex-col justify-center">
               <div className="mb-4">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.625rem] font-medium text-[var(--text-muted)] mb-2.5">
@@ -387,7 +387,7 @@ export default function CreateSchool() {
           </div>
 
           {/* Navigation */}
-          <div className="px-5 py-4 border-t border-[var(--border)] flex items-center gap-3 shrink-0">
+          <div className="px-6 py-4 border-t border-[var(--border)] flex items-center gap-3 shrink-0">
             <button
               onClick={() => setStep((s) => s - 1)}
               disabled={step === 0}
