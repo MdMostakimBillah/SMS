@@ -1,31 +1,101 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Building2, Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
-import type { Institution } from '@/store/superAdminStore'
+import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 
-interface InstitutionLoginProps {
-  institution: Institution
+const fallbackInstitutions: Institution[] = [
+  {
+    id: 'INST-001', name: 'Sunrise Academy', nameBn: 'সানরাইজ একাডেমি',
+    email: 'admin@sunrise.edu.bd', phone: '+880-1712-345678',
+    address: 'Banani, Dhaka 1213', addressBn: 'বনানী, ঢাকা-১২১৩',
+    eiin: '123456', website: 'sunrise.smsappbd.vercel.app', subdomain: 'sunrise',
+    status: 'active', package: { name: 'Premium', nameBn: 'প্রিমিয়াম', maxStudents: 400, maxTeachers: 40, maxClasses: 999, storageMB: 10240, price: 3000, duration: 30 },
+    usedStorageMB: 4520, createdAt: '2024-08-15', lastLogin: '2026-07-30',
+    logo: '', banner: '', brandColor: '#6366f1', brandName: 'EduTech',
+    motto: 'Knowledge is Power', mottoBn: 'জ্ঞাই হলো শক্তি',
+    startTime: '07:30', endTime: '14:30', optionalSubjects: [], sessions: ['2024-25', '2025-26'],
+  },
+  {
+    id: 'INST-002', name: 'Dhaka International School', nameBn: 'ঢাকা ইন্টারন্যাশনাল স্কুল',
+    email: 'info@dis.edu.bd', phone: '+880-1812-456789',
+    address: 'Gulshan, Dhaka 1212', addressBn: 'গুলশান, ঢাকা-১২১২',
+    eiin: '234567', website: 'dis.smsappbd.vercel.app', subdomain: 'dis',
+    status: 'active', package: { name: 'Enterprise', nameBn: 'এন্টারপ্রাইজ', maxStudents: 500, maxTeachers: 50, maxClasses: 999, storageMB: 20480, price: 3500, duration: 30 },
+    usedStorageMB: 18750, createdAt: '2024-06-20', lastLogin: '2026-07-31',
+    logo: '', banner: '', brandColor: '#3b82f6', brandName: 'EduTech',
+    motto: '', mottoBn: '', startTime: '08:00', endTime: '15:00',
+    optionalSubjects: [], sessions: ['2024-25', '2025-26'],
+  },
+  {
+    id: 'INST-003', name: 'Green Valley School', nameBn: 'গ্রিন ভ্যালি স্কুল',
+    email: 'contact@greenvalley.edu.bd', phone: '+880-1912-567890',
+    address: 'Uttara, Dhaka 1230', addressBn: 'উত্তরা, ঢাকা-১২৩০',
+    eiin: '345678', website: 'greenvalley.smsappbd.vercel.app', subdomain: 'greenvalley',
+    status: 'trial', package: { name: 'Standard', nameBn: 'স্ট্যান্ডার্ড', maxStudents: 250, maxTeachers: 30, maxClasses: 999, storageMB: 5120, price: 2200, duration: 30 },
+    usedStorageMB: 340, createdAt: '2026-07-01', lastLogin: '2026-07-28',
+    logo: '', banner: '', brandColor: '#22c55e', brandName: 'EduTech',
+    motto: '', mottoBn: '', startTime: '07:30', endTime: '14:00',
+    optionalSubjects: [], sessions: ['2024-25', '2025-26'],
+  },
+  {
+    id: 'INST-004', name: 'Rajshahi Collegiate School', nameBn: 'রাজশাহী কলেজিয়েট স্কুল',
+    email: 'admin@rajshahi-cs.edu.bd', phone: '+880-1712-678901',
+    address: 'Boalia, Rajshahi 6205', addressBn: 'বোয়ালিয়া, রাজশাহী-৬২০৫',
+    eiin: '456789', website: 'rajshahi-cs.smsappbd.vercel.app', subdomain: 'rajshahi-cs',
+    status: 'suspended', package: { name: 'Basic', nameBn: 'বেসিক', maxStudents: 150, maxTeachers: 20, maxClasses: 999, storageMB: 2048, price: 1500, duration: 30 },
+    usedStorageMB: 120, createdAt: '2025-11-10', lastLogin: '2026-05-15',
+    logo: '', banner: '', brandColor: '#f59e0b', brandName: 'EduTech',
+    motto: '', mottoBn: '', startTime: '08:00', endTime: '14:30',
+    optionalSubjects: [], sessions: ['2024-25', '2025-26'],
+  },
+]
+
+function loadInstitutionData(inst: Institution) {
+  useClassStore.getState().updateInstitution({
+    name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: inst.banner, bannerPosition: { x: 0, y: 0 },
+    brandName: inst.brandName || 'EduTech', motto: inst.motto, mottoBn: inst.mottoBn, eiin: inst.eiin, phone: inst.phone, email: inst.email,
+    address: inst.address, website: inst.website, subjects: inst.optionalSubjects || [], startTime: inst.startTime || '07:30', endTime: inst.endTime || '14:30',
+    breaks: [], currentSession: inst.sessions?.[1] || '2025-26', sessions: inst.sessions || ['2024-25', '2025-26'],
+    lightColors: { ...defaultThemeColors, brand: inst.brandColor }, darkColors: { ...defaultThemeColorsDark },
+  })
 }
 
-export default function InstitutionLogin({ institution }: InstitutionLoginProps) {
+export { loadInstitutionData, fallbackInstitutions }
+
+export default function InstitutionLogin({ subdomain, institution: propInstitution }: { subdomain?: string; institution?: Institution }) {
   const isBn = useBn()
   const navigate = useNavigate()
+  const storeInstitutions = useSuperAdminStore((s) => s.institutions)
+
+  const institution = useMemo(() => {
+    if (propInstitution) return propInstitution
+    if (!subdomain) return null
+    const all = storeInstitutions.length > 0 ? storeInstitutions : fallbackInstitutions
+    return all.find((i) => i.subdomain === subdomain) || null
+  }, [propInstitution, subdomain, storeInstitutions])
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const loadInstitutionData = (inst: Institution) => {
-    useClassStore.getState().updateInstitution({
-      name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: inst.banner, bannerPosition: { x: 0, y: 0 },
-      brandName: inst.brandName || 'EduTech', motto: inst.motto, mottoBn: inst.mottoBn, eiin: inst.eiin, phone: inst.phone, email: inst.email,
-      address: inst.address, website: inst.website, subjects: inst.optionalSubjects || [], startTime: inst.startTime || '07:30', endTime: inst.endTime || '14:30',
-      breaks: [], currentSession: inst.sessions?.[1] || '2025-26', sessions: inst.sessions || ['2024-25', '2025-26'],
-      lightColors: { ...defaultThemeColors, brand: inst.brandColor }, darkColors: { ...defaultThemeColorsDark },
-    })
+  if (!institution) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Building2 size={48} className="text-[var(--text-muted)] mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-[var(--text-primary)] mb-2">
+            {isBn ? 'প্রতিষ্ঠান পাওয়া যায়নি' : 'Institution Not Found'}
+          </h1>
+          <p className="text-sm text-[var(--text-muted)]">
+            {isBn ? 'এই সাবডোমেইনে কোনো প্রতিষ্ঠান নেই' : 'No institution found for this URL'}
+          </p>
+        </div>
+      </div>
+    )
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -33,9 +103,7 @@ export default function InstitutionLogin({ institution }: InstitutionLoginProps)
     setError('')
     setLoading(true)
 
-    // Simulate login - in real app this would be API call
     setTimeout(() => {
-      // Check if it's the super admin
       const superAdminEmail = import.meta.env.VITE_SUPER_ADMIN_EMAIL
       const superAdminPassword = import.meta.env.VITE_SUPER_ADMIN_PASSWORD
 
@@ -47,7 +115,6 @@ export default function InstitutionLogin({ institution }: InstitutionLoginProps)
         return
       }
 
-      // Check if it's the institution admin
       if (email === institution.email && password === 'admin123') {
         loadInstitutionData(institution)
         localStorage.setItem('edutech_user', JSON.stringify({
@@ -66,7 +133,6 @@ export default function InstitutionLogin({ institution }: InstitutionLoginProps)
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: `linear-gradient(135deg, ${institution.brandColor}15 0%, ${institution.brandColor}05 100%)` }}>
       <div className="w-full max-w-md">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-xl overflow-hidden" style={{ background: `${institution.brandColor}15` }}>
             {institution.logo ? (
@@ -80,7 +146,6 @@ export default function InstitutionLogin({ institution }: InstitutionLoginProps)
           <p className="text-xs text-[var(--text-muted)] mt-2">{isBn ? 'স্কুল ম্যানেজমেন্ট সিস্টেম' : 'School Management System'}</p>
         </div>
 
-        {/* Login Form */}
         <div className="bg-[var(--bg-primary)] rounded-2xl shadow-xl border border-[var(--border)] p-6">
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -149,7 +214,6 @@ export default function InstitutionLogin({ institution }: InstitutionLoginProps)
           </div>
         </div>
 
-        {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-[0.625rem] text-[var(--text-muted)]">
             Powered by <span className="font-semibold" style={{ color: institution.brandColor }}>EduTech SMS</span>

@@ -12,6 +12,7 @@ import { useSubdomain } from '@/hooks/useSubdomain'
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
 const InstitutionLogin = lazy(() => import('@/pages/auth/InstitutionLogin'))
+const InstitutionLoginRoute = lazy(() => import('@/pages/auth/InstitutionLoginRoute'))
 const DashboardPage = lazy(() => import('@/pages/dashboard'))
 const SuperAdminPage = lazy(() => import('@/pages/super-admin'))
 const StudentsPage = lazy(() => import('@/pages/students'))
@@ -57,8 +58,9 @@ const F = ({ children }: { children: React.ReactNode }) => (
 
 function AppContent() {
   const { isSubdomain, institution } = useSubdomain()
+  const isPathBased = window.location.pathname.startsWith('/i/')
 
-  if (isSubdomain && institution) {
+  if (isSubdomain && institution && !isPathBased) {
     return (
       <Suspense fallback={<LoadingSpinner />}>
         <InstitutionLogin institution={institution} />
@@ -69,6 +71,7 @@ function AppContent() {
   return (
     <AuthProvider>
       <Routes>
+        <Route path="/i/:subdomain" element={<F><InstitutionLoginRoute /></F>} />
         <Route element={<AuthRoute />}>
           <Route path={LOGIN_PATH} element={<F><LoginPage /></F>} />
           <Route path="/register" element={<F><RegisterPage /></F>} />

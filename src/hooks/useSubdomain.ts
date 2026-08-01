@@ -55,18 +55,31 @@ export function useSubdomain() {
 
   const result = useMemo(() => {
     const hostname = window.location.hostname
-    const isSubdomain = hostname !== BASE_DOMAIN && hostname !== `www.${BASE_DOMAIN}` && hostname !== 'localhost'
+    const pathname = window.location.pathname
 
-    if (!isSubdomain) return { isSubdomain: false, institution: null, subdomain: null }
+    // Check subdomain
+    const isSubdomain = hostname !== BASE_DOMAIN && hostname !== `www.${BASE_DOMAIN}` && !hostname.includes('localhost')
 
-    const subdomain = hostname.replace(`.${BASE_DOMAIN}`, '').replace('.localhost', '')
+    if (isSubdomain) {
+      const subdomain = hostname.replace(`.${BASE_DOMAIN}`, '').replace('.localhost', '')
+      const allInstitutions = institutions.length > 0 ? institutions : fallbackInstitutions
+      const institution = allInstitutions.find((inst) => inst.subdomain === subdomain) || null
+      return { isSubdomain: true, institution, subdomain }
+    }
 
-    // Try localStorage institutions first, then fallback to demo data
-    const allInstitutions = institutions.length > 0 ? institutions : fallbackInstitutions
-    const institution = allInstitutions.find((inst) => inst.subdomain === subdomain) || null
+    // Check path-based: /i/:subdomain
+    const pathMatch = pathname.match(/^\/i\/([^/]+)/)
+    if (pathMatch) {
+      const subdomain = pathMatch[1]
+      const allInstitutions = institutions.length > 0 ? institutions : fallbackInstitutions
+      const institution = allInstitutions.find((inst) => inst.subdomain === subdomain) || null
+      return { isSubdomain: true, institution, subdomain }
+    }
 
-    return { isSubdomain: true, institution, subdomain }
+    return { isSubdomain: false, institution: null, subdomain: null }
   }, [institutions])
 
   return result
 }
+
+export { fallbackInstitutions }
