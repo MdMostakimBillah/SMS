@@ -15,7 +15,7 @@ const fallbackInstitutions: Institution[] = [
     usedStorageMB: 4520, createdAt: '2024-08-15', lastLogin: '2026-07-30',
     logo: '', banner: '', brandColor: '#6366f1', brandName: 'Sunrise Academy',
     motto: 'Knowledge is Power', mottoBn: 'জ্ঞাই হলো শক্তি',
-    startTime: '07:30', endTime: '14:30', optionalSubjects: [], sessions: ['2024-25', '2025-26'],
+    startTime: '07:30', endTime: '14:30', optionalSubjects: [], sessions: ['2024-25', '2025-26'], password: 'Sunrise@2024',
   },
   {
     id: 'INST-002', name: 'Dhaka International School', nameBn: 'ঢাকা ইন্টারন্যাশনাল স্কুল',
@@ -26,7 +26,7 @@ const fallbackInstitutions: Institution[] = [
     usedStorageMB: 18750, createdAt: '2024-06-20', lastLogin: '2026-07-31',
     logo: '', banner: '', brandColor: '#3b82f6', brandName: 'DIS',
     motto: '', mottoBn: '', startTime: '08:00', endTime: '15:00',
-    optionalSubjects: [], sessions: ['2024-25', '2025-26'],
+    optionalSubjects: [], sessions: ['2024-25', '2025-26'], password: 'Dis@2024',
   },
   {
     id: 'INST-003', name: 'Green Valley School', nameBn: 'গ্রিন ভ্যালি স্কুল',
@@ -37,7 +37,7 @@ const fallbackInstitutions: Institution[] = [
     usedStorageMB: 340, createdAt: '2026-07-01', lastLogin: '2026-07-28',
     logo: '', banner: '', brandColor: '#22c55e', brandName: 'Green Valley',
     motto: '', mottoBn: '', startTime: '07:30', endTime: '14:00',
-    optionalSubjects: [], sessions: ['2024-25', '2025-26'],
+    optionalSubjects: [], sessions: ['2024-25', '2025-26'], password: 'GreenValley@2024',
   },
   {
     id: 'INST-004', name: 'Rajshahi Collegiate School', nameBn: 'রাজশাহী কলেজিয়েট স্কুল',
@@ -48,7 +48,7 @@ const fallbackInstitutions: Institution[] = [
     usedStorageMB: 120, createdAt: '2025-11-10', lastLogin: '2026-05-15',
     logo: '', banner: '', brandColor: '#f59e0b', brandName: 'Rajshahi CS',
     motto: '', mottoBn: '', startTime: '08:00', endTime: '14:30',
-    optionalSubjects: [], sessions: ['2024-25', '2025-26'],
+    optionalSubjects: [], sessions: ['2024-25', '2025-26'], password: 'Rajshahi@2024',
   },
 ]
 
@@ -115,7 +115,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         return
       }
 
-      if (email === institution.email && password === 'admin123') {
+      if (email === institution.email && password === (institution.password || 'admin123')) {
         loadInstitutionData(institution)
         localStorage.setItem('edutech_user', JSON.stringify({
           email, role: 'admin', name: institution.name, institutionId: institution.id

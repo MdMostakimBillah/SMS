@@ -160,6 +160,7 @@ export default function CreateSchool() {
       endTime: form.endTime,
       optionalSubjects: form.optionalSubjects,
       sessions: form.sessions,
+      password: form.adminPassword,
     }
     addInstitution(inst)
     setCreated(true)

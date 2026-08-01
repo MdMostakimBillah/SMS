@@ -4,7 +4,7 @@ import {
   Building2, Search, Filter, ChevronDown, ChevronUp,
   Users, GraduationCap, HardDrive, Calendar, Mail, Phone, Globe,
   MapPin, CheckCircle, XCircle, Pause, Clock,
-  CreditCard, Shield, Trash2, ExternalLink,
+  CreditCard, Shield, Trash2, ExternalLink, Lock, Copy, Check,
 } from 'lucide-react'
 import { useSuperAdminStore, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
@@ -145,6 +145,7 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
           {/* Info Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 px-1">
             <InfoRow icon={<Mail size={13} />} label={isBn ? 'ইমেইল' : 'Email'} value={inst.email} />
+            <PasswordRow label={isBn ? 'পাসওয়ার্ড' : 'Password'} value={inst.password} />
             <InfoRow icon={<Phone size={13} />} label={isBn ? 'ফোন' : 'Phone'} value={inst.phone} />
             <InfoRow icon={<MapPin size={13} />} label={isBn ? 'ঠিকানা' : 'Address'} value={isBn ? inst.addressBn : inst.address} />
             <InfoRow icon={<Globe size={13} />} label={isBn ? 'ওয়েবসাইট' : 'Website'} value={`smsappbd.vercel.app/i/${inst.subdomain}`} />
@@ -217,6 +218,29 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
       <span className="text-[var(--text-muted)] shrink-0">{icon}</span>
       <span className="text-[0.6875rem] text-[var(--text-muted)] shrink-0 w-16">{label}</span>
       <span className="text-[0.75rem] text-[var(--text-primary)] font-medium truncate">{value}</span>
+    </div>
+  )
+}
+
+function PasswordRow({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+  return (
+    <div className="flex items-center gap-2.5 py-1.5">
+      <span className="text-[var(--text-muted)] shrink-0"><Lock size={13} /></span>
+      <span className="text-[0.6875rem] text-[var(--text-muted)] shrink-0 w-16">{label}</span>
+      <span className="text-[0.75rem] text-[var(--text-primary)] font-mono font-medium truncate">{value}</span>
+      <button
+        onClick={handleCopy}
+        className="ml-1 p-1 rounded-md hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none bg-transparent"
+        title={copied ? 'Copied!' : 'Copy password'}
+      >
+        {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} className="text-[var(--text-muted)]" />}
+      </button>
     </div>
   )
 }

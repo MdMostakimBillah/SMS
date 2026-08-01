@@ -40,6 +40,7 @@ export interface Institution {
   endTime: string
   optionalSubjects: string[]
   sessions: string[]
+  password: string
 }
 
 export const PACKAGES: InstitutionPackage[] = [
@@ -112,6 +113,7 @@ const demoInstitutions: Institution[] = [
     endTime: '14:30',
     optionalSubjects: [],
     sessions: ['2024-25', '2025-26'],
+    password: 'Sunrise@2024',
   },
   {
     id: 'INST-002',
@@ -139,6 +141,7 @@ const demoInstitutions: Institution[] = [
     endTime: '15:00',
     optionalSubjects: [],
     sessions: ['2024-25', '2025-26'],
+    password: 'Dis@2024',
   },
   {
     id: 'INST-003',
@@ -166,6 +169,7 @@ const demoInstitutions: Institution[] = [
     endTime: '14:00',
     optionalSubjects: [],
     sessions: ['2024-25', '2025-26'],
+    password: 'GreenValley@2024',
   },
   {
     id: 'INST-004',
@@ -193,6 +197,7 @@ const demoInstitutions: Institution[] = [
     endTime: '14:30',
     optionalSubjects: [],
     sessions: ['2024-25', '2025-26'],
+    password: 'Rajshahi@2024',
   },
 ]
 
