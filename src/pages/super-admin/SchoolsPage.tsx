@@ -61,10 +61,14 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
         className="w-full p-4 flex items-center gap-3 text-left cursor-pointer bg-transparent border-none"
       >
         <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-white font-bold text-[0.875rem]"
+          className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
           style={{ background: inst.brandColor }}
         >
-          {inst.name.charAt(0)}
+          {inst.logo ? (
+            <img src={inst.logo} alt={inst.name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-white font-bold text-[0.875rem]">{inst.name.charAt(0)}</span>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
