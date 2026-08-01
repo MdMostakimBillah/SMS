@@ -99,11 +99,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null)
     setUser(null)
     loginTimestampRef.current = null
+    localStorage.removeItem('edutech_user')
+    localStorage.removeItem('edutech_institutionId')
   }, [])
 
-  // Token lives in memory only — no localStorage persistence
-  // On page reload, user must re-login (acceptable for admin panel)
+  // Restore user from localStorage (set by InstitutionLogin)
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem('edutech_user')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed?.email && parsed?.role) {
+          setUser({
+            id: parsed.institutionId || 'super-admin',
+            email: parsed.email,
+            name: parsed.name || null,
+            role: parsed.role,
+            schoolId: parsed.institutionId || null,
+            schoolName: parsed.name || null,
+            avatar: null,
+          })
+        }
+      }
+    } catch { /* ignore */ }
     setLoading(false)
   }, [])
 
