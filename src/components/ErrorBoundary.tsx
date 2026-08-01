@@ -11,6 +11,18 @@ interface ErrorBoundaryState {
   error: Error | null
 }
 
+function isChunkLoadError(error: Error): boolean {
+  const msg = error.message.toLowerCase()
+  return (
+    msg.includes('failed to fetch dynamically imported module') ||
+    msg.includes('loading chunk') ||
+    msg.includes('importing a module failed') ||
+    msg.includes('dynamically imported module') ||
+    error.name === 'ChunkLoadError' ||
+    error.name === 'SyntaxError'
+  )
+}
+
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props)
@@ -21,12 +33,35 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return { hasError: true, error }
   }
 
+  componentDidCatch(_error: Error, _errorInfo: React.ErrorInfo) {
+    if (isChunkLoadError(_error)) {
+      // Clear service worker cache and reload
+      if ('caches' in globalThis) {
+        caches.keys().then((names) => {
+          Promise.all(names.map((name) => caches.delete(name))).then(() => {
+            globalThis.location.reload()
+          })
+        })
+      } else {
+        globalThis.location.reload()
+      }
+    }
+  }
+
   handleGoBack = () => {
-    window.location.href = '/login'
+    globalThis.location.href = '/login'
   }
 
   handleTryAgain = () => {
-    this.setState({ hasError: false, error: null })
+    if ('caches' in globalThis) {
+      caches.keys().then((names) => {
+        Promise.all(names.map((name) => caches.delete(name))).then(() => {
+          globalThis.location.reload()
+        })
+      })
+    } else {
+      globalThis.location.reload()
+    }
   }
 
   render() {
