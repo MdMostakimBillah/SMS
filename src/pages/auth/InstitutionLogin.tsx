@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Building2, Mail, Lock, Eye, EyeOff, LogIn, Check, X, GraduationCap } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useAppStore } from '@/store/appStore'
+import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 
@@ -204,6 +205,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
               : 'linear-gradient(180deg, #1a1a2e 0%, #1e1e32 100%)',
           }}
         />
+        <BackgroundPaths />
         <div className="relative z-10 text-center px-8">
           {institution.logo ? (
             <div className="w-[72px] h-[72px] rounded-2xl mx-auto mb-4 overflow-hidden shadow-xl">
