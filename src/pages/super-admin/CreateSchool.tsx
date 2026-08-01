@@ -194,12 +194,12 @@ export default function CreateSchool() {
       <div className={`w-full h-full bg-[var(--bg-primary)] shadow-2xl flex overflow-hidden transition-all duration-300 ${exiting ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
 
         {/* Left Column - Live Preview */}
-        <div className="hidden lg:flex flex-1 flex-col overflow-hidden rounded-r-3xl">
+        <div className="hidden lg:flex flex-1 flex-col overflow-hidden">
           <PreviewPanel form={form} isBn={isBn} />
         </div>
 
         {/* Right Column - Input */}
-        <div className="w-full lg:w-[420px] flex flex-col border-l border-[var(--border)] rounded-l-3xl overflow-hidden shrink-0">
+        <div className="w-full lg:w-[420px] flex flex-col border-l border-[var(--border)] overflow-hidden shrink-0">
           {/* Header */}
           <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
