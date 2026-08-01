@@ -96,6 +96,7 @@ export default function CreateSchool() {
   const [emailVerified, setEmailVerified] = useState(false)
   const [emailCodeInput, setEmailCodeInput] = useState('')
   const [sendingCode, setSendingCode] = useState(false)
+  const [emailError, setEmailError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   const currentSection = SECTION_STEPS[step]
@@ -276,7 +277,7 @@ export default function CreateSchool() {
                           ref={inputRef}
                           type="email"
                           value={form.adminEmail}
-                          onChange={(e) => { set('adminEmail', e.target.value); setEmailSent(false); setEmailVerified(false); setEmailCode('') }}
+                          onChange={(e) => { set('adminEmail', e.target.value); setEmailSent(false); setEmailVerified(false); setEmailCode(''); setEmailError('') }}
                           placeholder="admin@school.edu.bd"
                           disabled={emailVerified}
                           className="flex-1 px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all disabled:opacity-50"
@@ -286,10 +287,15 @@ export default function CreateSchool() {
                             onClick={async () => {
                               if (form.adminEmail.includes('@')) {
                                 setSendingCode(true)
+                                setEmailError('')
                                 const code = Math.random().toString(36).slice(-6).toUpperCase()
-                                await sendVerificationCode(form.adminEmail, code)
-                                setEmailCode(code)
-                                setEmailSent(true)
+                                const result = await sendVerificationCode(form.adminEmail, code)
+                                if (result.success) {
+                                  setEmailCode(code)
+                                  setEmailSent(true)
+                                } else {
+                                  setEmailError(isBn ? 'কোড পাঠাতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।' : 'Failed to send code. Please try again.')
+                                }
                                 setSendingCode(false)
                               }
                             }}
@@ -305,6 +311,9 @@ export default function CreateSchool() {
                           </div>
                         )}
                       </div>
+                      {emailError && (
+                        <p className="text-[0.6875rem] text-[var(--red)] mt-1.5">{emailError}</p>
+                      )}
                     </div>
                     {emailSent && !emailVerified && (
                       <div>
@@ -552,8 +561,8 @@ function PreviewPanel({ form, isBn }: { form: SchoolForm; isBn: boolean }) {
                     {form.optionalSubjects.map((s) => (
                       <span key={s} className="text-[0.625rem] px-2 py-0.5 rounded-full font-medium" style={{ background: `${form.brandColor}15`, color: form.brandColor }}>{s}</span>
                     ))}
-                  </div>
-                </div>
+                      </div>
+                    </div>
               )}
             </div>
           </div>
