@@ -14,6 +14,7 @@ interface User {
   schoolId: string | null
   schoolName: string | null
   avatar: string | null
+  subdomain: string | null
 }
 
 interface AuthContextType {
@@ -101,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loginTimestampRef.current = null
     localStorage.removeItem('edutech_user')
     localStorage.removeItem('edutech_institutionId')
+    localStorage.removeItem('edutech_institutionSubdomain')
   }, [])
 
   // Restore user from localStorage (set by InstitutionLogin)
@@ -118,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             schoolId: parsed.institutionId || null,
             schoolName: parsed.name || null,
             avatar: null,
+            subdomain: parsed.subdomain || null,
           })
         }
       }
@@ -202,7 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await authApi.login(email, password)
       setAuthToken(res.token)
       setToken(res.token)
-      setUser(res.user)
+      setUser({ ...res.user, subdomain: (res.user as any).subdomain || null })
       loginTimestampRef.current = Date.now()
       clearLoginAttempts()
       return
@@ -227,7 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await authApi.register(email, password, name, role)
       setAuthToken(res.token)
       setToken(res.token)
-      setUser(res.user)
+      setUser({ ...res.user, subdomain: (res.user as any).subdomain || null })
       loginTimestampRef.current = Date.now()
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : 'Registration failed'

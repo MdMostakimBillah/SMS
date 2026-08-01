@@ -38,6 +38,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAppStore } from '@/store/appStore'
 import { useClassStore } from '@/store/classStore'
+import { useSuperAdminStore } from '@/store/superAdminStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
@@ -88,8 +89,10 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
   const institution = useClassStore((s) => s.institution)
   const switchSession = useClassStore((s) => s.switchSession)
   const addSession = useClassStore((s) => s.addSession)
+  const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
   const { user } = useAuth()
   const isSuperAdmin = user?.role === 'super_admin'
+  const isViewing = isSuperAdmin && !!viewingInstitutionId
   const [showSessionDropdown, setShowSessionDropdown] = useState(false)
   const [newSession, setNewSession] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -349,14 +352,14 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
         {!collapsed && (
           <div ref={dropdownRef} className="relative px-2 pt-2 pb-1 z-50">
             <div
-              onClick={() => user?.role === 'admin' && setShowSessionDropdown(!showSessionDropdown)}
+              onClick={() => isViewing && setShowSessionDropdown(!showSessionDropdown)}
               className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 border border-[var(--border)] ${
-                user?.role === 'admin'
+                isViewing
                   ? 'cursor-pointer bg-[var(--bg-secondary)] hover:bg-[var(--surface-2)] hover:border-[var(--brand)]'
                   : ''
               }`}
             >
-              {user?.role === 'admin' && institution.logo ? (
+              {isViewing && institution.logo ? (
                 <img src={institution.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
               ) : (
                 <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
@@ -365,13 +368,13 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
               )}
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-[var(--text-primary)] leading-none overflow-hidden text-ellipsis whitespace-nowrap">
-                  {user?.role === 'admin' ? (institution.brandName || institution.name) : 'EduTech'}
+                  {isViewing ? (institution.brandName || institution.name) : 'EduTech'}
                 </div>
                 <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
-                  {user?.role === 'admin' ? (institution.currentSession || 'No Session') : 'School Management'}
+                  {isViewing ? (institution.currentSession || 'No Session') : 'School Management'}
                 </div>
               </div>
-              {user?.role === 'admin' && (
+              {isViewing && (
                 <ChevronsUpDown
                   size={11}
                   className="text-[var(--text-muted)] shrink-0 transition-transform duration-200"
@@ -380,7 +383,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
               )}
             </div>
 
-            {showSessionDropdown && user?.role === 'admin' && (
+            {showSessionDropdown && isViewing && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-[0.625rem] shadow-lg z-[60] overflow-hidden mx-2">
                 <div className="px-2.5 py-2 border-b border-[var(--border)]">
                   <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1.5">
@@ -432,7 +435,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
         {/* Collapsed Logo */}
         {collapsed && (
           <div className="flex flex-col items-center py-3 border-b border-[var(--border)]">
-            {user?.role === 'admin' && institution.logo ? (
+            {isViewing && institution.logo ? (
               <img src={institution.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
             ) : (
               <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center">

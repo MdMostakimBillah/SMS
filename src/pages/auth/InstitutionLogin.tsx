@@ -154,9 +154,10 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
       if (email === institution.email && password === (institution.password || 'admin123')) {
         loadInstitutionData(institution)
         localStorage.setItem('edutech_user', JSON.stringify({
-          email, role: 'admin', name: institution.name, institutionId: institution.id
+          email, role: 'admin', name: institution.name, institutionId: institution.id, subdomain: institution.subdomain
         }))
         localStorage.setItem('edutech_institutionId', institution.id)
+        localStorage.setItem('edutech_institutionSubdomain', institution.subdomain)
         navigate('/dashboard')
         return
       }

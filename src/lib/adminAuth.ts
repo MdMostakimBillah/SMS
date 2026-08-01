@@ -8,6 +8,7 @@ interface SuperAdminUser {
   schoolId: null
   schoolName: null
   avatar: null
+  subdomain: null
 }
 
 function base64UrlEncode(data: ArrayBuffer | Uint8Array): string {
@@ -73,6 +74,7 @@ export function createSuperAdminUser(): SuperAdminUser {
     schoolId: null,
     schoolName: null,
     avatar: null,
+    subdomain: null,
   }
 }
 

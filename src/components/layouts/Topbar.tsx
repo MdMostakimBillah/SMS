@@ -135,7 +135,7 @@ const demoMessages = [
 
 export default React.memo(function Topbar() {
   const navigate = useNavigate()
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const theme = useAppStore((s) => s.theme)
   const language = useAppStore((s) => s.language)
   const setTheme = useAppStore((s) => s.setTheme)
@@ -934,8 +934,13 @@ export default React.memo(function Topbar() {
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   onClick={() => {
+                    const subdomain = user?.subdomain
                     logout()
-                    navigate(LOGIN_PATH)
+                    if (user?.role === 'admin' && subdomain) {
+                      navigate(`/i/${subdomain}`)
+                    } else {
+                      navigate(LOGIN_PATH)
+                    }
                   }}
                 >
                   <LogOut size={14} />
