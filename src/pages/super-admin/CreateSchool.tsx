@@ -143,7 +143,7 @@ export default function CreateSchool() {
       address: form.address,
       addressBn: form.addressBn || form.address,
       eiin: form.eiin,
-      website: subdomain ? `${subdomain}.${BASE_URL}` : `www.${BASE_URL}`,
+      website: subdomain ? `${BASE_URL}/i/${subdomain}` : BASE_URL,
       subdomain: subdomain || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       status: 'active',
       package: form.package,
@@ -503,7 +503,7 @@ function PreviewPanel({ form, isBn }: { form: SchoolForm; isBn: boolean }) {
                     <div>
                       <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ইমেইল / ওয়েবসাইট' : 'Email / Website'}</div>
                       <div className="text-xs font-semibold text-[var(--text-primary)]">{form.email}</div>
-                      {form.subdomain && <div className="text-[0.625rem] text-[var(--text-muted)]">{form.subdomain}.{BASE_URL}</div>}
+                      {form.subdomain && <div className="text-[0.625rem] text-[var(--text-muted)]">{BASE_URL}/i/{form.subdomain}</div>}
                     </div>
                   </div>
                 )}

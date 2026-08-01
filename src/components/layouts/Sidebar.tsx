@@ -362,7 +362,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
             </div>
             {!collapsed && (
               <div>
-                <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">{institution.brandName || 'EduTech'}</div>
+                <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">{institution.brandName || institution.name || 'EduTech'}</div>
                 <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">School Management</div>
               </div>
             )}

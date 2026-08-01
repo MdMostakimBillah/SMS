@@ -147,7 +147,7 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
             <InfoRow icon={<Mail size={13} />} label={isBn ? 'ইমেইল' : 'Email'} value={inst.email} />
             <InfoRow icon={<Phone size={13} />} label={isBn ? 'ফোন' : 'Phone'} value={inst.phone} />
             <InfoRow icon={<MapPin size={13} />} label={isBn ? 'ঠিকানা' : 'Address'} value={isBn ? inst.addressBn : inst.address} />
-            <InfoRow icon={<Globe size={13} />} label={isBn ? 'ওয়েবসাইট' : 'Website'} value={inst.website} />
+            <InfoRow icon={<Globe size={13} />} label={isBn ? 'ওয়েবসাইট' : 'Website'} value={`smsappbd.vercel.app/i/${inst.subdomain}`} />
             <InfoRow icon={<Shield size={13} />} label="EIIN" value={inst.eiin} />
             <InfoRow icon={<CreditCard size={13} />} label={isBn ? 'মূল্য' : 'Price'} value={inst.package.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${inst.package.price}/${isBn ? 'মাস' : 'mo'}`} />
             <InfoRow icon={<Calendar size={13} />} label={isBn ? 'নিবন্ধন' : 'Created'} value={inst.createdAt} />
@@ -244,7 +244,7 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
     } else {
       useClassStore.getState().updateInstitution({
         name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: inst.banner, bannerPosition: { x: 0, y: 0 },
-        brandName: inst.brandName || 'EduTech', motto: inst.motto, mottoBn: inst.mottoBn, eiin: inst.eiin, phone: inst.phone, email: inst.email,
+        brandName: inst.brandName || inst.name, motto: inst.motto, mottoBn: inst.mottoBn, eiin: inst.eiin, phone: inst.phone, email: inst.email,
         address: inst.address, website: inst.website, subjects: inst.optionalSubjects || [], startTime: inst.startTime || '07:30', endTime: inst.endTime || '14:30',
         breaks: [], currentSession: inst.sessions?.[1] || '2025-26', sessions: inst.sessions || ['2024-25', '2025-26'],
         lightColors: { ...defaultThemeColors, brand: inst.brandColor }, darkColors: { ...defaultThemeColorsDark },
