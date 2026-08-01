@@ -1,14 +1,10 @@
 import emailjs from '@emailjs/browser'
 
-const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || ''
-const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || ''
-const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || ''
+const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_xqctcri'
+const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_f83p6rg'
+const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '61CbgIQyFjPYSScyg'
 
-console.log('[EmailJS] Config:', {
-  service: SERVICE_ID ? SERVICE_ID.slice(0, 10) + '...' : 'MISSING',
-  template: TEMPLATE_ID ? TEMPLATE_ID.slice(0, 10) + '...' : 'MISSING',
-  key: PUBLIC_KEY ? PUBLIC_KEY.slice(0, 6) + '...' : 'MISSING',
-})
+console.log('[EmailJS] Config:', { service: SERVICE_ID.slice(0, 10) + '...', template: TEMPLATE_ID.slice(0, 10) + '...', key: PUBLIC_KEY.slice(0, 6) + '...' })
 
 let initialized = false
 
