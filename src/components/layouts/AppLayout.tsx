@@ -5,6 +5,7 @@ import { useClassStore } from '@/store/classStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useThemeColors } from '@/hooks/useThemeColors'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useAuth } from '@/contexts/AuthContext'
 import { gsap } from 'gsap'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
@@ -23,14 +24,15 @@ export default function AppLayout() {
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
   const institutions = useSuperAdminStore((s) => s.institutions)
   const stopViewing = useSuperAdminStore((s) => s.stopViewing)
+  const { user } = useAuth()
   const navigate = useNavigate()
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
 
   const viewedInst = useMemo(() => {
-    if (!viewingInstitutionId) return null
+    if (!viewingInstitutionId || user?.role !== 'super_admin') return null
     return institutions.find((i) => i.id === viewingInstitutionId) || null
-  }, [viewingInstitutionId, institutions])
+  }, [viewingInstitutionId, institutions, user])
 
   useThemeColors()
   const [isLoading, setIsLoading] = useState(true)

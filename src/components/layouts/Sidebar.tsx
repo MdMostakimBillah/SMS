@@ -29,7 +29,6 @@ import {
   Settings,
   ChevronsUpDown,
   Check,
-  X,
   Star,
   PanelLeftClose,
   PanelRightClose,
@@ -346,76 +345,42 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
           width: collapsed ? collapsedWidth : expandedWidth,
         }}
       >
-        {/* Logo */}
-        <div
-          className={`flex items-center border-b border-[var(--border)] ${
-            collapsed ? 'flex-col px-0 py-3' : 'flex-row px-3.5 py-3'
-          }`}
-        >
-          <div
-            className={`flex items-center gap-2.5 ${
-              collapsed ? 'w-full justify-center' : 'flex-1'
-            }`}
-          >
-            {user?.role === 'admin' && institution.logo ? (
-              <img src={institution.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
-            ) : (
-              <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
-                <GraduationCap size={17} color="#fff" />
-              </div>
-            )}
-            {!collapsed && (
-              <div>
-                <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">
-                  {user?.role === 'admin' ? (institution.brandName || institution.name) : 'EduTech'}
-                </div>
-                <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
-                  {user?.role === 'admin' ? (institution.nameBn || institution.name) : 'School Management'}
-                </div>
-              </div>
-            )}
-          </div>
-          {isMobile && !collapsed && (
-            <button
-              onClick={toggleSidebar}
-              aria-label={isBn ? 'বন্ধ করুন' : 'Close'}
-              className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-colors"
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
-
-        {/* Session Switcher */}
+        {/* Logo + Session Switcher */}
         {!collapsed && (
           <div ref={dropdownRef} className="relative px-2 pt-2 pb-1 z-50">
             <div
-              onClick={() => setShowSessionDropdown(!showSessionDropdown)}
-              className="flex items-center gap-2 rounded-lg px-2.5 py-2 cursor-pointer transition-all duration-150 bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--surface-2)] hover:border-[var(--brand)]"
+              onClick={() => user?.role === 'admin' && setShowSessionDropdown(!showSessionDropdown)}
+              className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 border border-[var(--border)] ${
+                user?.role === 'admin'
+                  ? 'cursor-pointer bg-[var(--bg-secondary)] hover:bg-[var(--surface-2)] hover:border-[var(--brand)]'
+                  : ''
+              }`}
             >
-              {institution.logo ? (
+              {user?.role === 'admin' && institution.logo ? (
                 <img src={institution.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
               ) : (
-                <div className="w-8 h-8 rounded-lg bg-[var(--teal)] flex items-center justify-center text-[0.625rem] font-bold text-white shrink-0">
-                  {(institution.name || 'SA').slice(0, 2).toUpperCase()}
+                <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
+                  <GraduationCap size={17} color="#fff" />
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
-                  {institution.name || 'Institution'}
+                <div className="text-sm font-semibold text-[var(--text-primary)] leading-none overflow-hidden text-ellipsis whitespace-nowrap">
+                  {user?.role === 'admin' ? (institution.brandName || institution.name) : 'EduTech'}
                 </div>
-                <div className="text-[0.5625rem] text-[var(--brand)] font-semibold">
-                  {institution.currentSession || 'No Session'}
+                <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
+                  {user?.role === 'admin' ? (institution.currentSession || 'No Session') : 'School Management'}
                 </div>
               </div>
-              <ChevronsUpDown
-                size={11}
-                className="text-[var(--text-muted)] shrink-0 transition-transform duration-200"
-                style={{ transform: showSessionDropdown ? 'rotate(180deg)' : 'rotate(0)' }}
-              />
+              {user?.role === 'admin' && (
+                <ChevronsUpDown
+                  size={11}
+                  className="text-[var(--text-muted)] shrink-0 transition-transform duration-200"
+                  style={{ transform: showSessionDropdown ? 'rotate(180deg)' : 'rotate(0)' }}
+                />
+              )}
             </div>
 
-            {showSessionDropdown && (
+            {showSessionDropdown && user?.role === 'admin' && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-[0.625rem] shadow-lg z-[60] overflow-hidden mx-2">
                 <div className="px-2.5 py-2 border-b border-[var(--border)]">
                   <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1.5">
@@ -459,6 +424,19 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                     </button>
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Collapsed Logo */}
+        {collapsed && (
+          <div className="flex flex-col items-center py-3 border-b border-[var(--border)]">
+            {user?.role === 'admin' && institution.logo ? (
+              <img src={institution.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center">
+                <GraduationCap size={17} color="#fff" />
               </div>
             )}
           </div>
