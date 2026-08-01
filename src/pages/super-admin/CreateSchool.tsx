@@ -153,6 +153,13 @@ export default function CreateSchool() {
       logo: form.logo,
       banner: form.banner,
       brandColor: form.brandColor,
+      brandName: form.brandName || 'EduTech',
+      motto: form.motto,
+      mottoBn: form.mottoBn,
+      startTime: form.startTime,
+      endTime: form.endTime,
+      optionalSubjects: form.optionalSubjects,
+      sessions: form.sessions,
     }
     addInstitution(inst)
     setCreated(true)

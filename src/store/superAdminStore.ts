@@ -33,6 +33,13 @@ export interface Institution {
   logo: string
   banner: string
   brandColor: string
+  brandName: string
+  motto: string
+  mottoBn: string
+  startTime: string
+  endTime: string
+  optionalSubjects: string[]
+  sessions: string[]
 }
 
 export const PACKAGES: InstitutionPackage[] = [
@@ -98,6 +105,13 @@ const demoInstitutions: Institution[] = [
     logo: '',
     banner: '',
     brandColor: '#6366f1',
+    brandName: 'EduTech',
+    motto: 'Knowledge is Power',
+    mottoBn: 'জ্ঞাই হলো শক্তি',
+    startTime: '07:30',
+    endTime: '14:30',
+    optionalSubjects: [],
+    sessions: ['2024-25', '2025-26'],
   },
   {
     id: 'INST-002',
@@ -118,6 +132,13 @@ const demoInstitutions: Institution[] = [
     logo: '',
     banner: '',
     brandColor: '#3b82f6',
+    brandName: 'EduTech',
+    motto: '',
+    mottoBn: '',
+    startTime: '08:00',
+    endTime: '15:00',
+    optionalSubjects: [],
+    sessions: ['2024-25', '2025-26'],
   },
   {
     id: 'INST-003',
@@ -138,6 +159,13 @@ const demoInstitutions: Institution[] = [
     logo: '',
     banner: '',
     brandColor: '#22c55e',
+    brandName: 'EduTech',
+    motto: '',
+    mottoBn: '',
+    startTime: '07:30',
+    endTime: '14:00',
+    optionalSubjects: [],
+    sessions: ['2024-25', '2025-26'],
   },
   {
     id: 'INST-004',
@@ -158,6 +186,13 @@ const demoInstitutions: Institution[] = [
     logo: '',
     banner: '',
     brandColor: '#f59e0b',
+    brandName: 'EduTech',
+    motto: '',
+    mottoBn: '',
+    startTime: '08:00',
+    endTime: '14:30',
+    optionalSubjects: [],
+    sessions: ['2024-25', '2025-26'],
   },
 ]
 

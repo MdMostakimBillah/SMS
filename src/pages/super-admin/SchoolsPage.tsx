@@ -243,10 +243,10 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
       useFeeStore.setState({ feeCategories, structures: feeStructures, payments: feePayments })
     } else {
       useClassStore.getState().updateInstitution({
-        name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: '', bannerPosition: { x: 0, y: 0 },
-        brandName: 'EduTech', motto: '', mottoBn: '', eiin: inst.eiin, phone: inst.phone, email: inst.email,
-        address: inst.address, website: inst.website, subjects: [], startTime: '07:30', endTime: '14:30',
-        breaks: [], currentSession: '2025-26', sessions: ['2024-25', '2025-26'],
+        name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: inst.banner, bannerPosition: { x: 0, y: 0 },
+        brandName: inst.brandName || 'EduTech', motto: inst.motto, mottoBn: inst.mottoBn, eiin: inst.eiin, phone: inst.phone, email: inst.email,
+        address: inst.address, website: inst.website, subjects: inst.optionalSubjects || [], startTime: inst.startTime || '07:30', endTime: inst.endTime || '14:30',
+        breaks: [], currentSession: inst.sessions?.[1] || '2025-26', sessions: inst.sessions || ['2024-25', '2025-26'],
         lightColors: { ...defaultThemeColors, brand: inst.brandColor }, darkColors: { ...defaultThemeColorsDark },
       })
     }
