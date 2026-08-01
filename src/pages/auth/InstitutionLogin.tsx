@@ -205,7 +205,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
               : 'linear-gradient(180deg, #1a1a2e 0%, #1e1e32 100%)',
           }}
         />
-        <BackgroundPaths />
+        <BackgroundPaths color={institution.brandColor} />
         <div className="relative z-10 text-center px-8">
           {institution.logo ? (
             <div className="w-[72px] h-[72px] rounded-2xl mx-auto mb-4 overflow-hidden shadow-xl">

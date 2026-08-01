@@ -25,7 +25,7 @@ function generatePaths(position: number): WavePath[] {
   }))
 }
 
-function FloatingPaths({ position }: { position: number }) {
+function FloatingPaths({ position, color }: { position: number; color?: string }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const paths = useMemo(() => generatePaths(position), [position])
 
@@ -85,7 +85,7 @@ function FloatingPaths({ position }: { position: number }) {
           <path
             key={path.id}
             d={path.d}
-            stroke="var(--brand)"
+            stroke={color || 'var(--brand)'}
             strokeWidth={path.width}
             strokeOpacity={0.05 + path.id * 0.02}
           />
@@ -95,11 +95,11 @@ function FloatingPaths({ position }: { position: number }) {
   )
 }
 
-export function BackgroundPaths({ isDark: _isDark }: { isDark?: boolean }) {
+export function BackgroundPaths({ isDark: _isDark, color }: { isDark?: boolean; color?: string }) {
   return (
     <div className="absolute inset-0">
-      <FloatingPaths position={1} />
-      <FloatingPaths position={-1} />
+      <FloatingPaths position={1} color={color} />
+      <FloatingPaths position={-1} color={color} />
     </div>
   )
 }
