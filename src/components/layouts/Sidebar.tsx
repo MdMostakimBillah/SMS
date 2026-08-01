@@ -357,13 +357,21 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
               collapsed ? 'w-full justify-center' : 'flex-1'
             }`}
           >
-            <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
-              <GraduationCap size={17} color="#fff" />
-            </div>
+            {user?.role === 'admin' && institution.logo ? (
+              <img src={institution.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
+                <GraduationCap size={17} color="#fff" />
+              </div>
+            )}
             {!collapsed && (
               <div>
-                <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">{institution.brandName || institution.name || 'EduTech'}</div>
-                <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">School Management</div>
+                <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">
+                  {user?.role === 'admin' ? (institution.brandName || institution.name) : 'EduTech'}
+                </div>
+                <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
+                  {user?.role === 'admin' ? (institution.nameBn || institution.name) : 'School Management'}
+                </div>
               </div>
             )}
           </div>
