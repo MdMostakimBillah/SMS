@@ -4,6 +4,12 @@ const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || ''
 const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || ''
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || ''
 
+console.log('[EmailJS] Config:', {
+  service: SERVICE_ID ? SERVICE_ID.slice(0, 10) + '...' : 'MISSING',
+  template: TEMPLATE_ID ? TEMPLATE_ID.slice(0, 10) + '...' : 'MISSING',
+  key: PUBLIC_KEY ? PUBLIC_KEY.slice(0, 6) + '...' : 'MISSING',
+})
+
 let initialized = false
 
 function initEmailJS() {
