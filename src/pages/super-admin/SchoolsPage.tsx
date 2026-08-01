@@ -222,10 +222,11 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   )
 }
 
-function PasswordRow({ label, value }: { label: string; value: string }) {
+function PasswordRow({ label, value }: { label: string; value?: string }) {
   const [copied, setCopied] = useState(false)
+  const password = value || 'admin123'
   const handleCopy = () => {
-    navigator.clipboard.writeText(value)
+    navigator.clipboard.writeText(password)
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
@@ -233,7 +234,7 @@ function PasswordRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-center gap-2.5 py-1.5">
       <span className="text-[var(--text-muted)] shrink-0"><Lock size={13} /></span>
       <span className="text-[0.6875rem] text-[var(--text-muted)] shrink-0 w-16">{label}</span>
-      <span className="text-[0.75rem] text-[var(--text-primary)] font-mono font-medium truncate">{value}</span>
+      <span className="text-[0.75rem] text-[var(--text-primary)] font-mono font-medium truncate">{password}</span>
       <button
         onClick={handleCopy}
         className="ml-1 p-1 rounded-md hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none bg-transparent"
