@@ -143,15 +143,17 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
     setLoading(true)
 
     setTimeout(() => {
-      const superAdminEmail = import.meta.env.VITE_SUPER_ADMIN_EMAIL
-      const superAdminPassword = import.meta.env.VITE_SUPER_ADMIN_PASSWORD
-
-      if (email === superAdminEmail && password === superAdminPassword) {
-        localStorage.setItem('edutech_user', JSON.stringify({
-          email, role: 'super_admin', name: 'Super Admin'
-        }))
-        navigate('/super-admin')
-        return
+      if (!subdomain) {
+        const superAdminEmail = import.meta.env.VITE_SUPER_ADMIN_EMAIL
+        const superAdminPassword = import.meta.env.VITE_SUPER_ADMIN_PASSWORD
+        if (email === superAdminEmail && password === superAdminPassword) {
+          localStorage.setItem('edutech_user', JSON.stringify({
+            email, role: 'super_admin', name: 'Super Admin'
+          }))
+          navigate('/super-admin')
+          setLoading(false)
+          return
+        }
       }
 
       if (email === institution.email && password === (institution.password || 'admin123')) {
@@ -166,7 +168,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           localStorage.setItem('edutech_institutionSubdomain', institution.subdomain)
           sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
         }
-        navigate('/dashboard')
+        navigate(`/i/${institution.subdomain}/dashboard`)
         return
       }
 
