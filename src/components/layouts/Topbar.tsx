@@ -935,7 +935,7 @@ export default React.memo(function Topbar() {
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   onClick={() => {
                     const role = user?.role
-                    const subdomain = user?.subdomain
+                    const subdomain = user?.subdomain || localStorage.getItem('edutech_institutionSubdomain')
                     logout()
                     if (role === 'admin' && subdomain) {
                       navigate(`/i/${subdomain}`)

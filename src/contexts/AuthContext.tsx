@@ -113,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (stored) {
         const parsed = JSON.parse(stored)
         if (parsed?.email && parsed?.role) {
+          const subdomain = parsed.subdomain || localStorage.getItem('edutech_institutionSubdomain') || null
           setUser({
             id: parsed.institutionId || 'super-admin',
             email: parsed.email,
@@ -121,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             schoolId: parsed.institutionId || null,
             schoolName: parsed.name || null,
             avatar: null,
-            subdomain: parsed.subdomain || null,
+            subdomain,
           })
         }
       }
