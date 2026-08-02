@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Building2, Mail, Lock, Eye, EyeOff, LogIn, Check, X, GraduationCap } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useAppStore } from '@/store/appStore'
+import { AuthContext } from '@/contexts/AuthContext'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
@@ -84,6 +85,8 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   const navigate = useNavigate()
   const storeInstitutions = useSuperAdminStore((s) => s.institutions)
   const setAppTheme = useAppStore((s) => s.setTheme)
+  const authCtx = useContext(AuthContext)
+  const setInstitutionUser = authCtx?.setInstitutionUser
 
   const institution = useMemo(() => {
     if (propInstitution) return propInstitution
@@ -153,11 +156,15 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
 
       if (email === institution.email && password === (institution.password || 'admin123')) {
         loadInstitutionData(institution)
-        localStorage.setItem('edutech_user', JSON.stringify({
-          email, role: 'admin', name: institution.name, institutionId: institution.id, subdomain: institution.subdomain
-        }))
-        localStorage.setItem('edutech_institutionId', institution.id)
-        localStorage.setItem('edutech_institutionSubdomain', institution.subdomain)
+        if (setInstitutionUser) {
+          setInstitutionUser(email, institution.name, 'admin', institution.id, institution.subdomain)
+        } else {
+          localStorage.setItem('edutech_user', JSON.stringify({
+            email, role: 'admin', name: institution.name, institutionId: institution.id, subdomain: institution.subdomain
+          }))
+          localStorage.setItem('edutech_institutionId', institution.id)
+          localStorage.setItem('edutech_institutionSubdomain', institution.subdomain)
+        }
         navigate('/dashboard')
         return
       }

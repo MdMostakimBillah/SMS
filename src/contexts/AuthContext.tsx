@@ -23,6 +23,7 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, name: string, role?: string) => Promise<void>
+  setInstitutionUser: (email: string, name: string, role: string, institutionId: string, subdomain: string) => void
   logout: () => void
   error: string | null
   clearError: () => void
@@ -30,7 +31,7 @@ interface AuthContextType {
   lockoutRemaining: number
 }
 
-const AuthContext = createContext<AuthContextType | null>(null)
+export const AuthContext = createContext<AuthContextType | null>(null)
 
 const ATTEMPTS_KEY = 'edutech_login_attempts'
 const LOCKOUT_KEY = 'edutech_lockout_until'
@@ -241,9 +242,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), [])
 
+  const setInstitutionUser = useCallback((email: string, name: string, role: string, institutionId: string, subdomain: string) => {
+    setUser({
+      id: institutionId,
+      email,
+      name,
+      role,
+      schoolId: institutionId,
+      schoolName: name,
+      avatar: null,
+      subdomain,
+    })
+    localStorage.setItem('edutech_user', JSON.stringify({ email, role, name, institutionId, subdomain }))
+    localStorage.setItem('edutech_institutionId', institutionId)
+    localStorage.setItem('edutech_institutionSubdomain', subdomain)
+  }, [])
+
   const ctxValue = useMemo(() => ({
-    user, token, loading, login, register, logout, error, clearError, isLockedOut, lockoutRemaining
-  }), [user, token, loading, login, register, logout, error, clearError, isLockedOut, lockoutRemaining])
+    user, token, loading, login, register, setInstitutionUser, logout, error, clearError, isLockedOut, lockoutRemaining
+  }), [user, token, loading, login, register, setInstitutionUser, logout, error, clearError, isLockedOut, lockoutRemaining])
 
   return (
     <AuthContext.Provider value={ctxValue}>
