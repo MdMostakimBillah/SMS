@@ -934,9 +934,10 @@ export default React.memo(function Topbar() {
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   onClick={() => {
+                    const role = user?.role
                     const subdomain = user?.subdomain
                     logout()
-                    if (user?.role === 'admin' && subdomain) {
+                    if (role === 'admin' && subdomain) {
                       navigate(`/i/${subdomain}`)
                     } else {
                       navigate(LOGIN_PATH)
