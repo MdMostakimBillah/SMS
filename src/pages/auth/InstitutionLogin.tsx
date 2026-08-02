@@ -164,6 +164,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           }))
           localStorage.setItem('edutech_institutionId', institution.id)
           localStorage.setItem('edutech_institutionSubdomain', institution.subdomain)
+          sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
         }
         navigate('/dashboard')
         return

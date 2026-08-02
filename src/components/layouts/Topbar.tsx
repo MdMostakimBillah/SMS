@@ -934,8 +934,19 @@ export default React.memo(function Topbar() {
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   onClick={() => {
-                    const role = user?.role
-                    const subdomain = user?.subdomain || localStorage.getItem('edutech_institutionSubdomain')
+                    // Read from localStorage BEFORE logout clears it
+                    let role = user?.role
+                    let subdomain = user?.subdomain
+                    if (!role || !subdomain) {
+                      try {
+                        const stored = localStorage.getItem('edutech_user')
+                        if (stored) {
+                          const parsed = JSON.parse(stored)
+                          role = role || parsed?.role
+                          subdomain = subdomain || parsed?.subdomain || localStorage.getItem('edutech_institutionSubdomain')
+                        }
+                      } catch { /* ignore */ }
+                    }
                     logout()
                     if (role === 'admin' && subdomain) {
                       navigate(`/i/${subdomain}`)

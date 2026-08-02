@@ -257,6 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('edutech_user', JSON.stringify({ email, role, name, institutionId, subdomain }))
     localStorage.setItem('edutech_institutionId', institutionId)
     localStorage.setItem('edutech_institutionSubdomain', subdomain)
+    sessionStorage.setItem('edutech_inst_subdomain', subdomain)
   }, [])
 
   const ctxValue = useMemo(() => ({
