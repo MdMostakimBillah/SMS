@@ -54,7 +54,7 @@ export default function SuperAdminPage() {
   const goTo = (id: string) => navigate(SUPER_ADMIN_REVERSE_MAP[id])
 
   return (
-    <div ref={containerRef} className="max-w-5xl mx-auto space-y-5">
+    <div ref={containerRef} className="space-y-5">
       {currentPage !== 'home' && (
         <button onClick={() => goTo('home')}
           className="anim-card flex items-center gap-2 text-[0.8125rem] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none transition-colors">
