@@ -55,7 +55,7 @@ function InstitutionSettings({ isBn }: { isBn: boolean }) {
   useEffect(() => {
     if (currentInst?.accessModes) {
       setModes(currentInst.accessModes)
-      setCustomDomainInput(currentInst.accessModes.customDomain || '')
+      setCustomDomainInput(currentInst.accessModes?.customDomain || '')
     }
   }, [currentInst])
 

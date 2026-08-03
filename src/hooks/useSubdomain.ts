@@ -69,7 +69,7 @@ export function resolveInstitution(
 ): ResolvedInstitution | null {
   // 1. Check custom domains (most specific)
   const customMatch = institutions.find(
-    (inst) => inst.accessModes.customDomain && hostname === inst.accessModes.customDomain
+    (inst) => inst.accessModes?.customDomain && hostname === inst.accessModes.customDomain
   )
   if (customMatch) {
     return { institution: customMatch, mode: 'custom-domain', slug: customMatch.slug }
@@ -81,7 +81,7 @@ export function resolveInstitution(
     && !hostname.includes('localhost')
   if (isSubdomain) {
     const subdomain = hostname.replace(`.${BASE_DOMAIN}`, '').replace('.localhost', '')
-    const inst = institutions.find((i) => i.subdomain === subdomain && i.accessModes.subdomainBased)
+    const inst = institutions.find((i) => i.subdomain === subdomain && i.accessModes?.subdomainBased)
     if (inst) return { institution: inst, mode: 'subdomain', slug: inst.slug }
   }
 
@@ -89,7 +89,7 @@ export function resolveInstitution(
   const pathMatch = pathname.match(/^\/i\/([^/]+)/)
   if (pathMatch) {
     const slug = pathMatch[1]
-    const inst = institutions.find((i) => i.slug === slug && i.accessModes.pathBased)
+    const inst = institutions.find((i) => i.slug === slug && i.accessModes?.pathBased)
     if (inst) return { institution: inst, mode: 'path', slug: inst.slug }
   }
 
