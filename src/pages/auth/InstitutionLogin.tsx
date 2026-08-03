@@ -7,6 +7,7 @@ import { AuthContext } from '@/contexts/AuthContext'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
+import { nsSet, migrateOldKeys } from '@/lib/storage'
 
 const fallbackInstitutions: Institution[] = [
   {
@@ -162,16 +163,17 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
 
       if (email === institution.email && password === (institution.password || 'admin123')) {
         loadInstitutionData(institution)
+        sessionStorage.setItem('edutech_inst_slug', institution.slug)
+        sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
+        migrateOldKeys(institution.slug)
         if (setInstitutionUser) {
           setInstitutionUser(email, institution.name, 'admin', institution.id, institution.subdomain, institution.slug)
         } else {
-          localStorage.setItem('edutech_user', JSON.stringify({
+          nsSet('user', JSON.stringify({
             email, role: 'admin', name: institution.name, institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug
           }))
-          localStorage.setItem('edutech_institutionId', institution.id)
-          localStorage.setItem('edutech_institutionSubdomain', institution.subdomain)
-          sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
-          sessionStorage.setItem('edutech_inst_slug', institution.slug)
+          nsSet('institutionId', institution.id)
+          nsSet('institutionSubdomain', institution.subdomain)
         }
         navigate(`/i/${institution.slug}/admin/dashboard`)
         return

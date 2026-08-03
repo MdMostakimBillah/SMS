@@ -1,17 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Shield, Mail, Lock, Eye, EyeOff, Save, CheckCircle, AlertTriangle, Loader2,
+  Globe, Link, ToggleLeft, ToggleRight, Copy,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
 import { authApi } from '@/lib/api'
+import { useSuperAdminStore, type InstitutionAccessModes } from '@/store/superAdminStore'
 
 export default function Page() {
   const { user } = useAuth()
   const isBn = useBn()
   const isSuperAdmin = user?.role === 'super_admin'
+  const isInstAdmin = user?.role === 'admin'
 
-  if (!isSuperAdmin) {
+  if (!isSuperAdmin && !isInstAdmin) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
@@ -20,14 +23,211 @@ export default function Page() {
             {isBn ? 'অ্যাক্সেস অস্বীকৃত' : 'Access Denied'}
           </div>
           <div className="text-[0.8125rem] text-[var(--text-muted)]">
-            {isBn ? 'শুধুমাত্র সুপার অ্যাডমিন সেটিংস অ্যাক্সেস করতে পারেন' : 'Only super admin can access settings'}
+            {isBn ? 'শুধুমাত্র অ্যাডমিন সেটিংস অ্যাক্সেস করতে পারেন' : 'Only admin can access settings'}
           </div>
         </div>
       </div>
     )
   }
 
-  return <SettingsContent isBn={isBn} />
+  if (isSuperAdmin) return <SettingsContent isBn={isBn} />
+  return <InstitutionSettings isBn={isBn} />
+}
+
+function InstitutionSettings({ isBn }: { isBn: boolean }) {
+  const { user } = useAuth()
+  const storeInstitutions = useSuperAdminStore((s) => s.institutions)
+  const updateStoreInstitution = useSuperAdminStore((s) => s.updateInstitution)
+
+  const currentInst = useMemo(() => {
+    return storeInstitutions.find((i) => i.subdomain === user?.subdomain) || null
+  }, [storeInstitutions, user?.subdomain])
+
+  const [modes, setModes] = useState<InstitutionAccessModes>({
+    pathBased: true,
+    subdomainBased: true,
+    customDomain: '',
+  })
+  const [customDomainInput, setCustomDomainInput] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    if (currentInst?.accessModes) {
+      setModes(currentInst.accessModes)
+      setCustomDomainInput(currentInst.accessModes.customDomain || '')
+    }
+  }, [currentInst])
+
+  const handleSave = async () => {
+    if (!currentInst) return
+    setSaving(true)
+    const updated: InstitutionAccessModes = {
+      ...modes,
+      customDomain: customDomainInput.trim(),
+    }
+    updateStoreInstitution(currentInst.id, { accessModes: updated })
+    setModes(updated)
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  const baseUrl = window.location.origin
+  const slug = currentInst?.slug || ''
+  const subdomain = currentInst?.subdomain || ''
+
+  const pathUrl = `${baseUrl}/i/${slug}`
+  const subdomainUrl = `https://${subdomain}.smsappbd.vercel.app`
+  const customUrl = customDomainInput.trim() ? `https://${customDomainInput.trim()}` : ''
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-5">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] flex items-center justify-center">
+          <Globe size={20} className="text-[var(--brand)]" />
+        </div>
+        <div>
+          <h1 className="text-[1.125rem] font-bold text-[var(--text-primary)]">
+            {isBn ? 'অ্যাক্সেস মোড' : 'Access Modes'}
+          </h1>
+          <p className="text-[0.75rem] text-[var(--text-muted)]">
+            {isBn ? 'কিভাবে আপনার প্রতিষ্ঠানে প্রবেশ করা যাবে' : 'How your institution can be accessed'}
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--border)]">
+          <h2 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+            {isBn ? 'অ্যাক্সেস পদ্ধতি নির্বাচন করুন' : 'Select Access Methods'}
+          </h2>
+        </div>
+        <div className="p-5 space-y-5">
+          {/* Path-based */}
+          <div className="flex items-start gap-4 p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+            <button
+              onClick={() => setModes((p) => ({ ...p, pathBased: !p.pathBased }))}
+              className="mt-0.5 cursor-pointer bg-transparent border-none p-0"
+            >
+              {modes.pathBased ? (
+                <ToggleRight size={28} className="text-[var(--green)]" />
+              ) : (
+                <ToggleLeft size={28} className="text-[var(--text-muted)]" />
+              )}
+            </button>
+            <div className="flex-1 min-w-0">
+              <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] mb-1">
+                {isBn ? 'পাথ-বেসড' : 'Path-based'}
+              </div>
+              <div className="text-[0.6875rem] text-[var(--text-muted)] mb-2">
+                {isBn ? 'example.com/i/আপনার-স্লাগ' : 'example.com/i/your-slug'}
+              </div>
+              {modes.pathBased && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
+                  <Link size={12} className="text-[var(--text-muted)] shrink-0" />
+                  <code className="text-[0.6875rem] text-[var(--text-primary)] truncate flex-1">{pathUrl}</code>
+                  <button onClick={() => navigator.clipboard.writeText(pathUrl)}
+                    className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none p-0">
+                    <Copy size={12} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Subdomain-based */}
+          <div className="flex items-start gap-4 p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+            <button
+              onClick={() => setModes((p) => ({ ...p, subdomainBased: !p.subdomainBased }))}
+              className="mt-0.5 cursor-pointer bg-transparent border-none p-0"
+            >
+              {modes.subdomainBased ? (
+                <ToggleRight size={28} className="text-[var(--green)]" />
+              ) : (
+                <ToggleLeft size={28} className="text-[var(--text-muted)]" />
+              )}
+            </button>
+            <div className="flex-1 min-w-0">
+              <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] mb-1">
+                {isBn ? 'সাবডোমেইন' : 'Subdomain'}
+              </div>
+              <div className="text-[0.6875rem] text-[var(--text-muted)] mb-2">
+                {isBn ? 'institution.example.com' : 'institution.example.com'}
+              </div>
+              {modes.subdomainBased && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
+                  <Link size={12} className="text-[var(--text-muted)] shrink-0" />
+                  <code className="text-[0.6875rem] text-[var(--text-primary)] truncate flex-1">{subdomainUrl}</code>
+                  <button onClick={() => navigator.clipboard.writeText(subdomainUrl)}
+                    className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none p-0">
+                    <Copy size={12} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Custom domain */}
+          <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+            <div className="flex items-start gap-4">
+              <div className="mt-0.5">
+                <Globe size={28} className={customDomainInput ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] mb-1">
+                  {isBn ? 'কাস্টম ডোমেইন' : 'Custom Domain'}
+                </div>
+                <div className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
+                  {isBn ? 'নিজের ডোমেইন ব্যবহার করুন (ঐচ্ছিক)' : 'Use your own domain (optional)'}
+                </div>
+                <input
+                  type="text"
+                  value={customDomainInput}
+                  onChange={(e) => setCustomDomainInput(e.target.value)}
+                  placeholder="abcschool.com"
+                  className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]"
+                />
+                {customDomainInput && (
+                  <div className="mt-2 space-y-2">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
+                      <Link size={12} className="text-[var(--text-muted)] shrink-0" />
+                      <code className="text-[0.6875rem] text-[var(--text-primary)] truncate flex-1">{customUrl}</code>
+                      <button onClick={() => navigator.clipboard.writeText(customUrl)}
+                        className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none p-0">
+                        <Copy size={12} />
+                      </button>
+                    </div>
+                    <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/15">
+                      <div className="text-[0.6875rem] text-[var(--text-secondary)]">
+                        {isBn ? (
+                          <>DNS সেটআপ: আপনার ডোমেইন রেজিস্ট্রারে CNAME রেকর্ড যোগ করুন <code className="px-1 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.625rem] font-mono">cname.vercel-dns.com</code></>
+                        ) : (
+                          <>DNS setup: Add CNAME record at your registrar pointing to <code className="px-1 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.625rem] font-mono">cname.vercel-dns.com</code></>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Save button */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="h-10 px-6 rounded-xl text-[0.8125rem] font-semibold border-none cursor-pointer flex items-center gap-2 disabled:opacity-50 text-white transition-all"
+          style={{ background: saved ? 'var(--green)' : 'linear-gradient(135deg, var(--brand), var(--brand-2))' }}
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <><CheckCircle size={14} />{isBn ? 'সংরক্ষিত!' : 'Saved!'}</> : <><Save size={14} />{isBn ? 'সংরক্ষণ করুন' : 'Save Changes'}</>}
+        </button>
+      </div>
+    </div>
+  )
 }
 
 function SettingsContent({ isBn }: { isBn: boolean }) {
@@ -100,7 +300,6 @@ function SettingsContent({ isBn }: { isBn: boolean }) {
           </div>
         </div>
         <div className="p-5 space-y-4">
-          {/* Email */}
           <div>
             <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 flex items-center gap-1.5">
               <Mail size={12} />
@@ -111,7 +310,6 @@ function SettingsContent({ isBn }: { isBn: boolean }) {
               className="w-full h-10 px-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]" />
           </div>
 
-          {/* Password */}
           <div>
             <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 flex items-center gap-1.5">
               <Lock size={12} />

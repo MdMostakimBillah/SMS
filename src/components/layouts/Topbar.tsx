@@ -939,7 +939,7 @@ export default React.memo(function Topbar() {
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   onClick={() => {
                     let role = user?.role
-                    let slug = sessionStorage.getItem('edutech_inst_slug')
+                    const slug = sessionStorage.getItem('edutech_inst_slug')
                     if (!role) {
                       try {
                         const stored = localStorage.getItem('edutech_user')

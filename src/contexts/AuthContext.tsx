@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import { authApi, setAuthToken, ApiError, API_BASE } from '@/lib/api'
 import { createSuperAdminToken, createSuperAdminUser } from '@/lib/adminAuth'
+import { nsGet, nsSet, nsRemove, migrateOldKeys } from '@/lib/storage'
 
 const VITE_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL as string) || 'admin@edutech.com'
 const VITE_PASSWORD = (import.meta.env.VITE_SUPER_ADMIN_PASSWORD as string) || 'Admin@123456'
@@ -101,19 +102,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null)
     setUser(null)
     loginTimestampRef.current = null
-    localStorage.removeItem('edutech_user')
-    localStorage.removeItem('edutech_institutionId')
-    localStorage.removeItem('edutech_institutionSubdomain')
+    nsRemove('user')
+    nsRemove('institutionId')
+    nsRemove('institutionSubdomain')
   }, [])
 
   // Restore user from localStorage (set by InstitutionLogin)
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('edutech_user')
+      const slug = sessionStorage.getItem('edutech_inst_slug')
+      if (slug) migrateOldKeys(slug)
+      const stored = nsGet('user')
       if (stored) {
         const parsed = JSON.parse(stored)
         if (parsed?.email && parsed?.role) {
-          const subdomain = parsed.subdomain || localStorage.getItem('edutech_institutionSubdomain') || null
+          const subdomain = parsed.subdomain || nsGet('institutionSubdomain') || null
           setUser({
             id: parsed.institutionId || 'super-admin',
             email: parsed.email,
@@ -244,6 +247,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearError = useCallback(() => setError(null), [])
 
   const setInstitutionUser = useCallback((email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string) => {
+    if (slug) {
+      sessionStorage.setItem('edutech_inst_slug', slug)
+    }
     setUser({
       id: institutionId,
       email,
@@ -254,11 +260,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       avatar: null,
       subdomain,
     })
-    localStorage.setItem('edutech_user', JSON.stringify({ email, role, name, institutionId, subdomain, slug }))
-    localStorage.setItem('edutech_institutionId', institutionId)
-    localStorage.setItem('edutech_institutionSubdomain', subdomain)
+    nsSet('user', JSON.stringify({ email, role, name, institutionId, subdomain, slug }))
+    nsSet('institutionId', institutionId)
+    nsSet('institutionSubdomain', subdomain)
     sessionStorage.setItem('edutech_inst_subdomain', subdomain)
-    if (slug) sessionStorage.setItem('edutech_inst_slug', slug)
   }, [])
 
   const ctxValue = useMemo(() => ({
