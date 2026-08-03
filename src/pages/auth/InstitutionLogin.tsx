@@ -13,45 +13,49 @@ const fallbackInstitutions: Institution[] = [
     id: 'INST-001', name: 'Sunrise Academy', nameBn: 'সানরাইজ একাডেমি',
     email: 'admin@sunrise.edu.bd', phone: '+880-1712-345678',
     address: 'Banani, Dhaka 1213', addressBn: 'বনানী, ঢাকা-১২১৩',
-    eiin: '123456', website: 'smsappbd.vercel.app/i/sunrise', subdomain: 'sunrise',
+    eiin: '123456', website: 'smsappbd.vercel.app/i/sunrise', subdomain: 'sunrise', slug: 'sunrise',
     status: 'active', package: { name: 'Premium', nameBn: 'প্রিমিয়াম', maxStudents: 400, maxTeachers: 40, maxClasses: 999, storageMB: 10240, price: 3000, duration: 30 },
     usedStorageMB: 4520, createdAt: '2024-08-15', lastLogin: '2026-07-30',
     logo: '', banner: '', brandColor: '#6366f1', brandName: 'Sunrise Academy',
     motto: 'Knowledge is Power', mottoBn: 'জ্ঞাই হলো শক্তি',
     startTime: '07:30', endTime: '14:30', optionalSubjects: [], sessions: ['2024-25', '2025-26'], password: 'Sunrise@2024',
+    accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
   },
   {
     id: 'INST-002', name: 'Dhaka International School', nameBn: 'ঢাকা ইন্টারন্যাশনাল স্কুল',
     email: 'info@dis.edu.bd', phone: '+880-1812-456789',
     address: 'Gulshan, Dhaka 1212', addressBn: 'গুলশান, ঢাকা-১২১২',
-    eiin: '234567', website: 'smsappbd.vercel.app/i/dis', subdomain: 'dis',
+    eiin: '234567', website: 'smsappbd.vercel.app/i/dis', subdomain: 'dis', slug: 'dis',
     status: 'active', package: { name: 'Enterprise', nameBn: 'এন্টারপ্রাইজ', maxStudents: 500, maxTeachers: 50, maxClasses: 999, storageMB: 20480, price: 3500, duration: 30 },
     usedStorageMB: 18750, createdAt: '2024-06-20', lastLogin: '2026-07-31',
     logo: '', banner: '', brandColor: '#3b82f6', brandName: 'DIS',
     motto: '', mottoBn: '', startTime: '08:00', endTime: '15:00',
     optionalSubjects: [], sessions: ['2024-25', '2025-26'], password: 'Dis@2024',
+    accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
   },
   {
     id: 'INST-003', name: 'Green Valley School', nameBn: 'গ্রিন ভ্যালি স্কুল',
     email: 'contact@greenvalley.edu.bd', phone: '+880-1912-567890',
     address: 'Uttara, Dhaka 1230', addressBn: 'উত্তরা, ঢাকা-১২৩০',
-    eiin: '345678', website: 'smsappbd.vercel.app/i/greenvalley', subdomain: 'greenvalley',
+    eiin: '345678', website: 'smsappbd.vercel.app/i/greenvalley', subdomain: 'greenvalley', slug: 'greenvalley',
     status: 'trial', package: { name: 'Standard', nameBn: 'স্ট্যান্ডার্ড', maxStudents: 250, maxTeachers: 30, maxClasses: 999, storageMB: 5120, price: 2200, duration: 30 },
     usedStorageMB: 340, createdAt: '2026-07-01', lastLogin: '2026-07-28',
     logo: '', banner: '', brandColor: '#22c55e', brandName: 'Green Valley',
     motto: '', mottoBn: '', startTime: '07:30', endTime: '14:00',
     optionalSubjects: [], sessions: ['2024-25', '2025-26'], password: 'GreenValley@2024',
+    accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
   },
   {
     id: 'INST-004', name: 'Rajshahi Collegiate School', nameBn: 'রাজশাহী কলেজিয়েট স্কুল',
     email: 'admin@rajshahi-cs.edu.bd', phone: '+880-1712-678901',
     address: 'Boalia, Rajshahi 6205', addressBn: 'বোয়ালিয়া, রাজশাহী-৬২০৫',
-    eiin: '456789', website: 'smsappbd.vercel.app/i/rajshahi-cs', subdomain: 'rajshahi-cs',
+    eiin: '456789', website: 'smsappbd.vercel.app/i/rajshahi-cs', subdomain: 'rajshahi-cs', slug: 'rajshahi-cs',
     status: 'suspended', package: { name: 'Basic', nameBn: 'বেসিক', maxStudents: 150, maxTeachers: 20, maxClasses: 999, storageMB: 2048, price: 1500, duration: 30 },
     usedStorageMB: 120, createdAt: '2025-11-10', lastLogin: '2026-05-15',
     logo: '', banner: '', brandColor: '#f59e0b', brandName: 'Rajshahi CS',
     motto: '', mottoBn: '', startTime: '08:00', endTime: '14:30',
     optionalSubjects: [], sessions: ['2024-25', '2025-26'], password: 'Rajshahi@2024',
+    accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
   },
 ]
 
@@ -159,16 +163,17 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
       if (email === institution.email && password === (institution.password || 'admin123')) {
         loadInstitutionData(institution)
         if (setInstitutionUser) {
-          setInstitutionUser(email, institution.name, 'admin', institution.id, institution.subdomain)
+          setInstitutionUser(email, institution.name, 'admin', institution.id, institution.subdomain, institution.slug)
         } else {
           localStorage.setItem('edutech_user', JSON.stringify({
-            email, role: 'admin', name: institution.name, institutionId: institution.id, subdomain: institution.subdomain
+            email, role: 'admin', name: institution.name, institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug
           }))
           localStorage.setItem('edutech_institutionId', institution.id)
           localStorage.setItem('edutech_institutionSubdomain', institution.subdomain)
           sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
+          sessionStorage.setItem('edutech_inst_slug', institution.slug)
         }
-        navigate(`/i/${institution.subdomain}/dashboard`)
+        navigate(`/i/${institution.slug}/admin/dashboard`)
         return
       }
 

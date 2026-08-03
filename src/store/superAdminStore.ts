@@ -14,6 +14,12 @@ export interface InstitutionPackage {
   duration: number
 }
 
+export interface InstitutionAccessModes {
+  pathBased: boolean
+  subdomainBased: boolean
+  customDomain: string
+}
+
 export interface Institution {
   id: string
   name: string
@@ -25,6 +31,7 @@ export interface Institution {
   eiin: string
   website: string
   subdomain: string
+  slug: string
   status: InstitutionStatus
   package: InstitutionPackage
   usedStorageMB: number
@@ -41,6 +48,7 @@ export interface Institution {
   optionalSubjects: string[]
   sessions: string[]
   password: string
+  accessModes: InstitutionAccessModes
 }
 
 export const PACKAGES: InstitutionPackage[] = [
@@ -114,6 +122,8 @@ const demoInstitutions: Institution[] = [
     optionalSubjects: [],
     sessions: ['2024-25', '2025-26'],
     password: 'Sunrise@2024',
+    slug: 'sunrise',
+    accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
   },
   {
     id: 'INST-002',
@@ -142,6 +152,8 @@ const demoInstitutions: Institution[] = [
     optionalSubjects: [],
     sessions: ['2024-25', '2025-26'],
     password: 'Dis@2024',
+    slug: 'dis',
+    accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
   },
   {
     id: 'INST-003',
@@ -170,6 +182,8 @@ const demoInstitutions: Institution[] = [
     optionalSubjects: [],
     sessions: ['2024-25', '2025-26'],
     password: 'GreenValley@2024',
+    slug: 'greenvalley',
+    accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
   },
   {
     id: 'INST-004',
@@ -198,6 +212,8 @@ const demoInstitutions: Institution[] = [
     optionalSubjects: [],
     sessions: ['2024-25', '2025-26'],
     password: 'Rajshahi@2024',
+    slug: 'rajshahi-cs',
+    accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
   },
 ]
 

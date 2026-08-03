@@ -28,6 +28,8 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSubdomain } from '@/hooks/useSubdomain'
+import { getNavBase } from '@/lib/navUtils'
 import { LOGIN_PATH } from '@/lib/constants'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
@@ -136,6 +138,8 @@ const demoMessages = [
 export default React.memo(function Topbar() {
   const navigate = useNavigate()
   const { logout, user } = useAuth()
+  const { resolved } = useSubdomain()
+  const navBase = getNavBase(user, resolved)
   const theme = useAppStore((s) => s.theme)
   const language = useAppStore((s) => s.language)
   const setTheme = useAppStore((s) => s.setTheme)
@@ -783,19 +787,19 @@ export default React.memo(function Topbar() {
                     icon: <LayoutDashboard size={14} />,
                     labelEn: 'Dashboard',
                     labelBn: 'ড্যাশবোর্ড',
-                    path: '/dashboard',
+                    path: `${navBase}/dashboard`,
                   },
                   {
                     icon: <Users size={14} />,
                     labelEn: 'Students',
                     labelBn: 'ছাত্র',
-                    path: '/students',
+                    path: `${navBase}/students`,
                   },
                   {
                     icon: <ClipboardCheck size={14} />,
                     labelEn: 'Attendance',
                     labelBn: 'উপস্থিতি',
-                    path: '/attendance',
+                    path: `${navBase}/attendance`,
                   },
                 ].map((item) => (
                   <div
@@ -934,22 +938,20 @@ export default React.memo(function Topbar() {
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   onClick={() => {
-                    // Read from localStorage BEFORE logout clears it
                     let role = user?.role
-                    let subdomain = user?.subdomain
-                    if (!role || !subdomain) {
+                    let slug = sessionStorage.getItem('edutech_inst_slug')
+                    if (!role) {
                       try {
                         const stored = localStorage.getItem('edutech_user')
                         if (stored) {
                           const parsed = JSON.parse(stored)
                           role = role || parsed?.role
-                          subdomain = subdomain || parsed?.subdomain || localStorage.getItem('edutech_institutionSubdomain')
                         }
                       } catch { /* ignore */ }
                     }
                     logout()
-                    if (role === 'admin' && subdomain) {
-                      navigate(`/i/${subdomain}`)
+                    if (role === 'admin' && slug) {
+                      navigate(`/i/${slug}`)
                     } else {
                       navigate(LOGIN_PATH)
                     }

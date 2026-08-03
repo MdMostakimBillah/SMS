@@ -145,6 +145,7 @@ export default function CreateSchool() {
       eiin: form.eiin,
       website: subdomain ? `${BASE_URL}/i/${subdomain}` : BASE_URL,
       subdomain: subdomain || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      slug: subdomain || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       status: 'active',
       package: form.package,
       usedStorageMB: 0,
@@ -161,6 +162,7 @@ export default function CreateSchool() {
       optionalSubjects: form.optionalSubjects,
       sessions: form.sessions,
       password: form.adminPassword,
+      accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
     }
     addInstitution(inst)
     setCreated(true)

@@ -39,6 +39,8 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAppStore } from '@/store/appStore'
 import { useClassStore } from '@/store/classStore'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSubdomain } from '@/hooks/useSubdomain'
+import { getNavBase } from '@/lib/navUtils'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
 
@@ -89,7 +91,9 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
   const switchSession = useClassStore((s) => s.switchSession)
   const addSession = useClassStore((s) => s.addSession)
   const { user } = useAuth()
+  const { resolved } = useSubdomain()
   const isSuperAdmin = user?.role === 'super_admin'
+  const navBase = getNavBase(user, resolved)
   const [showSessionDropdown, setShowSessionDropdown] = useState(false)
   const [newSession, setNewSession] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -141,74 +145,74 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
   const navGroups = useMemo(() => [
     {
       key: 'grp_main',
-      items: [{ key: 'nav_dashboard', page: '/dashboard', icon: 'layout-dashboard' }],
+      items: [{ key: 'nav_dashboard', page: `${navBase}/dashboard`, icon: 'layout-dashboard' }],
     },
     {
       key: 'grp_manage',
       items: [
-        { key: 'nav_classes', page: '/classes', icon: 'school' },
-        { key: 'nav_teachers', page: '/teachers', icon: 'graduation-cap' },
-        { key: 'nav_students', page: '/students', icon: 'users' },
-        { key: 'nav_hr', page: '/hr', icon: 'briefcase' },
+        { key: 'nav_classes', page: `${navBase}/classes`, icon: 'school' },
+        { key: 'nav_teachers', page: `${navBase}/teachers`, icon: 'graduation-cap' },
+        { key: 'nav_students', page: `${navBase}/students`, icon: 'users' },
+        { key: 'nav_hr', page: `${navBase}/hr`, icon: 'briefcase' },
       ],
     },
     {
       key: 'grp_academic',
       items: [
-        { key: 'nav_attendance', page: '/attendance', icon: 'calendar-check' },
-        { key: 'nav_exams', page: '/exams', icon: 'clipboard-list' },
-        { key: 'nav_syllabus', page: '/syllabus', icon: 'book-open' },
-        { key: 'nav_assignments', page: '/assignments', icon: 'file-text' },
-        { key: 'nav_online', page: '/online', icon: 'video' },
+        { key: 'nav_attendance', page: `${navBase}/attendance`, icon: 'calendar-check' },
+        { key: 'nav_exams', page: `${navBase}/exams`, icon: 'clipboard-list' },
+        { key: 'nav_syllabus', page: `${navBase}/syllabus`, icon: 'book-open' },
+        { key: 'nav_assignments', page: `${navBase}/assignments`, icon: 'file-text' },
+        { key: 'nav_online', page: `${navBase}/online`, icon: 'video' },
       ],
     },
     {
       key: 'grp_finance',
       items: [
-        { key: 'nav_finance', page: '/finance', icon: 'landmark' },
-        { key: 'nav_payroll', page: '/payroll', icon: 'wallet' },
-        { key: 'nav_store', page: '/store', icon: 'shopping-bag' },
-        { key: 'nav_expenses', page: '/expenses', icon: 'receipt' },
+        { key: 'nav_finance', page: `${navBase}/finance`, icon: 'landmark' },
+        { key: 'nav_payroll', page: `${navBase}/payroll`, icon: 'wallet' },
+        { key: 'nav_store', page: `${navBase}/store`, icon: 'shopping-bag' },
+        { key: 'nav_expenses', page: `${navBase}/expenses`, icon: 'receipt' },
       ],
     },
     {
       key: 'grp_facility',
       items: [
-        { key: 'nav_library', page: '/library', icon: 'library' },
-        { key: 'nav_transport', page: '/transport', icon: 'bus' },
-        { key: 'nav_hostel', page: '/hostel', icon: 'building-2' },
+        { key: 'nav_library', page: `${navBase}/library`, icon: 'library' },
+        { key: 'nav_transport', page: `${navBase}/transport`, icon: 'bus' },
+        { key: 'nav_hostel', page: `${navBase}/hostel`, icon: 'building-2' },
       ],
     },
     {
       key: 'grp_comm',
       items: [
-        { key: 'nav_messages', page: '/messages', icon: 'message-circle' },
-        { key: 'nav_notice', page: '/notice', icon: 'megaphone' },
-        { key: 'nav_notifications', page: '/notifications', icon: 'bell' },
+        { key: 'nav_messages', page: `${navBase}/messages`, icon: 'message-circle' },
+        { key: 'nav_notice', page: `${navBase}/notice`, icon: 'megaphone' },
+        { key: 'nav_notifications', page: `${navBase}/notifications`, icon: 'bell' },
       ],
     },
     {
       key: 'grp_portal',
       items: [
-        { key: 'nav_parent', page: '/parent-portal', icon: 'home' },
-        { key: 'nav_student_portal', page: '/student-portal', icon: 'user' },
+        { key: 'nav_parent', page: `${navBase}/parent-portal`, icon: 'home' },
+        { key: 'nav_student_portal', page: `${navBase}/student-portal`, icon: 'user' },
       ],
     },
     {
       key: 'grp_report',
       items: [
-        { key: 'nav_analytics', page: '/analytics', icon: 'bar-chart-2' },
-        { key: 'nav_reports', page: '/reports', icon: 'file-bar-chart' },
+        { key: 'nav_analytics', page: `${navBase}/analytics`, icon: 'bar-chart-2' },
+        { key: 'nav_reports', page: `${navBase}/reports`, icon: 'file-bar-chart' },
       ],
     },
     {
       key: 'grp_system',
       items: [
-        { key: 'nav_settings', page: '/settings', icon: 'settings' },
+        { key: 'nav_settings', page: `${navBase}/settings`, icon: 'settings' },
         ...(isSuperAdmin ? [{ key: 'nav_superadmin', page: '/super-admin', icon: 'crown' }] : []),
       ],
     },
-  ], [isSuperAdmin])
+  ], [isSuperAdmin, navBase])
 
   // Apply custom sidebar order
   type NavItem = { key: string; page: string }

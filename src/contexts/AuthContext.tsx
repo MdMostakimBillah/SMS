@@ -23,7 +23,7 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, name: string, role?: string) => Promise<void>
-  setInstitutionUser: (email: string, name: string, role: string, institutionId: string, subdomain: string) => void
+  setInstitutionUser: (email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string) => void
   logout: () => void
   error: string | null
   clearError: () => void
@@ -243,7 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), [])
 
-  const setInstitutionUser = useCallback((email: string, name: string, role: string, institutionId: string, subdomain: string) => {
+  const setInstitutionUser = useCallback((email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string) => {
     setUser({
       id: institutionId,
       email,
@@ -254,10 +254,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       avatar: null,
       subdomain,
     })
-    localStorage.setItem('edutech_user', JSON.stringify({ email, role, name, institutionId, subdomain }))
+    localStorage.setItem('edutech_user', JSON.stringify({ email, role, name, institutionId, subdomain, slug }))
     localStorage.setItem('edutech_institutionId', institutionId)
     localStorage.setItem('edutech_institutionSubdomain', subdomain)
     sessionStorage.setItem('edutech_inst_subdomain', subdomain)
+    if (slug) sessionStorage.setItem('edutech_inst_slug', slug)
   }, [])
 
   const ctxValue = useMemo(() => ({

@@ -1,27 +1,31 @@
-import { lazy, Suspense, useContext } from 'react'
-import { useParams } from 'react-router-dom'
+import { lazy, Suspense, useContext, useMemo } from 'react'
+import { useParams, Navigate } from 'react-router-dom'
 import { AuthContext } from '@/contexts/AuthContext'
+import { useSuperAdminStore } from '@/store/superAdminStore'
+import { fallbackInstitutions } from '@/hooks/useSubdomain'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 const InstitutionLogin = lazy(() => import('@/pages/auth/InstitutionLogin'))
-const DashboardPage = lazy(() => import('@/pages/dashboard'))
 
 export default function InstitutionLoginRoute() {
-  const { subdomain } = useParams<{ subdomain: string }>()
+  const { slug } = useParams<{ slug: string }>()
   const authCtx = useContext(AuthContext)
   const user = authCtx?.user
+  const storeInstitutions = useSuperAdminStore((s) => s.institutions)
 
-  if (user && user.subdomain === subdomain) {
-    return (
-      <Suspense fallback={<LoadingSpinner />}>
-        <DashboardPage />
-      </Suspense>
-    )
+  const institution = useMemo(() => {
+    const all = storeInstitutions.length > 0 ? storeInstitutions : fallbackInstitutions
+    return all.find((i) => i.slug === slug) || null
+  }, [slug, storeInstitutions])
+
+  if (user && institution && user.subdomain === institution.subdomain) {
+    const role = user.role === 'super_admin' ? 'admin' : user.role
+    return <Navigate to={`/i/${slug}/${role}/dashboard`} replace />
   }
 
   return (
     <Suspense fallback={<LoadingSpinner />}>
-      <InstitutionLogin subdomain={subdomain || ''} />
+      <InstitutionLogin subdomain={institution?.subdomain || slug || ''} />
     </Suspense>
   )
 }

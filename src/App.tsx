@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useParams } from 'react-router-dom'
 import AppLayout from '@/components/layouts/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
@@ -56,127 +56,117 @@ const F = ({ children }: { children: React.ReactNode }) => (
   <ErrorBoundary><Suspense fallback={<LoadingSpinner />}>{children}</Suspense></ErrorBoundary>
 )
 
-function AppContent() {
-  const { isSubdomain, institution } = useSubdomain()
-  const isPathBased = window.location.pathname.startsWith('/i/')
+function LegacyDashboardRedirect() {
+  const { subdomain } = useParams<{ subdomain: string }>()
+  if (subdomain) return <Navigate to={`/i/${subdomain}/admin/dashboard`} replace />
+  return <Navigate to="/admin/dashboard" replace />
+}
 
-  if (isSubdomain && institution && !isPathBased) {
-    return (
-      <Suspense fallback={<LoadingSpinner />}>
-        <InstitutionLogin institution={institution} />
-      </Suspense>
-    )
+function LegacyStudentsRedirect() {
+  const { subdomain } = useParams<{ subdomain: string }>()
+  if (subdomain) return <Navigate to={`/i/${subdomain}/admin/students`} replace />
+  return <Navigate to="/admin/students" replace />
+}
+
+function AppContent() {
+  const { isSubdomain, institution, resolved } = useSubdomain()
+
+  if (isSubdomain && institution && resolved) {
+    if (resolved.mode === 'subdomain' || resolved.mode === 'custom-domain') {
+      return (
+        <Suspense fallback={<LoadingSpinner />}>
+          <InstitutionLogin institution={institution} />
+        </Suspense>
+      )
+    }
   }
 
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/i/:subdomain" element={<F><InstitutionLoginRoute /></F>} />
+        <Route path="/i/:slug" element={<F><InstitutionLoginRoute /></F>} />
+
         <Route element={<AuthRoute />}>
           <Route path={LOGIN_PATH} element={<F><LoginPage /></F>} />
           <Route path="/register" element={<F><RegisterPage /></F>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Route>
+
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
-            <Route path="/dashboard" element={<F><DashboardPage /></F>} />
-            <Route path="/i/:subdomain/dashboard" element={<F><DashboardPage /></F>} />
-            <Route path="/students" element={<F><StudentsPage /></F>} />
-            <Route path="/i/:subdomain/students/*" element={<F><StudentsPage /></F>} />
-            <Route path="/teachers" element={<F><TeachersPage /></F>} />
-            <Route path="/i/:subdomain/teachers/*" element={<F><TeachersPage /></F>} />
-            <Route path="/classes" element={<F><ClassesPage /></F>} />
-            <Route path="/i/:subdomain/classes" element={<F><ClassesPage /></F>} />
-            <Route path="/hr" element={<F><HRPage /></F>} />
-            <Route path="/i/:subdomain/hr" element={<F><HRPage /></F>} />
-            <Route path="/attendance" element={<F><AttendancePage /></F>} />
-            <Route path="/i/:subdomain/attendance" element={<F><AttendancePage /></F>} />
-            <Route path="/exams" element={<F><ExamDashboard /></F>} />
-            <Route path="/i/:subdomain/exams/*" element={<F><ExamDashboard /></F>} />
-            <Route path="/syllabus" element={<F><SyllabusPage /></F>} />
-            <Route path="/i/:subdomain/syllabus" element={<F><SyllabusPage /></F>} />
-            <Route path="/assignments" element={<F><AssignmentsPage /></F>} />
-            <Route path="/i/:subdomain/assignments" element={<F><AssignmentsPage /></F>} />
-            <Route path="/online" element={<F><OnlineClassesPage /></F>} />
-            <Route path="/i/:subdomain/online" element={<F><OnlineClassesPage /></F>} />
-            <Route path="/finance" element={<F><FinancePage /></F>} />
-            <Route path="/i/:subdomain/finance" element={<F><FinancePage /></F>} />
-            <Route path="/payroll" element={<F><PayrollPage /></F>} />
-            <Route path="/i/:subdomain/payroll" element={<F><PayrollPage /></F>} />
-            <Route path="/store" element={<P name="School Store" />} />
-            <Route path="/i/:subdomain/store" element={<P name="School Store" />} />
-            <Route path="/expenses" element={<P name="Expenses" />} />
-            <Route path="/i/:subdomain/expenses" element={<P name="Expenses" />} />
-            <Route path="/library" element={<P name="Library" />} />
-            <Route path="/i/:subdomain/library" element={<P name="Library" />} />
-            <Route path="/transport" element={<P name="Transport" />} />
-            <Route path="/i/:subdomain/transport" element={<P name="Transport" />} />
-            <Route path="/hostel" element={<P name="Hostel" />} />
-            <Route path="/i/:subdomain/hostel" element={<P name="Hostel" />} />
-            <Route path="/messages" element={<P name="Messages" />} />
-            <Route path="/i/:subdomain/messages" element={<P name="Messages" />} />
-            <Route path="/notice" element={<P name="Notice Board" />} />
-            <Route path="/i/:subdomain/notice" element={<P name="Notice Board" />} />
-            <Route path="/notifications" element={<P name="Notifications" />} />
-            <Route path="/i/:subdomain/notifications" element={<P name="Notifications" />} />
-            <Route path="/parent-portal" element={<P name="Parent Portal" />} />
-            <Route path="/i/:subdomain/parent-portal" element={<P name="Parent Portal" />} />
-            <Route path="/student-portal" element={<P name="Student Portal" />} />
-            <Route path="/i/:subdomain/student-portal" element={<P name="Student Portal" />} />
-            <Route path="/analytics" element={<P name="Analytics" />} />
-            <Route path="/i/:subdomain/analytics" element={<P name="Analytics" />} />
-            <Route path="/reports" element={<P name="Reports" />} />
-            <Route path="/i/:subdomain/reports" element={<P name="Reports" />} />
-            <Route path="/settings" element={<P name="Settings" />} />
-            <Route path="/i/:subdomain/settings" element={<P name="Settings" />} />
-            <Route path="/students/admission" element={<F><StudentAdmission /></F>} />
-            <Route path="/i/:subdomain/students/admission" element={<F><StudentAdmission /></F>} />
-            <Route path="/students/all" element={<F><AllStudentsPage /></F>} />
-            <Route path="/i/:subdomain/students/all" element={<F><AllStudentsPage /></F>} />
-            <Route path="/students/update" element={<F><UpdateStudentPage /></F>} />
-            <Route path="/i/:subdomain/students/update" element={<F><UpdateStudentPage /></F>} />
-            <Route path="/students/bulk-update" element={<F><BulkUpdatePage /></F>} />
-            <Route path="/i/:subdomain/students/bulk-update" element={<F><BulkUpdatePage /></F>} />
-            <Route path="/students/id-cards" element={<F><IDCardsPage /></F>} />
-            <Route path="/i/:subdomain/students/id-cards" element={<F><IDCardsPage /></F>} />
-            <Route path="/students/promotion" element={<F><PromotionPage /></F>} />
-            <Route path="/i/:subdomain/students/promotion" element={<F><PromotionPage /></F>} />
-            <Route path="/teachers/add" element={<F><AddTeacherPage /></F>} />
-            <Route path="/i/:subdomain/teachers/add" element={<F><AddTeacherPage /></F>} />
-            <Route path="/teachers/all" element={<F><AllTeachersPage /></F>} />
-            <Route path="/i/:subdomain/teachers/all" element={<F><AllTeachersPage /></F>} />
-            <Route path="/teachers/all/:id" element={<F><TeacherDetailPage /></F>} />
-            <Route path="/i/:subdomain/teachers/all/:id" element={<F><TeacherDetailPage /></F>} />
-            <Route path="/teachers/edit/:id" element={<F><EditTeacherPage /></F>} />
-            <Route path="/i/:subdomain/teachers/edit/:id" element={<F><EditTeacherPage /></F>} />
-            <Route path="/teachers/bulk-update" element={<F><TeacherBulkUpdatePage /></F>} />
-            <Route path="/i/:subdomain/teachers/bulk-update" element={<F><TeacherBulkUpdatePage /></F>} />
-            <Route path="/teachers/departments" element={<F><DepartmentsPage /></F>} />
-            <Route path="/i/:subdomain/teachers/departments" element={<F><DepartmentsPage /></F>} />
-            <Route path="/teachers/subjects" element={<F><SubjectsPage /></F>} />
-            <Route path="/i/:subdomain/teachers/subjects" element={<F><SubjectsPage /></F>} />
-            <Route path="/teachers/designations" element={<F><DesignationsPage /></F>} />
-            <Route path="/i/:subdomain/teachers/designations" element={<F><DesignationsPage /></F>} />
-            <Route path="/exams/planning" element={<F><Step1Planning /></F>} />
-            <Route path="/i/:subdomain/exams/planning" element={<F><Step1Planning /></F>} />
-            <Route path="/exams/scheduling" element={<F><Step2Schedule /></F>} />
-            <Route path="/i/:subdomain/exams/scheduling" element={<F><Step2Schedule /></F>} />
-            <Route path="/exams/evaluation" element={<F><Step3Evaluation /></F>} />
-            <Route path="/i/:subdomain/exams/evaluation" element={<F><Step3Evaluation /></F>} />
-            <Route path="/exams/results" element={<F><Step4Results /></F>} />
-            <Route path="/i/:subdomain/exams/results" element={<F><Step4Results /></F>} />
-            <Route path="/exams/marksheet" element={<F><Step5Marksheet /></F>} />
-            <Route path="/i/:subdomain/exams/marksheet" element={<F><Step5Marksheet /></F>} />
-            <Route path="/exams/omr" element={<F><OMRSheetPage /></F>} />
-            <Route path="/i/:subdomain/exams/omr" element={<F><OMRSheetPage /></F>} />
+            <Route path="/dashboard" element={<LegacyDashboardRedirect />} />
+            <Route path="/students" element={<LegacyStudentsRedirect />} />
+            <Route path="/teachers" element={<Navigate to="/admin/teachers" replace />} />
+            <Route path="/classes" element={<Navigate to="/admin/classes" replace />} />
+            <Route path="/hr" element={<Navigate to="/admin/hr" replace />} />
+            <Route path="/attendance" element={<Navigate to="/admin/attendance" replace />} />
+            <Route path="/exams" element={<Navigate to="/admin/exams" replace />} />
+            <Route path="/syllabus" element={<Navigate to="/admin/syllabus" replace />} />
+            <Route path="/assignments" element={<Navigate to="/admin/assignments" replace />} />
+            <Route path="/online" element={<Navigate to="/admin/online" replace />} />
+            <Route path="/finance" element={<Navigate to="/admin/finance" replace />} />
+            <Route path="/payroll" element={<Navigate to="/admin/payroll" replace />} />
+            <Route path="/settings" element={<Navigate to="/admin/settings" replace />} />
           </Route>
         </Route>
+
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/:role/dashboard" element={<F><DashboardPage /></F>} />
+            <Route path="/:role/students" element={<F><StudentsPage /></F>} />
+            <Route path="/:role/students/admission" element={<F><StudentAdmission /></F>} />
+            <Route path="/:role/students/all" element={<F><AllStudentsPage /></F>} />
+            <Route path="/:role/students/update" element={<F><UpdateStudentPage /></F>} />
+            <Route path="/:role/students/bulk-update" element={<F><BulkUpdatePage /></F>} />
+            <Route path="/:role/students/id-cards" element={<F><IDCardsPage /></F>} />
+            <Route path="/:role/students/promotion" element={<F><PromotionPage /></F>} />
+            <Route path="/:role/teachers" element={<F><TeachersPage /></F>} />
+            <Route path="/:role/teachers/add" element={<F><AddTeacherPage /></F>} />
+            <Route path="/:role/teachers/all" element={<F><AllTeachersPage /></F>} />
+            <Route path="/:role/teachers/all/:id" element={<F><TeacherDetailPage /></F>} />
+            <Route path="/:role/teachers/edit/:id" element={<F><EditTeacherPage /></F>} />
+            <Route path="/:role/teachers/bulk-update" element={<F><TeacherBulkUpdatePage /></F>} />
+            <Route path="/:role/teachers/departments" element={<F><DepartmentsPage /></F>} />
+            <Route path="/:role/teachers/subjects" element={<F><SubjectsPage /></F>} />
+            <Route path="/:role/teachers/designations" element={<F><DesignationsPage /></F>} />
+            <Route path="/:role/classes" element={<F><ClassesPage /></F>} />
+            <Route path="/:role/hr" element={<F><HRPage /></F>} />
+            <Route path="/:role/attendance" element={<F><AttendancePage /></F>} />
+            <Route path="/:role/exams" element={<F><ExamDashboard /></F>} />
+            <Route path="/:role/exams/planning" element={<F><Step1Planning /></F>} />
+            <Route path="/:role/exams/scheduling" element={<F><Step2Schedule /></F>} />
+            <Route path="/:role/exams/evaluation" element={<F><Step3Evaluation /></F>} />
+            <Route path="/:role/exams/results" element={<F><Step4Results /></F>} />
+            <Route path="/:role/exams/marksheet" element={<F><Step5Marksheet /></F>} />
+            <Route path="/:role/exams/omr" element={<F><OMRSheetPage /></F>} />
+            <Route path="/:role/syllabus" element={<F><SyllabusPage /></F>} />
+            <Route path="/:role/assignments" element={<F><AssignmentsPage /></F>} />
+            <Route path="/:role/online" element={<F><OnlineClassesPage /></F>} />
+            <Route path="/:role/finance" element={<F><FinancePage /></F>} />
+            <Route path="/:role/payroll" element={<F><PayrollPage /></F>} />
+            <Route path="/:role/store" element={<P name="School Store" />} />
+            <Route path="/:role/expenses" element={<P name="Expenses" />} />
+            <Route path="/:role/library" element={<P name="Library" />} />
+            <Route path="/:role/transport" element={<P name="Transport" />} />
+            <Route path="/:role/hostel" element={<P name="Hostel" />} />
+            <Route path="/:role/messages" element={<P name="Messages" />} />
+            <Route path="/:role/notice" element={<P name="Notice Board" />} />
+            <Route path="/:role/notifications" element={<P name="Notifications" />} />
+            <Route path="/:role/parent-portal" element={<P name="Parent Portal" />} />
+            <Route path="/:role/student-portal" element={<P name="Student Portal" />} />
+            <Route path="/:role/analytics" element={<P name="Analytics" />} />
+            <Route path="/:role/reports" element={<P name="Reports" />} />
+            <Route path="/:role/settings" element={<P name="Settings" />} />
+          </Route>
+        </Route>
+
         <Route element={<RoleProtectedRoute allowedRoles={['super_admin']} />}>
           <Route element={<AppLayout />}>
             <Route path="/super-admin" element={<F><SuperAdminPage /></F>} />
             <Route path="/super-admin/:subpage" element={<F><SuperAdminPage /></F>} />
           </Route>
         </Route>
+
         <Route path="*" element={<F><NotFoundPage /></F>} />
       </Routes>
     </AuthProvider>
