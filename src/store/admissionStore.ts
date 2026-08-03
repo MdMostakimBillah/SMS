@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { useMemo } from 'react'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { useClassStore } from './classStore'
+import { getStorageKey } from '@/lib/storage'
 
 function normalizeClassName(raw: string, classes: { id: string; name: string }[]): string {
   if (!raw) return raw
@@ -98,7 +99,7 @@ export const useAdmissionStore = create<AdmissionState>()(
       },
     }),
     {
-      name: 'edutech-admissions',
+      name: getStorageKey('edutech-admissions'),
       version: 4,
       migrate: (persistedState: any, version: number) => {
         if (version < 3) {

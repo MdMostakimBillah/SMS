@@ -8,6 +8,7 @@ import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 import { nsSet, migrateOldKeys } from '@/lib/storage'
+import { resetAllInstitutionStores } from '@/lib/resetStores'
 
 const fallbackInstitutions: Institution[] = [
   {
@@ -162,10 +163,11 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
       }
 
       if (email === institution.email && password === (institution.password || 'admin123')) {
-        loadInstitutionData(institution)
         sessionStorage.setItem('edutech_inst_slug', institution.slug)
         sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
         migrateOldKeys(institution.slug)
+        resetAllInstitutionStores()
+        loadInstitutionData(institution)
         if (setInstitutionUser) {
           setInstitutionUser(email, institution.name, 'admin', institution.id, institution.subdomain, institution.slug)
         } else {

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { getStorageKey } from '@/lib/storage'
 
 export type Platform = 'youtube' | 'facebook' | 'google-meet' | 'zoom' | 'other'
 export type ClassStatus = 'scheduled' | 'live' | 'ended'
@@ -71,70 +72,10 @@ export const platformLabels: Record<Platform, { en: string; bn: string }> = {
   other: { en: 'Other', bn: 'অন্যান্য' },
 }
 
-const sampleClasses: OnlineClass[] = [
-  {
-    id: 'OC-001',
-    title: 'Mathematics - Algebra Basics',
-    titleBn: 'গণিত - বীজগণিতের মূল ভিত্তি',
-    description: 'Introduction to algebraic expressions and equations',
-    descriptionBn: 'বীজগণিতীয় সূত্র ও সমীকরণের ভূমিকা',
-    classId: 'CLS-1',
-    sectionId: 'SEC-A',
-    subjectId: 'SUB-MATH',
-    teacherId: 'TCH-001',
-    url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    platform: 'youtube',
-    thumbnailUrl: '',
-    scheduledAt: new Date().toISOString(),
-    status: 'live',
-    createdBy: 'admin',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'OC-002',
-    title: 'English Grammar - Tenses',
-    titleBn: 'ইংরেজি ব্যাকরণ - টেন্স',
-    description: 'Past, present and future tense explained',
-    descriptionBn: 'অতীত, বর্তমান ও ভবিষ্যৎ কাল',
-    classId: 'CLS-2',
-    sectionId: 'SEC-B',
-    subjectId: 'SUB-ENG',
-    teacherId: 'TCH-002',
-    url: 'https://www.youtube.com/watch?v=abc123',
-    platform: 'youtube',
-    thumbnailUrl: '',
-    scheduledAt: new Date(Date.now() - 86400000).toISOString(),
-    status: 'ended',
-    createdBy: 'admin',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: 'OC-003',
-    title: 'Physics - Newton\'s Laws',
-    titleBn: 'পদার্থবিজ্ঞান - নিউটনের সূত্র',
-    description: 'Understanding Newton\'s three laws of motion',
-    descriptionBn: 'নিউটনের তিনটি গতির সূত্র বোঝা',
-    classId: 'CLS-3',
-    sectionId: 'SEC-A',
-    subjectId: 'SUB-PHYS',
-    teacherId: 'TCH-003',
-    url: 'https://www.facebook.com/watch/live/example',
-    platform: 'facebook',
-    thumbnailUrl: '',
-    scheduledAt: new Date(Date.now() - 172800000).toISOString(),
-    status: 'ended',
-    createdBy: 'admin',
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    updatedAt: new Date(Date.now() - 172800000).toISOString(),
-  },
-]
-
 export const useOnlineStore = create<OnlineState>()(
   persist(
     (set) => ({
-      classes: sampleClasses,
+      classes: [],
       addClass: (c) =>
         set((s) => ({
           classes: [
@@ -149,7 +90,7 @@ export const useOnlineStore = create<OnlineState>()(
       deleteClass: (id) => set((s) => ({ classes: s.classes.filter((c) => c.id !== id) })),
     }),
     {
-      name: 'edutech-online',
+      name: getStorageKey('edutech-online'),
       onRehydrateStorage: () => (state) => {
         if (!state) return
         const fixed = state.classes.map((c) => {

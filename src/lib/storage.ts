@@ -8,6 +8,11 @@ function getSlug(): string | null {
   }
 }
 
+export function getStorageKey(base: string): string {
+  const slug = getSlug()
+  return slug ? `${base}_${slug}` : base
+}
+
 export function nsKey(key: string): string {
   const slug = getSlug()
   return slug ? `${STORAGE_PREFIX}_${key}_${slug}` : `${STORAGE_PREFIX}_${key}`

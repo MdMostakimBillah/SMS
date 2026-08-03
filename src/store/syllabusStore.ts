@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { getStorageKey } from '@/lib/storage'
 
 export interface SyllabusTopic {
   id: string
@@ -71,167 +72,11 @@ function recalcStats(chapters: SyllabusChapter[]) {
   return { totalChapters: chapters.length, totalTopics, completedTopics }
 }
 
-const demoSyllabi: SyllabusEntry[] = [
-  {
-    id: 'SYL-001',
-    classId: '6',
-    sectionId: 'A',
-    subjectId: 'SUB-001',
-    sessionId: '2025-26',
-    totalChapters: 2,
-    totalTopics: 5,
-    completedTopics: 2,
-    createdAt: '2025-01-01',
-    updatedAt: '2025-01-01',
-    chapters: [
-      {
-        id: 'CH-001',
-        title: 'Force & Motion',
-        titleBn: 'বল ও গতি',
-        description: 'Introduction to forces and types of motion',
-        descriptionBn: 'বল ও গতির ধরন পরিচিতি',
-        order: 1,
-        topics: [
-          {
-            id: 'TP-001',
-            title: 'Types of Force',
-            titleBn: 'বলের প্রকারভেদ',
-            description: 'Contact and non-contact forces',
-            descriptionBn: 'স্পর্শ ও অস্পর্শ বল',
-            marks: 10,
-            status: 'completed',
-            weekNo: 1,
-            startDate: '2025-01-05',
-            endDate: '2025-01-11',
-          },
-          {
-            id: 'TP-002',
-            title: "Newton's Laws",
-            titleBn: 'নিউটনের সূত্র',
-            description: 'Three laws of motion',
-            descriptionBn: 'গতির তিনটি সূত্র',
-            marks: 15,
-            status: 'completed',
-            weekNo: 2,
-            startDate: '2025-01-12',
-            endDate: '2025-01-18',
-          },
-          {
-            id: 'TP-003',
-            title: 'Friction',
-            titleBn: '�র্ষণ',
-            description: 'Types and effects of friction',
-            descriptionBn: 'ঘর্ষণের ধরন ও প্রভাব',
-            marks: 10,
-            status: 'in-progress',
-            weekNo: 3,
-            startDate: '2025-01-19',
-            endDate: '2025-01-25',
-          },
-        ],
-      },
-      {
-        id: 'CH-002',
-        title: 'Energy',
-        titleBn: 'শক্তি',
-        description: 'Forms and conservation of energy',
-        descriptionBn: 'শক্তির রূপ ও সংরক্ষণ',
-        order: 2,
-        topics: [
-          {
-            id: 'TP-004',
-            title: 'Kinetic & Potential Energy',
-            titleBn: 'গতিশক্তি ও স্থিতিশক্তি',
-            description: 'Understanding different forms of energy',
-            descriptionBn: 'শক্তির বিভিন্ন রূপ',
-            marks: 10,
-            status: 'pending',
-            weekNo: 4,
-            startDate: '2025-01-26',
-            endDate: '2025-02-01',
-          },
-          {
-            id: 'TP-005',
-            title: 'Conservation of Energy',
-            titleBn: 'শক্তির সংরক্ষণ',
-            description: 'Energy cannot be created or destroyed',
-            descriptionBn: 'শক্তি সৃষ্টি বা ধ্বংস করা যায় না',
-            marks: 10,
-            status: 'pending',
-            weekNo: 5,
-            startDate: '2025-02-02',
-            endDate: '2025-02-08',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'SYL-002',
-    classId: '6',
-    sectionId: 'B',
-    subjectId: 'SUB-003',
-    sessionId: '2025-26',
-    totalChapters: 1,
-    totalTopics: 3,
-    completedTopics: 1,
-    createdAt: '2025-01-01',
-    updatedAt: '2025-01-01',
-    chapters: [
-      {
-        id: 'CH-003',
-        title: 'Number System',
-        titleBn: 'সংখ্যা পদ্ধতি',
-        description: 'Whole numbers, fractions, decimals',
-        descriptionBn: 'পূর্ণ সংখ্যা, ভগ্নাংশ, দশমিক',
-        order: 1,
-        topics: [
-          {
-            id: 'TP-006',
-            title: 'Whole Numbers',
-            titleBn: 'পূর্ণ সংখ্যা',
-            description: 'Operations with whole numbers',
-            descriptionBn: 'পূর্ণ সংখ্যায় কার্যক্রম',
-            marks: 15,
-            status: 'completed',
-            weekNo: 1,
-            startDate: '2025-01-05',
-            endDate: '2025-01-11',
-          },
-          {
-            id: 'TP-007',
-            title: 'Fractions',
-            titleBn: 'ভগ্নাংশ',
-            description: 'Adding, subtracting, multiplying fractions',
-            descriptionBn: 'ভগ্নাংশের যোগ, বিয়োগ, গুণ',
-            marks: 15,
-            status: 'in-progress',
-            weekNo: 2,
-            startDate: '2025-01-12',
-            endDate: '2025-01-18',
-          },
-          {
-            id: 'TP-008',
-            title: 'Decimals',
-            titleBn: 'দশমিক',
-            description: 'Decimal numbers and operations',
-            descriptionBn: 'দশমিক সংখ্যা ও কার্যক্রম',
-            marks: 15,
-            status: 'pending',
-            weekNo: 3,
-            startDate: '2025-01-19',
-            endDate: '2025-01-25',
-          },
-        ],
-      },
-    ],
-  },
-]
 
 export const useSyllabusStore = create<SyllabusState>()(
   persist(
     (set, get) => ({
-      syllabi: demoSyllabi,
+      syllabi: [],
 
       addSyllabus: (entry) => {
         const id = `SYL-${Date.now()}`
@@ -367,6 +212,6 @@ export const useSyllabusStore = create<SyllabusState>()(
         return get().syllabi.find((s) => s.classId === classId && s.sectionId === sectionId && s.subjectId === subjectId)
       },
     }),
-    { name: 'edutech-syllabus', version: 1 }
+    { name: getStorageKey('edutech-syllabus'), version: 1 }
   )
 )

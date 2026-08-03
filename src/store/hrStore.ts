@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { getStorageKey } from '@/lib/storage'
 
 export interface IncrementRecord {
   id: string
@@ -137,237 +138,18 @@ interface HRState {
   upsertTeacherFacilities: (tfs: TeacherFacility[]) => void
 }
 
-function generateDemoDailyReports(): DailyReport[] {
-  const reports: DailyReport[] = []
-  const teacherIds = [
-    'TCH-2026-001',
-    'TCH-2026-002',
-    'TCH-2026-003',
-    'TCH-2026-004',
-    'TCH-2026-005',
-    'TCH-2026-006',
-    'TCH-2026-008',
-    'TCH-2026-009',
-    'TCH-2026-010',
-    'TCH-2026-011',
-    'TCH-2026-012',
-    'TCH-2026-014',
-    'TCH-2026-015',
-    'TCH-2026-016',
-    'TCH-2026-017',
-    'TCH-2026-018',
-  ]
-  const classIds = ['CLS-001', 'CLS-002', 'CLS-003', 'CLS-004', 'CLS-005', 'CLS-006', 'CLS-007', 'CLS-008']
-  const now = new Date()
-  for (let i = 1; i <= 28; i++) {
-    const d = new Date(now)
-    d.setDate(d.getDate() - i)
-    if (d.getDay() === 0) continue
-    const dateStr = d.toISOString().split('T')[0]
-    teacherIds.forEach((tid) => {
-      const submitted = Math.random() > 0.18
-      const studentCount = 25 + Math.floor(Math.random() * 20)
-      const avgScore = submitted ? 45 + Math.floor(Math.random() * 35) : 0
-      reports.push({
-        id: `DR-${tid}-${dateStr}`,
-        teacherId: tid,
-        date: dateStr,
-        submitted,
-        classId: classIds[Math.floor(Math.random() * classIds.length)],
-        studentCount,
-        avgScore,
-      })
-    })
-  }
-  return reports
-}
-
-function generateDemoRecommendations(): HRRecommendation[] {
-  const recs: HRRecommendation[] = [
-    {
-      id: 'REC-001',
-      teacherId: 'TCH-2026-001',
-      type: 'promotion',
-      score: 92,
-      reason: 'Consistent top performer, excellent student results',
-      status: 'pending',
-      createdAt: '2026-05-28',
-    },
-    {
-      id: 'REC-002',
-      teacherId: 'TCH-2026-008',
-      type: 'bonus',
-      score: 88,
-      reason: 'Outstanding homework submission rate and attendance',
-      status: 'pending',
-      createdAt: '2026-05-28',
-    },
-    {
-      id: 'REC-003',
-      teacherId: 'TCH-2026-004',
-      type: 'increment',
-      score: 85,
-      reason: 'High student performance scores consistently',
-      status: 'pending',
-      createdAt: '2026-05-27',
-    },
-    {
-      id: 'REC-004',
-      teacherId: 'TCH-2026-014',
-      type: 'bonus',
-      score: 82,
-      reason: 'Perfect daily report submission record',
-      status: 'approved',
-      createdAt: '2026-05-25',
-    },
-    {
-      id: 'REC-005',
-      teacherId: 'TCH-2026-005',
-      type: 'promotion',
-      score: 79,
-      reason: 'Good improvement in last quarter',
-      status: 'pending',
-      createdAt: '2026-05-26',
-    },
-  ]
-  return recs
-}
-
 export const useHRStore = create<HRState>()(
   persist(
     (set): HRState => ({
-      increments: [
-        {
-          id: 'INC-001',
-          teacherId: 'TCH-2026-001',
-          type: 'annual',
-          amount: 5000,
-          percentage: 8,
-          reason: 'Annual increment 2026',
-          date: '2026-01-01',
-          approvedBy: 'Admin',
-        },
-        {
-          id: 'INC-002',
-          teacherId: 'TCH-2026-008',
-          type: 'performance',
-          amount: 3000,
-          percentage: 5,
-          reason: 'Outstanding results',
-          date: '2026-06-01',
-          approvedBy: 'Admin',
-        },
-        {
-          id: 'INC-003',
-          teacherId: 'TCH-2026-014',
-          type: 'annual',
-          amount: 4500,
-          percentage: 8,
-          reason: 'Annual increment 2026',
-          date: '2026-01-01',
-          approvedBy: 'Admin',
-        },
-      ],
-      bonuses: [
-        {
-          id: 'BON-001',
-          teacherId: 'TCH-2026-001',
-          type: 'festival',
-          amount: 10000,
-          month: '2026-04',
-          reason: 'Eid Festival Bonus',
-          date: '2026-04-10',
-        },
-        {
-          id: 'BON-002',
-          teacherId: 'TCH-2026-008',
-          type: 'performance',
-          amount: 8000,
-          month: '2026-03',
-          reason: 'Best teacher of the month',
-          date: '2026-03-30',
-        },
-        {
-          id: 'BON-003',
-          teacherId: 'TCH-2026-014',
-          type: 'attendance',
-          amount: 5000,
-          month: '2026-02',
-          reason: '100% attendance February',
-          date: '2026-02-28',
-        },
-        {
-          id: 'BON-004',
-          teacherId: 'TCH-2026-004',
-          type: 'festival',
-          amount: 10000,
-          month: '2026-04',
-          reason: 'Eid Festival Bonus',
-          date: '2026-04-10',
-        },
-      ],
-      promotions: [
-        {
-          id: 'PRO-001',
-          teacherId: 'TCH-2026-005',
-          fromDesignation: 'Lecturer',
-          toDesignation: 'Assistant Professor',
-          date: '2026-07-01',
-          reason: 'Excellent performance',
-        },
-      ],
-      funds: [
-        { id: 'FND-001', type: 'bonus_pool', amount: 200000, description: 'Q2 bonus pool allocation', date: '2026-04-01' },
-        { id: 'FND-002', type: 'increment_pool', amount: 150000, description: 'Annual increment allocation', date: '2026-01-01' },
-        { id: 'FND-003', type: 'contribution', amount: 500000, description: 'Monthly fund contribution', date: '2026-05-01' },
-        { id: 'FND-004', type: 'withdrawal', amount: 55000, description: 'April increments paid', date: '2026-04-01' },
-      ],
+      increments: [],
+      bonuses: [],
+      promotions: [],
+      funds: [],
       homeworkRecords: [],
-      dailyReports: generateDemoDailyReports(),
-      recommendations: generateDemoRecommendations(),
+      dailyReports: [],
+      recommendations: [],
       monthlySalaryConfigs: [],
-      facilities: [
-        {
-          id: 'FAC-001',
-          name: 'House Rent',
-          nameBn: 'বাসা ভাড়া',
-          defaultAmount: 0,
-          type: 'monthly',
-          isActive: true,
-          createdAt: '2026-01-01',
-          updatedAt: '2026-01-01',
-        },
-        {
-          id: 'FAC-002',
-          name: 'Medicine',
-          nameBn: 'চিকিৎসা',
-          defaultAmount: 0,
-          type: 'monthly',
-          isActive: true,
-          createdAt: '2026-01-01',
-          updatedAt: '2026-01-01',
-        },
-        {
-          id: 'FAC-003',
-          name: 'Extra Bonus',
-          nameBn: 'অতিরিক্ত বোনাস',
-          defaultAmount: 0,
-          type: 'oneTime',
-          isActive: true,
-          createdAt: '2026-01-01',
-          updatedAt: '2026-01-01',
-        },
-        {
-          id: 'FAC-004',
-          name: 'Conveyance',
-          nameBn: 'যাতায়াত',
-          defaultAmount: 0,
-          type: 'monthly',
-          isActive: true,
-          createdAt: '2026-01-01',
-          updatedAt: '2026-01-01',
-        },
-      ],
+      facilities: [],
       teacherFacilities: [],
 
       addIncrement: (record) => set((state) => ({ increments: [...state.increments, record] })),
@@ -455,6 +237,6 @@ export const useHRStore = create<HRState>()(
           return { teacherFacilities: newTfs }
         }),
     }),
-    { name: 'edutech-hr', version: 1 }
+    { name: getStorageKey('edutech-hr'), version: 1 }
   )
 )

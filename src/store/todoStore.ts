@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { getStorageKey } from '@/lib/storage'
 
 export type TodoPriority = 'low' | 'medium' | 'high'
 export type TodoStatus = 'pending' | 'in-progress' | 'completed'
@@ -45,7 +46,7 @@ export const useTodoStore = create<TodoState>()(
         })),
     }),
     {
-      name: 'edutech-todos',
+      name: getStorageKey('edutech-todos'),
       version: 1,
     }
   )

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { getStorageKey } from '@/lib/storage'
 
 export interface BreakTime {
   id: string
@@ -416,7 +417,7 @@ export const useClassStore = create<ClassState>()(
         }),
     }),
     {
-      name: 'edutech-classes',
+      name: getStorageKey('edutech-classes'),
       version: 7,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
