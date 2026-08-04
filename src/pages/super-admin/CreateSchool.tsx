@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Building2, MapPin, Phone, Clock, Globe, CalendarDays,
   ChevronRight, ChevronLeft, Check, X, Eye, EyeOff, Sparkles,
-  FileText, Palette, GraduationCap, CreditCard, Shield, Copy, Upload,
+  Palette, GraduationCap, Shield, Copy, Upload,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
@@ -68,12 +68,10 @@ interface SectionStep {
 }
 
 const SECTION_STEPS: SectionStep[] = [
-  { key: 'basic', labelEn: 'Basic Info', labelBn: 'মৌলিক তথ্য', icon: <Building2 size={14} /> },
+  { key: 'basic', labelEn: 'School Info', labelBn: 'স্কুল তথ্য', icon: <Building2 size={14} /> },
   { key: 'contact', labelEn: 'Contact', labelBn: 'যোগাযোগ', icon: <Phone size={14} /> },
-  { key: 'extra', labelEn: 'Extra Details', labelBn: 'অতিরিক্ত তথ্য', icon: <FileText size={14} /> },
   { key: 'brand', labelEn: 'Branding', labelBn: 'ব্র্যান্ডিং', icon: <Palette size={14} /> },
-  { key: 'academic', labelEn: 'Academic', labelBn: 'একাডেমিক', icon: <GraduationCap size={14} /> },
-  { key: 'package', labelEn: 'Package', labelBn: 'প্যাকেজ', icon: <CreditCard size={14} /> },
+  { key: 'academic', labelEn: 'Academic & Package', labelBn: 'একাডেমিক ও প্যাকেজ', icon: <GraduationCap size={14} /> },
   { key: 'admin', labelEn: 'Admin Account', labelBn: 'অ্যাডমিন', icon: <Shield size={14} /> },
 ]
 
@@ -242,6 +240,9 @@ export default function CreateSchool() {
                   <>
                     <FieldInput ref={inputRef} label={isBn ? 'স্কুলের নাম *' : 'School Name *'} value={form.name} onChange={(v) => set('name', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} hint={isBn ? 'স্কুলের আনুষ্ঠানিক নাম' : 'The official name of the school'} />
                     <FieldInput label={isBn ? 'বাংলায় নাম' : 'Bengali Name'} value={form.nameBn} onChange={(v) => set('nameBn', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} hint={isBn ? 'বাংলা লিপিতে স্কুলের নাম' : 'School name in Bengali script'} />
+                    <FieldInput label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName} onChange={(v) => set('brandName', v)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} hint={isBn ? 'সিস্টেমের জন্য ছোট ব্র্যান্ড নাম' : 'Short brand name for the system'} />
+                    <FieldInput label="EIIN" value={form.eiin} onChange={(v) => set('eiin', v)} placeholder="123456" hint={isBn ? 'শিক্ষা প্রতিষ্ঠান শনাক্তকরণ নম্বর' : 'Education Institution Identification Number'} />
+                    <SubdomainInput value={form.subdomain} onChange={(v) => set('subdomain', v)} institutions={institutions} isBn={isBn} />
                   </>
                 )}
                 {currentSection?.key === 'contact' && (
@@ -252,15 +253,8 @@ export default function CreateSchool() {
                     <FieldInput label={isBn ? 'ঠিকানা (বাংলা)' : 'Address (Bengali)'} value={form.addressBn} onChange={(v) => set('addressBn', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'বাসা নং, রাস্তা, শহর'} hint={isBn ? 'বাংলায় ঠিকানা' : 'Address in Bengali'} />
                   </>
                 )}
-            {currentSection?.key === 'extra' && (
-              <>
-                <FieldInput ref={inputRef} label="EIIN" value={form.eiin} onChange={(v) => set('eiin', v)} placeholder="123456" hint={isBn ? 'শিক্ষা প্রতিষ্ঠান শনাক্তকরণ নম্বর' : 'Education Institution Identification Number'} />
-                <SubdomainInput value={form.subdomain} onChange={(v) => set('subdomain', v)} institutions={institutions} isBn={isBn} />
-              </>
-            )}
                 {currentSection?.key === 'brand' && (
                   <>
-                    <FieldInput ref={inputRef} label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName} onChange={(v) => set('brandName', v)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} hint={isBn ? 'সিস্টেমের জন্য ছোট ব্র্যান্ড নাম' : 'Short brand name for the system'} />
                     <FieldInput label={isBn ? 'মোটো (ইংরেজি)' : 'Motto (English)'} value={form.motto} onChange={(v) => set('motto', v)} placeholder="Knowledge is Power" hint={isBn ? 'ইংরেজিতে স্কুলের মোটো' : 'School motto in English'} />
                     <FieldInput label={isBn ? 'মোটো (বাংলা)' : 'Motto (Bengali)'} value={form.mottoBn} onChange={(v) => set('mottoBn', v)} placeholder="জ্ঞাই হলো শক্তি" hint={isBn ? 'বাংলায় স্কুলের মোটো' : 'School motto in Bengali'} />
                     <FileUpload label={isBn ? 'লোগো' : 'Logo'} value={form.logo} onChange={(v) => set('logo', v)} accept="image/*" isBn={isBn} />
@@ -273,10 +267,8 @@ export default function CreateSchool() {
                     <TagInput ref={inputRef} tags={form.optionalSubjects} onAdd={(t) => set('optionalSubjects', [...form.optionalSubjects, t])} onRemove={(t) => set('optionalSubjects', form.optionalSubjects.filter((x) => x !== t))} newTag={newSubject} setNewTag={setNewSubject} placeholder={isBn ? 'ঐচ্ছিক বিষয় যোগ করুন' : 'Add optional subject'} label={isBn ? 'ঐচ্ছিক বিষয়সমূহ' : 'Optional Subjects'} hint={isBn ? 'যেমন: উচ্চতর গণিত, কৃষি, আইসিটি' : 'e.g. Higher Math, Agriculture, ICT'} />
                     <TagInput tags={form.sessions} onAdd={(t) => set('sessions', [...form.sessions, t])} onRemove={(t) => set('sessions', form.sessions.filter((x) => x !== t))} newTag={newSession} setNewTag={setNewSession} placeholder="2026-27" label={isBn ? 'একাডেমিক সেশন *' : 'Academic Sessions *'} hint={isBn ? 'একাডেমিক সেশন (যেমন: 2025-26)' : 'Academic sessions (e.g. 2025-26)'} />
                     <ScheduleInput form={form} set={set} isBn={isBn} />
+                    <PackagePicker value={form.package} onChange={(v) => set('package', v)} isBn={isBn} />
                   </>
-                )}
-                {currentSection?.key === 'package' && (
-                  <PackagePicker value={form.package} onChange={(v) => set('package', v)} isBn={isBn} />
                 )}
                 {currentSection?.key === 'admin' && (
                   <>
