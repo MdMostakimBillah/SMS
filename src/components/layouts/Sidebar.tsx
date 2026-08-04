@@ -323,15 +323,16 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
     }
   }, [location.pathname, navItemsMap])
 
-  // Only manually bookmarked pages (max 5) — ordered by bookmarks array
+  // Only manually bookmarked pages (max 5) — filtered by current navBase, ordered by bookmarks array
   const quickAccess = useMemo(() => {
     const pageVisits = useAppStore.getState().pageVisits
     const visited = new Map(pageVisits.map((v) => [v.path, v]))
     return bookmarks
+      .filter((path) => navBase ? path.startsWith(navBase) : !path.startsWith('/super-admin'))
       .map((path) => visited.get(path))
       .filter((v): v is NonNullable<typeof v> => Boolean(v))
       .slice(0, 5)
-  }, [bookmarks])
+  }, [bookmarks, navBase])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -389,8 +390,8 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
           </div>
         </div>
 
-        {/* Session Switcher — super admin only (viewing or not) */}
-        {!collapsed && isSuperAdmin && (
+        {/* Session Switcher — super admin or institution admin */}
+        {!collapsed && (isSuperAdmin || user?.role === 'admin') && (
           <div ref={dropdownRef} className="relative px-2 pt-2 pb-1 z-50">
             <div
               onClick={() => setShowSessionDropdown(!showSessionDropdown)}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   Shield, Mail, Lock, Eye, EyeOff, Save, CheckCircle, AlertTriangle, Loader2,
-  Globe, Link, ToggleLeft, ToggleRight, Copy, Server,
+  Globe, Link, ToggleLeft, ToggleRight, Copy, Server, ArrowUpRight,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
@@ -91,23 +91,39 @@ function InstitutionSettings({ isBn }: { isBn: boolean }) {
   const atLeastOneMode = modes.pathBased || modes.subdomainBased || !!customDomainInput.trim()
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] flex items-center justify-center">
-          <Globe size={20} className="text-[var(--brand)]" />
+    <div className="max-w-3xl mx-auto space-y-6">
+      {/* Header Card */}
+      <div className="bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] rounded-2xl p-6 text-white">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+            <Globe size={20} />
+          </div>
+          <div>
+            <h1 className="text-[1.125rem] font-bold">
+              {isBn ? 'অ্যাক্সেস মোড' : 'Access Modes'}
+            </h1>
+            <p className="text-[0.75rem] text-white/70">
+              {isBn ? 'কিভাবে আপনার প্রতিষ্ঠানে প্রবেশ করা যাবে' : 'How your institution can be accessed'}
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-[1.125rem] font-bold text-[var(--text-primary)]">
-            {isBn ? 'অ্যাক্সেস মোড' : 'Access Modes'}
-          </h1>
-          <p className="text-[0.75rem] text-[var(--text-muted)]">
-            {isBn ? 'কিভাবে আপনার প্রতিষ্ঠানে প্রবেশ করা যাবে' : 'How your institution can be accessed'}
-          </p>
+        <div className="flex gap-4 mt-4">
+          <div className="flex items-center gap-2 text-[0.75rem] text-white/80">
+            <div className={`w-2 h-2 rounded-full ${modes.pathBased ? 'bg-green-400' : 'bg-white/30'}`} />
+            Path
+          </div>
+          <div className="flex items-center gap-2 text-[0.75rem] text-white/80">
+            <div className={`w-2 h-2 rounded-full ${modes.subdomainBased ? 'bg-green-400' : 'bg-white/30'}`} />
+            Subdomain
+          </div>
+          <div className="flex items-center gap-2 text-[0.75rem] text-white/80">
+            <div className={`w-2 h-2 rounded-full ${customDomainInput ? 'bg-green-400' : 'bg-white/30'}`} />
+            Custom
+          </div>
         </div>
       </div>
 
-      {/* Warning if no modes enabled */}
+      {/* Warning */}
       {!atLeastOneMode && (
         <div className="px-4 py-3 rounded-xl bg-amber-500/8 border border-amber-500/15 flex items-start gap-2.5">
           <AlertTriangle size={15} className="text-amber-600 shrink-0 mt-0.5" />
@@ -119,213 +135,171 @@ function InstitutionSettings({ isBn }: { isBn: boolean }) {
         </div>
       )}
 
-      {/* Access Modes */}
-      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-[var(--border)]">
-          <h2 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
-            {isBn ? 'অ্যাক্সেস পদ্ধতি নির্বাচন করুন' : 'Select Access Methods'}
-          </h2>
-        </div>
-        <div className="p-5 space-y-4">
-          {/* Path-based */}
-          <AccessModeCard
-            enabled={modes.pathBased}
-            onToggle={() => setModes((p) => ({ ...p, pathBased: !p.pathBased }))}
-            title={isBn ? 'পাথ-বেসড (Path-based)' : 'Path-based'}
-            description={isBn
-              ? 'ব্রাউজারে URL দিয়ে সরাসরি প্রবেশ করুন'
-              : 'Access directly via URL path'}
-            example={isBn ? 'example.com/i/আপনার-স্লাগ' : 'example.com/i/your-slug'}
-            url={pathUrl}
-            copiedField={copiedField}
-            fieldKey="path"
-            onCopy={handleCopy}
-          />
-
-          {/* Subdomain-based */}
-          <AccessModeCard
-            enabled={modes.subdomainBased}
-            onToggle={() => setModes((p) => ({ ...p, subdomainBased: !p.subdomainBased }))}
-            title={isBn ? 'সাবডোমেইন (Subdomain)' : 'Subdomain'}
-            description={isBn
-              ? 'আলাদা সাবডোমেইন দিয়ে প্রবেশ করুন'
-              : 'Access via a dedicated subdomain'}
-            example={`${subdomain}.smsappbd.vercel.app`}
-            url={subdomainUrl}
-            copiedField={copiedField}
-            fieldKey="subdomain"
-            onCopy={handleCopy}
-          />
-
-          {/* Custom Domain */}
-          <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
-            <div className="flex items-start gap-4">
-              <div className="mt-0.5">
-                <Globe size={28} className={customDomainInput ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] mb-1">
-                  {isBn ? 'কাস্টম ডোমেইন (Custom Domain)' : 'Custom Domain'}
+      {/* Access Mode Cards */}
+      <div className="grid gap-4">
+        {/* Path-based */}
+        <div className={`relative bg-[var(--bg-primary)] border rounded-2xl overflow-hidden transition-all ${modes.pathBased ? 'border-[var(--brand)]/30 shadow-[0_0_0_1px_var(--brand)]/10' : 'border-[var(--border)]'}`}>
+          <div className="p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${modes.pathBased ? 'bg-[var(--brand-light)]' : 'bg-[var(--bg-secondary)]'}`}>
+                  <Link size={18} className={modes.pathBased ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'} />
                 </div>
-                <div className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
-                  {isBn ? 'নিজের ডোমেইন ব্যবহার করুন (ঐচ্ছিক)' : 'Use your own domain (optional)'}
-                </div>
-                <input
-                  type="text"
-                  value={customDomainInput}
-                  onChange={(e) => setCustomDomainInput(e.target.value)}
-                  placeholder="abcschool.com"
-                  className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]"
-                />
-                {customDomainInput && (
-                  <div className="mt-3 space-y-3">
-                    {/* URL preview */}
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
-                      <Link size={12} className="text-[var(--text-muted)] shrink-0" />
-                      <code className="text-[0.6875rem] text-[var(--text-primary)] truncate flex-1">{customUrl}</code>
-                      <button onClick={() => handleCopy(customUrl, 'custom')}
-                        className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none p-0">
-                        {copiedField === 'custom' ? <CheckCircle size={12} className="text-[var(--green)]" /> : <Copy size={12} />}
-                      </button>
-                    </div>
-
-                    {/* DNS Instructions */}
-                    <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/15">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Server size={13} className="text-blue-600" />
-                        <span className="text-[0.6875rem] font-semibold text-blue-700">
-                          {isBn ? 'DNS কনফিগারেশন' : 'DNS Configuration'}
-                        </span>
-                      </div>
-                      <div className="space-y-2 text-[0.6875rem] text-[var(--text-secondary)]">
-                        <div className="flex items-start gap-2">
-                          <span className="text-blue-600 font-semibold shrink-0">1.</span>
-                          <span>
-                            {isBn ? 'আপনার ডোমেইন রেজিস্ট্রারে যান' : 'Go to your domain registrar'}
-                          </span>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <span className="text-blue-600 font-semibold shrink-0">2.</span>
-                          <span>
-                            {isBn ? 'একটি CNAME রেকর্ড যোগ করুন:' : 'Add a CNAME record:'}
-                          </span>
-                        </div>
-                        <div className="ml-5 px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] font-mono text-[0.625rem]">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[var(--text-muted)]">Type:</span>
-                            <span className="text-[var(--text-primary)] font-semibold">CNAME</span>
-                          </div>
-                          <div className="flex justify-between items-center mt-1">
-                            <span className="text-[var(--text-muted)]">Name:</span>
-                            <span className="text-[var(--text-primary)] font-semibold">@</span>
-                          </div>
-                          <div className="flex justify-between items-center mt-1">
-                            <span className="text-[var(--text-muted)]">Value:</span>
-                            <span className="text-[var(--text-primary)] font-semibold">cname.vercel-dns.com</span>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <span className="text-blue-600 font-semibold shrink-0">3.</span>
-                          <span>
-                            {isBn
-                              ? 'DNS প্রসারণে ২৪-৪৮ ঘণ্টা সময় লাগতে পারে'
-                              : 'DNS propagation may take 24-48 hours'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                <div>
+                  <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+                    {isBn ? 'পাথ-বেসড' : 'Path-based'}
                   </div>
-                )}
+                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                    {isBn ? 'URL পাথ দিয়ে সরাসরি প্রবেশ' : 'Access via URL path'}
+                  </div>
+                </div>
               </div>
+              <button
+                onClick={() => setModes((p) => ({ ...p, pathBased: !p.pathBased }))}
+                className="mt-1 cursor-pointer bg-transparent border-none p-0"
+              >
+                {modes.pathBased ? (
+                  <ToggleRight size={32} className="text-[var(--green)]" />
+                ) : (
+                  <ToggleLeft size={32} className="text-[var(--text-muted)]" />
+                )}
+              </button>
             </div>
+            {modes.pathBased && (
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+                <code className="text-[0.75rem] text-[var(--text-primary)] truncate flex-1 font-mono">{pathUrl}</code>
+                <button onClick={() => handleCopy(pathUrl, 'path')}
+                  className="text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer bg-transparent border-none p-1 rounded-lg hover:bg-[var(--brand-light)] transition-colors">
+                  {copiedField === 'path' ? <CheckCircle size={14} className="text-[var(--green)]" /> : <Copy size={14} />}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Subdomain */}
+        <div className={`relative bg-[var(--bg-primary)] border rounded-2xl overflow-hidden transition-all ${modes.subdomainBased ? 'border-[var(--brand)]/30 shadow-[0_0_0_1px_var(--brand)]/10' : 'border-[var(--border)]'}`}>
+          <div className="p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${modes.subdomainBased ? 'bg-[var(--brand-light)]' : 'bg-[var(--bg-secondary)]'}`}>
+                  <Globe size={18} className={modes.subdomainBased ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'} />
+                </div>
+                <div>
+                  <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+                    {isBn ? 'সাবডোমেইন' : 'Subdomain'}
+                  </div>
+                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                    {isBn ? 'আলাদা সাবডোমেইন দিয়ে প্রবেশ' : 'Access via dedicated subdomain'}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setModes((p) => ({ ...p, subdomainBased: !p.subdomainBased }))}
+                className="mt-1 cursor-pointer bg-transparent border-none p-0"
+              >
+                {modes.subdomainBased ? (
+                  <ToggleRight size={32} className="text-[var(--green)]" />
+                ) : (
+                  <ToggleLeft size={32} className="text-[var(--text-muted)]" />
+                )}
+              </button>
+            </div>
+            {modes.subdomainBased && (
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+                <code className="text-[0.75rem] text-[var(--text-primary)] truncate flex-1 font-mono">{subdomainUrl}</code>
+                <button onClick={() => handleCopy(subdomainUrl, 'subdomain')}
+                  className="text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer bg-transparent border-none p-1 rounded-lg hover:bg-[var(--brand-light)] transition-colors">
+                  {copiedField === 'subdomain' ? <CheckCircle size={14} className="text-[var(--green)]" /> : <Copy size={14} />}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Custom Domain */}
+        <div className={`relative bg-[var(--bg-primary)] border rounded-2xl overflow-hidden transition-all ${customDomainInput ? 'border-[var(--green)]/30 shadow-[0_0_0_1px_var(--green)]/10' : 'border-[var(--border)]'}`}>
+          <div className="p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${customDomainInput ? 'bg-green-500/10' : 'bg-[var(--bg-secondary)]'}`}>
+                  <ArrowUpRight size={18} className={customDomainInput ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'} />
+                </div>
+                <div>
+                  <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+                    {isBn ? 'কাস্টম ডোমেইন' : 'Custom Domain'}
+                  </div>
+                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                    {isBn ? 'নিজের ডোমেইন ব্যবহার করুন' : 'Use your own domain'}
+                  </div>
+                </div>
+              </div>
+              {customDomainInput && (
+                <div className="mt-1 px-2 py-0.5 rounded-full bg-green-500/10 text-[0.625rem] font-semibold text-[var(--green)]">
+                  Active
+                </div>
+              )}
+            </div>
+            <input
+              type="text"
+              value={customDomainInput}
+              onChange={(e) => setCustomDomainInput(e.target.value)}
+              placeholder="abcschool.com"
+              className="w-full h-10 px-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]"
+            />
+            {customDomainInput && (
+              <div className="mt-3 space-y-3">
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+                  <code className="text-[0.75rem] text-[var(--text-primary)] truncate flex-1 font-mono">{customUrl}</code>
+                  <button onClick={() => handleCopy(customUrl, 'custom')}
+                    className="text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer bg-transparent border-none p-1 rounded-lg hover:bg-[var(--brand-light)] transition-colors">
+                    {copiedField === 'custom' ? <CheckCircle size={14} className="text-[var(--green)]" /> : <Copy size={14} />}
+                  </button>
+                </div>
+                <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/15">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Server size={14} className="text-blue-600" />
+                    <span className="text-[0.75rem] font-semibold text-blue-700">
+                      {isBn ? 'DNS কনফিগারেশন' : 'DNS Configuration'}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
+                      <div className="flex items-center justify-between text-[0.6875rem]">
+                        <span className="text-[var(--text-muted)]">Type</span>
+                        <span className="font-mono font-semibold text-[var(--text-primary)]">CNAME</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[0.6875rem] mt-1.5">
+                        <span className="text-[var(--text-muted)]">Name</span>
+                        <span className="font-mono font-semibold text-[var(--text-primary)]">@</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[0.6875rem] mt-1.5">
+                        <span className="text-[var(--text-muted)]">Value</span>
+                        <span className="font-mono font-semibold text-[var(--text-primary)]">cname.vercel-dns.com</span>
+                      </div>
+                    </div>
+                    <p className="text-[0.625rem] text-[var(--text-muted)]">
+                      {isBn ? 'DNS প্রসারণে ২৪-৪৮ ঘণ্টা সময় লাগতে পারে' : 'DNS propagation may take 24-48 hours'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Active URLs Summary */}
-      {(modes.pathBased || modes.subdomainBased || customDomainInput.trim()) && (
-        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-[var(--border)]">
-            <h2 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
-              {isBn ? 'সক্রিয় URL' : 'Active URLs'}
-            </h2>
-          </div>
-          <div className="p-4 space-y-2">
-            {modes.pathBased && (
-              <UrlRow label="Path" url={pathUrl} copiedField={copiedField} fieldKey="path" onCopy={handleCopy} />
-            )}
-            {modes.subdomainBased && (
-              <UrlRow label="Subdomain" url={subdomainUrl} copiedField={copiedField} fieldKey="subdomain" onCopy={handleCopy} />
-            )}
-            {customDomainInput.trim() && (
-              <UrlRow label="Custom" url={customUrl} copiedField={copiedField} fieldKey="custom" onCopy={handleCopy} />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Save button */}
-      <div className="flex justify-end">
+      {/* Save Button */}
+      <div className="flex justify-end pt-2">
         <button
           onClick={handleSave}
           disabled={saving || !atLeastOneMode}
-          className="h-10 px-6 rounded-xl text-[0.8125rem] font-semibold border-none cursor-pointer flex items-center gap-2 disabled:opacity-50 text-white transition-all"
+          className="h-11 px-8 rounded-xl text-[0.8125rem] font-semibold border-none cursor-pointer flex items-center gap-2 disabled:opacity-50 text-white transition-all shadow-lg shadow-[var(--brand)]/20"
           style={{ background: saved ? 'var(--green)' : 'linear-gradient(135deg, var(--brand), var(--brand-2))' }}
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <><CheckCircle size={14} />{isBn ? 'সংরক্ষিত!' : 'Saved!'}</> : <><Save size={14} />{isBn ? 'সংরক্ষণ করুন' : 'Save Changes'}</>}
         </button>
       </div>
-    </div>
-  )
-}
-
-function AccessModeCard({
-  enabled, onToggle, title, description, example, url, copiedField, fieldKey, onCopy,
-}: {
-  enabled: boolean; onToggle: () => void; title: string; description: string;
-  example: string; url: string; copiedField: string | null; fieldKey: string;
-  onCopy: (text: string, field: string) => void
-}) {
-  return (
-    <div className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${enabled ? 'border-[var(--brand)]/30 bg-[var(--bg-secondary)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] opacity-60'}`}>
-      <button onClick={onToggle} className="mt-0.5 cursor-pointer bg-transparent border-none p-0">
-        {enabled ? (
-          <ToggleRight size={28} className="text-[var(--green)]" />
-        ) : (
-          <ToggleLeft size={28} className="text-[var(--text-muted)]" />
-        )}
-      </button>
-      <div className="flex-1 min-w-0">
-        <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] mb-0.5">{title}</div>
-        <div className="text-[0.6875rem] text-[var(--text-muted)] mb-1">{description}</div>
-        <div className="text-[0.625rem] text-[var(--text-muted)] mb-2 font-mono">{example}</div>
-        {enabled && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
-            <Link size={12} className="text-[var(--text-muted)] shrink-0" />
-            <code className="text-[0.6875rem] text-[var(--text-primary)] truncate flex-1">{url}</code>
-            <button onClick={() => onCopy(url, fieldKey)}
-              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none p-0">
-              {copiedField === fieldKey ? <CheckCircle size={12} className="text-[var(--green)]" /> : <Copy size={12} />}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function UrlRow({ label, url, copiedField, fieldKey, onCopy }: {
-  label: string; url: string; copiedField: string | null; fieldKey: string;
-  onCopy: (text: string, field: string) => void
-}) {
-  return (
-    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-      <span className="text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase w-16 shrink-0">{label}</span>
-      <code className="text-[0.6875rem] text-[var(--text-primary)] truncate flex-1">{url}</code>
-      <button onClick={() => onCopy(url, fieldKey)}
-        className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none p-0 shrink-0">
-        {copiedField === fieldKey ? <CheckCircle size={12} className="text-[var(--green)]" /> : <Copy size={12} />}
-      </button>
     </div>
   )
 }
