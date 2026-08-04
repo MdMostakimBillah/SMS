@@ -166,6 +166,7 @@ export default function CreateSchool() {
     }
     addInstitution(inst)
     setCreated(true)
+    setTimeout(() => navigate('/super-admin/schools'), 1500)
   }
 
   if (created) {
@@ -178,7 +179,7 @@ export default function CreateSchool() {
           <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">{isBn ? 'স্কুল তৈরি হয়েছে!' : 'School Created!'}</h2>
           <p className="text-sm text-[var(--text-secondary)] mb-6">{isBn ? `${form.name} সফলভাবে নিবন্ধন করা হয়েছে` : `${form.name} has been registered successfully`}</p>
           <div className="flex gap-3 justify-center">
-            <button onClick={() => navigate('/super-admin/schools')} className="px-5 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-semibold cursor-pointer border-none">
+            <button onClick={() => { setCreated(false); navigate('/super-admin/schools') }} className="px-5 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-semibold cursor-pointer border-none">
               {isBn ? 'স্কুল দেখুন' : 'View Schools'}
             </button>
             <button onClick={() => { setForm(defaultForm); setCreated(false); setStep(0) }} className="px-5 py-2.5 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-primary)] text-sm font-semibold cursor-pointer border border-[var(--border)]">
