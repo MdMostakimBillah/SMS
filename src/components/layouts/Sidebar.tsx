@@ -365,27 +365,45 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
             collapsed ? 'px-0 py-3' : 'px-3.5 py-3'
           }`}
         >
-          <div className={`flex items-center gap-2.5 ${collapsed ? 'justify-center' : ''}`}>
-            {(user?.role === 'admin' || isViewing) && institution.logo ? (
-              <img src={institution.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
-            ) : (
+          {/* EduTech header — always show for super admin, or when not viewing */}
+          {(!isViewing || isSuperAdmin) && (
+            <div className={`flex items-center gap-2.5 ${collapsed ? 'justify-center' : ''}`}>
               <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
                 <GraduationCap size={17} color="#fff" />
               </div>
-            )}
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">
-                  {(user?.role === 'admin' || isViewing) ? (institution.brandName || institution.name) : 'EduTech'}
+              {!collapsed && (
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">EduTech</div>
+                  <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">School Management</div>
                 </div>
-                <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
-                  {(user?.role === 'admin' || isViewing) ? (institution.nameBn || institution.name) : 'School Management'}
+              )}
+            </div>
+          )}
+
+          {/* Institution card — show when viewing or when institution admin */}
+          {isViewing && !collapsed && (
+            <div className="mt-2 px-2.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
+              <div className="flex items-center gap-2">
+                {institution.logo ? (
+                  <img src={institution.logo} alt="Logo" className="w-6 h-6 rounded object-cover shrink-0" />
+                ) : (
+                  <div className="w-6 h-6 rounded bg-[var(--teal)] flex items-center justify-center text-[0.5rem] font-bold text-white shrink-0">
+                    {(institution.name || 'SA').slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="text-[0.6875rem] font-semibold text-[var(--text-primary)] truncate">
+                    {institution.brandName || institution.name}
+                  </div>
+                  <div className="text-[0.5rem] text-[var(--text-muted)] truncate">
+                    {institution.nameBn || institution.name}
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Session Switcher — below institution name */}
+          {/* Session Switcher — show for super admin or institution admin */}
           {!collapsed && (isSuperAdmin || user?.role === 'admin') && (
             <div ref={dropdownRef} className="relative mt-2 z-50">
               <div
