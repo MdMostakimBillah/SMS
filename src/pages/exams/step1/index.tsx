@@ -19,6 +19,7 @@ import {
   Download,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useTabSlider } from '@/hooks/useTabSlider'
@@ -44,6 +45,7 @@ const EXAM_TYPE_LABELS: Record<ExamType, { en: string; bn: string }> = {
 
 export default function Step1Planning() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const subjects = useTeacherStore((s) => s.subjects)
   const { classes } = useClassStore()
   const currentSession = useClassStore((s) => s.institution.currentSession)
@@ -379,7 +381,7 @@ export default function Step1Planning() {
       <div className="flex flex-wrap items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate('/exams')}
+            onClick={() => navigate(nav('/exams'))}
             className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] shrink-0"
           >
             <ArrowLeft size={16} />

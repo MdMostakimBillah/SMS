@@ -389,7 +389,11 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
 
 function SummaryCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)]">
+    <div
+      className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+    >
       <div
         className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
         style={{ background: `${color}18`, color }}
@@ -397,8 +401,8 @@ function SummaryCard({ icon, label, value, color }: { icon: React.ReactNode; lab
         {icon}
       </div>
       <div className="min-w-0">
-        <div className="text-[1rem] font-bold text-[var(--text-primary)] leading-tight">{value}</div>
-        <div className="text-[0.6875rem] text-[var(--text-secondary)] whitespace-nowrap">{label}</div>
+        <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{value}</div>
+        <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem] whitespace-nowrap">{label}</div>
       </div>
     </div>
   )

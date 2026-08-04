@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, User, FileText, AlertCircle } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { openPrintWindow } from '@/lib/pdf'
@@ -9,6 +10,7 @@ import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 
 export default function TeacherDetailPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const { id } = useParams<{ id: string }>()
   const isBn = useBn()
   const { teachers, departments, subjects } = useTeacherStore(
@@ -105,7 +107,7 @@ ${photoHtml}
         <AlertCircle size={40} className="text-[var(--text-muted)] mb-3" />
         <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'শিক্ষক পাওয়া যায়নি' : 'Teacher not found'}</p>
         <button
-          onClick={() => navigate('/teachers/all')}
+          onClick={() => navigate(nav('/teachers/all'))}
           className="mt-3 py-2 px-4 rounded-lg bg-[var(--border)] border-none text-white text-[0.8125rem] cursor-pointer font-inherit"
         >
           {isBn ? 'ফিরে যান' : 'Go Back'}
@@ -150,7 +152,7 @@ ${photoHtml}
     <div>
       <div className="flex items-center gap-2.5 mb-4 flex-wrap">
         <button
-          onClick={() => navigate('/teachers/all')}
+          onClick={() => navigate(nav('/teachers/all'))}
           className="flex items-center gap-1.5 py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-inherit shrink-0"
         >
           <ArrowLeft size={14} />

@@ -28,6 +28,7 @@ import type { SyllabusEntry, SyllabusChapter, SyllabusTopic } from '@/store/syll
 import { SyllabusPDFOptionsModal } from './SyllabusPDFOptionsModal'
 import { printRawHTML } from '@/lib/pdf'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
+import { useNavPath } from '@/hooks/useNavPath'
 import { Skeleton, SkeletonCard, SkeletonLine } from '@/components/ui/Skeleton'
 
 const btnPri =
@@ -59,6 +60,7 @@ type View = 'home' | 'sections' | 'subjects' | 'detail'
 export default function SyllabusPage() {
   const isBn = useBn()
   const navigate = useNavigate()
+  const nav = useNavPath()
   const classes = useClassStore((s) => s.classes)
   const currentSession = useClassStore((s) => s.institution.currentSession)
   const subjects = useTeacherStore((s) => s.subjects)
@@ -518,18 +520,18 @@ export default function SyllabusPage() {
           </button>
         )}
         {view === 'home' && classNumbers.length === 0 && (
-          <button
-            onClick={() => {
-              pushToChain({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
-              setRedirectTimestamp()
-              navigate('/classes')
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
-          >
-            <Settings size={14} />
-            {isBn ? 'শ্রেণি ব্যবস্থাপনা' : 'Class Management'}
-            <ArrowRight size={14} />
-          </button>
+                  <button
+                    onClick={() => {
+                      pushToChain({ path: nav('/syllabus'), label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+                      setRedirectTimestamp()
+                      navigate(nav('/classes'))
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
+                  >
+                    <Settings size={14} />
+                    {isBn ? 'শ্রেণি ব্যবস্থাপনায় যান' : 'Go to Class Management'}
+                    <ArrowRight size={14} />
+                  </button>
         )}
       </div>
 
@@ -584,9 +586,9 @@ export default function SyllabusPage() {
                   </p>
                   <button
                     onClick={() => {
-                      pushToChain({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+                      pushToChain({ path: nav('/syllabus'), label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
                       setRedirectTimestamp()
-                      navigate('/classes')
+                      navigate(nav('/classes'))
                     }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
                   >
@@ -638,9 +640,9 @@ export default function SyllabusPage() {
                   </p>
                   <button
                     onClick={() => {
-                      pushToChain({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+                      pushToChain({ path: nav('/syllabus'), label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
                       setRedirectTimestamp()
-                      navigate('/classes')
+                      navigate(nav('/classes'))
                     }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
                   >
@@ -692,9 +694,9 @@ export default function SyllabusPage() {
                   </p>
                   <button
                     onClick={() => {
-                      pushToChain({ path: '/syllabus', label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+                      pushToChain({ path: nav('/syllabus'), label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
                       setRedirectTimestamp()
-                      navigate('/classes')
+                      navigate(nav('/classes'))
                     }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
                   >

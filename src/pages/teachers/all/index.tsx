@@ -27,6 +27,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
+import { useNavPath } from '@/hooks/useNavPath'
 import { openPrintWindow } from '@/lib/pdf'
 import { escapeHtml } from '@/lib/sanitize'
 import { TeacherPDFOptionsModal } from '@/components/shared/TeacherPDFOptionsModal'
@@ -40,6 +41,7 @@ const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
 
 export default function AllTeachersPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const isBn = useBn()
   const { teachers, departments, subjects, deleteTeacher } = useTeacherStore(
     useShallow((s) => ({
@@ -432,7 +434,7 @@ ${photoHtml}
               </button>
               <button
                 onClick={() => {
-                  navigate(`/teachers/edit/${viewT.id}`)
+                  navigate(nav(`/teachers/edit/${viewT.id}`))
                   setViewT(null)
                 }}
                 className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer"
@@ -481,7 +483,7 @@ ${photoHtml}
       <div className="shrink-0">
         <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
           <button
-            onClick={() => navigate('/teachers')}
+            onClick={() => navigate(nav('/teachers'))}
             className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] shrink-0"
           >
             <ArrowLeft size={14} />
@@ -510,7 +512,7 @@ ${photoHtml}
             </div>
           </div>
           <button
-            onClick={() => navigate('/teachers/add')}
+            onClick={() => navigate(nav('/teachers/add'))}
             className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-[0.5625rem] bg-[var(--teal-light)] border border-[var(--teal)] text-[var(--teal)] text-[0.8125rem] cursor-pointer font-medium"
           >
             <UserPlus size={14} />
@@ -846,7 +848,7 @@ ${photoHtml}
                           <Eye size={12} />
                         </button>
                         <button
-                          onClick={() => navigate(`/teachers/edit/${t.id}`)}
+                          onClick={() => navigate(nav(`/teachers/edit/${t.id}`))}
                           title="Edit"
                           className="w-[1.625rem] h-[1.625rem] rounded-[0.375rem] bg-[var(--amber-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--amber)]"
                         >

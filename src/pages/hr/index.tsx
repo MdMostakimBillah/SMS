@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useNavPath } from '@/hooks/useNavPath'
 import {
   ArrowLeft,
   TrendingUp,
@@ -83,6 +84,7 @@ function HRPageSkeleton() {
 
 export default function HRPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const isBn = useBn()
   const { isMobile, isTablet } = useWindowSize()
   const { teachers, departments, attendance } = useTeacherStore(
@@ -1009,7 +1011,7 @@ export default function HRPage() {
       {/* Header */}
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate(nav('/'))}
           className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit]"
         >
           <ArrowLeft size={14} />

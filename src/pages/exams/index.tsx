@@ -16,6 +16,7 @@ import {
   GraduationCap,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useExamStore } from '@/store/examStore'
@@ -67,6 +68,7 @@ function ExamSkeleton() {
 
 export default function ExamDashboard() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const { isMobile, isTablet } = useWindowSize()
   const students = useSessionStudents()
   const subjects = useTeacherStore((s) => s.subjects)
@@ -212,9 +214,9 @@ export default function ExamDashboard() {
         results: '/exams/results',
         promotion: '/exams/marksheet',
       }
-      navigate(routeMap[key] || '/exams')
+      navigate(nav(routeMap[key] || '/exams'))
     },
-    [navigate]
+    [navigate, nav]
   )
 
   const col4 = isMobile ? '1fr 1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)'
@@ -258,11 +260,11 @@ export default function ExamDashboard() {
   const approvedStudentCount = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false).length, [students])
 
   // ── Handlers ──
-  const navPlanning = useCallback(() => navigate('/exams/planning'), [navigate])
-  const navScheduling = useCallback(() => navigate('/exams/scheduling'), [navigate])
-  const navEvaluation = useCallback(() => navigate('/exams/evaluation'), [navigate])
-  const navResults = useCallback(() => navigate('/exams/results'), [navigate])
-  const navMarksheet = useCallback(() => navigate('/exams/marksheet'), [navigate])
+  const navPlanning = useCallback(() => navigate(nav('/exams/planning')), [navigate, nav])
+  const navScheduling = useCallback(() => navigate(nav('/exams/scheduling')), [navigate, nav])
+  const navEvaluation = useCallback(() => navigate(nav('/exams/evaluation')), [navigate, nav])
+  const navResults = useCallback(() => navigate(nav('/exams/results')), [navigate, nav])
+  const navMarksheet = useCallback(() => navigate(nav('/exams/marksheet')), [navigate, nav])
 
   // ── Quick Access Card IDs ──
   const quickAccessCardIds = useMemo(() => ['create-exam', 'generate-routine', 'create-seat-plan', 'enter-marks', 'publish-result', 'promote-students'], [])
@@ -812,7 +814,7 @@ export default function ExamDashboard() {
             {checklist.map((item, i) => (
               <div
                 key={i}
-                onClick={() => navigate(item.link)}
+                onClick={() => navigate(nav(item.link))}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

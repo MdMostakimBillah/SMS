@@ -16,6 +16,7 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAppStore } from '@/store/appStore'
+import { useNavPath } from '@/hooks/useNavPath'
 
 import gsap from 'gsap'
 
@@ -135,6 +136,7 @@ function TeachersSkeleton() {
 
 export default function TeachersPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const isBn = useBn()
   const { teachers, departments, subjects, designations } = useTeacherStore(
     useShallow((s) => ({
@@ -387,7 +389,7 @@ export default function TeachersPage() {
               onDragEnd={handleDragEnd}
               onClick={() => {
                 if (draggedIdx !== null) return
-                navigate(opt.path)
+                navigate(nav(opt.path))
               }}
               className="glass"
               style={{

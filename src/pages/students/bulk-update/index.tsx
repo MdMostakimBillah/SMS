@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { logger } from '@/lib/logger'
@@ -107,6 +108,7 @@ async function compressImage(file: File): Promise<string> {
 
 export default function BulkUpdatePage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const { isMobile } = useWindowSize()
   const updateStudent = useAdmissionStore((s) => s.updateStudent)
   const allStudents = useAdmissionStore((s) => s.students)
@@ -248,7 +250,7 @@ export default function BulkUpdatePage() {
     <div>
       <div className="flex items-center gap-[0.625rem] mb-[1.125rem] flex-wrap">
         <button
-          onClick={() => navigate('/students')}
+          onClick={() => navigate(nav('/students'))}
           className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] flex-shrink-0"
         >
           <ArrowLeft size={14} />

@@ -6,6 +6,7 @@ import { useBn } from '@/hooks/useBn'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
+import { useNavPath } from '@/hooks/useNavPath'
 import type { Subject } from '@/pages/teachers/types'
 
 const sel =
@@ -13,6 +14,7 @@ const sel =
 
 export default function SubjectsPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const isBn = useBn()
   const { subjects, departments, teachers, addSubject, updateSubject, deleteSubject } = useTeacherStore(
     useShallow((s) => ({
@@ -215,7 +217,7 @@ export default function SubjectsPage() {
             if (prev) {
               navigate(prev.path)
             } else {
-              navigate('/teachers')
+              navigate(nav('/teachers'))
             }
           }}
           className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
@@ -270,9 +272,9 @@ export default function SubjectsPage() {
         {departments.length === 0 && (
           <button
             onClick={() => {
-              pushToChain({ path: '/teachers/subjects', label: isBn ? 'বিষয়' : 'Subjects' })
+              pushToChain({ path: nav('/teachers/subjects'), label: isBn ? 'বিষয়' : 'Subjects' })
               setRedirectTimestamp()
-              navigate('/teachers/departments')
+              navigate(nav('/teachers/departments'))
             }}
             className="flex items-center gap-[0.3125rem] py-2 px-[0.875rem] rounded-[0.5625rem] bg-[var(--brand)] text-white text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
           >
@@ -344,10 +346,10 @@ export default function SubjectsPage() {
                         <button
                           onClick={() => {
                             const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
-                            chain.push({ path: '/teachers/subjects', label: isBn ? 'বিষয়' : 'Subjects' })
+                            chain.push({ path: nav('/teachers/subjects'), label: isBn ? 'বিষয়' : 'Subjects' })
                             localStorage.setItem('edutech_navChain', JSON.stringify(chain))
                             sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
-                            navigate('/teachers/departments')
+                            navigate(nav('/teachers/departments'))
                           }}
                           className="py-2 px-4 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none"
                         >

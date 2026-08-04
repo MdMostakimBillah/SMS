@@ -7,10 +7,12 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
+import { useNavPath } from '@/hooks/useNavPath'
 import type { Designation } from '@/pages/teachers/types'
 
 export default function DesignationsPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const isBn = useBn()
   const { designations, teachers, addDesignation, updateDesignation, deleteDesignation } = useTeacherStore(
     useShallow((s) => ({
@@ -166,7 +168,7 @@ export default function DesignationsPage() {
             if (prev) {
               navigate(prev.path)
             } else {
-              navigate('/teachers')
+              navigate(nav('/teachers'))
             }
           }}
           className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"

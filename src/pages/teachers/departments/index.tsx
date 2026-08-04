@@ -8,10 +8,12 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
+import { useNavPath } from '@/hooks/useNavPath'
 import type { Department } from '@/pages/teachers/types'
 
 export default function DepartmentsPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const isBn = useBn()
   const { departments, subjects, teachers, addDepartment, updateDepartment, deleteDepartment } = useTeacherStore(
     useShallow((s) => ({
@@ -195,7 +197,7 @@ export default function DepartmentsPage() {
             if (prev) {
               navigate(prev.path)
             } else {
-              navigate('/teachers')
+              navigate(nav('/teachers'))
             }
           }}
           className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"

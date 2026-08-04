@@ -78,10 +78,12 @@ export default function SuperAdminPage() {
             </div>
           </div>
 
-          <div className="anim-card grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="anim-card grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-[0.625rem]">
             {SUPER_ADMIN_ROUTES.map((a) => (
               <button key={a.id} onClick={() => goTo(a.id)}
-                className="group relative p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] cursor-pointer text-left hover:shadow-lg hover:shadow-black/5 transition-all duration-200">
+                className="group relative glass rounded-[0.75rem] p-4 cursor-pointer text-left transition-all duration-200"
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}>
                 {!a.functional && (
                   <span className="absolute top-3 right-3 px-1.5 py-0.5 rounded text-[0.5rem] font-semibold bg-[var(--bg-secondary)] text-[var(--text-muted)] uppercase">
                     {isBn ? 'শীঘ্রই' : 'Soon'}
@@ -119,8 +121,8 @@ function AccountSettings({ isBn }: { isBn: boolean }) {
 
   return (
     <div className="max-w-xl mx-auto space-y-4">
-      <div className="anim-card bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-3">
+      <div className="anim-card glass rounded-[0.75rem] overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--glass-border)] flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#6366f115', color: '#6366f1' }}>
             <Mail size={17} />
           </div>
@@ -156,8 +158,8 @@ function AccountSettings({ isBn }: { isBn: boolean }) {
         </div>
       </div>
 
-      <div className="anim-card bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-3">
+      <div className="anim-card glass rounded-[0.75rem] overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--glass-border)] flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#8b5cf615', color: '#8b5cf6' }}>
             <Lock size={17} />
           </div>

@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { BookOpen, Check, X } from 'lucide-react'
 import { useNavChain } from '@/hooks/useNavChain'
+import { useNavPath } from '@/hooks/useNavPath'
 import type { Subject } from '@/pages/teachers/types'
 import type { ClassSection } from '@/store/classStore'
 
@@ -25,6 +26,7 @@ export function SubjectSelectionModal({
   isBn,
 }: SubjectSelectionModalProps) {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const { pushToChain, setRedirectTimestamp } = useNavChain()
 
   return createPortal(
@@ -85,9 +87,9 @@ export function SubjectSelectionModal({
               <button
                 onClick={() => {
                   setShowSubjectModal(null)
-                  pushToChain({ path: '/classes', label: isBn ? 'শ্রেণী ব্যবস্থাপনা' : 'Classes Management' })
+                  pushToChain({ path: nav('/classes'), label: isBn ? 'শ্রেণী ব্যবস্থাপনা' : 'Classes Management' })
                   setRedirectTimestamp()
-                  navigate('/teachers/subjects')
+                  navigate(nav('/teachers/subjects'))
                 }}
                 style={{
                   padding: '0.5rem 1rem',

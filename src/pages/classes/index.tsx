@@ -11,6 +11,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useClassStore } from '@/store/classStore'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -21,6 +22,7 @@ import RoutineTab from './tabs/RoutineTab'
 
 export default function ClassesPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const { isMobile, isTablet } = useWindowSize()
   const {
     institution,
@@ -87,7 +89,7 @@ export default function ClassesPage() {
             if (prev) {
               navigate(prev.path)
             } else {
-              navigate('/')
+              navigate(nav('/'))
             }
           }}
           className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"

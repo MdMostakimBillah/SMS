@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { UserPlus, Users, User, UserPen, TableProperties, IdCard, ArrowUpCircle, ArrowRight } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useAppStore } from '@/store/appStore'
@@ -47,6 +48,7 @@ function StudentsSkeleton() {
 
 export default function StudentsPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const { isMobile, isTablet } = useWindowSize()
   const students = useSessionStudents()
   const isBn = useBn()
@@ -332,7 +334,7 @@ export default function StudentsPage() {
               onDragEnd={handleDragEnd}
               onClick={() => {
                 if (draggedIdx !== null) return
-                navigate(opt.path)
+                navigate(nav(opt.path))
               }}
               className={`glass rounded-[0.75rem] cursor-pointer transition-all duration-200 flex ${isMobile ? 'flex-row items-center gap-3' : 'flex-col items-start gap-0'} ${isMobile ? 'p-3' : 'p-4'} ${isDragOver ? '!border-[var(--brand)] shadow-[0_8px_32px_rgba(0,0,0,0.12)]' : ''} ${isDragging ? 'opacity-50' : ''}`}
               style={{ transform: isDragOver ? 'translateY(-2px)' : undefined }}

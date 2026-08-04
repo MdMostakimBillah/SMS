@@ -25,6 +25,7 @@ import { XLSX } from '@/lib/excelExport'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useSessionStudents, useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
@@ -41,6 +42,7 @@ const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
 
 export default function AllStudentsPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const { isMobile } = useWindowSize()
   const students = useSessionStudents()
   const deactivateStudent = useAdmissionStore((s) => s.deactivateStudent)
@@ -365,7 +367,7 @@ export default function AllStudentsPage() {
               </button>
               <button
                 onClick={() => {
-                  navigate('/students/update', { state: { studentId: viewSt.id } })
+                  navigate(nav('/students/update'), { state: { studentId: viewSt.id } })
                   setViewSt(null)
                 }}
                 className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer"
@@ -385,7 +387,7 @@ export default function AllStudentsPage() {
         <div className="mb-4">
           <div className="flex items-center gap-[0.625rem] mb-2">
             <button
-              onClick={() => navigate('/students')}
+              onClick={() => navigate(nav('/students'))}
               className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] shrink-0"
             >
               <ArrowLeft size={14} />
@@ -396,14 +398,14 @@ export default function AllStudentsPage() {
             </h1>
             <div className="flex gap-2 shrink-0">
               <button
-                onClick={() => navigate('/students/update')}
+                onClick={() => navigate(nav('/students/update'))}
                 className="flex items-center gap-[0.3125rem] px-3 py-2 rounded-[0.5625rem] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.8125rem] cursor-pointer font-medium"
               >
                 <Edit2 size={14} />
                 {!isMobile && (isBn ? 'আপডেট' : 'Update')}
               </button>
               <button
-                onClick={() => navigate('/students/bulk-update')}
+                onClick={() => navigate(nav('/students/bulk-update'))}
                 className="flex items-center gap-[0.3125rem] px-3 py-2 rounded-[0.5625rem] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.8125rem] cursor-pointer font-medium"
               >
                 <Layers size={14} />
@@ -798,7 +800,7 @@ export default function AllStudentsPage() {
                           <Eye size={12} />
                         </button>
                         <button
-                          onClick={() => navigate('/students/update', { state: { studentId: s.id } })}
+                          onClick={() => navigate(nav('/students/update'), { state: { studentId: s.id } })}
                           title="Edit"
                           className="w-[1.625rem] h-[1.625rem] rounded-[0.375rem] bg-[var(--amber-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--amber)]"
                         >

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { CheckCircle, Camera, Clock, Users, Save, Briefcase, X, IdCard } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { TeacherStatus } from '@/pages/teachers/types'
@@ -82,6 +83,7 @@ function FormField({ labelEn, labelBn, value, onChange, type = 'text', required 
 
 export default function EditTeacherPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const { id } = useParams<{ id: string }>()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
@@ -264,7 +266,7 @@ export default function EditTeacherPage() {
         signature,
       })
       setSaved(true)
-      setTimeout(() => navigate(`/teachers/all`), 1200)
+      setTimeout(() => navigate(nav(`/teachers/all`)), 1200)
     }
 
   // ── helpers ──
@@ -287,7 +289,7 @@ export default function EditTeacherPage() {
       <div className="p-10 text-center">
         <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'শিক্ষক পাওয়া যায়নি' : 'Teacher not found'}</p>
         <button
-          onClick={() => navigate('/teachers/all')}
+          onClick={() => navigate(nav('/teachers/all'))}
           className="mt-3 px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] cursor-pointer"
         >
           {isBn ? 'ফিরে যান' : 'Go Back'}
@@ -311,7 +313,7 @@ export default function EditTeacherPage() {
           </p>
           <div className="flex gap-2 justify-center flex-wrap">
             <button
-              onClick={() => navigate('/teachers/all')}
+              onClick={() => navigate(nav('/teachers/all'))}
               className="flex items-center gap-1.5 px-[1.125rem] py-2.5 rounded-[0.5625rem] bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer"
             >
               {isBn ? 'সকল শিক্ষক' : 'All Teachers'}
@@ -328,7 +330,7 @@ export default function EditTeacherPage() {
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
         <button
           type="button"
-          onClick={() => navigate('/teachers/all')}
+          onClick={() => navigate(nav('/teachers/all'))}
           className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)]"
         >
           ← {isBn ? 'ফিরে যান' : 'Back'}
@@ -685,7 +687,7 @@ export default function EditTeacherPage() {
       <div className="flex gap-[0.625rem] justify-end flex-wrap">
         <button
           type="button"
-          onClick={() => navigate('/teachers/all')}
+          onClick={() => navigate(nav('/teachers/all'))}
           className="px-5 py-2.5 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer"
         >
           {isBn ? 'বাতিল' : 'Cancel'}

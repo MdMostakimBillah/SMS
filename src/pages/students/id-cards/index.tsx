@@ -4,6 +4,7 @@ import { ArrowLeft, IdCard, Printer, Search, User } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import QRCode from 'qrcode'
@@ -180,6 +181,7 @@ function IDCard({
 
 export default function IDCardsPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const { isMobile } = useWindowSize()
   const allStudents = useAdmissionStore((s) => s.students)
   const { classes, institution } = useClassStore()
@@ -315,7 +317,7 @@ export default function IDCardsPage() {
       {/* Header */}
       <div className="flex items-center gap-2.5 mb-[1.125rem] flex-wrap">
         <button
-          onClick={() => navigate('/students')}
+          onClick={() => navigate(nav('/students'))}
           className="flex items-center gap-1.5 py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-['Inter',sans-serif] shrink-0"
         >
           <ArrowLeft size={14} />

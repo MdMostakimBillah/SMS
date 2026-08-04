@@ -1,6 +1,7 @@
 import React, { useState, useMemo, Fragment, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import { useNavPath } from '@/hooks/useNavPath'
 import {
   ArrowRight,
   Clock,
@@ -51,6 +52,7 @@ export default React.memo(function RoutineTab({
   isMobile,
 }: RoutineTabProps) {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const [selectedClass, setSelectedClass] = useState(classes[0]?.id || '')
   const [selectedSection, setSelectedSection] = useState('')
   const [editSlot, setEditSlot] = useState<{ day: number; period: number } | null>(null)
@@ -647,10 +649,10 @@ export default React.memo(function RoutineTab({
                     <button
                       onClick={() => {
                         const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
-                        chain.push({ path: '/classes', label: isBn ? 'শ্রেণি' : 'Classes' })
+                        chain.push({ path: nav('/classes'), label: isBn ? 'শ্রেণি' : 'Classes' })
                         localStorage.setItem('edutech_navChain', JSON.stringify(chain))
                         sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
-                        navigate('/teachers/subjects')
+                        navigate(nav('/teachers/subjects'))
                       }}
                       style={{
                         display: 'inline-flex',

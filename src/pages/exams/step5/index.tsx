@@ -2,6 +2,7 @@ import { useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, Award, FileText, CheckCircle, Users, GraduationCap, Eye, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -13,6 +14,7 @@ type SubTab = 'marksheets' | 'cumulative' | 'promotion'
 
 export default function Step5Marksheet() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const { classes } = useClassStore()
   const currentSession = useClassStore((s) => s.institution.currentSession)
   const students = useSessionStudents()
@@ -193,7 +195,7 @@ export default function Step5Marksheet() {
       <div className="flex flex-wrap items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate('/exams')}
+            onClick={() => navigate(nav('/exams'))}
             className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] shrink-0"
           >
             <ArrowLeft size={16} />

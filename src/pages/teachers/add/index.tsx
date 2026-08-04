@@ -5,6 +5,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useNavChain } from '@/hooks/useNavChain'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
@@ -71,6 +72,7 @@ function SummaryRow({ labelBn, labelEn, value, isBn }: { labelBn: string; labelE
 
 export default function AddTeacherPage() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
   const { departments, subjects, designations, addTeacher, getNextTeacherId } = useTeacherStore(
@@ -240,7 +242,7 @@ export default function AddTeacherPage() {
           <button type="button" onClick={() => { setDone(false); setForm(initForm()); setShowReview(false); setActiveTab('personal') }} className="flex items-center gap-1.5 px-[1.125rem] py-2.5 rounded-[0.5625rem] bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer">
             <Send size={14} /> {isBn ? 'নতুন শিক্ষক যোগ করুন' : 'Add Another Teacher'}
           </button>
-          <button type="button" onClick={() => navigate('/teachers/all')} className="px-[1.125rem] py-2.5 rounded-[0.5625rem] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer">
+          <button type="button" onClick={() => navigate(nav('/teachers/all'))} className="px-[1.125rem] py-2.5 rounded-[0.5625rem] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer">
             {isBn ? 'সকল শিক্ষক' : 'All Teachers'}
           </button>
         </div>
@@ -251,7 +253,7 @@ export default function AddTeacherPage() {
   if (showReview) return (
     <div>
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
-        <button type="button" onClick={() => navigate('/teachers')} className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)]">
+        <button type="button" onClick={() => navigate(nav('/teachers'))} className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)]">
           {'\u2190'} {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div>
@@ -387,7 +389,7 @@ export default function AddTeacherPage() {
   return (
     <form autoComplete="off" onSubmit={(e) => e.preventDefault()}>
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
-        <button type="button" onClick={() => navigate('/teachers')} className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)]">
+        <button type="button" onClick={() => navigate(nav('/teachers'))} className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)]">
           {'\u2190'} {isBn ? 'ফিরে যান' : 'Back'}
         </button>
         <div>
@@ -493,7 +495,7 @@ export default function AddTeacherPage() {
                 {departments.length === 0 ? (
                   <div className="flex items-center gap-2">
                     <input value="" disabled placeholder={isBn ? 'কোনো বিভাগ নেই' : 'No departments'} className={inputNormal + ' opacity-60'} style={{ flex: 1 }} />
-                    <button onClick={() => { pushToChain({ path: '/teachers/add', label: isBn ? 'শিক্ষক যোগ' : 'Add Teacher' }); setRedirectTimestamp(); navigate('/teachers/departments') }}
+                    <button onClick={() => { pushToChain({ path: nav('/teachers/add'), label: isBn ? 'শিক্ষক যোগ' : 'Add Teacher' }); setRedirectTimestamp(); navigate(nav('/teachers/departments')) }}
                       className="py-[0.5rem] px-[0.75rem] rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none whitespace-nowrap">
                       {isBn ? 'বিভাগ তৈরি করুন \u2192' : 'Create Dept \u2192'}
                     </button>
@@ -511,7 +513,7 @@ export default function AddTeacherPage() {
                 {designations.length === 0 ? (
                   <div className="flex items-center gap-2">
                     <input value="" disabled placeholder={isBn ? 'কোনো পদবি নেই' : 'No designations'} className={inputNormal + ' opacity-60'} style={{ flex: 1 }} />
-                    <button onClick={() => { pushToChain({ path: '/teachers/add', label: isBn ? 'শিক্ষক যোগ' : 'Add Teacher' }); setRedirectTimestamp(); navigate('/teachers/designations') }}
+                    <button onClick={() => { pushToChain({ path: nav('/teachers/add'), label: isBn ? 'শিক্ষক যোগ' : 'Add Teacher' }); setRedirectTimestamp(); navigate(nav('/teachers/designations')) }}
                       className="py-[0.5rem] px-[0.75rem] rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none whitespace-nowrap">
                       {isBn ? 'পদবি তৈরি করুন \u2192' : 'Create Designation \u2192'}
                     </button>

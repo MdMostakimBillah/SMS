@@ -35,6 +35,7 @@ import {
   Lightbulb,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -54,6 +55,7 @@ type SubTab = 'extra-marks' | 'tabulation' | 'analysis' | 'position' | 'mark-adj
 
 export default function Step4Results() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const subjects = useTeacherStore((s) => s.subjects)
   const { classes, institution } = useClassStore()
   const currentSession = institution.currentSession
@@ -497,7 +499,7 @@ export default function Step4Results() {
       <div className="flex flex-wrap items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate('/exams')}
+            onClick={() => navigate(nav('/exams'))}
             className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] shrink-0"
           >
             <ArrowLeft size={16} />

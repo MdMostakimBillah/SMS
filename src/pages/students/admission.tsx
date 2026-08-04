@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, UserPlus, Users, ListChecks } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import GeneralAdmission from './admission/GeneralAdmission'
@@ -16,6 +17,7 @@ const tabs = [
 
 export default function StudentAdmission() {
   const navigate = useNavigate()
+  const nav = useNavPath()
   const { isMobile } = useWindowSize()
   const [activeTab, setActiveTab] = useState('general')
   const isBn = useBn()
@@ -33,7 +35,7 @@ export default function StudentAdmission() {
     <div className="flex flex-col gap-[0.875rem]">
       <div className="flex items-center gap-[0.625rem] flex-wrap">
         <button
-          onClick={() => navigate('/students')}
+          onClick={() => navigate(nav('/students'))}
           className="glass flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit]"
         >
           <ArrowLeft size={14} />
