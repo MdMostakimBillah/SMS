@@ -261,7 +261,7 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
       breaks: [], currentSession: inst.sessions?.[1] || '2025-26', sessions: inst.sessions || ['2024-25', '2025-26'],
       lightColors: { ...defaultThemeColors, brand: inst.brandColor }, darkColors: { ...defaultThemeColorsDark },
     })
-    navigate('/dashboard')
+    navigate('/super-admin/viewing/admin/dashboard')
   }
 
   const filtered = institutions.filter((i) => {

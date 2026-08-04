@@ -4,7 +4,7 @@ import AppLayout from '@/components/layouts/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { AuthProvider } from '@/contexts/AuthContext'
-import { ProtectedRoute, RoleProtectedRoute } from '@/components/ProtectedRoute'
+import { ProtectedRoute, RoleProtectedRoute, ViewingRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
 import { LOGIN_PATH } from '@/lib/constants'
 import { useSubdomain } from '@/hooks/useSubdomain'
@@ -47,6 +47,7 @@ const AssignmentsPage = lazy(() => import('@/pages/assignments'))
 const OnlineClassesPage = lazy(() => import('@/pages/online'))
 const FinancePage = lazy(() => import('@/pages/finance'))
 const NotFoundPage = lazy(() => import('@/pages/NotFound'))
+const SettingsPage = lazy(() => import('@/pages/settings'))
 
 function P({ name }: { name: string }) {
   return <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 500, padding: '1.25rem' }}>{name}</div>
@@ -156,7 +157,7 @@ function AppContent() {
             <Route path="/:role/student-portal" element={<P name="Student Portal" />} />
             <Route path="/:role/analytics" element={<P name="Analytics" />} />
             <Route path="/:role/reports" element={<P name="Reports" />} />
-            <Route path="/:role/settings" element={<P name="Settings" />} />
+            <Route path="/:role/settings" element={<F><SettingsPage /></F>} />
           </Route>
         </Route>
 
@@ -164,6 +165,56 @@ function AppContent() {
           <Route element={<AppLayout />}>
             <Route path="/super-admin" element={<F><SuperAdminPage /></F>} />
             <Route path="/super-admin/:subpage" element={<F><SuperAdminPage /></F>} />
+          </Route>
+        </Route>
+
+        <Route element={<ViewingRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/super-admin/viewing/:role/dashboard" element={<F><DashboardPage /></F>} />
+            <Route path="/super-admin/viewing/:role/students" element={<F><StudentsPage /></F>} />
+            <Route path="/super-admin/viewing/:role/students/admission" element={<F><StudentAdmission /></F>} />
+            <Route path="/super-admin/viewing/:role/students/all" element={<F><AllStudentsPage /></F>} />
+            <Route path="/super-admin/viewing/:role/students/update" element={<F><UpdateStudentPage /></F>} />
+            <Route path="/super-admin/viewing/:role/students/bulk-update" element={<F><BulkUpdatePage /></F>} />
+            <Route path="/super-admin/viewing/:role/students/id-cards" element={<F><IDCardsPage /></F>} />
+            <Route path="/super-admin/viewing/:role/students/promotion" element={<F><PromotionPage /></F>} />
+            <Route path="/super-admin/viewing/:role/teachers" element={<F><TeachersPage /></F>} />
+            <Route path="/super-admin/viewing/:role/teachers/add" element={<F><AddTeacherPage /></F>} />
+            <Route path="/super-admin/viewing/:role/teachers/all" element={<F><AllTeachersPage /></F>} />
+            <Route path="/super-admin/viewing/:role/teachers/all/:id" element={<F><TeacherDetailPage /></F>} />
+            <Route path="/super-admin/viewing/:role/teachers/edit/:id" element={<F><EditTeacherPage /></F>} />
+            <Route path="/super-admin/viewing/:role/teachers/bulk-update" element={<F><TeacherBulkUpdatePage /></F>} />
+            <Route path="/super-admin/viewing/:role/teachers/departments" element={<F><DepartmentsPage /></F>} />
+            <Route path="/super-admin/viewing/:role/teachers/subjects" element={<F><SubjectsPage /></F>} />
+            <Route path="/super-admin/viewing/:role/teachers/designations" element={<F><DesignationsPage /></F>} />
+            <Route path="/super-admin/viewing/:role/classes" element={<F><ClassesPage /></F>} />
+            <Route path="/super-admin/viewing/:role/hr" element={<F><HRPage /></F>} />
+            <Route path="/super-admin/viewing/:role/attendance" element={<F><AttendancePage /></F>} />
+            <Route path="/super-admin/viewing/:role/exams" element={<F><ExamDashboard /></F>} />
+            <Route path="/super-admin/viewing/:role/exams/planning" element={<F><Step1Planning /></F>} />
+            <Route path="/super-admin/viewing/:role/exams/scheduling" element={<F><Step2Schedule /></F>} />
+            <Route path="/super-admin/viewing/:role/exams/evaluation" element={<F><Step3Evaluation /></F>} />
+            <Route path="/super-admin/viewing/:role/exams/results" element={<F><Step4Results /></F>} />
+            <Route path="/super-admin/viewing/:role/exams/marksheet" element={<F><Step5Marksheet /></F>} />
+            <Route path="/super-admin/viewing/:role/exams/omr" element={<F><OMRSheetPage /></F>} />
+            <Route path="/super-admin/viewing/:role/syllabus" element={<F><SyllabusPage /></F>} />
+            <Route path="/super-admin/viewing/:role/assignments" element={<F><AssignmentsPage /></F>} />
+            <Route path="/super-admin/viewing/:role/online" element={<F><OnlineClassesPage /></F>} />
+            <Route path="/super-admin/viewing/:role/finance" element={<F><FinancePage /></F>} />
+            <Route path="/super-admin/viewing/:role/payroll" element={<F><PayrollPage /></F>} />
+            <Route path="/super-admin/viewing/:role/store" element={<P name="School Store" />} />
+            <Route path="/super-admin/viewing/:role/expenses" element={<P name="Expenses" />} />
+            <Route path="/super-admin/viewing/:role/library" element={<P name="Library" />} />
+            <Route path="/super-admin/viewing/:role/transport" element={<P name="Transport" />} />
+            <Route path="/super-admin/viewing/:role/hostel" element={<P name="Hostel" />} />
+            <Route path="/super-admin/viewing/:role/messages" element={<P name="Messages" />} />
+            <Route path="/super-admin/viewing/:role/notice" element={<P name="Notice Board" />} />
+            <Route path="/super-admin/viewing/:role/notifications" element={<P name="Notifications" />} />
+            <Route path="/super-admin/viewing/:role/parent-portal" element={<P name="Parent Portal" />} />
+            <Route path="/super-admin/viewing/:role/student-portal" element={<P name="Student Portal" />} />
+            <Route path="/super-admin/viewing/:role/analytics" element={<P name="Analytics" />} />
+            <Route path="/super-admin/viewing/:role/reports" element={<P name="Reports" />} />
+            <Route path="/super-admin/viewing/:role/settings" element={<F><SettingsPage /></F>} />
           </Route>
         </Route>
 

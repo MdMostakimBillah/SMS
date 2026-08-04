@@ -26,10 +26,11 @@ import {
 import { useAppStore } from '@/store/appStore'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubdomain } from '@/hooks/useSubdomain'
-import { getNavBase } from '@/lib/navUtils'
+import { useSuperAdminStore } from '@/store/superAdminStore'
+import { getNavBase, getSuperAdminViewNavBase } from '@/lib/navUtils'
 import { LOGIN_PATH } from '@/lib/constants'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
@@ -137,9 +138,15 @@ const demoMessages = [
 
 export default React.memo(function Topbar() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { logout, user } = useAuth()
   const { resolved } = useSubdomain()
-  const navBase = getNavBase(user, resolved)
+  const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
+  const isViewing = user?.role === 'super_admin' && !!viewingInstitutionId
+  const viewingRole = isViewing ? (location.pathname.split('/')[3] || 'admin') : undefined
+  const navBase = isViewing
+    ? getSuperAdminViewNavBase(user, viewingRole)
+    : getNavBase(user, resolved)
   const theme = useAppStore((s) => s.theme)
   const language = useAppStore((s) => s.language)
   const setTheme = useAppStore((s) => s.setTheme)
@@ -900,13 +907,13 @@ export default React.memo(function Topbar() {
                     icon: <Settings size={14} />,
                     labelEn: 'Settings',
                     labelBn: 'সেটিংস',
-                    path: '/settings',
+                    path: `${navBase}/settings`,
                   },
                   {
                     icon: <HelpCircle size={14} />,
                     labelEn: 'Help',
                     labelBn: 'সাহায্য',
-                    path: '/help',
+                    path: `${navBase}/help`,
                   },
                 ].map((item) => (
                   <div

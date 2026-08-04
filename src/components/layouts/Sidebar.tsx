@@ -40,7 +40,8 @@ import { useAppStore } from '@/store/appStore'
 import { useClassStore } from '@/store/classStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubdomain } from '@/hooks/useSubdomain'
-import { getNavBase } from '@/lib/navUtils'
+import { useSuperAdminStore } from '@/store/superAdminStore'
+import { getNavBase, getSuperAdminViewNavBase } from '@/lib/navUtils'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
 
@@ -92,8 +93,13 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
   const addSession = useClassStore((s) => s.addSession)
   const { user } = useAuth()
   const { resolved } = useSubdomain()
+  const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
   const isSuperAdmin = user?.role === 'super_admin'
-  const navBase = getNavBase(user, resolved)
+  const isViewing = isSuperAdmin && !!viewingInstitutionId
+  const viewingRole = isViewing ? (location.pathname.split('/')[3] || 'admin') : undefined
+  const navBase = isViewing
+    ? getSuperAdminViewNavBase(user, viewingRole)
+    : getNavBase(user, resolved)
   const [showSessionDropdown, setShowSessionDropdown] = useState(false)
   const [newSession, setNewSession] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -209,10 +215,11 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
       key: 'grp_system',
       items: [
         { key: 'nav_settings', page: `${navBase}/settings`, icon: 'settings' },
-        ...(isSuperAdmin ? [{ key: 'nav_superadmin', page: '/super-admin', icon: 'crown' }] : []),
+        ...(isViewing ? [{ key: 'nav_superadmin_back', page: '/super-admin/schools', icon: 'crown' }] : []),
+        ...(isSuperAdmin && !isViewing ? [{ key: 'nav_superadmin', page: '/super-admin', icon: 'crown' }] : []),
       ],
     },
-  ], [isSuperAdmin, navBase])
+  ], [isSuperAdmin, isViewing, navBase])
 
   // Apply custom sidebar order
   type NavItem = { key: string; page: string }
