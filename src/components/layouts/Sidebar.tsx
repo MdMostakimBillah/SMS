@@ -403,8 +403,8 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
             </div>
           )}
 
-          {/* Session Switcher — show for super admin or institution admin */}
-          {!collapsed && (isSuperAdmin || user?.role === 'admin') && (
+          {/* Session Switcher — show when viewing or institution admin */}
+          {!collapsed && (isViewing || user?.role === 'admin') && (
             <div ref={dropdownRef} className="relative mt-2 z-50">
               <div
                 onClick={() => setShowSessionDropdown(!showSessionDropdown)}
