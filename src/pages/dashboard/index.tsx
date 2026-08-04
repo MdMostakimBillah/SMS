@@ -23,13 +23,12 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useFeeStore } from '@/store/feeStore'
 import { useTodoStore } from '@/store/todoStore'
-import { useClassStore } from '@/store/classStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import CircularChart from '@/components/ui/CircularChart'
 import gsap from 'gsap'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { CreateTaskModal } from './modals/CreateTaskModal'
-import SetupWizard, { isSetupComplete } from './SetupWizard'
+
 
 const COLORS = ['#6366f1', '#14b8a6', '#f59e0b', '#22c55e', '#a855f7', '#ef4444', '#ec4899', '#06b6d4']
 const STATUS_COLORS = { approved: '#22c55e', pending: '#f59e0b', rejected: '#ef4444' }
@@ -83,7 +82,6 @@ export default function DashboardPage() {
   const isBn = useBn()
   const students = useSessionStudents()
   const teachers = useTeacherStore(useShallow((s) => s.teachers))
-  const classes = useClassStore((s) => s.classes)
   const payments = useFeeStore((s) => s.payments)
   const structures = useFeeStore((s) => s.structures)
   const generateWaivers = useFeeStore((s) => s.generateWaivers)
@@ -251,13 +249,6 @@ export default function DashboardPage() {
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap }}>
-      {/* Setup Wizard for new institutions */}
-      {!isSetupComplete() && students.length === 0 && teachers.length === 0 && classes.length === 0 && (
-        <div className="gsap-fade-up">
-          <SetupWizard />
-        </div>
-      )}
-
       {/* Header */}
       <div
         className="gsap-fade-up"
