@@ -168,6 +168,56 @@ function AppContent() {
           </Route>
         </Route>
 
+        <Route element={<RoleProtectedRoute allowedRoles={['super_admin']} />}>
+          <Route element={<AppLayout />}>
+            <Route path="/super-admin/admin/dashboard" element={<F><DashboardPage /></F>} />
+            <Route path="/super-admin/admin/students" element={<F><StudentsPage /></F>} />
+            <Route path="/super-admin/admin/students/admission" element={<F><StudentAdmission /></F>} />
+            <Route path="/super-admin/admin/students/all" element={<F><AllStudentsPage /></F>} />
+            <Route path="/super-admin/admin/students/update" element={<F><UpdateStudentPage /></F>} />
+            <Route path="/super-admin/admin/students/bulk-update" element={<F><BulkUpdatePage /></F>} />
+            <Route path="/super-admin/admin/students/id-cards" element={<F><IDCardsPage /></F>} />
+            <Route path="/super-admin/admin/students/promotion" element={<F><PromotionPage /></F>} />
+            <Route path="/super-admin/admin/teachers" element={<F><TeachersPage /></F>} />
+            <Route path="/super-admin/admin/teachers/add" element={<F><AddTeacherPage /></F>} />
+            <Route path="/super-admin/admin/teachers/all" element={<F><AllTeachersPage /></F>} />
+            <Route path="/super-admin/admin/teachers/all/:id" element={<F><TeacherDetailPage /></F>} />
+            <Route path="/super-admin/admin/teachers/edit/:id" element={<F><EditTeacherPage /></F>} />
+            <Route path="/super-admin/admin/teachers/bulk-update" element={<F><TeacherBulkUpdatePage /></F>} />
+            <Route path="/super-admin/admin/teachers/departments" element={<F><DepartmentsPage /></F>} />
+            <Route path="/super-admin/admin/teachers/subjects" element={<F><SubjectsPage /></F>} />
+            <Route path="/super-admin/admin/teachers/designations" element={<F><DesignationsPage /></F>} />
+            <Route path="/super-admin/admin/classes" element={<F><ClassesPage /></F>} />
+            <Route path="/super-admin/admin/hr" element={<F><HRPage /></F>} />
+            <Route path="/super-admin/admin/attendance" element={<F><AttendancePage /></F>} />
+            <Route path="/super-admin/admin/exams" element={<F><ExamDashboard /></F>} />
+            <Route path="/super-admin/admin/exams/planning" element={<F><Step1Planning /></F>} />
+            <Route path="/super-admin/admin/exams/scheduling" element={<F><Step2Schedule /></F>} />
+            <Route path="/super-admin/admin/exams/evaluation" element={<F><Step3Evaluation /></F>} />
+            <Route path="/super-admin/admin/exams/results" element={<F><Step4Results /></F>} />
+            <Route path="/super-admin/admin/exams/marksheet" element={<F><Step5Marksheet /></F>} />
+            <Route path="/super-admin/admin/exams/omr" element={<F><OMRSheetPage /></F>} />
+            <Route path="/super-admin/admin/syllabus" element={<F><SyllabusPage /></F>} />
+            <Route path="/super-admin/admin/assignments" element={<F><AssignmentsPage /></F>} />
+            <Route path="/super-admin/admin/online" element={<F><OnlineClassesPage /></F>} />
+            <Route path="/super-admin/admin/finance" element={<F><FinancePage /></F>} />
+            <Route path="/super-admin/admin/payroll" element={<F><PayrollPage /></F>} />
+            <Route path="/super-admin/admin/store" element={<P name="School Store" />} />
+            <Route path="/super-admin/admin/expenses" element={<P name="Expenses" />} />
+            <Route path="/super-admin/admin/library" element={<P name="Library" />} />
+            <Route path="/super-admin/admin/transport" element={<P name="Transport" />} />
+            <Route path="/super-admin/admin/hostel" element={<P name="Hostel" />} />
+            <Route path="/super-admin/admin/messages" element={<P name="Messages" />} />
+            <Route path="/super-admin/admin/notice" element={<P name="Notice Board" />} />
+            <Route path="/super-admin/admin/notifications" element={<P name="Notifications" />} />
+            <Route path="/super-admin/admin/parent-portal" element={<P name="Parent Portal" />} />
+            <Route path="/super-admin/admin/student-portal" element={<P name="Student Portal" />} />
+            <Route path="/super-admin/admin/analytics" element={<P name="Analytics" />} />
+            <Route path="/super-admin/admin/reports" element={<P name="Reports" />} />
+            <Route path="/super-admin/admin/settings" element={<F><SettingsPage /></F>} />
+          </Route>
+        </Route>
+
         <Route element={<ViewingRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/super-admin/viewing/:role/dashboard" element={<F><DashboardPage /></F>} />

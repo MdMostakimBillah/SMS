@@ -146,7 +146,9 @@ export default React.memo(function Topbar() {
   const viewingRole = isViewing ? (location.pathname.split('/')[3] || 'admin') : undefined
   const navBase = isViewing
     ? getSuperAdminViewNavBase(user, viewingRole)
-    : getNavBase(user, resolved)
+    : user?.role === 'super_admin'
+      ? '/super-admin/admin'
+      : getNavBase(user, resolved)
   const theme = useAppStore((s) => s.theme)
   const language = useAppStore((s) => s.language)
   const setTheme = useAppStore((s) => s.setTheme)

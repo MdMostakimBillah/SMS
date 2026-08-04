@@ -99,7 +99,9 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
   const viewingRole = isViewing ? (location.pathname.split('/')[3] || 'admin') : undefined
   const navBase = isViewing
     ? getSuperAdminViewNavBase(user, viewingRole)
-    : getNavBase(user, resolved)
+    : isSuperAdmin
+      ? '/super-admin/admin'
+      : getNavBase(user, resolved)
   const [showSessionDropdown, setShowSessionDropdown] = useState(false)
   const [newSession, setNewSession] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
