@@ -390,18 +390,10 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
             <div ref={dropdownRef} className="relative mt-2 z-50">
               <div
                 onClick={() => setShowSessionDropdown(!showSessionDropdown)}
-                className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 cursor-pointer transition-all duration-150 bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--surface-2)] hover:border-[var(--brand)]"
+                className="flex items-center justify-between rounded-lg px-2.5 py-1.5 cursor-pointer transition-all duration-150 bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--surface-2)] hover:border-[var(--brand)]"
               >
-                <div className="w-5 h-5 rounded bg-[var(--teal)] flex items-center justify-center text-[0.5rem] font-bold text-white shrink-0">
-                  {(institution.name || 'SA').slice(0, 2).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[0.5625rem] text-[var(--text-muted)]">
-                    {isBn ? 'বর্তমান সেশন' : 'Current Session'}
-                  </div>
-                  <div className="text-[0.6875rem] font-semibold text-[var(--brand)]">
-                    {institution.currentSession || 'No Session'}
-                  </div>
+                <div className="text-[0.6875rem] font-semibold text-[var(--brand)]">
+                  {institution.currentSession || 'No Session'}
                 </div>
                 <ChevronsUpDown
                   size={11}
