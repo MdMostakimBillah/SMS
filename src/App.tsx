@@ -87,6 +87,56 @@ function AppContent() {
       <Routes>
         <Route path="/i/:slug" element={<F><InstitutionLoginRoute /></F>} />
 
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/i/:slug/:role/dashboard" element={<F><DashboardPage /></F>} />
+            <Route path="/i/:slug/:role/students" element={<F><StudentsPage /></F>} />
+            <Route path="/i/:slug/:role/students/admission" element={<F><StudentAdmission /></F>} />
+            <Route path="/i/:slug/:role/students/all" element={<F><AllStudentsPage /></F>} />
+            <Route path="/i/:slug/:role/students/update" element={<F><UpdateStudentPage /></F>} />
+            <Route path="/i/:slug/:role/students/bulk-update" element={<F><BulkUpdatePage /></F>} />
+            <Route path="/i/:slug/:role/students/id-cards" element={<F><IDCardsPage /></F>} />
+            <Route path="/i/:slug/:role/students/promotion" element={<F><PromotionPage /></F>} />
+            <Route path="/i/:slug/:role/teachers" element={<F><TeachersPage /></F>} />
+            <Route path="/i/:slug/:role/teachers/add" element={<F><AddTeacherPage /></F>} />
+            <Route path="/i/:slug/:role/teachers/all" element={<F><AllTeachersPage /></F>} />
+            <Route path="/i/:slug/:role/teachers/all/:id" element={<F><TeacherDetailPage /></F>} />
+            <Route path="/i/:slug/:role/teachers/edit/:id" element={<F><EditTeacherPage /></F>} />
+            <Route path="/i/:slug/:role/teachers/bulk-update" element={<F><TeacherBulkUpdatePage /></F>} />
+            <Route path="/i/:slug/:role/teachers/departments" element={<F><DepartmentsPage /></F>} />
+            <Route path="/i/:slug/:role/teachers/subjects" element={<F><SubjectsPage /></F>} />
+            <Route path="/i/:slug/:role/teachers/designations" element={<F><DesignationsPage /></F>} />
+            <Route path="/i/:slug/:role/classes" element={<F><ClassesPage /></F>} />
+            <Route path="/i/:slug/:role/hr" element={<F><HRPage /></F>} />
+            <Route path="/i/:slug/:role/attendance" element={<F><AttendancePage /></F>} />
+            <Route path="/i/:slug/:role/exams" element={<F><ExamDashboard /></F>} />
+            <Route path="/i/:slug/:role/exams/planning" element={<F><Step1Planning /></F>} />
+            <Route path="/i/:slug/:role/exams/scheduling" element={<F><Step2Schedule /></F>} />
+            <Route path="/i/:slug/:role/exams/evaluation" element={<F><Step3Evaluation /></F>} />
+            <Route path="/i/:slug/:role/exams/results" element={<F><Step4Results /></F>} />
+            <Route path="/i/:slug/:role/exams/marksheet" element={<F><Step5Marksheet /></F>} />
+            <Route path="/i/:slug/:role/exams/omr" element={<F><OMRSheetPage /></F>} />
+            <Route path="/i/:slug/:role/syllabus" element={<F><SyllabusPage /></F>} />
+            <Route path="/i/:slug/:role/assignments" element={<F><AssignmentsPage /></F>} />
+            <Route path="/i/:slug/:role/online" element={<F><OnlineClassesPage /></F>} />
+            <Route path="/i/:slug/:role/finance" element={<F><FinancePage /></F>} />
+            <Route path="/i/:slug/:role/payroll" element={<F><PayrollPage /></F>} />
+            <Route path="/i/:slug/:role/store" element={<P name="School Store" />} />
+            <Route path="/i/:slug/:role/expenses" element={<P name="Expenses" />} />
+            <Route path="/i/:slug/:role/library" element={<P name="Library" />} />
+            <Route path="/i/:slug/:role/transport" element={<P name="Transport" />} />
+            <Route path="/i/:slug/:role/hostel" element={<P name="Hostel" />} />
+            <Route path="/i/:slug/:role/messages" element={<P name="Messages" />} />
+            <Route path="/i/:slug/:role/notice" element={<P name="Notice Board" />} />
+            <Route path="/i/:slug/:role/notifications" element={<P name="Notifications" />} />
+            <Route path="/i/:slug/:role/parent-portal" element={<P name="Parent Portal" />} />
+            <Route path="/i/:slug/:role/student-portal" element={<P name="Student Portal" />} />
+            <Route path="/i/:slug/:role/analytics" element={<P name="Analytics" />} />
+            <Route path="/i/:slug/:role/reports" element={<P name="Reports" />} />
+            <Route path="/i/:slug/:role/settings" element={<F><SettingsPage /></F>} />
+          </Route>
+        </Route>
+
         <Route element={<AuthRoute />}>
           <Route path={LOGIN_PATH} element={<F><LoginPage /></F>} />
           <Route path="/register" element={<F><RegisterPage /></F>} />
