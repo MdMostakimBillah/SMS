@@ -2,7 +2,6 @@ import { lazy, Suspense, useContext, useMemo } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { AuthContext } from '@/contexts/AuthContext'
 import { useSuperAdminStore } from '@/store/superAdminStore'
-import { fallbackInstitutions } from '@/hooks/useSubdomain'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 const InstitutionLogin = lazy(() => import('@/pages/auth/InstitutionLogin'))
@@ -14,8 +13,7 @@ export default function InstitutionLoginRoute() {
   const storeInstitutions = useSuperAdminStore((s) => s.institutions)
 
   const institution = useMemo(() => {
-    const all = storeInstitutions.length > 0 ? storeInstitutions : fallbackInstitutions
-    return all.find((i) => i.slug === slug) || null
+    return storeInstitutions.find((i) => i.slug === slug) || null
   }, [slug, storeInstitutions])
 
   if (user && institution && user.subdomain === institution.subdomain) {
