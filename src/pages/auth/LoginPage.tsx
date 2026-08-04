@@ -1,23 +1,9 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogIn, Eye, EyeOff, GraduationCap, Mail, Lock, Check, X, Clock } from 'lucide-react'
+import { LogIn, Eye, EyeOff, GraduationCap, Mail, Lock, X, Clock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
-
-interface PasswordRule {
-  label: string
-  labelBn: string
-  test: (p: string) => boolean
-}
-
-const PASSWORD_RULES: PasswordRule[] = [
-  { label: '8+ characters', labelBn: '৮+ অক্ষর', test: (p) => p.length >= 8 },
-  { label: 'Uppercase letter', labelBn: 'বড় হাতের অক্ষর', test: (p) => /[A-Z]/.test(p) },
-  { label: 'Lowercase letter', labelBn: 'ছোট হাতের অক্ষর', test: (p) => /[a-z]/.test(p) },
-  { label: 'Number', labelBn: 'সংখ্যা', test: (p) => /[0-9]/.test(p) },
-  { label: 'Special character', labelBn: 'বিশেষ অক্ষর', test: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
-]
 
 function getInitialTheme(): 'light' | 'dark' {
   try {
@@ -56,16 +42,8 @@ export default function LoginPage() {
     setAppTheme(next)
   }
 
-  const passwordValidation = useMemo(() => {
-    return PASSWORD_RULES.map((rule) => ({
-      ...rule,
-      met: password.length > 0 && rule.test(password),
-    }))
-  }, [password])
-
-  const isPasswordValid = password.length > 0 && passwordValidation.every((r) => r.met)
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  const canSubmit = isEmailValid && isPasswordValid && !submitting && !isLockedOut
+  const canSubmit = isEmailValid && password.length > 0 && !submitting && !isLockedOut
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.ceil(ms / 1000)
@@ -248,29 +226,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password rules */}
-            {password.length > 0 && (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2">
-                {passwordValidation.map((rule) => (
-                  <div key={rule.label} className="flex items-center gap-2">
-                    <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${
-                      rule.met ? 'bg-[var(--green)]/20' : isDark ? 'bg-white/5' : 'bg-black/5'
-                    }`}>
-                      {rule.met ? (
-                        <Check size={10} className="text-[var(--green)]" />
-                      ) : (
-                        <X size={10} className={isDark ? 'text-white/20' : 'text-[var(--text-muted)]'} />
-                      )}
-                    </div>
-                    <span className={`text-[0.6875rem] transition-colors ${
-                      rule.met ? 'text-[var(--green)]' : isDark ? 'text-white/30' : 'text-[var(--text-muted)]'
-                    }`}>
-                      {isBn ? rule.labelBn : rule.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
 
             {/* Submit */}
             <button
