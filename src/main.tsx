@@ -5,7 +5,10 @@ import * as Sentry from '@sentry/react'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import './index.css'
 import './styles/premium-theme.css'
+import { cleanupOrphanedBaseKeys } from '@/lib/storage'
 import App from './App'
+
+cleanupOrphanedBaseKeys()
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN
 if (sentryDsn) {

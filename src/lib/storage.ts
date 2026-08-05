@@ -52,29 +52,48 @@ export function migrateOldKeys(slug: string): void {
   })
 }
 
+const INSTITUTION_STORE_KEYS = [
+  'edutech-classes', 'edutech-teachers', 'edutech-exams', 'edutech-syllabus',
+  'edutech-online', 'edutech-assignments', 'edutech-admissions', 'edutech-fees',
+  'edutech-hr', 'edutech-todos',
+]
+
+export function cleanupOrphanedBaseKeys(): void {
+  INSTITUTION_STORE_KEYS.forEach((key) => {
+    if (localStorage.getItem(key)) {
+      localStorage.removeItem(key)
+    }
+  })
+}
+
 import type { PersistStorage, StorageValue } from 'zustand/middleware/persist'
 
 export function createNamespacedStorage<T>(base: string): PersistStorage<T> {
-  function resolveKey(): string {
+  function resolveKey(): string | null {
     const slug = getSlug()
-    return slug ? `${base}_${slug}` : base
+    return slug ? `${base}_${slug}` : null
   }
   return {
     getItem: (_name: string): StorageValue<T> | null => {
       try {
         const key = resolveKey()
+        if (!key) return null
         const raw = localStorage.getItem(key)
         return raw ? (JSON.parse(raw) as StorageValue<T>) : null
       } catch { return null }
     },
     setItem: (_name: string, value: StorageValue<T>): void => {
       try {
-        localStorage.setItem(resolveKey(), JSON.stringify(value))
+        const key = resolveKey()
+        if (!key) return
+        localStorage.setItem(key, JSON.stringify(value))
       } catch { /* ignore */ }
     },
     removeItem: (_name: string): void => {
       try {
-        localStorage.removeItem(resolveKey())
+        const key = resolveKey()
+        if (!key) return
+        localStorage.removeItem(key)
       } catch { /* ignore */ }
     },
   }
