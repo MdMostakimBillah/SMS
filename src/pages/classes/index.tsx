@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft,
   Settings,
   Users,
   CalendarDays,
@@ -11,7 +10,6 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
-import { useNavPath } from '@/hooks/useNavPath'
 import { useClassStore } from '@/store/classStore'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -22,7 +20,6 @@ import RoutineTab from './tabs/RoutineTab'
 
 export default function ClassesPage() {
   const navigate = useNavigate()
-  const nav = useNavPath()
   const { isMobile, isTablet } = useWindowSize()
   const {
     institution,
@@ -76,58 +73,38 @@ export default function ClassesPage() {
     setTimeout(() => setSaved(false), 2000)
   }
 
-  const { popFromChain, getChain } = useNavChain()
+  const { getChain } = useNavChain()
   useNavChainClearOnMount()
 
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
-        <button
-          onClick={() => {
-            const prev = popFromChain()
-            if (prev) {
-              navigate(prev.path)
-            } else {
-              navigate(nav('/'))
-            }
-          }}
-          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
-        >
-          <ArrowLeft size={14} />
-          {isBn ? 'ফিরে যান' : 'Back'}
-        </button>
-        <div className="flex-1">
+      <div className="mb-4">
+        <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1 flex-wrap">
           {(() => {
             const chain = getChain()
             if (chain.length === 0) return null
-            return (
-              <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1 flex-wrap">
-                {chain.map((item: { path: string; label: string }, idx: number) => (
-                  <span key={idx} className="flex items-center gap-1">
-                    {idx > 0 && <span className="text-[var(--text-muted)]">›</span>}
-                    <button
-                      onClick={() => {
-                        navigate(item.path)
-                      }}
-                      className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
-                    >
-                      {item.label}
-                    </button>
-                  </span>
-                ))}
-                <span className="text-[var(--text-muted)]">›</span>
-                <span className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--brand)] text-white font-medium">
-                  {isBn ? 'শ্রেণি' : 'Classes'}
-                </span>
-              </div>
-            )
+            return chain.map((item: { path: string; label: string }, idx: number) => (
+              <span key={idx} className="flex items-center gap-1">
+                {idx > 0 && <span className="text-[var(--text-muted)]">›</span>}
+                <button
+                  onClick={() => {
+                    navigate(item.path)
+                  }}
+                  className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
+                >
+                  {item.label}
+                </button>
+              </span>
+            ))
           })()}
-          <h1 className={`${isMobile ? 'text-[1.125rem]' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)]`}>
-            {isBn ? 'শ্রেণি ব্যবস্থাপনা' : 'Classes Management'}
+        </div>
+        <div className="flex-1">
+          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
+            {isBn ? 'শ্রেণি ও সেকশন' : 'Classes & Sections'}
           </h1>
-          <p className="text-[0.75rem] text-[var(--text-secondary)] mt-[0.125rem]">
-            {isBn ? 'প্রতিষ্ঠান সেটিংস এবং শ্রেণি পরিচালনা' : 'Institution settings & class management'}
+          <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
+            {isBn ? 'শ্রেণি, সেকশন ও রুটিন পরিচালনা করুন' : 'Manage classes, sections and routines'}
           </p>
         </div>
       </div>
