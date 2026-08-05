@@ -50,7 +50,7 @@ export function ViewingRoute() {
   if (loading) return <LoadingSpinner />
   if (!user) return <Navigate to={getLoginRedirect()} replace />
   if (user.role !== 'super_admin') return <Navigate to="/super-admin/admin/dashboard" replace />
-  if (!viewingInstitutionId) return <Navigate to="/super-admin/schools" replace />
+  if (!viewingInstitutionId && !sessionStorage.getItem('edutech_viewing_id')) return <Navigate to="/super-admin/schools" replace />
 
   return <Outlet />
 }
