@@ -1,9 +1,9 @@
 import { lazy, Suspense } from 'react'
-import { Routes, Route, Navigate, useParams } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layouts/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { AuthProvider } from '@/contexts/AuthContext'
+import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ProtectedRoute, RoleProtectedRoute, ViewingRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
 import { LOGIN_PATH } from '@/lib/constants'
@@ -58,15 +58,23 @@ const F = ({ children }: { children: React.ReactNode }) => (
 )
 
 function LegacyDashboardRedirect() {
-  const { subdomain } = useParams<{ subdomain: string }>()
-  if (subdomain) return <Navigate to={`/i/${subdomain}/admin/dashboard`} replace />
-  return <Navigate to="/admin/dashboard" replace />
+  const { user } = useAuth()
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (user?.role === 'super_admin') {
+    return <Navigate to="/super-admin/admin/dashboard" replace />
+  }
+  if (slug) return <Navigate to={`/i/${slug}/admin/dashboard`} replace />
+  return <Navigate to="/super-admin/admin/dashboard" replace />
 }
 
 function LegacyStudentsRedirect() {
-  const { subdomain } = useParams<{ subdomain: string }>()
-  if (subdomain) return <Navigate to={`/i/${subdomain}/admin/students`} replace />
-  return <Navigate to="/admin/students" replace />
+  const { user } = useAuth()
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (user?.role === 'super_admin') {
+    return <Navigate to="/super-admin/admin/students" replace />
+  }
+  if (slug) return <Navigate to={`/i/${slug}/admin/students`} replace />
+  return <Navigate to="/super-admin/admin/students" replace />
 }
 
 function AppContent() {

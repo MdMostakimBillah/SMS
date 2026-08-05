@@ -33,6 +33,7 @@ export function ProtectedRoute() {
       const userRole = user.role === 'super_admin' ? 'admin' : user.role
       if (role !== userRole) {
         const slug = sessionStorage.getItem('edutech_inst_slug')
+        if (user.role === 'super_admin') return <Navigate to="/super-admin/admin/dashboard" replace />
         if (slug) return <Navigate to={`/i/${slug}/${userRole}/dashboard`} replace />
         return <Navigate to={`/${userRole}/dashboard`} replace />
       }
@@ -48,7 +49,7 @@ export function ViewingRoute() {
 
   if (loading) return <LoadingSpinner />
   if (!user) return <Navigate to={getLoginRedirect()} replace />
-  if (user.role !== 'super_admin') return <Navigate to="/admin/dashboard" replace />
+  if (user.role !== 'super_admin') return <Navigate to="/super-admin/admin/dashboard" replace />
   if (!viewingInstitutionId) return <Navigate to="/super-admin/schools" replace />
 
   return <Outlet />
@@ -59,7 +60,12 @@ export function RoleProtectedRoute({ allowedRoles }: { allowedRoles: string[] })
 
   if (loading) return <LoadingSpinner />
   if (!user) return <Navigate to={getLoginRedirect()} replace />
-  if (!allowedRoles.includes(user.role)) return <Navigate to="/admin/dashboard" replace />
+  if (!allowedRoles.includes(user.role)) {
+    const slug = sessionStorage.getItem('edutech_inst_slug')
+    if (user.role === 'super_admin') return <Navigate to="/super-admin/admin/dashboard" replace />
+    if (slug) return <Navigate to={`/i/${slug}/${user.role}/dashboard`} replace />
+    return <Navigate to="/super-admin/admin/dashboard" replace />
+  }
 
   return <Outlet />
 }
