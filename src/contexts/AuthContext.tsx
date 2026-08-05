@@ -127,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             avatar: null,
             subdomain,
           })
+          loginTimestampRef.current = parsed.loginTimestamp || Date.now()
         }
       }
     } catch { /* ignore */ }
@@ -168,10 +169,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (email === VITE_EMAIL && password === VITE_PASSWORD) {
         const token = await createSuperAdminToken(password)
         const user = createSuperAdminUser()
+        user.email = email
         setAuthToken(token)
         setToken(token)
         setUser(user)
         loginTimestampRef.current = Date.now()
+        nsSet('user', JSON.stringify({ email, role: user.role, name: user.name, loginTimestamp: Date.now() }))
         clearLoginAttempts()
         return
       }
@@ -194,10 +197,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (result.valid) {
         const token = await createSuperAdminToken(password)
         const user = createSuperAdminUser()
+        user.email = email
         setAuthToken(token)
         setToken(token)
         setUser(user)
         loginTimestampRef.current = Date.now()
+        nsSet('user', JSON.stringify({ email, role: user.role, name: user.name, loginTimestamp: Date.now() }))
         clearLoginAttempts()
         return
       }
