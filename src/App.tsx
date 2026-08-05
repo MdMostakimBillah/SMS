@@ -8,6 +8,7 @@ import { ProtectedRoute, RoleProtectedRoute, ViewingRoute } from '@/components/P
 import { AuthRoute } from '@/components/AuthRoute'
 import { LOGIN_PATH } from '@/lib/constants'
 import { useSubdomain } from '@/hooks/useSubdomain'
+import { useSuperAdminStore } from '@/store/superAdminStore'
 
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
@@ -59,8 +60,10 @@ const F = ({ children }: { children: React.ReactNode }) => (
 
 function LegacyDashboardRedirect() {
   const { user } = useAuth()
+  const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
   const slug = sessionStorage.getItem('edutech_inst_slug')
   if (user?.role === 'super_admin') {
+    if (viewingInstitutionId) return <Navigate to="/super-admin/viewing/admin/dashboard" replace />
     return <Navigate to="/super-admin/admin/dashboard" replace />
   }
   if (slug) return <Navigate to={`/i/${slug}/admin/dashboard`} replace />
@@ -69,8 +72,10 @@ function LegacyDashboardRedirect() {
 
 function LegacyStudentsRedirect() {
   const { user } = useAuth()
+  const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
   const slug = sessionStorage.getItem('edutech_inst_slug')
   if (user?.role === 'super_admin') {
+    if (viewingInstitutionId) return <Navigate to="/super-admin/viewing/admin/students" replace />
     return <Navigate to="/super-admin/admin/students" replace />
   }
   if (slug) return <Navigate to={`/i/${slug}/admin/students`} replace />

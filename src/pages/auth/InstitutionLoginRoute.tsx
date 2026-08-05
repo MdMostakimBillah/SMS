@@ -11,12 +11,16 @@ export default function InstitutionLoginRoute() {
   const authCtx = useContext(AuthContext)
   const user = authCtx?.user
   const storeInstitutions = useSuperAdminStore((s) => s.institutions)
+  const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
 
   const institution = useMemo(() => {
     return storeInstitutions.find((i) => i.slug === slug) || null
   }, [slug, storeInstitutions])
 
   if (user && institution && user.subdomain === institution.subdomain) {
+    if (user.role === 'super_admin' && viewingInstitutionId) {
+      return <Navigate to="/super-admin/viewing/admin/dashboard" replace />
+    }
     const role = user.role === 'super_admin' ? 'admin' : user.role
     return <Navigate to={`/i/${slug}/${role}/dashboard`} replace />
   }
