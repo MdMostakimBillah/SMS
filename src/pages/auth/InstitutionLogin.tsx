@@ -125,7 +125,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   useEffect(() => {
     if (!institution) return
     const title = isBn ? (institution.nameBn || institution.name) : institution.name
-    document.title = `${title} - Login`
+    document.title = title
     if (institution.logo) {
       let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
       if (!link) {
