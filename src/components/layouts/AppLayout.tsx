@@ -87,17 +87,22 @@ export default function AppLayout() {
   if (isLoading) {
     const isSuperAdmin = user?.role === 'super_admin'
     const loadingName = isSuperAdmin ? 'EduTech' : (institution.brandName || institution.name || 'EduTech')
+    const loadingLogo = isSuperAdmin ? null : institution.logo
     return (
       <div className="flex h-screen overflow-hidden bg-[var(--bg-tertiary)] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div
-            className="w-12 h-12 rounded-xl bg-[var(--brand)] flex items-center justify-center"
+            className="w-16 h-16 rounded-2xl bg-[var(--brand)] flex items-center justify-center overflow-hidden"
             style={{ animation: 'pulse 2s infinite' }}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-              <path d="M6 12v5c3 3 9 3 12 0v-5" />
-            </svg>
+            {loadingLogo ? (
+              <img src={loadingLogo} alt={loadingName} className="w-full h-full object-cover" />
+            ) : (
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                <path d="M6 12v5c3 3 9 3 12 0v-5" />
+              </svg>
+            )}
           </div>
           <div className="text-sm font-semibold text-[var(--text-primary)]">{loadingName}</div>
           <div className="w-[6.25rem] h-[0.1875rem] bg-[var(--border)] rounded-[0.125rem] overflow-hidden">
