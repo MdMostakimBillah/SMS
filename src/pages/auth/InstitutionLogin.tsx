@@ -49,12 +49,20 @@ function getLockoutRemaining(): number {
 }
 
 function loadInstitutionData(inst: Institution) {
+  const current = useClassStore.getState().institution
   useClassStore.getState().updateInstitution({
-    name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: inst.banner, bannerPosition: { x: 0, y: 0 },
-    brandName: inst.brandName || inst.name, motto: inst.motto, mottoBn: inst.mottoBn, eiin: inst.eiin, phone: inst.phone, email: inst.email,
-    address: inst.address, website: inst.website, subjects: inst.optionalSubjects || [], startTime: inst.startTime || '07:30', endTime: inst.endTime || '14:30',
-    breaks: [], currentSession: inst.sessions?.[1] || '2025-26', sessions: inst.sessions || ['2024-25', '2025-26'],
-    lightColors: { ...defaultThemeColors, brand: inst.brandColor }, darkColors: { ...defaultThemeColorsDark },
+    name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: inst.banner,
+    brandName: inst.brandName || inst.name, motto: inst.motto, mottoBn: inst.mottoBn,
+    eiin: inst.eiin, phone: inst.phone, email: inst.email,
+    address: inst.address, website: inst.website, subjects: inst.optionalSubjects || [],
+    startTime: current.startTime || inst.startTime || '07:30',
+    endTime: current.endTime || inst.endTime || '14:30',
+    breaks: current.breaks?.length ? current.breaks : [],
+    currentSession: current.currentSession || inst.sessions?.[1] || '2025-26',
+    sessions: current.sessions?.length ? current.sessions : (inst.sessions || ['2024-25', '2025-26']),
+    lightColors: current.lightColors?.brand ? current.lightColors : { ...defaultThemeColors, brand: inst.brandColor },
+    darkColors: current.darkColors || { ...defaultThemeColorsDark },
+    bannerPosition: current.bannerPosition || { x: 0, y: 0 },
   })
 }
 
