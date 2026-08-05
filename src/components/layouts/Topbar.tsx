@@ -780,7 +780,7 @@ export default React.memo(function Topbar() {
                   >
                     School Admin
                   </div>
-                  <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>admin@school.edu</div>
+                  <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{user?.email || 'admin@school.edu'}</div>
                 </div>
               </div>
 
