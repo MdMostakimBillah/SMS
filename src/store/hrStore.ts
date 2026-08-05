@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 
 export interface IncrementRecord {
   id: string
@@ -247,4 +247,20 @@ registerStoreReset(() => {
     homeworkRecords: [], dailyReports: [], recommendations: [],
     monthlySalaryConfigs: [], facilities: [], teacherFacilities: [],
   })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-hr_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) useHRStore.setState(parsed.state)
+    } else {
+      useHRStore.setState({ increments: [], bonuses: [], promotions: [], funds: [], homeworkRecords: [], dailyReports: [], recommendations: [], monthlySalaryConfigs: [], facilities: [], teacherFacilities: [] })
+    }
+  } catch {
+    useHRStore.setState({ increments: [], bonuses: [], promotions: [], funds: [], homeworkRecords: [], dailyReports: [], recommendations: [], monthlySalaryConfigs: [], facilities: [], teacherFacilities: [] })
+  }
 })

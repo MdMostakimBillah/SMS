@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 
 export type TodoPriority = 'low' | 'medium' | 'high'
 export type TodoStatus = 'pending' | 'in-progress' | 'completed'
@@ -55,4 +55,20 @@ export const useTodoStore = create<TodoState>()(
 
 registerStoreReset(() => {
   useTodoStore.setState({ todos: [] })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-todos_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) useTodoStore.setState(parsed.state)
+    } else {
+      useTodoStore.setState({ todos: [] })
+    }
+  } catch {
+    useTodoStore.setState({ todos: [] })
+  }
 })

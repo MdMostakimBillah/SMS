@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 
 export interface SyllabusTopic {
   id: string
@@ -218,4 +218,20 @@ export const useSyllabusStore = create<SyllabusState>()(
 
 registerStoreReset(() => {
   useSyllabusStore.setState({ syllabi: [] })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-syllabus_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) useSyllabusStore.setState(parsed.state)
+    } else {
+      useSyllabusStore.setState({ syllabi: [] })
+    }
+  } catch {
+    useSyllabusStore.setState({ syllabi: [] })
+  }
 })

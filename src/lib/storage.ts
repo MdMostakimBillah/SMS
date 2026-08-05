@@ -80,18 +80,28 @@ export function onSlugChange(cb: SlugChangeCallback): () => void {
 }
 
 const resetFns: Array<() => void> = []
+const loadFns: Array<() => void> = []
 
 export function registerStoreReset(resetFn: () => void): void {
   resetFns.push(resetFn)
+}
+
+export function registerStoreLoad(loadFn: () => void): void {
+  loadFns.push(loadFn)
 }
 
 function resetAllStores(): void {
   resetFns.forEach((fn) => fn())
 }
 
+function loadAllStores(): void {
+  loadFns.forEach((fn) => fn())
+}
+
 export function setSlug(slug: string): void {
   sessionStorage.setItem('edutech_inst_slug', slug)
   slugListeners.forEach((cb) => cb(slug))
+  loadAllStores()
 }
 
 export function clearSlug(): void {

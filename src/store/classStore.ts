@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 
 export interface BreakTime {
   id: string
@@ -493,4 +493,20 @@ registerStoreReset(() => {
     sessionClasses: {},
     sessionRoutines: {},
   })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-classes_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) useClassStore.setState(parsed.state)
+    } else {
+      useClassStore.setState({ institution: { ...defaultInstitution }, classes: [], routines: [], sessionClasses: {}, sessionRoutines: {} })
+    }
+  } catch {
+    useClassStore.setState({ institution: { ...defaultInstitution }, classes: [], routines: [], sessionClasses: {}, sessionRoutines: {} })
+  }
 })

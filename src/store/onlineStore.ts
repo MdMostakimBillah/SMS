@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 
 export type Platform = 'youtube' | 'facebook' | 'google-meet' | 'zoom' | 'other'
 export type ClassStatus = 'scheduled' | 'live' | 'ended'
@@ -110,4 +110,20 @@ export const useOnlineStore = create<OnlineState>()(
 
 registerStoreReset(() => {
   useOnlineStore.setState({ classes: [] })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-online_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) useOnlineStore.setState(parsed.state)
+    } else {
+      useOnlineStore.setState({ classes: [] })
+    }
+  } catch {
+    useOnlineStore.setState({ classes: [] })
+  }
 })

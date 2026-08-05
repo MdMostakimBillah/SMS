@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Teacher, Department, Subject, Designation } from '@/pages/teachers/types'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 
 export type AttendanceStatus = 'present' | 'absent' | 'on-leave'
 
@@ -166,4 +166,20 @@ export const useTeacherStore = create<TeacherState>()(
 
 registerStoreReset(() => {
   useTeacherStore.setState({ teachers: [], subjects: [], departments: [], designations: [], attendance: {} })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-teachers_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) useTeacherStore.setState(parsed.state)
+    } else {
+      useTeacherStore.setState({ teachers: [], subjects: [], departments: [], designations: [], attendance: {} })
+    }
+  } catch {
+    useTeacherStore.setState({ teachers: [], subjects: [], departments: [], designations: [], attendance: {} })
+  }
 })

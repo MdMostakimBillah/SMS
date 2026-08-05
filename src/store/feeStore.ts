@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 
 export interface FeeCategory {
   id: string
@@ -619,4 +619,20 @@ export const useFeeStore = create<FeeState>()(
 
 registerStoreReset(() => {
   useFeeStore.setState({ structures: [], payments: [], feeCategories: [], waiverCategories: [], waiverEntries: [], studentWaivers: [] })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-fees_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) useFeeStore.setState(parsed.state)
+    } else {
+      useFeeStore.setState({ structures: [], payments: [], feeCategories: [], waiverCategories: [], waiverEntries: [], studentWaivers: [] })
+    }
+  } catch {
+    useFeeStore.setState({ structures: [], payments: [], feeCategories: [], waiverCategories: [], waiverEntries: [], studentWaivers: [] })
+  }
 })

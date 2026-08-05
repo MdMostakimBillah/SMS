@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 
 // ─── Types ───
 
@@ -1143,4 +1143,20 @@ registerStoreReset(() => {
     marksheetConfigs: [], generalAbilities: [], gradeScales: [], workingDays: [],
     promotions: [], cumulativeSheets: [], marksEntryStatuses: [], omrTemplates: [],
   })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-exams_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) useExamStore.setState(parsed.state)
+    } else {
+      useExamStore.setState({ examConfigs: [], subjectMarkConfigs: [], studentMarks: [], routines: [], rooms: [], seatPlans: [], invigilators: [], attendances: [], markAdjustments: [], omrConfigs: [], extraMarks: [], extraMarkTypes: [], marksheetConfigs: [], generalAbilities: [], gradeScales: [], workingDays: [], promotions: [], cumulativeSheets: [], marksEntryStatuses: [], omrTemplates: [] })
+    }
+  } catch {
+    useExamStore.setState({ examConfigs: [], subjectMarkConfigs: [], studentMarks: [], routines: [], rooms: [], seatPlans: [], invigilators: [], attendances: [], markAdjustments: [], omrConfigs: [], extraMarks: [], extraMarkTypes: [], marksheetConfigs: [], generalAbilities: [], gradeScales: [], workingDays: [], promotions: [], cumulativeSheets: [], marksEntryStatuses: [], omrTemplates: [] })
+  }
 })

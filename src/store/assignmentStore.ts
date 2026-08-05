@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 
 export type AssignmentStatus = 'active' | 'draft' | 'closed' | 'archived'
 export type SubmissionStatus = 'submitted' | 'reviewed' | 'returned' | 'late'
@@ -115,4 +115,20 @@ export const useAssignmentStore = create<AssignmentState>()(
 
 registerStoreReset(() => {
   useAssignmentStore.setState({ assignments: [], submissions: [] })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-assignments_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) useAssignmentStore.setState(parsed.state)
+    } else {
+      useAssignmentStore.setState({ assignments: [], submissions: [] })
+    }
+  } catch {
+    useAssignmentStore.setState({ assignments: [], submissions: [] })
+  }
 })

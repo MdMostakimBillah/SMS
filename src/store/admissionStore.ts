@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { useMemo } from 'react'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { useClassStore } from './classStore'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 
 function normalizeClassName(raw: string, classes: { id: string; name: string }[]): string {
   if (!raw) return raw
@@ -129,4 +129,20 @@ export function useSessionStudents() {
 
 registerStoreReset(() => {
   useAdmissionStore.setState({ students: [] })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-admissions_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) useAdmissionStore.setState(parsed.state)
+    } else {
+      useAdmissionStore.setState({ students: [] })
+    }
+  } catch {
+    useAdmissionStore.setState({ students: [] })
+  }
 })
