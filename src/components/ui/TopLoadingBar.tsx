@@ -40,7 +40,6 @@ export function TopLoadingBar() {
           borderRadius: '0 4px 4px 0',
           transition: 'width 300ms ease-out',
           background: 'linear-gradient(90deg, var(--brand), var(--brand-light))',
-          boxShadow: '0 0 10px var(--brand), 0 0 5px var(--brand)',
         }}
       />
     </div>,
