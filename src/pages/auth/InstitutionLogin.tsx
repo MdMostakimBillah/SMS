@@ -121,6 +121,27 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
     return () => { if (lockoutTimerRef.current) clearInterval(lockoutTimerRef.current) }
   }, [isLockedOut])
 
+  // Set page title and favicon from institution
+  useEffect(() => {
+    if (!institution) return
+    const title = isBn ? (institution.nameBn || institution.name) : institution.name
+    document.title = `${title} - Login`
+    if (institution.logo) {
+      let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+      if (!link) {
+        link = document.createElement('link')
+        link.rel = 'icon'
+        document.head.appendChild(link)
+      }
+      link.href = institution.logo
+    }
+    return () => {
+      document.title = 'EduTech SMS'
+      const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+      if (link) link.href = '/favicon.ico'
+    }
+  }, [institution, isBn])
+
   const formatTime = (ms: number) => {
     const totalSeconds = Math.ceil(ms / 1000)
     const minutes = Math.floor(totalSeconds / 60)
