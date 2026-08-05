@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreRehydrate } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
 
 export interface SyllabusTopic {
   id: string
@@ -216,4 +216,6 @@ export const useSyllabusStore = create<SyllabusState>()(
   )
 )
 
-registerStoreRehydrate(() => useSyllabusStore.persist.rehydrate())
+registerStoreReset(() => {
+  useSyllabusStore.setState({ syllabi: [] })
+})

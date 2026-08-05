@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreRehydrate } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
 
 export interface FeeCategory {
   id: string
@@ -617,4 +617,6 @@ export const useFeeStore = create<FeeState>()(
   )
 )
 
-registerStoreRehydrate(() => useFeeStore.persist.rehydrate())
+registerStoreReset(() => {
+  useFeeStore.setState({ structures: [], payments: [], feeCategories: [], waiverCategories: [], waiverEntries: [], studentWaivers: [] })
+})

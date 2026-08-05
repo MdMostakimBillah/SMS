@@ -79,26 +79,25 @@ export function onSlugChange(cb: SlugChangeCallback): () => void {
   }
 }
 
+const resetFns: Array<() => void> = []
+
+export function registerStoreReset(resetFn: () => void): void {
+  resetFns.push(resetFn)
+}
+
+function resetAllStores(): void {
+  resetFns.forEach((fn) => fn())
+}
+
 export function setSlug(slug: string): void {
   sessionStorage.setItem('edutech_inst_slug', slug)
   slugListeners.forEach((cb) => cb(slug))
-  rehydrateAll()
 }
 
 export function clearSlug(): void {
   sessionStorage.removeItem('edutech_inst_slug')
   slugListeners.forEach((cb) => cb(null))
-  rehydrateAll()
-}
-
-const rehydrateFns: Array<() => void> = []
-
-export function registerStoreRehydrate(rehydrateFn: () => void): void {
-  rehydrateFns.push(rehydrateFn)
-}
-
-function rehydrateAll(): void {
-  rehydrateFns.forEach((fn) => fn())
+  resetAllStores()
 }
 
 export function createNamespacedStorage<T>(base: string): PersistStorage<T> {

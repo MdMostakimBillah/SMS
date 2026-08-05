@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreRehydrate } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
 
 export interface IncrementRecord {
   id: string
@@ -241,4 +241,10 @@ export const useHRStore = create<HRState>()(
   )
 )
 
-registerStoreRehydrate(() => useHRStore.persist.rehydrate())
+registerStoreReset(() => {
+  useHRStore.setState({
+    increments: [], bonuses: [], promotions: [], funds: [],
+    homeworkRecords: [], dailyReports: [], recommendations: [],
+    monthlySalaryConfigs: [], facilities: [], teacherFacilities: [],
+  })
+})

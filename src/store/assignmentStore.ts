@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreRehydrate } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
 
 export type AssignmentStatus = 'active' | 'draft' | 'closed' | 'archived'
 export type SubmissionStatus = 'submitted' | 'reviewed' | 'returned' | 'late'
@@ -113,4 +113,6 @@ export const useAssignmentStore = create<AssignmentState>()(
   )
 )
 
-registerStoreRehydrate(() => useAssignmentStore.persist.rehydrate())
+registerStoreReset(() => {
+  useAssignmentStore.setState({ assignments: [], submissions: [] })
+})

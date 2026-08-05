@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { useMemo } from 'react'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { useClassStore } from './classStore'
-import { createNamespacedStorage, registerStoreRehydrate } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
 
 function normalizeClassName(raw: string, classes: { id: string; name: string }[]): string {
   if (!raw) return raw
@@ -127,4 +127,6 @@ export function useSessionStudents() {
   )
 }
 
-registerStoreRehydrate(() => useAdmissionStore.persist.rehydrate())
+registerStoreReset(() => {
+  useAdmissionStore.setState({ students: [] })
+})

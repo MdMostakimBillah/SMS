@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreRehydrate } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
 
 // ─── Types ───
 
@@ -1135,4 +1135,12 @@ export const useExamStore = create<ExamState>()(
   )
 )
 
-registerStoreRehydrate(() => useExamStore.persist.rehydrate())
+registerStoreReset(() => {
+  useExamStore.setState({
+    examConfigs: [], subjectMarkConfigs: [], studentMarks: [], routines: [],
+    rooms: [], seatPlans: [], invigilators: [], attendances: [],
+    markAdjustments: [], omrConfigs: [], extraMarks: [], extraMarkTypes: [],
+    marksheetConfigs: [], generalAbilities: [], gradeScales: [], workingDays: [],
+    promotions: [], cumulativeSheets: [], marksEntryStatuses: [], omrTemplates: [],
+  })
+})

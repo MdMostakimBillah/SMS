@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreRehydrate } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
 
 export type Platform = 'youtube' | 'facebook' | 'google-meet' | 'zoom' | 'other'
 export type ClassStatus = 'scheduled' | 'live' | 'ended'
@@ -108,4 +108,6 @@ export const useOnlineStore = create<OnlineState>()(
   )
 )
 
-registerStoreRehydrate(() => useOnlineStore.persist.rehydrate())
+registerStoreReset(() => {
+  useOnlineStore.setState({ classes: [] })
+})
