@@ -111,8 +111,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const slug = sessionStorage.getItem('edutech_inst_slug')
-      if (slug) migrateOldKeys(slug)
-      const stored = nsGet('user')
+      const isViewing = !!sessionStorage.getItem('edutech_viewing_id')
+
+      let stored: string | null = null
+      if (isViewing) {
+        // Super admin viewing — read from dedicated backup key first,
+        // then base key. Never read from namespaced key (edutech_user_{slug})
+        // as that may contain institution admin data.
+        stored = localStorage.getItem('edutech_superadmin_user')
+        if (!stored) stored = localStorage.getItem('edutech_user')
+      } else {
+        if (slug) migrateOldKeys(slug)
+        stored = nsGet('user')
+      }
+
       if (stored) {
         const parsed = JSON.parse(stored)
         if (parsed?.email && parsed?.role) {
@@ -174,7 +186,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(token)
         setUser(user)
         loginTimestampRef.current = Date.now()
-        nsSet('user', JSON.stringify({ email, role: user.role, name: user.name, loginTimestamp: Date.now() }))
+        const userData = JSON.stringify({ email, role: user.role, name: user.name, loginTimestamp: Date.now() })
+        nsSet('user', userData)
+        localStorage.setItem('edutech_superadmin_user', userData)
         clearLoginAttempts()
         return
       }
@@ -202,7 +216,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(token)
         setUser(user)
         loginTimestampRef.current = Date.now()
-        nsSet('user', JSON.stringify({ email, role: user.role, name: user.name, loginTimestamp: Date.now() }))
+        const userData2 = JSON.stringify({ email, role: user.role, name: user.name, loginTimestamp: Date.now() })
+        nsSet('user', userData2)
+        localStorage.setItem('edutech_superadmin_user', userData2)
         clearLoginAttempts()
         return
       }

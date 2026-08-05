@@ -154,6 +154,12 @@ export const useSuperAdminStore = create<SuperAdminState>()(
           ),
         })),
     }),
-    { name: 'edutech_super_admin' }
+    {
+      name: 'edutech_super_admin',
+      partialize: (state) => {
+        const { viewingInstitutionId, ...rest } = state
+        return rest
+      },
+    }
   )
 )

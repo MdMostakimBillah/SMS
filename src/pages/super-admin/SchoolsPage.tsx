@@ -7,6 +7,7 @@ import {
   CreditCard, Shield, Trash2, ExternalLink, Lock, Copy, Check,
 } from 'lucide-react'
 import { useSuperAdminStore, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
+import { useAuth } from '@/contexts/AuthContext'
 import { setSlug } from '@/lib/storage'
 
 function statusConfig(status: InstitutionStatus, isBn: boolean) {
@@ -201,6 +202,7 @@ function PasswordRow({ label, value }: { label: string; value?: string }) {
 
 export default function SchoolsPage({ isBn }: { isBn: boolean }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const {
     institutions, selectedId, searchQuery, statusFilter, packageFilter,
     setSelectedId, setSearchQuery, setStatusFilter, setPackageFilter,
@@ -210,6 +212,11 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
   const [showFilters, setShowFilters] = useState(false)
 
   const openInstitution = (inst: Institution) => {
+    if (user) {
+      localStorage.setItem('edutech_superadmin_user', JSON.stringify({
+        email: user.email, role: user.role, name: user.name, loginTimestamp: Date.now(),
+      }))
+    }
     startViewing(inst.id)
     setSlug(inst.slug)
     navigate('/super-admin/viewing/admin/dashboard')

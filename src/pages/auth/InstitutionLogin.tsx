@@ -194,9 +194,11 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         const superAdminEmail = import.meta.env.VITE_SUPER_ADMIN_EMAIL
         const superAdminPassword = import.meta.env.VITE_SUPER_ADMIN_PASSWORD
         if (email === superAdminEmail && password === superAdminPassword) {
-          localStorage.setItem('edutech_user', JSON.stringify({
-            email, role: 'super_admin', name: 'Super Admin'
-          }))
+          const userData = JSON.stringify({
+            email, role: 'super_admin', name: 'Super Admin', loginTimestamp: Date.now()
+          })
+          localStorage.setItem('edutech_user', userData)
+          localStorage.setItem('edutech_superadmin_user', userData)
           clearLoginAttempts()
           navigate('/super-admin')
           setLoading(false)
