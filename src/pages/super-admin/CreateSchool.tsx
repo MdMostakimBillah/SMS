@@ -83,7 +83,7 @@ function OtpInput({ length, value, onChange, error, disabled }: { length: number
   const handleChange = (index: number, digit: string) => {
     if (digit.length > 1) {
       // Handle paste
-      const pasted = digit.replace(/\D/g, '').slice(0, length).toUpperCase()
+      const pasted = digit.replace(/[^a-zA-Z0-9]/g, '').slice(0, length).toUpperCase()
       onChange(pasted)
       const nextIdx = Math.min(pasted.length, length - 1)
       setTimeout(() => inputRefs.current[nextIdx]?.focus(), 0)
@@ -91,7 +91,7 @@ function OtpInput({ length, value, onChange, error, disabled }: { length: number
     }
     const newValue = value.split('')
     newValue[index] = digit.toUpperCase()
-    const result = newValue.join('').replace(/\D/g, '').slice(0, length)
+    const result = newValue.join('').replace(/[^a-zA-Z0-9]/g, '').slice(0, length)
     onChange(result)
     if (digit && index < length - 1) {
       setTimeout(() => inputRefs.current[index + 1]?.focus(), 0)
