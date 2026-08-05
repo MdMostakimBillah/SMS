@@ -77,6 +77,58 @@ const SECTION_STEPS: SectionStep[] = [
 
 const PRESET_COLORS = ['#6366f1', '#3b82f6', '#14b8a6', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#a855f7', '#06b6d4', '#f97316']
 
+function OtpInput({ length, value, onChange, error, disabled }: { length: number; value: string; onChange: (v: string) => void; error?: boolean; disabled?: boolean }) {
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  const handleChange = (index: number, digit: string) => {
+    if (digit.length > 1) {
+      // Handle paste
+      const pasted = digit.replace(/\D/g, '').slice(0, length).toUpperCase()
+      onChange(pasted)
+      const nextIdx = Math.min(pasted.length, length - 1)
+      setTimeout(() => inputRefs.current[nextIdx]?.focus(), 0)
+      return
+    }
+    const newValue = value.split('')
+    newValue[index] = digit.toUpperCase()
+    const result = newValue.join('').replace(/\D/g, '').slice(0, length)
+    onChange(result)
+    if (digit && index < length - 1) {
+      setTimeout(() => inputRefs.current[index + 1]?.focus(), 0)
+    }
+  }
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !value[index] && index > 0) {
+      setTimeout(() => inputRefs.current[index - 1]?.focus(), 0)
+    }
+  }
+
+  const borderColor = error ? 'var(--red)' : 'var(--border)'
+  const focusRing = error ? 'focus:ring-[var(--red)]/20' : 'focus:ring-[var(--brand)]/10'
+
+  return (
+    <div className="flex gap-2 justify-center">
+      {Array.from({ length }).map((_, i) => (
+        <input
+          key={i}
+          ref={(el) => { inputRefs.current[i] = el }}
+          type="text"
+          inputMode="text"
+          autoComplete="one-time-code"
+          maxLength={length}
+          value={value[i] || ''}
+          onChange={(e) => handleChange(i, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(i, e)}
+          disabled={disabled}
+          className={`w-11 h-12 rounded-xl border bg-[var(--bg-secondary)] text-center text-lg font-mono font-bold text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 ${focusRing} transition-all disabled:opacity-50`}
+          style={{ borderColor }}
+        />
+      ))}
+    </div>
+  )
+}
+
 export default function CreateSchool() {
   const isBn = useBn()
   const navigate = useNavigate()
@@ -321,26 +373,23 @@ export default function CreateSchool() {
                     {emailSent && !emailVerified && (
                       <div>
                         <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'যাচাইকরণ কোড' : 'Verification Code'}</label>
-                        <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? `${form.adminEmail}-এ ৬-ডিজিট কোড পাঠানো হয়েছে` : `A 6-digit code was sent to ${form.adminEmail}`}</p>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={emailCodeInput}
-                            onChange={(e) => setEmailCodeInput(e.target.value.toUpperCase().slice(0, 6))}
-                            placeholder="XXXXXX"
-                            maxLength={6}
-                            className="flex-1 px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] font-mono tracking-widest outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all"
-                          />
-                          <button
-                            onClick={() => { if (emailCodeInput === emailCode) setEmailVerified(true) }}
-                            disabled={emailCodeInput.length < 6}
-                            className="px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-xs font-semibold cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                          >
-                            {isBn ? 'যাচাই করুন' : 'Verify'}
-                          </button>
-                        </div>
-                        {emailCodeInput && emailCodeInput !== emailCode && (
-                          <p className="text-[0.6875rem] text-[var(--red)] mt-1">{isBn ? 'ভুল কোড' : 'Invalid code'}</p>
+                        <p className="text-[0.625rem] text-[var(--text-muted)] mb-2">{isBn ? `${form.adminEmail}-এ ৬-ডিজিট কোড পাঠানো হয়েছে` : `A 6-digit code was sent to ${form.adminEmail}`}</p>
+                        <OtpInput
+                          length={6}
+                          value={emailCodeInput}
+                          onChange={(v) => {
+                            setEmailCodeInput(v)
+                            if (v.length === 6) {
+                              setTimeout(() => {
+                                if (v === emailCode) setEmailVerified(true)
+                              }, 200)
+                            }
+                          }}
+                          error={emailCodeInput.length === 6 && emailCodeInput !== emailCode}
+                          disabled={emailVerified}
+                        />
+                        {emailCodeInput && emailCodeInput !== emailCode && emailCodeInput.length === 6 && (
+                          <p className="text-[0.6875rem] text-[var(--red)] mt-1.5">{isBn ? 'ভুল কোড। আবার চেষ্টা করুন।' : 'Invalid code. Please try again.'}</p>
                         )}
                       </div>
                     )}
