@@ -147,67 +147,6 @@ function AppContent() {
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<LegacyDashboardRedirect />} />
             <Route path="/students" element={<LegacyStudentsRedirect />} />
-            <Route path="/teachers" element={<Navigate to="/admin/teachers" replace />} />
-            <Route path="/classes" element={<Navigate to="/admin/classes" replace />} />
-            <Route path="/hr" element={<Navigate to="/admin/hr" replace />} />
-            <Route path="/attendance" element={<Navigate to="/admin/attendance" replace />} />
-            <Route path="/exams" element={<Navigate to="/admin/exams" replace />} />
-            <Route path="/syllabus" element={<Navigate to="/admin/syllabus" replace />} />
-            <Route path="/assignments" element={<Navigate to="/admin/assignments" replace />} />
-            <Route path="/online" element={<Navigate to="/admin/online" replace />} />
-            <Route path="/finance" element={<Navigate to="/admin/finance" replace />} />
-            <Route path="/payroll" element={<Navigate to="/admin/payroll" replace />} />
-            <Route path="/settings" element={<Navigate to="/admin/settings" replace />} />
-          </Route>
-        </Route>
-
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AppLayout />}>
-            <Route path="/:role/dashboard" element={<F><DashboardPage /></F>} />
-            <Route path="/:role/students" element={<F><StudentsPage /></F>} />
-            <Route path="/:role/students/admission" element={<F><StudentAdmission /></F>} />
-            <Route path="/:role/students/all" element={<F><AllStudentsPage /></F>} />
-            <Route path="/:role/students/update" element={<F><UpdateStudentPage /></F>} />
-            <Route path="/:role/students/bulk-update" element={<F><BulkUpdatePage /></F>} />
-            <Route path="/:role/students/id-cards" element={<F><IDCardsPage /></F>} />
-            <Route path="/:role/students/promotion" element={<F><PromotionPage /></F>} />
-            <Route path="/:role/teachers" element={<F><TeachersPage /></F>} />
-            <Route path="/:role/teachers/add" element={<F><AddTeacherPage /></F>} />
-            <Route path="/:role/teachers/all" element={<F><AllTeachersPage /></F>} />
-            <Route path="/:role/teachers/all/:id" element={<F><TeacherDetailPage /></F>} />
-            <Route path="/:role/teachers/edit/:id" element={<F><EditTeacherPage /></F>} />
-            <Route path="/:role/teachers/bulk-update" element={<F><TeacherBulkUpdatePage /></F>} />
-            <Route path="/:role/teachers/departments" element={<F><DepartmentsPage /></F>} />
-            <Route path="/:role/teachers/subjects" element={<F><SubjectsPage /></F>} />
-            <Route path="/:role/teachers/designations" element={<F><DesignationsPage /></F>} />
-            <Route path="/:role/classes" element={<F><ClassesPage /></F>} />
-            <Route path="/:role/hr" element={<F><HRPage /></F>} />
-            <Route path="/:role/attendance" element={<F><AttendancePage /></F>} />
-            <Route path="/:role/exams" element={<F><ExamDashboard /></F>} />
-            <Route path="/:role/exams/planning" element={<F><Step1Planning /></F>} />
-            <Route path="/:role/exams/scheduling" element={<F><Step2Schedule /></F>} />
-            <Route path="/:role/exams/evaluation" element={<F><Step3Evaluation /></F>} />
-            <Route path="/:role/exams/results" element={<F><Step4Results /></F>} />
-            <Route path="/:role/exams/marksheet" element={<F><Step5Marksheet /></F>} />
-            <Route path="/:role/exams/omr" element={<F><OMRSheetPage /></F>} />
-            <Route path="/:role/syllabus" element={<F><SyllabusPage /></F>} />
-            <Route path="/:role/assignments" element={<F><AssignmentsPage /></F>} />
-            <Route path="/:role/online" element={<F><OnlineClassesPage /></F>} />
-            <Route path="/:role/finance" element={<F><FinancePage /></F>} />
-            <Route path="/:role/payroll" element={<F><PayrollPage /></F>} />
-            <Route path="/:role/store" element={<P name="School Store" />} />
-            <Route path="/:role/expenses" element={<P name="Expenses" />} />
-            <Route path="/:role/library" element={<P name="Library" />} />
-            <Route path="/:role/transport" element={<P name="Transport" />} />
-            <Route path="/:role/hostel" element={<P name="Hostel" />} />
-            <Route path="/:role/messages" element={<P name="Messages" />} />
-            <Route path="/:role/notice" element={<P name="Notice Board" />} />
-            <Route path="/:role/notifications" element={<P name="Notifications" />} />
-            <Route path="/:role/parent-portal" element={<P name="Parent Portal" />} />
-            <Route path="/:role/student-portal" element={<P name="Student Portal" />} />
-            <Route path="/:role/analytics" element={<P name="Analytics" />} />
-            <Route path="/:role/reports" element={<P name="Reports" />} />
-            <Route path="/:role/settings" element={<F><SettingsPage /></F>} />
           </Route>
         </Route>
 
