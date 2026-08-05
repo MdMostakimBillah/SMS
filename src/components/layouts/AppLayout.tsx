@@ -130,7 +130,7 @@ export default function AppLayout() {
               <span>Viewing as: <strong>{viewedInst.name}</strong></span>
             </div>
             <button
-              onClick={() => { stopViewing(); navigate('/super-admin/schools') }}
+              onClick={() => { sessionStorage.removeItem('edutech_inst_slug'); stopViewing(); navigate('/super-admin/schools') }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.6875rem] font-semibold text-amber-700 bg-amber-500/15 hover:bg-amber-500/25 transition-colors cursor-pointer border-none"
             >
               <X size={12} />
