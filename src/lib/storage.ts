@@ -110,16 +110,15 @@ export function clearSlug(): void {
   resetAllStores()
 }
 
-export function createNamespacedStorage<T>(base: string): PersistStorage<T> {
-  function resolveKey(slug: string | null): string | null {
-    return slug ? `${base}_${slug}` : null
+export function createNamespacedStorage<T>(base: string, fallback?: string): PersistStorage<T> {
+  function resolveKey(slug: string | null): string {
+    return slug ? `${base}_${slug}` : (fallback || base)
   }
 
   return {
     getItem: (_name: string): StorageValue<T> | null => {
       const slug = getSlug()
       const key = resolveKey(slug)
-      if (!key) return null
       try {
         const raw = localStorage.getItem(key)
         return raw ? (JSON.parse(raw) as StorageValue<T>) : null
@@ -129,7 +128,6 @@ export function createNamespacedStorage<T>(base: string): PersistStorage<T> {
       try {
         const slug = getSlug()
         const key = resolveKey(slug)
-        if (!key) return
         localStorage.setItem(key, JSON.stringify(value))
       } catch { /* ignore */ }
     },
@@ -137,7 +135,6 @@ export function createNamespacedStorage<T>(base: string): PersistStorage<T> {
       try {
         const slug = getSlug()
         const key = resolveKey(slug)
-        if (!key) return
         localStorage.removeItem(key)
       } catch { /* ignore */ }
     },

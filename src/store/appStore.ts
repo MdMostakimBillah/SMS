@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Theme, Language } from '@/types'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 
 interface PageVisit {
   path: string
@@ -98,11 +99,9 @@ export const useAppStore = create<AppState>()(
       toggleBookmark: (path) =>
         set((state) => {
           const exists = state.bookmarks.includes(path)
-          // If removing, just remove
           if (exists) {
             return { bookmarks: state.bookmarks.filter((p) => p !== path) }
           }
-          // If adding, max 5 bookmarks
           if (state.bookmarks.length >= 5) return state
           return { bookmarks: [...state.bookmarks, path] }
         }),
@@ -133,6 +132,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'edutech-settings',
+      storage: createNamespacedStorage('edutech-settings', 'edutech-settings'),
       version: 1,
       partialize: (state) => ({
         theme: state.theme,
@@ -150,3 +150,19 @@ export const useAppStore = create<AppState>()(
     }
   )
 )
+
+registerStoreReset(() => {
+  useAppStore.setState({ sidebarOpen: false })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-settings_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) useAppStore.setState(parsed.state)
+    }
+  } catch { /* ignore */ }
+})
