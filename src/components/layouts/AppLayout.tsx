@@ -54,6 +54,24 @@ export default function AppLayout() {
   }, [language])
 
   useEffect(() => {
+    const slug = sessionStorage.getItem('edutech_inst_slug')
+    const viewed = viewedInst
+    const inst = slug ? viewed || institution : null
+    if (inst && inst.name) {
+      document.title = inst.name
+      if (inst.logo) {
+        let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+        if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link) }
+        link.href = inst.logo
+      }
+    } else {
+      document.title = 'EduTech SMS'
+      const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+      if (link) link.href = '/favicon.ico'
+    }
+  }, [institution, viewedInst])
+
+  useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 600)
     return () => clearTimeout(timer)
   }, [])
