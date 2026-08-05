@@ -9,7 +9,7 @@ export interface InstitutionPackage {
   maxStudents: number
   maxTeachers: number
   maxClasses: number
-  storageMB: number
+  pricePerStudent: number
   price: number
   duration: number
 }
@@ -34,7 +34,6 @@ export interface Institution {
   slug: string
   status: InstitutionStatus
   package: InstitutionPackage
-  usedStorageMB: number
   createdAt: string
   lastLogin: string
   logo: string
@@ -55,40 +54,40 @@ export const PACKAGES: InstitutionPackage[] = [
   {
     name: 'Basic',
     nameBn: 'বেসিক',
-    maxStudents: 150,
-    maxTeachers: 20,
+    maxStudents: 200,
+    maxTeachers: 25,
     maxClasses: 999,
-    storageMB: 2048,
+    pricePerStudent: 10,
     price: 1500,
     duration: 30,
   },
   {
     name: 'Standard',
     nameBn: 'স্ট্যান্ডার্ড',
-    maxStudents: 250,
-    maxTeachers: 30,
+    maxStudents: 400,
+    maxTeachers: 50,
     maxClasses: 999,
-    storageMB: 5120,
+    pricePerStudent: 8,
     price: 2200,
     duration: 30,
   },
   {
     name: 'Premium',
     nameBn: 'প্রিমিয়াম',
-    maxStudents: 400,
-    maxTeachers: 40,
+    maxStudents: 800,
+    maxTeachers: 100,
     maxClasses: 999,
-    storageMB: 10240,
+    pricePerStudent: 6,
     price: 3000,
     duration: 30,
   },
   {
     name: 'Enterprise',
     nameBn: 'এন্টারপ্রাইজ',
-    maxStudents: 500,
-    maxTeachers: 50,
+    maxStudents: 9999,
+    maxTeachers: 9999,
     maxClasses: 999,
-    storageMB: 20480,
+    pricePerStudent: 4,
     price: 3500,
     duration: 30,
   },

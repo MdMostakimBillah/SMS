@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Building2, Search, Filter, ChevronDown, ChevronUp,
-  Users, GraduationCap, HardDrive, Calendar, Mail, Phone, Globe,
+  Users, GraduationCap, Calendar, Mail, Phone, Globe,
   MapPin, CheckCircle, XCircle, Pause, Clock,
   CreditCard, Shield, Trash2, ExternalLink, Lock, Copy, Check,
 } from 'lucide-react'
@@ -19,21 +19,6 @@ function statusConfig(status: InstitutionStatus, isBn: boolean) {
   return map[status]
 }
 
-function StorageBar({ used, total }: { used: number; total: number }) {
-  const pct = Math.min((used / total) * 100, 100)
-  const color = pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#22c55e'
-  return (
-    <div className="w-full h-2 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
-      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
-    </div>
-  )
-}
-
-function formatMB(mb: number): string {
-  if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`
-  return `${mb} MB`
-}
-
 function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
   inst: Institution
   isBn: boolean
@@ -42,7 +27,6 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
   onOpen: () => void
 }) {
   const status = statusConfig(inst.status, isBn)
-  const pct = Math.min((inst.usedStorageMB / inst.package.storageMB) * 100, 100)
 
   return (
     <div
@@ -91,13 +75,6 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
               {inst.package.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${inst.package.price}/${isBn ? 'মাস' : 'mo'}`}
             </div>
           </div>
-          <div className="w-20">
-            <div className="flex items-center justify-between text-[0.625rem] text-[var(--text-muted)] mb-1">
-              <span>{formatMB(inst.usedStorageMB)}</span>
-              <span>{formatMB(inst.package.storageMB)}</span>
-            </div>
-            <StorageBar used={inst.usedStorageMB} total={inst.package.storageMB} />
-          </div>
           <div className="text-[0.625rem] text-[var(--text-muted)] whitespace-nowrap">
             <Clock size={10} className="inline mr-1" />
             {inst.lastLogin}
@@ -112,30 +89,10 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
         <div className="px-5 pb-5 space-y-4 border-t border-[var(--border)]">
           {/* Stats Row */}
           <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <MiniStat icon={<GraduationCap size={14} />} label={isBn ? 'শিক্ষার্থী' : 'Students'} value={inst.package.maxStudents.toLocaleString()} color="#6366f1" />
-            <MiniStat icon={<Users size={14} />} label={isBn ? 'শিক্ষক' : 'Teachers'} value={inst.package.maxTeachers.toLocaleString()} color="#3b82f6" />
+            <MiniStat icon={<GraduationCap size={14} />} label={isBn ? 'শিক্ষার্থী' : 'Students'} value={inst.package.maxStudents >= 9999 ? (isBn ? 'অসীমিত' : 'Unlimited') : inst.package.maxStudents.toLocaleString()} color="#6366f1" />
+            <MiniStat icon={<Users size={14} />} label={isBn ? 'শিক্ষক' : 'Teachers'} value={inst.package.maxTeachers >= 9999 ? (isBn ? 'অসীমিত' : 'Unlimited') : inst.package.maxTeachers.toLocaleString()} color="#3b82f6" />
             <MiniStat icon={<Building2 size={14} />} label={isBn ? 'শ্রেণি' : 'Classes'} value={inst.package.maxClasses.toString()} color="#8b5cf6" />
             <MiniStat icon={<Clock size={14} />} label={isBn ? 'শেষ লগইন' : 'Last Login'} value={inst.lastLogin} color="#f59e0b" />
-          </div>
-
-          {/* Storage */}
-          <div className="p-3.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-            <div className="flex items-center justify-between mb-2.5">
-              <div className="flex items-center gap-2 text-[0.75rem] font-medium text-[var(--text-primary)]">
-                <div className="w-6 h-6 rounded-md flex items-center justify-center bg-[var(--brand-light)]">
-                  <HardDrive size={12} className="text-[var(--brand)]" />
-                </div>
-                {isBn ? 'স্টোরেজ ব্যবহার' : 'Storage Usage'}
-              </div>
-              <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">
-                {pct.toFixed(1)}%
-              </span>
-            </div>
-            <StorageBar used={inst.usedStorageMB} total={inst.package.storageMB} />
-            <div className="flex justify-between mt-2 text-[0.6875rem] text-[var(--text-muted)]">
-              <span>{formatMB(inst.usedStorageMB)} {isBn ? 'ব্যবহৃত' : 'used'}</span>
-              <span>{formatMB(inst.package.storageMB)} {isBn ? 'মোট' : 'total'}</span>
-            </div>
           </div>
 
           {/* Info Grid */}
@@ -281,8 +238,7 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
 
   const totalStudents = institutions.reduce((sum, i) => sum + i.package.maxStudents, 0)
   const activeCount = institutions.filter((i) => i.status === 'active').length
-  const totalStorage = institutions.reduce((sum, i) => sum + i.package.storageMB, 0)
-  const usedStorage = institutions.reduce((sum, i) => sum + i.usedStorageMB, 0)
+  const totalRevenue = institutions.reduce((sum, i) => sum + i.package.price, 0)
 
   return (
     <div className="space-y-4">
@@ -306,10 +262,10 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
           color="#3b82f6"
         />
         <SummaryCard
-          icon={<HardDrive size={18} />}
-          label={isBn ? 'স্টোরেজ' : 'Storage'}
-          value={`${formatMB(usedStorage)} / ${formatMB(totalStorage)}`}
-          color="#f59e0b"
+          icon={<CreditCard size={18} />}
+          label={isBn ? 'মাসিক আয়' : 'Monthly Revenue'}
+          value={`৳${totalRevenue.toLocaleString()}`}
+          color="#22c55e"
         />
       </div>
 

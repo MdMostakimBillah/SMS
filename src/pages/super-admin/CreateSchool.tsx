@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Building2, MapPin, Phone, Clock, Globe, CalendarDays,
   ChevronRight, ChevronLeft, Check, X, Eye, EyeOff, Sparkles,
-  Palette, GraduationCap, Shield, Copy, Upload,
+  Palette, GraduationCap, Shield, Copy, Upload, Users, CreditCard,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
@@ -166,7 +166,7 @@ export default function CreateSchool() {
   const canNext = useMemo(() => {
     if (!currentSection) return true
     switch (currentSection.key) {
-      case 'basic': return form.name.trim().length > 0
+      case 'basic': return form.name.trim().length > 0 && !hasEmoji(form.name) && form.subdomain.trim().length > 0
       case 'academic': return form.sessions.length > 0
       case 'admin': return form.adminEmail.trim().length > 0 && emailVerified && isPasswordValid
       default: return true
@@ -198,7 +198,6 @@ export default function CreateSchool() {
       slug: subdomain || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       status: 'active',
       package: form.package,
-      usedStorageMB: 0,
       createdAt: new Date().toISOString().split('T')[0],
       lastLogin: '-',
       logo: form.logo,
@@ -290,9 +289,9 @@ export default function CreateSchool() {
               <div className="space-y-4">
                 {currentSection?.key === 'basic' && (
                   <>
-                    <FieldInput ref={inputRef} label={isBn ? 'স্কুলের নাম *' : 'School Name *'} value={form.name} onChange={(v) => set('name', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} hint={isBn ? 'স্কুলের আনুষ্ঠানিক নাম' : 'The official name of the school'} />
-                    <FieldInput label={isBn ? 'বাংলায় নাম' : 'Bengali Name'} value={form.nameBn} onChange={(v) => set('nameBn', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} hint={isBn ? 'বাংলা লিপিতে স্কুলের নাম' : 'School name in Bengali script'} />
-                    <FieldInput label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName} onChange={(v) => set('brandName', v)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} hint={isBn ? 'সিস্টেমের জন্য ছোট ব্র্যান্ড নাম' : 'Short brand name for the system'} />
+                    <FieldInput ref={inputRef} label={isBn ? 'স্কুলের নাম *' : 'School Name *'} value={form.name} onChange={(v) => set('name', hasEmoji(v) ? v.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '') : v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} hint={isBn ? 'শুধু অক্ষর ও বিশেষ চিহ্ন অনুমোদিত (ইমোজি নয়)' : 'Letters and punctuation only (no emoji)'} error={hasEmoji(form.name) ? (isBn ? 'ইমোজি অনুমোদিত নয়' : 'Emoji not allowed') : undefined} />
+                    <FieldInput label={isBn ? 'বাংলায় নাম' : 'Bengali Name'} value={form.nameBn} onChange={(v) => set('nameBn', hasEmoji(v) ? v.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '') : v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} hint={isBn ? 'বাংলা লিপিতে স্কুলের নাম' : 'School name in Bengali script'} />
+                    <FieldInput label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName} onChange={(v) => set('brandName', hasEmoji(v) ? v.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '') : v)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} hint={isBn ? 'সিস্টেমের জন্য ছোট ব্র্যান্ড নাম' : 'Short brand name for the system'} />
                     <FieldInput label="EIIN" value={form.eiin} onChange={(v) => set('eiin', v)} placeholder="123456" hint={isBn ? 'শিক্ষা প্রতিষ্ঠান শনাক্তকরণ নম্বর' : 'Education Institution Identification Number'} />
                     <SubdomainInput value={form.subdomain} onChange={(v) => set('subdomain', v)} institutions={institutions} isBn={isBn} />
                   </>
@@ -635,14 +634,16 @@ function PreviewPanel({ form, isBn }: { form: SchoolForm; isBn: boolean }) {
 }
 
 /* ─── Shared Components ─── */
-function FieldInput({ ref, label, type = 'text', value, onChange, placeholder, hint }: {
-  ref?: React.Ref<HTMLInputElement>; label: string; type?: string; value: string; onChange: (v: string) => void; placeholder?: string; hint?: string
+function FieldInput({ ref, label, type = 'text', value, onChange, placeholder, hint, error }: {
+  ref?: React.Ref<HTMLInputElement>; label: string; type?: string; value: string; onChange: (v: string) => void; placeholder?: string; hint?: string; error?: string
 }) {
+  const borderColor = error ? 'var(--red)' : 'var(--border)'
   return (
     <div>
       <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{label}</label>
       {hint && <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{hint}</p>}
-      <input ref={ref} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all" />
+      <input ref={ref} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} style={{ borderColor }} className="w-full px-3.5 py-2.5 rounded-xl border bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all" />
+      {error && <p className="text-[0.625rem] text-[var(--red)] mt-1">{error}</p>}
     </div>
   )
 }
@@ -766,6 +767,11 @@ function isBnShort() {
   try { return document.documentElement.lang === 'bn' } catch { return false }
 }
 
+function hasEmoji(str: string): boolean {
+  const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/u
+  return emojiRegex.test(str)
+}
+
 function SubdomainInput({ value, onChange, institutions, isBn }: {
   value: string; onChange: (v: string) => void; institutions: Institution[]; isBn: boolean
 }) {
@@ -785,8 +791,10 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
 
   return (
     <div>
-      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'ইনস্টিটিউশন লগইন URL' : 'Institution Login URL'}</label>
-      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'ইন্সটিটিউশনের ইউনিক পাথ' : 'Unique path for this institution'}</p>
+      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">
+        {isBn ? 'ইনস্টিটিউশন লগইন URL' : 'Institution Login URL'} <span className="text-[var(--red)]">*</span>
+      </label>
+      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'ইন্সটিটিউশনের ইউনিক পাথ (বাধ্যতামূলক)' : 'Unique path for this institution (required)'}</p>
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand)]/10 transition-all overflow-hidden">
         <div className="flex items-center">
           <span className="px-3.5 py-2.5 text-xs text-[var(--text-muted)] bg-[var(--bg-primary)] border-r border-[var(--border)] shrink-0">{BASE_URL}/i/</span>
@@ -794,7 +802,7 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
             type="text"
             value={slug}
             onChange={(e) => checkAvailability(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-            placeholder={isBn ? 'সাবডোমেইন' : 'subdomain'}
+            placeholder={isBn ? 'বাধ্যতামূলক' : 'required'}
             className="flex-1 min-w-0 px-3.5 py-2.5 bg-transparent text-sm text-[var(--text-primary)] outline-none"
           />
           <button
@@ -824,24 +832,70 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
 
 function PackagePicker({ value, onChange, isBn }: { value: InstitutionPackage; onChange: (v: InstitutionPackage) => void; isBn: boolean }) {
   return (
-    <div className="space-y-2">
-      {PACKAGES.map((pkg) => {
-        const selected = value.name === pkg.name
-        return (
-          <button key={pkg.name} onClick={() => onChange(pkg)} className={`w-full p-3.5 rounded-xl border-2 text-left cursor-pointer transition-all ${selected ? 'border-[var(--brand)] bg-[var(--brand-light)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/40'}`}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold text-[var(--text-primary)]">{isBn ? pkg.nameBn : pkg.name}</span>
-              {selected && <div className="w-4 h-4 rounded-full bg-[var(--brand)] flex items-center justify-center"><Check size={10} className="text-white" /></div>}
-            </div>
-            <div className="text-sm font-bold text-[var(--brand)] mb-1">{pkg.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${pkg.price}/${isBn ? 'মাস' : 'mo'}`}</div>
-            <div className="flex gap-3 text-[0.625rem] text-[var(--text-secondary)]">
-              <span>{pkg.maxStudents} students</span>
-              <span>{pkg.maxTeachers} teachers</span>
-              <span>{pkg.maxClasses >= 999 ? 'Unlimited' : pkg.maxClasses} classes</span>
-            </div>
-          </button>
-        )
-      })}
+    <div className="space-y-3">
+      <div className="space-y-2">
+        {PACKAGES.map((pkg) => {
+          const selected = value.name === pkg.name
+          const isUnlimited = pkg.maxStudents >= 9999
+          return (
+            <button key={pkg.name} onClick={() => onChange(pkg)} className={`w-full p-4 rounded-xl border-2 text-left cursor-pointer transition-all ${selected ? 'border-[var(--brand)] bg-[var(--brand-light)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/40'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-[var(--text-primary)]">{isBn ? pkg.nameBn : pkg.name}</span>
+                  {isUnlimited && (
+                    <span className="px-1.5 py-0.5 rounded text-[0.5rem] font-bold bg-[var(--brand)] text-white">
+                      {isBn ? 'আনলিমিটেড' : 'UNLIMITED'}
+                    </span>
+                  )}
+                </div>
+                {selected && <div className="w-5 h-5 rounded-full bg-[var(--brand)] flex items-center justify-center"><Check size={11} className="text-white" /></div>}
+              </div>
+
+              <div className="flex items-baseline gap-1 mb-2.5">
+                <span className="text-xl font-bold text-[var(--brand)]">৳{pkg.price.toLocaleString()}</span>
+                <span className="text-[0.625rem] text-[var(--text-muted)]">/{isBn ? 'মাস' : 'month'}</span>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded bg-[var(--green)]/10 flex items-center justify-center">
+                    <GraduationCap size={10} className="text-[var(--green)]" />
+                  </div>
+                  <span className="text-[0.6875rem] text-[var(--text-secondary)]">
+                    {isUnlimited ? (isBn ? 'অসীমিত ছাত্র' : 'Unlimited students') : `${pkg.maxStudents} ${isBn ? 'জন ছাত্র পর্যন্ত' : 'students max'}`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded bg-[var(--blue)]/10 flex items-center justify-center">
+                    <Users size={10} className="text-[var(--blue)]" />
+                  </div>
+                  <span className="text-[0.6875rem] text-[var(--text-secondary)]">
+                    {isUnlimited ? (isBn ? 'অসীমিত শিক্ষক' : 'Unlimited teachers') : `${pkg.maxTeachers} ${isBn ? 'জন শিক্ষক পর্যন্ত' : 'teachers max'}`}
+                  </span>
+                </div>
+                {!isUnlimited && (
+                  <div className="flex items-center gap-2 mt-1 pt-1.5 border-t border-[var(--border)]">
+                    <span className="text-[0.5625rem] text-[var(--text-muted)]">
+                      ≈ ৳{pkg.pricePerStudent}/{isBn ? 'জন/মাস' : 'student/mo'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </button>
+          )
+        })}
+      </div>
+      <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+        <div className="flex items-start gap-2">
+          <CreditCard size={14} className="text-[var(--brand)] mt-0.5 shrink-0" />
+          <div>
+            <p className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'পেমেন্ট' : 'Payment'}</p>
+            <p className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
+              {isBn ? 'পেমেন্ট গেটওয়ে শীঘ্রই যোগ করা হবে। এখন ফ্রি ট্রায়াল উপভোগ করুন!' : 'Payment gateway coming soon. Enjoy free trial for now!'}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
