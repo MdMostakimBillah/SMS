@@ -313,14 +313,23 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
   trackVisitRef.current = trackVisit
   const lastTrackedPath = useRef('')
 
-  // Track page visits
+  // Track page visits — find best matching nav item for current pathname
   useEffect(() => {
-    const base = '/' + (location.pathname.split('/')[1] || '')
-    if (base === lastTrackedPath.current) return
-    lastTrackedPath.current = base
-    const info = navItemsMap[base]
+    const pathname = location.pathname
+    if (pathname === lastTrackedPath.current) return
+    lastTrackedPath.current = pathname
+    // Try exact match first, then try removing trailing segments
+    let info = navItemsMap[pathname]
+    if (!info) {
+      const parts = pathname.split('/')
+      for (let len = parts.length - 1; len > 1; len--) {
+        const candidate = parts.slice(0, len).join('/')
+        info = navItemsMap[candidate]
+        if (info) break
+      }
+    }
     if (info) {
-      trackVisitRef.current(base, info.label, info.icon)
+      trackVisitRef.current(pathname, info.label, info.icon)
     }
   }, [location.pathname, navItemsMap])
 
