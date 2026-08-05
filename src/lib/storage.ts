@@ -69,8 +69,6 @@ export function cleanupOrphanedBaseKeys(): void {
 import type { PersistStorage, StorageValue } from 'zustand/middleware/persist'
 
 export function createNamespacedStorage<T>(base: string): PersistStorage<T> {
-  let cachedState: StorageValue<T> | null = null
-
   function resolveKey(slug: string | null): string | null {
     return slug ? `${base}_${slug}` : null
   }
@@ -86,17 +84,14 @@ export function createNamespacedStorage<T>(base: string): PersistStorage<T> {
     getItem: (_name: string): StorageValue<T> | null => {
       const slug = getSlug()
       const key = resolveKey(slug)
-      if (!key) return cachedState
-      const state = loadFromKey(key)
-      if (state) cachedState = state
-      return state
+      if (!key) return null
+      return loadFromKey(key)
     },
     setItem: (_name: string, value: StorageValue<T>): void => {
       try {
         const slug = getSlug()
         const key = resolveKey(slug)
         if (!key) return
-        cachedState = value
         localStorage.setItem(key, JSON.stringify(value))
       } catch { /* ignore */ }
     },
