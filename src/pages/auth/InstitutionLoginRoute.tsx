@@ -18,7 +18,8 @@ export default function InstitutionLoginRoute() {
   }, [slug, storeInstitutions])
 
   if (user && institution && user.subdomain === institution.subdomain) {
-    if (user.role === 'super_admin' && viewingInstitutionId) {
+    const isViewing = user.role === 'super_admin' && (viewingInstitutionId || sessionStorage.getItem('edutech_viewing_id'))
+    if (isViewing) {
       return <Navigate to="/super-admin/viewing/admin/dashboard" replace />
     }
     const role = user.role === 'super_admin' ? 'admin' : user.role

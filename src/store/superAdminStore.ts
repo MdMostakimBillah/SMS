@@ -120,13 +120,19 @@ export const useSuperAdminStore = create<SuperAdminState>()(
       searchQuery: '',
       statusFilter: 'all',
       packageFilter: 'all',
-      viewingInstitutionId: null,
+      viewingInstitutionId: sessionStorage.getItem('edutech_viewing_id') || null,
       setSelectedId: (id) => set({ selectedId: id }),
       setSearchQuery: (q) => set({ searchQuery: q }),
       setStatusFilter: (s) => set({ statusFilter: s }),
       setPackageFilter: (p) => set({ packageFilter: p }),
-      startViewing: (id) => set({ viewingInstitutionId: id }),
-      stopViewing: () => set({ viewingInstitutionId: null }),
+      startViewing: (id) => {
+        sessionStorage.setItem('edutech_viewing_id', id)
+        set({ viewingInstitutionId: id })
+      },
+      stopViewing: () => {
+        sessionStorage.removeItem('edutech_viewing_id')
+        set({ viewingInstitutionId: null })
+      },
       updateInstitution: (id, data) =>
         set((state) => ({
           institutions: state.institutions.map((i) =>

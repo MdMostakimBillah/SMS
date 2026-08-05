@@ -21,7 +21,7 @@ export function ProtectedRoute() {
   if (loading) return <LoadingSpinner />
   if (!user) return <Navigate to={getLoginRedirect()} replace />
 
-  const isViewing = !!viewingInstitutionId && user.role === 'super_admin'
+  const isViewing = user.role === 'super_admin' && (!!viewingInstitutionId || !!sessionStorage.getItem('edutech_viewing_id'))
 
   if (role && INSTITUTION_ROLES.includes(role as InstitutionRole)) {
     if (isViewing) {
