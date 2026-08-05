@@ -1,9 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
-import { useNavPath } from '@/hooks/useNavPath'
 import {
-  ArrowLeft,
   Briefcase,
   CalendarCheck,
   CalendarX,
@@ -80,8 +77,6 @@ function AttendancePageSkeleton() {
 }
 
 export default function AttendancePage() {
-  const navigate = useNavigate()
-  const nav = useNavPath()
   const isBn = useBn()
   const { isMobile, isTablet } = useWindowSize()
   const { teachers, departments, attendance, markAllPresent } = useTeacherStore(
@@ -755,13 +750,6 @@ export default function AttendancePage() {
 
       {/* Header */}
       <div className={`flex gap-2.5 mb-4 flex-wrap ${isMobile ? 'flex-col items-start' : 'items-center'}`}>
-        <button
-          onClick={() => navigate(nav('/teachers'))}
-          className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] shrink-0"
-        >
-          <ArrowLeft size={14} />
-          {isBn ? 'ফিরে যান' : 'Back'}
-        </button>
         <div className="flex-1">
           <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-[1.125rem]' : 'text-[1.375rem]'}`}>
             {isBn ? 'উপস্থিতি ব্যবস্থাপনা' : 'Attendance Management'}

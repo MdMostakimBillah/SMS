@@ -1,9 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
-import { useNavPath } from '@/hooks/useNavPath'
 import {
-  ArrowLeft,
   Plus,
   ChevronLeft,
   ChevronRight,
@@ -78,8 +75,6 @@ function PageSkeleton() {
 }
 
 export default function AssignmentPage() {
-  const navigate = useNavigate()
-  const nav = useNavPath()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
   const classes = useClassStore((s) => s.classes)
@@ -373,15 +368,6 @@ export default function AssignmentPage() {
     <div ref={containerRef}>
       {/* Header */}
       <div className="gsap-fade-up" style={{ marginBottom: isMobile ? '12px' : '1rem' }}>
-        <div className="flex items-center gap-[0.625rem] mb-1 flex-wrap">
-          <button
-            onClick={() => navigate(nav('/'))}
-            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit]"
-          >
-            <ArrowLeft size={14} />
-            {isBn ? 'ফিরে যান' : 'Back'}
-          </button>
-        </div>
         <div className="flex items-center justify-between">
           <div>
             <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>

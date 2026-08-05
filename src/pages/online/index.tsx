@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { ArrowLeft, Plus, Radio, PlayCircle, Search } from 'lucide-react'
+import { Plus, Radio, PlayCircle, Search } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useClassStore } from '@/store/classStore'
@@ -75,10 +75,6 @@ export default function OnlineClassesPage() {
     <div>
       {/* Header */}
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
-        <button onClick={() => window.history.back()} className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit]">
-          <ArrowLeft size={14} />
-          {isBn ? 'ফিরে যান' : 'Back'}
-        </button>
         <div className="flex-1">
           <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
             {isBn ? 'অনলাইন ক্লাস' : 'Online Classes'}
