@@ -30,11 +30,13 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
 
   return (
     <div
-      className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
+      className={`glass rounded-[0.75rem] transition-all duration-200 overflow-hidden ${
         isSelected
-          ? 'border-[var(--brand)] shadow-lg shadow-[var(--brand)]/10'
-          : 'border-[var(--border)] hover:border-[var(--border-2)] hover:shadow-md'
-      } bg-[var(--bg-primary)]`}
+          ? '!border-[var(--brand)] shadow-lg shadow-[var(--brand)]/10'
+          : ''
+      }`}
+      onMouseEnter={(e) => { if (!isSelected) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' } }}
+      onMouseLeave={(e) => { if (!isSelected) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' } }}
     >
       <button
         onClick={onToggle}
