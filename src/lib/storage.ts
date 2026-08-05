@@ -69,29 +69,41 @@ export function cleanupOrphanedBaseKeys(): void {
 import type { PersistStorage, StorageValue } from 'zustand/middleware/persist'
 
 export function createNamespacedStorage<T>(base: string): PersistStorage<T> {
-  function resolveKey(): string | null {
-    const slug = getSlug()
+  let cachedState: StorageValue<T> | null = null
+
+  function resolveKey(slug: string | null): string | null {
     return slug ? `${base}_${slug}` : null
   }
+
+  function loadFromKey(key: string): StorageValue<T> | null {
+    try {
+      const raw = localStorage.getItem(key)
+      return raw ? (JSON.parse(raw) as StorageValue<T>) : null
+    } catch { return null }
+  }
+
   return {
     getItem: (_name: string): StorageValue<T> | null => {
-      try {
-        const key = resolveKey()
-        if (!key) return null
-        const raw = localStorage.getItem(key)
-        return raw ? (JSON.parse(raw) as StorageValue<T>) : null
-      } catch { return null }
+      const slug = getSlug()
+      const key = resolveKey(slug)
+      if (!key) return cachedState
+      const state = loadFromKey(key)
+      if (state) cachedState = state
+      return state
     },
     setItem: (_name: string, value: StorageValue<T>): void => {
       try {
-        const key = resolveKey()
+        const slug = getSlug()
+        const key = resolveKey(slug)
         if (!key) return
+        cachedState = value
         localStorage.setItem(key, JSON.stringify(value))
       } catch { /* ignore */ }
     },
     removeItem: (_name: string): void => {
       try {
-        const key = resolveKey()
+        const slug = getSlug()
+        const key = resolveKey(slug)
         if (!key) return
         localStorage.removeItem(key)
       } catch { /* ignore */ }
