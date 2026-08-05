@@ -51,3 +51,31 @@ export function migrateOldKeys(slug: string): void {
     }
   })
 }
+
+import type { PersistStorage, StorageValue } from 'zustand/middleware/persist'
+
+export function createNamespacedStorage<T>(base: string): PersistStorage<T> {
+  function resolveKey(): string {
+    const slug = getSlug()
+    return slug ? `${base}_${slug}` : base
+  }
+  return {
+    getItem: (_name: string): StorageValue<T> | null => {
+      try {
+        const key = resolveKey()
+        const raw = localStorage.getItem(key)
+        return raw ? (JSON.parse(raw) as StorageValue<T>) : null
+      } catch { return null }
+    },
+    setItem: (_name: string, value: StorageValue<T>): void => {
+      try {
+        localStorage.setItem(resolveKey(), JSON.stringify(value))
+      } catch { /* ignore */ }
+    },
+    removeItem: (_name: string): void => {
+      try {
+        localStorage.removeItem(resolveKey())
+      } catch { /* ignore */ }
+    },
+  }
+}

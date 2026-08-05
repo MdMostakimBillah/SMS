@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { getStorageKey } from '@/lib/storage'
+import { createNamespacedStorage } from '@/lib/storage'
 
 export interface SyllabusTopic {
   id: string
@@ -212,6 +212,6 @@ export const useSyllabusStore = create<SyllabusState>()(
         return get().syllabi.find((s) => s.classId === classId && s.sectionId === sectionId && s.subjectId === subjectId)
       },
     }),
-    { name: getStorageKey('edutech-syllabus'), version: 1 }
+    { name: 'edutech-syllabus', storage: createNamespacedStorage('edutech-syllabus'), version: 1 }
   )
 )

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { getStorageKey } from '@/lib/storage'
+import { createNamespacedStorage } from '@/lib/storage'
 
 export type Platform = 'youtube' | 'facebook' | 'google-meet' | 'zoom' | 'other'
 export type ClassStatus = 'scheduled' | 'live' | 'ended'
@@ -90,7 +90,8 @@ export const useOnlineStore = create<OnlineState>()(
       deleteClass: (id) => set((s) => ({ classes: s.classes.filter((c) => c.id !== id) })),
     }),
     {
-      name: getStorageKey('edutech-online'),
+      name: 'edutech-online',
+      storage: createNamespacedStorage('edutech-online'),
       onRehydrateStorage: () => (state) => {
         if (!state) return
         const fixed = state.classes.map((c) => {

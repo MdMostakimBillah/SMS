@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { getStorageKey } from '@/lib/storage'
+import { createNamespacedStorage } from '@/lib/storage'
 
 export interface FeeCategory {
   id: string
@@ -525,7 +525,8 @@ export const useFeeStore = create<FeeState>()(
       },
     }),
     {
-      name: getStorageKey('edutech-fees'),
+      name: 'edutech-fees',
+      storage: createNamespacedStorage('edutech-fees'),
       version: 8,
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {

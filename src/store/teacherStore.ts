@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Teacher, Department, Subject, Designation } from '@/pages/teachers/types'
-import { getStorageKey } from '@/lib/storage'
+import { createNamespacedStorage } from '@/lib/storage'
 
 export type AttendanceStatus = 'present' | 'absent' | 'on-leave'
 
@@ -144,7 +144,8 @@ export const useTeacherStore = create<TeacherState>()(
       },
     }),
     {
-      name: getStorageKey('edutech-teachers'),
+      name: 'edutech-teachers',
+      storage: createNamespacedStorage('edutech-teachers'),
       version: 3,
       migrate: (persistedState: any, version: number) => {
         if (version < 3) {

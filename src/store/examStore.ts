@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { getStorageKey } from '@/lib/storage'
+import { createNamespacedStorage } from '@/lib/storage'
 
 // ─── Types ───
 
@@ -1094,7 +1094,8 @@ export const useExamStore = create<ExamState>()(
         }),
     }),
     {
-      name: getStorageKey('edutech-exams'),
+      name: 'edutech-exams',
+      storage: createNamespacedStorage('edutech-exams'),
       version: 8,
       migrate: (persistedState: any, version: number) => {
         if (version < 5) {

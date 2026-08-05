@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { getStorageKey } from '@/lib/storage'
+import { createNamespacedStorage } from '@/lib/storage'
 
 export type AssignmentStatus = 'active' | 'draft' | 'closed' | 'archived'
 export type SubmissionStatus = 'submitted' | 'reviewed' | 'returned' | 'late'
@@ -109,6 +109,6 @@ export const useAssignmentStore = create<AssignmentState>()(
           submissions: state.submissions.filter((s) => s.id !== id),
         })),
     }),
-    { name: getStorageKey('edutech-assignments'), version: 1 }
+    { name: 'edutech-assignments', storage: createNamespacedStorage('edutech-assignments'), version: 1 }
   )
 )

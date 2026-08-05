@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { getStorageKey } from '@/lib/storage'
+import { createNamespacedStorage } from '@/lib/storage'
 
 export interface IncrementRecord {
   id: string
@@ -237,6 +237,6 @@ export const useHRStore = create<HRState>()(
           return { teacherFacilities: newTfs }
         }),
     }),
-    { name: getStorageKey('edutech-hr'), version: 1 }
+    { name: 'edutech-hr', storage: createNamespacedStorage('edutech-hr'), version: 1 }
   )
 )

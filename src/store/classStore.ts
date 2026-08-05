@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { getStorageKey } from '@/lib/storage'
+import { createNamespacedStorage } from '@/lib/storage'
 
 export interface BreakTime {
   id: string
@@ -417,7 +417,8 @@ export const useClassStore = create<ClassState>()(
         }),
     }),
     {
-      name: getStorageKey('edutech-classes'),
+      name: 'edutech-classes',
+      storage: createNamespacedStorage('edutech-classes'),
       version: 7,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
