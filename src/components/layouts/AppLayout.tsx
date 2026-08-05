@@ -85,6 +85,8 @@ export default function AppLayout() {
   }, [isSmall])
 
   if (isLoading) {
+    const isSuperAdmin = user?.role === 'super_admin'
+    const loadingName = isSuperAdmin ? 'EduTech' : (institution.brandName || institution.name || 'EduTech')
     return (
       <div className="flex h-screen overflow-hidden bg-[var(--bg-tertiary)] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -97,7 +99,7 @@ export default function AppLayout() {
               <path d="M6 12v5c3 3 9 3 12 0v-5" />
             </svg>
           </div>
-          <div className="text-sm font-semibold text-[var(--text-primary)]">{institution.brandName || institution.name || 'EduTech'}</div>
+          <div className="text-sm font-semibold text-[var(--text-primary)]">{loadingName}</div>
           <div className="w-[6.25rem] h-[0.1875rem] bg-[var(--border)] rounded-[0.125rem] overflow-hidden">
             <div
               className="h-full w-2/5 bg-[var(--brand)] rounded-[0.125rem]"
