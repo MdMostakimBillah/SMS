@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import { authApi, setAuthToken, ApiError, API_BASE } from '@/lib/api'
 import { createSuperAdminToken, createSuperAdminUser } from '@/lib/adminAuth'
-import { nsGet, nsSet, nsRemove, migrateOldKeys } from '@/lib/storage'
+import { nsGet, nsSet, nsRemove, migrateOldKeys, setSlug } from '@/lib/storage'
 
 const VITE_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL as string) || 'admin@edutech.com'
 const VITE_PASSWORD = (import.meta.env.VITE_SUPER_ADMIN_PASSWORD as string) || 'Admin@123456'
@@ -253,7 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setInstitutionUser = useCallback((email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string) => {
     if (slug) {
-      sessionStorage.setItem('edutech_inst_slug', slug)
+      setSlug(slug)
     }
     setUser({
       id: institutionId,

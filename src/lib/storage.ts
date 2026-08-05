@@ -68,16 +68,42 @@ export function cleanupOrphanedBaseKeys(): void {
 
 import type { PersistStorage, StorageValue } from 'zustand/middleware/persist'
 
+type SlugChangeCallback = (slug: string | null) => void
+const slugListeners: SlugChangeCallback[] = []
+
+export function onSlugChange(cb: SlugChangeCallback): () => void {
+  slugListeners.push(cb)
+  return () => {
+    const idx = slugListeners.indexOf(cb)
+    if (idx >= 0) slugListeners.splice(idx, 1)
+  }
+}
+
+export function setSlug(slug: string): void {
+  sessionStorage.setItem('edutech_inst_slug', slug)
+  slugListeners.forEach((cb) => cb(slug))
+  rehydrateAll()
+}
+
+export function clearSlug(): void {
+  sessionStorage.removeItem('edutech_inst_slug')
+  slugListeners.forEach((cb) => cb(null))
+  rehydrateAll()
+}
+
+const rehydrateFns: Array<() => void> = []
+
+export function registerStoreRehydrate(rehydrateFn: () => void): void {
+  rehydrateFns.push(rehydrateFn)
+}
+
+function rehydrateAll(): void {
+  rehydrateFns.forEach((fn) => fn())
+}
+
 export function createNamespacedStorage<T>(base: string): PersistStorage<T> {
   function resolveKey(slug: string | null): string | null {
     return slug ? `${base}_${slug}` : null
-  }
-
-  function loadFromKey(key: string): StorageValue<T> | null {
-    try {
-      const raw = localStorage.getItem(key)
-      return raw ? (JSON.parse(raw) as StorageValue<T>) : null
-    } catch { return null }
   }
 
   return {
@@ -85,7 +111,10 @@ export function createNamespacedStorage<T>(base: string): PersistStorage<T> {
       const slug = getSlug()
       const key = resolveKey(slug)
       if (!key) return null
-      return loadFromKey(key)
+      try {
+        const raw = localStorage.getItem(key)
+        return raw ? (JSON.parse(raw) as StorageValue<T>) : null
+      } catch { return null }
     },
     setItem: (_name: string, value: StorageValue<T>): void => {
       try {

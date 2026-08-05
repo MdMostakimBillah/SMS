@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreRehydrate } from '@/lib/storage'
 
 // ─── Types ───
 
@@ -1134,3 +1134,5 @@ export const useExamStore = create<ExamState>()(
     }
   )
 )
+
+registerStoreRehydrate(() => useExamStore.persist.rehydrate())

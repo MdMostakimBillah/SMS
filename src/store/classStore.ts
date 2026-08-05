@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreRehydrate } from '@/lib/storage'
 
 export interface BreakTime {
   id: string
@@ -484,3 +484,5 @@ export const useClassStore = create<ClassState>()(
     }
   )
 )
+
+registerStoreRehydrate(() => useClassStore.persist.rehydrate())

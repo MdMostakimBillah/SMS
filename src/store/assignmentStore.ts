@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreRehydrate } from '@/lib/storage'
 
 export type AssignmentStatus = 'active' | 'draft' | 'closed' | 'archived'
 export type SubmissionStatus = 'submitted' | 'reviewed' | 'returned' | 'late'
@@ -112,3 +112,5 @@ export const useAssignmentStore = create<AssignmentState>()(
     { name: 'edutech-assignments', storage: createNamespacedStorage('edutech-assignments'), version: 1 }
   )
 )
+
+registerStoreRehydrate(() => useAssignmentStore.persist.rehydrate())

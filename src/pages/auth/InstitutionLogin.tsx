@@ -7,7 +7,7 @@ import { AuthContext } from '@/contexts/AuthContext'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
-import { nsSet, migrateOldKeys } from '@/lib/storage'
+import { nsSet, migrateOldKeys, setSlug } from '@/lib/storage'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_DURATION = 5 * 60 * 1000 // 5 minutes
@@ -176,7 +176,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
       }
 
       if (email === institution.email && password === (institution.password || 'admin123')) {
-        sessionStorage.setItem('edutech_inst_slug', institution.slug)
+        setSlug(institution.slug)
         sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
         migrateOldKeys(institution.slug)
         loadInstitutionData(institution)

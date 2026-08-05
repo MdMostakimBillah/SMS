@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Teacher, Department, Subject, Designation } from '@/pages/teachers/types'
-import { createNamespacedStorage } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreRehydrate } from '@/lib/storage'
 
 export type AttendanceStatus = 'present' | 'absent' | 'on-leave'
 
@@ -163,3 +163,5 @@ export const useTeacherStore = create<TeacherState>()(
     }
   )
 )
+
+registerStoreRehydrate(() => useTeacherStore.persist.rehydrate())

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreRehydrate } from '@/lib/storage'
 
 export type TodoPriority = 'low' | 'medium' | 'high'
 export type TodoStatus = 'pending' | 'in-progress' | 'completed'
@@ -52,3 +52,5 @@ export const useTodoStore = create<TodoState>()(
     }
   )
 )
+
+registerStoreRehydrate(() => useTodoStore.persist.rehydrate())

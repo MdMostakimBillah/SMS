@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useSuperAdminStore, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
+import { setSlug } from '@/lib/storage'
 
 function statusConfig(status: InstitutionStatus, isBn: boolean) {
   const map: Record<InstitutionStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -211,7 +212,7 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
 
   const openInstitution = (inst: Institution) => {
     startViewing(inst.id)
-    sessionStorage.setItem('edutech_inst_slug', inst.slug)
+    setSlug(inst.slug)
     useClassStore.getState().updateInstitution({
       name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: inst.banner, bannerPosition: { x: 0, y: 0 },
       brandName: inst.brandName || inst.name, motto: inst.motto, mottoBn: inst.mottoBn, eiin: inst.eiin, phone: inst.phone, email: inst.email,
