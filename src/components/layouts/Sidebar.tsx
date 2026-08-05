@@ -82,6 +82,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
   const bookmarks = useAppStore((s) => s.bookmarks)
   const toggleBookmark = useAppStore((s) => s.toggleBookmark)
   const reorderBookmarks = useAppStore((s) => s.reorderBookmarks)
+  const pageVisits = useAppStore((s) => s.pageVisits)
   const sidebarOrder = useAppStore((s) => s.sidebarOrder)
   const setSidebarOrder = useAppStore((s) => s.setSidebarOrder)
   const sidebarPosition = useAppStore((s) => s.sidebarPosition)
@@ -305,7 +306,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
       })
     )
     return map
-  }, [navGroups, isBn])
+  }, [navGroups, language])
 
   // Use refs to avoid infinite loop from trackVisit
   const trackVisitRef = useRef(trackVisit)
@@ -325,14 +326,19 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
 
   // Only manually bookmarked pages (max 5) — filtered by current navBase, ordered by bookmarks array
   const quickAccess = useMemo(() => {
-    const pageVisits = useAppStore.getState().pageVisits
     const visited = new Map(pageVisits.map((v) => [v.path, v]))
     return bookmarks
-      .filter((path) => navBase ? path.startsWith(navBase) : !path.startsWith('/super-admin'))
+      .filter((path) => {
+        if (isSuperAdmin && !isViewing) {
+          // Super admin pages are under /super-admin/* but not /super-admin/viewing/*
+          return path.startsWith('/super-admin/') && !path.includes('/viewing/')
+        }
+        return navBase ? path.startsWith(navBase) : false
+      })
       .map((path) => visited.get(path))
       .filter((v): v is NonNullable<typeof v> => Boolean(v))
       .slice(0, 5)
-  }, [bookmarks, navBase])
+  }, [bookmarks, navBase, pageVisits, isSuperAdmin, isViewing])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
