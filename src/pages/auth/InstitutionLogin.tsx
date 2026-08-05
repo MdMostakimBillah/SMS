@@ -1,6 +1,6 @@
-import { useState, useMemo, useContext } from 'react'
+import { useState, useMemo, useContext, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Mail, Lock, Eye, EyeOff, LogIn, X, GraduationCap } from 'lucide-react'
+import { Building2, Mail, Lock, Eye, EyeOff, LogIn, X, GraduationCap, Clock } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useAppStore } from '@/store/appStore'
 import { AuthContext } from '@/contexts/AuthContext'
@@ -9,6 +9,45 @@ import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 import { nsSet, migrateOldKeys } from '@/lib/storage'
 import { resetAllInstitutionStores } from '@/lib/resetStores'
+
+const MAX_ATTEMPTS = 5
+const LOCKOUT_DURATION = 5 * 60 * 1000 // 5 minutes
+
+function getLoginAttempts(): number {
+  try {
+    const raw = localStorage.getItem('edutech_login_attempts')
+    if (!raw) return 0
+    const data = JSON.parse(raw)
+    if (Date.now() - data.timestamp > LOCKOUT_DURATION) {
+      localStorage.removeItem('edutech_login_attempts')
+      return 0
+    }
+    return data.count || 0
+  } catch { return 0 }
+}
+
+function recordFailedAttempt() {
+  const count = getLoginAttempts() + 1
+  localStorage.setItem('edutech_login_attempts', JSON.stringify({ count, timestamp: Date.now() }))
+}
+
+function clearLoginAttempts() {
+  localStorage.removeItem('edutech_login_attempts')
+}
+
+function isCurrentlyLockedOut(): boolean {
+  return getLoginAttempts() >= MAX_ATTEMPTS
+}
+
+function getLockoutRemaining(): number {
+  try {
+    const raw = localStorage.getItem('edutech_login_attempts')
+    if (!raw) return 0
+    const data = JSON.parse(raw)
+    const elapsed = Date.now() - data.timestamp
+    return Math.max(0, LOCKOUT_DURATION - elapsed)
+  } catch { return 0 }
+}
 
 function loadInstitutionData(inst: Institution) {
   useClassStore.getState().updateInstitution({
@@ -56,12 +95,38 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   const [loading, setLoading] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme)
   const isDark = theme === 'dark'
+  const [isLockedOut, setIsLockedOut] = useState(isCurrentlyLockedOut())
+  const [lockoutRemaining, setLockoutRemaining] = useState(getLockoutRemaining())
+  const lockoutTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const toggleTheme = () => {
     const next = isDark ? 'light' : 'dark'
     setTheme(next)
     document.documentElement.setAttribute('data-theme', next)
     setAppTheme(next)
+  }
+
+  // Lockout timer
+  useEffect(() => {
+    if (isLockedOut) {
+      lockoutTimerRef.current = setInterval(() => {
+        const remaining = getLockoutRemaining()
+        setLockoutRemaining(remaining)
+        if (remaining <= 0) {
+          setIsLockedOut(false)
+          clearLoginAttempts()
+          if (lockoutTimerRef.current) clearInterval(lockoutTimerRef.current)
+        }
+      }, 1000)
+    }
+    return () => { if (lockoutTimerRef.current) clearInterval(lockoutTimerRef.current) }
+  }, [isLockedOut])
+
+  const formatTime = (ms: number) => {
+    const totalSeconds = Math.ceil(ms / 1000)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
 
@@ -85,6 +150,15 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // Check lockout
+    if (isCurrentlyLockedOut()) {
+      setIsLockedOut(true)
+      setLockoutRemaining(getLockoutRemaining())
+      setError(isBn ? `অনেক বার ভুল চেষ্টা করা হয়েছে। ${formatTime(getLockoutRemaining())} অপেক্ষা করুন।` : `Too many failed attempts. Try again in ${formatTime(getLockoutRemaining())}.`)
+      return
+    }
+
     setLoading(true)
 
     setTimeout(() => {
@@ -95,6 +169,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           localStorage.setItem('edutech_user', JSON.stringify({
             email, role: 'super_admin', name: 'Super Admin'
           }))
+          clearLoginAttempts()
           navigate('/super-admin')
           setLoading(false)
           return
@@ -107,6 +182,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         migrateOldKeys(institution.slug)
         resetAllInstitutionStores()
         loadInstitutionData(institution)
+        clearLoginAttempts()
         if (setInstitutionUser) {
           setInstitutionUser(email, institution.name, 'admin', institution.id, institution.subdomain, institution.slug)
         } else {
@@ -117,10 +193,20 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           nsSet('institutionSubdomain', institution.subdomain)
         }
         navigate(`/i/${institution.slug}/admin/dashboard`)
+        setLoading(false)
         return
       }
 
-      setError(isBn ? 'ভুল ইমেইল বা পাসওয়ার্ড' : 'Invalid email or password')
+      // Wrong credentials
+      recordFailedAttempt()
+      const attempts = getLoginAttempts()
+      if (attempts >= MAX_ATTEMPTS) {
+        setIsLockedOut(true)
+        setLockoutRemaining(LOCKOUT_DURATION)
+        setError(isBn ? `অনেক বার ভুল চেষ্টা করা হয়েছে। ৫ মিনিট অপেক্ষা করুন।` : `Too many failed attempts. Locked out for 5 minutes.`)
+      } else {
+        setError(isBn ? `ভুল ইমেইল বা পাসওয়ার্ড। ${MAX_ATTEMPTS - attempts} টি চেষ্টা বাকি।` : `Invalid credentials. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`)
+      }
       setLoading(false)
     }, 1000)
   }
@@ -214,14 +300,25 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
             </p>
           </div>
 
-          {/* Error */}
-          {error && (
+          {/* Error / Lockout */}
+          {(error || isLockedOut) && (
             <div className="mb-4 px-3 py-2 rounded-lg bg-[var(--red)]/8 border border-[var(--red)]/15 flex items-center gap-2">
-              <X size={13} className="text-[var(--red)]/70 shrink-0" />
-              <span className="text-[0.75rem] text-[var(--red)]/90 flex-1">{error}</span>
-              <button onClick={() => setError('')} aria-label={isBn ? 'বন্ধ করুন' : 'Close'} className="text-[var(--red)]/30 hover:text-[var(--red)]/60 cursor-pointer bg-transparent border-none p-0">
-                <X size={12} />
-              </button>
+              {isLockedOut ? (
+                <Clock size={13} className="text-[var(--red)]/70 shrink-0" />
+              ) : (
+                <X size={13} className="text-[var(--red)]/70 shrink-0" />
+              )}
+              <span className="text-[0.75rem] text-[var(--red)]/90 flex-1">
+                {isLockedOut
+                  ? (isBn ? `অনেক বার ভুল চেষ্টা করা হয়েছে। ${formatTime(lockoutRemaining)} অপেক্ষা করুন।` : `Too many failed attempts. Try again in ${formatTime(lockoutRemaining)}.`)
+                  : error
+                }
+              </span>
+              {!isLockedOut && (
+                <button onClick={() => setError('')} aria-label={isBn ? 'বন্ধ করুন' : 'Close'} className="text-[var(--red)]/30 hover:text-[var(--red)]/60 cursor-pointer bg-transparent border-none p-0">
+                  <X size={12} />
+                </button>
+              )}
             </div>
           )}
 
