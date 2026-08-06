@@ -123,23 +123,22 @@ const sectionRoutes: Record<string, RouteItem[]> = {
 }
 
 function getSectionForPath(pathname: string): { section: string; items: RouteItem[] } | null {
-  // For super admin management pages like /super-admin/admin/{section}, extract section
+  // For institution paths like /i/{slug}/{role}/{section}/{subpage}
+  const instMatch = pathname.match(/^\/i\/[^/]+\/[^/]+\/([^/]+)/)
+  if (instMatch) {
+    const section = instMatch[1]
+    if (sectionRoutes[section]) {
+      return { section, items: sectionRoutes[section] }
+    }
+  }
+
+  // For super admin paths like /super-admin/admin/{section}/{subpage}
   const superAdminMatch = pathname.match(/^\/super-admin\/admin\/([^/]+)/)
   if (superAdminMatch) {
     const section = superAdminMatch[1]
     if (sectionRoutes[section]) {
       return { section, items: sectionRoutes[section] }
     }
-  }
-
-  // For /super-admin/admin/* pages without a matching section route
-  if (pathname.startsWith('/super-admin/admin/')) {
-    return { section: 'super-admin', items: sectionRoutes['super-admin'] }
-  }
-
-  // For /super-admin main page
-  if (pathname === '/super-admin' || pathname === '/super-admin/') {
-    return { section: 'super-admin', items: sectionRoutes['super-admin'] }
   }
 
   return null
@@ -161,12 +160,28 @@ export default function QuickAccessFAB() {
   const ringRef = useRef<HTMLDivElement>(null)
 
   const context = useMemo(() => {
-    // Only show on super admin pages
-    if (location.pathname !== '/super-admin' && location.pathname !== '/super-admin/' && !location.pathname.startsWith('/super-admin/admin/')) return null
     const result = getSectionForPath(location.pathname)
     if (!result) return null
 
-    return { section: result.section, items: result.items.slice(0, 8) }
+    // Check if we're on a sub-page (not the section dashboard itself)
+    // Section dashboards: /{section}, /i/{slug}/admin/{section}, /super-admin/admin/{section}
+    // Sub-pages:          /{section}/{sub}, /i/{slug}/admin/{section}/{sub}, /super-admin/admin/{section}/{sub}
+    const sectionPattern = new RegExp(`/${result.section}/?$`)
+    const onDashboard = sectionPattern.test(location.pathname) && !location.search
+    if (onDashboard) return null
+
+    const siblings = result.items.filter((item) => {
+      if (item.path.includes('?')) {
+        const itemPath = item.path.split('?')[0]
+        const itemSearch = item.path.split('?')[1]
+        if (location.pathname === itemPath && location.search.includes(itemSearch)) return false
+        return true
+      }
+      if (location.pathname.startsWith(`${item.path}/`)) return false
+      return location.pathname !== item.path
+    })
+    if (siblings.length === 0) return null
+    return { section: result.section, items: siblings.slice(0, 8) }
   }, [location.pathname, location.search])
 
   useEffect(() => {
