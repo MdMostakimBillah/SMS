@@ -515,7 +515,10 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
               )}
 
               {group.items.map((item) => {
-                const isActive = location.pathname === item.page || location.pathname.startsWith(item.page + '/')
+                const isSuperAdminItem = item.key === 'nav_superadmin' || item.key === 'nav_superadmin_back'
+                const isActive = isSuperAdminItem
+                  ? location.pathname === item.page || (item.key === 'nav_superadmin_back' && location.pathname.startsWith(item.page + '/'))
+                  : location.pathname === item.page || location.pathname.startsWith(item.page + '/')
                 const IconComp = iconMap[item.icon] || LayoutDashboard
                 const isBookmarked = bookmarks.includes(item.page)
                 const atMaxBookmarks = bookmarks.length >= 6 && !isBookmarked
