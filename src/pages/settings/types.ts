@@ -9,6 +9,8 @@ export interface SettingItem {
   titleBn: string
   description: string
   descriptionBn: string
+  rightLabel?: string
+  rightLabelBn?: string
 }
 
 export interface SettingGroup {

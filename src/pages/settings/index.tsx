@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
-import { Settings } from 'lucide-react'
 import {
   Globe, Palette, Keyboard, Home,
   Mail, Bell, Shield, Key,
@@ -79,9 +78,9 @@ function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: bo
     titleBn: 'লগইন',
     items: [
       { key: 'backup-email', icon: Mail, iconBg: '#10b98115', iconColor: '#10b981', title: 'Backup Email', titleBn: 'ব্যাকআপ ইমেইল', description: 'Receive recovery links via a backup address', descriptionBn: 'ব্যাকআপ ঠিকানার মাধ্যমে পুনরুদ্ধার লিংক পান' },
-      { key: 'login-alerts', icon: Bell, iconBg: '#ef444415', iconColor: '#ef4444', title: 'Login Alerts', titleBn: 'লগইন সতর্কতা', description: 'Get notified whenever your account is accessed', descriptionBn: 'অ্যাকাউন্ট অ্যাক্সেস হলে সতর্কতা পান' },
-      { key: 'authenticator', icon: Shield, iconBg: '#6366f115', iconColor: '#6366f1', title: 'Authenticator App', titleBn: 'প্রমাণীকরণ অ্যাপ', description: 'Connect Google Authenticator or Authy', descriptionBn: 'Google Authenticator বা Authy সংযুক্ত করুন' },
-      { key: 'login-method', icon: Key, iconBg: '#f59e0b15', iconColor: '#f59e0b', title: 'Change Login Method', titleBn: 'লগইন পদ্ধতি পরিবর্তন', description: 'Switch between password or passkey login', descriptionBn: 'পাসওয়ার্ড বা পাসকির মধ্যে পরিবর্তন করুন' },
+      { key: 'login-alerts', icon: Bell, iconBg: '#ef444415', iconColor: '#ef4444', title: 'Login Alerts', titleBn: 'লগইন সতর্কতা', description: 'Get notified whenever your account is accessed', descriptionBn: 'অ্যাকাউন্ট অ্যাক্সেস হলে সতর্কতা পান', rightLabel: 'On', rightLabelBn: 'চালু' },
+      { key: 'authenticator', icon: Shield, iconBg: '#6366f115', iconColor: '#6366f1', title: 'Authenticator App', titleBn: 'প্রমাণীকরণ অ্যাপ', description: 'Connect Google Authenticator or Authy', descriptionBn: 'Google Authenticator বা Authy সংযুক্ত করুন', rightLabel: 'Off', rightLabelBn: 'বন্ধ' },
+      { key: 'login-method', icon: Key, iconBg: '#f59e0b15', iconColor: '#f59e0b', title: 'Change Login Method', titleBn: 'লগইন পদ্ধতি পরিবর্তন', description: 'Switch between password or passkey login', descriptionBn: 'পাসওয়ার্ড বা পাসকির মধ্যে পরিবর্তন করুন', rightLabel: 'Password', rightLabelBn: 'পাসওয়ার্ড' },
     ],
   }
 
@@ -132,18 +131,10 @@ function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: bo
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] flex items-center justify-center">
-          <Settings size={20} className="text-[var(--brand)]" />
-        </div>
-        <div>
-          <h1 className="text-[1.125rem] font-bold text-[var(--text-primary)]">
-            {isBn ? 'সেটিংস' : 'Settings'}
-          </h1>
-          <p className="text-[0.75rem] text-[var(--text-muted)]">
-            {isBn ? 'আপনার পছন্দ পরিচালনা করুন' : 'Manage your preferences'}
-          </p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-[1.375rem] font-bold text-[var(--text-primary)]">
+          {isBn ? 'সেটিংস' : 'Settings'}
+        </h1>
       </div>
 
       {/* Panel or Group List */}

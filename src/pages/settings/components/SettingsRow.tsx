@@ -13,8 +13,8 @@ export function SettingsRow({ item, isBn, onClick, isLast }: Props) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3.5 cursor-pointer bg-transparent border-none text-left transition-colors hover:bg-[var(--bg-secondary)] ${
-        !isLast ? 'border-b border-[var(--border)]' : ''
+      className={`w-full flex items-center gap-3.5 px-4 py-3 cursor-pointer bg-transparent border-none text-left transition-colors hover:bg-[var(--bg-secondary)] active:bg-[var(--bg-secondary)]/70 ${
+        !isLast ? 'border-b border-[var(--border)]/50' : ''
       }`}
     >
       <div
@@ -24,14 +24,21 @@ export function SettingsRow({ item, isBn, onClick, isLast }: Props) {
         <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+        <div className="text-[0.875rem] font-semibold text-[var(--text-primary)] leading-tight">
           {isBn ? item.titleBn : item.title}
         </div>
         <div className="text-[0.75rem] text-[var(--text-muted)] mt-0.5 leading-snug">
           {isBn ? item.descriptionBn : item.description}
         </div>
       </div>
-      <ChevronRight size={16} className="text-[var(--text-muted)] shrink-0" />
+      <div className="flex items-center gap-1.5 shrink-0">
+        {item.rightLabel && (
+          <span className="text-[0.75rem] text-[var(--text-muted)]">
+            {isBn ? item.rightLabelBn : item.rightLabel}
+          </span>
+        )}
+        <ChevronRight size={15} className="text-[var(--text-muted)]/60" />
+      </div>
     </button>
   )
 }
