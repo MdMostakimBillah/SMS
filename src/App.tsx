@@ -11,7 +11,7 @@ import { useSubdomain } from '@/hooks/useSubdomain'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
-const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
+const InstitutionRegister = lazy(() => import('@/pages/auth/InstitutionRegister'))
 const InstitutionLogin = lazy(() => import('@/pages/auth/InstitutionLogin'))
 const InstitutionLoginRoute = lazy(() => import('@/pages/auth/InstitutionLoginRoute'))
 const DashboardPage = lazy(() => import('@/pages/dashboard'))
@@ -152,7 +152,7 @@ function AppContent() {
 
         <Route element={<AuthRoute />}>
           <Route path={LOGIN_PATH} element={<F><LoginPage /></F>} />
-          <Route path="/register" element={<F><RegisterPage /></F>} />
+          <Route path="/register" element={<F><InstitutionRegister /></F>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Route>
 
