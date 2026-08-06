@@ -1,4 +1,5 @@
-import { Star } from 'lucide-react'
+import { useState } from 'react'
+import { Star, ChevronDown, ChevronRight } from 'lucide-react'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { useAppStore } from '@/store/appStore'
 import { useAuth } from '@/contexts/AuthContext'
@@ -15,6 +16,10 @@ import {
   Home, User,
   BarChart2, FileBarChart,
   Settings, Crown,
+  UserPlus, UserPen, TableProperties, IdCard, ArrowUpCircle,
+  Layers, Zap, TrendingUp, Gift, Award, Calculator, HandCoins,
+  Fingerprint, Radio, PlayCircle,
+  Edit2, Calendar,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -50,118 +55,249 @@ const iconMap: Record<string, LucideIcon> = {
   'file-bar-chart': FileBarChart,
   settings: Settings,
   crown: Crown,
+  'user-plus': UserPlus,
+  'user-pen': UserPen,
+  'table-properties': TableProperties,
+  'id-card': IdCard,
+  'arrow-up-circle': ArrowUpCircle,
+  layers: Layers,
+  zap: Zap,
+  'trending-up': TrendingUp,
+  gift: Gift,
+  award: Award,
+  calculator: Calculator,
+  'hand-coins': HandCoins,
+  fingerprint: Fingerprint,
+  radio: Radio,
+  'play-circle': PlayCircle,
+  edit: Edit2,
+  calendar: Calendar,
 }
 
-const groupLabels: Record<string, { en: string; bn: string }> = {
-  grp_main: { en: 'Main', bn: 'প্রধান' },
-  grp_manage: { en: 'Management', bn: 'ব্যবস্থাপনা' },
-  grp_academic: { en: 'Academic', bn: 'শৈক্ষিক' },
-  grp_finance: { en: 'Finance & Store', bn: 'অর্থ ও স্টোর' },
-  grp_facility: { en: 'Facilities', bn: 'সুবিধা' },
-  grp_comm: { en: 'Communication', bn: 'যোগাযোগ' },
-  grp_portal: { en: 'Portals', bn: 'পোর্টাল' },
-  grp_report: { en: 'Reports & Analytics', bn: 'রিপোর্ট ও বিশ্লেষণ' },
-  grp_system: { en: 'System', bn: 'সিস্টেম' },
+interface SubPage {
+  key: string
+  path: string
+  icon: string
+  title: string
+  titleBn: string
 }
 
-const navItemLabels: Record<string, { en: string; bn: string }> = {
-  nav_dashboard: { en: 'Dashboard', bn: 'ড্যাশবোর্ড' },
-  nav_classes: { en: 'Classes & Sections', bn: 'শ্রেণি ও বিভাগ' },
-  nav_teachers: { en: 'Teacher Management', bn: 'শিক্ষক ব্যবস্থাপনা' },
-  nav_students: { en: 'Student Management', bn: 'ছাত্র ব্যবস্থাপনা' },
-  nav_hr: { en: 'HR Management', bn: 'এইচআর ব্যবস্থাপনা' },
-  nav_attendance: { en: 'Attendance', bn: 'উপস্থিতি' },
-  nav_exams: { en: 'Exams', bn: 'পরীক্ষা' },
-  nav_syllabus: { en: 'Syllabus', bn: 'পাঠ্যক্রম' },
-  nav_assignments: { en: 'Assignments', bn: 'অ্যাসাইনমেন্ট' },
-  nav_online: { en: 'Online Classes', bn: 'অনলাইন ক্লাস' },
-  nav_finance: { en: 'Finance', bn: 'অর্থ' },
-  nav_payroll: { en: 'Payroll', bn: 'বেতন' },
-  nav_store: { en: 'School Store', bn: 'স্কুল স্টোর' },
-  nav_expenses: { en: 'Expenses', bn: 'খরচ' },
-  nav_library: { en: 'Library', bn: 'লাইব্রেরি' },
-  nav_transport: { en: 'Transport', bn: 'পরিবহন' },
-  nav_hostel: { en: 'Hostel', bn: 'হোস্টেল' },
-  nav_messages: { en: 'Messages', bn: 'বার্তা' },
-  nav_notice: { en: 'Notice Board', bn: 'নোটিশ বোর্ড' },
-  nav_notifications: { en: 'Notifications', bn: 'বিজ্ঞপ্তি' },
-  nav_parent: { en: 'Parent Portal', bn: 'অভিভাবক পোর্টাল' },
-  nav_student_portal: { en: 'Student Portal', bn: 'ছাত্র পোর্টাল' },
-  nav_analytics: { en: 'Analytics', bn: 'বিশ্লেষণ' },
-  nav_reports: { en: 'Reports', bn: 'রিপোর্ট' },
-  nav_settings: { en: 'Settings', bn: 'সেটিংস' },
-  nav_superadmin: { en: 'Super Admin', bn: 'সুপার অ্যাডমিন' },
-  nav_superadmin_back: { en: 'Super Admin', bn: 'সুপার অ্যাডমিন' },
+interface NavPage {
+  key: string
+  icon: string
+  title: string
+  titleBn: string
+  subPages?: SubPage[]
 }
 
-const navGroups = [
+const pages: NavPage[] = [
   {
-    key: 'grp_main',
-    items: [{ key: 'nav_dashboard', icon: 'layout-dashboard' }],
+    key: 'dashboard',
+    icon: 'layout-dashboard',
+    title: 'Dashboard',
+    titleBn: 'ড্যাশবোর্ড',
   },
   {
-    key: 'grp_manage',
-    items: [
-      { key: 'nav_classes', icon: 'school' },
-      { key: 'nav_teachers', icon: 'graduation-cap' },
-      { key: 'nav_students', icon: 'users' },
-      { key: 'nav_hr', icon: 'briefcase' },
+    key: 'classes',
+    icon: 'school',
+    title: 'Classes & Sections',
+    titleBn: 'শ্রেণি ও বিভাগ',
+    subPages: [
+      { key: 'institution', path: 'classes', icon: 'settings', title: 'Institution', titleBn: 'প্রতিষ্ঠান' },
+      { key: 'classes-tab', path: 'classes', icon: 'users', title: 'Classes', titleBn: 'শ্রেণি' },
+      { key: 'routine', path: 'classes', icon: 'calendar', title: 'Routine', titleBn: 'রুটিন' },
     ],
   },
   {
-    key: 'grp_academic',
-    items: [
-      { key: 'nav_attendance', icon: 'calendar-check' },
-      { key: 'nav_exams', icon: 'clipboard-list' },
-      { key: 'nav_syllabus', icon: 'book-open' },
-      { key: 'nav_assignments', icon: 'file-text' },
-      { key: 'nav_online', icon: 'video' },
+    key: 'teachers',
+    icon: 'graduation-cap',
+    title: 'Teacher Management',
+    titleBn: 'শিক্ষক ব্যবস্থাপনা',
+    subPages: [
+      { key: 'add', path: 'teachers/add', icon: 'user-plus', title: 'Add Teacher', titleBn: 'নতুন শিক্ষক' },
+      { key: 'all', path: 'teachers/all', icon: 'users', title: 'All Teachers', titleBn: 'সকল শিক্ষক' },
+      { key: 'departments', path: 'teachers/departments', icon: 'building-2', title: 'Departments', titleBn: 'বিভাগ' },
+      { key: 'subjects', path: 'teachers/subjects', icon: 'book-open', title: 'Subjects', titleBn: 'বিষয়' },
+      { key: 'designations', path: 'teachers/designations', icon: 'briefcase', title: 'Designations', titleBn: 'পদবি' },
+      { key: 'bulk-update', path: 'teachers/bulk-update', icon: 'layers', title: 'Bulk Update', titleBn: 'বাল্ক আপডেট' },
     ],
   },
   {
-    key: 'grp_finance',
-    items: [
-      { key: 'nav_finance', icon: 'landmark' },
-      { key: 'nav_payroll', icon: 'wallet' },
-      { key: 'nav_store', icon: 'shopping-bag' },
-      { key: 'nav_expenses', icon: 'receipt' },
+    key: 'students',
+    icon: 'users',
+    title: 'Student Management',
+    titleBn: 'ছাত্র ব্যবস্থাপনা',
+    subPages: [
+      { key: 'admission', path: 'students/admission', icon: 'user-plus', title: 'New Admission', titleBn: 'নতুন ভর্তি' },
+      { key: 'all', path: 'students/all', icon: 'users', title: 'All Students', titleBn: 'সকল ছাত্র' },
+      { key: 'update', path: 'students/update', icon: 'user-pen', title: 'Update Student', titleBn: 'তথ্য আপডেট' },
+      { key: 'bulk-update', path: 'students/bulk-update', icon: 'table-properties', title: 'Bulk Update', titleBn: 'বাল্ক আপডেট' },
+      { key: 'id-cards', path: 'students/id-cards', icon: 'id-card', title: 'ID Cards', titleBn: 'ID কার্ড' },
+      { key: 'promotion', path: 'students/promotion', icon: 'arrow-up-circle', title: 'Promotion', titleBn: 'প্রমোশন' },
     ],
   },
   {
-    key: 'grp_facility',
-    items: [
-      { key: 'nav_library', icon: 'library' },
-      { key: 'nav_transport', icon: 'bus' },
-      { key: 'nav_hostel', icon: 'building-2' },
+    key: 'hr',
+    icon: 'briefcase',
+    title: 'HR Management',
+    titleBn: 'এইচআর ব্যবস্থাপনা',
+    subPages: [
+      { key: 'overview', path: 'hr', icon: 'layout-dashboard', title: 'Overview', titleBn: 'সারসংক্ষেপ' },
+      { key: 'decisions', path: 'hr', icon: 'zap', title: 'Decisions', titleBn: 'সিদ্ধান্ত' },
+      { key: 'increment', path: 'hr', icon: 'trending-up', title: 'Increment', titleBn: 'বেতন বৃদ্ধি' },
+      { key: 'bonus', path: 'hr', icon: 'gift', title: 'Bonus', titleBn: 'বোনাস' },
+      { key: 'promotion', path: 'hr', icon: 'award', title: 'Promotion', titleBn: 'পদোন্নতি' },
+      { key: 'facilities', path: 'hr', icon: 'briefcase', title: 'Facilities', titleBn: 'সুবিধা' },
+      { key: 'salary-setup', path: 'hr', icon: 'calculator', title: 'Salary Setup', titleBn: 'বেতন সেটআপ' },
+      { key: 'fund', path: 'hr', icon: 'hand-coins', title: 'Fund', titleBn: 'তহবিল' },
     ],
   },
   {
-    key: 'grp_comm',
-    items: [
-      { key: 'nav_messages', icon: 'message-circle' },
-      { key: 'nav_notice', icon: 'megaphone' },
-      { key: 'nav_notifications', icon: 'bell' },
+    key: 'attendance',
+    icon: 'calendar-check',
+    title: 'Attendance',
+    titleBn: 'উপস্থিতি',
+    subPages: [
+      { key: 'today', path: 'attendance', icon: 'calendar-check', title: "Today's", titleBn: 'আজকের উপস্থিতি' },
+      { key: 'student', path: 'attendance', icon: 'graduation-cap', title: 'Student', titleBn: 'শিক্ষার্থী' },
+      { key: 'employee', path: 'attendance', icon: 'briefcase', title: 'Employee', titleBn: 'কর্মচারী' },
+      { key: 'device', path: 'attendance', icon: 'fingerprint', title: 'Device', titleBn: 'ডিভাইস' },
     ],
   },
   {
-    key: 'grp_portal',
-    items: [
-      { key: 'nav_parent', icon: 'home' },
-      { key: 'nav_student_portal', icon: 'user' },
+    key: 'exams',
+    icon: 'clipboard-list',
+    title: 'Exams',
+    titleBn: 'পরীক্ষা',
+    subPages: [
+      { key: 'planning', path: 'exams/planning', icon: 'settings', title: 'Planning', titleBn: 'পরিকল্পনা' },
+      { key: 'scheduling', path: 'exams/scheduling', icon: 'calendar', title: 'Scheduling', titleBn: 'সময়সূচী' },
+      { key: 'evaluation', path: 'exams/evaluation', icon: 'edit', title: 'Evaluation', titleBn: 'মূল্যায়ন' },
+      { key: 'results', path: 'exams/results', icon: 'bar-chart-2', title: 'Results', titleBn: 'ফলাফল' },
+      { key: 'marksheet', path: 'exams/marksheet', icon: 'graduation-cap', title: 'Marksheet', titleBn: 'মার্কশিট' },
+      { key: 'omr', path: 'exams/omr', icon: 'file-text', title: 'OMR Sheet', titleBn: 'OMR শিট' },
     ],
   },
   {
-    key: 'grp_report',
-    items: [
-      { key: 'nav_analytics', icon: 'bar-chart-2' },
-      { key: 'nav_reports', icon: 'file-bar-chart' },
+    key: 'syllabus',
+    icon: 'book-open',
+    title: 'Syllabus',
+    titleBn: 'পাঠ্যক্রম',
+  },
+  {
+    key: 'assignments',
+    icon: 'file-text',
+    title: 'Assignments',
+    titleBn: 'অ্যাসাইনমেন্ট',
+  },
+  {
+    key: 'online',
+    icon: 'video',
+    title: 'Online Classes',
+    titleBn: 'অনলাইন ক্লাস',
+    subPages: [
+      { key: 'live', path: 'online', icon: 'radio', title: 'Live Now', titleBn: 'লাইভ' },
+      { key: 'recordings', path: 'online', icon: 'play-circle', title: 'Recordings', titleBn: 'রেকর্ডিং' },
     ],
   },
   {
-    key: 'grp_system',
-    items: [
-      { key: 'nav_settings', icon: 'settings' },
+    key: 'finance',
+    icon: 'landmark',
+    title: 'Finance',
+    titleBn: 'অর্থ',
+    subPages: [
+      { key: 'structures', path: 'finance', icon: 'layers', title: 'Fee Structures', titleBn: 'ফি কাঠামো' },
+      { key: 'dues', path: 'finance', icon: 'calendar-check', title: 'Due Fees', titleBn: 'বকেয়' },
+      { key: 'collect', path: 'finance', icon: 'wallet', title: 'Fee Collect', titleBn: 'ফি আদায়' },
+      { key: 'payments', path: 'finance', icon: 'file-text', title: 'Payment History', titleBn: 'পেমেন্ট ইতিহাস' },
+      { key: 'waivers', path: 'finance', icon: 'award', title: 'Waivers', titleBn: 'ছাড়' },
+      { key: 'reports', path: 'finance', icon: 'bar-chart-2', title: 'Reports', titleBn: 'রিপোর্ট' },
+      { key: 'inactive', path: 'finance', icon: 'briefcase', title: 'Inactive Dues', titleBn: 'নিষ্ক্রিয় বকেয়' },
     ],
+  },
+  {
+    key: 'payroll',
+    icon: 'wallet',
+    title: 'Payroll',
+    titleBn: 'বেতন',
+  },
+  {
+    key: 'store',
+    icon: 'shopping-bag',
+    title: 'School Store',
+    titleBn: 'স্কুল স্টোর',
+  },
+  {
+    key: 'expenses',
+    icon: 'receipt',
+    title: 'Expenses',
+    titleBn: 'খরচ',
+  },
+  {
+    key: 'library',
+    icon: 'library',
+    title: 'Library',
+    titleBn: 'লাইব্রেরি',
+  },
+  {
+    key: 'transport',
+    icon: 'bus',
+    title: 'Transport',
+    titleBn: 'পরিবহন',
+  },
+  {
+    key: 'hostel',
+    icon: 'building-2',
+    title: 'Hostel',
+    titleBn: 'হোস্টেল',
+  },
+  {
+    key: 'messages',
+    icon: 'message-circle',
+    title: 'Messages',
+    titleBn: 'বার্তা',
+  },
+  {
+    key: 'notice',
+    icon: 'megaphone',
+    title: 'Notice Board',
+    titleBn: 'নোটিশ বোর্ড',
+  },
+  {
+    key: 'notifications',
+    icon: 'bell',
+    title: 'Notifications',
+    titleBn: 'বিজ্ঞপ্তি',
+  },
+  {
+    key: 'parent-portal',
+    icon: 'home',
+    title: 'Parent Portal',
+    titleBn: 'অভিভাবক পোর্টাল',
+  },
+  {
+    key: 'student-portal',
+    icon: 'user',
+    title: 'Student Portal',
+    titleBn: 'ছাত্র পোর্টাল',
+  },
+  {
+    key: 'analytics',
+    icon: 'bar-chart-2',
+    title: 'Analytics',
+    titleBn: 'বিশ্লেষণ',
+  },
+  {
+    key: 'reports',
+    icon: 'file-bar-chart',
+    title: 'Reports',
+    titleBn: 'রিপোর্ট',
+  },
+  {
+    key: 'settings',
+    icon: 'settings',
+    title: 'Settings',
+    titleBn: 'সেটিংস',
   },
 ]
 
@@ -183,8 +319,24 @@ export function BookmarkSettingsPanel({ isBn, onBack }: Props) {
       ? '/super-admin/admin'
       : getNavBase(user, resolved)
 
+  const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set())
+
+  const toggleExpand = (key: string) => {
+    setExpandedPages((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
   const bookmarkCount = bookmarks.length
   const maxBookmarks = 5
+
+  const isSubPagePath = (subPage: SubPage): boolean => {
+    const subTabs = ['hr', 'attendance', 'online', 'finance', 'classes']
+    return subTabs.includes(subPage.path)
+  }
 
   return (
     <SettingsPanel title="Bookmarks" titleBn="বুকমার্ক" isBn={isBn} onBack={onBack}>
@@ -205,68 +357,132 @@ export function BookmarkSettingsPanel({ isBn, onBack }: Props) {
           </span>
         </div>
 
-        {/* Groups */}
-        {navGroups.map((group) => {
-          const label = groupLabels[group.key]
-          return (
-            <div key={group.key}>
-              <h3 className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider px-1 mb-1.5">
-                {isBn ? label.bn : label.en}
-              </h3>
-              <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)] overflow-hidden">
-                {group.items.map((item, idx) => {
-                  const fullPath = `${navBase}/${item.key.replace('nav_', '').replace('_back', '')}`
-                  const isBookmarked = bookmarks.includes(fullPath)
-                  const isLast = idx === group.items.length - 1
-                  const itemLabel = navItemLabels[item.key]
-                  const Icon = iconMap[item.icon] || LayoutDashboard
+        {/* Pages */}
+        <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)] overflow-hidden">
+          {pages.map((page, pageIdx) => {
+            const fullPath = `${navBase}/${page.key}`
+            const isBookmarked = bookmarks.includes(fullPath)
+            const hasSubPages = page.subPages && page.subPages.length > 0
+            const isExpanded = expandedPages.has(page.key)
+            const Icon = iconMap[page.icon] || LayoutDashboard
 
-                  return (
-                    <div
-                      key={item.key}
-                      className={`flex items-center gap-3 px-3.5 py-3 ${
-                        !isLast ? 'border-b border-[var(--border)]' : ''
-                      }`}
+            return (
+              <div key={page.key}>
+                {/* Main page row */}
+                <div
+                  className={`flex items-center gap-3 px-3.5 py-3 ${
+                    pageIdx < pages.length - 1 ? 'border-b border-[var(--border)]' : ''
+                  }`}
+                >
+                  {hasSubPages ? (
+                    <button
+                      onClick={() => toggleExpand(page.key)}
+                      className="w-5 h-5 flex items-center justify-center cursor-pointer bg-transparent border-none p-0 shrink-0"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-[var(--bg-primary)] flex items-center justify-center shrink-0">
-                        <Icon size={15} className="text-[var(--text-muted)]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">
-                          {isBn ? itemLabel.bn : itemLabel.en}
-                        </div>
-                        <div className="text-[0.6875rem] text-[var(--text-muted)] truncate font-mono">
-                          {fullPath}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => toggleBookmark(fullPath)}
-                        disabled={!isBookmarked && bookmarkCount >= maxBookmarks}
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer border-none bg-transparent transition-all ${
-                          !isBookmarked && bookmarkCount >= maxBookmarks
-                            ? 'opacity-30 cursor-not-allowed'
-                            : 'hover:bg-[var(--bg-primary)]'
-                        }`}
-                        title={isBookmarked
-                          ? (isBn ? 'বুকমার্ক সরান' : 'Remove bookmark')
-                          : (isBn ? 'বুকমার্ক যোগ করুন' : 'Add bookmark')
-                        }
-                      >
-                        <Star
-                          size={16}
-                          className={isBookmarked
-                            ? 'text-[var(--amber)] fill-[var(--amber)]'
-                            : 'text-[var(--text-muted)]'
-                          }
-                        />
-                      </button>
+                      {isExpanded ? (
+                        <ChevronDown size={14} className="text-[var(--text-muted)]" />
+                      ) : (
+                        <ChevronRight size={14} className="text-[var(--text-muted)]" />
+                      )}
+                    </button>
+                  ) : (
+                    <div className="w-5" />
+                  )}
+
+                  <div className="w-8 h-8 rounded-lg bg-[var(--bg-primary)] flex items-center justify-center shrink-0">
+                    <Icon size={15} className="text-[var(--text-muted)]" />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">
+                      {isBn ? page.titleBn : page.title}
                     </div>
-                  )
-                })}
+                    <div className="text-[0.6875rem] text-[var(--text-muted)] truncate font-mono">
+                      {fullPath}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => toggleBookmark(fullPath)}
+                    disabled={!isBookmarked && bookmarkCount >= maxBookmarks}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer border-none bg-transparent transition-all ${
+                      !isBookmarked && bookmarkCount >= maxBookmarks
+                        ? 'opacity-30 cursor-not-allowed'
+                        : 'hover:bg-[var(--bg-primary)]'
+                    }`}
+                    title={isBookmarked
+                      ? (isBn ? 'বুকমার্ক সরান' : 'Remove bookmark')
+                      : (isBn ? 'বুকমার্ক যোগ করুন' : 'Add bookmark')
+                    }
+                  >
+                    <Star
+                      size={16}
+                      className={isBookmarked
+                        ? 'text-[var(--amber)] fill-[var(--amber)]'
+                        : 'text-[var(--text-muted)]'
+                      }
+                    />
+                  </button>
+                </div>
+
+                {/* Sub-pages */}
+                {hasSubPages && isExpanded && (
+                  <div className="bg-[var(--bg-primary)]">
+                    {page.subPages!.map((sub, subIdx) => {
+                      const subFullPath = `${navBase}/${sub.key === page.key || isSubPagePath(sub) ? sub.path : sub.path}`
+                      const subIsBookmarked = bookmarks.includes(subFullPath)
+                      const SubIcon = iconMap[sub.icon] || LayoutDashboard
+
+                      return (
+                        <div
+                          key={sub.key}
+                          className={`flex items-center gap-3 pl-12 pr-3.5 py-2.5 ${
+                            subIdx < page.subPages!.length - 1 ? 'border-b border-[var(--border)]' : ''
+                          }`}
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center shrink-0">
+                            <SubIcon size={13} className="text-[var(--text-muted)]" />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[0.75rem] font-medium text-[var(--text-secondary)] truncate">
+                              {isBn ? sub.titleBn : sub.title}
+                            </div>
+                            <div className="text-[0.625rem] text-[var(--text-muted)] truncate font-mono">
+                              {subFullPath}
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => toggleBookmark(subFullPath)}
+                            disabled={!subIsBookmarked && bookmarkCount >= maxBookmarks}
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none bg-transparent transition-all ${
+                              !subIsBookmarked && bookmarkCount >= maxBookmarks
+                                ? 'opacity-30 cursor-not-allowed'
+                                : 'hover:bg-[var(--bg-secondary)]'
+                            }`}
+                            title={subIsBookmarked
+                              ? (isBn ? 'বুকমার্ক সরান' : 'Remove bookmark')
+                              : (isBn ? 'বুকমার্ক যোগ করুন' : 'Add bookmark')
+                            }
+                          >
+                            <Star
+                              size={14}
+                              className={subIsBookmarked
+                                ? 'text-[var(--amber)] fill-[var(--amber)]'
+                                : 'text-[var(--text-muted)]'
+                              }
+                            />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
     </SettingsPanel>
   )
