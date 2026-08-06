@@ -24,10 +24,10 @@ export function SettingsRow({ item, isBn, onClick, isLast }: Props) {
         <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-[0.9375rem] font-bold text-[var(--text-primary)] leading-tight">
+        <div className="text-[0.875rem] font-medium text-[var(--text-primary)] leading-tight">
           {isBn ? item.titleBn : item.title}
         </div>
-        <div className="text-[0.75rem] text-[var(--text-muted)]/60 mt-0.5 leading-snug">
+        <div className="text-[0.6875rem] text-[var(--text-muted)]/60 mt-0.5 leading-snug">
           {isBn ? item.descriptionBn : item.description}
         </div>
       </div>
