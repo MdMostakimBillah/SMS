@@ -123,34 +123,15 @@ const sectionRoutes: Record<string, RouteItem[]> = {
 }
 
 function getSectionForPath(pathname: string): { section: string; items: RouteItem[] } | null {
-  // For institution paths like /i/{slug}/{role}/{section}, extract section
-  const instMatch = pathname.match(/^\/i\/[^/]+\/[^/]+\/([^/]+)/)
-  if (instMatch) {
-    const section = instMatch[1]
-    if (sectionRoutes[section]) {
-      return { section, items: sectionRoutes[section] }
-    }
-  }
-
-  // For super admin paths like /super-admin/admin/{section}, extract section
+  // Only show FAB on super admin management pages (/super-admin/admin/*)
   const superAdminMatch = pathname.match(/^\/super-admin\/admin\/([^/]+)/)
   if (superAdminMatch) {
     const section = superAdminMatch[1]
     if (sectionRoutes[section]) {
       return { section, items: sectionRoutes[section] }
     }
-  }
-
-  // For super admin management pages, show super admin routes
-  if (pathname.startsWith('/super-admin/admin/')) {
+    // Fallback: show super admin routes for unmatched admin sections
     return { section: 'super-admin', items: sectionRoutes['super-admin'] }
-  }
-
-  // Direct section match (e.g., /teachers, /students)
-  for (const [section, items] of Object.entries(sectionRoutes)) {
-    if (pathname.startsWith(`/${section}`)) {
-      return { section, items }
-    }
   }
 
   return null
