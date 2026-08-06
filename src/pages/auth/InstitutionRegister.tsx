@@ -303,7 +303,7 @@ export default function InstitutionRegister() {
 
         {/* Right Panel - Marketing */}
         <div className={`flex-1 flex items-center justify-center px-6 py-12 ${isDark ? 'bg-[#0a0a0f]' : 'bg-[#f0f2f8]'}`}>
-          <div className="w-full max-w-[26rem]">
+          <div className="w-full max-w-[24rem] relative">
             <div className="lg:hidden text-center mb-8">
               <GraduationCap size={44} className="text-[var(--brand)] mx-auto mb-4" />
               <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>EduTech SMS</h1>
@@ -325,7 +325,7 @@ export default function InstitutionRegister() {
                 { icon: BarChart3, title: isBn ? 'পরীক্ষা ও ফলাফল' : 'Exams & Results', desc: isBn ? 'স্বয়ংক্রিয় গ্রেডিং ও রিপোর্ট' : 'Automatic grading & reports' },
                 { icon: Zap, title: isBn ? 'ফি ও হিসাব' : 'Fees & Accounting', desc: isBn ? 'অনলাইন পেমেন্ট ও হিসাব' : 'Online payment & accounting' },
               ].map((f, i) => (
-                <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${isDark ? 'bg-white/[0.03]' : 'bg-white'}`}>
+                <div key={i} className={`flex items-start gap-3 p-3 rounded-xl transition-all ${isDark ? 'bg-white/[0.03] hover:bg-white/[0.05]' : 'bg-white hover:shadow-sm'}`}>
                   <div className="w-9 h-9 rounded-lg bg-[var(--brand)]/10 flex items-center justify-center shrink-0 mt-0.5">
                     <f.icon size={16} className="text-[var(--brand)]" />
                   </div>
