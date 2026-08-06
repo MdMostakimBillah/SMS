@@ -147,6 +147,9 @@ export default function QuickAccessFAB() {
   const location = useLocation()
   const navigate = useNavigate()
   const isBn = useBn()
+
+  // Only show on the /super-admin main page
+  if (location.pathname !== '/super-admin' && location.pathname !== '/super-admin/') return null
   const sidebarPosition = useAppStore((s) => s.sidebarPosition)
   const isLeft = sidebarPosition === 'left'
   const [isOpen, setIsOpen] = useState(false)
