@@ -1,9 +1,9 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import {
-  GraduationCap, Building2, Globe, Phone, Mail, MapPin,
+  GraduationCap, Building2, Globe, Phone, MapPin,
   Upload, Palette, CreditCard, Shield, Eye, EyeOff,
-  ChevronRight, ChevronLeft, Check, X, ArrowLeft, Clock,
-  Sparkles, Zap, BarChart3, Users, Lock,
+  ChevronRight, ChevronLeft, Check, X,
+  Zap, BarChart3, Users, Lock,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
