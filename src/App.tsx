@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, type ComponentType } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layouts/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -10,45 +10,56 @@ import { LOGIN_PATH } from '@/lib/constants'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 
-const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
-const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
-const InstitutionLogin = lazy(() => import('@/pages/auth/InstitutionLogin'))
-const InstitutionLoginRoute = lazy(() => import('@/pages/auth/InstitutionLoginRoute'))
-const DashboardPage = lazy(() => import('@/pages/dashboard'))
-const SuperAdminPage = lazy(() => import('@/pages/super-admin'))
-const StudentsPage = lazy(() => import('@/pages/students'))
-const StudentAdmission = lazy(() => import('@/pages/students/admission'))
-const AllStudentsPage = lazy(() => import('@/pages/students/all'))
-const UpdateStudentPage = lazy(() => import('@/pages/students/update'))
-const BulkUpdatePage = lazy(() => import('@/pages/students/bulk-update'))
-const IDCardsPage = lazy(() => import('@/pages/students/id-cards'))
-const PromotionPage = lazy(() => import('@/pages/students/promotion'))
-const TeachersPage = lazy(() => import('@/pages/teachers'))
-const AddTeacherPage = lazy(() => import('@/pages/teachers/add'))
-const AllTeachersPage = lazy(() => import('@/pages/teachers/all'))
-const TeacherDetailPage = lazy(() => import('@/pages/teachers/all/[id]'))
-const EditTeacherPage = lazy(() => import('@/pages/teachers/edit/[id]'))
-const DepartmentsPage = lazy(() => import('@/pages/teachers/departments'))
-const SubjectsPage = lazy(() => import('@/pages/teachers/subjects'))
-const TeacherBulkUpdatePage = lazy(() => import('@/pages/teachers/bulk-update'))
-const DesignationsPage = lazy(() => import('@/pages/teachers/designations'))
-const PayrollPage = lazy(() => import('@/pages/payroll'))
-const ClassesPage = lazy(() => import('@/pages/classes'))
-const HRPage = lazy(() => import('@/pages/hr'))
-const AttendancePage = lazy(() => import('@/pages/attendance'))
-const ExamDashboard = lazy(() => import('@/pages/exams/index'))
-const Step1Planning = lazy(() => import('@/pages/exams/step1'))
-const Step2Schedule = lazy(() => import('@/pages/exams/step2'))
-const Step3Evaluation = lazy(() => import('@/pages/exams/step3'))
-const Step4Results = lazy(() => import('@/pages/exams/step4'))
-const Step5Marksheet = lazy(() => import('@/pages/exams/step5'))
-const OMRSheetPage = lazy(() => import('@/pages/exams/omr'))
-const SyllabusPage = lazy(() => import('@/pages/syllabus'))
-const AssignmentsPage = lazy(() => import('@/pages/assignments'))
-const OnlineClassesPage = lazy(() => import('@/pages/online'))
-const FinancePage = lazy(() => import('@/pages/finance'))
-const NotFoundPage = lazy(() => import('@/pages/NotFound'))
-const SettingsPage = lazy(() => import('@/pages/settings'))
+function lazyWithRetry<T extends ComponentType<any>>(factory: () => Promise<{ default: T }>) {
+  return lazy(() =>
+    factory().catch((err) => {
+      if (err?.message?.includes('dynamically imported module') || err?.name === 'ChunkLoadError') {
+        window.location.reload()
+      }
+      throw err
+    })
+  )
+}
+
+const LoginPage = lazyWithRetry(() => import('@/pages/auth/LoginPage'))
+const RegisterPage = lazyWithRetry(() => import('@/pages/auth/RegisterPage'))
+const InstitutionLogin = lazyWithRetry(() => import('@/pages/auth/InstitutionLogin'))
+const InstitutionLoginRoute = lazyWithRetry(() => import('@/pages/auth/InstitutionLoginRoute'))
+const DashboardPage = lazyWithRetry(() => import('@/pages/dashboard'))
+const SuperAdminPage = lazyWithRetry(() => import('@/pages/super-admin'))
+const StudentsPage = lazyWithRetry(() => import('@/pages/students'))
+const StudentAdmission = lazyWithRetry(() => import('@/pages/students/admission'))
+const AllStudentsPage = lazyWithRetry(() => import('@/pages/students/all'))
+const UpdateStudentPage = lazyWithRetry(() => import('@/pages/students/update'))
+const BulkUpdatePage = lazyWithRetry(() => import('@/pages/students/bulk-update'))
+const IDCardsPage = lazyWithRetry(() => import('@/pages/students/id-cards'))
+const PromotionPage = lazyWithRetry(() => import('@/pages/students/promotion'))
+const TeachersPage = lazyWithRetry(() => import('@/pages/teachers'))
+const AddTeacherPage = lazyWithRetry(() => import('@/pages/teachers/add'))
+const AllTeachersPage = lazyWithRetry(() => import('@/pages/teachers/all'))
+const TeacherDetailPage = lazyWithRetry(() => import('@/pages/teachers/all/[id]'))
+const EditTeacherPage = lazyWithRetry(() => import('@/pages/teachers/edit/[id]'))
+const DepartmentsPage = lazyWithRetry(() => import('@/pages/teachers/departments'))
+const SubjectsPage = lazyWithRetry(() => import('@/pages/teachers/subjects'))
+const TeacherBulkUpdatePage = lazyWithRetry(() => import('@/pages/teachers/bulk-update'))
+const DesignationsPage = lazyWithRetry(() => import('@/pages/teachers/designations'))
+const PayrollPage = lazyWithRetry(() => import('@/pages/payroll'))
+const ClassesPage = lazyWithRetry(() => import('@/pages/classes'))
+const HRPage = lazyWithRetry(() => import('@/pages/hr'))
+const AttendancePage = lazyWithRetry(() => import('@/pages/attendance'))
+const ExamDashboard = lazyWithRetry(() => import('@/pages/exams/index'))
+const Step1Planning = lazyWithRetry(() => import('@/pages/exams/step1'))
+const Step2Schedule = lazyWithRetry(() => import('@/pages/exams/step2'))
+const Step3Evaluation = lazyWithRetry(() => import('@/pages/exams/step3'))
+const Step4Results = lazyWithRetry(() => import('@/pages/exams/step4'))
+const Step5Marksheet = lazyWithRetry(() => import('@/pages/exams/step5'))
+const OMRSheetPage = lazyWithRetry(() => import('@/pages/exams/omr'))
+const SyllabusPage = lazyWithRetry(() => import('@/pages/syllabus'))
+const AssignmentsPage = lazyWithRetry(() => import('@/pages/assignments'))
+const OnlineClassesPage = lazyWithRetry(() => import('@/pages/online'))
+const FinancePage = lazyWithRetry(() => import('@/pages/finance'))
+const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFound'))
+const SettingsPage = lazyWithRetry(() => import('@/pages/settings'))
 
 function P({ name }: { name: string }) {
   return <div style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 500, padding: '1.25rem' }}>{name}</div>
