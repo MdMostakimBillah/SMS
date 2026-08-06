@@ -27,7 +27,7 @@ export function SettingsRow({ item, isBn, onClick, isLast }: Props) {
         <div className="text-[0.875rem] font-medium text-[var(--text-primary)] leading-tight">
           {isBn ? item.titleBn : item.title}
         </div>
-        <div className="text-[0.6875rem] text-[var(--text-muted)]/30 mt-0.5 leading-snug">
+        <div className="text-[0.6875rem] text-[var(--text-secondary)]/55 mt-0.5 leading-snug">
           {isBn ? item.descriptionBn : item.description}
         </div>
       </div>
