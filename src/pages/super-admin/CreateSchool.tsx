@@ -147,6 +147,7 @@ export default function CreateSchool() {
   const [emailCodeInput, setEmailCodeInput] = useState('')
   const [sendingCode, setSendingCode] = useState(false)
   const [emailError, setEmailError] = useState('')
+  const [simulated, setSimulated] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const currentSection = SECTION_STEPS[step]
@@ -336,62 +337,67 @@ export default function CreateSchool() {
                           disabled={emailVerified}
                           className="flex-1 px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all disabled:opacity-50"
                         />
-                        {!emailVerified && (
-                          <button
-                            onClick={async () => {
-                              if (form.adminEmail.includes('@')) {
-                                setSendingCode(true)
-                                setEmailError('')
-                                const code = Math.random().toString(36).slice(-6).toUpperCase()
-                                const result = await sendVerificationCode(form.adminEmail, code)
-                                if (result.success) {
-                                  setEmailCode(code)
-                                  setEmailSent(true)
-                                } else {
-                                  setEmailError(isBn ? 'কোড পাঠাতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।' : 'Failed to send code. Please try again.')
-                                }
-                                setSendingCode(false)
-                              }
-                            }}
-                            disabled={!form.adminEmail.includes('@') || emailSent || sendingCode}
-                            className="px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-xs font-semibold cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                          >
-                            {sendingCode ? (isBn ? 'পাঠানো হচ্ছে...' : 'Sending...') : emailSent ? (isBn ? 'পাঠানো হয়েছে' : 'Sent') : (isBn ? 'কোড পাঠান' : 'Send Code')}
-                          </button>
-                        )}
-                        {emailVerified && (
-                          <div className="px-3 py-2.5 rounded-xl bg-[var(--green)]/10 text-[var(--green)] text-xs font-semibold flex items-center gap-1.5 shrink-0">
-                            <Check size={14} /> {isBn ? 'যাচাইকৃত' : 'Verified'}
-                          </div>
-                        )}
-                      </div>
-                      {emailError && (
-                        <p className="text-[0.6875rem] text-[var(--red)] mt-1.5">{emailError}</p>
-                      )}
-                    </div>
-                    {emailSent && !emailVerified && (
-                      <div>
-                        <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'যাচাইকরণ কোড' : 'Verification Code'}</label>
-                        <p className="text-[0.625rem] text-[var(--text-muted)] mb-2">{isBn ? `${form.adminEmail}-এ ৬-ডিজিট কোড পাঠানো হয়েছে` : `A 6-digit code was sent to ${form.adminEmail}`}</p>
-                        <OtpInput
-                          length={6}
-                          value={emailCodeInput}
-                          onChange={(v) => {
-                            setEmailCodeInput(v)
-                            if (v.length === 6) {
-                              setTimeout(() => {
-                                if (v === emailCode) setEmailVerified(true)
-                              }, 200)
-                            }
-                          }}
-                          error={emailCodeInput.length === 6 && emailCodeInput !== emailCode}
-                          disabled={emailVerified}
-                        />
-                        {emailCodeInput && emailCodeInput !== emailCode && emailCodeInput.length === 6 && (
-                          <p className="text-[0.6875rem] text-[var(--red)] mt-1.5">{isBn ? 'ভুল কোড। আবার চেষ্টা করুন।' : 'Invalid code. Please try again.'}</p>
-                        )}
-                      </div>
-                    )}
+                         {!emailVerified && (
+                           <button
+                             onClick={async () => {
+                               if (form.adminEmail.includes('@')) {
+                                 setSendingCode(true)
+                                 setEmailError('')
+                                 const code = Math.random().toString(36).slice(-6).toUpperCase()
+                                 const result = await sendVerificationCode(form.adminEmail, code)
+                                 setEmailCode(code)
+                                 setEmailSent(true)
+                                 setSimulated(result.simulated)
+                                 setSendingCode(false)
+                               }
+                             }}
+                             disabled={!form.adminEmail.includes('@') || emailSent || sendingCode}
+                             className="px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-xs font-semibold cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                           >
+                             {sendingCode ? (isBn ? 'পাঠানো হচ্ছে...' : 'Sending...') : emailSent ? (isBn ? 'পাঠানো হয়েছে' : 'Sent') : (isBn ? 'কোড পাঠান' : 'Send Code')}
+                           </button>
+                         )}
+                         {emailVerified && (
+                           <div className="px-3 py-2.5 rounded-xl bg-[var(--green)]/10 text-[var(--green)] text-xs font-semibold flex items-center gap-1.5 shrink-0">
+                             <Check size={14} /> {isBn ? 'যাচাইকৃত' : 'Verified'}
+                           </div>
+                         )}
+                       </div>
+                       {emailError && (
+                         <p className="text-[0.6875rem] text-[var(--red)] mt-1.5">{emailError}</p>
+                       )}
+                     </div>
+                     {emailSent && !emailVerified && (
+                       <div>
+                         <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'যাচাইকরণ কোড' : 'Verification Code'}</label>
+                         {simulated && (
+                           <p className="text-[0.625rem] text-[var(--amber)] mb-1 font-medium">{isBn ? 'ইমেইল পাঠানো সম্ভব হয়নি। নিচের কোড ব্যবহার করুন:' : 'Email could not be sent. Use the code below:'}</p>
+                         )}
+                         {simulated && emailCode && (
+                           <div className="mb-2 px-3 py-2 rounded-lg bg-[var(--amber)]/10 border border-[var(--amber)]/20">
+                             <p className="text-[0.75rem] font-mono font-bold text-[var(--amber)] tracking-widest">{emailCode}</p>
+                           </div>
+                         )}
+                         <p className="text-[0.625rem] text-[var(--text-muted)] mb-2">{isBn ? `${form.adminEmail}-এ ৬-ডিজিট কোড পাঠানো হয়েছে` : `A 6-digit code was sent to ${form.adminEmail}`}</p>
+                         <OtpInput
+                           length={6}
+                           value={emailCodeInput}
+                           onChange={(v) => {
+                             setEmailCodeInput(v)
+                             if (v.length === 6) {
+                               setTimeout(() => {
+                                 if (v === emailCode) setEmailVerified(true)
+                               }, 200)
+                             }
+                           }}
+                           error={emailCodeInput.length === 6 && emailCodeInput !== emailCode}
+                           disabled={emailVerified}
+                         />
+                         {emailCodeInput && emailCodeInput !== emailCode && emailCodeInput.length === 6 && (
+                           <p className="text-[0.6875rem] text-[var(--red)] mt-1.5">{isBn ? 'ভুল কোড। আবার চেষ্টা করুন।' : 'Invalid code. Please try again.'}</p>
+                         )}
+                       </div>
+                     )}
                     <div>
                       <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'পাসওয়ার্ড *' : 'Password *'}</label>
                       <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'অ্যাডমিন অ্যাকাউন্টের পাসওয়ার্ড' : 'Password for the admin account'}</p>
