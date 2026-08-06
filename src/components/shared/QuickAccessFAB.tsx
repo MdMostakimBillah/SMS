@@ -142,7 +142,7 @@ function getSectionForPath(pathname: string): { section: string; items: RouteIte
   }
 
   // For super admin management pages, show super admin routes
-  if (pathname.startsWith('/super-admin')) {
+  if (pathname.startsWith('/super-admin/admin/')) {
     return { section: 'super-admin', items: sectionRoutes['super-admin'] }
   }
 
