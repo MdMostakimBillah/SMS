@@ -123,17 +123,8 @@ const sectionRoutes: Record<string, RouteItem[]> = {
 }
 
 function getSectionForPath(pathname: string): { section: string; items: RouteItem[] } | null {
-  // For super admin paths like /super-admin/admin/{section}, extract section
-  const superAdminMatch = pathname.match(/^\/super-admin\/admin\/([^/]+)/)
-  if (superAdminMatch) {
-    const section = superAdminMatch[1]
-    if (sectionRoutes[section]) {
-      return { section, items: sectionRoutes[section] }
-    }
-  }
-
-  // For super admin management pages, show super admin routes
-  if (pathname.startsWith('/super-admin/admin/')) {
+  // For /super-admin main page, show super admin routes
+  if (pathname === '/super-admin' || pathname === '/super-admin/') {
     return { section: 'super-admin', items: sectionRoutes['super-admin'] }
   }
 
