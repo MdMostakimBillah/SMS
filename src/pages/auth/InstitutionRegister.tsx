@@ -409,56 +409,55 @@ export default function InstitutionRegister() {
       </div>
 
       {/* Right - Form */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <button onClick={() => step === 0 ? setStarted(false) : setStep((s) => s - 1)}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] cursor-pointer border-none bg-transparent transition-colors">
-              <ChevronLeft size={16} />
-            </button>
-            <div>
-              <h2 className="text-sm font-bold text-[var(--text-primary)]">
-                {isBn ? 'নতুন প্রতিষ্ঠান' : 'New Institution'}
-              </h2>
-              <p className="text-[0.6875rem] text-[var(--text-muted)]">
-                {step + 1}/{STEPS.length} — {isBn ? currentStep.labelBn : currentStep.labelEn}
-              </p>
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-[28rem]">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <button onClick={() => step === 0 ? setStarted(false) : setStep((s) => s - 1)}
+                className={`w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer border-none transition-colors ${isDark ? 'bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10' : 'bg-black/5 text-black/30 hover:text-black/60 hover:bg-black/10'}`}>
+                <ChevronLeft size={16} />
+              </button>
+              <div>
+                <h2 className={`text-[1.125rem] font-bold ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>
+                  {isBn ? 'নতুন প্রতিষ্ঠান' : 'New Institution'}
+                </h2>
+                <p className={`text-[0.75rem] ${isDark ? 'text-white/35' : 'text-[var(--text-muted)]'}`}>
+                  {isBn ? `${step + 1}/${STEPS.length} — ${currentStep.labelBn}` : `${step + 1}/${STEPS.length} — ${currentStep.labelEn}`}
+                </p>
+              </div>
             </div>
+            <button onClick={() => setStarted(false)}
+              className={`w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer border-none transition-colors ${isDark ? 'bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10' : 'bg-black/5 text-black/30 hover:text-black/60 hover:bg-black/10'}`}>
+              <X size={16} />
+            </button>
           </div>
-          <button onClick={() => setStarted(false)}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] cursor-pointer border-none bg-transparent transition-colors">
-            <X size={16} />
-          </button>
-        </div>
 
-        {/* Progress */}
-        <div className="px-6 py-2.5 border-b border-[var(--border)] shrink-0">
-          <div className="flex gap-1.5">
+          {/* Progress */}
+          <div className="flex gap-1.5 mb-8">
             {STEPS.map((s, i) => (
-              <div key={s.key} className={`flex-1 h-1 rounded-full transition-all duration-300 ${i <= step ? 'bg-[var(--brand)]' : isDark ? 'bg-white/10' : 'bg-black/10'}`} />
+              <div key={s.key} className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${i <= step ? 'bg-[var(--brand)]' : isDark ? 'bg-white/10' : 'bg-black/10'}`} />
             ))}
           </div>
-        </div>
 
-        {/* Step Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
-          <div className="max-w-md mx-auto">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.625rem] font-medium text-[var(--text-muted)] mb-5">
+          {/* Step Card */}
+          <div className={`rounded-2xl p-8 ${isDark ? 'bg-white/[0.03] border border-white/[0.06]' : 'bg-white border border-[var(--border)] shadow-sm'}`}>
+            {/* Step badge */}
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg mb-6 text-[0.6875rem] font-medium ${isDark ? 'bg-white/5 text-white/50' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
               <span className="text-[var(--brand)]"><StepIcon size={12} /></span>
               {isBn ? currentStep.labelBn : currentStep.labelEn}
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               {/* Step 1: Name */}
               {STEPS[step].key === 'name' && (
                 <>
-                  <Field label={`${isBn ? 'প্রতিষ্ঠানের নাম' : 'Institution Name'} *`} value={form.name}
-                    onChange={(v) => set('name', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} />
-                  <Field label={isBn ? 'বাংলায় নাম' : 'Bengali Name'} value={form.nameBn}
-                    onChange={(v) => set('nameBn', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} />
-                  <Field label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName}
-                    onChange={(v) => set('brandName', v)} placeholder="EduTech" />
+                  <ProField label={`${isBn ? 'প্রতিষ্ঠানের নাম' : 'Institution Name'} *`} value={form.name}
+                    onChange={(v) => set('name', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} isDark={isDark} />
+                  <ProField label={isBn ? 'বাংলায় নাম' : 'Bengali Name'} value={form.nameBn}
+                    onChange={(v) => set('nameBn', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} isDark={isDark} />
+                  <ProField label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName}
+                    onChange={(v) => set('brandName', v)} placeholder="EduTech" isDark={isDark} />
                 </>
               )}
 
@@ -466,24 +465,24 @@ export default function InstitutionRegister() {
               {STEPS[step].key === 'url' && (
                 <>
                   <div>
-                    <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">
+                    <label className={`text-[0.8125rem] font-medium mb-2 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
                       {isBn ? 'সাবডোমেইন *' : 'Subdomain *'}
                     </label>
-                    <p className="text-[0.6875rem] text-[var(--text-muted)] mb-2">
+                    <p className={`text-[0.75rem] mb-3 ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>
                       {isBn ? 'আপনার স্কুলের URL চয়ন করুন' : 'Choose your school URL'}
                     </p>
                     <div className="flex items-center gap-0">
-                      <div className="flex-1 flex items-center h-11 px-3.5 rounded-l-xl border border-r-0 border-[var(--border)] bg-[var(--bg-secondary)]">
+                      <div className={`flex-1 flex items-center h-12 px-4 rounded-l-xl border border-r-0 ${isDark ? 'border-white/10 bg-white/5' : 'border-[var(--border)] bg-[var(--bg-secondary)]'}`}>
                         <input type="text" value={form.subdomain} onChange={(e) => set('subdomain', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
                           placeholder={isBn ? 'যেমন: sunrise-academy' : 'e.g. sunrise-academy'}
-                          className="flex-1 bg-transparent border-none outline-none text-[0.875rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
+                          className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`} />
                       </div>
-                      <div className="h-11 px-3 flex items-center rounded-r-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-muted)]">
+                      <div className={`h-12 px-3 flex items-center rounded-r-xl border text-[0.75rem] ${isDark ? 'border-white/10 bg-white/5 text-white/30' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
                         .{BASE_URL}/i/
                       </div>
                     </div>
                     {form.subdomain && (
-                      <p className={`text-[0.6875rem] mt-1.5 ${subdomainTaken ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
+                      <p className={`text-[0.75rem] mt-2 ${subdomainTaken ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
                         {subdomainTaken
                           ? (isBn ? 'এই সাবডোমেইন ইতিমধ্যে ব্যবহৃত' : 'This subdomain is already taken')
                           : `${BASE_URL}/i/${subdomainSlug}`}
@@ -496,37 +495,37 @@ export default function InstitutionRegister() {
               {/* Step 3: Contact */}
               {STEPS[step].key === 'contact' && (
                 <>
-                  <Field label={isBn ? 'ইমেইল' : 'Email'} type="email" value={form.email}
-                    onChange={(v) => set('email', v)} placeholder="info@school.edu.bd" />
-                  <Field label={isBn ? 'ফোন' : 'Phone'} value={form.phone}
-                    onChange={(v) => set('phone', v)} placeholder="+880-2-1234567" />
-                  <Field label={isBn ? 'ঠিকানা' : 'Address'} value={form.address}
-                    onChange={(v) => set('address', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'House, Road, City'} />
+                  <ProField label={isBn ? 'ইমেইল' : 'Email'} type="email" value={form.email}
+                    onChange={(v) => set('email', v)} placeholder="info@school.edu.bd" isDark={isDark} />
+                  <ProField label={isBn ? 'ফোন' : 'Phone'} value={form.phone}
+                    onChange={(v) => set('phone', v)} placeholder="+880-2-1234567" isDark={isDark} />
+                  <ProField label={isBn ? 'ঠিকানা' : 'Address'} value={form.address}
+                    onChange={(v) => set('address', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'House, Road, City'} isDark={isDark} />
                 </>
               )}
 
               {/* Step 4: Logo */}
               {STEPS[step].key === 'logo' && (
-                <div className="text-center">
+                <div className="text-center py-4">
                   {form.logo ? (
                     <div className="mb-4">
-                      <img src={form.logo} alt="Logo" className="w-24 h-24 rounded-2xl object-contain mx-auto bg-[var(--bg-secondary)] p-2" />
+                      <img src={form.logo} alt="Logo" className="w-28 h-28 rounded-2xl object-contain mx-auto bg-[var(--bg-secondary)] p-2" />
                       <button onClick={() => set('logo', '')}
-                        className="mt-2 text-[0.75rem] text-[var(--red)] hover:underline bg-transparent border-none cursor-pointer">
+                        className="mt-3 text-[0.75rem] text-[var(--red)] hover:underline bg-transparent border-none cursor-pointer">
                         {isBn ? 'মুছুন' : 'Remove'}
                       </button>
                     </div>
                   ) : (
                     <label className="block cursor-pointer">
-                      <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-[var(--border)] flex flex-col items-center justify-center mx-auto hover:border-[var(--brand)] transition-colors">
-                        <Upload size={20} className="text-[var(--text-muted)] mb-1" />
-                        <span className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'আপলোড' : 'Upload'}</span>
+                      <div className={`w-28 h-28 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center mx-auto transition-colors ${isDark ? 'border-white/15 hover:border-[var(--brand)]/50' : 'border-[var(--border)] hover:border-[var(--brand)]/50'}`}>
+                        <Upload size={24} className={`mb-1.5 ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`} />
+                        <span className={`text-[0.6875rem] ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>{isBn ? 'আপলোড' : 'Upload'}</span>
                       </div>
                       <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                     </label>
                   )}
-                  <p className="text-[0.6875rem] text-[var(--text-muted)] mt-3">
-                    {isBn ? 'বামে ক্লিক করে লোগো আপলোড করুন (ঐচ্ছিক)' : 'Click left panel to upload logo (optional)'}
+                  <p className={`text-[0.75rem] mt-4 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`}>
+                    {isBn ? 'ঐচ্ছিক — পরে আপলোড করতে পারেন' : 'Optional — you can upload later'}
                   </p>
                 </div>
               )}
@@ -534,10 +533,10 @@ export default function InstitutionRegister() {
               {/* Step 5: Brand Color */}
               {STEPS[step].key === 'color' && (
                 <div>
-                  <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-3 block">
+                  <label className={`text-[0.8125rem] font-medium mb-4 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
                     {isBn ? 'ব্র্যান্ড রং চয়ন করুন' : 'Choose Brand Color'}
                   </label>
-                  <div className="grid grid-cols-5 gap-3 mb-4">
+                  <div className="grid grid-cols-5 gap-3 mb-5">
                     {PRESET_COLORS.map((c) => (
                       <button key={c} onClick={() => set('brandColor', c)}
                         className={`w-full aspect-square rounded-xl cursor-pointer border-2 transition-all ${form.brandColor === c ? 'border-[var(--text-primary)] scale-110' : 'border-transparent hover:scale-105'}`}
@@ -545,12 +544,12 @@ export default function InstitutionRegister() {
                     ))}
                   </div>
                   <div className="flex items-center gap-3">
-                    <label className="text-[0.75rem] text-[var(--text-muted)]">Custom:</label>
+                    <label className={`text-[0.75rem] ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>Custom:</label>
                     <div className="relative">
                       <input type="color" value={form.brandColor} onChange={(e) => set('brandColor', e.target.value)}
                         className="w-10 h-10 rounded-lg cursor-pointer border-none p-0 bg-transparent" />
                     </div>
-                    <span className="text-[0.75rem] text-[var(--text-muted)] font-mono">{form.brandColor}</span>
+                    <span className={`text-[0.75rem] font-mono ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>{form.brandColor}</span>
                   </div>
                 </div>
               )}
@@ -560,14 +559,14 @@ export default function InstitutionRegister() {
                 <div className="space-y-3">
                   {PACKAGES.map((pkg) => (
                     <button key={pkg.name} onClick={() => set('package', pkg)}
-                      className={`w-full p-4 rounded-xl border text-left cursor-pointer transition-all ${form.package.name === pkg.name ? 'border-[var(--brand)] bg-[var(--brand)]/5' : 'border-[var(--border)] hover:border-[var(--brand)]/50 bg-[var(--bg-secondary)]'}`}>
+                      className={`w-full p-4 rounded-xl border text-left cursor-pointer transition-all ${form.package.name === pkg.name ? 'border-[var(--brand)] bg-[var(--brand)]/5' : isDark ? 'border-white/10 hover:border-[var(--brand)]/50 bg-white/[0.02]' : 'border-[var(--border)] hover:border-[var(--brand)]/50 bg-[var(--bg-secondary)]'}`}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+                        <span className={`text-[0.875rem] font-semibold ${isDark ? 'text-white/80' : 'text-[var(--text-primary)]'}`}>
                           {isBn ? pkg.nameBn : pkg.name}
                         </span>
                         <span className="text-[0.875rem] font-bold text-[var(--brand)]">৳{pkg.price}/mo</span>
                       </div>
-                      <p className="text-[0.6875rem] text-[var(--text-muted)]">
+                      <p className={`text-[0.75rem] ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>
                         {isBn ? `${pkg.maxStudents} জন ছাত্র পর্যন্ত` : `Up to ${pkg.maxStudents} students`}
                       </p>
                     </button>
@@ -579,38 +578,38 @@ export default function InstitutionRegister() {
               {STEPS[step].key === 'admin' && (
                 <>
                   <div>
-                    <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">
+                    <label className={`text-[0.8125rem] font-medium mb-2 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
                       {isBn ? 'অ্যাডমিন ইমেইল *' : 'Admin Email *'}
                     </label>
                     <div className="flex gap-2">
                       <input type="email" value={form.adminEmail}
                         onChange={(e) => { set('adminEmail', e.target.value); setEmailSent(false); setEmailVerified(false); setEmailCode(''); setEmailError('') }}
                         placeholder="admin@school.edu.bd" disabled={emailVerified}
-                        className="flex-1 h-11 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.875rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-all disabled:opacity-50" />
+                        className={`flex-1 h-12 px-4 rounded-xl border text-[0.875rem] outline-none transition-all disabled:opacity-50 ${isDark ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]/50'}`} />
                       {!emailVerified && (
                         <button onClick={sendOtp} disabled={sendingCode || !form.adminEmail.includes('@')}
-                          className="h-11 px-4 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold border-none cursor-pointer disabled:opacity-50 whitespace-nowrap">
+                          className="h-12 px-5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold border-none cursor-pointer disabled:opacity-50 whitespace-nowrap transition-all hover:opacity-90">
                           {sendingCode ? '...' : isBn ? 'কোড পাঠান' : 'Send Code'}
                         </button>
                       )}
                       {emailVerified && (
-                        <div className="h-11 px-4 rounded-xl bg-[var(--green)]/10 flex items-center gap-1.5">
+                        <div className="h-12 px-5 rounded-xl bg-[var(--green)]/10 flex items-center gap-1.5">
                           <Check size={14} className="text-[var(--green)]" />
                           <span className="text-[0.75rem] text-[var(--green)] font-medium">{isBn ? 'যাচাইকৃত' : 'Verified'}</span>
                         </div>
                       )}
                     </div>
                     {emailSent && !emailVerified && (
-                      <div className="mt-3 space-y-3">
+                      <div className="mt-4 space-y-3">
                         {simulated && (
-                          <div className="px-3 py-2 rounded-lg bg-[var(--brand)]/5 border border-[var(--brand)]/10 text-[0.6875rem] text-[var(--brand)]">
+                          <div className="px-3 py-2 rounded-lg bg-[var(--brand)]/5 border border-[var(--brand)]/10 text-[0.75rem] text-[var(--brand)]">
                             {isBn ? 'ডেমো মোড: কোড হলো' : 'Demo mode: Your code is'} <strong>{emailCode}</strong>
                           </div>
                         )}
                         <OtpInput length={6} value={emailCodeInput} onChange={setEmailCodeInput} />
-                        {emailError && <p className="text-[0.6875rem] text-[var(--red)] text-center">{emailError}</p>}
+                        {emailError && <p className="text-[0.75rem] text-[var(--red)] text-center">{emailError}</p>}
                         <button onClick={verifyOtp} disabled={emailCodeInput.length < 6}
-                          className="w-full h-10 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold border-none cursor-pointer disabled:opacity-50">
+                          className="w-full h-11 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold border-none cursor-pointer disabled:opacity-50 transition-all hover:opacity-90">
                           {isBn ? 'যাচাই করুন' : 'Verify'}
                         </button>
                       </div>
@@ -618,26 +617,26 @@ export default function InstitutionRegister() {
                   </div>
 
                   <div>
-                    <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">
+                    <label className={`text-[0.8125rem] font-medium mb-2 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
                       {isBn ? 'পাসওয়ার্ড *' : 'Password *'}
                     </label>
                     <div className="relative">
-                      <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                      <Lock size={16} className={`absolute left-4 top-1/2 -translate-y-1/2 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
                       <input type={showPassword ? 'text' : 'password'} value={form.adminPassword}
                         onChange={(e) => set('adminPassword', e.target.value)}
                         placeholder="••••••••" disabled={emailVerified}
-                        className="w-full h-11 pl-10 pr-11 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.875rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-all disabled:opacity-50" />
+                        className={`w-full h-12 pl-11 pr-11 rounded-xl border text-[0.875rem] outline-none transition-all disabled:opacity-50 ${isDark ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]/50'}`} />
                       <button type="button" onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-pointer bg-transparent border-none">
+                        className={`absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer bg-transparent border-none transition-colors ${isDark ? 'text-white/30 hover:text-white/60' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
                     {form.adminPassword.length > 0 && (
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-3">
                         {passwordValidation.map((r) => (
                           <div key={r.label} className="flex items-center gap-1.5">
-                            <Check size={10} className={r.met ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'} />
-                            <span className={`text-[0.625rem] ${r.met ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>
+                            <Check size={10} className={r.met ? 'text-[var(--green)]' : isDark ? 'text-white/20' : 'text-[var(--text-muted)]'} />
+                            <span className={`text-[0.6875rem] ${r.met ? 'text-[var(--green)]' : isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`}>
                               {isBn ? r.labelBn : r.label}
                             </span>
                           </div>
@@ -649,46 +648,46 @@ export default function InstitutionRegister() {
               )}
             </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-[var(--border)] flex items-center justify-between shrink-0">
-          <button onClick={() => step === 0 ? setStarted(false) : setStep((s) => s - 1)}
-            className={`h-10 px-4 rounded-xl text-[0.8125rem] font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] cursor-pointer flex items-center gap-1.5 hover:bg-[var(--bg-primary)] transition-colors`}>
-            <ChevronLeft size={14} />
-            {isBn ? 'পূর্ববর্তী' : 'Back'}
-          </button>
+          {/* Footer Buttons */}
+          <div className="flex items-center justify-between mt-6">
+            <button onClick={() => step === 0 ? setStarted(false) : setStep((s) => s - 1)}
+              className={`h-11 px-5 rounded-xl text-[0.8125rem] font-medium border cursor-pointer flex items-center gap-2 transition-all ${isDark ? 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'}`}>
+              <ChevronLeft size={15} />
+              {isBn ? 'পূর্ববর্তী' : 'Back'}
+            </button>
 
-          {step < STEPS.length - 1 ? (
-            <button onClick={() => setStep((s) => s + 1)} disabled={!canNext}
-              className="h-10 px-5 rounded-xl text-[0.8125rem] font-semibold border-none cursor-pointer flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ background: canNext ? 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)' : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', color: canNext ? '#fff' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}>
-              {isBn ? 'পরবর্তী' : 'Next'}
-              <ChevronRight size={14} />
-            </button>
-          ) : (
-            <button onClick={handleCreate} disabled={!canNext}
-              className="h-10 px-5 rounded-xl text-[0.8125rem] font-semibold border-none cursor-pointer flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ background: canNext ? 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)' : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', color: canNext ? '#fff' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}>
-              <Check size={14} />
-              {isBn ? 'তৈরি করুন' : 'Create'}
-            </button>
-          )}
+            {step < STEPS.length - 1 ? (
+              <button onClick={() => setStep((s) => s + 1)} disabled={!canNext}
+                className="h-11 px-6 rounded-xl text-[0.8125rem] font-semibold border-none cursor-pointer flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: canNext ? 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)' : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', color: canNext ? '#fff' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}>
+                {isBn ? 'পরবর্তী' : 'Next'}
+                <ChevronRight size={15} />
+              </button>
+            ) : (
+              <button onClick={handleCreate} disabled={!canNext}
+                className="h-11 px-6 rounded-xl text-[0.8125rem] font-semibold border-none cursor-pointer flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: canNext ? 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)' : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', color: canNext ? '#fff' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}>
+                <Check size={15} />
+                {isBn ? 'তৈরি করুন' : 'Create'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-/* ─── Reusable Field ─── */
-function Field({ label, value, onChange, placeholder, type = 'text' }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string
+/* ─── Professional Field ─── */
+function ProField({ label, value, onChange, placeholder, type = 'text', isDark }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; isDark: boolean
 }) {
   return (
     <div>
-      <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5 block">{label}</label>
+      <label className={`text-[0.8125rem] font-medium mb-2 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>{label}</label>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full h-11 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.875rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-all placeholder:text-[var(--text-muted)]" />
+        className={`w-full h-12 px-4 rounded-xl border text-[0.875rem] outline-none transition-all placeholder:text-[var(--text-muted)] ${isDark ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50 focus:bg-white/[0.07]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:border-[var(--brand)]/50 focus:bg-[var(--bg-secondary)]'}`} />
     </div>
   )
 }
