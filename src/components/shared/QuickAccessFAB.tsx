@@ -147,9 +147,6 @@ export default function QuickAccessFAB() {
   const location = useLocation()
   const navigate = useNavigate()
   const isBn = useBn()
-
-  // Only show on the /super-admin main page
-  if (location.pathname !== '/super-admin' && location.pathname !== '/super-admin/') return null
   const sidebarPosition = useAppStore((s) => s.sidebarPosition)
   const isLeft = sidebarPosition === 'left'
   const [isOpen, setIsOpen] = useState(false)
@@ -159,6 +156,8 @@ export default function QuickAccessFAB() {
   const ringRef = useRef<HTMLDivElement>(null)
 
   const context = useMemo(() => {
+    // Only show on the /super-admin main page
+    if (location.pathname !== '/super-admin' && location.pathname !== '/super-admin/') return null
     const result = getSectionForPath(location.pathname)
     if (!result) return null
     const basePath = `/${result.section}`
