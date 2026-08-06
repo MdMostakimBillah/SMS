@@ -160,24 +160,8 @@ export default function QuickAccessFAB() {
     if (location.pathname !== '/super-admin' && location.pathname !== '/super-admin/') return null
     const result = getSectionForPath(location.pathname)
     if (!result) return null
-    const basePath = `/${result.section}`
-    const isBasePath = location.pathname === basePath || location.pathname === `${basePath}/`
-    const hasSearchParams = location.search && location.search.length > 1
 
-    if (isBasePath && !hasSearchParams) return null
-
-    const siblings = result.items.filter((item) => {
-      if (item.path.includes('?')) {
-        const itemPath = item.path.split('?')[0]
-        const itemSearch = item.path.split('?')[1]
-        if (location.pathname === itemPath && location.search.includes(itemSearch)) return false
-        return true
-      }
-      if (location.pathname.startsWith(`${item.path}/`)) return false
-      return location.pathname !== item.path
-    })
-    if (siblings.length === 0) return null
-    return { section: result.section, items: siblings.slice(0, 8) }
+    return { section: result.section, items: result.items.slice(0, 8) }
   }, [location.pathname, location.search])
 
   useEffect(() => {
