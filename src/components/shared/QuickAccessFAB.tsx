@@ -163,25 +163,26 @@ export default function QuickAccessFAB() {
     const result = getSectionForPath(location.pathname)
     if (!result) return null
 
-    // Check if we're on a sub-page (not the section dashboard itself)
-    // Section dashboards: /{section}, /i/{slug}/admin/{section}, /super-admin/admin/{section}
-    // Sub-pages:          /{section}/{sub}, /i/{slug}/admin/{section}/{sub}, /super-admin/admin/{section}/{sub}
     const sectionPattern = new RegExp(`/${result.section}/?$`)
     const onDashboard = sectionPattern.test(location.pathname) && !location.search
     if (onDashboard) return null
+
+    // Extract the prefix before the section (e.g., /super-admin/admin or /i/{slug}/admin)
+    const prefixMatch = location.pathname.match(new RegExp(`(.+)/${result.section}/`))
+    const prefix = prefixMatch ? prefixMatch[1] : ''
 
     const siblings = result.items.filter((item) => {
       if (item.path.includes('?')) {
         const itemPath = item.path.split('?')[0]
         const itemSearch = item.path.split('?')[1]
-        if (location.pathname === itemPath && location.search.includes(itemSearch)) return false
+        if (location.pathname === `${prefix}${itemPath}` && location.search.includes(itemSearch)) return false
         return true
       }
-      if (location.pathname.startsWith(`${item.path}/`)) return false
-      return location.pathname !== item.path
+      if (location.pathname.startsWith(`${prefix}${item.path}/`)) return false
+      return location.pathname !== `${prefix}${item.path}`
     })
     if (siblings.length === 0) return null
-    return { section: result.section, items: siblings.slice(0, 8) }
+    return { section: result.section, prefix, items: siblings.slice(0, 8) }
   }, [location.pathname, location.search])
 
   useEffect(() => {
@@ -346,7 +347,7 @@ export default function QuickAccessFAB() {
                   className="flex flex-col items-center gap-1.5 group relative cursor-pointer"
                   onClick={(e) => {
                     e.preventDefault()
-                    close(item.path)
+                    close(`${context.prefix}${item.path}`)
                   }}
                 >
                   <div className="w-12 h-12 rounded-full bg-[var(--surface)] shadow-lg flex items-center justify-center group-hover:scale-110 group-hover:shadow-xl transition-all duration-200 border border-[var(--border)]">
