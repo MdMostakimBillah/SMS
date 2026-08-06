@@ -123,14 +123,17 @@ const sectionRoutes: Record<string, RouteItem[]> = {
 }
 
 function getSectionForPath(pathname: string): { section: string; items: RouteItem[] } | null {
-  // Only show FAB on super admin management pages (/super-admin/admin/*)
+  // For super admin paths like /super-admin/admin/{section}, extract section
   const superAdminMatch = pathname.match(/^\/super-admin\/admin\/([^/]+)/)
   if (superAdminMatch) {
     const section = superAdminMatch[1]
     if (sectionRoutes[section]) {
       return { section, items: sectionRoutes[section] }
     }
-    // Fallback: show super admin routes for unmatched admin sections
+  }
+
+  // For super admin management pages, show super admin routes
+  if (pathname.startsWith('/super-admin/admin/')) {
     return { section: 'super-admin', items: sectionRoutes['super-admin'] }
   }
 
