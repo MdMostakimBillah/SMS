@@ -292,7 +292,7 @@ export default function InstitutionRegister() {
             <GraduationCap size={72} className="text-[var(--brand)] mx-auto mb-4" />
             <h1 className="text-[2rem] font-bold mb-3 tracking-tight text-white">EduTech SMS</h1>
             <p className="text-[1rem] max-w-[280px] mx-auto leading-relaxed text-white/50">
-              {isBn ? 'আপনার স্কুলের জন্য সম্পূর্ণ ম্যানেজমেন্ট সিস্টেম' : 'Complete school management system'}
+              {isBn ? 'স্কুল ম্যানেজমেন্ট সিস্টেম' : 'School Management System'}
             </p>
             <div className="mt-8 flex items-center justify-center gap-2 text-[0.75rem] text-white/30">
               <Lock size={12} />
