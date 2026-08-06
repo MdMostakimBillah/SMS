@@ -514,20 +514,21 @@ export default function InstitutionRegister() {
                   <label className={`text-[0.8125rem] font-medium mb-4 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
                     {isBn ? 'ব্র্যান্ড রং চয়ন করুন' : 'Choose Brand Color'}
                   </label>
-                  <div className="grid grid-cols-5 gap-3 mb-5">
+                  <div className="flex flex-wrap gap-2.5 mb-5">
                     {PRESET_COLORS.map((c) => (
                       <button key={c} onClick={() => set('brandColor', c)}
-                        className={`w-full aspect-square rounded-xl cursor-pointer border-2 transition-all ${form.brandColor === c ? 'border-[var(--text-primary)] scale-110' : 'border-transparent hover:scale-105'}`}
+                        className={`w-8 h-8 rounded-lg cursor-pointer border-2 transition-all ${form.brandColor === c ? 'border-[var(--text-primary)] scale-110' : 'border-transparent hover:scale-105'}`}
                         style={{ background: c }} />
                     ))}
                   </div>
                   <div className="flex items-center gap-3">
-                    <label className={`text-[0.75rem] ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>Custom:</label>
-                    <div className="relative">
+                    <div className={`flex items-center h-10 px-3 rounded-lg border transition-all ${isDark ? 'border-white/10 bg-white/5' : 'border-[var(--border)] bg-[var(--bg-secondary)]'}`}>
                       <input type="color" value={form.brandColor} onChange={(e) => set('brandColor', e.target.value)}
-                        className="w-10 h-10 rounded-lg cursor-pointer border-none p-0 bg-transparent" />
+                        className="w-6 h-6 rounded cursor-pointer border-none p-0 bg-transparent" />
+                      <input type="text" value={form.brandColor} onChange={(e) => set('brandColor', e.target.value)}
+                        placeholder="#6366f1" maxLength={7}
+                        className={`w-24 ml-2 bg-transparent border-none outline-none text-[0.8125rem] font-mono ${isDark ? 'text-white/60 placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`} />
                     </div>
-                    <span className={`text-[0.75rem] font-mono ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>{form.brandColor}</span>
                   </div>
                 </div>
               )}
