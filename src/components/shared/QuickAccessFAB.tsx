@@ -123,7 +123,21 @@ const sectionRoutes: Record<string, RouteItem[]> = {
 }
 
 function getSectionForPath(pathname: string): { section: string; items: RouteItem[] } | null {
-  // For /super-admin main page, show super admin routes
+  // For super admin management pages like /super-admin/admin/{section}, extract section
+  const superAdminMatch = pathname.match(/^\/super-admin\/admin\/([^/]+)/)
+  if (superAdminMatch) {
+    const section = superAdminMatch[1]
+    if (sectionRoutes[section]) {
+      return { section, items: sectionRoutes[section] }
+    }
+  }
+
+  // For /super-admin/admin/* pages without a matching section route
+  if (pathname.startsWith('/super-admin/admin/')) {
+    return { section: 'super-admin', items: sectionRoutes['super-admin'] }
+  }
+
+  // For /super-admin main page
   if (pathname === '/super-admin' || pathname === '/super-admin/') {
     return { section: 'super-admin', items: sectionRoutes['super-admin'] }
   }
@@ -147,8 +161,8 @@ export default function QuickAccessFAB() {
   const ringRef = useRef<HTMLDivElement>(null)
 
   const context = useMemo(() => {
-    // Only show on the /super-admin main page
-    if (location.pathname !== '/super-admin' && location.pathname !== '/super-admin/') return null
+    // Only show on super admin pages
+    if (location.pathname !== '/super-admin' && location.pathname !== '/super-admin/' && !location.pathname.startsWith('/super-admin/admin/')) return null
     const result = getSectionForPath(location.pathname)
     if (!result) return null
 
