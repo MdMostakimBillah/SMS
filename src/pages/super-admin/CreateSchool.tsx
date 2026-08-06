@@ -7,6 +7,7 @@ import {
   Palette, GraduationCap, Shield, Copy, Upload, Users, CreditCard,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useWindowSize } from '@/hooks/useWindowSize'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
 import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
@@ -132,6 +133,7 @@ function OtpInput({ length, value, onChange, error, disabled }: { length: number
 export default function CreateSchool() {
   const isBn = useBn()
   const navigate = useNavigate()
+  const { isDesktop } = useWindowSize()
   const addInstitution = useSuperAdminStore((s) => s.addInstitution)
   const institutions = useSuperAdminStore((s) => s.institutions)
   const [step, setStep] = useState(0)
@@ -148,6 +150,8 @@ export default function CreateSchool() {
   const [sendingCode, setSendingCode] = useState(false)
   const [emailError, setEmailError] = useState('')
   const [simulated, setSimulated] = useState(false)
+  const [inputWidth, setInputWidth] = useState(420)
+  const dragRef = useRef<{ startX: number; startWidth: number } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const currentSection = SECTION_STEPS[step]
@@ -181,6 +185,28 @@ export default function CreateSchool() {
   const handleClose = () => {
     setExiting(true)
     setTimeout(() => navigate('/super-admin/schools'), 300)
+  }
+
+  const onDragStart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    dragRef.current = { startX: e.clientX, startWidth: inputWidth }
+    const onMove = (ev: MouseEvent) => {
+      if (!dragRef.current) return
+      const delta = dragRef.current.startX - ev.clientX
+      const newWidth = Math.min(Math.max(dragRef.current.startWidth + delta, 320), Math.min(window.innerWidth * 0.6, 700))
+      setInputWidth(newWidth)
+    }
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      dragRef.current = null
+    }
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
   }
 
   const handleCreate = () => {
@@ -248,12 +274,20 @@ export default function CreateSchool() {
       <div className={`w-full h-full bg-[var(--bg-primary)] shadow-2xl flex overflow-hidden transition-all duration-300 ${exiting ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
 
         {/* Left Column - Live Preview */}
-        <div className="hidden lg:flex flex-1 flex-col overflow-hidden">
+        <div className="hidden lg:flex flex-1 flex-col overflow-hidden min-w-0">
           <PreviewPanel form={form} isBn={isBn} />
         </div>
 
-        {/* Right Column - Input */}
-        <div className="w-full lg:w-[420px] flex flex-col border-l border-[var(--border)] overflow-hidden shrink-0">
+        {/* Drag Divider */}
+        <div
+          onMouseDown={onDragStart}
+          className="hidden lg:flex w-[5px] cursor-col-resize items-center justify-center shrink-0 hover:bg-[var(--brand)]/20 active:bg-[var(--brand)]/30 transition-colors group"
+        >
+          <div className="w-[3px] h-8 rounded-full bg-[var(--border)] group-hover:bg-[var(--brand)] transition-colors" />
+        </div>
+
+        {/* Right Column - Input (mobile: full width, desktop: resizable) */}
+        <div style={isDesktop ? { width: `${inputWidth}px` } : undefined} className="w-full flex flex-col border-l border-[var(--border)] overflow-hidden shrink-0">
           {/* Header */}
           <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
