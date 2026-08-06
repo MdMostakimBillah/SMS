@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react'
 import {
-  GraduationCap, Building2, Globe, Phone, MapPin,
+  GraduationCap, Building2, Globe, Phone, Mail, MapPin,
   Upload, Palette, CreditCard, Shield, Eye, EyeOff,
   ChevronRight, ChevronLeft, Check, X,
   Zap, BarChart3, Users, Lock,
@@ -238,7 +238,6 @@ export default function InstitutionRegister() {
   }
 
   const currentStep = STEPS[step]
-  const StepIcon = currentStep?.icon || Building2
 
   /* ─── Success Screen ─── */
   if (created) {
@@ -411,52 +410,31 @@ export default function InstitutionRegister() {
       {/* Right - Form */}
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-[28rem]">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <button onClick={() => step === 0 ? setStarted(false) : setStep((s) => s - 1)}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer border-none transition-colors ${isDark ? 'bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10' : 'bg-black/5 text-black/30 hover:text-black/60 hover:bg-black/10'}`}>
-                <ChevronLeft size={16} />
-              </button>
-              <div>
-                <h2 className={`text-[1.125rem] font-bold ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>
-                  {isBn ? 'নতুন প্রতিষ্ঠান' : 'New Institution'}
-                </h2>
-                <p className={`text-[0.75rem] ${isDark ? 'text-white/35' : 'text-[var(--text-muted)]'}`}>
-                  {isBn ? `${step + 1}/${STEPS.length} — ${currentStep.labelBn}` : `${step + 1}/${STEPS.length} — ${currentStep.labelEn}`}
-                </p>
-              </div>
+          {/* Minimal top bar: close + step counter */}
+          <div className="flex items-center justify-between mb-8">
+            <div className={`flex items-center gap-2 text-[0.8125rem] font-medium ${isDark ? 'text-white/40' : 'text-[var(--text-muted)]'}`}>
+              <span className="text-[var(--brand)] font-bold">{step + 1}</span>
+              <span>/</span>
+              <span>{STEPS.length}</span>
+              <span className={`ml-1 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`}>— {isBn ? currentStep.labelBn : currentStep.labelEn}</span>
             </div>
             <button onClick={() => setStarted(false)}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer border-none transition-colors ${isDark ? 'bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10' : 'bg-black/5 text-black/30 hover:text-black/60 hover:bg-black/10'}`}>
-              <X size={16} />
+              className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer border-none transition-colors ${isDark ? 'bg-white/5 text-white/30 hover:text-white/60 hover:bg-white/10' : 'bg-black/5 text-black/25 hover:text-black/50 hover:bg-black/10'}`}>
+              <X size={15} />
             </button>
-          </div>
-
-          {/* Progress */}
-          <div className="flex gap-1.5 mb-8">
-            {STEPS.map((s, i) => (
-              <div key={s.key} className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${i <= step ? 'bg-[var(--brand)]' : isDark ? 'bg-white/10' : 'bg-black/10'}`} />
-            ))}
           </div>
 
           {/* Step Card */}
           <div className={`rounded-2xl p-8 ${isDark ? 'bg-white/[0.03] border border-white/[0.06]' : 'bg-white border border-[var(--border)] shadow-sm'}`}>
-            {/* Step badge */}
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg mb-6 text-[0.6875rem] font-medium ${isDark ? 'bg-white/5 text-white/50' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
-              <span className="text-[var(--brand)]"><StepIcon size={12} /></span>
-              {isBn ? currentStep.labelBn : currentStep.labelEn}
-            </div>
-
             <div className="space-y-5">
               {/* Step 1: Name */}
               {STEPS[step].key === 'name' && (
                 <>
-                  <ProField label={`${isBn ? 'প্রতিষ্ঠানের নাম' : 'Institution Name'} *`} value={form.name}
+                  <IconField icon={<Building2 size={16} />} label={`${isBn ? 'প্রতিষ্ঠানের নাম' : 'Institution Name'} *`} value={form.name}
                     onChange={(v) => set('name', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} isDark={isDark} />
-                  <ProField label={isBn ? 'বাংলায় নাম' : 'Bengali Name'} value={form.nameBn}
+                  <IconField icon={<Building2 size={16} />} label={isBn ? 'বাংলায় নাম' : 'Bengali Name'} value={form.nameBn}
                     onChange={(v) => set('nameBn', v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} isDark={isDark} />
-                  <ProField label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName}
+                  <IconField icon={<GraduationCap size={16} />} label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName}
                     onChange={(v) => set('brandName', v)} placeholder="EduTech" isDark={isDark} />
                 </>
               )}
@@ -473,6 +451,7 @@ export default function InstitutionRegister() {
                     </p>
                     <div className="flex items-center gap-0">
                       <div className={`flex-1 flex items-center h-12 px-4 rounded-l-xl border border-r-0 ${isDark ? 'border-white/10 bg-white/5' : 'border-[var(--border)] bg-[var(--bg-secondary)]'}`}>
+                        <Globe size={16} className={`shrink-0 mr-2.5 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
                         <input type="text" value={form.subdomain} onChange={(e) => set('subdomain', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
                           placeholder={isBn ? 'যেমন: sunrise-academy' : 'e.g. sunrise-academy'}
                           className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`} />
@@ -495,11 +474,11 @@ export default function InstitutionRegister() {
               {/* Step 3: Contact */}
               {STEPS[step].key === 'contact' && (
                 <>
-                  <ProField label={isBn ? 'ইমেইল' : 'Email'} type="email" value={form.email}
+                  <IconField icon={<Mail size={16} />} label={isBn ? 'ইমেইল' : 'Email'} type="email" value={form.email}
                     onChange={(v) => set('email', v)} placeholder="info@school.edu.bd" isDark={isDark} />
-                  <ProField label={isBn ? 'ফোন' : 'Phone'} value={form.phone}
+                  <IconField icon={<Phone size={16} />} label={isBn ? 'ফোন' : 'Phone'} value={form.phone}
                     onChange={(v) => set('phone', v)} placeholder="+880-2-1234567" isDark={isDark} />
-                  <ProField label={isBn ? 'ঠিকানা' : 'Address'} value={form.address}
+                  <IconField icon={<MapPin size={16} />} label={isBn ? 'ঠিকানা' : 'Address'} value={form.address}
                     onChange={(v) => set('address', v)} placeholder={isBn ? 'বাসা নং, রাস্তা, শহর' : 'House, Road, City'} isDark={isDark} />
                 </>
               )}
@@ -582,10 +561,13 @@ export default function InstitutionRegister() {
                       {isBn ? 'অ্যাডমিন ইমেইল *' : 'Admin Email *'}
                     </label>
                     <div className="flex gap-2">
-                      <input type="email" value={form.adminEmail}
-                        onChange={(e) => { set('adminEmail', e.target.value); setEmailSent(false); setEmailVerified(false); setEmailCode(''); setEmailError('') }}
-                        placeholder="admin@school.edu.bd" disabled={emailVerified}
-                        className={`flex-1 h-12 px-4 rounded-xl border text-[0.875rem] outline-none transition-all disabled:opacity-50 ${isDark ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]/50'}`} />
+                      <div className={`flex-1 flex items-center h-12 px-4 rounded-xl border text-[0.875rem] transition-all disabled:opacity-50 ${isDark ? 'border-white/10 bg-white/5' : 'border-[var(--border)] bg-[var(--bg-secondary)]'}`}>
+                        <Mail size={16} className={`shrink-0 mr-2.5 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
+                        <input type="email" value={form.adminEmail}
+                          onChange={(e) => { set('adminEmail', e.target.value); setEmailSent(false); setEmailVerified(false); setEmailCode(''); setEmailError('') }}
+                          placeholder="admin@school.edu.bd" disabled={emailVerified}
+                          className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'} disabled:opacity-50`} />
+                      </div>
                       {!emailVerified && (
                         <button onClick={sendOtp} disabled={sendingCode || !form.adminEmail.includes('@')}
                           className="h-12 px-5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold border-none cursor-pointer disabled:opacity-50 whitespace-nowrap transition-all hover:opacity-90">
@@ -616,34 +598,27 @@ export default function InstitutionRegister() {
                     )}
                   </div>
 
-                  <div>
-                    <label className={`text-[0.8125rem] font-medium mb-2 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
-                      {isBn ? 'পাসওয়ার্ড *' : 'Password *'}
-                    </label>
-                    <div className="relative">
-                      <Lock size={16} className={`absolute left-4 top-1/2 -translate-y-1/2 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
-                      <input type={showPassword ? 'text' : 'password'} value={form.adminPassword}
-                        onChange={(e) => set('adminPassword', e.target.value)}
-                        placeholder="••••••••" disabled={emailVerified}
-                        className={`w-full h-12 pl-11 pr-11 rounded-xl border text-[0.875rem] outline-none transition-all disabled:opacity-50 ${isDark ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]/50'}`} />
+                  <IconField icon={<Lock size={16} />} label={isBn ? 'পাসওয়ার্ড *' : 'Password *'} type={showPassword ? 'text' : 'password'}
+                    value={form.adminPassword} onChange={(v) => set('adminPassword', v)} placeholder="••••••••" isDark={isDark}
+                    disabled={emailVerified}
+                    suffix={
                       <button type="button" onClick={() => setShowPassword(!showPassword)}
-                        className={`absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer bg-transparent border-none transition-colors ${isDark ? 'text-white/30 hover:text-white/60' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
+                        className={`cursor-pointer bg-transparent border-none transition-colors ${isDark ? 'text-white/30 hover:text-white/60' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
+                    } />
+                  {form.adminPassword.length > 0 && (
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-1">
+                      {passwordValidation.map((r) => (
+                        <div key={r.label} className="flex items-center gap-1.5">
+                          <Check size={10} className={r.met ? 'text-[var(--green)]' : isDark ? 'text-white/20' : 'text-[var(--text-muted)]'} />
+                          <span className={`text-[0.6875rem] ${r.met ? 'text-[var(--green)]' : isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`}>
+                            {isBn ? r.labelBn : r.label}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                    {form.adminPassword.length > 0 && (
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-3">
-                        {passwordValidation.map((r) => (
-                          <div key={r.label} className="flex items-center gap-1.5">
-                            <Check size={10} className={r.met ? 'text-[var(--green)]' : isDark ? 'text-white/20' : 'text-[var(--text-muted)]'} />
-                            <span className={`text-[0.6875rem] ${r.met ? 'text-[var(--green)]' : isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`}>
-                              {isBn ? r.labelBn : r.label}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </>
               )}
             </div>
@@ -652,9 +627,8 @@ export default function InstitutionRegister() {
           {/* Footer Buttons */}
           <div className="flex items-center justify-between mt-6">
             <button onClick={() => step === 0 ? setStarted(false) : setStep((s) => s - 1)}
-              className={`h-11 px-5 rounded-xl text-[0.8125rem] font-medium border cursor-pointer flex items-center gap-2 transition-all ${isDark ? 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'}`}>
-              <ChevronLeft size={15} />
-              {isBn ? 'পূর্ববর্তী' : 'Back'}
+              className={`w-11 h-11 rounded-xl flex items-center justify-center cursor-pointer border transition-all ${isDark ? 'border-white/10 bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'}`}>
+              <ChevronLeft size={18} />
             </button>
 
             {step < STEPS.length - 1 ? (
@@ -679,15 +653,19 @@ export default function InstitutionRegister() {
   )
 }
 
-/* ─── Professional Field ─── */
-function ProField({ label, value, onChange, placeholder, type = 'text', isDark }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; isDark: boolean
+/* ─── Icon Field (modern input with icon) ─── */
+function IconField({ icon, label, value, onChange, placeholder, type = 'text', isDark, disabled, suffix }: {
+  icon: React.ReactNode; label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; isDark: boolean; disabled?: boolean; suffix?: React.ReactNode
 }) {
   return (
     <div>
       <label className={`text-[0.8125rem] font-medium mb-2 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>{label}</label>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className={`w-full h-12 px-4 rounded-xl border text-[0.875rem] outline-none transition-all placeholder:text-[var(--text-muted)] ${isDark ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50 focus:bg-white/[0.07]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:border-[var(--brand)]/50 focus:bg-[var(--bg-secondary)]'}`} />
+      <div className={`flex items-center h-12 px-4 rounded-xl border text-[0.875rem] transition-all ${isDark ? 'border-white/10 bg-white/5' : 'border-[var(--border)] bg-[var(--bg-secondary)]'} ${disabled ? 'opacity-50' : ''}`}>
+        <span className={`shrink-0 mr-2.5 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`}>{icon}</span>
+        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled}
+          className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`} />
+        {suffix && <span className="shrink-0 ml-2">{suffix}</span>}
+      </div>
     </div>
   )
 }

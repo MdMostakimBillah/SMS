@@ -4,7 +4,7 @@ import {
   Building2, Search, Filter, ChevronDown, ChevronUp,
   Users, GraduationCap, Calendar, Mail, Phone, Globe,
   MapPin, CheckCircle, XCircle, Pause, Clock,
-  CreditCard, Shield, Trash2, ExternalLink, Lock, Copy, Check,
+  CreditCard, Shield, Trash2, ExternalLink, Lock, Copy, Check, Plus,
 } from 'lucide-react'
 import { useSuperAdminStore, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { useAuth } from '@/contexts/AuthContext'
@@ -281,6 +281,14 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
             className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--brand)] focus:ring-0 focus:outline-none transition-colors"
           />
         </div>
+        <button
+          onClick={() => navigate('/super-admin/add-school')}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[0.8125rem] font-semibold border-none cursor-pointer transition-all"
+          style={{ background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)', color: '#fff' }}
+        >
+          <Plus size={15} />
+          {isBn ? 'নতুন প্রতিষ্ঠান' : 'Add Institution'}
+        </button>
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[0.8125rem] font-medium transition-all cursor-pointer ${
