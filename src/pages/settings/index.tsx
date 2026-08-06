@@ -7,7 +7,7 @@ import {
   Globe, Palette, Keyboard, Home,
   Mail, Bell, Shield, Key,
   Calendar,
-  Trash2,
+  Trash2, Star,
 } from 'lucide-react'
 import { SettingsGroup } from './components/SettingsGroup'
 import { SettingsRow } from './components/SettingsRow'
@@ -25,6 +25,7 @@ import { AccessModesPanel } from './panels/AccessModes'
 import { SessionManagementPanel } from './panels/SessionManagement'
 import { EmailPasswordPanel } from './panels/EmailPassword'
 import { DangerZonePanel } from './panels/DangerZone'
+import { BookmarkSettingsPanel } from './panels/BookmarkSettings'
 
 export default function Page() {
   const { user } = useAuth()
@@ -65,6 +66,14 @@ function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: bo
     ],
   }
 
+  const navigationGroup: SettingGroup = {
+    title: 'Navigation',
+    titleBn: 'নেভিগেশন',
+    items: [
+      { key: 'bookmarks', icon: Star, iconBg: '#f59e0b15', iconColor: '#f59e0b', title: 'Bookmarks', titleBn: 'বুকমার্ক', description: 'Quick access pages shown in sidebar', descriptionBn: 'সাইডবারে দেখানো দ্রুত প্রবেশের পৃষ্ঠাসমূহ' },
+    ],
+  }
+
   const loginGroup: SettingGroup = {
     title: 'Login',
     titleBn: 'লগইন',
@@ -95,8 +104,8 @@ function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: bo
   }
 
   const groups = isInstAdmin
-    ? [generalGroup, loginGroup, institutionGroup, accountGroup]
-    : [generalGroup, loginGroup, accountGroup]
+    ? [generalGroup, navigationGroup, loginGroup, institutionGroup, accountGroup]
+    : [generalGroup, navigationGroup, loginGroup, accountGroup]
 
   const allItems = groups.flatMap((g) => g.items)
   const activeItem = allItems.find((i) => i.key === activePanel)
@@ -115,6 +124,7 @@ function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: bo
       case 'session-mgmt': return <SessionManagementPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'email-password': return <EmailPasswordPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'danger-zone': return <DangerZonePanel isBn={isBn} onBack={() => setActivePanel(null)} />
+      case 'bookmarks': return <BookmarkSettingsPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       default: return null
     }
   }
