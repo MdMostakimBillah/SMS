@@ -453,7 +453,7 @@ export default function InstitutionRegister() {
                         <Globe size={16} className={`shrink-0 mr-2.5 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
                         <input type="text" value={form.subdomain} onChange={(e) => set('subdomain', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
                           placeholder={isBn ? 'যেমন: sunrise-academy' : 'e.g. sunrise-academy'}
-                          className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`} />
+                          className={`flex-1 bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`} />
                       </div>
                       <div className={`h-12 px-3 flex items-center rounded-r-xl border text-[0.75rem] ${isDark ? 'border-white/10 bg-white/5 text-white/30' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
                         .{BASE_URL}/i/
@@ -664,7 +664,7 @@ function IconField({ icon, label, value, onChange, placeholder, type = 'text', i
         <span className={`shrink-0 mr-2.5 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`}>{icon}</span>
         <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-          className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`} />
+          className={`flex-1 bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`} />
         {suffix && <span className="shrink-0 ml-2">{suffix}</span>}
       </div>
     </div>

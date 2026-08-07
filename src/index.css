@@ -6,9 +6,13 @@
 
 /* Remove focus outline on all input fields */
 input:focus,
+input:focus-visible,
 select:focus,
+select:focus-visible,
 textarea:focus,
-button:focus {
+textarea:focus-visible,
+button:focus,
+button:focus-visible {
   outline: none;
 }
 
