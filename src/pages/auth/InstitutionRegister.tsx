@@ -3,7 +3,7 @@ import {
   GraduationCap, Building2, Globe, Phone, Mail, MapPin,
   Upload, Palette, CreditCard, Shield, Eye, EyeOff,
   ChevronRight, ChevronLeft, Check, X,
-  Zap, BarChart3, Users, Lock, Loader2,
+  Zap, BarChart3, Users, Lock,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
@@ -623,10 +623,11 @@ export default function InstitutionRegister() {
                       </div>
                       {!emailVerified && (
                         <button onClick={sendOtp} disabled={sendingCode || !form.adminEmail.includes('@') || (emailSent && resendTimer > 0)}
-                          className="h-12 px-5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold border-none cursor-pointer disabled:opacity-50 whitespace-nowrap transition-all hover:opacity-90 flex items-center gap-1.5">
-                          {sendingCode ? <Loader2 size={14} className="animate-spin" /> : emailSent && resendTimer > 0
+                          className="h-12 px-5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold border-none cursor-pointer disabled:opacity-50 whitespace-nowrap transition-all hover:opacity-90 flex items-center justify-center gap-1.5">
+                          {sendingCode && <span className="flex items-center justify-center w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                          {!sendingCode && (emailSent && resendTimer > 0
                             ? `${Math.floor(resendTimer / 60)}:${String(resendTimer % 60).padStart(2, '0')}`
-                            : isBn ? 'কোড পাঠান' : 'Send Code'}
+                            : isBn ? 'কোড পাঠান' : 'Send Code')}
                         </button>
                       )}
                     </div>
