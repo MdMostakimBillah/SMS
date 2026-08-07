@@ -320,14 +320,14 @@ export default function CreateSchool() {
           </div>
 
           {/* Progress */}
-          <div className="px-6 py-2.5 border-b border-[var(--border)] shrink-0">
+          <div className="px-8 py-2.5 border-b border-[var(--border)] shrink-0">
             <div className="h-1 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
               <div className="h-full rounded-full bg-[var(--brand)] transition-all duration-500" style={{ width: `${((step + 1) / SECTION_STEPS.length) * 100}%` }} />
             </div>
           </div>
 
           {/* Field */}
-          <div className="flex-1 px-[26px] py-5 overflow-hidden">
+          <div className="flex-1 px-8 py-5 overflow-hidden">
             <div key={stepAnim.key} className={`h-full flex flex-col justify-center ${stepAnim.dir === 'next' ? 'animate-slideLeft' : 'animate-slideRight'}`}>
               <div className="mb-4">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.625rem] font-medium text-[var(--text-muted)] mb-2.5">
@@ -486,7 +486,7 @@ export default function CreateSchool() {
           </div>
 
           {/* Navigation */}
-          <div className="px-[26px] py-4 border-t border-[var(--border)] flex items-center gap-3 shrink-0">
+          <div className="px-8 py-4 border-t border-[var(--border)] flex items-center gap-3 shrink-0">
             <button
               onClick={() => bounceClick('back', () => animateStep(step - 1, 'prev'))}
               disabled={step === 0}
