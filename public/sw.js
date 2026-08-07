@@ -1,4 +1,4 @@
-const CACHE_NAME = 'edutech-pwa-v2'
+const CACHE_NAME = 'edutech-pwa-v3'
 let brandColor = '#6366f1'
 let institution = null // { name, brandName, slug, logo, brandColor }
 
@@ -22,9 +22,17 @@ function generateManifest(color) {
   const name = institution?.name || 'EduTech SMS'
   const shortName = institution?.brandName || institution?.name || 'EduTech'
   const slug = institution?.slug
-  const hasLogo = !!institution?.logo
+  const logo = institution?.logo
 
-  const manifest = {
+  // Build icons — institution logo first if available
+  const icons = []
+  if (logo) {
+    icons.push({ src: logo, sizes: '512x512', type: 'image/png', purpose: 'any maskable' })
+    icons.push({ src: logo, sizes: '192x192', type: 'image/png', purpose: 'any' })
+  }
+  icons.push({ src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' })
+
+  return {
     name,
     short_name: shortName.length > 12 ? shortName.slice(0, 12) : shortName,
     description: 'School Management System',
@@ -34,17 +42,8 @@ function generateManifest(color) {
     display: 'standalone',
     background_color: '#0a0a0f',
     theme_color: color,
-    icons: hasLogo
-      ? [
-          { src: institution.logo, sizes: 'any', type: 'image/png' },
-          { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' },
-        ]
-      : [
-          { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' },
-        ],
+    icons,
   }
-
-  return manifest
 }
 
 self.addEventListener('message', (event) => {
@@ -79,13 +78,33 @@ self.addEventListener('fetch', (event) => {
     }
   }
 
+  // Favicon — return institution logo if available, otherwise generate SVG
   if (url.pathname === '/favicon.svg' || url.pathname === '/favicon.ico') {
-    const letter = institution?.name ? institution.name.charAt(0).toUpperCase() : 'E'
-    event.respondWith(
-      new Response(generateFaviconSVG(brandColor, letter), {
-        headers: { 'Content-Type': 'image/svg+xml' },
-      })
-    )
+    if (institution?.logo) {
+      // Proxy the institution logo directly
+      event.respondWith(
+        fetch(institution.logo).then((res) => {
+          if (res.ok) return res
+          // Fallback to generated SVG if logo fetch fails
+          const letter = institution.name ? institution.name.charAt(0).toUpperCase() : 'E'
+          return new Response(generateFaviconSVG(brandColor, letter), {
+            headers: { 'Content-Type': 'image/svg+xml' },
+          })
+        }).catch(() => {
+          const letter = institution.name ? institution.name.charAt(0).toUpperCase() : 'E'
+          return new Response(generateFaviconSVG(brandColor, letter), {
+            headers: { 'Content-Type': 'image/svg+xml' },
+          })
+        })
+      )
+    } else {
+      const letter = institution?.name ? institution.name.charAt(0).toUpperCase() : 'E'
+      event.respondWith(
+        new Response(generateFaviconSVG(brandColor, letter), {
+          headers: { 'Content-Type': 'image/svg+xml' },
+        })
+      )
+    }
     return
   }
 
