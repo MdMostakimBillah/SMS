@@ -10,7 +10,7 @@ function getLoginRedirect(): string {
     const slug = sessionStorage.getItem('edutech_inst_slug')
     if (slug) return `/i/${slug}`
   } catch { /* ignore */ }
-  return LOGIN_PATH
+  return LOGIN_PATH ? `${LOGIN_PATH}/login` : '/register'
 }
 
 export function ProtectedRoute() {

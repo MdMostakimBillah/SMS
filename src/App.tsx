@@ -151,7 +151,7 @@ function AppContent() {
         </Route>
 
         <Route element={<AuthRoute />}>
-          {LOGIN_PATH && <Route path={LOGIN_PATH} element={<F><LoginPage /></F>} />}
+          {LOGIN_PATH && <Route path={`${LOGIN_PATH}/login`} element={<F><LoginPage /></F>} />}
           <Route path="/register" element={<F><InstitutionRegister /></F>} />
           <Route path="/" element={<Navigate to="/register" replace />} />
           <Route path="/login" element={<Navigate to="/register" replace />} />

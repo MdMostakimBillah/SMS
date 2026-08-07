@@ -962,7 +962,7 @@ export default React.memo(function Topbar() {
                     if (role === 'admin' && slug) {
                       navigate(`/i/${slug}`)
                     } else {
-                      navigate(LOGIN_PATH)
+                      navigate(LOGIN_PATH ? `${LOGIN_PATH}/login` : '/register')
                     }
                   }}
                 >
