@@ -163,6 +163,26 @@ export default function InstitutionRegister() {
     document.documentElement.setAttribute('data-theme', next)
   }
 
+  // Instantly apply brand color to all CSS vars when changed
+  useEffect(() => {
+    const hex = form.brandColor
+    if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    const root = document.documentElement
+    root.style.setProperty('--brand', hex)
+    root.style.setProperty('--brand-2', `rgb(${Math.min(255, r + 30)}, ${Math.min(255, g + 30)}, ${Math.min(255, b + 30)})`)
+    root.style.setProperty('--brand-light', `rgba(${r}, ${g}, ${b}, 0.1)`)
+    root.style.setProperty('--brand-lighter', `rgba(${r}, ${g}, ${b}, 0.05)`)
+    return () => {
+      root.style.removeProperty('--brand')
+      root.style.removeProperty('--brand-2')
+      root.style.removeProperty('--brand-light')
+      root.style.removeProperty('--brand-lighter')
+    }
+  }, [form.brandColor])
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
