@@ -3,7 +3,7 @@ import {
   GraduationCap, Building2, Globe, Phone, Mail, MapPin,
   Upload, Palette, CreditCard, Shield, Eye, EyeOff,
   ChevronRight, ChevronLeft, Check, X,
-  Zap, BarChart3, Users, Lock,
+  Zap, BarChart3, Users, Lock, Loader2,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
@@ -103,7 +103,8 @@ function OtpInput({ length, value, onChange, disabled, isDark }: { length: numbe
         <input key={i} ref={(el) => { refs.current[i] = el }} type="text" inputMode="text" autoComplete="one-time-code"
           maxLength={length} value={value[i] || ''} onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)} disabled={disabled}
-          className={`w-11 h-12 rounded-xl border text-center text-lg font-mono font-bold outline-none transition-all disabled:opacity-50 ${isDark ? 'border-white/10 bg-white/5 text-white focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10'}`} />
+          style={{ background: isDark ? 'rgba(255,255,255,0.06)' : undefined, color: isDark ? '#fff' : undefined, borderColor: isDark ? 'rgba(255,255,255,0.12)' : undefined }}
+          className={`w-11 h-12 rounded-xl border text-center text-lg font-mono font-bold outline-none transition-all disabled:opacity-50 ${isDark ? 'focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10'}`} />
       ))}
     </div>
   )
@@ -602,8 +603,8 @@ export default function InstitutionRegister() {
                       </div>
                       {!emailVerified && (
                         <button onClick={sendOtp} disabled={sendingCode || !form.adminEmail.includes('@') || (emailSent && resendTimer > 0)}
-                          className="h-12 px-5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold border-none cursor-pointer disabled:opacity-50 whitespace-nowrap transition-all hover:opacity-90">
-                          {sendingCode ? '...' : emailSent && resendTimer > 0
+                          className="h-12 px-5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold border-none cursor-pointer disabled:opacity-50 whitespace-nowrap transition-all hover:opacity-90 flex items-center gap-1.5">
+                          {sendingCode ? <Loader2 size={14} className="animate-spin" /> : emailSent && resendTimer > 0
                             ? `${Math.floor(resendTimer / 60)}:${String(resendTimer % 60).padStart(2, '0')}`
                             : isBn ? 'কোড পাঠান' : 'Send Code'}
                         </button>
@@ -629,7 +630,7 @@ export default function InstitutionRegister() {
 
                   <IconField icon={<Lock size={16} />} label={isBn ? 'পাসওয়ার্ড *' : 'Password *'} type={showPassword ? 'text' : 'password'}
                     value={form.adminPassword} onChange={(v) => set('adminPassword', v)} placeholder="••••••••" isDark={isDark}
-                    disabled={false}
+                    disabled={!emailVerified}
                     suffix={
                       <button type="button" onClick={() => setShowPassword(!showPassword)}
                         className={`cursor-pointer bg-transparent border-none transition-colors ${isDark ? 'text-white/30 hover:text-white/60' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
