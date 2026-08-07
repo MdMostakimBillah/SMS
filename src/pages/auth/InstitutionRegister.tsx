@@ -318,14 +318,14 @@ export default function InstitutionRegister() {
             </div>
 
             {/* Features */}
-            <div className="space-y-4 mb-8">
+            <div className="space-y-3 mb-8">
               {[
                 { icon: Users, title: isBn ? 'ছাত্র ও শিক্ষক ম্যানেজমেন্ট' : 'Student & Teacher Management', desc: isBn ? 'সকল তথ্য এক জায়গায়' : 'All data in one place' },
                 { icon: BarChart3, title: isBn ? 'পরীক্ষা ও ফলাফল' : 'Exams & Results', desc: isBn ? 'স্বয়ংক্রিয় গ্রেডিং ও রিপোর্ট' : 'Automatic grading & reports' },
                 { icon: Zap, title: isBn ? 'ফি ও হিসাব' : 'Fees & Accounting', desc: isBn ? 'অনলাইন পেমেন্ট ও হিসাব' : 'Online payment & accounting' },
               ].map((f, i) => (
                 <div key={i} className={`flex items-start gap-3 p-3 rounded-xl transition-all ${isDark ? 'bg-white/[0.03] hover:bg-white/[0.05]' : 'bg-white hover:shadow-sm'}`}>
-                  <div className="w-9 h-9 rounded-lg bg-[var(--brand)]/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: `${isDark ? 'rgba(255,255,255,0.06)' : 'var(--brand-light, rgba(99,102,241,0.1))'}` }}>
                     <f.icon size={16} className="text-[var(--brand)]" />
                   </div>
                   <div>
@@ -337,18 +337,20 @@ export default function InstitutionRegister() {
             </div>
 
             <button onClick={() => setStarted(true)}
-              className="w-full h-12 rounded-xl text-[0.875rem] font-semibold border-none cursor-pointer flex items-center justify-center gap-2 transition-all"
+              className="w-full h-12 rounded-xl text-[0.875rem] font-semibold border-none cursor-pointer flex items-center justify-center gap-2 transition-all hover:opacity-90"
               style={{ background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)', color: '#fff' }}>
               {isBn ? 'এখনই শুরু করুন' : 'Get Started'}
               <ChevronRight size={16} />
             </button>
 
-            <p className={`text-center text-[0.6875rem] mt-4 ${isDark ? 'text-white/20' : 'text-[var(--text-muted)]'}`}>
-              {isBn ? 'ইতিমধ্যে অ্যাকাউন্ট আছে?' : 'Already have an account?'}{' '}
-              <button onClick={() => navigate(LOGIN_PATH)} className="text-[var(--brand)] hover:underline bg-transparent border-none cursor-pointer text-[0.6875rem] p-0">
-                {isBn ? 'সাইন ইন' : 'Sign in'}
-              </button>
-            </p>
+            <div className="mt-6 text-center">
+              <p className={`text-[0.75rem] ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>
+                {isBn ? 'ইতিমধ্যে অ্যাকাউন্ট আছে?' : 'Already have an account?'}{' '}
+                <button onClick={() => navigate(LOGIN_PATH)} className="text-[var(--brand)] hover:underline bg-transparent border-none cursor-pointer text-[0.75rem] p-0">
+                  {isBn ? 'সাইন ইন' : 'Sign in'}
+                </button>
+              </p>
+            </div>
           </div>
         </div>
       </div>
