@@ -12,6 +12,8 @@ import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage
 import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
 
+const btnBounce = `animate-[btnBounce_0.35s_cubic-bezier(0.34,1.56,0.64,1)]`
+
 interface SchoolForm {
   name: string
   nameBn: string
@@ -154,6 +156,7 @@ export default function CreateSchool() {
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [stepAnim, setStepAnim] = useState<{ key: number; dir: 'next' | 'prev' }>({ key: 0, dir: 'next' })
+  const [bounceBtn, setBounceBtn] = useState<'next' | 'back' | null>(null)
 
   const currentSection = SECTION_STEPS[step]
   const isLastStep = step === SECTION_STEPS.length - 1
@@ -164,6 +167,11 @@ export default function CreateSchool() {
     setStepAnim({ key: newStep, dir })
     setStep(newStep)
   }, [])
+
+  const bounceClick = (which: 'next' | 'back', fn: () => void) => {
+    setBounceBtn(which)
+    setTimeout(() => { setBounceBtn(null); fn() }, 300)
+  }
 
   const passwordValidation = useMemo(() => {
     return PASSWORD_RULES.map((rule) => ({
@@ -480,9 +488,9 @@ export default function CreateSchool() {
           {/* Navigation */}
           <div className="px-6 py-4 border-t border-[var(--border)] flex items-center gap-3 shrink-0">
             <button
-              onClick={() => animateStep(step - 1, 'prev')}
+              onClick={() => bounceClick('back', () => animateStep(step - 1, 'prev'))}
               disabled={step === 0}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer border border-[var(--border)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-[var(--bg-tertiary)]"
+              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer border border-[var(--border)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-[var(--bg-tertiary)] ${bounceBtn === 'back' ? btnBounce : ''}`}
             >
               <ChevronLeft size={13} />
               {isBn ? 'আগে' : 'Back'}
@@ -499,9 +507,9 @@ export default function CreateSchool() {
               </button>
             ) : (
               <button
-                onClick={() => animateStep(step + 1, 'next')}
+                onClick={() => bounceClick('next', () => animateStep(step + 1, 'next'))}
                 disabled={!canNext}
-                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--brand)] text-white cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:opacity-90"
+                className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--brand)] text-white cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:opacity-90 ${bounceBtn === 'next' ? btnBounce : ''}`}
               >
                 {isBn ? 'পরবর্তী' : 'Next'}
                 <ChevronRight size={13} />
