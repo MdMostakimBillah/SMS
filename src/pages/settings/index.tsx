@@ -7,7 +7,7 @@ import {
   Mail, Bell, Shield, Key,
   Calendar,
   Trash2, Star,
-  Monitor, Code, Activity,
+  Monitor, Code, Activity, Users,
 } from 'lucide-react'
 import { SettingsGroup } from './components/SettingsGroup'
 import { SettingsRow } from './components/SettingsRow'
@@ -30,6 +30,7 @@ import { ActiveSessionsPanel } from './panels/ActiveSessions'
 import { ApiKeysPanel } from './panels/ApiKeys'
 import { NotificationPreferencesPanel } from './panels/NotificationPreferences'
 import { ActivityLogPanel } from './panels/ActivityLog'
+import { StaffPermissionsPanel } from './panels/StaffPermissions'
 
 export default function Page() {
   const { user } = useAuth()
@@ -95,6 +96,7 @@ function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: bo
     items: [
       { key: 'access-modes', icon: Globe, iconBg: '#3b82f615', iconColor: '#3b82f6', title: 'Access Modes', titleBn: 'অ্যাক্সেস মোড', description: 'Path, subdomain, and custom domain access', descriptionBn: 'পাথ, সাবডোমেইন ও কাস্টম ডোমেইন অ্যাক্সেস' },
       { key: 'session-mgmt', icon: Calendar, iconBg: '#8b5cf615', iconColor: '#8b5cf6', title: 'Session Management', titleBn: 'সেশন ব্যবস্থাপনা', description: 'Manage academic sessions', descriptionBn: 'শৈক্ষিক সেশন পরিচালনা করুন' },
+      { key: 'staff-permissions', icon: Users, iconBg: '#10b98115', iconColor: '#10b981', title: 'Staff Permissions', titleBn: 'স্টাফ অনুমতি', description: 'Manage teacher and staff access', descriptionBn: 'শিক্ষক ও স্টাফের অ্যাক্সেস পরিচালনা করুন' },
     ],
   }
 
@@ -137,6 +139,7 @@ function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: bo
       case 'login-method': return <ChangeLoginMethodPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'access-modes': return <AccessModesPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'session-mgmt': return <SessionManagementPanel isBn={isBn} onBack={() => setActivePanel(null)} />
+      case 'staff-permissions': return <StaffPermissionsPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'email-password': return <EmailPasswordPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'danger-zone': return <DangerZonePanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'bookmarks': return <BookmarkSettingsPanel isBn={isBn} onBack={() => setActivePanel(null)} />
