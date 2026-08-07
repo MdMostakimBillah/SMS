@@ -1,6 +1,14 @@
-const CACHE_NAME = 'edutech-icons-v1'
+const CACHE_NAME = 'edutech-pwa-v2'
 let brandColor = '#6366f1'
 let institution = null // { name, brandName, slug, logo, brandColor }
+
+self.addEventListener('install', () => {
+  self.skipWaiting()
+})
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim())
+})
 
 function generateFaviconSVG(color, letter) {
   const l = letter || 'E'
@@ -61,8 +69,15 @@ self.addEventListener('message', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
 
-  // Only intercept same-origin requests
   if (url.origin !== self.location.origin) return
+
+  // Auto-detect institution from URL path if not set via message
+  if (!institution) {
+    const pathMatch = url.pathname.match(/^\/i\/([^/]+)/)
+    if (pathMatch) {
+      institution = { name: null, brandName: null, slug: pathMatch[1], logo: null, brandColor: '#6366f1' }
+    }
+  }
 
   if (url.pathname === '/favicon.svg' || url.pathname === '/favicon.ico') {
     const letter = institution?.name ? institution.name.charAt(0).toUpperCase() : 'E'
