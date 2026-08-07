@@ -588,12 +588,17 @@ export default function InstitutionRegister() {
                       {isBn ? 'অ্যাডমিন ইমেইল *' : 'Admin Email *'}
                     </label>
                     <div className="flex gap-2">
-                      <div className={`flex-1 flex items-center h-12 px-4 rounded-xl border transition-all disabled:opacity-50 ${isDark ? 'border-white/10 bg-white/5 focus-within:ring-2 focus-within:ring-[var(--brand)]/40 focus-within:border-[var(--brand)]/50' : 'border-[var(--border)] bg-[var(--bg-secondary)] focus-within:ring-2 focus-within:ring-[var(--brand)]/30 focus-within:border-[var(--brand)]/50'}`}>
+                      <div className={`flex-1 flex items-center h-12 px-4 rounded-xl border transition-all ${isDark ? 'border-white/10 bg-white/5 focus-within:ring-2 focus-within:ring-[var(--brand)]/40 focus-within:border-[var(--brand)]/50' : 'border-[var(--border)] bg-[var(--bg-secondary)] focus-within:ring-2 focus-within:ring-[var(--brand)]/30 focus-within:border-[var(--brand)]/50'} ${emailVerified ? (isDark ? 'border-[var(--green)]/30' : 'border-[var(--green)]/30') : ''}`}>
                         <Mail size={16} className={`shrink-0 mr-2.5 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
                         <input type="email" value={form.adminEmail}
                           onChange={(e) => { set('adminEmail', e.target.value); setEmailSent(false); setEmailVerified(false); setEmailCode(''); setEmailError('') }}
                           placeholder="admin@school.edu.bd" disabled={emailVerified}
                           className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'} disabled:opacity-50`} />
+                        {emailVerified && (
+                          <span className="shrink-0 ml-2 w-5 h-5 rounded-full bg-[var(--green)]/15 flex items-center justify-center">
+                            <Check size={12} className="text-[var(--green)]" />
+                          </span>
+                        )}
                       </div>
                       {!emailVerified && (
                         <button onClick={sendOtp} disabled={sendingCode || !form.adminEmail.includes('@') || (emailSent && resendTimer > 0)}
@@ -602,12 +607,6 @@ export default function InstitutionRegister() {
                             ? `${Math.floor(resendTimer / 60)}:${String(resendTimer % 60).padStart(2, '0')}`
                             : isBn ? 'কোড পাঠান' : 'Send Code'}
                         </button>
-                      )}
-                      {emailVerified && (
-                        <div className="h-12 px-5 rounded-xl bg-[var(--green)]/10 flex items-center gap-1.5">
-                          <Check size={14} className="text-[var(--green)]" />
-                          <span className="text-[0.75rem] text-[var(--green)] font-medium">{isBn ? 'যাচাইকৃত' : 'Verified'}</span>
-                        </div>
                       )}
                     </div>
                     {emailSent && !emailVerified && (
