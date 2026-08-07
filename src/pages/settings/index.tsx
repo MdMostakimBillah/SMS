@@ -54,10 +54,10 @@ export default function Page() {
     )
   }
 
-  return <SettingsContent isBn={isBn} isInstAdmin={isInstAdmin} />
+  return <SettingsContent isBn={isBn} isInstAdmin={isInstAdmin} isSuperAdmin={isSuperAdmin} />
 }
 
-function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: boolean }) {
+function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; isInstAdmin: boolean; isSuperAdmin: boolean }) {
   const [activePanel, setActivePanel] = useState<string | null>(null)
 
   const generalGroup: SettingGroup = {
@@ -120,7 +120,7 @@ function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: bo
     ],
   }
 
-  const groups = isInstAdmin
+  const groups = isInstAdmin || isSuperAdmin
     ? [generalGroup, navigationGroup, loginGroup, institutionGroup, advancedGroup, accountGroup]
     : [generalGroup, navigationGroup, loginGroup, advancedGroup, accountGroup]
 
