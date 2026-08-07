@@ -7,6 +7,7 @@ import {
   Mail, Bell, Shield, Key,
   Calendar,
   Trash2, Star,
+  Monitor, Code, Activity,
 } from 'lucide-react'
 import { SettingsGroup } from './components/SettingsGroup'
 import { SettingsRow } from './components/SettingsRow'
@@ -25,6 +26,10 @@ import { SessionManagementPanel } from './panels/SessionManagement'
 import { EmailPasswordPanel } from './panels/EmailPassword'
 import { DangerZonePanel } from './panels/DangerZone'
 import { BookmarkSettingsPanel } from './panels/BookmarkSettings'
+import { ActiveSessionsPanel } from './panels/ActiveSessions'
+import { ApiKeysPanel } from './panels/ApiKeys'
+import { NotificationPreferencesPanel } from './panels/NotificationPreferences'
+import { ActivityLogPanel } from './panels/ActivityLog'
 
 export default function Page() {
   const { user } = useAuth()
@@ -74,8 +79,8 @@ function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: bo
   }
 
   const loginGroup: SettingGroup = {
-    title: 'Login',
-    titleBn: 'লগইন',
+    title: 'Login & Security',
+    titleBn: 'লগইন ও নিরাপত্তা',
     items: [
       { key: 'backup-email', icon: Mail, iconBg: '#10b98115', iconColor: '#10b981', title: 'Backup Email', titleBn: 'ব্যাকআপ ইমেইল', description: 'Receive recovery links via a backup address', descriptionBn: 'ব্যাকআপ ঠিকানার মাধ্যমে পুনরুদ্ধার লিংক পান' },
       { key: 'login-alerts', icon: Bell, iconBg: '#ef444415', iconColor: '#ef4444', title: 'Login Alerts', titleBn: 'লগইন সতর্কতা', description: 'Get notified whenever your account is accessed', descriptionBn: 'অ্যাকাউন্ট অ্যাক্সেস হলে সতর্কতা পান', rightLabel: 'On', rightLabelBn: 'চালু' },
@@ -93,6 +98,17 @@ function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: bo
     ],
   }
 
+  const advancedGroup: SettingGroup = {
+    title: 'Advanced',
+    titleBn: 'উন্নত',
+    items: [
+      { key: 'active-sessions', icon: Monitor, iconBg: '#3b82f615', iconColor: '#3b82f6', title: 'Active Sessions', titleBn: 'সক্রিয় সেশন', description: 'View and manage logged-in devices', descriptionBn: 'লগইন করা ডিভাইস দেখুন ও পরিচালনা করুন' },
+      { key: 'api-keys', icon: Code, iconBg: '#10b98115', iconColor: '#10b981', title: 'API Keys', titleBn: 'API কী', description: 'Manage API access keys', descriptionBn: 'API অ্যাক্সেস কী পরিচালনা করুন' },
+      { key: 'notification-prefs', icon: Bell, iconBg: '#f59e0b15', iconColor: '#f59e0b', title: 'Notification Preferences', titleBn: 'নোটিফিকেশন পছন্দ', description: 'Choose notification channels', descriptionBn: 'নোটিফিকেশন চ্যানেল নির্বাচন করুন' },
+      { key: 'activity-log', icon: Activity, iconBg: '#8b5cf615', iconColor: '#8b5cf6', title: 'Activity Log', titleBn: 'কার্যক্রম লগ', description: 'View recent account activity', descriptionBn: 'সাম্প্রতিক অ্যাকাউন্ট কার্যক্রম দেখুন' },
+    ],
+  }
+
   const accountGroup: SettingGroup = {
     title: 'Account',
     titleBn: 'অ্যাকাউন্ট',
@@ -103,8 +119,8 @@ function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: bo
   }
 
   const groups = isInstAdmin
-    ? [generalGroup, navigationGroup, loginGroup, institutionGroup, accountGroup]
-    : [generalGroup, navigationGroup, loginGroup, accountGroup]
+    ? [generalGroup, navigationGroup, loginGroup, institutionGroup, advancedGroup, accountGroup]
+    : [generalGroup, navigationGroup, loginGroup, advancedGroup, accountGroup]
 
   const allItems = groups.flatMap((g) => g.items)
   const activeItem = allItems.find((i) => i.key === activePanel)
@@ -124,6 +140,10 @@ function SettingsContent({ isBn, isInstAdmin }: { isBn: boolean; isInstAdmin: bo
       case 'email-password': return <EmailPasswordPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'danger-zone': return <DangerZonePanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'bookmarks': return <BookmarkSettingsPanel isBn={isBn} onBack={() => setActivePanel(null)} />
+      case 'active-sessions': return <ActiveSessionsPanel isBn={isBn} onBack={() => setActivePanel(null)} />
+      case 'api-keys': return <ApiKeysPanel isBn={isBn} onBack={() => setActivePanel(null)} />
+      case 'notification-prefs': return <NotificationPreferencesPanel isBn={isBn} onBack={() => setActivePanel(null)} />
+      case 'activity-log': return <ActivityLogPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       default: return null
     }
   }

@@ -30,6 +30,12 @@ interface SettingsState {
   }
   loginMethod: 'password' | 'passkey' | '2fa'
   twoFactorEnabled: boolean
+  notificationPreferences: {
+    email: boolean
+    sms: boolean
+    push: boolean
+    security: boolean
+  }
 }
 
 interface AppState {
@@ -97,6 +103,12 @@ export const useAppStore = create<AppState>()(
         },
         loginMethod: 'password',
         twoFactorEnabled: false,
+        notificationPreferences: {
+          email: true,
+          sms: false,
+          push: true,
+          security: true,
+        },
       },
 
       setTheme: (theme) => {
