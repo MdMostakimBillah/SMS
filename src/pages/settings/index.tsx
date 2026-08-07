@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { AlertTriangle, Search } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
@@ -12,6 +12,7 @@ import {
 import { SettingsGroup } from './components/SettingsGroup'
 import { SettingsRow } from './components/SettingsRow'
 import type { SettingGroup } from './types'
+import gsap from 'gsap'
 
 import { LanguageRegionPanel } from './panels/LanguageRegion'
 import { ThemeDisplayPanel } from './panels/ThemeDisplay'
@@ -60,6 +61,15 @@ export default function Page() {
 function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; isInstAdmin: boolean; isSuperAdmin: boolean }) {
   const [activePanel, setActivePanel] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (activePanel) return
+    const el = containerRef.current
+    if (!el) return
+    const items = el.querySelectorAll('.gsap-fade-up')
+    gsap.fromTo(items, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: 'power2.out' })
+  }, [activePanel])
 
   const generalGroup: SettingGroup = {
     title: 'General Settings',
@@ -172,7 +182,7 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
     <div className="max-w-2xl mx-auto px-4 py-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-[1.375rem] font-bold text-[var(--text-primary)]">
+        <h1 className="text-[1.375rem] font-bold text-[var(--text-primary)] tracking-tight">
           {isBn ? 'সেটিংস' : 'Settings'}
         </h1>
       </div>
@@ -181,9 +191,9 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
       {activePanel && activeItem ? (
         renderPanel()
       ) : (
-        <>
+        <div ref={containerRef}>
           {/* Search Bar */}
-          <div className="mb-5">
+          <div className="mb-5 gsap-fade-up">
             <div className="relative">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
               <input
@@ -191,34 +201,42 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={isBn ? 'সেটিংস খুঁজুন...' : 'Search settings...'}
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.875rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)] transition-colors"
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.875rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] placeholder:text-[var(--text-muted)] transition-all duration-200"
               />
             </div>
           </div>
 
           <div>
             {filteredGroups.map((group) => (
-              <SettingsGroup key={group.title} title={group.title} titleBn={group.titleBn} isBn={isBn}>
-                {group.items.map((item, idx) => (
-                  <SettingsRow
-                    key={item.key}
-                    item={item}
-                    isBn={isBn}
-                    isLast={idx === group.items.length - 1}
-                    onClick={() => setActivePanel(item.key)}
-                  />
-                ))}
-              </SettingsGroup>
+              <div key={group.title} className="gsap-fade-up">
+                <SettingsGroup title={group.title} titleBn={group.titleBn} isBn={isBn}>
+                  {group.items.map((item, idx) => (
+                    <SettingsRow
+                      key={item.key}
+                      item={item}
+                      isBn={isBn}
+                      isLast={idx === group.items.length - 1}
+                      onClick={() => setActivePanel(item.key)}
+                    />
+                  ))}
+                </SettingsGroup>
+              </div>
             ))}
             {filteredGroups.length === 0 && searchQuery && (
-              <div className="text-center py-8">
-                <div className="text-[0.875rem] text-[var(--text-muted)]">
+              <div className="text-center py-12 gsap-fade-up">
+                <div className="w-12 h-12 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3">
+                  <Search size={20} className="text-[var(--text-muted)]" />
+                </div>
+                <div className="text-[0.875rem] font-medium text-[var(--text-primary)] mb-1">
                   {isBn ? 'কোনো সেটিংস পাওয়া যায়নি' : 'No settings found'}
+                </div>
+                <div className="text-[0.75rem] text-[var(--text-muted)]">
+                  {isBn ? 'অন্য কীওয়ার্ড দিয়ে খুঁজুন' : 'Try a different keyword'}
                 </div>
               </div>
             )}
           </div>
-        </>
+        </div>
       )}
     </div>
   )
