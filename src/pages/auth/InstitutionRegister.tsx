@@ -79,7 +79,7 @@ const STEPS = [
 ]
 
 /* ─── OtpInput ─── */
-function OtpInput({ length, value, onChange, disabled }: { length: number; value: string; onChange: (v: string) => void; disabled?: boolean }) {
+function OtpInput({ length, value, onChange, disabled, isDark }: { length: number; value: string; onChange: (v: string) => void; disabled?: boolean; isDark: boolean }) {
   const refs = useRef<(HTMLInputElement | null)[]>([])
   const handleChange = (i: number, d: string) => {
     if (d.length > 1) {
@@ -103,7 +103,7 @@ function OtpInput({ length, value, onChange, disabled }: { length: number; value
         <input key={i} ref={(el) => { refs.current[i] = el }} type="text" inputMode="text" autoComplete="one-time-code"
           maxLength={length} value={value[i] || ''} onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)} disabled={disabled}
-          className="w-11 h-12 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-center text-lg font-mono font-bold text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all disabled:opacity-50" />
+          className={`w-11 h-12 rounded-xl border text-center text-lg font-mono font-bold outline-none transition-all disabled:opacity-50 ${isDark ? 'border-white/10 bg-white/5 text-white focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10'}`} />
       ))}
     </div>
   )
@@ -616,7 +616,7 @@ export default function InstitutionRegister() {
                             {isBn ? 'ডেমো মোড: কোড হলো' : 'Demo mode: Your code is'} <strong>{emailCode}</strong>
                           </div>
                         )}
-                        <OtpInput length={6} value={emailCodeInput} onChange={setEmailCodeInput} />
+                        <OtpInput length={6} value={emailCodeInput} onChange={setEmailCodeInput} isDark={isDark} />
                         {emailError && <p className="text-[0.75rem] text-[var(--red)] text-center">{emailError}</p>}
                         {emailCodeInput.length < 6 && (
                           <p className="text-[0.75rem] text-[var(--text-muted)] text-center">
