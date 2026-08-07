@@ -10,7 +10,6 @@ import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage
 import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
-import { LOGIN_PATH } from '@/lib/constants'
 import { setAuthToken } from '@/lib/api'
 
 const BASE_URL = 'smsappbd.vercel.app'
@@ -118,6 +117,7 @@ export default function InstitutionRegister() {
   const institutions = useSuperAdminStore((s) => s.institutions)
 
   const [started, setStarted] = useState(false)
+  const [showLoginHint, setShowLoginHint] = useState(false)
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<RegForm>(defaultForm)
   const [showPassword, setShowPassword] = useState(false)
@@ -344,12 +344,22 @@ export default function InstitutionRegister() {
             </button>
 
             <div className="mt-6 text-center">
-              <p className={`text-[0.75rem] ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>
-                {isBn ? 'ইতিমধ্যে অ্যাকাউন্ট আছে?' : 'Already have an account?'}{' '}
-                <button onClick={() => navigate(LOGIN_PATH)} className="text-[var(--brand)] hover:underline bg-transparent border-none cursor-pointer text-[0.75rem] p-0">
-                  {isBn ? 'সাইন ইন' : 'Sign in'}
-                </button>
-              </p>
+              <button onClick={() => setShowLoginHint(!showLoginHint)}
+                className={`text-[0.75rem] cursor-pointer bg-transparent border-none transition-colors ${isDark ? 'text-white/30 hover:text-white/50' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
+                {isBn ? 'ইতিমধ্যে অ্যাকাউন্ট আছে?' : 'Already have an account?'}
+              </button>
+              {showLoginHint && (
+                <div className={`mt-3 p-4 rounded-xl text-left text-[0.75rem] leading-relaxed ${isDark ? 'bg-white/[0.03] border border-white/[0.06] text-white/50' : 'bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)]'}`}>
+                  <p className="font-medium mb-2">{isBn ? 'আপনার প্রতিষ্ঠানে লগইন করুন:' : 'Login to your institution:'}</p>
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>{isBn ? 'আপনার প্রতিষ্ঠানের ইউআরএলে যান' : 'Go to your institution URL'}</li>
+                    <li>{isBn ? 'সেখানে ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন' : 'Enter email & password to login'}</li>
+                  </ol>
+                  <p className="mt-2 text-[0.6875rem] opacity-60">
+                    {isBn ? 'URL পাচ্ছেন না? আপনার প্রতিষ্ঠান প্রশাসকের সাথে যোগাযোগ করুন।' : "Can't find the URL? Contact your institution admin."}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
