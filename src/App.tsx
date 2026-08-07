@@ -12,8 +12,8 @@ import { useSuperAdminStore } from '@/store/superAdminStore'
 
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const InstitutionRegister = lazy(() => import('@/pages/auth/InstitutionRegister'))
-const InstitutionLogin = lazy(() => import('@/pages/auth/InstitutionLogin'))
 const InstitutionLoginRoute = lazy(() => import('@/pages/auth/InstitutionLoginRoute'))
+const InstitutionLanding = lazy(() => import('@/pages/institution/InstitutionLanding'))
 const DashboardPage = lazy(() => import('@/pages/dashboard'))
 const SuperAdminPage = lazy(() => import('@/pages/super-admin'))
 const StudentsPage = lazy(() => import('@/pages/students'))
@@ -89,7 +89,7 @@ function AppContent() {
     if (resolved.mode === 'subdomain' || resolved.mode === 'custom-domain') {
       return (
         <Suspense fallback={<LoadingSpinner />}>
-          <InstitutionLogin institution={institution} />
+          <InstitutionLanding />
         </Suspense>
       )
     }
@@ -98,7 +98,8 @@ function AppContent() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/i/:slug" element={<F><InstitutionLoginRoute /></F>} />
+        <Route path="/i/:slug" element={<F><InstitutionLanding /></F>} />
+        <Route path="/i/:slug/login" element={<F><InstitutionLoginRoute /></F>} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
