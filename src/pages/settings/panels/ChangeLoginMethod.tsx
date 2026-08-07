@@ -32,35 +32,41 @@ export function ChangeLoginMethodPanel({ isBn, onBack }: Props) {
             : 'Switch between password or passkey login.'}
         </p>
 
-        <div className="space-y-2">
-          {methods.map(({ key, icon: Icon, label, labelBn, desc, descBn }) => (
+        <div className="rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden">
+          {methods.map(({ key, icon: Icon, label, labelBn, desc, descBn }, index) => (
             <button
               key={key}
               onClick={() => updateSettings({ loginMethod: key })}
-              className={`w-full flex items-center gap-3 px-4 py-4 rounded-xl border text-left cursor-pointer transition-all ${
+              className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors border-none ${
                 settings.loginMethod === key
-                  ? 'border-[var(--brand)] bg-[var(--brand-light)]'
-                  : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/30'
-              }`}
+                  ? 'bg-[var(--brand-light)]'
+                  : 'bg-transparent hover:bg-[var(--bg-tertiary)]'
+              } ${index < methods.length - 1 ? 'border-b border-[var(--border)]' : ''}`}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                settings.loginMethod === key ? 'bg-[var(--brand)]/10' : 'bg-[var(--bg-primary)]'
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                settings.loginMethod === key
+                  ? 'bg-[var(--brand)]/10'
+                  : 'bg-[var(--bg-primary)]'
               }`}>
                 <Icon size={20} className={settings.loginMethod === key ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'} />
               </div>
               <div className="flex-1">
-                <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+                <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">
                   {isBn ? labelBn : label}
                 </div>
-                <div className="text-[0.75rem] text-[var(--text-muted)]">
+                <div className="text-[0.6875rem] text-[var(--text-muted)]">
                   {isBn ? descBn : desc}
                 </div>
               </div>
-              {settings.loginMethod === key && (
-                <div className="w-5 h-5 rounded-full bg-[var(--brand)] flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-white" />
-                </div>
-              )}
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                settings.loginMethod === key
+                  ? 'border-[var(--brand)]'
+                  : 'border-[var(--text-muted)]'
+              }`}>
+                {settings.loginMethod === key && (
+                  <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand)]" />
+                )}
+              </div>
             </button>
           ))}
         </div>

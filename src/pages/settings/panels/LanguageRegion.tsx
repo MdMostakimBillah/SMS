@@ -8,8 +8,8 @@ interface Props {
 }
 
 const languages = [
-  { code: 'en', label: 'English', labelBn: 'ইংরেজি' },
-  { code: 'bn', label: 'Bengali', labelBn: 'বাংলা' },
+  { code: 'en', label: 'English', labelBn: 'ইংরেজি', desc: 'English language', descBn: 'ইংরেজি ভাষা' },
+  { code: 'bn', label: 'Bengali', labelBn: 'বাংলা', desc: 'Bangla language', descBn: 'বাংলা ভাষা' },
 ]
 
 const timezones = [
@@ -42,18 +42,34 @@ export function LanguageRegionPanel({ isBn, onBack }: Props) {
           <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-2 block">
             {isBn ? 'ভাষা' : 'Language'}
           </label>
-          <div className="grid grid-cols-2 gap-2">
-            {languages.map((lang) => (
+          <div className="rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden">
+            {languages.map(({ code, label, labelBn, desc, descBn }, index) => (
               <button
-                key={lang.code}
-                onClick={() => setLanguage(lang.code as 'en' | 'bn')}
-                className={`px-4 py-3 rounded-xl border text-[0.8125rem] font-medium cursor-pointer transition-all ${
-                  language === lang.code
-                    ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]'
-                    : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--brand)]/30'
-                }`}
+                key={code}
+                onClick={() => setLanguage(code as 'en' | 'bn')}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors border-none ${
+                  language === code
+                    ? 'bg-[var(--brand-light)]'
+                    : 'bg-transparent hover:bg-[var(--bg-tertiary)]'
+                } ${index < languages.length - 1 ? 'border-b border-[var(--border)]' : ''}`}
               >
-                {isBn ? lang.labelBn : lang.label}
+                <div className="flex-1">
+                  <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">
+                    {isBn ? labelBn : label}
+                  </div>
+                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                    {isBn ? descBn : desc}
+                  </div>
+                </div>
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  language === code
+                    ? 'border-[var(--brand)]'
+                    : 'border-[var(--text-muted)]'
+                }`}>
+                  {language === code && (
+                    <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand)]" />
+                  )}
+                </div>
               </button>
             ))}
           </div>

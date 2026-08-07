@@ -63,30 +63,34 @@ export function ThemeDisplayPanel({ isBn, onBack }: Props) {
           <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-2 block">
             {isBn ? 'কনটেন্ট ঘনত্ব' : 'Content Density'}
           </label>
-          <div className="space-y-2">
-            {densities.map(({ key, label, labelBn, desc, descBn }) => (
+          <div className="rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden">
+            {densities.map(({ key, label, labelBn, desc, descBn }, index) => (
               <button
                 key={key}
                 onClick={() => setDensity(key as 'compact' | 'default' | 'comfortable')}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left cursor-pointer transition-all ${
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors border-none ${
                   density === key
-                    ? 'border-[var(--brand)] bg-[var(--brand-light)]'
-                    : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/30'
-                }`}
+                    ? 'bg-[var(--brand-light)]'
+                    : 'bg-transparent hover:bg-[var(--bg-tertiary)]'
+                } ${index < densities.length - 1 ? 'border-b border-[var(--border)]' : ''}`}
               >
-                <div>
-                  <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  density === key
+                    ? 'border-[var(--brand)]'
+                    : 'border-[var(--text-muted)]'
+                }`}>
+                  {density === key && (
+                    <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand)]" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">
                     {isBn ? labelBn : label}
                   </div>
                   <div className="text-[0.6875rem] text-[var(--text-muted)]">
                     {isBn ? descBn : desc}
                   </div>
                 </div>
-                {density === key && (
-                  <div className="w-5 h-5 rounded-full bg-[var(--brand)] flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-white" />
-                  </div>
-                )}
               </button>
             ))}
           </div>
