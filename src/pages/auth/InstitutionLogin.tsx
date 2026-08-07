@@ -417,9 +417,6 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
                 color: !loading ? '#fff' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
               }}
             >
-              {loading && (
-                <span className="flex items-center justify-center w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              )}
               {!loading && <LogIn size={16} />}
               {loading
                 ? (isBn ? 'সাইন ইন হচ্ছে...' : 'Signing in...')

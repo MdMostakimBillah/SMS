@@ -189,9 +189,8 @@ export default function LoginPage() {
                 background: canSubmit ? 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)' : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
                 color: canSubmit ? '#fff' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
               }}>
-              {isLockedOut && <Clock size={16} />}
-              {submitting && <span className="flex items-center justify-center w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
               {!isLockedOut && !submitting && <LogIn size={16} />}
+              {isLockedOut && <Clock size={16} />}
               {isLockedOut ? (isBn ? `লকড আউট — ${formatTime(lockoutRemaining)}` : `Locked out — ${formatTime(lockoutRemaining)}`)
                 : submitting ? (isBn ? 'সাইন ইন হচ্ছে...' : 'Signing in...')
                 : (isBn ? 'সাইন ইন' : 'Sign In')}
