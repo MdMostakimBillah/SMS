@@ -409,9 +409,9 @@ export default function InstitutionRegister() {
 
       {/* Right - Form */}
       <div className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[28rem]">
+        <div className="w-full max-w-[24rem]">
           {/* Minimal top bar: close + step counter */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div className={`flex items-center gap-2 text-[0.8125rem] font-medium ${isDark ? 'text-white/40' : 'text-[var(--text-muted)]'}`}>
               <span className="text-[var(--brand)] font-bold">{step + 1}</span>
               <span>/</span>
@@ -425,7 +425,7 @@ export default function InstitutionRegister() {
           </div>
 
           {/* Step Card */}
-          <div className="space-y-5">
+          <div className="space-y-4">
               {/* Step 1: Name */}
               {STEPS[step].key === 'name' && (
                 <>
