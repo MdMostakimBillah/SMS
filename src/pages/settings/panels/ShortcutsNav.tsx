@@ -85,13 +85,13 @@ export function ShortcutsNavPanel({ isBn, onBack }: Props) {
           </div>
           <button
             onClick={() => updateSettings({ keyboardShortcuts: !settings.keyboardShortcuts })}
-            className={`w-11 h-6 rounded-full transition-colors cursor-pointer border-none ${
+            className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer border-none ${
               settings.keyboardShortcuts ? 'bg-[var(--brand)]' : 'bg-[var(--text-muted)]'
             }`}
           >
             <div
-              className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
-                settings.keyboardShortcuts ? 'translate-x-5.5' : 'translate-x-0.5'
+              className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-300 ease-in-out ${
+                settings.keyboardShortcuts ? 'left-[22px]' : 'left-0.5'
               }`}
             />
           </button>

@@ -72,9 +72,9 @@ export function AccessModesPanel({ isBn, onBack }: Props) {
             </div>
             <button
               onClick={() => setModes((p) => ({ ...p, pathBased: !p.pathBased }))}
-              className={`w-11 h-6 rounded-full transition-colors cursor-pointer border-none ${modes.pathBased ? 'bg-[var(--brand)]' : 'bg-[var(--text-muted)]'}`}
+              className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer border-none ${modes.pathBased ? 'bg-[var(--brand)]' : 'bg-[var(--text-muted)]'}`}
             >
-              <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${modes.pathBased ? 'translate-x-5.5' : 'translate-x-0.5'}`} />
+              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-300 ease-in-out ${modes.pathBased ? 'left-[22px]' : 'left-0.5'}`} />
             </button>
           </div>
           {modes.pathBased && (
@@ -105,9 +105,9 @@ export function AccessModesPanel({ isBn, onBack }: Props) {
             </div>
             <button
               onClick={() => setModes((p) => ({ ...p, subdomainBased: !p.subdomainBased }))}
-              className={`w-11 h-6 rounded-full transition-colors cursor-pointer border-none ${modes.subdomainBased ? 'bg-[var(--brand)]' : 'bg-[var(--text-muted)]'}`}
+              className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer border-none ${modes.subdomainBased ? 'bg-[var(--brand)]' : 'bg-[var(--text-muted)]'}`}
             >
-              <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${modes.subdomainBased ? 'translate-x-5.5' : 'translate-x-0.5'}`} />
+              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-300 ease-in-out ${modes.subdomainBased ? 'left-[22px]' : 'left-0.5'}`} />
             </button>
           </div>
           {modes.subdomainBased && (

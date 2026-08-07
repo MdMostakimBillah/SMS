@@ -43,13 +43,13 @@ export function LoginAlertsPanel({ isBn, onBack }: Props) {
               </span>
               <button
                 onClick={() => toggle(key)}
-                className={`w-11 h-6 rounded-full transition-colors cursor-pointer border-none ${
+                className={`relative w-11 h-6 rounded-full transition-colors duration-300 cursor-pointer border-none ${
                   settings.loginAlerts[key] ? 'bg-[var(--brand)]' : 'bg-[var(--text-muted)]'
                 }`}
               >
                 <div
-                  className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
-                    settings.loginAlerts[key] ? 'translate-x-5.5' : 'translate-x-0.5'
+                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-300 ease-in-out ${
+                    settings.loginAlerts[key] ? 'left-[22px]' : 'left-0.5'
                   }`}
                 />
               </button>
