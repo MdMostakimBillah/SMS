@@ -425,7 +425,7 @@ export default function InstitutionRegister() {
           </div>
 
           {/* Step Card */}
-          <div className="space-y-4">
+          <div key={step} className="space-y-4" style={{ animation: 'stepFadeIn 0.3s ease-out' }}>
               {/* Step 1: Name */}
               {STEPS[step].key === 'name' && (
                 <>
