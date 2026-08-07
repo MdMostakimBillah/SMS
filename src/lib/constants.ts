@@ -2,7 +2,7 @@
  * Application-wide constants: dropdown options, grade scales, and default institution config.
  * All bilingual options use `{ value, labelEn, labelBn }` shape.
  */
-export const LOGIN_PATH = import.meta.env.VITE_LOGIN_PATH || '/login'
+export const LOGIN_PATH = import.meta.env.VITE_LOGIN_PATH || ''
 
 export const BLOOD_GROUPS = [
   'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
