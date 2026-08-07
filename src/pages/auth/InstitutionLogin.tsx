@@ -212,6 +212,17 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         migrateOldKeys(institution.slug)
         loadInstitutionData(institution)
         clearLoginAttempts()
+        // Notify service worker of institution for PWA identity
+        if (navigator.serviceWorker?.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'SET_INSTITUTION',
+            name: institution.name,
+            brandName: institution.brandName || institution.name,
+            slug: institution.slug,
+            logo: institution.logo || null,
+            brandColor: institution.brandColor || '#6366f1',
+          })
+        }
         if (setInstitutionUser) {
           setInstitutionUser(email, institution.name, 'admin', institution.id, institution.subdomain, institution.slug)
         } else {

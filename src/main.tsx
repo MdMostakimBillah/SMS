@@ -44,7 +44,22 @@ if ('serviceWorker' in navigator) {
         import('./store/classStore').then(({ useClassStore }) => {
           const { institution } = useClassStore.getState()
           const brandColor = institution.lightColors?.brand || '#6366f1'
-          reg.active?.postMessage({ type: 'SET_BRAND_COLOR', color: brandColor })
+          // Try to get institution details from superAdminStore for PWA identity
+          import('./store/superAdminStore').then(({ useSuperAdminStore }) => {
+            const slug = sessionStorage.getItem('edutech_inst_slug')
+            const institutions = useSuperAdminStore.getState().institutions
+            const inst = slug ? institutions.find((i) => i.slug === slug) : null
+            reg.active?.postMessage({
+              type: 'SET_INSTITUTION',
+              name: inst?.name || institution.name || null,
+              brandName: inst?.brandName || institution.brandName || null,
+              slug: inst?.slug || slug || null,
+              logo: inst?.logo || institution.logo || null,
+              brandColor,
+            })
+          }).catch(() => {
+            reg.active?.postMessage({ type: 'SET_BRAND_COLOR', color: brandColor })
+          })
         })
       }
       if (reg.active) {

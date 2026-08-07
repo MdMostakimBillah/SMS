@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useClassStore } from '@/store/classStore'
 import type { ThemeColors } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
+import { useSuperAdminStore } from '@/store/superAdminStore'
 
 const cssVarMap: Record<keyof import('@/store/classStore').ThemeColors, string> = {
   brand: '--brand',
@@ -149,7 +150,18 @@ function updateFavicon(color: string) {
 function sendBrandColorToSW(color: string) {
   if (!navigator.serviceWorker) return
   navigator.serviceWorker.ready.then((reg) => {
-    reg.active?.postMessage({ type: 'SET_BRAND_COLOR', color })
+    const slug = sessionStorage.getItem('edutech_inst_slug')
+    const institutions = useSuperAdminStore.getState().institutions
+    const inst = slug ? institutions.find((i) => i.slug === slug) : null
+    const { institution: classInst } = useClassStore.getState()
+    reg.active?.postMessage({
+      type: 'SET_INSTITUTION',
+      name: inst?.name || classInst.name || null,
+      brandName: inst?.brandName || classInst.brandName || null,
+      slug: inst?.slug || slug || null,
+      logo: inst?.logo || classInst.logo || null,
+      brandColor: color,
+    })
   })
 }
 
