@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -153,11 +153,17 @@ export default function CreateSchool() {
   const [inputWidth, setInputWidth] = useState(420)
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [stepAnim, setStepAnim] = useState<{ key: number; dir: 'next' | 'prev' }>({ key: 0, dir: 'next' })
 
   const currentSection = SECTION_STEPS[step]
   const isLastStep = step === SECTION_STEPS.length - 1
 
   const set = <K extends keyof SchoolForm>(key: K, val: SchoolForm[K]) => setForm((f) => ({ ...f, [key]: val }))
+
+  const animateStep = useCallback((newStep: number, dir: 'next' | 'prev') => {
+    setStepAnim({ key: newStep, dir })
+    setStep(newStep)
+  }, [])
 
   const passwordValidation = useMemo(() => {
     return PASSWORD_RULES.map((rule) => ({
@@ -179,7 +185,8 @@ export default function CreateSchool() {
   }, [currentSection, form, emailVerified, isPasswordValid])
 
   useEffect(() => {
-    inputRef.current?.focus()
+    const t = setTimeout(() => inputRef.current?.focus(), 150)
+    return () => clearTimeout(t)
   }, [step])
 
   const handleClose = () => {
@@ -312,8 +319,8 @@ export default function CreateSchool() {
           </div>
 
           {/* Field */}
-          <div className="flex-1 px-6 py-5 overflow-y-auto">
-            <div className="min-h-full flex flex-col justify-center">
+          <div className="flex-1 px-6 py-5 overflow-hidden">
+            <div key={stepAnim.key} className={`h-full flex flex-col justify-center ${stepAnim.dir === 'next' ? 'animate-slideLeft' : 'animate-slideRight'}`}>
               <div className="mb-4">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.625rem] font-medium text-[var(--text-muted)] mb-2.5">
                   <span className="text-[var(--brand)]">{currentSection?.icon}</span>
@@ -321,7 +328,7 @@ export default function CreateSchool() {
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 overflow-y-auto max-h-full">
                 {currentSection?.key === 'basic' && (
                   <>
                     <FieldInput ref={inputRef} label={isBn ? 'স্কুলের নাম *' : 'School Name *'} value={form.name} onChange={(v) => set('name', hasEmoji(v) ? v.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '') : v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. Sunrise Academy'} hint={isBn ? 'শুধু অক্ষর ও বিশেষ চিহ্ন অনুমোদিত (ইমোজি নয়)' : 'Letters and punctuation only (no emoji)'} error={hasEmoji(form.name) ? (isBn ? 'ইমোজি অনুমোদিত নয়' : 'Emoji not allowed') : undefined} />
@@ -473,7 +480,7 @@ export default function CreateSchool() {
           {/* Navigation */}
           <div className="px-6 py-4 border-t border-[var(--border)] flex items-center gap-3 shrink-0">
             <button
-              onClick={() => setStep((s) => s - 1)}
+              onClick={() => animateStep(step - 1, 'prev')}
               disabled={step === 0}
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer border border-[var(--border)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-[var(--bg-tertiary)]"
             >
@@ -492,7 +499,7 @@ export default function CreateSchool() {
               </button>
             ) : (
               <button
-                onClick={() => setStep((s) => s + 1)}
+                onClick={() => animateStep(step + 1, 'next')}
                 disabled={!canNext}
                 className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--brand)] text-white cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:opacity-90"
               >
