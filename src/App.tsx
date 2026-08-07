@@ -153,7 +153,7 @@ function AppContent() {
         <Route element={<AuthRoute />}>
           <Route path={LOGIN_PATH} element={<F><LoginPage /></F>} />
           <Route path="/register" element={<F><InstitutionRegister /></F>} />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/register" replace />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
