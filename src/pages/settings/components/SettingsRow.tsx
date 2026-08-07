@@ -13,8 +13,8 @@ export function SettingsRow({ item, isBn, onClick, isLast }: Props) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3.5 px-4 py-3 cursor-pointer bg-transparent border-none text-left transition-colors hover:bg-[var(--bg-secondary)] active:bg-[var(--bg-secondary)]/70 ${
-        !isLast ? 'border-b border-[var(--border)]/50' : ''
+      className={`w-full flex items-center gap-3.5 px-4 py-3.5 cursor-pointer bg-transparent border-none text-left transition-colors hover:bg-[var(--bg-secondary)] active:bg-[var(--bg-secondary)]/70 ${
+        !isLast ? 'border-b border-[var(--border)]' : ''
       }`}
     >
       <div
@@ -24,10 +24,10 @@ export function SettingsRow({ item, isBn, onClick, isLast }: Props) {
         <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-[0.875rem] font-medium text-[var(--text-primary)] leading-tight">
+        <div className="text-[0.875rem] font-semibold text-[var(--text-primary)] leading-tight">
           {isBn ? item.titleBn : item.title}
         </div>
-        <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5 leading-snug opacity-70">
+        <div className="text-[0.6875rem] text-[var(--text-muted)] leading-tight opacity-70">
           {isBn ? item.descriptionBn : item.description}
         </div>
       </div>
