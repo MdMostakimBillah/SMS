@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
 import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
+import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { setAuthToken } from '@/lib/api'
 
@@ -257,6 +258,7 @@ export default function InstitutionRegister() {
       accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
     }
     addInstitution(inst)
+    loadInstitutionData(inst)
 
     // Auto-login
     const slug = inst.slug

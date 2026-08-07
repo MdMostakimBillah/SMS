@@ -6,11 +6,51 @@ import { useAppStore } from '@/store/appStore'
 import { AuthContext } from '@/contexts/AuthContext'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
-import { useClassStore, defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
+import { useClassStore, defaultThemeColors, defaultThemeColorsDark, type ThemeColors } from '@/store/classStore'
 import { nsSet, migrateOldKeys, setSlug } from '@/lib/storage'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_DURATION = 5 * 60 * 1000 // 5 minutes
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const h = hex.replace('#', '')
+  const n = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16)
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return '#' + [r, g, b].map((c) => Math.round(Math.min(255, Math.max(0, c))).toString(16).padStart(2, '0')).join('')
+}
+
+function lighten(hex: string, percent: number): string {
+  const { r, g, b } = hexToRgb(hex)
+  const amt = percent / 100
+  return rgbToHex(r + (255 - r) * amt, g + (255 - g) * amt, b + (255 - b) * amt)
+}
+
+function withAlpha(hex: string, alpha: number): string {
+  const { r, g, b } = hexToRgb(hex)
+  return `rgba(${r},${g},${b},${alpha})`
+}
+
+function generateLightColors(brandHex: string): ThemeColors {
+  return {
+    ...defaultThemeColors,
+    brand: brandHex,
+    brand2: lighten(brandHex, 20),
+    brandLight: withAlpha(brandHex, 0.06),
+  }
+}
+
+function generateDarkColors(brandHex: string): ThemeColors {
+  const dark = lighten(brandHex, 15)
+  return {
+    ...defaultThemeColorsDark,
+    brand: dark,
+    brand2: lighten(brandHex, 30),
+    brandLight: withAlpha(dark, 0.1),
+  }
+}
 
 function getLoginAttempts(): number {
   try {
@@ -50,6 +90,7 @@ function getLockoutRemaining(): number {
 
 function loadInstitutionData(inst: Institution) {
   const current = useClassStore.getState().institution
+  const brandColor = inst.brandColor || '#6366f1'
   useClassStore.getState().updateInstitution({
     name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: inst.banner,
     brandName: inst.brandName || inst.name, motto: inst.motto, mottoBn: inst.mottoBn,
@@ -60,8 +101,8 @@ function loadInstitutionData(inst: Institution) {
     breaks: current.breaks?.length ? current.breaks : [],
     currentSession: current.currentSession || inst.sessions?.[1] || '2025-26',
     sessions: current.sessions?.length ? current.sessions : (inst.sessions || ['2024-25', '2025-26']),
-    lightColors: current.lightColors?.brand ? current.lightColors : { ...defaultThemeColors, brand: inst.brandColor },
-    darkColors: current.darkColors || { ...defaultThemeColorsDark },
+    lightColors: current.lightColors?.brand ? current.lightColors : generateLightColors(brandColor),
+    darkColors: current.darkColors?.brand ? current.darkColors : generateDarkColors(brandColor),
     bannerPosition: current.bannerPosition || { x: 0, y: 0 },
   })
 }

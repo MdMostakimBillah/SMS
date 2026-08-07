@@ -11,6 +11,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
 import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
+import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
 
 const btnBounce = `animate-[btnBounce_0.35s_cubic-bezier(0.34,1.56,0.64,1)]`
 
@@ -256,6 +257,7 @@ export default function CreateSchool() {
       accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
     }
     addInstitution(inst)
+    loadInstitutionData(inst)
     setCreated(true)
     setTimeout(() => navigate('/super-admin/schools'), 1500)
   }
