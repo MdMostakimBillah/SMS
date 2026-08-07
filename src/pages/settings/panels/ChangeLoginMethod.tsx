@@ -33,15 +33,15 @@ export function ChangeLoginMethodPanel({ isBn, onBack }: Props) {
         </p>
 
         <div className="rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden">
-          {methods.map(({ key, icon: Icon, label, labelBn, desc, descBn }, index) => (
+          {methods.map(({ key, icon: Icon, label, labelBn, desc, descBn }) => (
             <button
               key={key}
               onClick={() => updateSettings({ loginMethod: key })}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors border-none ${
+              className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors border-none border-b border-[var(--border)] last:border-b-0 ${
                 settings.loginMethod === key
                   ? 'bg-[var(--brand-light)]'
                   : 'bg-transparent hover:bg-[var(--bg-tertiary)]'
-              } ${index < methods.length - 1 ? 'border-b border-[var(--border)]' : ''}`}
+              }`}
             >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                 settings.loginMethod === key
@@ -50,11 +50,11 @@ export function ChangeLoginMethodPanel({ isBn, onBack }: Props) {
               }`}>
                 <Icon size={20} className={settings.loginMethod === key ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'} />
               </div>
-              <div className="flex-1">
-                <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">
+              <div className="flex-1 min-w-0">
+                <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] leading-tight">
                   {isBn ? labelBn : label}
                 </div>
-                <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                <div className="text-[0.6875rem] text-[var(--text-muted)] leading-tight mt-0.5">
                   {isBn ? descBn : desc}
                 </div>
               </div>

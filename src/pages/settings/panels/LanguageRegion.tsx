@@ -43,21 +43,21 @@ export function LanguageRegionPanel({ isBn, onBack }: Props) {
             {isBn ? 'ভাষা' : 'Language'}
           </label>
           <div className="rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden">
-            {languages.map(({ code, label, labelBn, desc, descBn }, index) => (
+            {languages.map(({ code, label, labelBn, desc, descBn }) => (
               <button
                 key={code}
                 onClick={() => setLanguage(code as 'en' | 'bn')}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors border-none ${
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors border-none border-b border-[var(--border)] last:border-b-0 ${
                   language === code
                     ? 'bg-[var(--brand-light)]'
                     : 'bg-transparent hover:bg-[var(--bg-tertiary)]'
-                } ${index < languages.length - 1 ? 'border-b border-[var(--border)]' : ''}`}
+                }`}
               >
-                <div className="flex-1">
-                  <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">
+                <div className="flex-1 min-w-0">
+                  <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] leading-tight">
                     {isBn ? labelBn : label}
                   </div>
-                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                  <div className="text-[0.6875rem] text-[var(--text-muted)] leading-tight mt-0.5">
                     {isBn ? descBn : desc}
                   </div>
                 </div>

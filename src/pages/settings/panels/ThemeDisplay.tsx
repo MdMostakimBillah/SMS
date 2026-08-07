@@ -64,16 +64,24 @@ export function ThemeDisplayPanel({ isBn, onBack }: Props) {
             {isBn ? 'কনটেন্ট ঘনত্ব' : 'Content Density'}
           </label>
           <div className="rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden">
-            {densities.map(({ key, label, labelBn, desc, descBn }, index) => (
+            {densities.map(({ key, label, labelBn, desc, descBn }) => (
               <button
                 key={key}
                 onClick={() => setDensity(key as 'compact' | 'default' | 'comfortable')}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors border-none ${
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors border-none border-b border-[var(--border)] last:border-b-0 ${
                   density === key
                     ? 'bg-[var(--brand-light)]'
                     : 'bg-transparent hover:bg-[var(--bg-tertiary)]'
-                } ${index < densities.length - 1 ? 'border-b border-[var(--border)]' : ''}`}
+                }`}
               >
+                <div className="flex-1 min-w-0">
+                  <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] leading-tight">
+                    {isBn ? labelBn : label}
+                  </div>
+                  <div className="text-[0.6875rem] text-[var(--text-muted)] leading-tight mt-0.5">
+                    {isBn ? descBn : desc}
+                  </div>
+                </div>
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                   density === key
                     ? 'border-[var(--brand)]'
@@ -82,14 +90,6 @@ export function ThemeDisplayPanel({ isBn, onBack }: Props) {
                   {density === key && (
                     <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand)]" />
                   )}
-                </div>
-                <div className="flex-1">
-                  <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">
-                    {isBn ? labelBn : label}
-                  </div>
-                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
-                    {isBn ? descBn : desc}
-                  </div>
                 </div>
               </button>
             ))}

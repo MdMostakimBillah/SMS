@@ -35,15 +35,15 @@ export function DefaultHomePagePanel({ isBn, onBack }: Props) {
         </p>
 
         <div className="rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden">
-          {homePages.map(({ key, icon: Icon, label, labelBn, desc, descBn }, index) => (
+          {homePages.map(({ key, icon: Icon, label, labelBn, desc, descBn }) => (
             <button
               key={key}
               onClick={() => updateSettings({ defaultHomePage: key })}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors border-none ${
+              className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors border-none border-b border-[var(--border)] last:border-b-0 ${
                 settings.defaultHomePage === key
                   ? 'bg-[var(--brand-light)]'
                   : 'bg-transparent hover:bg-[var(--bg-tertiary)]'
-              } ${index < homePages.length - 1 ? 'border-b border-[var(--border)]' : ''}`}
+              }`}
             >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                 settings.defaultHomePage === key
@@ -52,11 +52,11 @@ export function DefaultHomePagePanel({ isBn, onBack }: Props) {
               }`}>
                 <Icon size={20} className={settings.defaultHomePage === key ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'} />
               </div>
-              <div className="flex-1">
-                <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">
+              <div className="flex-1 min-w-0">
+                <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] leading-tight">
                   {isBn ? labelBn : label}
                 </div>
-                <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                <div className="text-[0.6875rem] text-[var(--text-muted)] leading-tight mt-0.5">
                   {isBn ? descBn : desc}
                 </div>
               </div>
