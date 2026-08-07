@@ -19,6 +19,7 @@ interface SettingsState {
   timezone: string
   density: 'compact' | 'default' | 'comfortable'
   keyboardShortcuts: boolean
+  customShortcuts: Record<string, string[]>
   defaultHomePage: string
   backupEmail: string
   loginAlerts: {
@@ -85,6 +86,7 @@ export const useAppStore = create<AppState>()(
         timezone: 'UTC+06:00',
         density: 'default',
         keyboardShortcuts: true,
+        customShortcuts: {},
         defaultHomePage: 'dashboard',
         backupEmail: '',
         loginAlerts: {
