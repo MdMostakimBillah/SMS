@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import {
   GraduationCap, Building2, Globe, Phone, Mail, MapPin,
   Upload, Palette, CreditCard, Shield, Eye, EyeOff,
@@ -132,6 +132,7 @@ export default function InstitutionRegister() {
   const [sendingCode, setSendingCode] = useState(false)
   const [emailError, setEmailError] = useState('')
   const [simulated, setSimulated] = useState(false)
+  const [resendTimer, setResendTimer] = useState(0)
 
   const [created, setCreated] = useState(false)
 
@@ -179,16 +180,30 @@ export default function InstitutionRegister() {
     setSimulated(result.simulated)
     setEmailSent(true)
     setSendingCode(false)
+    setResendTimer(300) // 5 minutes
   }
 
-  const verifyOtp = () => {
-    if (emailCodeInput.toUpperCase() === emailCode) {
-      setEmailVerified(true)
-      setEmailError('')
-    } else {
-      setEmailError(isBn ? 'ভুল কোড' : 'Invalid code')
+  // Resend countdown
+  useEffect(() => {
+    if (resendTimer <= 0) return
+    const id = setInterval(() => setResendTimer((t) => t - 1), 1000)
+    return () => clearInterval(id)
+  }, [resendTimer])
+
+  // Auto-verify when 6 digits entered
+  useEffect(() => {
+    if (emailCodeInput.length === 6 && !emailVerified && emailSent) {
+      const timer = setTimeout(() => {
+        if (emailCodeInput.toUpperCase() === emailCode) {
+          setEmailVerified(true)
+          setEmailError('')
+        } else {
+          setEmailError(isBn ? 'ভুল কোড' : 'Invalid code')
+        }
+      }, 300)
+      return () => clearTimeout(timer)
     }
-  }
+  }, [emailCodeInput, emailVerified, emailSent, emailCode, isBn])
 
   const handleCreate = () => {
     const inst: Institution = {
@@ -581,9 +596,11 @@ export default function InstitutionRegister() {
                           className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'} disabled:opacity-50`} />
                       </div>
                       {!emailVerified && (
-                        <button onClick={sendOtp} disabled={sendingCode || !form.adminEmail.includes('@')}
+                        <button onClick={sendOtp} disabled={sendingCode || !form.adminEmail.includes('@') || (emailSent && resendTimer > 0)}
                           className="h-12 px-5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold border-none cursor-pointer disabled:opacity-50 whitespace-nowrap transition-all hover:opacity-90">
-                          {sendingCode ? '...' : isBn ? 'কোড পাঠান' : 'Send Code'}
+                          {sendingCode ? '...' : emailSent && resendTimer > 0
+                            ? `${Math.floor(resendTimer / 60)}:${String(resendTimer % 60).padStart(2, '0')}`
+                            : isBn ? 'কোড পাঠান' : 'Send Code'}
                         </button>
                       )}
                       {emailVerified && (
@@ -602,17 +619,18 @@ export default function InstitutionRegister() {
                         )}
                         <OtpInput length={6} value={emailCodeInput} onChange={setEmailCodeInput} />
                         {emailError && <p className="text-[0.75rem] text-[var(--red)] text-center">{emailError}</p>}
-                        <button onClick={verifyOtp} disabled={emailCodeInput.length < 6}
-                          className="w-full h-11 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold border-none cursor-pointer disabled:opacity-50 transition-all hover:opacity-90">
-                          {isBn ? 'যাচাই করুন' : 'Verify'}
-                        </button>
+                        {emailCodeInput.length < 6 && (
+                          <p className="text-[0.75rem] text-[var(--text-muted)] text-center">
+                            {isBn ? '৬ ডিজিট কোড লিখুন' : 'Enter 6-digit code to verify'}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
 
                   <IconField icon={<Lock size={16} />} label={isBn ? 'পাসওয়ার্ড *' : 'Password *'} type={showPassword ? 'text' : 'password'}
                     value={form.adminPassword} onChange={(v) => set('adminPassword', v)} placeholder="••••••••" isDark={isDark}
-                    disabled={emailVerified}
+                    disabled={false}
                     suffix={
                       <button type="button" onClick={() => setShowPassword(!showPassword)}
                         className={`cursor-pointer bg-transparent border-none transition-colors ${isDark ? 'text-white/30 hover:text-white/60' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
