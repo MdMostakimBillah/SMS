@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { AlertTriangle, Search } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
 import {
@@ -59,6 +59,7 @@ export default function Page() {
 
 function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; isInstAdmin: boolean; isSuperAdmin: boolean }) {
   const [activePanel, setActivePanel] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const generalGroup: SettingGroup = {
     title: 'General Settings',
@@ -120,11 +121,27 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
     ],
   }
 
-  const groups = isInstAdmin || isSuperAdmin
+  const allGroups = isInstAdmin || isSuperAdmin
     ? [generalGroup, navigationGroup, loginGroup, institutionGroup, advancedGroup, accountGroup]
     : [generalGroup, navigationGroup, loginGroup, advancedGroup, accountGroup]
 
-  const allItems = groups.flatMap((g) => g.items)
+  const filteredGroups = useMemo(() => {
+    if (!searchQuery.trim()) return allGroups
+
+    const query = searchQuery.toLowerCase()
+    return allGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter(
+          (item) =>
+            (isBn ? item.titleBn : item.title).toLowerCase().includes(query) ||
+            (isBn ? item.descriptionBn : item.description).toLowerCase().includes(query)
+        ),
+      }))
+      .filter((group) => group.items.length > 0)
+  }, [allGroups, searchQuery, isBn])
+
+  const allItems = allGroups.flatMap((g) => g.items)
   const activeItem = allItems.find((i) => i.key === activePanel)
 
   const renderPanel = () => {
@@ -164,21 +181,44 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
       {activePanel && activeItem ? (
         renderPanel()
       ) : (
-        <div className="space-y-1">
-          {groups.map((group) => (
-            <SettingsGroup key={group.title} title={group.title} titleBn={group.titleBn} isBn={isBn}>
-              {group.items.map((item, idx) => (
-                <SettingsRow
-                  key={item.key}
-                  item={item}
-                  isBn={isBn}
-                  isLast={idx === group.items.length - 1}
-                  onClick={() => setActivePanel(item.key)}
-                />
-              ))}
-            </SettingsGroup>
-          ))}
-        </div>
+        <>
+          {/* Search Bar */}
+          <div className="mb-5">
+            <div className="relative">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={isBn ? 'সেটিংস খুঁজুন...' : 'Search settings...'}
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.875rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)] transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            {filteredGroups.map((group) => (
+              <SettingsGroup key={group.title} title={group.title} titleBn={group.titleBn} isBn={isBn}>
+                {group.items.map((item, idx) => (
+                  <SettingsRow
+                    key={item.key}
+                    item={item}
+                    isBn={isBn}
+                    isLast={idx === group.items.length - 1}
+                    onClick={() => setActivePanel(item.key)}
+                  />
+                ))}
+              </SettingsGroup>
+            ))}
+            {filteredGroups.length === 0 && searchQuery && (
+              <div className="text-center py-8">
+                <div className="text-[0.875rem] text-[var(--text-muted)]">
+                  {isBn ? 'কোনো সেটিংস পাওয়া যায়নি' : 'No settings found'}
+                </div>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   )
