@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
+import { useAppStore } from '@/store/appStore'
 import { Sun, Moon, Monitor } from 'lucide-react'
 
 interface Props {
@@ -20,8 +21,18 @@ const densities = [
 ]
 
 export function ThemeDisplayPanel({ isBn, onBack }: Props) {
-  const [theme, setTheme] = useState('light')
-  const [density, setDensity] = useState('default')
+  const theme = useAppStore((s) => s.theme)
+  const setTheme = useAppStore((s) => s.setTheme)
+  const settings = useAppStore((s) => s.settings)
+  const updateSettings = useAppStore((s) => s.updateSettings)
+  const [density, setDensity] = useState(settings.density)
+  const [saved, setSaved] = useState(false)
+
+  const handleSave = () => {
+    updateSettings({ density })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   return (
     <SettingsPanel title="Theme & Display" titleBn="থিম ও প্রদর্শন" isBn={isBn} onBack={onBack}>
@@ -34,7 +45,7 @@ export function ThemeDisplayPanel({ isBn, onBack }: Props) {
             {themes.map(({ key, icon: Icon, label, labelBn }) => (
               <button
                 key={key}
-                onClick={() => setTheme(key)}
+                onClick={() => setTheme(key as 'light' | 'dark' | 'system')}
                 className={`flex flex-col items-center gap-2 px-3 py-4 rounded-xl border text-[0.8125rem] font-medium cursor-pointer transition-all ${
                   theme === key
                     ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]'
@@ -56,7 +67,7 @@ export function ThemeDisplayPanel({ isBn, onBack }: Props) {
             {densities.map(({ key, label, labelBn, desc, descBn }) => (
               <button
                 key={key}
-                onClick={() => setDensity(key)}
+                onClick={() => setDensity(key as 'compact' | 'default' | 'comfortable')}
                 className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left cursor-pointer transition-all ${
                   density === key
                     ? 'border-[var(--brand)] bg-[var(--brand-light)]'
@@ -82,8 +93,11 @@ export function ThemeDisplayPanel({ isBn, onBack }: Props) {
         </div>
 
         <div className="pt-2">
-          <button className="w-full h-10 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity">
-            {isBn ? 'সংরক্ষণ করুন' : 'Save Changes'}
+          <button
+            onClick={handleSave}
+            className="w-full h-10 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
+          >
+            {saved ? (isBn ? 'সংরক্ষিত!' : 'Saved!') : (isBn ? 'সংরক্ষণ করুন' : 'Save Changes')}
           </button>
         </div>
       </div>

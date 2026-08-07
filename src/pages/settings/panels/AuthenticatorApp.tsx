@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
+import { useAppStore } from '@/store/appStore'
 import { Shield, Copy, CheckCircle } from 'lucide-react'
 
 interface Props {
@@ -8,11 +9,15 @@ interface Props {
 }
 
 export function AuthenticatorAppPanel({ isBn, onBack }: Props) {
+  const settings = useAppStore((s) => s.settings)
+  const setTwoFactorEnabled = useAppStore((s) => s.setTwoFactorEnabled)
   const [setup, setSetup] = useState(false)
   const [code, setCode] = useState('')
-  const [verified, setVerified] = useState(false)
   const [copied, setCopied] = useState(false)
-  const secret = 'JBSWY3DPEHPK3PXP'
+  const [secret] = useState(() => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
+    return Array.from({ length: 16 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+  })
 
   const handleCopy = () => {
     navigator.clipboard.writeText(secret)
@@ -22,30 +27,33 @@ export function AuthenticatorAppPanel({ isBn, onBack }: Props) {
 
   const handleVerify = () => {
     if (code.length === 6) {
-      setVerified(true)
+      setTwoFactorEnabled(true)
+      onBack()
     }
   }
 
-  if (verified) {
+  if (settings.twoFactorEnabled) {
     return (
       <SettingsPanel title="Authenticator App" titleBn="প্রমাণীকরণ অ্যাপ" isBn={isBn} onBack={onBack}>
-        <div className="text-center py-8">
-          <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-            <CheckCircle size={32} className="text-[var(--green)]" />
+        <div className="space-y-5">
+          <div className="text-center py-6">
+            <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle size={32} className="text-[var(--green)]" />
+            </div>
+            <h3 className="text-[0.9375rem] font-bold text-[var(--text-primary)] mb-2">
+              {isBn ? 'সক্রিয় আছে' : 'Active'}
+            </h3>
+            <p className="text-[0.8125rem] text-[var(--text-muted)] mb-6">
+              {isBn
+                ? 'দুই-ফ্যাক্টর প্রমাণীকরণ সক্রিয় আছে।'
+                : 'Two-factor authentication is enabled.'}
+            </p>
           </div>
-          <h3 className="text-[1rem] font-bold text-[var(--text-primary)] mb-2">
-            {isBn ? 'সক্রিয় হয়েছে!' : 'Activated!'}
-          </h3>
-          <p className="text-[0.8125rem] text-[var(--text-muted)] mb-6">
-            {isBn
-              ? 'দুই-ফ্যাক্টর প্রমাণীকরণ সফলভাবে সক্রিয় হয়েছে।'
-              : 'Two-factor authentication has been enabled.'}
-          </p>
           <button
-            onClick={onBack}
-            className="h-10 px-6 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold border-none cursor-pointer"
+            onClick={() => setTwoFactorEnabled(false)}
+            className="w-full h-10 rounded-xl bg-[var(--red)] text-white text-[0.8125rem] font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
           >
-            {isBn ? 'ফিরে যান' : 'Go Back'}
+            {isBn ? 'নিষ্ক্রিয় করুন' : 'Disable 2FA'}
           </button>
         </div>
       </SettingsPanel>

@@ -23,7 +23,17 @@ const timezones = [
 export function LanguageRegionPanel({ isBn, onBack }: Props) {
   const language = useAppStore((s) => s.language)
   const setLanguage = useAppStore((s) => s.setLanguage)
-  const [timezone, setTimezone] = useState('UTC+06:00')
+  const settings = useAppStore((s) => s.settings)
+  const updateSettings = useAppStore((s) => s.updateSettings)
+  const [timezone, setTimezone] = useState(settings.timezone)
+  const [saved, setSaved] = useState(false)
+
+  const handleSave = () => {
+    updateSettings({ timezone })
+    setLanguage(language)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   return (
     <SettingsPanel title="Language & Region" titleBn="ভাষা ও অঞ্চল" isBn={isBn} onBack={onBack}>
@@ -65,8 +75,11 @@ export function LanguageRegionPanel({ isBn, onBack }: Props) {
         </div>
 
         <div className="pt-2">
-          <button className="w-full h-10 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity">
-            {isBn ? 'সংরক্ষণ করুন' : 'Save Changes'}
+          <button
+            onClick={handleSave}
+            className="w-full h-10 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
+          >
+            {saved ? (isBn ? 'সংরক্ষিত!' : 'Saved!') : (isBn ? 'সংরক্ষণ করুন' : 'Save Changes')}
           </button>
         </div>
       </div>

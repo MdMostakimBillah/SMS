@@ -9,6 +9,13 @@ interface Props {
 
 export function DangerZonePanel({ isBn, onBack }: Props) {
   const [confirmText, setConfirmText] = useState('')
+  const [showModal, setShowModal] = useState(false)
+
+  const handleDelete = () => {
+    localStorage.clear()
+    sessionStorage.clear()
+    window.location.href = '/login'
+  }
 
   return (
     <SettingsPanel title="Danger Zone" titleBn="বিপজ্জনক অঞ্চল" isBn={isBn} onBack={onBack}>
@@ -42,6 +49,7 @@ export function DangerZonePanel({ isBn, onBack }: Props) {
 
             <button
               disabled={confirmText !== 'DELETE'}
+              onClick={() => setShowModal(true)}
               className="w-full h-10 rounded-xl bg-[var(--red)] text-white text-[0.8125rem] font-semibold border-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
             >
               <Trash2 size={14} />
@@ -50,6 +58,40 @@ export function DangerZonePanel({ isBn, onBack }: Props) {
           </div>
         </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] p-6 w-full max-w-sm mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[var(--red)]/10 flex items-center justify-center">
+                <AlertTriangle size={20} className="text-[var(--red)]" />
+              </div>
+              <h3 className="text-[0.9375rem] font-bold text-[var(--text-primary)]">
+                {isBn ? 'অ্যাকাউন্ট মুছুন?' : 'Delete Account?'}
+              </h3>
+            </div>
+            <p className="text-[0.8125rem] text-[var(--text-muted)] mb-6">
+              {isBn
+                ? 'এই কাজটি অপরিবর্তনীয়। সবকিছু মুছে ফেলা হবে।'
+                : 'This cannot be undone. Everything will be permanently deleted.'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowModal(false)}
+                className="flex-1 h-10 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-semibold border border-[var(--border)] cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors"
+              >
+                {isBn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 h-10 rounded-xl bg-[var(--red)] text-white text-[0.8125rem] font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
+              >
+                {isBn ? 'মুছুন' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </SettingsPanel>
   )
 }

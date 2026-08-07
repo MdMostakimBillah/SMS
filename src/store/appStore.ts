@@ -15,6 +15,22 @@ interface SidebarItem {
   page: string
 }
 
+interface SettingsState {
+  timezone: string
+  density: 'compact' | 'default' | 'comfortable'
+  keyboardShortcuts: boolean
+  defaultHomePage: string
+  backupEmail: string
+  loginAlerts: {
+    login: boolean
+    failedAttempts: boolean
+    passwordChange: boolean
+    newDevice: boolean
+  }
+  loginMethod: 'password' | 'passkey' | '2fa'
+  twoFactorEnabled: boolean
+}
+
 interface AppState {
   theme: Theme
   language: Language
@@ -29,6 +45,7 @@ interface AppState {
   studentCardsOrder: string[]
   feeCardsOrder: string[]
   quickAccessCardsOrder: string[]
+  settings: SettingsState
   setTheme: (theme: Theme) => void
   setLanguage: (language: Language) => void
   toggleSidebar: () => void
@@ -44,6 +61,8 @@ interface AppState {
   setStudentCardsOrder: (order: string[]) => void
   setFeeCardsOrder: (order: string[]) => void
   setQuickAccessCardsOrder: (order: string[]) => void
+  updateSettings: (partial: Partial<SettingsState>) => void
+  setTwoFactorEnabled: (enabled: boolean) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -62,6 +81,21 @@ export const useAppStore = create<AppState>()(
       studentCardsOrder: [],
       feeCardsOrder: [],
       quickAccessCardsOrder: [],
+      settings: {
+        timezone: 'UTC+06:00',
+        density: 'default',
+        keyboardShortcuts: true,
+        defaultHomePage: 'dashboard',
+        backupEmail: '',
+        loginAlerts: {
+          login: true,
+          failedAttempts: true,
+          passwordChange: true,
+          newDevice: true,
+        },
+        loginMethod: 'password',
+        twoFactorEnabled: false,
+      },
 
       setTheme: (theme) => {
         set({ theme })
@@ -129,6 +163,12 @@ export const useAppStore = create<AppState>()(
       setFeeCardsOrder: (order) => set({ feeCardsOrder: order }),
 
       setQuickAccessCardsOrder: (order) => set({ quickAccessCardsOrder: order }),
+
+      updateSettings: (partial) =>
+        set((state) => ({ settings: { ...state.settings, ...partial } })),
+
+      setTwoFactorEnabled: (enabled) =>
+        set((state) => ({ settings: { ...state.settings, twoFactorEnabled: enabled } })),
     }),
     {
       name: 'edutech-settings',
@@ -146,6 +186,7 @@ export const useAppStore = create<AppState>()(
         studentCardsOrder: state.studentCardsOrder,
         feeCardsOrder: state.feeCardsOrder,
         quickAccessCardsOrder: state.quickAccessCardsOrder,
+        settings: state.settings,
       }),
     }
   )

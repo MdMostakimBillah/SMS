@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
+import { useAppStore } from '@/store/appStore'
 import { Mail, CheckCircle } from 'lucide-react'
 
 interface Props {
@@ -8,11 +9,14 @@ interface Props {
 }
 
 export function BackupEmailPanel({ isBn, onBack }: Props) {
-  const [email, setEmail] = useState('')
+  const settings = useAppStore((s) => s.settings)
+  const updateSettings = useAppStore((s) => s.updateSettings)
+  const [email, setEmail] = useState(settings.backupEmail)
   const [saved, setSaved] = useState(false)
 
   const handleSave = () => {
     if (!email) return
+    updateSettings({ backupEmail: email })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }

@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
+import { useAppStore } from '@/store/appStore'
 
 interface Props {
   isBn: boolean
@@ -15,7 +15,8 @@ const shortcuts = [
 ]
 
 export function ShortcutsNavPanel({ isBn, onBack }: Props) {
-  const [enabled, setEnabled] = useState(true)
+  const settings = useAppStore((s) => s.settings)
+  const updateSettings = useAppStore((s) => s.updateSettings)
 
   return (
     <SettingsPanel title="Shortcuts & Navigation" titleBn="শর্টকাট ও নেভিগেশন" isBn={isBn} onBack={onBack}>
@@ -30,14 +31,14 @@ export function ShortcutsNavPanel({ isBn, onBack }: Props) {
             </div>
           </div>
           <button
-            onClick={() => setEnabled(!enabled)}
+            onClick={() => updateSettings({ keyboardShortcuts: !settings.keyboardShortcuts })}
             className={`w-11 h-6 rounded-full transition-colors cursor-pointer border-none ${
-              enabled ? 'bg-[var(--brand)]' : 'bg-[var(--text-muted)]'
+              settings.keyboardShortcuts ? 'bg-[var(--brand)]' : 'bg-[var(--text-muted)]'
             }`}
           >
             <div
               className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
-                enabled ? 'translate-x-5.5' : 'translate-x-0.5'
+                settings.keyboardShortcuts ? 'translate-x-5.5' : 'translate-x-0.5'
               }`}
             />
           </button>

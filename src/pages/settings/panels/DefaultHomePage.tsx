@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
+import { useAppStore } from '@/store/appStore'
 import { LayoutDashboard, Users, GraduationCap, BookOpen } from 'lucide-react'
 
 interface Props {
@@ -15,7 +16,14 @@ const homePages = [
 ]
 
 export function DefaultHomePagePanel({ isBn, onBack }: Props) {
-  const [selected, setSelected] = useState('dashboard')
+  const settings = useAppStore((s) => s.settings)
+  const updateSettings = useAppStore((s) => s.updateSettings)
+  const [saved, setSaved] = useState(false)
+
+  const handleSave = () => {
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   return (
     <SettingsPanel title="Default Home Page" titleBn="ডিফল্ট হোম পেজ" isBn={isBn} onBack={onBack}>
@@ -30,9 +38,9 @@ export function DefaultHomePagePanel({ isBn, onBack }: Props) {
           {homePages.map(({ key, icon: Icon, label, labelBn }) => (
             <button
               key={key}
-              onClick={() => setSelected(key)}
+              onClick={() => updateSettings({ defaultHomePage: key })}
               className={`flex flex-col items-center gap-2 px-4 py-5 rounded-xl border text-[0.8125rem] font-medium cursor-pointer transition-all ${
-                selected === key
+                settings.defaultHomePage === key
                   ? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]'
                   : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--brand)]/30'
               }`}
@@ -44,8 +52,11 @@ export function DefaultHomePagePanel({ isBn, onBack }: Props) {
         </div>
 
         <div className="pt-2">
-          <button className="w-full h-10 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity">
-            {isBn ? 'সংরক্ষণ করুন' : 'Save Changes'}
+          <button
+            onClick={handleSave}
+            className="w-full h-10 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
+          >
+            {saved ? (isBn ? 'সংরক্ষিত!' : 'Saved!') : (isBn ? 'সংরক্ষণ করুন' : 'Save Changes')}
           </button>
         </div>
       </div>
