@@ -28,7 +28,7 @@ export default function LoginPage() {
       const viewingId = sessionStorage.getItem('edutech_viewing_id')
       if (viewingId) navigate('/super-admin/viewing/admin/dashboard', { replace: true })
       else if (slug) navigate(`/i/${slug}/${user.role}/dashboard`, { replace: true })
-      else if (user.role === 'super_admin') navigate('/super-admin', { replace: true })
+      else if (user.role === 'super_admin') navigate('/super-admin/admin/dashboard', { replace: true })
       else navigate('/', { replace: true })
     }
   }, [user, navigate])

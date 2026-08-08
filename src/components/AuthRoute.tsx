@@ -11,7 +11,7 @@ export function AuthRoute() {
     const viewingId = sessionStorage.getItem('edutech_viewing_id')
     if (viewingId) return <Navigate to="/super-admin/viewing/admin/dashboard" replace />
     if (slug) return <Navigate to={`/i/${slug}/${user.role}/dashboard`} replace />
-    return <Navigate to="/super-admin" replace />
+    return <Navigate to="/super-admin/admin/dashboard" replace />
   }
 
   return <Outlet />

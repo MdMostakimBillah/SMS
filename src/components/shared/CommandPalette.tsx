@@ -423,9 +423,9 @@ export default function CommandPalette() {
       }
     } else {
       const item = result.item as SearchItem
-      // Super admin link always goes to /super-admin directly
+      // Super admin link always goes to /super-admin/admin/dashboard
       if (item.id === 'super-admin') {
-        navigate('/super-admin')
+        navigate('/super-admin/admin/dashboard')
       } else {
         const base = getNavBase()
         if (base) {

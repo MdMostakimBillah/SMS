@@ -14,7 +14,7 @@ export default function NotFoundPage() {
     const viewingId = sessionStorage.getItem('edutech_viewing_id')
     if (viewingId) return navigate('/super-admin/viewing/admin/dashboard')
     if (slug) return navigate(`/i/${slug}/${user.role}/dashboard`)
-    if (user.role === 'super_admin') return navigate('/super-admin')
+    if (user.role === 'super_admin') return navigate('/super-admin/admin/dashboard')
     return navigate('/')
   }
 

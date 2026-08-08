@@ -35,7 +35,7 @@ export function ProtectedRoute() {
         const slug = sessionStorage.getItem('edutech_inst_slug')
         if (user.role === 'super_admin') return <Navigate to="/super-admin/admin/dashboard" replace />
         if (slug) return <Navigate to={`/i/${slug}/${userRole}/dashboard`} replace />
-        return <Navigate to="/super-admin" replace />
+        return <Navigate to="/super-admin/admin/dashboard" replace />
       }
     }
   }

@@ -50,7 +50,7 @@ export default function SuperAdminPage() {
   if (user && user.role !== 'super_admin') {
     const slug = sessionStorage.getItem('edutech_inst_slug')
     if (slug) return <Navigate to={`/i/${slug}/${user.role}/dashboard`} replace />
-    return <Navigate to="/super-admin" replace />
+    return <Navigate to="/super-admin/admin/dashboard" replace />
   }
 
   const goTo = (id: string) => navigate(SUPER_ADMIN_REVERSE_MAP[id])

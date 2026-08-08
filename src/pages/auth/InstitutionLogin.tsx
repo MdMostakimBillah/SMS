@@ -241,7 +241,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           localStorage.setItem('edutech_user', userData)
           localStorage.setItem('edutech_superadmin_user', userData)
           clearLoginAttempts()
-          navigate('/super-admin')
+          navigate('/super-admin/admin/dashboard')
           setLoading(false)
           return
         }
