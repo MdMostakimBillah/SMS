@@ -182,7 +182,7 @@ export default function AppLayout() {
             onClick={() => {
               clearSlug()
               logout()
-              navigate('/')
+              navigate(`/i/${currentInstSlug}/login`)
             }}
             className="px-5 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
           >
