@@ -309,6 +309,22 @@ export default function CommandPalette() {
   const listRef = useRef<HTMLDivElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
 
+  // Detect nav base from current URL
+  const getNavBase = useCallback(() => {
+    const path = window.location.pathname
+    // /i/:slug/:role/...
+    const instMatch = path.match(/^\/i\/([^/]+)\/([^/]+)/)
+    if (instMatch) return `/i/${instMatch[1]}/${instMatch[2]}`
+    // /super-admin/admin/...
+    if (path.startsWith('/super-admin/admin')) return '/super-admin/admin'
+    // /super-admin/viewing/:role/...
+    const viewingMatch = path.match(/^\/super-admin\/viewing\/([^/]+)/)
+    if (viewingMatch) return `/super-admin/viewing/${viewingMatch[1]}`
+    // /super-admin/...
+    if (path.startsWith('/super-admin')) return '/super-admin'
+    return ''
+  }, [])
+
 
   const quickActions: QuickAction[] = useMemo(() => [
     {
@@ -407,10 +423,20 @@ export default function CommandPalette() {
       }
     } else {
       const item = result.item as SearchItem
-      navigate(item.path)
+      // Super admin link always goes to /super-admin directly
+      if (item.id === 'super-admin') {
+        navigate('/super-admin')
+      } else {
+        const base = getNavBase()
+        if (base) {
+          navigate(`${base}${item.path}`)
+        } else {
+          navigate(item.path)
+        }
+      }
     }
     handleClose()
-  }, [navigate, theme, language, setTheme, setLanguage, handleClose])
+  }, [navigate, theme, language, setTheme, setLanguage, handleClose, getNavBase])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
