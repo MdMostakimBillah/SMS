@@ -23,7 +23,14 @@ export default function LoginPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (user) navigate('/dashboard', { replace: true })
+    if (user) {
+      const slug = sessionStorage.getItem('edutech_inst_slug')
+      const viewingId = sessionStorage.getItem('edutech_viewing_id')
+      if (viewingId) navigate('/super-admin/viewing/admin/dashboard', { replace: true })
+      else if (slug) navigate(`/i/${slug}/${user.role}/dashboard`, { replace: true })
+      else if (user.role === 'super_admin') navigate('/super-admin', { replace: true })
+      else navigate('/', { replace: true })
+    }
   }, [user, navigate])
 
   const [email, setEmail] = useState('')
