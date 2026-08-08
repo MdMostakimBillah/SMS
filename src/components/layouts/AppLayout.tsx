@@ -13,8 +13,10 @@ import CommandPalette from '@/components/shared/CommandPalette'
 import QuickAccessFAB from '@/components/shared/QuickAccessFAB'
 import { Crown, X } from 'lucide-react'
 import { clearSlug } from '@/lib/storage'
+import { useBn } from '@/hooks/useBn'
 
 export default function AppLayout() {
+  const isBn = useBn()
   const theme = useAppStore((s) => s.theme)
   const language = useAppStore((s) => s.language)
   const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed)
@@ -25,7 +27,7 @@ export default function AppLayout() {
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
   const institutions = useSuperAdminStore((s) => s.institutions)
   const stopViewing = useSuperAdminStore((s) => s.stopViewing)
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
@@ -130,6 +132,62 @@ export default function AppLayout() {
               style={{ animation: 'shimmer 1.5s infinite' }}
             />
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Check if institution is suspended or inactive
+  const currentInstSlug = sessionStorage.getItem('edutech_inst_slug')
+  const isSuperAdminViewing = user?.role === 'super_admin' && !!viewingInstitutionId
+  const currentInst = !isSuperAdminViewing && currentInstSlug
+    ? institutions.find((i) => i.slug === currentInstSlug) || null
+    : null
+
+  if (currentInst && (currentInst.status === 'suspended' || currentInst.status === 'inactive')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-tertiary)]">
+        <div className="text-center max-w-md mx-auto px-6">
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
+            currentInst.status === 'suspended' ? 'bg-red-500/10' : 'bg-gray-500/10'
+          }`}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+              stroke={currentInst.status === 'suspended' ? '#ef4444' : '#6b7280'}
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              {currentInst.status === 'suspended' ? (
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              ) : (
+                <>
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </>
+              )}
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-[var(--text-primary)] mb-2">
+            {currentInst.status === 'suspended'
+              ? (isBn ? 'এই প্রতিষ্ঠান বন্ধ রাখা হয়েছে' : 'Account Suspended')
+              : (isBn ? 'এই প্রতিষ্ঠান নিষ্ক্রিয়' : 'Account Inactive')}
+          </h1>
+          <p className="text-sm text-[var(--text-muted)] mb-1">
+            {isBn ? currentInst.nameBn || currentInst.name : currentInst.name}
+          </p>
+          <p className="text-sm text-[var(--text-muted)] mb-6">
+            {currentInst.status === 'suspended'
+              ? (isBn ? 'আপনার প্রতিষ্ঠানের অ্যাকাউন্ট সাময়িক বন্ধ রাখা হয়েছে।' : 'Your institution account has been temporarily suspended.')
+              : (isBn ? 'আপনার প্রতিষ্ঠানের অ্যাকাউন্ট এখন নিষ্ক্রিয় আছে।' : 'Your institution account is currently inactive.')}
+          </p>
+          <button
+            onClick={() => {
+              clearSlug()
+              logout()
+              navigate('/')
+            }}
+            className="px-5 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
+          >
+            {isBn ? 'লগ আউট' : 'Log Out'}
+          </button>
         </div>
       </div>
     )

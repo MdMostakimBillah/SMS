@@ -216,6 +216,59 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
     )
   }
 
+  if (institution.status === 'suspended') {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: isDark ? '#0a0a0f' : '#f0f2f8' }}>
+        <div className="text-center max-w-md mx-auto px-6">
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-[var(--text-primary)] mb-2">
+            {isBn ? 'এই প্রতিষ্ঠান বন্ধ রাখা হয়েছে' : 'Account Suspended'}
+          </h1>
+          <p className="text-sm text-[var(--text-muted)] mb-1">
+            {isBn ? institution.nameBn || institution.name : institution.name}
+          </p>
+          <p className="text-sm text-[var(--text-muted)]">
+            {isBn
+              ? 'আপনার প্রতিষ্ঠানের অ্যাকাউন্ট সাময়িক বন্ধ রাখা হয়েছে। অনুগ্রহ করে সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।'
+              : 'Your institution account has been temporarily suspended. Please contact the super admin.'}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (institution.status === 'inactive') {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: isDark ? '#0a0a0f' : '#f0f2f8' }}>
+        <div className="text-center max-w-md mx-auto px-6">
+          <div className="w-16 h-16 rounded-2xl bg-gray-500/10 flex items-center justify-center mx-auto mb-4">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-[var(--text-primary)] mb-2">
+            {isBn ? 'এই প্রতিষ্ঠান নিষ্ক্রিয়' : 'Account Inactive'}
+          </h1>
+          <p className="text-sm text-[var(--text-muted)] mb-1">
+            {isBn ? institution.nameBn || institution.name : institution.name}
+          </p>
+          <p className="text-sm text-[var(--text-muted)]">
+            {isBn
+              ? 'আপনার প্রতিষ্ঠানের অ্যাকাউন্ট এখন নিষ্ক্রিয় আছে। অনুগ্রহ করে সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।'
+              : 'Your institution account is currently inactive. Please contact the super admin.'}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
