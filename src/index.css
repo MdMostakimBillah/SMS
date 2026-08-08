@@ -587,6 +587,12 @@ button {
   transform: translateY(0.75rem);
 }
 
+/* Override card--premium hover for settings groups — no lift or shadow on hover */
+.settings-group-card.card--premium:hover {
+  transform: none !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
+}
+
 /* Modal pop-in animation */
 @keyframes modalPopIn {
   from {
