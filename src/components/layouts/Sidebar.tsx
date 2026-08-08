@@ -339,15 +339,21 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
     return bookmarks
       .filter((path) => {
         if (isSuperAdmin && !isViewing) {
-          // Super admin pages are under /super-admin/* but not /super-admin/viewing/*
           return path.startsWith('/super-admin/') && !path.includes('/viewing/')
         }
         return navBase ? path.startsWith(navBase) : false
       })
-      .map((path) => visited.get(path))
+      .map((path) => {
+        // Prefer pageVisits data, fall back to navItemsMap
+        const fromVisits = visited.get(path)
+        if (fromVisits) return fromVisits
+        const fromNav = navItemsMap[path]
+        if (fromNav) return { path, label: fromNav.label, icon: fromNav.icon, count: 0 }
+        return null
+      })
       .filter((v): v is NonNullable<typeof v> => Boolean(v))
       .slice(0, 5)
-  }, [bookmarks, navBase, pageVisits, isSuperAdmin, isViewing])
+  }, [bookmarks, navBase, pageVisits, navItemsMap, isSuperAdmin, isViewing])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -521,7 +527,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                   : location.pathname === item.page || location.pathname.startsWith(item.page + '/')
                 const IconComp = iconMap[item.icon] || LayoutDashboard
                 const isBookmarked = bookmarks.includes(item.page)
-                const atMaxBookmarks = bookmarks.length >= 6 && !isBookmarked
+                const atMaxBookmarks = bookmarks.length >= 5 && !isBookmarked
                 const isDragging = draggedItem === item.page
                 const isDragOver = dragOverItem === item.page
                 return (
