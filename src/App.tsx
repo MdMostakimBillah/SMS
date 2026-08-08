@@ -3,12 +3,11 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layouts/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute, RoleProtectedRoute, ViewingRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
 import { LOGIN_PATH } from '@/lib/constants'
 import { useSubdomain } from '@/hooks/useSubdomain'
-import { useSuperAdminStore } from '@/store/superAdminStore'
 
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const InstitutionRegister = lazy(() => import('@/pages/auth/InstitutionRegister'))
@@ -57,30 +56,6 @@ function P({ name }: { name: string }) {
 const F = ({ children }: { children: React.ReactNode }) => (
   <ErrorBoundary><Suspense fallback={<LoadingSpinner />}>{children}</Suspense></ErrorBoundary>
 )
-
-function LegacyDashboardRedirect() {
-  const { user } = useAuth()
-  const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
-  const slug = sessionStorage.getItem('edutech_inst_slug')
-  if (user?.role === 'super_admin') {
-    if (viewingInstitutionId) return <Navigate to="/super-admin/viewing/admin/dashboard" replace />
-    return <Navigate to="/super-admin/admin/dashboard" replace />
-  }
-  if (slug) return <Navigate to={`/i/${slug}/admin/dashboard`} replace />
-  return <Navigate to="/super-admin/admin/dashboard" replace />
-}
-
-function LegacyStudentsRedirect() {
-  const { user } = useAuth()
-  const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
-  const slug = sessionStorage.getItem('edutech_inst_slug')
-  if (user?.role === 'super_admin') {
-    if (viewingInstitutionId) return <Navigate to="/super-admin/viewing/admin/students" replace />
-    return <Navigate to="/super-admin/admin/students" replace />
-  }
-  if (slug) return <Navigate to={`/i/${slug}/admin/students`} replace />
-  return <Navigate to="/super-admin/admin/students" replace />
-}
 
 function AppContent() {
   const { isSubdomain, institution, resolved } = useSubdomain()
@@ -156,13 +131,6 @@ function AppContent() {
           <Route path="/register" element={<F><InstitutionRegister /></F>} />
           <Route path="/" element={<Navigate to="/register" replace />} />
           <Route path="/login" element={<Navigate to="/register" replace />} />
-        </Route>
-
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AppLayout />}>
-            <Route path="/dashboard" element={<LegacyDashboardRedirect />} />
-            <Route path="/students" element={<LegacyStudentsRedirect />} />
-          </Route>
         </Route>
 
         <Route element={<RoleProtectedRoute allowedRoles={['super_admin']} />}>
