@@ -131,15 +131,15 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
     ],
   }
 
-  const allGroups = isInstAdmin || isSuperAdmin
-    ? [generalGroup, navigationGroup, loginGroup, institutionGroup, advancedGroup, accountGroup]
-    : [generalGroup, navigationGroup, loginGroup, advancedGroup, accountGroup]
-
   const filteredGroups = useMemo(() => {
-    if (!searchQuery.trim()) return allGroups
+    const groups = isInstAdmin || isSuperAdmin
+      ? [generalGroup, navigationGroup, loginGroup, institutionGroup, advancedGroup, accountGroup]
+      : [generalGroup, navigationGroup, loginGroup, advancedGroup, accountGroup]
+
+    if (!searchQuery.trim()) return groups
 
     const query = searchQuery.toLowerCase()
-    return allGroups
+    return groups
       .map((group) => ({
         ...group,
         items: group.items.filter(
@@ -149,9 +149,9 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
         ),
       }))
       .filter((group) => group.items.length > 0)
-  }, [allGroups, searchQuery, isBn])
+  }, [searchQuery, isBn, isInstAdmin, isSuperAdmin])
 
-  const allItems = allGroups.flatMap((g) => g.items)
+  const allItems = filteredGroups.flatMap((g) => g.items)
   const activeItem = allItems.find((i) => i.key === activePanel)
 
   const renderPanel = () => {
