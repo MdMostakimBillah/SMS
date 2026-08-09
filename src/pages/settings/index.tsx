@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { AlertTriangle, Search } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
@@ -12,7 +12,6 @@ import {
 import { SettingsGroup } from './components/SettingsGroup'
 import { SettingsRow } from './components/SettingsRow'
 import type { SettingGroup } from './types'
-import gsap from 'gsap'
 
 import { LanguageRegionPanel } from './panels/LanguageRegion'
 import { ThemeDisplayPanel } from './panels/ThemeDisplay'
@@ -61,15 +60,6 @@ export default function Page() {
 function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; isInstAdmin: boolean; isSuperAdmin: boolean }) {
   const [activePanel, setActivePanel] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (activePanel) return
-    const el = containerRef.current
-    if (!el) return
-    const items = el.querySelectorAll('.gsap-fade-up')
-    gsap.fromTo(items, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: 'power2.out' })
-  }, [activePanel, searchQuery])
 
   const generalGroup: SettingGroup = {
     title: 'General Settings',
@@ -191,9 +181,9 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
       {activePanel && activeItem ? (
         renderPanel()
       ) : (
-        <div ref={containerRef}>
+        <div>
           {/* Search Bar */}
-          <div className="mb-5 gsap-fade-up">
+          <div className="mb-5">
             <div className="relative">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
               <input
@@ -208,7 +198,7 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
 
           <div>
             {filteredGroups.map((group) => (
-              <div key={group.title} className="gsap-fade-up">
+              <div key={group.title}>
                 <SettingsGroup title={group.title} titleBn={group.titleBn} isBn={isBn}>
                   {group.items.map((item, idx) => (
                     <SettingsRow
@@ -223,7 +213,7 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
               </div>
             ))}
             {filteredGroups.length === 0 && searchQuery && (
-              <div className="text-center py-12 gsap-fade-up">
+              <div className="text-center py-12">
                 <div className="w-12 h-12 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3">
                   <Search size={20} className="text-[var(--text-muted)]" />
                 </div>
