@@ -48,6 +48,8 @@ export interface Institution {
   sessions: string[]
   password: string
   accessModes: InstitutionAccessModes
+  language: 'en' | 'bn'
+  theme: 'light' | 'dark'
 }
 
 export const PACKAGES: InstitutionPackage[] = [

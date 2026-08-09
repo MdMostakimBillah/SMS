@@ -255,6 +255,8 @@ export default function CreateSchool() {
       sessions: form.sessions,
       password: form.adminPassword,
       accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
+      language: 'en',
+      theme: 'light',
     }
     addInstitution(inst)
     loadInstitutionData(inst)

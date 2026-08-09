@@ -76,7 +76,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       theme: 'dark',
-      language: 'bn',
+      language: 'en',
       sidebarOpen: false,
       sidebarCollapsed: false,
       sidebarPosition: 'left',

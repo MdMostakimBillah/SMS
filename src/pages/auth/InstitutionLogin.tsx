@@ -109,24 +109,12 @@ function loadInstitutionData(inst: Institution) {
 
 export { loadInstitutionData }
 
-function getInitialTheme(): 'light' | 'dark' {
-  try {
-    const stored = localStorage.getItem('edutech-settings')
-    if (stored) {
-      const parsed = JSON.parse(stored)
-      const t = parsed?.state?.theme
-      if (t === 'light') return 'light'
-      if (t === 'dark') return 'dark'
-    }
-  } catch { /* ignore */ }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
-
 export default function InstitutionLogin({ subdomain, institution: propInstitution }: { subdomain?: string; institution?: Institution }) {
   const isBn = useBn()
   const navigate = useNavigate()
   const storeInstitutions = useSuperAdminStore((s) => s.institutions)
   const setAppTheme = useAppStore((s) => s.setTheme)
+  const setAppLanguage = useAppStore((s) => s.setLanguage)
   const authCtx = useContext(AuthContext)
   const setInstitutionUser = authCtx?.setInstitutionUser
 
@@ -141,11 +129,23 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme)
+  const [theme, setTheme] = useState<'light' | 'dark'>(institution?.theme || 'light')
   const isDark = theme === 'dark'
   const [isLockedOut, setIsLockedOut] = useState(isCurrentlyLockedOut())
   const [lockoutRemaining, setLockoutRemaining] = useState(getLockoutRemaining())
   const lockoutTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Apply institution's language and theme on mount
+  useEffect(() => {
+    if (!institution) return
+    const lang = institution.language || 'en'
+    const t = institution.theme || 'light'
+    setAppLanguage(lang)
+    document.documentElement.dataset.lang = lang
+    setTheme(t)
+    document.documentElement.setAttribute('data-theme', t)
+    setAppTheme(t)
+  }, [institution])
 
   const toggleTheme = () => {
     const next = isDark ? 'light' : 'dark'

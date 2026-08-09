@@ -256,6 +256,8 @@ export default function InstitutionRegister() {
       sessions: ['2025-26'],
       password: form.adminPassword,
       accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
+      language: 'en',
+      theme: 'light',
     }
     addInstitution(inst)
     loadInstitutionData(inst)
