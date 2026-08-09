@@ -508,7 +508,7 @@ export default function InstitutionRegister() {
                       <p className={`text-[0.75rem] mt-2.5 ml-1 ${subdomainTaken ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
                         {subdomainTaken
                           ? (isBn ? 'এই সাবডোমেইন ইতিমধ্যে ব্যবহৃত' : 'This subdomain is already taken')
-                          : `${BASE_URL}/i/${subdomainSlug}`}
+                          : (isBn ? 'ব্যবহারযোগ্য' : 'Available')}
                       </p>
                     )}
                   </div>
@@ -710,23 +710,20 @@ function SubdomainInput({ value, onChange, isDark, isBn, taken }: {
       <label className={`text-[0.8125rem] font-semibold mb-2 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
         {isBn ? 'সাবডোমেইন *' : 'Subdomain *'}
       </label>
-      <div className="flex items-center h-12 rounded-xl border overflow-hidden transition-all duration-200"
+      <div className={`flex items-center h-12 rounded-xl border overflow-hidden transition-all duration-200 ${isDark ? 'border-white/10' : 'border-[var(--border)]'}`}
         style={{ borderColor: taken ? 'var(--red)' : focused ? 'var(--brand)' : undefined }}>
-        <div className={`flex-1 flex items-center h-full px-4 gap-2.5 transition-colors ${isDark ? 'bg-white/[0.03]' : 'bg-[var(--bg-secondary)]'}`}>
-          <Globe size={16} className={`shrink-0 ${focused ? 'text-[var(--brand)]' : isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={isBn ? 'যেমন: sunrise-academy' : 'e.g. sunrise-academy'}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] h-full ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`}
-          />
-        </div>
-        <div className={`h-full px-3.5 flex items-center border-l text-[0.75rem] font-medium ${isDark ? 'border-white/10 bg-white/[0.03] text-white/30' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
-          .smsappbd.vercel.app/i/
-        </div>
+        <span className={`px-3.5 h-full flex items-center text-[0.75rem] border-r shrink-0 ${isDark ? 'bg-white/[0.03] border-white/10 text-white/30' : 'bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--text-muted)]'}`}>
+          smsappbd.vercel.app/i/
+        </span>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+          placeholder={isBn ? 'বাধ্যতামূলক' : 'required'}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          className={`flex-1 min-w-0 h-full px-3.5 bg-transparent border-none outline-none text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`}
+        />
       </div>
     </div>
   )
