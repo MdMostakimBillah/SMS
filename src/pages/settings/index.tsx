@@ -69,7 +69,7 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
     if (!el) return
     const items = el.querySelectorAll('.gsap-fade-up')
     gsap.fromTo(items, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: 'power2.out' })
-  }, [activePanel])
+  }, [activePanel, searchQuery])
 
   const generalGroup: SettingGroup = {
     title: 'General Settings',
