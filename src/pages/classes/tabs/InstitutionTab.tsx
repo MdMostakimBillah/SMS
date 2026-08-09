@@ -424,45 +424,6 @@ export default React.memo(function InstitutionTab({
                   )}
                 </div>
               </div>
-
-              {/* Brand Color Preview */}
-              <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] mt-3">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-lg bg-[var(--brand-light)] flex items-center justify-center">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--brand)]">
-                      <circle cx="13.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="10.5" r="2.5" /><circle cx="8.5" cy="7.5" r="2.5" /><circle cx="6.5" cy="12.5" r="2.5" />
-                      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-semibold text-[var(--text-primary)]">{isBn ? 'ব্র্যান্ড রঙ' : 'Brand Color'}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Light Mode Preview */}
-                  <div className="p-2.5 rounded-lg bg-white border border-gray-200">
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 border border-yellow-500"></span>
-                      <span className="text-[0.625rem] font-medium text-gray-500">{isBn ? 'লাইট' : 'Light'}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-6 h-6 rounded-md" style={{ background: institution.lightColors?.brand || institution.brandColor || '#6366f1' }}></div>
-                      <div className="w-6 h-6 rounded-md" style={{ background: institution.lightColors?.brand2 || '#818cf8' }}></div>
-                      <div className="w-6 h-6 rounded-md border border-gray-200" style={{ background: institution.lightColors?.brandLight || 'rgba(99,102,241,0.1)' }}></div>
-                    </div>
-                  </div>
-                  {/* Dark Mode Preview */}
-                  <div className="p-2.5 rounded-lg bg-[#1a1a2e] border border-white/10">
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-gray-700 border border-gray-500"></span>
-                      <span className="text-[0.625rem] font-medium text-white/50">{isBn ? 'ডার্ক' : 'Dark'}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-6 h-6 rounded-md" style={{ background: institution.darkColors?.brand || '#818cf8' }}></div>
-                      <div className="w-6 h-6 rounded-md" style={{ background: institution.darkColors?.brand2 || '#a5b4fc' }}></div>
-                      <div className="w-6 h-6 rounded-md border border-white/10" style={{ background: institution.darkColors?.brandLight || 'rgba(129,140,248,0.1)' }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
