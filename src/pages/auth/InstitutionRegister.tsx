@@ -137,6 +137,7 @@ export default function InstitutionRegister() {
   const [resendTimer, setResendTimer] = useState(0)
 
   const [created, setCreated] = useState(false)
+  const [emailFocused, setEmailFocused] = useState(false)
 
   const set = <K extends keyof RegForm>(key: K, val: RegForm[K]) => setForm((f) => ({ ...f, [key]: val }))
 
@@ -492,25 +493,18 @@ export default function InstitutionRegister() {
               {STEPS[step].key === 'url' && (
                 <>
                   <div>
-                    <label className={`text-[0.8125rem] font-medium mb-2 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
-                      {isBn ? 'সাবডোমেইন *' : 'Subdomain *'}
-                    </label>
-                    <p className={`text-[0.75rem] mb-3 ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>
+                    <p className={`text-[0.75rem] mb-4 ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>
                       {isBn ? 'আপনার স্কুলের URL চয়ন করুন' : 'Choose your school URL'}
                     </p>
-                    <div className="flex items-center gap-0">
-                      <div className={`flex-1 flex items-center h-12 px-4 rounded-l-xl border border-r-0 transition-all ${isDark ? 'border-white/10 bg-white/5 focus-within:ring-2 focus-within:ring-[var(--brand)]/40 focus-within:border-[var(--brand)]/50' : 'border-[var(--border)] bg-[var(--bg-secondary)] focus-within:ring-2 focus-within:ring-[var(--brand)]/30 focus-within:border-[var(--brand)]/50'}`}>
-                        <Globe size={16} className={`shrink-0 mr-2.5 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
-                        <input type="text" value={form.subdomain} onChange={(e) => set('subdomain', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                          placeholder={isBn ? 'যেমন: sunrise-academy' : 'e.g. sunrise-academy'}
-                          className={`flex-1 bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`} />
-                      </div>
-                      <div className={`h-12 px-3 flex items-center rounded-r-xl border text-[0.75rem] ${isDark ? 'border-white/10 bg-white/5 text-white/30' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
-                        .{BASE_URL}/i/
-                      </div>
-                    </div>
+                    <SubdomainInput
+                      value={form.subdomain}
+                      onChange={(v) => set('subdomain', v.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                      isDark={isDark}
+                      isBn={isBn}
+                      taken={subdomainTaken}
+                    />
                     {form.subdomain && (
-                      <p className={`text-[0.75rem] mt-2 ${subdomainTaken ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
+                      <p className={`text-[0.75rem] mt-2.5 ml-1 ${subdomainTaken ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
                         {subdomainTaken
                           ? (isBn ? 'এই সাবডোমেইন ইতিমধ্যে ব্যবহৃত' : 'This subdomain is already taken')
                           : `${BASE_URL}/i/${subdomainSlug}`}
@@ -607,30 +601,36 @@ export default function InstitutionRegister() {
               {STEPS[step].key === 'admin' && (
                 <>
                   <div>
-                    <label className={`text-[0.8125rem] font-medium mb-2 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
-                      {isBn ? 'অ্যাডমিন ইমেইল *' : 'Admin Email *'}
-                    </label>
-                    <div className="flex gap-2">
-                      <div className={`flex-1 flex items-center h-12 px-4 rounded-xl border transition-all ${isDark ? 'border-white/10 bg-white/5 focus-within:ring-2 focus-within:ring-[var(--brand)]/40 focus-within:border-[var(--brand)]/50' : 'border-[var(--border)] bg-[var(--bg-secondary)] focus-within:ring-2 focus-within:ring-[var(--brand)]/30 focus-within:border-[var(--brand)]/50'} ${emailVerified ? (isDark ? 'border-[var(--green)]/30' : 'border-[var(--green)]/30') : ''}`}>
-                        <Mail size={16} className={`shrink-0 mr-2.5 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
-                        <input type="email" value={form.adminEmail}
+                    <div className="relative group">
+                      <span className={`absolute left-4 top-1/2 -translate-y-1/2 z-10 transition-colors duration-200 ${emailVerified ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}><Mail size={16} /></span>
+                      <label className={`absolute left-11 pointer-events-none origin-left transition-all duration-200 ease-out ${(emailFocused || form.adminEmail.length > 0) ? 'top-2 text-[0.625rem] font-semibold tracking-wide' : 'top-1/2 -translate-y-1/2 text-[0.875rem] font-medium'} ${(emailFocused || form.adminEmail.length > 0) ? (emailVerified ? 'text-[var(--green)]' : 'text-[var(--text-muted)]') : 'text-[var(--text-muted)]'}`}>
+                        {isBn ? 'অ্যাডমিন ইমেইল' : 'Admin Email'}
+                      </label>
+                      <div className={`relative flex items-center h-[3.25rem] rounded-xl border transition-all duration-200 ${emailVerified ? 'border-[var(--green)]/30' : emailFocused ? 'border-[var(--brand)] shadow-[0_0_0_3px_rgba(99,102,241,0.08)]' : isDark ? 'border-white/10 bg-white/[0.03] hover:border-white/15' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--border)]/80'}`}>
+                        <span className="w-10" />
+                        <input
+                          type="email"
+                          value={form.adminEmail}
                           onChange={(e) => { set('adminEmail', e.target.value); setEmailSent(false); setEmailVerified(false); setEmailCode(''); setEmailError('') }}
-                          placeholder="admin@school.edu.bd" disabled={emailVerified}
-                          className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'} disabled:opacity-50`} />
-                        {emailVerified && (
-                          <span className="shrink-0 ml-2 w-5 h-5 rounded-full bg-[var(--green)]/15 flex items-center justify-center">
+                          placeholder={(emailFocused || form.adminEmail.length > 0) ? 'admin@school.edu.bd' : ''}
+                          disabled={emailVerified}
+                          onFocus={() => setEmailFocused(true)}
+                          onBlur={() => setEmailFocused(false)}
+                          className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] pt-3 pb-0 disabled:opacity-50 ${isDark ? 'text-white placeholder:text-white/15' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]/50'}`}
+                        />
+                        {emailVerified ? (
+                          <span className="shrink-0 pr-3 w-5 h-5 rounded-full bg-[var(--green)]/15 flex items-center justify-center">
                             <Check size={12} className="text-[var(--green)]" />
                           </span>
+                        ) : (
+                          <button onClick={sendOtp} disabled={sendingCode || !form.adminEmail.includes('@') || (emailSent && resendTimer > 0)}
+                            className="shrink-0 mr-2 h-8 px-3.5 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-semibold border-none cursor-pointer disabled:opacity-50 whitespace-nowrap transition-all hover:opacity-90 flex items-center justify-center">
+                            {emailSent && resendTimer > 0
+                              ? `${Math.floor(resendTimer / 60)}:${String(resendTimer % 60).padStart(2, '0')}`
+                              : isBn ? 'কোড পাঠান' : 'Send Code'}
+                          </button>
                         )}
                       </div>
-                      {!emailVerified && (
-                        <button onClick={sendOtp} disabled={sendingCode || !form.adminEmail.includes('@') || (emailSent && resendTimer > 0)}
-                          className="h-12 px-5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold border-none cursor-pointer disabled:opacity-50 whitespace-nowrap transition-all hover:opacity-90 flex items-center justify-center">
-                          {emailSent && resendTimer > 0
-                            ? `${Math.floor(resendTimer / 60)}:${String(resendTimer % 60).padStart(2, '0')}`
-                            : isBn ? 'কোড পাঠান' : 'Send Code'}
-                        </button>
-                      )}
                     </div>
                     {emailSent && !emailVerified && (
                       <div className="mt-4 space-y-3">
@@ -704,21 +704,77 @@ export default function InstitutionRegister() {
   )
 }
 
-/* ─── Icon Field (modern input with icon) ─── */
-function IconField({ icon, label, value, onChange, placeholder, type = 'text', isDark, disabled, suffix }: {
-  icon: React.ReactNode; label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; isDark: boolean; disabled?: boolean; suffix?: React.ReactNode
+/* ─── Subdomain Input (floating label with suffix) ─── */
+function SubdomainInput({ value, onChange, isDark, isBn, taken }: {
+  value: string; onChange: (v: string) => void; isDark: boolean; isBn: boolean; taken: boolean
 }) {
   const [focused, setFocused] = useState(false)
+  const hasValue = value.length > 0
+  const isFloating = focused || hasValue
+
   return (
     <div>
-      <label className={`text-[0.8125rem] font-medium mb-2 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>{label}</label>
-      <div className={`flex items-center h-12 px-4 rounded-xl border transition-all ${isDark ? 'border-white/10 bg-white/5' : 'border-[var(--border)] bg-[var(--bg-secondary)]'} ${focused ? (isDark ? 'ring-2 ring-[var(--brand)]/40 border-[var(--brand)]/50' : 'ring-2 ring-[var(--brand)]/30 border-[var(--brand)]/50') : ''} ${disabled ? 'opacity-50' : ''}`}>
-        <span className={`shrink-0 mr-2.5 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`}>{icon}</span>
-        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled}
-          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-          className={`flex-1 bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`} />
-        {suffix && <span className="shrink-0 ml-2">{suffix}</span>}
+      <div className="relative group">
+        <span className={`absolute left-4 top-1/2 -translate-y-1/2 z-10 transition-colors duration-200 ${focused ? 'text-[var(--brand)]' : isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`}><Globe size={16} /></span>
+
+        <label className={`absolute left-11 pointer-events-none origin-left transition-all duration-200 ease-out ${isFloating ? 'top-2 text-[0.625rem] font-semibold tracking-wide' : 'top-1/2 -translate-y-1/2 text-[0.875rem] font-medium'} ${focused ? 'text-[var(--brand)]' : isFloating ? (isDark ? 'text-white/40' : 'text-[var(--text-muted)]') : (isDark ? 'text-white/30' : 'text-[var(--text-muted)]')}`}>
+          {isBn ? 'সাবডোমেইন' : 'Subdomain'}
+        </label>
+
+        <div className={`relative flex items-center h-[3.25rem] rounded-xl border transition-all duration-200 ${taken ? 'border-[var(--red)]' : focused ? 'border-[var(--brand)] shadow-[0_0_0_3px_rgba(99,102,241,0.08)]' : isDark ? 'border-white/10 bg-white/[0.03] hover:border-white/15' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--border)]/80'}`}>
+          <span className="w-10" />
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={isFloating ? (isBn ? 'যেমন: sunrise-academy' : 'e.g. sunrise-academy') : ''}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] pt-3 pb-0 ${isDark ? 'text-white placeholder:text-white/15' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]/50'}`}
+          />
+          <div className={`h-full px-3 flex items-center rounded-r-xl border-l text-[0.6875rem] font-medium ${isDark ? 'border-white/10 text-white/25' : 'border-[var(--border)] text-[var(--text-muted)]'}`}>
+            .smsappbd.vercel.app/i/
+          </div>
+        </div>
       </div>
+    </div>
+  )
+}
+
+/* ─── Icon Field (modern floating label input) ─── */
+function IconField({ icon, label, value, onChange, placeholder, type = 'text', isDark, disabled, suffix, error }: {
+  icon: React.ReactNode; label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; isDark: boolean; disabled?: boolean; suffix?: React.ReactNode; error?: string
+}) {
+  const [focused, setFocused] = useState(false)
+  const hasValue = value.length > 0
+  const isFloating = focused || hasValue
+
+  return (
+    <div>
+      <div className={`relative group ${disabled ? 'opacity-50' : ''}`}>
+        {/* Icon */}
+        <span className={`absolute left-4 top-1/2 -translate-y-1/2 z-10 transition-colors duration-200 ${focused ? 'text-[var(--brand)]' : isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`}>{icon}</span>
+
+        {/* Floating label */}
+        <label className={`absolute left-11 pointer-events-none origin-left transition-all duration-200 ease-out ${isFloating ? 'top-2 text-[0.625rem] font-semibold tracking-wide' : 'top-1/2 -translate-y-1/2 text-[0.875rem] font-medium'} ${focused ? 'text-[var(--brand)]' : isFloating ? (isDark ? 'text-white/40' : 'text-[var(--text-muted)]') : (isDark ? 'text-white/30' : 'text-[var(--text-muted)]')}`}>{label}</label>
+
+        {/* Input container */}
+        <div className={`relative flex items-center h-[3.25rem] rounded-xl border transition-all duration-200 ${error ? 'border-[var(--red)]' : focused ? 'border-[var(--brand)] shadow-[0_0_0_3px_rgba(99,102,241,0.08)]' : isDark ? 'border-white/10 bg-white/[0.03] hover:border-white/15' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--border)]/80'}`}>
+          <span className="w-10" /> {/* Spacer for icon */}
+          <input
+            type={type}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={isFloating ? placeholder : ''}
+            disabled={disabled}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] pt-3 pb-0 ${isDark ? 'text-white placeholder:text-white/15' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]/50'}`}
+          />
+          {suffix && <span className="shrink-0 pr-3">{suffix}</span>}
+        </div>
+      </div>
+      {error && <p className="text-[0.6875rem] text-[var(--red)] mt-1.5 ml-1">{error}</p>}
     </div>
   )
 }
