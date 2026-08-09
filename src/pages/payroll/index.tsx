@@ -326,12 +326,14 @@ export default function PayrollPage() {
       </div>
 
       {!monthSelected && (
-        <div className={`${card} mb-3.5`}>
-          <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-2.5 flex items-center gap-1.5">
-            <Calendar size={13} />
-            {isBn ? 'মাস বেছে নিন' : 'Select Month'}
+        <div className="card--premium !p-0 overflow-hidden mb-3.5">
+          <div className="px-4 pt-4 pb-2">
+            <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] flex items-center gap-1.5">
+              <Calendar size={13} />
+              {isBn ? 'মাস বেছে নিন' : 'Select Month'}
+            </div>
           </div>
-          <div className={`grid ${isMobile ? 'grid-cols-3' : 'grid-cols-4'} gap-2`}>
+          <div className={`grid ${isMobile ? 'grid-cols-3' : 'grid-cols-4'} gap-px bg-[var(--border)]`}>
             {MONTHS.map((m) => {
               const val = `${currentYear}-${m.key}`
               const isCurrent = m.key === String(new Date().getMonth() + 1).padStart(2, '0') && currentYear === new Date().getFullYear()
@@ -339,13 +341,21 @@ export default function PayrollPage() {
                 <button
                   key={m.key}
                   onClick={() => setMonth(val)}
-                  className={`py-3.5 px-2.5 rounded-[0.625rem] border-2 ${isCurrent ? 'border-[var(--brand)]' : 'border-[var(--border)]'} ${isCurrent ? 'bg-[var(--brand-light)]' : 'bg-[var(--bg-secondary)]'} cursor-pointer font-[inherit] text-center transition-all duration-150 relative hover:border-[var(--brand)] hover:bg-[var(--brand-light)]`}
+                  className={`py-4 px-3 cursor-pointer font-[inherit] text-center transition-colors duration-150 relative border-none ${
+                    isCurrent
+                      ? 'bg-[var(--brand-light)]'
+                      : 'bg-[var(--bg-primary)] hover:bg-[var(--bg-secondary)]'
+                  }`}
                 >
-                  {isCurrent && <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />}
-                  <div className={`text-[0.8125rem] font-semibold ${isCurrent ? 'text-[var(--brand)]' : 'text-[var(--text-primary)]'}`}>
+                  {isCurrent && (
+                    <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-[var(--brand)]" />
+                  )}
+                  <div className={`text-[0.8125rem] font-semibold mt-1 ${isCurrent ? 'text-[var(--brand)]' : 'text-[var(--text-primary)]'}`}>
                     {isBn ? m.bn : m.en}
                   </div>
-                  <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">{currentYear}</div>
+                  <div className={`text-[0.625rem] mt-0.5 ${isCurrent ? 'text-[var(--brand)]/60' : 'text-[var(--text-muted)]'}`}>
+                    {currentYear}
+                  </div>
                 </button>
               )
             })}
