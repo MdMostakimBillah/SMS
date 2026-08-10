@@ -57,6 +57,14 @@ export function ProductModal({ existing, onSaved, onClose }: Props) {
     setErrors((prev) => ({ ...prev, classes: false }))
   }
 
+  const handleCategoryChange = (catId: string) => {
+    setCategoryId(catId)
+    if (catId) {
+      const cat = categories.find((c) => c.id === catId)
+      if (cat?.unit) setUnit(cat.unit)
+    }
+  }
+
   const selectedUnit = useMemo(() => unitOptions.find((u) => u.value === unit), [unit])
   const profit = price && cost ? Number(price) - Number(cost) : 0
   const profitMargin = price && cost && Number(price) > 0 ? ((profit / Number(price)) * 100).toFixed(1) : '0'
@@ -156,7 +164,7 @@ export function ProductModal({ existing, onSaved, onClose }: Props) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={fieldLabelCls}>{bn ? 'ক্যাটাগরি' : 'Category'}</label>
-                  <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={selectFieldCls}>
+                  <select value={categoryId} onChange={(e) => handleCategoryChange(e.target.value)} className={selectFieldCls}>
                     <option value="">{bn ? 'নির্বাচন করুন' : 'Select category'}</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>{bn ? c.nameBn : c.name}</option>
