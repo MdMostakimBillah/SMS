@@ -1,27 +1,27 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Tag, X, Package } from 'lucide-react'
+import { Tag, X, Package, Weight, Droplets, Ruler, ShoppingBag, Scroll, Gift, Hash, Box } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useStoreStore, type StoreCategory } from '@/store/storeStore'
+import { CustomSelect } from '@/components/ui/CustomSelect'
 
 const unitOptions = [
-  { value: 'pc', label: 'Piece', labelBn: 'পিস', icon: '📦' },
-  { value: 'kg', label: 'Kilogram', labelBn: 'কেজি', icon: '⚖️' },
-  { value: 'g', label: 'Gram', labelBn: 'গ্রাম', icon: '⚖️' },
-  { value: 'l', label: 'Liter', labelBn: 'লিটার', icon: '🧴' },
-  { value: 'ml', label: 'Milliliter', labelBn: 'মিলি', icon: '🧴' },
-  { value: 'm', label: 'Meter', labelBn: 'মিটার', icon: '📏' },
-  { value: 'cm', label: 'Centimeter', labelBn: 'সেমি', icon: '📏' },
-  { value: 'box', label: 'Box', labelBn: 'বক্স', icon: '📦' },
-  { value: 'bag', label: 'Bag', labelBn: 'ব্যাগ', icon: '🛍️' },
-  { value: 'roll', label: 'Roll', labelBn: 'রোল', icon: '🧻' },
-  { value: 'set', label: 'Set', labelBn: 'সেট', icon: '🎁' },
-  { value: 'doz', label: 'Dozen', labelBn: 'ডজন', icon: '🔢' },
-  { value: 'pack', label: 'Pack', labelBn: 'প্যাক', icon: '📦' },
+  { value: 'pc', label: 'Piece', labelBn: 'পিস', icon: <Package size={14} /> },
+  { value: 'kg', label: 'Kilogram', labelBn: 'কেজি', icon: <Weight size={14} /> },
+  { value: 'g', label: 'Gram', labelBn: 'গ্রাম', icon: <Weight size={14} /> },
+  { value: 'l', label: 'Liter', labelBn: 'লিটার', icon: <Droplets size={14} /> },
+  { value: 'ml', label: 'Milliliter', labelBn: 'মিলি', icon: <Droplets size={14} /> },
+  { value: 'm', label: 'Meter', labelBn: 'মিটার', icon: <Ruler size={14} /> },
+  { value: 'cm', label: 'Centimeter', labelBn: 'সেমি', icon: <Ruler size={14} /> },
+  { value: 'box', label: 'Box', labelBn: 'বক্স', icon: <Box size={14} /> },
+  { value: 'bag', label: 'Bag', labelBn: 'ব্যাগ', icon: <ShoppingBag size={14} /> },
+  { value: 'roll', label: 'Roll', labelBn: 'রোল', icon: <Scroll size={14} /> },
+  { value: 'set', label: 'Set', labelBn: 'সেট', icon: <Gift size={14} /> },
+  { value: 'doz', label: 'Dozen', labelBn: 'ডজন', icon: <Hash size={14} /> },
+  { value: 'pack', label: 'Pack', labelBn: 'প্যাক', icon: <Package size={14} /> },
 ]
 
 const inputFieldCls = 'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 hover:border-[var(--brand)]/30'
-const selectFieldCls = `${inputFieldCls} appearance-none cursor-pointer bg-[url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")] bg-no-repeat bg-[position:right_0.75rem_center] bg-[size:12px]`
 const fieldLabelCls = 'block text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1.5'
 
 interface Props {
@@ -107,11 +107,7 @@ export function CategoryModal({ existing, onSaved, onClose }: Props) {
 
           <div>
             <label className={fieldLabelCls}>{bn ? 'একক (Unit)' : 'Unit'}</label>
-            <select value={unit} onChange={(e) => setUnit(e.target.value)} className={selectFieldCls}>
-              {unitOptions.map((u) => (
-                <option key={u.value} value={u.value}>{u.icon} {bn ? u.labelBn : u.label}</option>
-              ))}
-            </select>
+            <CustomSelect value={unit} options={unitOptions} onChange={setUnit} bn={bn} />
           </div>
 
           <div>
