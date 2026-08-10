@@ -145,8 +145,10 @@ export default function AppLayout() {
     : null
 
   // Auto-logout when institution is suspended/inactive
+  const suspendedLoggedOut = useRef(false)
   useEffect(() => {
-    if (currentInst && (currentInst.status === 'suspended' || currentInst.status === 'inactive')) {
+    if (!suspendedLoggedOut.current && currentInst && (currentInst.status === 'suspended' || currentInst.status === 'inactive')) {
+      suspendedLoggedOut.current = true
       clearSlug()
       logout()
     }
