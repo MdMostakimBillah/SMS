@@ -175,7 +175,7 @@ function ProductCard({ product, bn, onRestock, onEdit, onDelete }: { product: St
         className="overflow-hidden transition-all duration-300 ease-in-out"
         style={{ maxHeight: open ? '10rem' : '0' }}
       >
-        <div className="px-4 pb-4 pt-0 pl-[4.75rem]">
+        <div className="px-4 pb-4 pt-3 pl-[4.75rem] border-t border-[var(--border)] bg-[var(--bg-secondary)]/50">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[0.75rem]">
             <div className="flex items-center gap-1.5">
               <span className="text-[var(--text-secondary)]">{bn ? 'স্টক' : 'Stock'}:</span>
