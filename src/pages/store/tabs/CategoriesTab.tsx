@@ -1,15 +1,16 @@
 import { useState, useMemo, useCallback } from 'react'
+import { Tag, Pencil, Trash2, Plus, BoxSelect } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useStoreStore, type StoreCategory } from '@/store/storeStore'
-import { btnPrimary } from '@/lib/styles'
 import { CategoryModal } from '../modals/CategoryModal'
 
 interface Props {
-  isMobile: boolean
   searchQuery: string
 }
 
-export const CategoriesTab = ({ isMobile, searchQuery }: Props) => {
+const catColors = ['var(--brand)', 'var(--teal)', 'var(--amber)', 'var(--green)', 'var(--purple)', 'var(--red)']
+
+export const CategoriesTab = ({ searchQuery }: Props) => {
   const bn = useBn()
   const categories = useStoreStore((s) => s.categories)
   const products = useStoreStore((s) => s.products)
@@ -32,36 +33,65 @@ export const CategoriesTab = ({ isMobile, searchQuery }: Props) => {
   }, [products])
 
   return (
-    <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
-      <div className="flex justify-end mb-3">
-        <button onClick={() => { setEditItem(null); setShowModal(true) }} className={`${btnPrimary} text-[0.8125rem]`}>
-          + {bn ? 'ক্যাটাগরি' : 'Category'}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="text-[0.8125rem] text-[var(--text-secondary)]">
+          {bn ? `${filtered.length} টি ক্যাটাগরি` : `${filtered.length} categories`}
+        </div>
+        <button onClick={() => { setEditItem(null); setShowModal(true) }} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90">
+          <Plus size={15} />
+          {bn ? 'ক্যাটাগরি' : 'Category'}
         </button>
       </div>
 
       {filtered.length === 0 ? (
-        <div className="py-12 text-center text-[var(--text-secondary)] text-[0.875rem]">
-          {bn ? 'কোনো ক্যাটাগরি পাওয়া যায়নি' : 'No categories found'}
+        <div className="py-12 text-center">
+          <Tag size={32} className="mx-auto text-[var(--text-secondary)] mb-2" />
+          <p className="text-[0.875rem] text-[var(--text-secondary)]">{bn ? 'কোনো ক্যাটাগরি পাওয়া যায়নি' : 'No categories found'}</p>
+          <button onClick={() => setShowModal(true)} className="mt-2 text-[0.8125rem] text-[var(--brand)] cursor-pointer hover:underline">
+            {bn ? '+ প্রথম ক্যাটাগরি যোগ করুন' : '+ Add your first category'}
+          </button>
         </div>
       ) : (
-        <div className={isMobile ? 'space-y-2' : 'grid grid-cols-2 lg:grid-cols-3 gap-3'}>
-          {filtered.map((c) => (
-            <div key={c.id} className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <div className="font-medium text-[0.875rem]">{bn ? c.nameBn : c.name}</div>
-                  {c.description && <div className="text-[0.75rem] text-[var(--text-secondary)] mt-0.5">{c.description}</div>}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map((c, i) => {
+            const color = catColors[i % catColors.length]
+            const count = getProductCount(c.id)
+            return (
+              <div key={c.id} className="p-4 rounded-[0.625rem] bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${color}18`, color }}>
+                    <Tag size={16} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[0.875rem] font-semibold text-[var(--text-primary)] truncate">{bn ? c.nameBn : c.name}</div>
+                    {c.description && <div className="text-[0.6875rem] text-[var(--text-secondary)] truncate mt-0.5">{c.description}</div>}
+                  </div>
+                  <div className="flex items-center gap-0.5 px-2 py-1 rounded-md bg-[var(--bg-secondary)]">
+                    <BoxSelect size={12} className="text-[var(--text-secondary)]" />
+                    <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">{count}</span>
+                  </div>
                 </div>
-                <span className="text-[0.75rem] text-[var(--text-secondary)] bg-[var(--bg-tertiary)] px-2 py-0.5 rounded">
-                  {getProductCount(c.id)} {bn ? 'পণ্য' : 'items'}
-                </span>
+
+                <div className="flex items-center gap-2 pt-2.5 border-t border-[var(--border)]">
+                  <button
+                    onClick={() => { setEditItem(c); setShowModal(true) }}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.75rem] font-medium cursor-pointer hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                  >
+                    <Pencil size={12} />
+                    {bn ? 'সম্পাদনা' : 'Edit'}
+                  </button>
+                  <button
+                    onClick={() => deleteCategory(c.id)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md bg-red-500/8 text-red-500 text-[0.75rem] font-medium cursor-pointer hover:bg-red-500/15 transition-colors"
+                  >
+                    <Trash2 size={12} />
+                    {bn ? 'মুছুন' : 'Delete'}
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2 mt-3 pt-2 border-t border-[var(--border)]">
-                <button onClick={() => { setEditItem(c); setShowModal(true) }} className="text-[0.75rem] text-[var(--brand)] cursor-pointer hover:underline">{bn ? 'সম্পাদনা' : 'Edit'}</button>
-                <button onClick={() => deleteCategory(c.id)} className="text-[0.75rem] text-red-500 cursor-pointer hover:underline">{bn ? 'মুছুন' : 'Delete'}</button>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

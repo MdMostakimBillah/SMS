@@ -332,7 +332,7 @@ export default function StorePage() {
         </>
       )}
 
-      {activeTab === 'categories' && <CategoriesTab isMobile={isMobile} searchQuery={searchQuery} />}
+      {activeTab === 'categories' && <CategoriesTab searchQuery={searchQuery} />}
       {activeTab === 'sales' && <SalesTab isMobile={isMobile} searchQuery={searchQuery} />}
       {activeTab === 'reports' && <ReportsTab isMobile={isMobile} />}
 
