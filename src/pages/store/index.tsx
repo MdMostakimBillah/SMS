@@ -117,46 +117,72 @@ function ProductCard({ product, bn, onRestock }: { product: StoreProduct; bn: bo
   const us = getUnitStyle(product.unit)
   const lowStock = product.stock <= product.minStock
   return (
-    <div className="p-3 rounded-[0.625rem] bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
-      <div className="flex items-center gap-2.5 mb-2.5">
-        <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: `${us.color}18`, color: us.color }}>
-          <Package size={14} />
+    <div className="flex items-center gap-4 p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)] hover:shadow-md transition-shadow">
+      {/* Icon */}
+      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${us.color}15`, color: us.color }}>
+        <Package size={20} />
+      </div>
+
+      {/* Name + Unit + SKU */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[0.875rem] font-semibold text-[var(--text-primary)] truncate">{bn ? product.nameBn : product.name}</span>
+          {lowStock && (
+            <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-bold bg-red-500/10 text-red-500 uppercase tracking-wider">
+              {bn ? 'কম' : 'LOW'}
+            </span>
+          )}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] truncate">{bn ? product.nameBn : product.name}</div>
-          <div className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? us.labelBn : us.label}</div>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? us.labelBn : us.label}</span>
+          <span className="text-[0.5rem] text-[var(--text-muted)]">•</span>
+          <span className="text-[0.6875rem] text-[var(--text-secondary)]">{product.sku}</span>
         </div>
-        {lowStock && (
-          <span className="px-1.5 py-0.5 rounded text-[0.625rem] font-medium bg-red-500/10 text-red-500">
-            {bn ? 'কম' : 'LOW'}
+      </div>
+
+      {/* Price */}
+      <div className="text-right shrink-0">
+        <div className="text-[0.625rem] text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'মূল্য' : 'Price'}</div>
+        <div className="text-[0.9375rem] font-bold text-[var(--text-primary)]">৳{product.price}</div>
+      </div>
+
+      {/* Stock */}
+      <div className="text-right shrink-0 w-16">
+        <div className="text-[0.625rem] text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'স্টক' : 'Stock'}</div>
+        <div className={`text-[0.9375rem] font-bold ${lowStock ? 'text-red-500' : 'text-[var(--text-primary)]'}`}>
+          {bn ? toBnNum(product.stock) : product.stock}
+        </div>
+      </div>
+
+      {/* Min Stock */}
+      <div className="text-right shrink-0 w-16 hidden sm:block">
+        <div className="text-[0.625rem] text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'মিন' : 'Min'}</div>
+        <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)]">
+          {bn ? toBnNum(product.minStock) : product.minStock}
+        </div>
+      </div>
+
+      {/* Classes */}
+      <div className="hidden md:flex flex-wrap gap-1 shrink-0 max-w-[120px]">
+        {product.classNames.slice(0, 2).map((cn) => (
+          <span key={cn} className="px-1.5 py-0.5 rounded bg-[var(--brand)]/8 text-[var(--brand)] text-[0.5625rem] font-medium">
+            {cn}
+          </span>
+        ))}
+        {product.classNames.length > 2 && (
+          <span className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.5625rem] font-medium">
+            +{product.classNames.length - 2}
           </span>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-2 mb-2.5">
-        <div className="px-2 py-1.5 rounded-md bg-[var(--bg-secondary)]">
-          <div className="text-[0.625rem] text-[var(--text-secondary)]">{bn ? 'মূল্য' : 'Price'}</div>
-          <div className="text-[0.8125rem] font-bold text-[var(--text-primary)]">৳{product.price}</div>
-        </div>
-        <div className="px-2 py-1.5 rounded-md bg-[var(--bg-secondary)]">
-          <div className="text-[0.625rem] text-[var(--text-secondary)]">{bn ? 'স্টক' : 'Stock'}</div>
-          <div className={`text-[0.8125rem] font-bold ${lowStock ? 'text-red-500' : 'text-[var(--text-primary)]'}`}>
-            {bn ? toBnNum(product.stock) : product.stock}
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-1 mb-2.5">
-        {product.classNames.map((cn) => (
-          <span key={cn} className="px-1.5 py-0.5 rounded bg-[var(--brand)]/8 text-[var(--brand)] text-[0.5625rem] font-medium">
-            {bn ? `শ্রেণি ${cn}` : `Class ${cn}`}
-          </span>
-        ))}
-      </div>
+
+      {/* Restock */}
       <button
         onClick={() => onRestock(product)}
-        className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md bg-[var(--brand)]/8 text-[var(--brand)] text-[0.75rem] font-medium cursor-pointer hover:bg-[var(--brand)]/15 transition-colors"
+        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--brand)]/8 text-[var(--brand)] text-[0.75rem] font-medium cursor-pointer hover:bg-[var(--brand)]/15 transition-colors shrink-0"
       >
-        <Plus size={12} />
-        {bn ? 'স্টক যোগ করুন' : 'Restock'}
+        <Plus size={13} />
+        {bn ? 'স্টক' : 'Stock'}
       </button>
     </div>
   )
@@ -315,7 +341,7 @@ export default function StorePage() {
           </div>
 
           {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="space-y-2">
               {filteredProducts.map((p) => (
                 <ProductCard key={p.id} product={p} bn={bn} onRestock={setRestockProduct} />
               ))}
