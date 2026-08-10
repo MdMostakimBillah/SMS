@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Tag, Pencil, Trash2, Plus, BoxSelect } from 'lucide-react'
+import { Tag, Pencil, Trash2, Plus } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useStoreStore, type StoreCategory } from '@/store/storeStore'
 import { CategoryModal } from '../modals/CategoryModal'
@@ -7,8 +7,6 @@ import { CategoryModal } from '../modals/CategoryModal'
 interface Props {
   searchQuery: string
 }
-
-const catColors = ['var(--brand)', 'var(--teal)', 'var(--amber)', 'var(--green)', 'var(--purple)', 'var(--red)']
 
 export const CategoriesTab = ({ searchQuery }: Props) => {
   const bn = useBn()
@@ -53,45 +51,60 @@ export const CategoriesTab = ({ searchQuery }: Props) => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtered.map((c, i) => {
-            const color = catColors[i % catColors.length]
-            const count = getProductCount(c.id)
-            return (
-              <div key={c.id} className="p-4 rounded-[0.625rem] bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${color}18`, color }}>
-                    <Tag size={16} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[0.875rem] font-semibold text-[var(--text-primary)] truncate">{bn ? c.nameBn : c.name}</div>
-                    {c.description && <div className="text-[0.6875rem] text-[var(--text-secondary)] truncate mt-0.5">{c.description}</div>}
-                  </div>
-                  <div className="flex items-center gap-0.5 px-2 py-1 rounded-md bg-[var(--bg-secondary)]">
-                    <BoxSelect size={12} className="text-[var(--text-secondary)]" />
-                    <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">{count}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 pt-2.5 border-t border-[var(--border)]">
-                  <button
-                    onClick={() => { setEditItem(c); setShowModal(true) }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.75rem] font-medium cursor-pointer hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
-                  >
-                    <Pencil size={12} />
-                    {bn ? 'সম্পাদনা' : 'Edit'}
-                  </button>
-                  <button
-                    onClick={() => deleteCategory(c.id)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md bg-red-500/8 text-red-500 text-[0.75rem] font-medium cursor-pointer hover:bg-red-500/15 transition-colors"
-                  >
-                    <Trash2 size={12} />
-                    {bn ? 'মুছুন' : 'Delete'}
-                  </button>
-                </div>
-              </div>
-            )
-          })}
+        <div className="overflow-x-auto rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)]">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">#</th>
+                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'নাম' : 'Name'}</th>
+                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'বিবরণ' : 'Description'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পণ্য' : 'Products'}</th>
+                <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'কার্যক্রম' : 'Actions'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((c, i) => {
+                const count = getProductCount(c.id)
+                return (
+                  <tr key={c.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-tertiary)] transition-colors">
+                    <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)]">{i + 1}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 bg-[var(--brand)]/10 text-[var(--brand)]">
+                          <Tag size={13} />
+                        </div>
+                        <span className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)] max-w-[200px] truncate">
+                      {c.description || '—'}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-md bg-[var(--brand)]/8 text-[var(--brand)] text-[0.75rem] font-semibold">
+                        {count}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => { setEditItem(c); setShowModal(true) }}
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] cursor-pointer transition-colors"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                        <button
+                          onClick={() => deleteCategory(c.id)}
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-500 cursor-pointer transition-colors"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
