@@ -59,7 +59,7 @@ export function RoleProtectedRoute({ allowedRoles }: { allowedRoles: string[] })
   const { user, loading } = useAuth()
 
   if (loading) return <LoadingSpinner />
-  if (!user) return <Navigate to={getLoginRedirect()} replace />
+  if (!user) return <Navigate to="/register" replace />
   if (!allowedRoles.includes(user.role)) {
     const slug = sessionStorage.getItem('edutech_inst_slug')
     if (user.role === 'super_admin') return <Navigate to="/super-admin/admin/dashboard" replace />
