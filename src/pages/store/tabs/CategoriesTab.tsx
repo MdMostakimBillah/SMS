@@ -57,6 +57,7 @@ export const CategoriesTab = ({ searchQuery }: Props) => {
               <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)]">
                 <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">#</th>
                 <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'নাম' : 'Name'}</th>
+                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'একক' : 'Unit'}</th>
                 <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'বিবরণ' : 'Description'}</th>
                 <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পণ্য' : 'Products'}</th>
                 <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'কার্যক্রম' : 'Actions'}</th>
@@ -75,6 +76,11 @@ export const CategoriesTab = ({ searchQuery }: Props) => {
                         </div>
                         <span className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</span>
                       </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.75rem] font-medium text-[var(--text-secondary)]">
+                        {bn ? c.unitBn : c.unit}
+                      </span>
                     </td>
                     <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)] max-w-[200px] truncate">
                       {c.description || '—'}

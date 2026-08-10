@@ -25,6 +25,8 @@ export interface StoreCategory {
   id: string
   name: string
   nameBn: string
+  unit: string
+  unitBn: string
   description: string
   descriptionBn: string
   isActive: boolean
