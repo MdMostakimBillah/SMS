@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
-import { User, Search, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2, Download, CircleCheck } from 'lucide-react'
+import { User, Search, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2, Download, CircleCheck, ShoppingBag } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
+import { useStoreStore } from '@/store/storeStore'
 import type { FeeDue, FeeStructure, FeePayment } from '@/store/feeStore'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
@@ -176,6 +177,9 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const [fineDescBn, setFineDescBn] = useState('')
   const [fineAmount, setFineAmount] = useState('')
   const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [showShopModal, setShowShopModal] = useState(false)
+  const [selectedShopProducts, setSelectedShopProducts] = useState<Set<string>>(new Set())
+  const [shopQtyMap, setShopQtyMap] = useState<Record<string, number>>({})
 
   const [extraRows, setExtraRows] = useState<MonthRow[]>([])
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
@@ -550,6 +554,12 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     })
   }, [structures, selectedStudent, payments, waivers, displayRows])
 
+  const storeProducts = useStoreStore((s) => s.products)
+  const classProducts = useMemo(() => {
+    if (!selectedStudent) return []
+    return storeProducts.filter((p) => p.isActive && p.stock > 0 && p.classNames.includes(selectedStudent.class))
+  }, [storeProducts, selectedStudent])
+
   const handleAddOneTimeFees = useCallback(() => {
     if (!selectedStudent) return
     const newRows: MonthRow[] = []
@@ -568,6 +578,27 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     setEditState((prev) => ({ ...prev, ...newEditState }))
     setSelectedOneTimeFees(new Set()); setShowOneTimeModal(false)
   }, [selectedStudent, oneTimeStructures, selectedOneTimeFees, payments, waivers, fSession])
+
+  const handleAddShopProducts = useCallback(() => {
+    if (!selectedStudent) return
+    const newRows: MonthRow[] = []
+    const newEditState: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}
+    for (const product of classProducts) {
+      if (!selectedShopProducts.has(product.id)) continue
+      const qty = shopQtyMap[product.id] || 1
+      const subtotal = product.price * qty
+      const key = `shop-${product.id}-${Date.now()}`
+      newRows.push({
+        key, feeName: product.name, feeNameBn: product.nameBn, dateRange: fSession, dateRangeBn: fSession,
+        amount: subtotal, discount: 0, remarks: `${qty} × ৳${product.price}`, receivable: subtotal, receive: subtotal,
+        structureId: '', isOnetime: true, waivedAmount: 0, waiverReason: '', waiverReasonBn: ''
+      })
+      newEditState[key] = { discount: 0, remarks: `${qty} × ৳${product.price}`, receive: subtotal, checked: false }
+    }
+    setExtraRows((prev) => [...prev, ...newRows])
+    setEditState((prev) => ({ ...prev, ...newEditState }))
+    setSelectedShopProducts(new Set()); setShopQtyMap({}); setShowShopModal(false)
+  }, [selectedStudent, classProducts, selectedShopProducts, shopQtyMap, fSession])
 
   const handleAddFine = useCallback(() => {
     if (!selectedStudent || !fineDesc || !fineAmount) return
@@ -1044,6 +1075,12 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg bg-[var(--brand)] text-white text-[12px] font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
                 <Plus size={13} />{bn ? 'এককালীন ফি' : 'One-time fee'}
               </button>
+              {selectedStudent && classProducts.length > 0 && (
+                <button onClick={() => setShowShopModal(true)}
+                  className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg bg-[var(--teal)] text-white text-[12px] font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
+                  <ShoppingBag size={13} />{bn ? 'দোকান' : 'Shop'}
+                </button>
+              )}
               <button onClick={() => setShowFineModal(true)}
                 className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-transparent text-[var(--red)] text-[12px] font-semibold cursor-pointer bg-[var(--red-light)] hover:bg-[var(--red)]/15 transition-colors">
                 <Ban size={13} />{bn ? 'জরিমানা' : 'Add fine'}
@@ -1086,6 +1123,59 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 <button onClick={handleAddOneTimeFees} disabled={selectedOneTimeFees.size === 0}
                   className="w-full h-10 rounded-lg bg-[var(--brand)] text-white font-bold text-[13px] border-0 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
                   {bn ? 'যোগ করুন' : 'Add selected'} ({selectedOneTimeFees.size})
+                </button>
+              </>
+            )}
+          </div>
+        </div>, document.body
+      )}
+
+      {/* Shop Modal */}
+      {showShopModal && createPortal(
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50" onClick={() => setShowShopModal(false)}>
+          <div className="bg-[var(--bg-primary)] rounded-xl w-[600px] max-w-[90vw] max-h-[80vh] overflow-y-auto p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3.5">
+              <h3 className="text-[15px] font-bold text-[var(--text-primary)] m-0">
+                <ShoppingBag size={16} className="inline mr-1.5 text-[var(--teal)]" />
+                {bn ? 'দোকান' : 'Shop'} — {bn ? `শ্রেণি ${selectedStudent?.class}` : `Class ${selectedStudent?.class}`}
+              </h3>
+              <button onClick={() => setShowShopModal(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)]"><X size={14} /></button>
+            </div>
+            {classProducts.length === 0 ? (
+              <p className="text-xs text-[var(--text-muted)] text-center py-6">{bn ? 'এই শ্রেণিতে কোনো পণ্য নেই' : 'No products available for this class'}</p>
+            ) : (
+              <>
+                <div className="space-y-2 mb-3">
+                  {classProducts.map((p) => {
+                    const qty = shopQtyMap[p.id] || 1
+                    const isSelected = selectedShopProducts.has(p.id)
+                    return (
+                      <div key={p.id} className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors ${isSelected ? 'border-[var(--teal)] bg-[var(--teal)]/5' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)]'}`}>
+                        <input type="checkbox" checked={isSelected}
+                          onChange={(e) => { const next = new Set(selectedShopProducts); if (e.target.checked) next.add(p.id); else next.delete(p.id); setSelectedShopProducts(next) }}
+                          className="w-[14px] h-[14px] accent-[var(--teal)]" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[12.5px] font-semibold text-[var(--text-primary)]">{bn ? p.nameBn : p.name}</div>
+                          <div className="text-[10.5px] text-[var(--text-muted)]">{bn ? p.unitBn : p.unit} · {p.sku}</div>
+                        </div>
+                        <div className="text-[var(--teal)] text-[12.5px] font-semibold">৳{p.price}</div>
+                        <div className="text-[10.5px] text-[var(--text-muted)]">{bn ? `স্টক: ${p.stock}` : `Stock: ${p.stock}`}</div>
+                        {isSelected && (
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => setShopQtyMap((prev) => ({ ...prev, [p.id]: Math.max(1, (prev[p.id] || 1) - 1) }))}
+                              className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[10px] hover:bg-[var(--border)] transition-colors">-</button>
+                            <span className="w-8 text-center text-[12px] font-semibold text-[var(--text-primary)]">{qty}</span>
+                            <button onClick={() => setShopQtyMap((prev) => ({ ...prev, [p.id]: Math.min(p.stock, (prev[p.id] || 1) + 1) }))}
+                              className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[10px] hover:bg-[var(--border)] transition-colors">+</button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                <button onClick={handleAddShopProducts} disabled={selectedShopProducts.size === 0}
+                  className="w-full h-10 rounded-lg bg-[var(--teal)] text-white font-bold text-[13px] border-0 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
+                  {bn ? 'যোগ করুন' : 'Add selected'} ({selectedShopProducts.size})
                 </button>
               </>
             )}
