@@ -117,88 +117,69 @@ function ProductCard({ product, bn, onRestock, onEdit, onDelete }: { product: St
   const us = getUnitStyle(product.unit)
   const lowStock = product.stock <= product.minStock
   return (
-    <div className="flex items-center gap-4 p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)] hover:shadow-md transition-shadow">
-      {/* Icon */}
-      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${us.color}15`, color: us.color }}>
-        <Package size={20} />
+    <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)] hover:shadow-md transition-shadow">
+      {/* Top row: Icon + Name + Actions */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${us.color}15`, color: us.color }}>
+          <Package size={18} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[0.875rem] font-semibold text-[var(--text-primary)] truncate">{bn ? product.nameBn : product.name}</span>
+            {lowStock && (
+              <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-bold bg-red-500/10 text-red-500 uppercase tracking-wider">LOW</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? us.labelBn : us.label}</span>
+            <span className="text-[0.5rem] text-[var(--text-muted)]">·</span>
+            <span className="text-[0.6875rem] text-[var(--text-secondary)]">{product.sku}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <button onClick={() => onRestock(product)} className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--brand)]/8 text-[var(--brand)] cursor-pointer hover:bg-[var(--brand)]/15 transition-colors" title={bn ? 'স্টক যোগ' : 'Restock'}>
+            <Plus size={14} />
+          </button>
+          <button onClick={() => onEdit(product)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] transition-colors" title={bn ? 'সম্পাদনা' : 'Edit'}>
+            <Pencil size={13} />
+          </button>
+          <button onClick={() => onDelete(product.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] cursor-pointer hover:bg-red-500/10 hover:text-red-500 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+            <Trash2 size={13} />
+          </button>
+        </div>
       </div>
 
-      {/* Name + Unit + SKU */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[0.875rem] font-semibold text-[var(--text-primary)] truncate">{bn ? product.nameBn : product.name}</span>
-          {lowStock && (
-            <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-bold bg-red-500/10 text-red-500 uppercase tracking-wider">
-              {bn ? 'কম' : 'LOW'}
+      {/* Bottom row: Stats */}
+      <div className="flex items-center gap-6 pl-[3.25rem]">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'মূল্য' : 'Price'}</span>
+          <span className="text-[0.875rem] font-bold text-[var(--text-primary)]">৳{product.price}</span>
+        </div>
+        <div className="w-px h-4 bg-[var(--border)]" />
+        <div className="flex items-center gap-1.5">
+          <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'স্টক' : 'Stock'}</span>
+          <span className={`text-[0.875rem] font-bold ${lowStock ? 'text-red-500' : 'text-[var(--text-primary)]'}`}>
+            {bn ? toBnNum(product.stock) : product.stock}
+          </span>
+        </div>
+        <div className="w-px h-4 bg-[var(--border)]" />
+        <div className="flex items-center gap-1.5">
+          <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'মিন' : 'Min'}</span>
+          <span className="text-[0.8125rem] font-medium text-[var(--text-secondary)]">
+            {bn ? toBnNum(product.minStock) : product.minStock}
+          </span>
+        </div>
+        <div className="w-px h-4 bg-[var(--border)] hidden sm:block" />
+        <div className="hidden sm:flex items-center gap-1.5">
+          {product.classNames.slice(0, 3).map((cn) => (
+            <span key={cn} className="px-2 py-0.5 rounded-full bg-[var(--brand)]/8 text-[var(--brand)] text-[0.625rem] font-medium">
+              {cn}
             </span>
+          ))}
+          {product.classNames.length > 3 && (
+            <span className="text-[0.625rem] text-[var(--text-secondary)]">+{product.classNames.length - 3}</span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? us.labelBn : us.label}</span>
-          <span className="text-[0.5rem] text-[var(--text-muted)]">·</span>
-          <span className="text-[0.6875rem] text-[var(--text-secondary)]">{product.sku}</span>
-        </div>
-      </div>
-
-      {/* Price */}
-      <div className="text-right shrink-0">
-        <div className="text-[0.625rem] text-[var(--text-secondary)] uppercase tracking-wider mb-0.5">{bn ? 'মূল্য' : 'Price'}</div>
-        <div className="text-[0.9375rem] font-bold text-[var(--text-primary)]">৳{product.price}</div>
-      </div>
-
-      {/* Stock */}
-      <div className="text-right shrink-0">
-        <div className="text-[0.625rem] text-[var(--text-secondary)] uppercase tracking-wider mb-0.5">{bn ? 'স্টক' : 'Stock'}</div>
-        <div className={`text-[0.9375rem] font-bold ${lowStock ? 'text-red-500' : 'text-[var(--text-primary)]'}`}>
-          {bn ? toBnNum(product.stock) : product.stock}
-        </div>
-      </div>
-
-      {/* Min */}
-      <div className="text-right shrink-0 hidden sm:block">
-        <div className="text-[0.625rem] text-[var(--text-secondary)] uppercase tracking-wider mb-0.5">{bn ? 'মিন' : 'Min'}</div>
-        <div className="text-[0.8125rem] font-medium text-[var(--text-secondary)]">
-          {bn ? toBnNum(product.minStock) : product.minStock}
-        </div>
-      </div>
-
-      {/* Classes */}
-      <div className="hidden lg:flex flex-wrap gap-1 shrink-0 max-w-[140px]">
-        {product.classNames.slice(0, 2).map((cn) => (
-          <span key={cn} className="px-2 py-0.5 rounded-full bg-[var(--brand)]/8 text-[var(--brand)] text-[0.625rem] font-medium">
-            {bn ? `শ্রেণি ${cn}` : `Class ${cn}`}
-          </span>
-        ))}
-        {product.classNames.length > 2 && (
-          <span className="px-2 py-0.5 rounded-full bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.625rem] font-medium">
-            +{product.classNames.length - 2}
-          </span>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-1 shrink-0">
-        <button
-          onClick={() => onRestock(product)}
-          className="flex items-center gap-1 px-2.5 py-2 rounded-lg bg-[var(--brand)]/8 text-[var(--brand)] text-[0.75rem] font-medium cursor-pointer hover:bg-[var(--brand)]/15 transition-colors"
-          title={bn ? 'স্টক যোগ' : 'Restock'}
-        >
-          <Plus size={13} />
-        </button>
-        <button
-          onClick={() => onEdit(product)}
-          className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-[var(--text-secondary)] text-[0.75rem] cursor-pointer hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] transition-colors"
-          title={bn ? 'সম্পাদনা' : 'Edit'}
-        >
-          <Pencil size={13} />
-        </button>
-        <button
-          onClick={() => onDelete(product.id)}
-          className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-[var(--text-secondary)] text-[0.75rem] cursor-pointer hover:bg-red-500/10 hover:text-red-500 transition-colors"
-          title={bn ? 'মুছুন' : 'Delete'}
-        >
-          <Trash2 size={13} />
-        </button>
       </div>
     </div>
   )
