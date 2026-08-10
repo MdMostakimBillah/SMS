@@ -1096,36 +1096,44 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
       {/* One-Time Fee Modal */}
       {showOneTimeModal && createPortal(
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 " onClick={() => setShowOneTimeModal(false)}>
-          <div className="bg-[var(--bg-primary)] rounded-xl w-[400px] max-w-[90vw] max-h-[80vh] overflow-y-auto p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-3.5">
-              <h3 className="text-[15px] font-bold text-[var(--text-primary)] m-0">{bn ? 'এককালীন ফি যোগ' : 'Add one-time fee'}</h3>
-              <button onClick={() => setShowOneTimeModal(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)]"><X size={14} /></button>
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50" onClick={() => setShowOneTimeModal(false)}>
+          <div className="bg-[var(--bg-primary)] rounded-2xl w-[560px] h-[520px] max-w-[90vw] flex flex-col shadow-2xl border border-[var(--border)]" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
+              <div>
+                <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">{bn ? 'এককালীন ফি' : 'One-time Fee'}</h3>
+                <p className="text-[11px] text-[var(--text-muted)] mt-0.5 m-0">{bn ? `${selectedStudent?.nameBn || ''} — শ্রেণি ${selectedStudent?.class || ''}` : `${selectedStudent?.nameEn || ''} — Class ${selectedStudent?.class || ''}`}</p>
+              </div>
+              <button onClick={() => setShowOneTimeModal(false)} className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)] transition-colors"><X size={15} /></button>
             </div>
-            {oneTimeStructures.length === 0 ? (
-              <p className="text-xs text-[var(--text-muted)] text-center py-6">{bn ? 'কোনো এককালীন ফি পাওয়া যায়নি' : 'No one-time fees found'}</p>
-            ) : (
-              <>
-                <div className="space-y-2 mb-3">
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {oneTimeStructures.length === 0 ? (
+                <p className="text-[13px] text-[var(--text-muted)] text-center py-10">{bn ? 'কোনো এককালীন ফি পাওয়া যায়নি' : 'No one-time fees found'}</p>
+              ) : (
+                <div className="space-y-2">
                   {oneTimeStructures.map((s) => (
-                    <label key={s.id} className="flex items-center gap-[10px] p-[10px] rounded-lg border border-[var(--border)] cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors">
+                    <label key={s.id} className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] cursor-pointer hover:bg-[var(--bg-secondary)] hover:border-[var(--brand)]/30 transition-all">
                       <input type="checkbox" checked={selectedOneTimeFees.has(s.id)}
                         onChange={(e) => { const next = new Set(selectedOneTimeFees); if (e.target.checked) next.add(s.id); else next.delete(s.id); setSelectedOneTimeFees(next) }}
-                        className="w-[14px] h-[14px] accent-[var(--brand)]" />
+                        className="w-4 h-4 accent-[var(--brand)]" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-[12.5px] font-semibold text-[var(--text-primary)]">{bn ? s.nameBn : s.name}</div>
-                        <div className="text-[10.5px] text-[var(--text-muted)]">{s.descriptionBn || s.description}</div>
+                        <div className="text-[13px] font-semibold text-[var(--text-primary)]">{bn ? s.nameBn : s.name}</div>
+                        <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{s.descriptionBn || s.description || '—'}</div>
                       </div>
-                      <div className="text-[var(--brand)] text-[12.5px]">{fmt(s.amount)}</div>
+                      <div className="text-[var(--brand)] text-[14px] font-bold">৳{s.amount.toLocaleString()}</div>
                     </label>
                   ))}
                 </div>
-                <button onClick={handleAddOneTimeFees} disabled={selectedOneTimeFees.size === 0}
-                  className="w-full h-10 rounded-lg bg-[var(--brand)] text-white font-bold text-[13px] border-0 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
-                  {bn ? 'যোগ করুন' : 'Add selected'} ({selectedOneTimeFees.size})
-                </button>
-              </>
-            )}
+              )}
+            </div>
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-[var(--border)]">
+              <button onClick={handleAddOneTimeFees} disabled={selectedOneTimeFees.size === 0}
+                className="w-full h-11 rounded-xl bg-[var(--brand)] text-white font-bold text-[14px] border-0 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
+                {bn ? 'যোগ করুন' : 'Add selected'} ({selectedOneTimeFees.size})
+              </button>
+            </div>
           </div>
         </div>, document.body
       )}
@@ -1133,52 +1141,64 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       {/* Shop Modal */}
       {showShopModal && createPortal(
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50" onClick={() => setShowShopModal(false)}>
-          <div className="bg-[var(--bg-primary)] rounded-xl w-[600px] max-w-[90vw] max-h-[80vh] overflow-y-auto p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-3.5">
-              <h3 className="text-[15px] font-bold text-[var(--text-primary)] m-0">
-                <ShoppingBag size={16} className="inline mr-1.5 text-[var(--teal)]" />
-                {bn ? 'দোকান' : 'Shop'} — {bn ? `শ্রেণি ${selectedStudent?.class}` : `Class ${selectedStudent?.class}`}
-              </h3>
-              <button onClick={() => setShowShopModal(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)]"><X size={14} /></button>
+          <div className="bg-[var(--bg-primary)] rounded-2xl w-[700px] h-[520px] max-w-[90vw] flex flex-col shadow-2xl border border-[var(--border)]" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--teal)]/10 text-[var(--teal)]">
+                  <ShoppingBag size={18} />
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">{bn ? 'দোকান' : 'Shop'}</h3>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-0.5 m-0">{bn ? `শ্রেণি ${selectedStudent?.class}` : `Class ${selectedStudent?.class}`}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowShopModal(false)} className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)] transition-colors"><X size={15} /></button>
             </div>
-            {classProducts.length === 0 ? (
-              <p className="text-xs text-[var(--text-muted)] text-center py-6">{bn ? 'এই শ্রেণিতে কোনো পণ্য নেই' : 'No products available for this class'}</p>
-            ) : (
-              <>
-                <div className="space-y-2 mb-3">
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {classProducts.length === 0 ? (
+                <p className="text-[13px] text-[var(--text-muted)] text-center py-10">{bn ? 'এই শ্রেণিতে কোনো পণ্য নেই' : 'No products available for this class'}</p>
+              ) : (
+                <div className="space-y-2">
                   {classProducts.map((p) => {
                     const qty = shopQtyMap[p.id] || 1
                     const isSelected = selectedShopProducts.has(p.id)
                     return (
-                      <div key={p.id} className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors ${isSelected ? 'border-[var(--teal)] bg-[var(--teal)]/5' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)]'}`}>
+                      <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isSelected ? 'border-[var(--teal)] bg-[var(--teal)]/5 shadow-sm' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)] hover:border-[var(--teal)]/20'}`}>
                         <input type="checkbox" checked={isSelected}
                           onChange={(e) => { const next = new Set(selectedShopProducts); if (e.target.checked) next.add(p.id); else next.delete(p.id); setSelectedShopProducts(next) }}
-                          className="w-[14px] h-[14px] accent-[var(--teal)]" />
+                          className="w-4 h-4 accent-[var(--teal)]" />
                         <div className="flex-1 min-w-0">
-                          <div className="text-[12.5px] font-semibold text-[var(--text-primary)]">{bn ? p.nameBn : p.name}</div>
-                          <div className="text-[10.5px] text-[var(--text-muted)]">{bn ? p.unitBn : p.unit} · {p.sku}</div>
+                          <div className="text-[13px] font-semibold text-[var(--text-primary)]">{bn ? p.nameBn : p.name}</div>
+                          <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{bn ? p.unitBn : p.unit} · {p.sku}</div>
                         </div>
-                        <div className="text-[var(--teal)] text-[12.5px] font-semibold">৳{p.price}</div>
-                        <div className="text-[10.5px] text-[var(--text-muted)]">{bn ? `স্টক: ${p.stock}` : `Stock: ${p.stock}`}</div>
+                        <div className="text-[var(--teal)] text-[14px] font-bold">৳{p.price}</div>
+                        <div className={`text-[11px] px-2 py-0.5 rounded-full ${p.stock <= p.minStock ? 'bg-red-500/10 text-red-500' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
+                          {bn ? `স্টক: ${p.stock}` : `Stock: ${p.stock}`}
+                        </div>
                         {isSelected && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] rounded-lg px-1 py-0.5">
                             <button onClick={() => setShopQtyMap((prev) => ({ ...prev, [p.id]: Math.max(1, (prev[p.id] || 1) - 1) }))}
-                              className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[10px] hover:bg-[var(--border)] transition-colors">-</button>
-                            <span className="w-8 text-center text-[12px] font-semibold text-[var(--text-primary)]">{qty}</span>
+                              className="w-7 h-7 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[12px] font-bold hover:bg-[var(--border)] transition-colors">-</button>
+                            <span className="w-8 text-center text-[13px] font-bold text-[var(--text-primary)]">{qty}</span>
                             <button onClick={() => setShopQtyMap((prev) => ({ ...prev, [p.id]: Math.min(p.stock, (prev[p.id] || 1) + 1) }))}
-                              className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[10px] hover:bg-[var(--border)] transition-colors">+</button>
+                              className="w-7 h-7 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[12px] font-bold hover:bg-[var(--border)] transition-colors">+</button>
                           </div>
                         )}
                       </div>
                     )
                   })}
                 </div>
-                <button onClick={handleAddShopProducts} disabled={selectedShopProducts.size === 0}
-                  className="w-full h-10 rounded-lg bg-[var(--teal)] text-white font-bold text-[13px] border-0 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
-                  {bn ? 'যোগ করুন' : 'Add selected'} ({selectedShopProducts.size})
-                </button>
-              </>
-            )}
+              )}
+            </div>
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-[var(--border)]">
+              <button onClick={handleAddShopProducts} disabled={selectedShopProducts.size === 0}
+                className="w-full h-11 rounded-xl bg-[var(--teal)] text-white font-bold text-[14px] border-0 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
+                {bn ? 'যোগ করুন' : 'Add selected'} ({selectedShopProducts.size})
+              </button>
+            </div>
           </div>
         </div>, document.body
       )}
