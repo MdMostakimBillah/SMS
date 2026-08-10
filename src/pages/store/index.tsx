@@ -269,7 +269,7 @@ export default function StorePage() {
 
       <StatCards stats={stats} bn={bn} />
 
-      <div className="relative flex gap-[0.375rem] glass rounded-xl p-[0.3125rem] w-full overflow-x-auto flex-nowrap">
+      <div className="relative flex gap-[0.375rem] glass rounded-xl p-[0.3125rem] w-full">
         <div
           ref={sliderRef}
           className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out]"
@@ -284,7 +284,7 @@ export default function StorePage() {
             key={tab.id}
             ref={(el) => { if (el) tabRefs.current.set(tab.id, el) }}
             onClick={() => handleTabChange(tab.id)}
-            className={`relative z-10 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap shrink-0 ${
+            className={`relative z-10 flex-1 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${
               activeTab === tab.id ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
             style={{ background: 'transparent' }}
