@@ -55,7 +55,7 @@ export function migrateOldKeys(slug: string): void {
 const INSTITUTION_STORE_KEYS = [
   'edutech-classes', 'edutech-teachers', 'edutech-exams', 'edutech-syllabus',
   'edutech-online', 'edutech-assignments', 'edutech-admissions', 'edutech-fees',
-  'edutech-hr', 'edutech-todos',
+  'edutech-hr', 'edutech-todos', 'edutech-store',
 ]
 
 export function cleanupOrphanedBaseKeys(): void {
