@@ -144,6 +144,14 @@ export default function AppLayout() {
     ? institutions.find((i) => i.slug === currentInstSlug) || null
     : null
 
+  // Auto-logout when institution is suspended/inactive
+  useEffect(() => {
+    if (currentInst && (currentInst.status === 'suspended' || currentInst.status === 'inactive')) {
+      clearSlug()
+      logout()
+    }
+  }, [currentInst])
+
   if (currentInst && (currentInst.status === 'suspended' || currentInst.status === 'inactive')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-tertiary)]">
@@ -173,21 +181,11 @@ export default function AppLayout() {
           <p className="text-sm text-[var(--text-muted)] mb-1">
             {isBn ? currentInst.nameBn || currentInst.name : currentInst.name}
           </p>
-          <p className="text-sm text-[var(--text-muted)] mb-6">
+          <p className="text-sm text-[var(--text-muted)]">
             {currentInst.status === 'suspended'
               ? (isBn ? 'আপনার প্রতিষ্ঠানের অ্যাকাউন্ট সাময়িক বন্ধ রাখা হয়েছে।' : 'Your institution account has been temporarily suspended.')
               : (isBn ? 'আপনার প্রতিষ্ঠানের অ্যাকাউন্ট এখন নিষ্ক্রিয় আছে।' : 'Your institution account is currently inactive.')}
           </p>
-          <button
-            onClick={() => {
-              clearSlug()
-              logout()
-              navigate(`/i/${currentInstSlug}/login`)
-            }}
-            className="px-5 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
-          >
-            {isBn ? 'লগ আউট' : 'Log Out'}
-          </button>
         </div>
       </div>
     )
