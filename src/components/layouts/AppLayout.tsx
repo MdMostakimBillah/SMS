@@ -144,17 +144,17 @@ export default function AppLayout() {
     ? institutions.find((i) => i.slug === currentInstSlug) || null
     : null
 
-  // Auto-logout when institution is suspended/inactive
-  const suspendedLoggedOut = useRef(false)
-  useEffect(() => {
-    if (!suspendedLoggedOut.current && currentInst && (currentInst.status === 'suspended' || currentInst.status === 'inactive')) {
-      suspendedLoggedOut.current = true
-      clearSlug()
-      logout()
-    }
-  }, [currentInst])
+  const isSuspended = currentInst && (currentInst.status === 'suspended' || currentInst.status === 'inactive')
 
-  if (currentInst && (currentInst.status === 'suspended' || currentInst.status === 'inactive')) {
+  // Auto-logout once when institution is suspended/inactive (no useEffect — sync to avoid loop)
+  const suspendedLoggedOut = useRef(false)
+  if (isSuspended && !suspendedLoggedOut.current) {
+    suspendedLoggedOut.current = true
+    // Use setTimeout to avoid setState-during-render
+    setTimeout(() => { clearSlug(); logout() }, 0)
+  }
+
+  if (isSuspended) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-tertiary)]">
         <div className="text-center max-w-md mx-auto px-6">
