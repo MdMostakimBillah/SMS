@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Package, AlertTriangle, DollarSign, TrendingUp, Tag, BarChart3, ShoppingCart, Search, Plus, Minus, Pencil, Trash2 } from 'lucide-react'
+import { Package, AlertTriangle, DollarSign, TrendingUp, Tag, BarChart3, ShoppingCart, Search, Plus, Minus, Pencil, Trash2, ChevronDown } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { useStoreStore, type StoreProduct } from '@/store/storeStore'
@@ -116,13 +116,21 @@ function RestockModal({ product, bn, onSaved, onClose }: RestockModalProps) {
 function ProductCard({ product, bn, onRestock, onEdit, onDelete }: { product: StoreProduct; bn: boolean; onRestock: (p: StoreProduct) => void; onEdit: (p: StoreProduct) => void; onDelete: (id: string) => void }) {
   const us = getUnitStyle(product.unit)
   const lowStock = product.stock <= product.minStock
+  const [open, setOpen] = useState(false)
   return (
-    <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)] hover:shadow-md transition-shadow">
-      {/* Top row: Icon + Name + Actions */}
-      <div className="flex items-center gap-3 mb-3">
+    <div className="rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)] hover:shadow-md transition-shadow overflow-hidden">
+      {/* Header row — clickable */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 p-4 text-left cursor-pointer"
+      >
+        {/* Icon */}
         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${us.color}15`, color: us.color }}>
           <Package size={18} />
         </div>
+
+        {/* Name + Unit + SKU */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-[0.875rem] font-semibold text-[var(--text-primary)] truncate">{bn ? product.nameBn : product.name}</span>
@@ -136,7 +144,14 @@ function ProductCard({ product, bn, onRestock, onEdit, onDelete }: { product: St
             <span className="text-[0.6875rem] text-[var(--text-secondary)]">{product.sku}</span>
           </div>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+
+        {/* Price */}
+        <div className="text-right shrink-0 mr-1">
+          <span className="text-[0.9375rem] font-bold text-[var(--text-primary)]">৳{bn ? toBnNum(product.price) : product.price}</span>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
           <button onClick={() => onRestock(product)} className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--brand)]/8 text-[var(--brand)] cursor-pointer hover:bg-[var(--brand)]/15 transition-colors" title={bn ? 'স্টক যোগ' : 'Restock'}>
             <Plus size={14} />
           </button>
@@ -147,37 +162,58 @@ function ProductCard({ product, bn, onRestock, onEdit, onDelete }: { product: St
             <Trash2 size={13} />
           </button>
         </div>
-      </div>
 
-      {/* Bottom row: Stats */}
-      <div className="flex items-center gap-6 pl-[3.25rem]">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'মূল্য' : 'Price'}</span>
-          <span className="text-[0.875rem] font-bold text-[var(--text-primary)]">৳{product.price}</span>
-        </div>
-        <div className="w-px h-4 bg-[var(--border)]" />
-        <div className="flex items-center gap-1.5">
-          <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'স্টক' : 'Stock'}</span>
-          <span className={`text-[0.875rem] font-bold ${lowStock ? 'text-red-500' : 'text-[var(--text-primary)]'}`}>
-            {bn ? toBnNum(product.stock) : product.stock}
-          </span>
-        </div>
-        <div className="w-px h-4 bg-[var(--border)]" />
-        <div className="flex items-center gap-1.5">
-          <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'মিন' : 'Min'}</span>
-          <span className="text-[0.8125rem] font-medium text-[var(--text-secondary)]">
-            {bn ? toBnNum(product.minStock) : product.minStock}
-          </span>
-        </div>
-        <div className="w-px h-4 bg-[var(--border)] hidden sm:block" />
-        <div className="hidden sm:flex items-center gap-1.5">
-          {product.classNames.slice(0, 3).map((cn) => (
-            <span key={cn} className="px-2 py-0.5 rounded-full bg-[var(--brand)]/8 text-[var(--brand)] text-[0.625rem] font-medium">
-              {cn}
-            </span>
-          ))}
-          {product.classNames.length > 3 && (
-            <span className="text-[0.625rem] text-[var(--text-secondary)]">+{product.classNames.length - 3}</span>
+        {/* Chevron */}
+        <ChevronDown
+          size={16}
+          className={`text-[var(--text-muted)] shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {/* Expandable details */}
+      <div
+        className="overflow-hidden transition-all duration-300 ease-in-out"
+        style={{ maxHeight: open ? '10rem' : '0' }}
+      >
+        <div className="px-4 pb-4 pt-0 pl-[4.75rem]">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[0.75rem]">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[var(--text-secondary)]">{bn ? 'স্টক' : 'Stock'}:</span>
+              <span className={`font-bold ${lowStock ? 'text-red-500' : 'text-[var(--text-primary)]'}`}>
+                {bn ? toBnNum(product.stock) : product.stock} {bn ? product.unitBn : product.unit}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[var(--text-secondary)]">{bn ? 'সর্বনিম্ন' : 'Min'}:</span>
+              <span className="font-medium text-[var(--text-primary)]">
+                {bn ? toBnNum(product.minStock) : product.minStock}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[var(--text-secondary)]">{bn ? 'ক্রয়মূল্য' : 'Cost'}:</span>
+              <span className="font-medium text-[var(--text-primary)]">৳{bn ? toBnNum(product.cost) : product.cost}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[var(--text-secondary)]">{bn ? 'লাভ' : 'Profit'}:</span>
+              <span className="font-medium text-green-500">৳{bn ? toBnNum(product.price - product.cost) : product.price - product.cost}</span>
+            </div>
+          </div>
+          {/* Classes */}
+          {product.classNames.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'শ্রেণি' : 'Classes'}:</span>
+              {product.classNames.map((cn) => (
+                <span key={cn} className="px-2 py-0.5 rounded-full bg-[var(--brand)]/8 text-[var(--brand)] text-[0.625rem] font-medium">
+                  {bn ? `শ্রেণি ${cn}` : `Class ${cn}`}
+                </span>
+              ))}
+            </div>
+          )}
+          {/* Description */}
+          {(bn ? product.descriptionBn : product.description) && (
+            <div className="mt-2 text-[0.75rem] text-[var(--text-secondary)] leading-relaxed">
+              {bn ? product.descriptionBn : product.description}
+            </div>
           )}
         </div>
       </div>
