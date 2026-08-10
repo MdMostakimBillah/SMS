@@ -27,7 +27,7 @@ export default function AppLayout() {
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
   const institutions = useSuperAdminStore((s) => s.institutions)
   const stopViewing = useSuperAdminStore((s) => s.stopViewing)
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
@@ -144,17 +144,7 @@ export default function AppLayout() {
     ? institutions.find((i) => i.slug === currentInstSlug) || null
     : null
 
-  const isSuspended = currentInst && (currentInst.status === 'suspended' || currentInst.status === 'inactive')
-
-  // Auto-logout once when institution is suspended/inactive (no useEffect — sync to avoid loop)
-  const suspendedLoggedOut = useRef(false)
-  if (isSuspended && !suspendedLoggedOut.current) {
-    suspendedLoggedOut.current = true
-    // Use setTimeout to avoid setState-during-render
-    setTimeout(() => { clearSlug(); logout() }, 0)
-  }
-
-  if (isSuspended) {
+  if (currentInst && (currentInst.status === 'suspended' || currentInst.status === 'inactive')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-tertiary)]">
         <div className="text-center max-w-md mx-auto px-6">
