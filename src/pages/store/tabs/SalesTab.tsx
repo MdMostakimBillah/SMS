@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { useBn } from '@/hooks/useBn'
 import { useStoreStore } from '@/store/storeStore'
 import { toBnNum } from '@/lib/i18n'
-import { ShoppingBag, Receipt, Download, Filter, X } from 'lucide-react'
+import { ShoppingBag, Receipt, Download, Filter, X, Trash2, CheckSquare, Square } from 'lucide-react'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsModal'
@@ -24,6 +24,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const [filterSource, setFilterSource] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const paymentLabels: Record<string, { en: string; bn: string }> = {
     cash: { en: 'Cash', bn: 'নগদ' },
@@ -49,10 +50,26 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   }, [sales, searchQuery, dateFrom, dateTo, filterPayment, filterSource])
 
   const totalRevenue = filtered.reduce((sum, s) => sum + s.total, 0)
-  const totalItems = filtered.reduce((sum, s) => sum + s.items.reduce((is, i) => is + i.qty, 0), 0)
+  const totalItems = filtered.reduce((sum, s) => sum + s.items.reduce((is2, i) => is2 + i.qty, 0), 0)
   const feeCollectCount = filtered.filter((s) => isFeeCollect(s)).length
   const directCount = filtered.length - feeCollectCount
   const hasActiveFilters = dateFrom || dateTo || filterPayment || filterSource
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  const toggleAll = () => {
+    if (selected.size === filtered.length) setSelected(new Set()); else setSelected(new Set(filtered.map((s) => s.id)))
+  }
+  const deleteSelected = () => {
+    if (!confirm(bn ? 'নির্বাচিত বিক্রয় মুছে ফেলতে চান?' : 'Delete selected sales?')) return
+    selected.forEach((id) => deleteSale(id))
+    setSelected(new Set())
+  }
 
   const clearFilters = () => { setDateFrom(''); setDateTo(''); setFilterPayment(''); setFilterSource('') }
 
@@ -98,22 +115,24 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   }, [bn])
 
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
-    const rows = filtered.map((s, i) => buildPdfRow(s, opts.selectedCols, i))
+    const data = selected.size > 0 ? filtered.filter((s) => selected.has(s.id)) : filtered
+    const rows = data.map((s, i) => buildPdfRow(s, opts.selectedCols, i))
     const totalRow: Record<string, string | number> = {}
     const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
     totalRow[bn ? 'ক্রমিক' : 'S/N'] = ''
     totalRow[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? 'মোট' : 'Total'
-    if (opts.selectedCols.includes('total')) totalRow[bn ? 'মোট' : 'Total'] = totalRevenue
+    if (opts.selectedCols.includes('total')) totalRow[bn ? 'মোট' : 'Total'] = data.reduce((s, r) => s + r.total, 0)
     rows.push(totalRow)
     const pdfBranding = getPDFBranding()
     const logoHtml = pdfLogoHTML(pdfBranding)
     const css = `@page{size:${opts.orientation};margin:5mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact}}`
     const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r, i) => `<tr${i === rows.length - 1 ? ' style="font-weight:700;border-top:2px solid #333;background:#f0f0f0"' : ''}>${headers.map((h) => `<td>${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="ftr">Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>`
     openPrintWindow(opts.title, bodyHTML, { css })
-  }, [filtered, pdfColumns, bn, totalRevenue, buildPdfRow])
+  }, [filtered, selected, pdfColumns, bn, buildPdfRow])
 
   const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
-    const rows = filtered.slice(0, 20).map((s, i) => buildPdfRow(s, opts.selectedCols, i))
+    const data = selected.size > 0 ? filtered.filter((s) => selected.has(s.id)) : filtered
+    const rows = data.slice(0, 20).map((s, i) => buildPdfRow(s, opts.selectedCols, i))
     const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
     const pdfBranding = getPDFBranding()
     return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a">
@@ -126,9 +145,9 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
         <thead><tr>${headers.map((h) => `<th style="background:${pdfBranding.brandColor};color:#fff;padding:4px 6px;text-align:center">${h}</th>`).join('')}</tr></thead>
         <tbody>${rows.map((r) => `<tr>${headers.map((h) => `<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody>
       </table>
-      ${filtered.length > 20 ? `<div style="font-size:9px;color:#999;margin-top:6px;text-align:center">... and ${filtered.length - 20} more records</div>` : ''}
+      ${data.length > 20 ? `<div style="font-size:9px;color:#999;margin-top:6px;text-align:center">... and ${data.length - 20} more records</div>` : ''}
     </div>`
-  }, [filtered, pdfColumns, bn, buildPdfRow])
+  }, [filtered, selected, pdfColumns, bn, buildPdfRow])
 
   return (
     <div className="space-y-4">
@@ -153,60 +172,52 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
         ))}
       </div>
 
-      {/* Filter bar + PDF button */}
+      {/* Actions row: filters + bulk delete + PDF */}
       <div className="flex items-center justify-between gap-3">
-        <button onClick={() => setShowFilters((v) => !v)}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium border transition-colors cursor-pointer ${showFilters || hasActiveFilters ? 'bg-[var(--brand)]/8 text-[var(--brand)] border-[var(--brand)]/20' : 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]/30'}`}>
-          <Filter size={14} />
-          {bn ? 'ফিল্টার' : 'Filters'}
-          {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowFilters((v) => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium border transition-colors cursor-pointer ${showFilters || hasActiveFilters ? 'bg-[var(--brand)]/8 text-[var(--brand)] border-[var(--brand)]/20' : 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]/30'}`}>
+            <Filter size={14} />
+            {bn ? 'ফিল্টার' : 'Filters'}
+            {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />}
+          </button>
+          {selected.size > 0 && (
+            <button onClick={deleteSelected}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium bg-red-500/8 text-red-500 border border-red-500/20 hover:bg-red-500/15 transition-colors cursor-pointer">
+              <Trash2 size={14} />
+              {bn ? `নির্বাচিত (${selected.size}) মুছুন` : `Delete (${selected.size})`}
+            </button>
+          )}
+        </div>
         <button onClick={() => setShowPdfModal(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium bg-[var(--surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]/30 hover:text-[var(--brand)] transition-colors cursor-pointer">
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium bg-[var(--brand)]/8 text-[var(--brand)] border border-[var(--brand)]/20 hover:bg-[var(--brand)]/15 transition-colors cursor-pointer">
           <Download size={14} />
           {bn ? 'PDF' : 'PDF'}
         </button>
       </div>
 
-      {/* Filters panel */}
+      {/* Filters — simple inline row */}
       {showFilters && (
-        <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)]">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{bn ? 'ফিল্টার অপশন' : 'Filter Options'}</span>
-            {hasActiveFilters && (
-              <button onClick={clearFilters} className="flex items-center gap-1 text-[0.6875rem] text-red-500 cursor-pointer hover:underline">
-                <X size={12} />{bn ? 'মুছুন' : 'Clear'}
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div>
-              <label className="block text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'শুরু' : 'From'}</label>
-              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors" />
-            </div>
-            <div>
-              <label className="block text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'শেষ' : 'To'}</label>
-              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors" />
-            </div>
-            <div>
-              <label className="block text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'পেমেন্ট' : 'Payment'}</label>
-              <select value={filterPayment} onChange={(e) => setFilterPayment(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors cursor-pointer">
-                <option value="">{bn ? 'সব' : 'All'}</option>
-                <option value="cash">{bn ? 'নগদ' : 'Cash'}</option>
-                <option value="bank">{bn ? 'ব্যাংক' : 'Bank'}</option>
-                <option value="mobile">{bn ? 'মোবাইল' : 'Mobile'}</option>
-                <option value="other">{bn ? 'অন্যান্য' : 'Other'}</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'উৎস' : 'Source'}</label>
-              <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors cursor-pointer">
-                <option value="">{bn ? 'সব' : 'All'}</option>
-                <option value="feecollect">{bn ? 'ফি কালেক্ট' : 'Fee Collect'}</option>
-                <option value="direct">{bn ? 'সরাসরি' : 'Direct'}</option>
-              </select>
-            </div>
-          </div>
+        <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} placeholder={bn ? 'থেকে' : 'From'} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors" />
+          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} placeholder={bn ? 'পর্যন্ত' : 'To'} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors" />
+          <select value={filterPayment} onChange={(e) => setFilterPayment(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors cursor-pointer">
+            <option value="">{bn ? 'সব পেমেন্ট' : 'All Payments'}</option>
+            <option value="cash">{bn ? 'নগদ' : 'Cash'}</option>
+            <option value="bank">{bn ? 'ব্যাংক' : 'Bank'}</option>
+            <option value="mobile">{bn ? 'মোবাইল' : 'Mobile'}</option>
+            <option value="other">{bn ? 'অন্যান্য' : 'Other'}</option>
+          </select>
+          <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors cursor-pointer">
+            <option value="">{bn ? 'সব উৎস' : 'All Sources'}</option>
+            <option value="feecollect">{bn ? 'ফি কালেক্ট' : 'Fee Collect'}</option>
+            <option value="direct">{bn ? 'সরাসরি' : 'Direct'}</option>
+          </select>
+          {hasActiveFilters && (
+            <button onClick={clearFilters} className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-[0.75rem] text-red-500 border border-red-500/20 hover:bg-red-500/10 transition-colors cursor-pointer">
+              <X size={12} />{bn ? 'মুছুন' : 'Clear'}
+            </button>
+          )}
         </div>
       )}
 
@@ -221,28 +232,43 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
             <table className="w-full">
               <thead>
                 <tr className="bg-[var(--bg-secondary)]">
-                  <th className="text-left py-3 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">#</th>
-                  <th className="text-left py-3 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
-                  <th className="text-left py-3 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'রসিদ' : 'Receipt'}</th>
-                  <th className="text-left py-3 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                  <th className="text-left py-3 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'পণ্য' : 'Items'}</th>
-                  <th className="text-left py-3 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'পেমেন্ট' : 'Payment'}</th>
-                  <th className="text-right py-3 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'মোট' : 'Total'}</th>
-                  <th className="text-right py-3 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'কার্যক্রম' : 'Actions'}</th>
+                  <th className="w-10 py-3 px-3">
+                    <button onClick={toggleAll} className="cursor-pointer" title={bn ? 'সব নির্বাচন' : 'Select all'}>
+                      {selected.size === filtered.length && filtered.length > 0
+                        ? <CheckSquare size={16} className="text-[var(--brand)]" />
+                        : <Square size={16} className="text-[var(--text-muted)]" />}
+                    </button>
+                  </th>
+                  <th className="text-left py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">#</th>
+                  <th className="text-left py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
+                  <th className="text-left py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'রসিদ' : 'Receipt'}</th>
+                  <th className="text-left py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                  <th className="text-left py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'পণ্য' : 'Items'}</th>
+                  <th className="text-left py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'পেমেন্ট' : 'Payment'}</th>
+                  <th className="text-right py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'মোট' : 'Total'}</th>
+                  <th className="text-center py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider w-10"></th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((s, idx) => {
                   const receipt = getReceiptNo(s.note)
                   const fromFee = isFeeCollect(s)
+                  const isSelected = selected.has(s.id)
                   return (
-                    <tr key={s.id} className="border-t border-[var(--border)] hover:bg-[var(--bg-secondary)]/50 transition-colors">
-                      <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-muted)]">{bn ? toBnNum(idx + 1) : idx + 1}</td>
-                      <td className="py-3 px-4">
+                    <tr key={s.id} className={`border-t border-[var(--border)] transition-colors ${isSelected ? 'bg-[var(--brand)]/5' : idx % 2 === 0 ? 'bg-[var(--surface)]' : 'bg-[var(--bg-secondary)]/30'}`}>
+                      <td className="py-3 px-3">
+                        <button onClick={() => toggleSelect(s.id)} className="cursor-pointer" title={bn ? 'নির্বাচন' : 'Select'}>
+                          {isSelected
+                            ? <CheckSquare size={16} className="text-[var(--brand)]" />
+                            : <Square size={16} className="text-[var(--text-muted)]" />}
+                        </button>
+                      </td>
+                      <td className="py-3 px-3 text-[0.8125rem] text-[var(--text-muted)]">{bn ? toBnNum(idx + 1) : idx + 1}</td>
+                      <td className="py-3 px-3">
                         <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{formatDate(s.createdAt)}</div>
                         <div className="text-[0.6875rem] text-[var(--text-muted)]">{formatTime(s.createdAt)}</div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-3">
                         <div className="flex items-center gap-1.5">
                           {receipt && (
                             <span className="px-2 py-0.5 rounded-md bg-[var(--brand)]/8 text-[var(--brand)] text-[0.625rem] font-mono font-semibold">
@@ -256,11 +282,11 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-3">
                         <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{bn ? s.soldToNameBn : s.soldToName}</div>
                         <div className="text-[0.6875rem] text-[var(--text-muted)]">{bn ? `শ্রেণি ${s.soldToClass}` : `Class ${s.soldToClass}`}{s.soldToSection ? ` — ${s.soldToSection}` : ''}</div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-3">
                         <div className="flex flex-wrap gap-1 max-w-[220px]">
                           {s.items.map((item, i) => (
                             <span key={i} className="inline-flex items-center text-[0.625rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-2 py-0.5 rounded-md whitespace-nowrap">
@@ -269,18 +295,18 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
                           ))}
                         </div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-3">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-secondary)]">
                           {paymentLabels[s.paymentMethod]?.[bn ? 'bn' : 'en']}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-3 text-right">
                         <span className="text-[0.9375rem] font-bold text-[var(--text-primary)]">৳{bn ? toBnNum(s.total) : s.total.toLocaleString()}</span>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-3 text-center">
                         <button onClick={() => { if (confirm(bn ? 'এই বিক্রয় মুছে ফেলতে চান?' : 'Delete this sale?')) deleteSale(s.id) }}
-                          className="px-2.5 py-1 rounded-md text-[0.6875rem] text-red-500 cursor-pointer hover:bg-red-500/10 transition-colors">
-                          {bn ? 'মুছুন' : 'Delete'}
+                          className="p-1.5 rounded-md text-[var(--text-muted)] cursor-pointer hover:text-red-500 hover:bg-red-500/10 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                          <Trash2 size={15} />
                         </button>
                       </td>
                     </tr>
