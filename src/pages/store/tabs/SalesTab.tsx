@@ -49,6 +49,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   }
 
   const isFeeCollect = (s: typeof sales[number]) => s.note?.includes('Fee Collect')
+  const getReceiptNo = (note: string) => note?.match(/RCP-\w+/)?.[0] || ''
 
   const filtered = useMemo(() => {
     let list = [...sales].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -92,7 +93,6 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
 
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString(bn ? 'bn-BD' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })
   const formatTime = (iso: string) => new Date(iso).toLocaleTimeString(bn ? 'bn-BD' : 'en-US', { hour: '2-digit', minute: '2-digit' })
-  const getReceiptNo = (note: string) => note?.match(/RCP-\w+/)?.[0] || ''
 
   // ─── PDF ────────────────────────────────────────────────────────────
   const pdfColumns: PDFColumnDef[] = useMemo(() => [
