@@ -151,6 +151,9 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const { classes, institution } = useClassStore()
   const { structures, payments, generateWaivers, addPayment, deletePayment } = useFeeStore()
   const waivers = useMemo(() => generateWaivers(students), [generateWaivers, structures, payments, students])
+  const storeProducts = useStoreStore((s) => s.products)
+  const addSale = useStoreStore((s) => s.addSale)
+  const storeSales = useStoreStore((s) => s.sales)
 
   const [fSession, setFSession] = useState(institution?.currentSession || '')
   const [fClass, setFClass] = useState('')
@@ -326,6 +329,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
   const todayStr = new Date().toISOString().split('T')[0]
   const todayIncome = useMemo(() => payments.filter((p) => p.paidAt === todayStr).reduce((s, p) => s + p.amount, 0), [payments, todayStr])
+  const todayShopIncome = useMemo(() => storeSales.filter((s) => s.createdAt.startsWith(todayStr)).reduce((sum, s) => sum + s.total, 0), [storeSales, todayStr])
   const todayDiscount = useMemo(() => payments.filter((p) => p.paidAt === todayStr).reduce((s, p) => s + (p.discount || 0), 0), [payments, todayStr])
   const todayWaiver = useMemo(() => waivers.filter((w) => w.createdAt?.startsWith(todayStr)).reduce((s, w) => s + w.amount, 0), [waivers, todayStr])
 
@@ -338,6 +342,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const batchId = `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     const receiptFees: ReceiptData['fees'] = []
     let totalDiscount = 0
+    const shopSaleItems: { productId: string; productName: string; productNameBn: string; qty: number; unitPrice: number }[] = []
     for (const row of checkedRows) {
       const edit = getRowEdit(row.key)
       const lastDash = row.key.lastIndexOf('-')
@@ -345,6 +350,17 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       const forMonth = row.isOnetime ? undefined : `${row.key.substring(secondLastDash + 1, lastDash)}-${String(Number(row.key.substring(lastDash + 1)) + 1).padStart(2, '0')}`
       const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
       addPayment(payment)
+      // Handle shop product sales — deduct stock
+      if (row.key.startsWith('shop-')) {
+        const parts = row.key.split('-')
+        const productId = parts[1]
+        const product = storeProducts.find((pp) => pp.id === productId)
+        if (product) {
+          const qtyMatch = row.remarks?.match(/^(\d+)\s*×/)
+          const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1
+          shopSaleItems.push({ productId: product.id, productName: product.name, productNameBn: product.nameBn, qty, unitPrice: product.price })
+        }
+      }
       const feeItem: ReceiptData['fees'][number] = {
         name: row.feeName,
         nameBn: row.feeNameBn,
@@ -367,6 +383,24 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       }
       receiptFees.push(feeItem)
       totalDiscount += edit.discount
+    }
+    // Create store sale for shop products
+    if (shopSaleItems.length > 0) {
+      const saleTotal = shopSaleItems.reduce((s, item) => s + item.unitPrice * item.qty, 0)
+      addSale({
+        id: `sale-fc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        items: shopSaleItems.map((item) => ({ ...item, subtotal: item.unitPrice * item.qty })),
+        total: saleTotal,
+        paymentMethod: 'cash',
+        soldToId: selectedStudent.id,
+        soldToName: selectedStudent.nameEn,
+        soldToNameBn: selectedStudent.nameBn,
+        soldToClass: selectedStudent.class,
+        soldToSection: selectedStudent.section,
+        note: 'Fee Collect — Shop',
+        createdBy: 'admin',
+        createdAt: new Date().toISOString(),
+      })
     }
     const rn = `RCP-${Date.now().toString(36).toUpperCase()}`
     const ds = new Date(receivedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -398,7 +432,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     setExtraRows((prev) => prev.filter((r) => !receivedKeys.has(r.key)))
     setEditState({})
     setFindDueTrigger((t) => t + 1)
-  }, [selectedStudent, displayRows, getRowEdit, receivedDate, addPayment, fSession])
+  }, [selectedStudent, displayRows, getRowEdit, receivedDate, addPayment, addSale, storeProducts, fSession])
 
   const numberToWords = useCallback((n: number): string => {
     if (n === 0) return 'Zero'
@@ -554,7 +588,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     })
   }, [structures, selectedStudent, payments, waivers, displayRows])
 
-  const storeProducts = useStoreStore((s) => s.products)
   const classProducts = useMemo(() => {
     if (!selectedStudent) return []
     return storeProducts.filter((p) => p.isActive && p.stock > 0 && p.classNames.includes(selectedStudent.class))
@@ -635,7 +668,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             <Receipt size={15} style={{ color: 'var(--green)' }} />
           </div>
           <div className="min-w-0">
-            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(todayIncome)}</div>
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(todayIncome + todayShopIncome)}</div>
             <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'আজকের আয়' : "Today's income"}</div>
           </div>
         </div>
