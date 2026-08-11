@@ -152,12 +152,16 @@ export const ReportsTab = ({ isMobile }: Props) => {
       </div>
 
       {/* Student Spending */}
-      {studentSpending.length > 0 && (
-        <div>
-          <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
-            <User size={14} className="inline mr-1.5 -mt-0.5" />
-            {bn ? 'শিক্ষার্থী খরচ' : 'Student Spending'}
-          </h3>
+      <div>
+        <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
+          <User size={14} className="inline mr-1.5 -mt-0.5" />
+          {bn ? 'শিক্ষার্থী খরচ' : 'Student Spending'}
+        </h3>
+        {studentSpending.length === 0 ? (
+          <div className="py-8 text-center text-[var(--text-muted)] text-[0.8125rem] rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/50">
+            {bn ? 'এখনো কোনো বিক্রয় হয়নি' : 'No sales yet'}
+          </div>
+        ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -193,16 +197,20 @@ export const ReportsTab = ({ isMobile }: Props) => {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Product Sales */}
-      {productSales.length > 0 && (
-        <div>
-          <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
-            <Package size={14} className="inline mr-1.5 -mt-0.5" />
-            {bn ? 'পণ্য বিক্রয়' : 'Product Sales'}
-          </h3>
+      <div>
+        <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
+          <Package size={14} className="inline mr-1.5 -mt-0.5" />
+          {bn ? 'পণ্য বিক্রয়' : 'Product Sales'}
+        </h3>
+        {productSales.length === 0 ? (
+          <div className="py-8 text-center text-[var(--text-muted)] text-[0.8125rem] rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/50">
+            {bn ? 'এখনো কোনো বিক্রয় হয়নি' : 'No sales yet'}
+          </div>
+        ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -229,16 +237,20 @@ export const ReportsTab = ({ isMobile }: Props) => {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Category Breakdown */}
-      {categorySales.length > 0 && (
-        <div>
-          <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
-            <Tag size={14} className="inline mr-1.5 -mt-0.5" />
-            {bn ? 'ক্যাটাগরি ভিত্তিক' : 'Category Breakdown'}
-          </h3>
+      <div>
+        <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
+          <Tag size={14} className="inline mr-1.5 -mt-0.5" />
+          {bn ? 'ক্যাটাগরি ভিত্তিক' : 'Category Breakdown'}
+        </h3>
+        {categorySales.length === 0 ? (
+          <div className="py-8 text-center text-[var(--text-muted)] text-[0.8125rem] rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/50">
+            {bn ? 'এখনো কোনো বিক্রয় হয়নি' : 'No sales yet'}
+          </div>
+        ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -263,8 +275,8 @@ export const ReportsTab = ({ isMobile }: Props) => {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Low Stock Alert */}
       {stats.lowStockItems.length > 0 && (
