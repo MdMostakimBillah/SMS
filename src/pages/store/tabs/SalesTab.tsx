@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useBn } from '@/hooks/useBn'
 import { useStoreStore } from '@/store/storeStore'
 import { toBnNum } from '@/lib/i18n'
-import { ShoppingBag, Receipt, Filter, X, Trash2, CheckSquare, Square, MoreVertical, ChevronDown, FileSpreadsheet, FileText } from 'lucide-react'
+import { ShoppingBag, Receipt, Filter, X, Trash2, CheckSquare, Square, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Search } from 'lucide-react'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { XLSX } from '@/lib/excelExport'
@@ -17,13 +17,16 @@ interface Props {
 export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const bn = useBn()
   const sales = useStoreStore((s) => s.sales)
+  const categories = useStoreStore((s) => s.categories)
+  const products = useStoreStore((s) => s.products)
   const deleteSale = useStoreStore((s) => s.deleteSale)
 
   const today = new Date().toISOString().split('T')[0]
   const [dateFrom, setDateFrom] = useState(today)
   const [dateTo, setDateTo] = useState(today)
   const [filterPayment, setFilterPayment] = useState('')
-  const [filterSource, setFilterSource] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
+  const [quickSearch, setQuickSearch] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -54,19 +57,25 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
       const q = searchQuery.toLowerCase()
       list = list.filter((s) => s.soldToName.toLowerCase().includes(q) || s.soldToNameBn.includes(q) || s.soldToClass.includes(q) || s.id.toLowerCase().includes(q) || s.items.some((i) => i.productName.toLowerCase().includes(q) || i.productNameBn.includes(q)))
     }
+    if (quickSearch) {
+      const q = quickSearch.toLowerCase()
+      list = list.filter((s) => s.soldToName.toLowerCase().includes(q) || s.soldToNameBn.includes(q) || s.soldToClass.includes(q) || getReceiptNo(s.note).toLowerCase().includes(q) || s.items.some((i) => i.productName.toLowerCase().includes(q) || i.productNameBn.includes(q)))
+    }
     if (dateFrom) list = list.filter((s) => s.createdAt >= dateFrom)
     if (dateTo) list = list.filter((s) => s.createdAt <= dateTo + 'T23:59:59')
     if (filterPayment) list = list.filter((s) => s.paymentMethod === filterPayment)
-    if (filterSource === 'feecollect') list = list.filter((s) => isFeeCollect(s))
-    if (filterSource === 'direct') list = list.filter((s) => !isFeeCollect(s))
+    if (filterCategory) {
+      const catProductIds = new Set(products.filter((p) => p.categoryId === filterCategory).map((p) => p.id))
+      list = list.filter((s) => s.items.some((i) => catProductIds.has(i.productId)))
+    }
     return list
-  }, [sales, searchQuery, dateFrom, dateTo, filterPayment, filterSource])
+  }, [sales, searchQuery, quickSearch, dateFrom, dateTo, filterPayment, filterCategory, products])
 
   const totalRevenue = filtered.reduce((sum, s) => sum + s.total, 0)
   const totalItems = filtered.reduce((sum, s) => sum + s.items.reduce((is2, i) => is2 + i.qty, 0), 0)
   const feeCollectCount = filtered.filter((s) => isFeeCollect(s)).length
   const directCount = filtered.length - feeCollectCount
-  const hasActiveFilters = dateFrom || dateTo || filterPayment || filterSource
+  const hasActiveFilters = dateFrom || dateTo || filterPayment || filterCategory || quickSearch
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
@@ -80,7 +89,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
     setSelected(new Set())
   }
 
-  const clearFilters = () => { setDateFrom(''); setDateTo(''); setFilterPayment(''); setFilterSource('') }
+  const clearFilters = () => { setDateFrom(''); setDateTo(''); setFilterPayment(''); setFilterCategory(''); setQuickSearch('') }
 
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString(bn ? 'bn-BD' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })
   const formatTime = (iso: string) => new Date(iso).toLocaleTimeString(bn ? 'bn-BD' : 'en-US', { hour: '2-digit', minute: '2-digit' })
@@ -225,6 +234,18 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
         )}
       </div>
 
+      {/* Quick search */}
+      <div className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+        <input type="text" value={quickSearch} onChange={(e) => setQuickSearch(e.target.value)} placeholder={bn ? 'শিক্ষার্থী, পণ্য, রসিদ খুঁজুন...' : 'Search student, product, receipt...'}
+          className="w-full pl-9 pr-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors placeholder:text-[var(--text-muted)]" />
+        {quickSearch && (
+          <button onClick={() => setQuickSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer">
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
       {/* Filters */}
       {showFilters && (
         <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
@@ -237,10 +258,11 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
             <option value="mobile">{bn ? 'মোবাইল' : 'Mobile'}</option>
             <option value="other">{bn ? 'অন্যান্য' : 'Other'}</option>
           </select>
-          <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors cursor-pointer">
-            <option value="">{bn ? 'সব উৎস' : 'All Sources'}</option>
-            <option value="feecollect">{bn ? 'ফি কালেক্ট' : 'Fee Collect'}</option>
-            <option value="direct">{bn ? 'সরাসরি' : 'Direct'}</option>
+          <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors cursor-pointer">
+            <option value="">{bn ? 'সব ক্যাটাগরি' : 'All Categories'}</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{bn ? c.nameBn : c.name}</option>
+            ))}
           </select>
           {hasActiveFilters && (
             <button onClick={clearFilters} className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-[0.75rem] text-red-500 border border-red-500/20 hover:bg-red-500/10 transition-colors cursor-pointer">
