@@ -328,7 +328,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
                       <td className="py-2.5 px-3">
                         <div className="flex flex-wrap gap-1 max-w-[200px]">
                           {s.items.map((item, i) => (
-                            <span key={i} className="inline-flex items-center text-[0.5625rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded whitespace-nowrap">
+                            <span key={i} className="inline-flex items-center text-[0.6875rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-2 py-0.5 rounded whitespace-nowrap">
                               {bn ? item.productNameBn : item.productName}<span className="ml-0.5 font-medium text-[var(--text-primary)]">×{item.qty}</span>
                             </span>
                           ))}
