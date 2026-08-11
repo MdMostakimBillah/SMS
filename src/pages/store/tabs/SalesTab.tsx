@@ -57,7 +57,10 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
     return d.toLocaleTimeString(bn ? 'bn-BD' : 'en-US', { hour: '2-digit', minute: '2-digit' })
   }
 
-  const getInitials = (name: string) => name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
+  const getReceiptNo = (note: string) => {
+    const match = note?.match(/RCP-\w+/)
+    return match ? match[0] : ''
+  }
 
   return (
     <div className="space-y-4">
@@ -99,79 +102,79 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
         </select>
       </div>
 
-      {/* Sales list */}
+      {/* Table view */}
       {filtered.length === 0 ? (
-        <div className="py-16 text-center text-[var(--text-secondary)] text-[0.875rem]">
+        <div className="py-16 text-center text-[var(--text-secondary)] text-[0.875rem] rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/50">
           {bn ? 'কোনো বিক্রয় পাওয়া যায়নি' : 'No sales found'}
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((s) => {
-            const fromFee = isFeeCollect(s)
-            return (
-              <div key={s.id} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] overflow-hidden hover:shadow-md transition-shadow">
-                {/* Header row */}
-                <div className="flex items-center gap-3 p-4 pb-3">
-                  {/* Student avatar */}
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-[0.75rem] font-bold" style={{ background: 'var(--brand-light)', color: 'var(--brand)' }}>
-                    {getInitials(s.soldToNameBn || s.soldToName)}
-                  </div>
-                  {/* Student info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[0.875rem] font-semibold text-[var(--text-primary)] truncate">{bn ? s.soldToNameBn : s.soldToName}</span>
-                      {fromFee && (
-                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-bold bg-[var(--teal)]/10 text-[var(--teal)] uppercase tracking-wider">
-                          {bn ? 'ফি কালেক্ট' : 'FEE COLLECT'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? `শ্রেণি ${s.soldToClass}` : `Class ${s.soldToClass}`}</span>
-                      <span className="text-[0.5rem] text-[var(--text-muted)]">·</span>
-                      <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? `সেকশন ${s.soldToSection}` : `Section ${s.soldToSection}`}</span>
-                      <span className="text-[0.5rem] text-[var(--text-muted)]">·</span>
-                      <span className="text-[0.6875rem] text-[var(--text-muted)]">{formatDate(s.createdAt)} {formatTime(s.createdAt)}</span>
-                    </div>
-                  </div>
-                  {/* Amount + delete */}
-                  <div className="text-right shrink-0">
-                    <div className="text-[1rem] font-bold text-[var(--text-primary)]">৳{bn ? toBnNum(s.total) : s.total.toLocaleString()}</div>
-                    <div className="text-[0.625rem] text-[var(--text-secondary)]">{paymentLabels[s.paymentMethod]?.[bn ? 'bn' : 'en']}</div>
-                  </div>
-                </div>
-
-                {/* Items */}
-                <div className="px-4 pb-3">
-                  <div className="bg-[var(--bg-secondary)]/60 rounded-lg p-2.5 space-y-1.5">
-                    {s.items.map((item, i) => (
-                      <div key={i} className="flex items-center justify-between text-[0.75rem]">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[var(--text-secondary)]">{bn ? item.productNameBn : item.productName}</span>
-                        </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-[var(--text-muted)]">{bn ? toBnNum(item.qty) : item.qty} × ৳{bn ? toBnNum(item.unitPrice) : item.unitPrice}</span>
-                          <span className="font-semibold text-[var(--text-primary)] w-16 text-right">৳{bn ? toBnNum(item.subtotal) : item.subtotal.toLocaleString()}</span>
-                        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[var(--border)]">
+                <th className="text-left py-2.5 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">#</th>
+                <th className="text-left py-2.5 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'তারিখ' : 'Date'}</th>
+                <th className="text-left py-2.5 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'রসিদ' : 'Receipt'}</th>
+                <th className="text-left py-2.5 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                <th className="text-left py-2.5 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পণ্য' : 'Items'}</th>
+                <th className="text-left py-2.5 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পেমেন্ট' : 'Payment'}</th>
+                <th className="text-right py-2.5 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'মোট' : 'Total'}</th>
+                <th className="text-right py-2.5 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'কার্যক্রম' : 'Actions'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((s, idx) => {
+                const receipt = getReceiptNo(s.note)
+                const fromFee = isFeeCollect(s)
+                return (
+                  <tr key={s.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)]">
+                    <td className="py-2.5 px-3 text-[0.8125rem] text-[var(--text-muted)]">{bn ? toBnNum(idx + 1) : idx + 1}</td>
+                    <td className="py-2.5 px-3">
+                      <div className="text-[0.8125rem]">{formatDate(s.createdAt)}</div>
+                      <div className="text-[0.6875rem] text-[var(--text-secondary)]">{formatTime(s.createdAt)}</div>
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-1.5">
+                        {receipt && (
+                          <span className="px-1.5 py-0.5 rounded bg-[var(--brand)]/8 text-[var(--brand)] text-[0.625rem] font-mono font-medium">
+                            {receipt}
+                          </span>
+                        )}
+                        {fromFee && (
+                          <span className="px-1.5 py-0.5 rounded bg-[var(--teal)]/10 text-[var(--teal)] text-[0.5625rem] font-bold uppercase">
+                            {bn ? 'ফি' : 'FEE'}
+                          </span>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between px-4 py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)]/30">
-                  <span className="text-[0.6875rem] text-[var(--text-muted)]">
-                    {s.items.reduce((sum, i) => sum + i.qty, 0)} {bn ? 'টি পণ্য' : 'items'}
-                    {s.note && <span className="ml-1.5">· {s.note}</span>}
-                  </span>
-                  <button onClick={() => { if (confirm(bn ? 'এই বিক্রয় মুছে ফেলতে চান?' : 'Delete this sale?')) deleteSale(s.id) }}
-                    className="text-[0.6875rem] text-red-500 cursor-pointer hover:underline">
-                    {bn ? 'মুছুন' : 'Delete'}
-                  </button>
-                </div>
-              </div>
-            )
-          })}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <div className="text-[0.8125rem] font-medium">{bn ? s.soldToNameBn : s.soldToName}</div>
+                      <div className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? `শ্রেণি ${s.soldToClass}` : `Class ${s.soldToClass}`}{s.soldToSection ? ` — ${s.soldToSection}` : ''}</div>
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <div className="flex flex-wrap gap-1 max-w-[200px]">
+                        {s.items.map((item, i) => (
+                          <span key={i} className="text-[0.625rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded whitespace-nowrap">
+                            {bn ? item.productNameBn : item.productName} ×{item.qty}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3 text-[0.8125rem] text-[var(--text-secondary)]">
+                      {paymentLabels[s.paymentMethod]?.[bn ? 'bn' : 'en']}
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-semibold text-[0.875rem]">৳{bn ? toBnNum(s.total) : s.total.toLocaleString()}</td>
+                    <td className="py-2.5 px-3 text-right">
+                      <button onClick={() => { if (confirm(bn ? 'এই বিক্রয় মুছে ফেলতে চান?' : 'Delete this sale?')) deleteSale(s.id) }}
+                        className="text-[0.6875rem] text-red-500 cursor-pointer hover:underline">
+                        {bn ? 'মুছুন' : 'Delete'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

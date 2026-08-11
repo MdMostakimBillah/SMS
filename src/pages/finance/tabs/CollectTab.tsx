@@ -352,8 +352,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       addPayment(payment)
       // Handle shop product sales — deduct stock
       if (row.key.startsWith('shop-')) {
-        const parts = row.key.split('-')
-        const productId = parts[1]
+        const lastDash = row.key.lastIndexOf('-')
+        const productId = row.key.substring(5, lastDash)
         const product = storeProducts.find((pp) => pp.id === productId)
         if (product) {
           const qtyMatch = row.remarks?.match(/^(\d+)\s*×/)
@@ -384,6 +384,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       receiptFees.push(feeItem)
       totalDiscount += edit.discount
     }
+    const rn = `RCP-${Date.now().toString(36).toUpperCase()}`
     // Create store sale for shop products
     if (shopSaleItems.length > 0) {
       const saleTotal = shopSaleItems.reduce((s, item) => s + item.unitPrice * item.qty, 0)
@@ -397,12 +398,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         soldToNameBn: selectedStudent.nameBn,
         soldToClass: selectedStudent.class,
         soldToSection: selectedStudent.section,
-        note: 'Fee Collect — Shop',
+        note: `Fee Collect — ${rn}`,
         createdBy: 'admin',
         createdAt: new Date().toISOString(),
       })
     }
-    const rn = `RCP-${Date.now().toString(36).toUpperCase()}`
     const ds = new Date(receivedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     const totalDue = displayRows.reduce((s, r) => {
       const edit = getRowEdit(r.key)
