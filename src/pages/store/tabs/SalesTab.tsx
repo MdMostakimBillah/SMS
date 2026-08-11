@@ -285,7 +285,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
                   const isSelected = selected.has(s.id)
                   return (
                     <tr key={s.id}
-                      className={`border-t border-[var(--border)] transition-colors ${isSelected ? 'bg-[var(--brand)]/5' : ''}`}
+                      className={`border-t border-[var(--border)] transition-colors group ${isSelected ? 'bg-[var(--brand)]/5' : 'hover:!bg-[var(--brand)]/5'}`}
                       style={!isSelected ? { backgroundColor: idx % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' } : undefined}>
                       <td className="py-3 px-3">
                         <button onClick={() => toggleSelect(s.id)} className="cursor-pointer" title={bn ? 'নির্বাচন' : 'Select'}>
