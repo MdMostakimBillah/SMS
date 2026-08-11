@@ -59,7 +59,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
     }
     if (quickSearch) {
       const q = quickSearch.toLowerCase()
-      list = list.filter((s) => s.soldToName.toLowerCase().includes(q) || s.soldToNameBn.includes(q) || s.soldToClass.includes(q) || getReceiptNo(s.note).toLowerCase().includes(q) || s.items.some((i) => i.productName.toLowerCase().includes(q) || i.productNameBn.includes(q)))
+      list = list.filter((s) => s.soldToName.toLowerCase().includes(q) || s.soldToNameBn.includes(q) || s.soldToId.toLowerCase().includes(q) || s.soldToClass.includes(q) || getReceiptNo(s.note).toLowerCase().includes(q) || s.items.some((i) => i.productName.toLowerCase().includes(q) || i.productNameBn.includes(q)))
     }
     if (dateFrom) list = list.filter((s) => s.createdAt >= dateFrom)
     if (dateTo) list = list.filter((s) => s.createdAt <= dateTo + 'T23:59:59')
