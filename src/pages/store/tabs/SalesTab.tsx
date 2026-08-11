@@ -19,8 +19,9 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const sales = useStoreStore((s) => s.sales)
   const deleteSale = useStoreStore((s) => s.deleteSale)
 
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const today = new Date().toISOString().split('T')[0]
+  const [dateFrom, setDateFrom] = useState(today)
+  const [dateTo, setDateTo] = useState(today)
   const [filterPayment, setFilterPayment] = useState('')
   const [filterSource, setFilterSource] = useState('')
   const [showFilters, setShowFilters] = useState(false)
