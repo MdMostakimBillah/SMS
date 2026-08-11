@@ -21,9 +21,8 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const products = useStoreStore((s) => s.products)
   const deleteSale = useStoreStore((s) => s.deleteSale)
 
-  const today = new Date().toISOString().split('T')[0]
-  const [dateFrom, setDateFrom] = useState(today)
-  const [dateTo, setDateTo] = useState(today)
+  const [dateFrom, setDateFrom] = useState(() => new Date().toISOString().split('T')[0])
+  const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0])
   const [filterPayment, setFilterPayment] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
   const [quickSearch, setQuickSearch] = useState('')
