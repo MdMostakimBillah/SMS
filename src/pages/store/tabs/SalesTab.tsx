@@ -283,73 +283,70 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
             <table className="w-full">
               <thead>
                 <tr className="bg-[var(--bg-secondary)]">
-                  <th className="w-10 py-3 px-3">
+                  <th className="w-10 py-2.5 px-3">
                     <button onClick={toggleAll} className="cursor-pointer" title={bn ? 'সব নির্বাচন' : 'Select all'}>
                       {selected.size === filtered.length && filtered.length > 0
-                        ? <CheckSquare size={16} className="text-[var(--brand)]" />
-                        : <Square size={16} className="text-[var(--text-muted)]" />}
+                        ? <CheckSquare size={15} className="text-[var(--brand)]" />
+                        : <Square size={15} className="text-[var(--text-muted)]" />}
                     </button>
                   </th>
-                  <th className="text-left py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">#</th>
-                  <th className="text-left py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
-                  <th className="text-left py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'রসিদ' : 'Receipt'}</th>
-                  <th className="text-left py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                  <th className="text-left py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'পণ্য' : 'Items'}</th>
-                  <th className="text-left py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'পেমেন্ট' : 'Payment'}</th>
-                  <th className="text-right py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bn ? 'মোট' : 'Total'}</th>
-                  <th className="text-center py-3 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider w-10"></th>
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">#</th>
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'রসিদ' : 'Receipt'}</th>
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'পণ্য' : 'Items'}</th>
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'পেমেন্ট' : 'Payment'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'মোট' : 'Total'}</th>
+                  <th className="text-center py-2.5 px-3 w-10"></th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((s, idx) => {
                   const receipt = getReceiptNo(s.note)
-                  const fromFee = isFeeCollect(s)
                   const isSelected = selected.has(s.id)
                   return (
                     <tr key={s.id}
-                      className={`border-t border-[var(--border)] transition-colors group ${isSelected ? 'bg-[var(--brand)]/5' : 'hover:!bg-[var(--brand)]/5'}`}
+                      className={`border-t border-[var(--border)] transition-colors ${isSelected ? 'bg-[var(--brand)]/5' : 'hover:!bg-[var(--brand)]/5'}`}
                       style={!isSelected ? { backgroundColor: idx % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' } : undefined}>
-                      <td className="py-3 px-3">
+                      <td className="py-2.5 px-3">
                         <button onClick={() => toggleSelect(s.id)} className="cursor-pointer" title={bn ? 'নির্বাচন' : 'Select'}>
-                          {isSelected ? <CheckSquare size={16} className="text-[var(--brand)]" /> : <Square size={16} className="text-[var(--text-muted)]" />}
+                          {isSelected ? <CheckSquare size={15} className="text-[var(--brand)]" /> : <Square size={15} className="text-[var(--text-muted)]" />}
                         </button>
                       </td>
-                      <td className="py-3 px-3 text-[0.8125rem] text-[var(--text-muted)]">{bn ? toBnNum(idx + 1) : idx + 1}</td>
-                      <td className="py-3 px-3">
-                        <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{formatDate(s.createdAt)}</div>
-                        <div className="text-[0.6875rem] text-[var(--text-muted)]">{formatTime(s.createdAt)}</div>
+                      <td className="py-2.5 px-3 text-[0.75rem] text-[var(--text-muted)]">{bn ? toBnNum(idx + 1) : idx + 1}</td>
+                      <td className="py-2.5 px-3">
+                        <div className="text-[0.75rem] text-[var(--text-primary)]">{formatDate(s.createdAt)}</div>
+                        <div className="text-[0.625rem] text-[var(--text-muted)]">{formatTime(s.createdAt)}</div>
                       </td>
-                      <td className="py-3 px-3">
-                        <div className="flex items-center gap-1.5">
-                          {receipt && <span className="px-2 py-0.5 rounded-md bg-[var(--brand)]/8 text-[var(--brand)] text-[0.625rem] font-mono font-semibold">{receipt}</span>}
-                          {fromFee && <span className="px-1.5 py-0.5 rounded-md bg-[var(--teal)]/10 text-[var(--teal)] text-[0.5625rem] font-bold uppercase tracking-wider">{bn ? 'ফি' : 'FEE'}</span>}
-                        </div>
+                      <td className="py-2.5 px-3">
+                        {receipt && <span className="px-2 py-0.5 rounded-md bg-[var(--brand)]/8 text-[var(--brand)] text-[0.625rem] font-mono font-medium">{receipt}</span>}
                       </td>
-                      <td className="py-3 px-3">
-                        <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{bn ? s.soldToNameBn : s.soldToName}</div>
-                        <div className="text-[0.6875rem] text-[var(--text-muted)]">{bn ? `শ্রেণি ${s.soldToClass}` : `Class ${s.soldToClass}`}{s.soldToSection ? ` — ${s.soldToSection}` : ''}</div>
+                      <td className="py-2.5 px-3">
+                        <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">{bn ? s.soldToNameBn : s.soldToName}</div>
+                        <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono">{s.soldToId}</div>
+                        <div className="text-[0.625rem] text-[var(--text-muted)]">{bn ? `শ্রেণি ${s.soldToClass}` : `Class ${s.soldToClass}`}{s.soldToSection ? ` — ${s.soldToSection}` : ''}</div>
                       </td>
-                      <td className="py-3 px-3">
-                        <div className="flex flex-wrap gap-1 max-w-[220px]">
+                      <td className="py-2.5 px-3">
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
                           {s.items.map((item, i) => (
-                            <span key={i} className="inline-flex items-center text-[0.625rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-2 py-0.5 rounded-md whitespace-nowrap">
-                              {bn ? item.productNameBn : item.productName} <span className="ml-1 font-semibold text-[var(--text-primary)]">×{item.qty}</span>
+                            <span key={i} className="inline-flex items-center text-[0.5625rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded whitespace-nowrap">
+                              {bn ? item.productNameBn : item.productName}<span className="ml-0.5 font-medium text-[var(--text-primary)]">×{item.qty}</span>
                             </span>
                           ))}
                         </div>
                       </td>
-                      <td className="py-3 px-3">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-secondary)]">
+                      <td className="py-2.5 px-3">
+                        <span className="text-[0.6875rem] text-[var(--text-secondary)]">
                           {paymentLabels[s.paymentMethod]?.[bn ? 'bn' : 'en']}
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-right">
-                        <span className="text-[0.9375rem] font-bold text-[var(--text-primary)]">৳{bn ? toBnNum(s.total) : s.total.toLocaleString()}</span>
+                      <td className="py-2.5 px-3 text-right">
+                        <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">৳{bn ? toBnNum(s.total) : s.total.toLocaleString()}</span>
                       </td>
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-2.5 px-3 text-center">
                         <button onClick={() => { if (confirm(bn ? 'এই বিক্রয় মুছে ফেলতে চান?' : 'Delete this sale?')) deleteSale(s.id) }}
-                          className="p-1.5 rounded-md text-[var(--text-muted)] cursor-pointer hover:text-red-500 hover:bg-red-500/10 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
-                          <Trash2 size={15} />
+                          className="p-1 rounded text-[var(--text-muted)] cursor-pointer hover:text-red-500 hover:bg-red-500/10 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                          <Trash2 size={14} />
                         </button>
                       </td>
                     </tr>
