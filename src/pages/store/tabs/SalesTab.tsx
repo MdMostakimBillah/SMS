@@ -166,12 +166,12 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
           { label: bn ? 'ফি কালেক্ট' : 'Fee Collect', value: bn ? toBnNum(feeCollectCount) : String(feeCollectCount), icon: <Receipt size={14} />, color: 'var(--teal)' },
           { label: bn ? 'সরাসরি বিক্রয়' : 'Direct Sale', value: bn ? toBnNum(directCount) : String(directCount), icon: <ShoppingBag size={14} />, color: 'var(--amber)' },
         ].map((s) => (
-          <div key={s.label} className="flex items-center gap-3 p-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)] hover:shadow-md transition-shadow">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${s.color}15`, color: s.color }}>{s.icon}</div>
+          <div key={s.label} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${s.color}15`, color: s.color }}>{s.icon}</div>
             <div className="min-w-0">
-              <div className="font-bold text-[1rem] text-[var(--text-primary)] leading-tight">{s.value}</div>
-              <div className="text-[0.6875rem] text-[var(--text-secondary)] whitespace-nowrap">{s.label}</div>
-              {'sub' in s && s.sub && <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">{s.sub}</div>}
+              <div className="font-bold text-[0.9375rem] text-[var(--text-primary)] leading-tight">{s.value}</div>
+              <div className="text-[0.625rem] text-[var(--text-secondary)] whitespace-nowrap">{s.label}</div>
+              {'sub' in s && s.sub && <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">{s.sub}</div>}
             </div>
           </div>
         ))}
@@ -228,16 +228,16 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
       {/* Filters */}
       {showFilters && (
         <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
-          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors" />
-          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors" />
-          <select value={filterPayment} onChange={(e) => setFilterPayment(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors cursor-pointer">
+          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors" />
+          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors" />
+          <select value={filterPayment} onChange={(e) => setFilterPayment(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors cursor-pointer">
             <option value="">{bn ? 'সব পেমেন্ট' : 'All Payments'}</option>
             <option value="cash">{bn ? 'নগদ' : 'Cash'}</option>
             <option value="bank">{bn ? 'ব্যাংক' : 'Bank'}</option>
             <option value="mobile">{bn ? 'মোবাইল' : 'Mobile'}</option>
             <option value="other">{bn ? 'অন্যান্য' : 'Other'}</option>
           </select>
-          <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors cursor-pointer">
+          <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors cursor-pointer">
             <option value="">{bn ? 'সব উৎস' : 'All Sources'}</option>
             <option value="feecollect">{bn ? 'ফি কালেক্ট' : 'Fee Collect'}</option>
             <option value="direct">{bn ? 'সরাসরি' : 'Direct'}</option>
