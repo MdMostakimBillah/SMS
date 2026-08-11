@@ -3,14 +3,14 @@ import { useBn } from '@/hooks/useBn'
 import { useStoreStore } from '@/store/storeStore'
 import { toBnNum } from '@/lib/i18n'
 import { inputCls, selectCls } from '@/lib/styles'
-import { ShoppingCart, User, Package, CreditCard, Trash2 } from 'lucide-react'
+import { ShoppingBag, Receipt } from 'lucide-react'
 
 interface Props {
   isMobile: boolean
   searchQuery: string
 }
 
-export const SalesTab = ({ isMobile, searchQuery }: Props) => {
+export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const bn = useBn()
   const sales = useStoreStore((s) => s.sales)
   const deleteSale = useStoreStore((s) => s.deleteSale)
@@ -27,25 +27,25 @@ export const SalesTab = ({ isMobile, searchQuery }: Props) => {
     other: { en: 'Other', bn: 'অন্যান্য' },
   }
 
-  const isFeeCollect = (s: typeof sales[0]) => s.note?.startsWith('Fee Collect')
+  const isFeeCollect = (s: typeof sales[number]) => s.note?.includes('Fee Collect')
 
   const filtered = useMemo(() => {
     let list = [...sales].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
-      list = list.filter((s) => s.soldToName.toLowerCase().includes(q) || s.soldToNameBn.includes(q) || s.id.toLowerCase().includes(q) || s.items.some((i) => i.productName.toLowerCase().includes(q) || i.productNameBn.includes(q)))
+      list = list.filter((s) => s.soldToName.toLowerCase().includes(q) || s.soldToNameBn.includes(q) || s.soldToClass.includes(q) || s.id.toLowerCase().includes(q) || s.items.some((i) => i.productName.toLowerCase().includes(q) || i.productNameBn.includes(q)))
     }
     if (dateFrom) list = list.filter((s) => s.createdAt >= dateFrom)
     if (dateTo) list = list.filter((s) => s.createdAt <= dateTo + 'T23:59:59')
     if (filterPayment) list = list.filter((s) => s.paymentMethod === filterPayment)
-    if (filterSource === 'fee') list = list.filter((s) => isFeeCollect(s))
-    if (filterSource === 'store') list = list.filter((s) => !isFeeCollect(s))
+    if (filterSource === 'feecollect') list = list.filter((s) => isFeeCollect(s))
+    if (filterSource === 'direct') list = list.filter((s) => !isFeeCollect(s))
     return list
   }, [sales, searchQuery, dateFrom, dateTo, filterPayment, filterSource])
 
   const totalRevenue = filtered.reduce((sum, s) => sum + s.total, 0)
-  const totalItems = filtered.reduce((sum, s) => sum + s.items.reduce((isum, i) => isum + i.qty, 0), 0)
-  const totalSales = filtered.length
+  const feeCollectCount = filtered.filter((s) => isFeeCollect(s)).length
+  const directCount = filtered.length - feeCollectCount
 
   const formatDate = (iso: string) => {
     const d = new Date(iso)
@@ -57,25 +57,28 @@ export const SalesTab = ({ isMobile, searchQuery }: Props) => {
     return d.toLocaleTimeString(bn ? 'bn-BD' : 'en-US', { hour: '2-digit', minute: '2-digit' })
   }
 
-  const SummaryCard = ({ icon: Icon, label, value, color }: { icon: typeof ShoppingCart; label: string; value: string; color: string }) => (
-    <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}15`, color }}>
-        <Icon size={16} />
-      </div>
-      <div>
-        <div className="text-[0.9375rem] font-bold text-[var(--text-primary)]">{value}</div>
-        <div className="text-[0.625rem] text-[var(--text-secondary)]">{label}</div>
-      </div>
-    </div>
-  )
+  const getInitials = (name: string) => name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 
   return (
     <div className="space-y-4">
-      {/* Summary */}
-      <div className="grid grid-cols-3 gap-3">
-        <SummaryCard icon={ShoppingCart} label={bn ? 'মোট বিক্রয়' : 'Total Sales'} value={bn ? toBnNum(totalSales) : String(totalSales)} color="var(--brand)" />
-        <SummaryCard icon={Package} label={bn ? 'মোট পণ্য বিক্রি' : 'Items Sold'} value={bn ? toBnNum(totalItems) : String(totalItems)} color="var(--teal)" />
-        <SummaryCard icon={CreditCard} label={bn ? 'মোট আয়' : 'Total Revenue'} value={bn ? `৳${toBnNum(totalRevenue)}` : `৳${totalRevenue.toLocaleString()}`} color="var(--green)" />
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: bn ? 'মোট বিক্রয়' : 'Total Sales', value: bn ? toBnNum(filtered.length) : String(filtered.length), icon: <Receipt size={14} />, color: 'var(--brand)' },
+          { label: bn ? 'মোট আয়' : 'Total Revenue', value: bn ? `৳${toBnNum(totalRevenue)}` : `৳${totalRevenue.toLocaleString()}`, icon: <ShoppingBag size={14} />, color: 'var(--green)' },
+          { label: bn ? 'ফি কালেক্ট' : 'Fee Collect', value: bn ? toBnNum(feeCollectCount) : String(feeCollectCount), icon: <Receipt size={14} />, color: 'var(--teal)' },
+          { label: bn ? 'সরাসরি বিক্রয়' : 'Direct Sale', value: bn ? toBnNum(directCount) : String(directCount), icon: <ShoppingBag size={14} />, color: 'var(--amber)' },
+        ].map((s) => (
+          <div key={s.label} className="flex items-center gap-3 p-3 rounded-[0.625rem] bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
+            <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: `${s.color}18`, color: s.color }}>
+              {s.icon}
+            </div>
+            <div className="min-w-0">
+              <div className="font-bold text-[1rem] text-[var(--text-primary)] leading-tight">{s.value}</div>
+              <div className="text-[0.6875rem] text-[var(--text-secondary)] whitespace-nowrap">{s.label}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Filters */}
@@ -91,130 +94,78 @@ export const SalesTab = ({ isMobile, searchQuery }: Props) => {
         </select>
         <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className={`${selectCls} w-auto min-w-[8rem]`}>
           <option value="">{bn ? 'সব উৎস' : 'All Sources'}</option>
-          <option value="fee">{bn ? 'ফি সংগ্রহ' : 'Fee Collect'}</option>
-          <option value="store">{bn ? 'দোকান' : 'Store'}</option>
+          <option value="feecollect">{bn ? 'ফি কালেক্ট' : 'Fee Collect'}</option>
+          <option value="direct">{bn ? 'সরাসরি' : 'Direct'}</option>
         </select>
       </div>
 
       {/* Sales list */}
       {filtered.length === 0 ? (
-        <div className="py-12 text-center text-[var(--text-secondary)] text-[0.875rem]">
+        <div className="py-16 text-center text-[var(--text-secondary)] text-[0.875rem]">
           {bn ? 'কোনো বিক্রয় পাওয়া যায়নি' : 'No sales found'}
         </div>
-      ) : isMobile ? (
-        <div className="space-y-2">
+      ) : (
+        <div className="space-y-3">
           {filtered.map((s) => {
-            const feeCollect = isFeeCollect(s)
+            const fromFee = isFeeCollect(s)
             return (
-              <div key={s.id} className={`p-3 rounded-xl border ${feeCollect ? 'bg-[var(--brand)]/5 border-[var(--brand)]/20' : 'bg-[var(--surface)] border-[var(--border)]'}`}>
-                {/* Header: Student + Total */}
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)]">
-                      <User size={14} className="text-[var(--text-secondary)]" />
+              <div key={s.id} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] overflow-hidden hover:shadow-md transition-shadow">
+                {/* Header row */}
+                <div className="flex items-center gap-3 p-4 pb-3">
+                  {/* Student avatar */}
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-[0.75rem] font-bold" style={{ background: 'var(--brand-light)', color: 'var(--brand)' }}>
+                    {getInitials(s.soldToNameBn || s.soldToName)}
+                  </div>
+                  {/* Student info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[0.875rem] font-semibold text-[var(--text-primary)] truncate">{bn ? s.soldToNameBn : s.soldToName}</span>
+                      {fromFee && (
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-bold bg-[var(--teal)]/10 text-[var(--teal)] uppercase tracking-wider">
+                          {bn ? 'ফি কালেক্ট' : 'FEE COLLECT'}
+                        </span>
+                      )}
                     </div>
-                    <div>
-                      <div className="font-medium text-[0.8125rem] text-[var(--text-primary)]">{bn ? s.soldToNameBn : s.soldToName}</div>
-                      <div className="text-[0.6875rem] text-[var(--text-secondary)]">{s.soldToClass} — {s.soldToSection}</div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? `শ্রেণি ${s.soldToClass}` : `Class ${s.soldToClass}`}</span>
+                      <span className="text-[0.5rem] text-[var(--text-muted)]">·</span>
+                      <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? `সেকশন ${s.soldToSection}` : `Section ${s.soldToSection}`}</span>
+                      <span className="text-[0.5rem] text-[var(--text-muted)]">·</span>
+                      <span className="text-[0.6875rem] text-[var(--text-muted)]">{formatDate(s.createdAt)} {formatTime(s.createdAt)}</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold text-[0.9375rem] text-[var(--text-primary)]">{bn ? `৳${toBnNum(s.total)}` : `৳${s.total.toLocaleString()}`}</div>
-                    {feeCollect && (
-                      <span className="inline-block px-1.5 py-0.5 rounded text-[0.5625rem] font-bold bg-[var(--brand)]/10 text-[var(--brand)] uppercase">
-                        {bn ? 'ফি সংগ্রহ' : 'FEE'}
-                      </span>
-                    )}
+                  {/* Amount + delete */}
+                  <div className="text-right shrink-0">
+                    <div className="text-[1rem] font-bold text-[var(--text-primary)]">৳{bn ? toBnNum(s.total) : s.total.toLocaleString()}</div>
+                    <div className="text-[0.625rem] text-[var(--text-secondary)]">{paymentLabels[s.paymentMethod]?.[bn ? 'bn' : 'en']}</div>
                   </div>
                 </div>
 
                 {/* Items */}
-                <div className="space-y-1 mb-2">
-                  {s.items.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between text-[0.75rem]">
-                      <span className="text-[var(--text-secondary)]">
-                        {bn ? item.productNameBn : item.productName}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[var(--text-muted)]">×{item.qty}</span>
-                        <span className="font-medium text-[var(--text-primary)]">{bn ? `৳${toBnNum(item.subtotal)}` : `৳${item.subtotal.toLocaleString()}`}</span>
+                <div className="px-4 pb-3">
+                  <div className="bg-[var(--bg-secondary)]/60 rounded-lg p-2.5 space-y-1.5">
+                    {s.items.map((item, i) => (
+                      <div key={i} className="flex items-center justify-between text-[0.75rem]">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[var(--text-secondary)]">{bn ? item.productNameBn : item.productName}</span>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-[var(--text-muted)]">{bn ? toBnNum(item.qty) : item.qty} × ৳{bn ? toBnNum(item.unitPrice) : item.unitPrice}</span>
+                          <span className="font-semibold text-[var(--text-primary)] w-16 text-right">৳{bn ? toBnNum(item.subtotal) : item.subtotal.toLocaleString()}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-between items-center pt-1.5 border-t border-[var(--border)]">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[0.6875rem] text-[var(--text-muted)]">{formatDate(s.createdAt)}</span>
-                    <span className="text-[0.6875rem] text-[var(--text-muted)]">{formatTime(s.createdAt)}</span>
-                    <span className="text-[0.625rem] px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
-                      {paymentLabels[s.paymentMethod]?.[bn ? 'bn' : 'en']}
-                    </span>
-                  </div>
-                  <button onClick={() => deleteSale(s.id)} className="p-1.5 rounded-lg text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-500 transition-colors cursor-pointer">
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {filtered.map((s) => {
-            const feeCollect = isFeeCollect(s)
-            return (
-              <div key={s.id} className={`p-4 rounded-xl border transition-shadow hover:shadow-md ${feeCollect ? 'bg-[var(--brand)]/5 border-[var(--brand)]/20' : 'bg-[var(--surface)] border-[var(--border)]'}`}>
-                {/* Top row: Student + Date + Total */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--bg-secondary)]">
-                      <User size={16} className="text-[var(--text-secondary)]" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-[0.875rem] text-[var(--text-primary)]">{bn ? s.soldToNameBn : s.soldToName}</span>
-                        {feeCollect && (
-                          <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-bold bg-[var(--brand)]/10 text-[var(--brand)] uppercase tracking-wider">
-                            {bn ? 'ফি সংগ্রহ' : 'Fee Collect'}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[0.6875rem] text-[var(--text-secondary)]">{s.soldToClass} — {s.soldToSection}</span>
-                        <span className="text-[0.5rem] text-[var(--text-muted)]">·</span>
-                        <span className="text-[0.6875rem] text-[var(--text-muted)]">{formatDate(s.createdAt)} {formatTime(s.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-[1.0625rem] text-[var(--text-primary)]">{bn ? `৳${toBnNum(s.total)}` : `৳${s.total.toLocaleString()}`}</div>
-                    <div className="text-[0.625rem] text-[var(--text-muted)]">
-                      {s.items.length} {bn ? 'পণ্য' : 'items'} · {s.items.reduce((isum, i) => isum + i.qty, 0)} {bn ? 'পিস' : 'pcs'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Items grid */}
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {s.items.map((item, i) => (
-                    <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-                      <Package size={12} className="text-[var(--text-muted)]" />
-                      <span className="text-[0.75rem] text-[var(--text-primary)] font-medium">{bn ? item.productNameBn : item.productName}</span>
-                      <span className="text-[0.6875rem] text-[var(--text-muted)]">×{item.qty}</span>
-                      <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">{bn ? `৳${toBnNum(item.subtotal)}` : `৳${item.subtotal.toLocaleString()}`}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between pt-2.5 border-t border-[var(--border)]">
-                  <span className="text-[0.6875rem] px-2 py-0.5 rounded-full bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
-                    {paymentLabels[s.paymentMethod]?.[bn ? 'bn' : 'en']}
+                <div className="flex items-center justify-between px-4 py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)]/30">
+                  <span className="text-[0.6875rem] text-[var(--text-muted)]">
+                    {s.items.reduce((sum, i) => sum + i.qty, 0)} {bn ? 'টি পণ্য' : 'items'}
+                    {s.note && <span className="ml-1.5">· {s.note}</span>}
                   </span>
-                  <button onClick={() => deleteSale(s.id)} className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] hover:text-red-500 transition-colors cursor-pointer">
-                    <Trash2 size={12} />
+                  <button onClick={() => { if (confirm(bn ? 'এই বিক্রয় মুছে ফেলতে চান?' : 'Delete this sale?')) deleteSale(s.id) }}
+                    className="text-[0.6875rem] text-red-500 cursor-pointer hover:underline">
                     {bn ? 'মুছুন' : 'Delete'}
                   </button>
                 </div>
