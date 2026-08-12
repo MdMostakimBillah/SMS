@@ -63,7 +63,7 @@ export function generateAdmitCardHTML(
       </tr>`
     }).join('') : subjectRows
 
-    return `<div style="width:190mm;min-height:120mm;border:1.5px solid #e2e8f0;border-radius:12px;margin:10px auto;padding:0;overflow:hidden;font-family:'Times New Roman',serif;page-break-inside:avoid;background:#fff">
+    return `<div style="width:190mm;min-height:120mm;border:1.5px solid #e2e8f0;border-radius:12px;margin:10px auto;padding:0;overflow:hidden;font-family:'Times New Roman','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;page-break-inside:avoid;background:#fff">
       <div style="padding:12px 20px;text-align:center;border-bottom:2px solid ${brandColor}">
         <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px">
           <div style="width:36px;height:36px;border-radius:8px;background:${brandColor};display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0">ET</div>
@@ -88,7 +88,7 @@ export function generateAdmitCardHTML(
             <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:${brandColor}15;color:${brandColor};font-weight:600">${isBn ? 'শ্রেণি' : 'Class'}: ${escapeHtml(student.class)}</span>
             <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:${brandColor}15;color:${brandColor};font-weight:600">${isBn ? 'সেকশন' : 'Section'}: ${escapeHtml(student.section)}</span>
             <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:#f1f5f9;color:#475569;font-weight:600">${isBn ? 'রোল' : 'Roll'}: ${escapeHtml(student.roll || '-')}</span>
-            <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:#f1f5f9;color:#475569;font-family:'Times New Roman',serif">ID: ${escapeHtml(student.id)}</span>
+            <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:#f1f5f9;color:#475569;font-family:monospace">ID: ${escapeHtml(student.id)}</span>
           </div>
         </div>
       </div>

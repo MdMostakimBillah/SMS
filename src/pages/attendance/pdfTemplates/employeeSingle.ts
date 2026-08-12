@@ -77,8 +77,8 @@ export function genSinglePDF(params: GenSinglePDFParams): string {
       return `<tr class="${i % 2 === 1 ? 'alt' : ''}">
       <td style="text-align:center;font-size:8px;color:#888">${i + 1}</td>
       <td style="font-size:8px">${r.date} <span style="color:#888;font-size:7px">${dayName}</span></td>
-      <td style="font-size:8px;font-family:'Times New Roman',serif;text-align:center">${firstIn ? firstIn.time : '—'}</td>
-      <td style="font-size:8px;font-family:'Times New Roman',serif;text-align:center">${lastOut ? lastOut.time : '—'}</td>
+      <td style="font-size:8px;font-family:monospace;text-align:center">${firstIn ? firstIn.time : '—'}</td>
+      <td style="font-size:8px;font-family:monospace;text-align:center">${lastOut ? lastOut.time : '—'}</td>
       <td style="text-align:center"><b style="color:${c};font-size:8px">${l}</b>${lateBadge}</td>
     </tr>`
     })
@@ -94,7 +94,7 @@ export function genSinglePDF(params: GenSinglePDFParams): string {
 <style>
 @page{size:A4 landscape;margin:8mm}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Times New Roman',serif;font-size:9px;color:#1a1a1a;background:#fff}
+body{font-family:'Times New Roman',Arial,sans-serif;font-size:9px;color:#1a1a1a;background:#fff}
 .page{padding:0}
 .hdr{display:flex;align-items:center;gap:14px;padding-bottom:8px;border-bottom:2.5px solid ${brand.brandColor};margin-bottom:10px}
 .profile{display:flex;align-items:center;gap:12px;flex:1}
