@@ -84,6 +84,8 @@ export const StudentsTab = ({ searchQuery }: Props) => {
   const totalPages = Math.ceil(filtered.length / perPage)
   const paginated = filtered.slice((page - 1) * perPage, page * perPage)
 
+  const totalFare = filtered.reduce((sum, a) => sum + a.monthlyFare, 0)
+
   const hasActiveFilters = filterVehicle || filterRoute
 
   const clearFilters = () => { setFilterVehicle(''); setFilterRoute(''); setPage(1) }
@@ -168,6 +170,11 @@ export const StudentsTab = ({ searchQuery }: Props) => {
           <span className="text-[0.8125rem] text-[var(--text-secondary)] hidden sm:inline">
             {bn ? `${filtered.length} জন ছাত্র বরাদ্দ` : `${filtered.length} students assigned`}
           </span>
+          {filtered.length > 0 && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--brand)]/8 text-[var(--brand)] text-[0.75rem] font-semibold whitespace-nowrap">
+              {bn ? 'মোট ভাড়া' : 'Total'}: ৳{bn ? toBnNum(totalFare) : totalFare.toLocaleString()}
+            </span>
+          )}
           <button onClick={() => setShowFilters((v) => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium border transition-colors cursor-pointer ${showFilters || hasActiveFilters ? 'bg-[var(--brand)]/5 text-[var(--brand)] border-[var(--brand)]/20' : 'bg-transparent text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)]'}`}>
             <Filter size={14} />
