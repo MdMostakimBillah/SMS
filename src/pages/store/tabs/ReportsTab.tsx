@@ -46,21 +46,6 @@ export const ReportsTab = ({ isMobile }: Props) => {
     return map
   }, [sales])
 
-  const studentSpending = useMemo(() => {
-    const map = new Map<string, { name: string; nameBn: string; id: string; class: string; section: string; total: number; count: number; products: Set<string> }>()
-    sales.forEach((s) => {
-      const existing = map.get(s.soldToId)
-      if (existing) {
-        existing.total += s.total
-        existing.count++
-        s.items.forEach((i) => existing.products.add(bn ? i.productNameBn : i.productName))
-      } else {
-        map.set(s.soldToId, { name: s.soldToName, nameBn: s.soldToNameBn, id: s.soldToId, class: s.soldToClass, section: s.soldToSection, total: s.total, count: 1, products: new Set(s.items.map((i) => bn ? i.productNameBn : i.productName)) })
-      }
-    })
-    return [...map.values()].sort((a, b) => b.total - a.total)
-  }, [sales, bn])
-
   const productSales = useMemo(() => {
     const map = new Map<string, { name: string; nameBn: string; qty: number; revenue: number; count: number; stock: number; minStock: number }>()
     sales.forEach((s) => {
@@ -182,51 +167,6 @@ export const ReportsTab = ({ isMobile }: Props) => {
             </div>
           )
         })}
-      </div>
-
-      {/* Student Spending */}
-      <div className="rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
-        <SectionHeader icon={Package} title={bn ? 'শিক্ষার্থী খরচ' : 'Student Spending'} count={studentSpending.length} />
-        {studentSpending.length === 0 ? (
-          <EmptyState icon={Package} text={bn ? 'এখনো কোনো বিক্রয় হয়নি' : 'No sales yet'} />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-[var(--bg-secondary)]">
-                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">#</th>
-                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'শ্রেণি' : 'Class'}</th>
-                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'লেনদেন' : 'Orders'}</th>
-                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'মোট খরচ' : 'Total Spent'}</th>
-                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'পণ্য' : 'Products'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {studentSpending.map((s, i) => (
-                  <tr key={i} className="border-t border-[var(--border)] transition-colors hover:!bg-[var(--brand)]/5" style={{ backgroundColor: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' }}>
-                    <td className="py-2.5 px-3 text-[0.75rem] text-[var(--text-muted)]">{bn ? toBnNum(i + 1) : i + 1}</td>
-                    <td className="py-2.5 px-3">
-                      <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">{bn ? s.nameBn : s.name}</div>
-                      <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono">{s.id}</div>
-                    </td>
-                    <td className="py-2.5 px-3 text-[0.75rem] text-[var(--text-secondary)]">{bn ? `শ্রেণি ${s.class}` : `Class ${s.class}`}{s.section ? ` — ${s.section}` : ''}</td>
-                    <td className="py-2.5 px-3 text-right text-[0.75rem] text-[var(--text-secondary)]">{bn ? toBnNum(s.count) : s.count}</td>
-                    <td className="py-2.5 px-3 text-right text-[0.8125rem] font-semibold text-[var(--green)]">৳{bn ? toBnNum(s.total) : s.total.toLocaleString()}</td>
-                    <td className="py-2.5 px-3">
-                      <div className="flex flex-wrap gap-1">
-                        {[...s.products].slice(0, 3).map((p) => (
-                          <span key={p} className="text-[0.5625rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded whitespace-nowrap">{p}</span>
-                        ))}
-                        {s.products.size > 3 && <span className="text-[0.5625rem] text-[var(--text-muted)]">+{s.products.size - 3}</span>}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
 
       {/* Product Sales */}
