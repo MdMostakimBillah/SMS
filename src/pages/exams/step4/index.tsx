@@ -43,6 +43,7 @@ import { useClassStore, getClassOptions, buildSectionsMap, extractClassNumber } 
 import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
 import { sectionCls, sectionTitleCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { downloadHTML } from '@/lib/pdf'
 import { TabulationPDFOptionsModal } from '@/components/shared/TabulationPDFOptionsModal'
 import type { TabulationPdfOptions } from '@/pages/exams/step4/tabulationPdfTemplate'
@@ -655,11 +656,11 @@ export default function Step4Results() {
                     <thead>
                       <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                         <th className="py-2 px-2 w-8">
-                          <input
-                            type="checkbox"
+                          <ModernCheckbox
                             checked={selectedStudents.size === enrichedTabulationData.length && enrichedTabulationData.length > 0}
                             onChange={toggleAllStudents}
-                            className="accent-[var(--brand)]"
+                            color="brand"
+                            size="xs"
                           />
                         </th>
                         <th className={`text-[0.625rem] font-semibold text-[var(--text-muted)] ${rotateHeaders ? 'p-0' : 'py-2 px-2 text-left w-8'}`} style={rotateHeaders ? { width: '2rem', minWidth: '2rem' } : undefined}>
@@ -715,11 +716,11 @@ export default function Step4Results() {
                       {enrichedTabulationData.map((row, idx) => (
                         <tr key={row.student.id} className={`border-b border-[var(--border)] hover:bg-[var(--bg-secondary)] ${selectedStudents.has(row.student.id) ? 'bg-[var(--brand)]/5' : ''}`}>
                           <td className="py-2 px-2">
-                            <input
-                              type="checkbox"
+                            <ModernCheckbox
                               checked={selectedStudents.has(row.student.id)}
                               onChange={() => toggleStudent(row.student.id)}
-                              className="accent-[var(--brand)]"
+                              color="brand"
+                              size="xs"
                             />
                           </td>
                           <td className="py-2 px-2 text-[var(--text-muted)]">{idx + 1}</td>
@@ -909,7 +910,7 @@ export default function Step4Results() {
                 <thead>
                   <tr className="bg-[var(--bg-secondary)] border-b-2 border-[var(--border)]">
                     <th className="p-2 text-center w-8">
-                      <input type="checkbox" checked={extraSelectAll} onChange={handleExtraSelectAll} className="cursor-pointer accent-[var(--brand)]" />
+                      <ModernCheckbox checked={extraSelectAll} onChange={handleExtraSelectAll} color="brand" size="xs" />
                     </th>
                     <th className="p-2 text-left font-semibold text-[var(--text-primary)]">{isBn ? 'রোল' : 'Roll'}</th>
                     <th className="p-2 text-left font-semibold text-[var(--text-primary)]">{isBn ? 'নাম' : 'Name'}</th>
@@ -940,7 +941,7 @@ export default function Step4Results() {
                     return (
                       <tr key={student.id} className={`border-b border-[var(--border)] transition-colors ${isSelected ? 'bg-[var(--brand-light)]' : 'hover:bg-[var(--bg-secondary)]'}`}>
                         <td className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
-                          <input type="checkbox" checked={isSelected} onChange={() => handleExtraToggleStudent(student.id)} className="cursor-pointer accent-[var(--brand)]" />
+                           <ModernCheckbox checked={isSelected} onChange={() => handleExtraToggleStudent(student.id)} color="brand" size="xs" />
                         </td>
                         <td className="p-2 text-left font-medium text-[var(--text-primary)]">{student.roll || '-'}</td>
                         <td className="p-2 text-left text-[var(--text-primary)]">{isBn ? student.nameBn || student.nameEn : student.nameEn}</td>

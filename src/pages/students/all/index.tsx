@@ -37,6 +37,7 @@ import { printRawHTML } from '@/lib/pdf'
 import type { ListPDFOptions } from '@/pages/students/admission/listPdfTemplate'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { BLOOD_GROUPS } from '@/lib/constants'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
 
@@ -689,11 +690,11 @@ export default function AllStudentsPage() {
             <thead className="sticky top-0 z-10">
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 <th className="p-2.5 w-[2.25rem]" style={sc('0')}>
-                  <input
-                    type="checkbox"
+                  <ModernCheckbox
                     checked={allSel}
-                    onChange={toggleAll}
-                    className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                    onChange={() => toggleAll()}
+                    color="brand"
+                    size="xs"
                   />
                 </th>
                 {[
@@ -739,11 +740,11 @@ export default function AllStudentsPage() {
                     }}
                   >
                     <td className="p-2.5" style={sc('0')}>
-                      <input
-                        type="checkbox"
+                      <ModernCheckbox
                         checked={selected.includes(s.id)}
                         onChange={() => toggleOne(s.id)}
-                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                        color="brand"
+                        size="xs"
                       />
                     </td>
                     <td className="p-2 text-[var(--text-muted)] font-semibold text-[0.6875rem]" style={sc('36px')}>

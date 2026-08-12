@@ -7,6 +7,7 @@ import { useFeeStore, type WaiverCategory, type WaiverEntry } from '@/store/feeS
 import { inputCls, selectCls, btnPrimary } from '@/lib/styles'
 import { modalOverlayCls, modalStyleCls } from '@/pages/hr/utils'
 import { createPortal } from 'react-dom'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface Props {
   mode?: 'category' | 'full'
@@ -296,7 +297,7 @@ export function WaiverModal({ mode = 'full', onSaved, onClose }: Props) {
                 ) : (
                   filteredStudents.map((s) => (
                     <label key={s.id} className={`flex items-center gap-2 px-2.5 py-1.5 cursor-pointer hover:bg-[var(--bg-secondary)]/50 transition-colors border-b border-[var(--border)] last:border-0 ${selectedStudentIds.has(s.id) ? 'bg-[var(--purple-light)]/30' : ''}`}>
-                      <input type="checkbox" checked={selectedStudentIds.has(s.id)} onChange={() => toggleStudent(s.id)} className="accent-[var(--purple)] w-3.5 h-3.5" />
+                      <ModernCheckbox checked={selectedStudentIds.has(s.id)} onChange={() => toggleStudent(s.id)} color="purple" size="xs" />
                       <span className="text-[0.7rem] text-[var(--text-primary)]">{s.nameEn}</span>
                       <span className="text-[0.6rem] text-[var(--text-muted)] ml-auto">{s.class}-{s.section}</span>
                     </label>

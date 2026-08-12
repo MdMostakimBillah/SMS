@@ -36,6 +36,7 @@ import type { TeacherListPDFOptions } from '@/pages/teachers/listPdfTemplate'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { BLOOD_GROUPS } from '@/lib/constants'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
 
@@ -738,12 +739,7 @@ ${photoHtml}
             <thead className="sticky top-0 z-10">
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 <th className="p-2.5 w-[2.25rem]" style={sc('0')}>
-                  <input
-                    type="checkbox"
-                    checked={allSel}
-                    onChange={toggleAll}
-                    className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
-                  />
+                   <ModernCheckbox checked={allSel} onChange={toggleAll} color="brand" size="xs" />
                 </th>
                 {[
                   { l: '#', w: '2.25rem', sticky: !isMobile, left: '2.25rem' },
@@ -786,12 +782,7 @@ ${photoHtml}
                     style={{ background: selected.includes(t.id) ? 'rgba(99,102,241,0.04)' : undefined }}
                   >
                     <td className="p-2.5" style={sc('0')}>
-                      <input
-                        type="checkbox"
-                        checked={selected.includes(t.id)}
-                        onChange={() => toggleOne(t.id)}
-                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
-                      />
+                     <ModernCheckbox checked={selected.includes(t.id)} onChange={() => toggleOne(t.id)} color="brand" size="xs" />
                     </td>
                     <td className="p-2 text-[var(--text-muted)] font-semibold text-[0.6875rem]" style={sc('36px')}>
                       {(sp - 1) * perPage + i + 1}

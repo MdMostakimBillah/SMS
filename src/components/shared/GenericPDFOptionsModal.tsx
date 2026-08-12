@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { X, File, LayoutTemplate, Plus, Trash2, Download, Eye, EyeOff } from 'lucide-react'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 export interface PDFColumnDef {
   key: string
@@ -384,11 +385,11 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
                           transition: 'all 0.1s',
                         }}
                       >
-                        <input
-                          type="checkbox"
+                        <ModernCheckbox
                           checked={cols.includes(c.key)}
                           onChange={() => toggleCol(c.key)}
-                          style={{ width: '0.8125rem', height: '0.8125rem', accentColor: 'var(--brand)', cursor: 'pointer', flexShrink: 0 }}
+                          color="brand"
+                          size="xs"
                         />
                         <span
                           style={{

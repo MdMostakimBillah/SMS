@@ -21,6 +21,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 type Op = 'salary' | 'phone' | 'photo' | 'department' | 'designation' | 'inTime' | 'outTime'
 
@@ -423,13 +424,12 @@ export default function TeacherBulkUpdatePage() {
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 <th className="py-[0.625rem] px-[0.75rem] w-[2.25rem]">
-                  <input
-                    type="checkbox"
-                    checked={allSel}
-                    onChange={toggleAll}
-                    className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[color:var(--op-color)]"
-                    style={{ accentColor: opInfo.color } as React.CSSProperties}
-                  />
+                   <ModernCheckbox
+                     checked={allSel}
+                     onChange={toggleAll}
+                     color={opInfo.color}
+                     size="xs"
+                   />
                 </th>
                 <th className="py-[0.625rem] px-[0.5rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase w-[2.25rem]">#</th>
                 <th className="py-[0.625rem] px-[0.5rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase min-w-[3.125rem]">
@@ -470,13 +470,12 @@ export default function TeacherBulkUpdatePage() {
                     }}
                   >
                     <td className="py-[0.5rem] px-[0.75rem]">
-                      <input
-                        type="checkbox"
-                        checked={selected.includes(t.id)}
-                        onChange={() => toggleOne(t.id)}
-                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer"
-                        style={{ accentColor: opInfo.color } as React.CSSProperties}
-                      />
+                       <ModernCheckbox
+                         checked={selected.includes(t.id)}
+                         onChange={() => toggleOne(t.id)}
+                         color={opInfo.color}
+                         size="xs"
+                       />
                     </td>
                     <td className="py-[0.5rem] px-[0.5rem] text-[var(--text-muted)] font-semibold text-[0.6875rem]">{i + 1}</td>
                     <td className="py-[0.4375rem] px-[0.5rem]">

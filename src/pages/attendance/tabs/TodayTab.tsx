@@ -16,6 +16,7 @@ import {
   Users,
   XCircle,
 } from 'lucide-react'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import type { StatusFilter } from '../helpers'
 
@@ -196,14 +197,14 @@ export const TodayTab = React.memo(function TodayTab({
             <thead className="sticky top-0 z-10">
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]">
-                  <input
-                    type="checkbox"
+                  <ModernCheckbox
                     checked={todayFiltered.length > 0 && todayFiltered.every((t) => selectedEmployees.includes(t.id))}
                     onChange={() => {
                       if (todayFiltered.every((t) => selectedEmployees.includes(t.id))) setSelectedEmployees([])
                       else setSelectedEmployees(todayFiltered.map((t) => t.id))
                     }}
-                    className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                    color="brand"
+                    size="xs"
                   />
                 </th>
                 <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]"></th>
@@ -247,13 +248,13 @@ export const TodayTab = React.memo(function TodayTab({
                     } ${t.isLate && isPresent ? 'bg-[rgba(245,158,11,0.04)]' : ''}`}
                   >
                     <td className="p-2 text-center">
-                      <input
-                        type="checkbox"
+                      <ModernCheckbox
                         checked={selectedEmployees.includes(t.id)}
                         onChange={() =>
                           setSelectedEmployees((prev) => (prev.includes(t.id) ? prev.filter((id) => id !== t.id) : [...prev, t.id]))
                         }
-                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                        color="brand"
+                        size="xs"
                       />
                     </td>
                     <td className="p-[0.375rem] text-center">

@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   ChevronDown,
 } from 'lucide-react'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useShallow } from 'zustand/shallow'
@@ -537,14 +538,14 @@ export default function DashboardPage() {
                         transition: 'all 0.15s',
                       }}
                     >
-                      <input
-                        type="checkbox"
+                      <ModernCheckbox
                         checked={task.status === 'completed'}
                         onChange={() => updateTodo(task.id, {
                           status: task.status === 'completed' ? 'pending' : 'completed',
                           completedAt: task.status === 'completed' ? undefined : new Date().toISOString(),
                         })}
-                        style={{ marginTop: '0.125rem', accentColor: 'var(--brand)', cursor: 'pointer', flexShrink: 0 }}
+                        color="brand"
+                        size="xs"
                       />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>

@@ -6,6 +6,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface RollCellProps {
   value: string
@@ -351,11 +352,17 @@ export default function ClassPromotionPage() {
               <thead>
                 <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                   <th className="p-[8px_10px] w-[2.25rem]">
-                    <input
-                      type="checkbox"
+                    <ModernCheckbox
                       checked={allSel}
-                      onChange={toggleAll}
-                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                      onChange={(c) => {
+                        if (c) {
+                          setSelected(filtered.map((s) => s.id))
+                        } else {
+                          setSelected([])
+                        }
+                      }}
+                      color="brand"
+                      size="xs"
                     />
                   </th>
                   <th className="p-[8px_6px] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase w-[1.875rem]">#</th>
@@ -397,11 +404,11 @@ export default function ClassPromotionPage() {
                       }}
                     >
                       <td className="p-[8px_10px]">
-                        <input
-                          type="checkbox"
+                        <ModernCheckbox
                           checked={selected.includes(s.id)}
                           onChange={() => toggleOne(s.id)}
-                          className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                          color="brand"
+                          size="xs"
                         />
                       </td>
                       <td className="p-[8px_6px] text-[var(--text-muted)] font-semibold text-[0.6875rem]">{i + 1}</td>

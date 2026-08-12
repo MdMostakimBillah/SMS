@@ -10,6 +10,7 @@ import { useStoreStore } from '@/store/storeStore'
 import type { FeeDue, FeeStructure, FeePayment } from '@/store/feeStore'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface ReceiptData {
   receiptNo: string
@@ -144,23 +145,6 @@ function generateMonthRows(
 
 const labelCls = 'block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.03em] mb-[5px]'
 const fieldInputCls = 'w-full border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] text-[var(--text-primary)] bg-[var(--bg-primary)] outline-none transition-colors focus:border-[var(--brand)]'
-
-function ModernCheckbox({ checked, onChange, color = 'brand' }: { checked: boolean; onChange: (v: boolean) => void; color?: 'brand' | 'teal' }) {
-  const c = color === 'teal' ? 'var(--teal)' : 'var(--brand)'
-  return (
-    <button type="button" role="checkbox" aria-checked={checked} onClick={() => onChange(!checked)}
-      className="relative w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 cursor-pointer transition-all duration-200"
-      style={{
-        borderColor: checked ? c : 'var(--border)',
-        background: checked ? c : 'transparent',
-      }}>
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="transition-all duration-200"
-        style={{ opacity: checked ? 1 : 0, transform: checked ? 'scale(1)' : 'scale(0.5)' }}>
-        <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  )
-}
 
 export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect, initialStudentId, initialFeeStructureId, onClearCollectFromDue }: Props) {
   const bn = useBn()
@@ -850,9 +834,9 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 <thead>
                   <tr className="bg-[var(--bg-secondary)]">
                     <th className="text-center py-2.5 px-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-10">
-                      <input type="checkbox" checked={displayRows.length > 0 && displayRows.every((r) => getRowEdit(r.key).checked)}
+                      <ModernCheckbox checked={displayRows.length > 0 && displayRows.every((r) => getRowEdit(r.key).checked)}
                         onChange={() => { const ac = displayRows.every((r) => getRowEdit(r.key).checked); const next: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}; for (const r of displayRows) { const e = getRowEdit(r.key); const newChecked = !ac; next[r.key] = { ...e, checked: newChecked, receive: newChecked ? Math.max(0, r.receivable - e.discount) : 0 } }; setEditState((prev) => ({ ...prev, ...next })) }}
-                        className="w-3 h-3 accent-[var(--brand)]" />
+                        color="brand" size="xs" />
                     </th>
                     <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[28%]">{bn ? 'বিবরণ' : 'Particular'}</th>
                     <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'পরিমাণ' : 'Amount'}</th>
@@ -869,13 +853,12 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     return (
                       <tr key={row.key} className={`transition-colors border-t border-[var(--border)] hover:bg-[var(--brand-light)]/60 ${!edit.checked ? 'opacity-45' : ''}`}>
                         <td className="text-center py-3 px-3">
-                          <input type="checkbox" checked={edit.checked} onChange={(e) => {
-                            const checked = e.target.checked
+                          <ModernCheckbox checked={edit.checked} onChange={(checked) => {
                             setEditState((prev) => {
                               const c = prev[row.key] || { discount: 0, remarks: '', receive: 0, checked: false }
                               return { ...prev, [row.key]: { ...c, checked, receive: checked ? Math.max(0, row.receivable - c.discount) : 0 } }
                             })
-                          }} className="w-3 h-3 accent-[var(--brand)]" />
+                          }} color="brand" size="xs" />
                         </td>
                         <td className="text-center px-3 py-3">
                           <span className="font-semibold text-[var(--text-primary)] text-[12px]">{bn ? row.feeNameBn : row.feeName}</span>
@@ -953,7 +936,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   className="h-8 w-[140px] text-[12px] px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" />
               </div>
               <label className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)] cursor-pointer">
-                <input type="checkbox" checked={sendSms} onChange={(e) => setSendSms(e.target.checked)} className="w-3.5 h-3.5 accent-[var(--brand)]" />
+                <ModernCheckbox checked={sendSms} onChange={(c) => setSendSms(c)} color="brand" size="xs" />
                 {bn ? 'এসএমএস' : 'SMS'}
               </label>
               <div className="ml-auto flex items-center gap-3">

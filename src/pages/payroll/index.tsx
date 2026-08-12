@@ -14,6 +14,7 @@ import {
   Calendar,
   FileText,
 } from 'lucide-react'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useShallow } from 'zustand/shallow'
@@ -536,11 +537,11 @@ export default function PayrollPage() {
                 <thead className="sticky top-0 z-10">
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                     <th className="py-[0.625rem] px-3 w-10">
-                      <input
-                        type="checkbox"
+                      <ModernCheckbox
                         checked={allSel}
                         onChange={toggleAll}
-                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                        color="brand"
+                        size="xs"
                       />
                     </th>
                     <th className="py-[0.625rem] px-3 w-10 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase">#</th>
@@ -591,11 +592,11 @@ export default function PayrollPage() {
                             className={`border-b border-[var(--border)] ${selected.includes(t.id) ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--bg-secondary)]'}`}
                           >
                             <td className="py-[0.625rem] px-3">
-                              <input
-                                type="checkbox"
+                              <ModernCheckbox
                                 checked={selected.includes(t.id)}
                                 onChange={() => toggleOne(t.id)}
-                                className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                                color="brand"
+                                size="xs"
                               />
                             </td>
                             <td className="py-[0.625rem] px-3 text-[var(--text-muted)] text-[0.6875rem]">{i + 1}</td>

@@ -13,6 +13,7 @@ import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { XLSX } from '@/lib/excelExport'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface Props {
   onAddWaiver: (mode: 'category' | 'full') => void
@@ -660,7 +661,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                   <thead>
                     <tr className="bg-[var(--bg-secondary)]">
                       <th className="w-8 px-2 py-2">
-                        <input type="checkbox" checked={groupedStudents.length > 0 && selectedRows.size === groupedStudents.length} onChange={toggleAllRows} className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer" />
+                        <ModernCheckbox checked={groupedStudents.length > 0 && selectedRows.size === groupedStudents.length} onChange={() => toggleAllRows()} color="brand" size="xs" />
                       </th>
                       <th className="w-8 px-2 py-2"></th>
                       <th className="w-10 px-2 py-2"></th>
@@ -696,7 +697,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                         <React.Fragment key={group.studentId}>
                           <tr className={`border-t border-[var(--border)] transition-colors cursor-pointer ${idx % 2 === 0 ? 'bg-[var(--bg-primary)]' : 'bg-[var(--bg-secondary)]/40'} hover:bg-[var(--brand-light)]/50 ${selectedRows.has(group.studentId) ? 'bg-[var(--brand-light)]/20' : ''}`} onClick={() => setExpandedId(isExpanded ? null : group.studentId)}>
                             <td className="px-2 py-2">
-                              <input type="checkbox" checked={selectedRows.has(group.studentId)} onChange={() => toggleRow(group.studentId)} onClick={(e) => e.stopPropagation()} className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer" />
+                              <ModernCheckbox checked={selectedRows.has(group.studentId)} onChange={() => toggleRow(group.studentId)} onClick={(e) => e.stopPropagation()} color="brand" size="xs" />
                             </td>
                             <td className="px-2 py-2 text-[var(--text-muted)]">
                               {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}

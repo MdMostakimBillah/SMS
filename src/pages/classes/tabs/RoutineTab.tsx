@@ -16,6 +16,7 @@ import {
   FileText,
   BookOpen,
 } from 'lucide-react'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { RoutinePDFOptionsModal } from '@/components/shared/RoutinePDFOptionsModal'
 import { generateRoutineGridPDF } from '@/pages/classes/routinePdfTemplate'
 import type { RoutineListPDFOptions, RoutineGridData } from '@/pages/classes/routinePdfTemplate'
@@ -383,11 +384,11 @@ export default React.memo(function RoutineTab({
             ))}
           </div>
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', cursor: 'pointer', fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
-            <input
-              type="checkbox"
+            <ModernCheckbox
               checked={showCustomDuration}
-              onChange={(e) => setShowCustomDuration(e.target.checked)}
-              style={{ width: '0.875rem', height: '0.875rem', accentColor: 'var(--purple)' }}
+              onChange={(c) => setShowCustomDuration(c)}
+              color="purple"
+              size="xs"
             />
             {isBn ? 'কাস্টম সময় সেট করুন' : 'Set custom time'}
           </label>

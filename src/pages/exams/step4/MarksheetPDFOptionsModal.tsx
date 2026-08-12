@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X, File, LayoutTemplate, Download, Eye, EyeOff, CheckSquare, Square, Search } from 'lucide-react'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { generateMarksheetPDF } from './marksheetPdfTemplate'
 import type { TabulationStudent, MarksheetOptions } from './MarksheetTab'
 
@@ -303,11 +304,11 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
                         transition: 'all 0.1s',
                       }}
                     >
-                      <input
-                        type="checkbox"
+                      <ModernCheckbox
                         checked={active}
                         onChange={() => toggleOption(key)}
-                        style={{ width: '0.8125rem', height: '0.8125rem', accentColor: 'var(--brand)', cursor: 'pointer', flexShrink: 0 }}
+                        color="brand"
+                        size="xs"
                       />
                       <span
                         style={{

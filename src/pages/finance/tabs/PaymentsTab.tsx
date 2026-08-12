@@ -11,6 +11,7 @@ import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsMod
 import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { inputCls } from '@/lib/styles'
 
 interface PaymentBatch {
@@ -509,7 +510,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
               <thead>
                 <tr className="bg-[var(--bg-secondary)]">
                   <th className="text-center px-2 py-2 w-[36px]">
-                    <input type="checkbox" checked={batches.length > 0 && selectedRows.size === batches.length} onChange={toggleAllRows} className="w-3.5 h-3.5 accent-[var(--brand)] cursor-pointer" />
+                    <ModernCheckbox checked={batches.length > 0 && selectedRows.size === batches.length} onChange={() => toggleAllRows()} color="brand" size="xs" />
                   </th>
                   <th className="text-center px-2 py-2 w-[36px] text-[10px] uppercase text-[var(--text-muted)] font-bold">#</th>
                   <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
@@ -526,7 +527,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
                 {batches.map((b, idx) => (
                   <tr key={b.batchKey} className={`border-t border-[var(--border)] transition-colors ${selectedRows.has(b.batchKey) ? 'bg-[var(--brand-light)]/60' : 'hover:bg-[var(--brand-light)]/30'}`}>
                     <td className="text-center px-2 py-2">
-                      <input type="checkbox" checked={selectedRows.has(b.batchKey)} onChange={() => toggleRowSelection(b.batchKey)} className="w-3.5 h-3.5 accent-[var(--brand)] cursor-pointer" />
+                      <ModernCheckbox checked={selectedRows.has(b.batchKey)} onChange={() => toggleRowSelection(b.batchKey)} color="brand" size="xs" />
                     </td>
                     <td className="text-center px-2 py-2 text-[var(--text-muted)] text-[11px]">{idx + 1}</td>
                     <td className="px-3 py-2">

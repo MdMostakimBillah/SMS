@@ -29,6 +29,7 @@ import { useExamStore } from '@/store/examStore'
 import type { ExamConfig, ExamType, SubjectMarkConfig } from '@/store/examStore'
 import { sectionCls, sectionTitleCls, inputCls, btnPrimary } from '@/lib/styles'
 import { printRawHTML } from '@/lib/pdf'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import OMRTab from './OMRTab'
 import { generatePlanningReportHTML } from './pdfTemplates/planningReport'
 
@@ -1364,13 +1365,13 @@ export default function Step1Planning() {
                           key={s.id}
                           className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[var(--bg-secondary)] cursor-pointer"
                         >
-                          <input
-                            type="checkbox"
+                          <ModernCheckbox
                             checked={copyTargetSubjectIds.includes(s.id)}
-                            onChange={(e) =>
-                              setCopyTargetSubjectIds((prev) => (e.target.checked ? [...prev, s.id] : prev.filter((id) => id !== s.id)))
+                            onChange={(c) =>
+                              setCopyTargetSubjectIds((prev) => (c ? [...prev, s.id] : prev.filter((id) => id !== s.id)))
                             }
-                            className="rounded"
+                            color="brand"
+                            size="xs"
                           />
                           <span className="text-[0.6875rem] text-[var(--text-primary)]">{isBn ? s.nameBn : s.name}</span>
                         </label>

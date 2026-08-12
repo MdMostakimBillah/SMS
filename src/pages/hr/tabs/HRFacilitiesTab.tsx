@@ -4,6 +4,7 @@ import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import type { FacForm } from '@/pages/hr/types'
 import type { Facility } from '@/store/hrStore'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface HRFacilitiesTabProps {
   isBn: boolean
@@ -289,11 +290,11 @@ export const HRFacilitiesTab = React.memo(function HRFacilitiesTab({
                   key={sf.facility.id}
                   className="flex items-center gap-[0.625rem] p-[0.625rem] rounded-lg bg-[var(--bg-primary)] transition-all"
                 >
-                  <input
-                    type="checkbox"
+                  <ModernCheckbox
                     checked={sf.assigned}
                     onChange={() => toggleStaffFacility(sf.facility.id)}
-                    className="w-[0.9375rem] h-[0.9375rem] cursor-pointer accent-[var(--brand)] shrink-0"
+                    color="brand"
+                    size="xs"
                   />
                   <div className="flex-1 min-w-[0]">
                     <div className="text-xs font-medium text-[var(--text-primary)]">{isBn ? sf.facility.nameBn : sf.facility.name}</div>
@@ -386,8 +387,7 @@ export const HRFacilitiesTab = React.memo(function HRFacilitiesTab({
               <thead>
                 <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                   <th className="p-2 w-9">
-                    <input
-                      type="checkbox"
+                    <ModernCheckbox
                       checked={paginatedAssignments.length > 0 && paginatedAssignments.every((tf: any) => selectedAssign.includes(tf.id))}
                       onChange={() => {
                         const pageIds = paginatedAssignments.map((tf: any) => tf.id)
@@ -397,7 +397,8 @@ export const HRFacilitiesTab = React.memo(function HRFacilitiesTab({
                             : [...new Set([...p, ...pageIds])]
                         )
                       }}
-                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                      color="brand"
+                      size="xs"
                     />
                   </th>
                   {[
@@ -434,11 +435,11 @@ export const HRFacilitiesTab = React.memo(function HRFacilitiesTab({
                       }}
                     >
                       <td className="p-2">
-                        <input
-                          type="checkbox"
+                        <ModernCheckbox
                           checked={isSelected}
                           onChange={() => toggleAssign(tf.id)}
-                          className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                          color="brand"
+                          size="xs"
                         />
                       </td>
                       <td className="p-2 text-[var(--text-muted)] text-[0.625rem] text-center">{(page - 1) * perPage + i + 1}</td>

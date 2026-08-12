@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X, File, LayoutTemplate, Download, Eye, EyeOff, Search } from 'lucide-react'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import QRCode from 'qrcode'
 import { getBrandColor } from '@/lib/pdf'
 import { useExamStore } from '@/store/examStore'
@@ -475,7 +476,7 @@ export const CumulativeMarksheetPDFOptionsModal = React.memo(function Cumulative
                   const checked = selectedIds.includes(s.student.id)
                   return (
                     <label key={s.student.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '6px 10px', cursor: 'pointer', borderBottom: '1px solid var(--border)', background: checked ? 'var(--brand-light)' : 'transparent', transition: 'background 0.1s' }}>
-                      <input type="checkbox" checked={checked} onChange={() => toggleStudent(s.student.id)} style={{ width: '0.875rem', height: '0.875rem', accentColor: 'var(--brand)', cursor: 'pointer', flexShrink: 0 }} />
+                      <ModernCheckbox checked={checked} onChange={() => toggleStudent(s.student.id)} color="brand" size="xs" />
                       <span style={{ flex: 1, fontSize: '0.8125rem', color: checked ? 'var(--brand)' : 'var(--text-primary)', fontWeight: checked ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.student.nameEn}</span>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.student.roll}</span>
                     </label>

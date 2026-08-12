@@ -11,6 +11,7 @@ import QRCode from 'qrcode'
 import { getPDFBranding } from '@/lib/pdfBranding'
 import { printRawHTML } from '@/lib/pdf'
 import { escapeHtml } from '@/lib/sanitize'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 const TEMPLATES = [
   { id: 'classic', name: 'Classic', nameBn: 'ক্লাসিক', primary: '#6366f1', secondary: '#eef2ff', accent: '#4f46e5', radius: 12 },
@@ -397,11 +398,11 @@ export default function IDCardsPage() {
                     background: fields.includes(f.key) ? 'var(--brand-light)' : 'transparent',
                   }}
                 >
-                  <input
-                    type="checkbox"
+                  <ModernCheckbox
                     checked={fields.includes(f.key)}
                     onChange={() => toggleField(f.key)}
-                    className="w-3 h-3 accent-[var(--brand)] cursor-pointer"
+                    color="brand"
+                    size="xs"
                   />
                   <span
                     className={`text-[0.6875rem] ${fields.includes(f.key) ? 'font-medium text-[var(--brand)]' : 'font-normal text-[var(--text-secondary)]'}`}

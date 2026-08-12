@@ -4,6 +4,7 @@ import { PaginationControls } from '@/components/shared/PaginationControls'
 import { DateRangeFilter } from '@/components/shared/DateRangeFilter'
 import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
 import type { ProForm } from '@/pages/hr/types'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface HRPromotionTabProps {
   isBn: boolean
@@ -104,11 +105,11 @@ export const HRPromotionTab = React.memo(function HRPromotionTab({
               <thead>
                 <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                   <th className="py-[0.625rem] px-2 w-9">
-                    <input
-                      type="checkbox"
+                    <ModernCheckbox
                       checked={selected.length === filteredPromotions.length && filteredPromotions.length > 0}
                       onChange={toggleAll}
-                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                      color="brand"
+                      size="xs"
                     />
                   </th>
                   {[
@@ -141,11 +142,11 @@ export const HRPromotionTab = React.memo(function HRPromotionTab({
                     }}
                   >
                     <td className="py-2 px-2">
-                      <input
-                        type="checkbox"
+                      <ModernCheckbox
                         checked={selected.includes(p.id)}
                         onChange={() => toggle(p.id)}
-                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                        color="brand"
+                        size="xs"
                       />
                     </td>
                     <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-muted)]">{p.date}</td>

@@ -5,6 +5,7 @@ import type { IncrementRecord } from '@/store/hrStore'
 import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
 import { DateRangeFilter } from '@/components/shared/DateRangeFilter'
 import { PaginationControls } from '@/components/shared/PaginationControls'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface HRIncrementTabProps {
   isBn: boolean
@@ -97,11 +98,11 @@ export const HRIncrementTab = React.memo(function HRIncrementTab({
           <thead>
             <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
               <th className="py-[0.625rem] px-2 w-9">
-                <input
-                  type="checkbox"
+                <ModernCheckbox
                   checked={selected.length === filteredIncrements.length && filteredIncrements.length > 0}
                   onChange={toggleAll}
-                  className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                  color="brand"
+                  size="xs"
                 />
               </th>
               {[
@@ -140,11 +141,11 @@ export const HRIncrementTab = React.memo(function HRIncrementTab({
                   }}
                 >
                   <td className="py-2 px-2">
-                    <input
-                      type="checkbox"
+                    <ModernCheckbox
                       checked={selected.includes(inc.id)}
                       onChange={() => toggle(inc.id)}
-                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                      color="brand"
+                      size="xs"
                     />
                   </td>
                   <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-muted)]">{inc.date}</td>

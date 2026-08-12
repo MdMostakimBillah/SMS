@@ -8,6 +8,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import { useNavPath } from '@/hooks/useNavPath'
 import type { Subject } from '@/pages/teachers/types'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 const sel =
   'py-[0.4375rem] px-[0.5625rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs font-[inherit] cursor-pointer outline-none'
@@ -132,11 +133,11 @@ export default function SubjectsPage() {
                       key={d.id}
                       className={`flex items-center gap-[0.3125rem] cursor-pointer py-1 px-2 rounded-md text-xs transition-all ${newDeptIds.includes(d.id) ? 'bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]'}`}
                     >
-                      <input
-                        type="checkbox"
+                      <ModernCheckbox
                         checked={newDeptIds.includes(d.id)}
                         onChange={() => toggleDept(d.id)}
-                        className="w-[0.875rem] h-[0.875rem] accent-[var(--brand)] cursor-pointer"
+                        color="brand"
+                        size="xs"
                       />
                       {isBn ? d.nameBn : d.name}
                     </label>

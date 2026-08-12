@@ -13,6 +13,7 @@ import {
   User,
   Users,
 } from 'lucide-react'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import { shortDate, dayName, isFriday } from '../helpers'
 
@@ -135,14 +136,14 @@ export const RangeTab = React.memo(function RangeTab({
             <thead className="sticky top-0 z-10">
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]">
-                  <input
-                    type="checkbox"
+                  <ModernCheckbox
                     checked={filteredEmployees.length > 0 && filteredEmployees.every((t) => selectedEmployees.includes(t.id))}
                     onChange={() => {
                       if (filteredEmployees.every((t) => selectedEmployees.includes(t.id))) setSelectedEmployees([])
                       else setSelectedEmployees(filteredEmployees.map((t) => t.id))
                     }}
-                    className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                    color="brand"
+                    size="xs"
                   />
                 </th>
                 <th className="p-2 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.25rem]"></th>
@@ -172,13 +173,13 @@ export const RangeTab = React.memo(function RangeTab({
                   }`}
                 >
                   <td className="p-2 text-center">
-                    <input
-                      type="checkbox"
+                    <ModernCheckbox
                       checked={selectedEmployees.includes(t.id)}
                       onChange={() =>
                         setSelectedEmployees((prev) => (prev.includes(t.id) ? prev.filter((id) => id !== t.id) : [...prev, t.id]))
                       }
-                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                      color="brand"
+                      size="xs"
                     />
                   </td>
                   <td className="p-[0.375rem] text-center">

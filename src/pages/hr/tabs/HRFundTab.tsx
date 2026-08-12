@@ -11,6 +11,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface HRFundTabProps {
   isBn: boolean
@@ -192,11 +193,11 @@ export const HRFundTab = React.memo(function HRFundTab({
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 <th className="py-[0.625rem] px-2 w-9">
-                  <input
-                    type="checkbox"
+                  <ModernCheckbox
                     checked={selectedFund.length === filteredFunds.length && filteredFunds.length > 0}
                     onChange={toggleAllFund}
-                    className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                    color="brand"
+                    size="xs"
                   />
                 </th>
                 {[isBn ? 'তারিখ' : 'Date', isBn ? 'ধরন' : 'Type', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'বিবরণ' : 'Description'].map(
@@ -224,11 +225,11 @@ export const HRFundTab = React.memo(function HRFundTab({
                   }}
                 >
                   <td className="py-2 px-2">
-                    <input
-                      type="checkbox"
+                    <ModernCheckbox
                       checked={selectedFund.includes(f.id)}
                       onChange={() => toggleFund(f.id)}
-                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                      color="brand"
+                      size="xs"
                     />
                   </td>
                   <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-muted)]">{f.date}</td>

@@ -3,6 +3,7 @@ import { User, Users, Eye, Edit2, Check, XCircle } from 'lucide-react'
 import { StatusBadge } from './StatusBadge'
 import { Pagination } from './Pagination'
 import type { StudentAdmission } from '../types'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 const actBtn = (bg: string, color: string): React.CSSProperties => ({
   width: '1.625rem', height: '1.625rem', borderRadius: '0.375rem',
@@ -41,11 +42,11 @@ export function AdmissionTable({
           <thead>
             <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
               <th style={{ padding: '10px 12px', width: '2.25rem' }}>
-                <input
-                  type="checkbox"
+                <ModernCheckbox
                   checked={allSel}
-                  onChange={toggleAll}
-                  style={{ width: '0.8125rem', height: '0.8125rem', cursor: 'pointer', accentColor: 'var(--brand)' }}
+                  onChange={() => toggleAll()}
+                  color="brand"
+                  size="xs"
                 />
               </th>
               {[
@@ -104,11 +105,11 @@ export function AdmissionTable({
                   }}
                 >
                   <td style={{ padding: '8px 12px' }}>
-                    <input
-                      type="checkbox"
+                    <ModernCheckbox
                       checked={selected.includes(s.id)}
                       onChange={() => toggleOne(s.id)}
-                      style={{ width: '0.8125rem', height: '0.8125rem', cursor: 'pointer', accentColor: 'var(--brand)' }}
+                      color="brand"
+                      size="xs"
                     />
                   </td>
                   <td style={{ padding: '8px 8px', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.6875rem' }}>

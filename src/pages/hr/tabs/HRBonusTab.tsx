@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { sectionCls, sectionTitleCls, inputCls } from '@/pages/hr/utils'
 import type { BonForm } from '@/pages/hr/types'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface HRBonusTabProps {
   isBn: boolean
@@ -148,11 +149,11 @@ export const HRBonusTab = React.memo(function HRBonusTab({
           <thead>
             <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
               <th className="py-[0.625rem] px-2 w-9">
-                <input
-                  type="checkbox"
+                <ModernCheckbox
                   checked={selected.length === filteredBonuses.length && filteredBonuses.length > 0}
                   onChange={toggleAll}
-                  className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                  color="brand"
+                  size="xs"
                 />
               </th>
               {[
@@ -186,11 +187,11 @@ export const HRBonusTab = React.memo(function HRBonusTab({
                 }}
               >
                 <td className="py-2 px-2">
-                  <input
-                    type="checkbox"
+                  <ModernCheckbox
                     checked={selected.includes(bon.id)}
                     onChange={() => toggle(bon.id)}
-                    className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                    color="brand"
+                    size="xs"
                   />
                 </td>
                 <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-muted)]">{bon.month}</td>

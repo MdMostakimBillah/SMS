@@ -11,6 +11,7 @@ import type { MonthlySalaryConfig } from '@/store/hrStore'
 import type { Teacher } from '@/pages/teachers/types'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { sectionCls, sectionTitleCls, inputCls } from '@/pages/hr/utils'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface BonusRecord {
   id: string
@@ -165,11 +166,11 @@ export const HRSalarySetupTab = React.memo(function HRSalarySetupTab({
         </div>
         <div className="flex items-center gap-1.5">
           <label className="flex items-center gap-1 cursor-pointer text-[0.625rem] text-[var(--text-secondary)] whitespace-nowrap">
-            <input
-              type="checkbox"
+            <ModernCheckbox
               checked={bulkDeductionEnabled}
-              onChange={(e) => setBulkDeductionEnabled(e.target.checked)}
-              className="w-[0.6875rem] h-[0.6875rem] cursor-pointer accent-[var(--red)]"
+              onChange={(c) => setBulkDeductionEnabled(c)}
+              color="red"
+              size="xs"
             />
             <TrendingDown size={10} className="text-[var(--red)]" />
             {isBn ? 'কাটা' : 'Deduction'}
@@ -201,11 +202,11 @@ export const HRSalarySetupTab = React.memo(function HRSalarySetupTab({
         <div className="w-[0.0625rem] h-4 bg-[var(--border)]" />
         <div className="flex items-center gap-1.5">
           <label className="flex items-center gap-1 cursor-pointer text-[0.625rem] text-[var(--text-secondary)] whitespace-nowrap">
-            <input
-              type="checkbox"
+            <ModernCheckbox
               checked={bulkFundEnabled}
-              onChange={(e) => setBulkFundEnabled(e.target.checked)}
-              className="w-[0.6875rem] h-[0.6875rem] cursor-pointer accent-[var(--brand)]"
+              onChange={(c) => setBulkFundEnabled(c)}
+              color="brand"
+              size="xs"
             />
             <HandCoins size={10} className="text-[var(--brand)]" />
             {isBn ? 'তহবিল' : 'Fund'}
@@ -236,11 +237,11 @@ export const HRSalarySetupTab = React.memo(function HRSalarySetupTab({
           <thead>
             <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
               <th className="py-2 px-[0.625rem] text-center w-9">
-                <input
-                  type="checkbox"
+                <ModernCheckbox
                   checked={selectedSalary.length === activeTeachers.length && activeTeachers.length > 0}
                   onChange={toggleAllSalary}
-                  className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                  color="brand"
+                  size="xs"
                 />
               </th>
               <th className="py-2 px-2 text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.0187rem] whitespace-nowrap">
@@ -301,11 +302,11 @@ export const HRSalarySetupTab = React.memo(function HRSalarySetupTab({
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
                   <td className="py-[0.4375rem] px-[0.625rem] text-center">
-                    <input
-                      type="checkbox"
+                    <ModernCheckbox
                       checked={selectedSalary.includes(t.id)}
                       onChange={() => toggleSalary(t.id)}
-                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                      color="brand"
+                      size="xs"
                     />
                   </td>
                   <td className="py-[0.4375rem] px-2">
@@ -341,22 +342,22 @@ export const HRSalarySetupTab = React.memo(function HRSalarySetupTab({
                     {totalBonus > 0 ? `৳${totalBonus.toLocaleString()}` : '-'}
                   </td>
                   <td className="py-[0.4375rem] px-[0.375rem] text-center">
-                    <input
-                      type="checkbox"
+                    <ModernCheckbox
                       checked={applyDeduction}
-                      onChange={(e) =>
+                      onChange={(c) =>
                         setSalaryConfigs((p) => ({
                           ...p,
                           [t.id]: {
                             ...p[t.id],
-                            applyDeductionRule: e.target.checked,
+                            applyDeductionRule: c,
                             bonus: p[t.id]?.bonus ?? 0,
                             festivalBonus: p[t.id]?.festivalBonus ?? 0,
                             fundContributionPercent: p[t.id]?.fundContributionPercent ?? 0,
                           },
                         }))
                       }
-                      className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
+                      color="brand"
+                      size="xs"
                     />
                   </td>
                   <td

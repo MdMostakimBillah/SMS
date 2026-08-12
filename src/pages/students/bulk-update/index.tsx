@@ -26,6 +26,7 @@ import { useNavPath } from '@/hooks/useNavPath'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { logger } from '@/lib/logger'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 type Op = 'photo' | 'roll' | 'class' | 'section' | 'bloodGroup' | 'religion' | 'academicYear'
 
@@ -483,12 +484,17 @@ export default function BulkUpdatePage() {
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 <th className="px-3 py-[0.625rem] w-[2.25rem]">
-                  <input
-                    type="checkbox"
+                  <ModernCheckbox
                     checked={allSel}
-                    onChange={toggleAll}
-                    className="w-[0.8125rem] h-[0.8125rem] cursor-pointer accent-[var(--brand)]"
-                    style={{ accentColor: opInfo.color }}
+                    onChange={(c) => {
+                      if (c) {
+                        setSelected(filtered.map((s) => s.id))
+                      } else {
+                        setSelected([])
+                      }
+                    }}
+                    color={opInfo.color}
+                    size="xs"
                   />
                 </th>
                 <th className="px-2 py-[0.625rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase w-[2.25rem]">#</th>
@@ -530,12 +536,11 @@ export default function BulkUpdatePage() {
                     }}
                   >
                     <td className="px-3 py-2">
-                      <input
-                        type="checkbox"
+                      <ModernCheckbox
                         checked={selected.includes(s.id)}
                         onChange={() => toggleOne(s.id)}
-                        className="w-[0.8125rem] h-[0.8125rem] cursor-pointer"
-                        style={{ accentColor: opInfo.color }}
+                        color={opInfo.color}
+                        size="xs"
                       />
                     </td>
                     <td className="px-2 py-2 text-[var(--text-muted)] font-semibold text-[0.6875rem]">{i + 1}</td>
