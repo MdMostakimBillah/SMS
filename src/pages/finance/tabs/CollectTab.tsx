@@ -349,7 +349,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       const lastDash = row.key.lastIndexOf('-')
       const secondLastDash = row.key.lastIndexOf('-', lastDash - 1)
       const forMonth = row.isOnetime ? undefined : `${row.key.substring(secondLastDash + 1, lastDash)}-${String(Number(row.key.substring(lastDash + 1)) + 1).padStart(2, '0')}`
-      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: edit.remarks, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
+      const paymentNote = row.key.startsWith('shop-') ? `${row.feeName} — ${edit.remarks || ''}` : edit.remarks
+      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: paymentNote, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
       addPayment(payment)
       // Handle shop product sales — deduct stock
       if (row.key.startsWith('shop-')) {
@@ -1306,7 +1307,12 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     {studentPayments.map((batch, idx) => {
                       const feeNames = batch.payments.map((p) => {
                         const struct = structures.find((s) => s.id === p.feeStructureId)
-                        return struct ? (bn ? struct.nameBn : struct.name) : '-'
+                        if (struct) return bn ? struct.nameBn : struct.name
+                        if (p.note) {
+                          const dashIdx = p.note.indexOf(' — ')
+                          if (dashIdx > 0) return p.note.substring(0, dashIdx).trim()
+                        }
+                        return '-'
                       })
                       const uniqueNames = [...new Set(feeNames)]
                       const paidDate = new Date(batch.paidAt)
