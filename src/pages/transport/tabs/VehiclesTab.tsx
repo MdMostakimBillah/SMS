@@ -46,6 +46,10 @@ export const VehiclesTab = ({ searchQuery }: Props) => {
       .join(', ')
   }
 
+  const getStudentCount = (vehicleId: string) => {
+    return assignments.filter((a) => a.vehicleId === vehicleId && a.isActive).length
+  }
+
   const getEarned = (vehicleId: string) => {
     return assignments.filter((a) => a.vehicleId === vehicleId && a.isActive).reduce((sum, a) => sum + a.monthlyFare, 0)
   }
@@ -90,7 +94,7 @@ export const VehiclesTab = ({ searchQuery }: Props) => {
                 <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'চালক' : 'Driver'}</th>
                 <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ফোন' : 'Phone'}</th>
                 <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'রুট' : 'Routes'}</th>
-                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'মোট আয়' : 'Earned'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ছাত্র / আয়' : 'Students / Earned'}</th>
                 <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'অবস্থা' : 'Status'}</th>
                 <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'কার্যক্রম' : 'Actions'}</th>
               </tr>
@@ -128,9 +132,14 @@ export const VehiclesTab = ({ searchQuery }: Props) => {
                     </div>
                   </td>
                   <td className="py-3 px-4 text-center">
-                    <span className="inline-flex items-center justify-center px-2 py-1 rounded-md bg-[var(--green)]/10 text-[var(--green)] text-[0.75rem] font-semibold whitespace-nowrap">
-                      ৳{bn ? toBnNum(getEarned(v.id)) : getEarned(v.id).toLocaleString()}
-                    </span>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-md bg-[var(--brand)]/8 text-[var(--brand)] text-[0.75rem] font-semibold">
+                        {getStudentCount(v.id)} {bn ? 'জন' : ''}
+                      </span>
+                      <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-[var(--green)]/10 text-[var(--green)] text-[0.75rem] font-semibold whitespace-nowrap">
+                        ৳{bn ? toBnNum(getEarned(v.id)) : getEarned(v.id).toLocaleString()}
+                      </span>
+                    </div>
                   </td>
                   <td className="py-3 px-4 text-center">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.6875rem] font-medium ${v.isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-500'}`}>
