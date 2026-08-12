@@ -8,6 +8,7 @@ export interface TransportVehicle {
   nameBn: string
   registrationNo: string
   capacity: number
+  driverId: string
   driverName: string
   driverNameBn: string
   driverPhone: string
@@ -72,6 +73,7 @@ export const useTransportStore = create<TransportState>()(
           nameBn: 'বাস-০১',
           registrationNo: 'ঢাকা মেট্রো গ-১২-৩৪৫৬',
           capacity: 40,
+          driverId: '',
           driverName: 'Kamal Hossain',
           driverNameBn: 'কামাল হোসেন',
           driverPhone: '01712345678',
@@ -87,6 +89,7 @@ export const useTransportStore = create<TransportState>()(
           nameBn: 'বাস-০২',
           registrationNo: 'ঢাকা মেট্রো খ-৭৮-১২৩৪',
           capacity: 35,
+          driverId: '',
           driverName: 'Rafiq Uddin',
           driverNameBn: 'রফিক উদ্দিন',
           driverPhone: '01812345678',
@@ -102,6 +105,7 @@ export const useTransportStore = create<TransportState>()(
           nameBn: 'ভ্যান-০১',
           registrationNo: 'ঢাকা মেট্রো ঙ-৪৫-৬৭৮৯',
           capacity: 15,
+          driverId: '',
           driverName: 'Sohel Rana',
           driverNameBn: 'সোহেল রানা',
           driverPhone: '01912345678',

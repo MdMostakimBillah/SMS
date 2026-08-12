@@ -3,10 +3,12 @@ import { createPortal } from 'react-dom'
 import { Bus, X, AlertCircle, Check } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTransportStore, type TransportVehicle } from '@/store/transportStore'
+import { useTeacherStore } from '@/store/teacherStore'
 import { labelCls } from '@/pages/hr/utils'
 
 const inputFieldCls =
   'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 hover:border-[var(--brand)]/30'
+const selectFieldCls = `${inputFieldCls} appearance-none cursor-pointer bg-[url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")] bg-no-repeat bg-[position:right_0.75rem_center] bg-[size:12px]`
 
 interface Props {
   existing?: TransportVehicle | null
@@ -17,13 +19,15 @@ interface Props {
 export function VehicleModal({ existing, onSaved, onClose }: Props) {
   const bn = useBn()
   const { addVehicle, updateVehicle, routes } = useTransportStore()
+  const teachers = useTeacherStore((s) => s.teachers)
+
+  const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
 
   const [name, setName] = useState(existing?.name || '')
   const [nameBn, setNameBn] = useState(existing?.nameBn || '')
   const [regNo, setRegNo] = useState(existing?.registrationNo || '')
   const [capacity, setCapacity] = useState(existing?.capacity?.toString() || '')
-  const [driverName, setDriverName] = useState(existing?.driverName || '')
-  const [driverNameBn, setDriverNameBn] = useState(existing?.driverNameBn || '')
+  const [driverId, setDriverId] = useState(existing?.driverId || '')
   const [driverPhone, setDriverPhone] = useState(existing?.driverPhone || '')
   const [driverDetails, setDriverDetails] = useState(existing?.driverDetails || '')
   const [vehicleDetails, setVehicleDetails] = useState(existing?.vehicleDetails || '')
@@ -31,6 +35,17 @@ export function VehicleModal({ existing, onSaved, onClose }: Props) {
   const [errors, setErrors] = useState<Record<string, boolean>>({})
 
   const activeRoutes = useMemo(() => routes.filter((r) => r.isActive), [routes])
+
+  const selectedTeacher = useMemo(() => activeTeachers.find((t) => t.id === driverId), [activeTeachers, driverId])
+
+  const handleDriverChange = (id: string) => {
+    setDriverId(id)
+    const teacher = activeTeachers.find((t) => t.id === id)
+    if (teacher) {
+      setDriverPhone(teacher.phone || '')
+    }
+    setErrors((p) => ({ ...p, driverId: false }))
+  }
 
   const toggleRoute = (id: string) => {
     setSelectedRouteIds((prev) => (prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]))
@@ -41,7 +56,7 @@ export function VehicleModal({ existing, onSaved, onClose }: Props) {
     if (!name.trim()) e.name = true
     if (!regNo.trim()) e.regNo = true
     if (!capacity || Number(capacity) <= 0) e.capacity = true
-    if (!driverName.trim()) e.driverName = true
+    if (!driverId) e.driverId = true
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -49,14 +64,16 @@ export function VehicleModal({ existing, onSaved, onClose }: Props) {
   const handleSave = () => {
     if (!validate()) return
     const now = new Date().toISOString().split('T')[0]
+    const teacher = activeTeachers.find((t) => t.id === driverId)
     const data: TransportVehicle = {
       id: existing?.id || `TV-${Date.now()}`,
       name: name.trim(),
       nameBn: nameBn.trim() || name.trim(),
       registrationNo: regNo.trim(),
       capacity: Number(capacity) || 0,
-      driverName: driverName.trim(),
-      driverNameBn: driverNameBn.trim() || driverName.trim(),
+      driverId: driverId || '',
+      driverName: teacher?.nameEn || '',
+      driverNameBn: teacher?.nameBn || '',
       driverPhone: driverPhone.trim(),
       driverDetails: driverDetails.trim(),
       vehicleDetails: vehicleDetails.trim(),
@@ -161,31 +178,47 @@ export function VehicleModal({ existing, onSaved, onClose }: Props) {
             </div>
           </div>
 
-          {/* Driver Info */}
+          {/* Driver Info - Staff Selector */}
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-6 h-6 rounded-md flex items-center justify-center bg-[var(--brand)]/10 text-[var(--brand)]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </div>
-              <span className="text-[0.75rem] font-bold text-[var(--text-primary)] uppercase tracking-wider">{bn ? 'চালকের তথ্য' : 'Driver Information'}</span>
+              <span className="text-[0.75rem] font-bold text-[var(--text-primary)] uppercase tracking-wider">{bn ? 'চালক নির্বাচন' : 'Select Driver'}</span>
             </div>
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>{bn ? 'চালকের নাম (ইংরেজি)' : 'Driver Name (English)'}<span className="text-red-400 ml-0.5">*</span></label>
-                  <input
-                    value={driverName}
-                    onChange={(e) => { setDriverName(e.target.value); setErrors((p) => ({ ...p, driverName: false })) }}
-                    className={`${inputFieldCls} ${errors.driverName ? 'border-red-400' : ''}`}
-                    placeholder={bn ? 'চালকের নাম' : 'Driver name'}
-                  />
-                  {errors.driverName && <p className="text-[0.6875rem] text-red-400 mt-1 flex items-center gap-1"><AlertCircle size={10} />{bn ? 'চালকের নাম আবশ্যক' : 'Driver name is required'}</p>}
-                </div>
-                <div>
-                  <label className={labelCls}>{bn ? 'চালকের নাম (বাংলা)' : 'Driver Name (Bengali)'}</label>
-                  <input value={driverNameBn} onChange={(e) => setDriverNameBn(e.target.value)} className={inputFieldCls} placeholder={bn ? 'চালকের বাংলা নাম' : 'Driver Bengali name'} />
-                </div>
+              <div>
+                <label className={labelCls}>{bn ? 'স্টাফ/শিক্ষক নির্বাচন করুন' : 'Select Staff/Teacher'}<span className="text-red-400 ml-0.5">*</span></label>
+                <select
+                  value={driverId}
+                  onChange={(e) => handleDriverChange(e.target.value)}
+                  className={`${selectFieldCls} ${errors.driverId ? 'border-red-400' : ''}`}
+                >
+                  <option value="">{bn ? 'চালক নির্বাচন করুন' : 'Select a driver'}</option>
+                  {activeTeachers.map((t) => (
+                    <option key={t.id} value={t.id}>{bn ? t.nameBn : t.nameEn} ({t.designation})</option>
+                  ))}
+                </select>
+                {errors.driverId && <p className="text-[0.6875rem] text-red-400 mt-1 flex items-center gap-1"><AlertCircle size={10} />{bn ? 'চালক নির্বাচন করুন' : 'Select a driver'}</p>}
+                {activeTeachers.length === 0 && (
+                  <p className="text-[0.6875rem] text-[var(--text-muted)] mt-1">{bn ? 'কোনো স্টাফ পাওয়া যায়নি। প্রথমে HR থেকে স্টাফ যোগ করুন।' : 'No staff found. Add staff from HR first.'}</p>
+                )}
               </div>
+
+              {/* Selected Teacher Preview */}
+              {selectedTeacher && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white font-bold text-[0.875rem]"
+                    style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+                    {(selectedTeacher.nameEn || '?')[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{bn ? selectedTeacher.nameBn : selectedTeacher.nameEn}</div>
+                    <div className="text-[0.6875rem] text-[var(--text-secondary)]">{selectedTeacher.designation} · {selectedTeacher.phone}</div>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className={labelCls}>{bn ? 'চালকের ফোন' : 'Driver Phone'}</label>
                 <input value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} className={inputFieldCls} placeholder={bn ? '01XXXXXXXXX' : '01XXXXXXXXX'} />
