@@ -95,7 +95,6 @@ export const VehiclesTab = ({ searchQuery }: Props) => {
                 <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ফোন' : 'Phone'}</th>
                 <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'রুট' : 'Routes'}</th>
                 <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ছাত্র / আয়' : 'Students / Earned'}</th>
-                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'অবস্থা' : 'Status'}</th>
                 <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'কার্যক্রম' : 'Actions'}</th>
               </tr>
             </thead>
@@ -140,11 +139,6 @@ export const VehiclesTab = ({ searchQuery }: Props) => {
                         ৳{bn ? toBnNum(getEarned(v.id)) : getEarned(v.id).toLocaleString()}
                       </span>
                     </div>
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.6875rem] font-medium ${v.isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-500'}`}>
-                      {v.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
-                    </span>
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-end gap-1.5">
