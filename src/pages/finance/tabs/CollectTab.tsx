@@ -1164,11 +1164,12 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 <div className="space-y-2">
                   {oneTimeStructures.map((s) => {
                     const isSelected = selectedOneTimeFees.has(s.id)
+                    const toggle = () => { const next = new Set(selectedOneTimeFees); if (isSelected) next.delete(s.id); else next.add(s.id); setSelectedOneTimeFees(next) }
                     return (
-                      <div key={s.id} onClick={() => { const next = new Set(selectedOneTimeFees); if (isSelected) next.delete(s.id); else next.add(s.id); setSelectedOneTimeFees(next) }}
-                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-[var(--brand)]/40 bg-[var(--brand)]/5 shadow-sm' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)] hover:border-[var(--brand)]/20'}`}>
-                        <ModernCheckbox checked={isSelected} onChange={(v) => { const next = new Set(selectedOneTimeFees); if (v) next.add(s.id); else next.delete(s.id); setSelectedOneTimeFees(next) }} />
-                        <div className="flex-1 min-w-0">
+                      <div key={s.id} onClick={toggle}
+                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-[var(--brand)]/20 bg-[var(--brand)]/5' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)]'}`}>
+                        <ModernCheckbox checked={isSelected} onChange={() => toggle()} />
+                        <div className="flex-1 min-w-0 cursor-pointer">
                           <div className="text-[13px] font-semibold text-[var(--text-primary)]">{bn ? s.nameBn : s.name}</div>
                           <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{s.descriptionBn || s.description || '—'}</div>
                         </div>
@@ -1216,10 +1217,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   {classProducts.map((p) => {
                     const qty = shopQtyMap[p.id] || 1
                     const isSelected = selectedShopProducts.has(p.id)
+                    const toggle = () => { const next = new Set(selectedShopProducts); if (isSelected) next.delete(p.id); else next.add(p.id); setSelectedShopProducts(next) }
                     return (
-                      <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isSelected ? 'border-[var(--teal)]/40 bg-[var(--teal)]/5 shadow-sm' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)] hover:border-[var(--teal)]/20'}`}>
-                        <ModernCheckbox checked={isSelected} color="teal" onChange={(v) => { const next = new Set(selectedShopProducts); if (v) next.add(p.id); else next.delete(p.id); setSelectedShopProducts(next) }} />
-                        <div className="flex-1 min-w-0">
+                      <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isSelected ? 'border-[var(--teal)]/20 bg-[var(--teal)]/5' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)]'}`}>
+                        <ModernCheckbox checked={isSelected} color="teal" onChange={() => toggle()} />
+                        <div className="flex-1 min-w-0 cursor-pointer" onClick={toggle}>
                           <div className="text-[13px] font-semibold text-[var(--text-primary)]">{bn ? p.nameBn : p.name}</div>
                           <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{bn ? p.unitBn : p.unit} · {p.sku}</div>
                         </div>
