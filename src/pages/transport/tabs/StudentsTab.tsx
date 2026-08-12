@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { Users, UserPlus, Trash2, Bus, MapPin, FileText, FileSpreadsheet, MoreVertical, ChevronDown, Filter, X } from 'lucide-react'
+import { Users, UserPlus, Pencil, Trash2, Bus, MapPin, FileText, FileSpreadsheet, MoreVertical, ChevronDown, Filter, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTransportStore, type TransportAssignment } from '@/store/transportStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -324,9 +324,9 @@ export const StudentsTab = ({ searchQuery }: Props) => {
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => { setEditItem(a); setShowModal(true) }}
-                          className="px-2 py-1 rounded-md text-[0.6875rem] text-[var(--brand)] bg-[var(--brand)]/8 hover:bg-[var(--brand)]/15 cursor-pointer transition-colors font-medium"
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] cursor-pointer transition-colors"
                         >
-                          {bn ? 'সম্পাদনা' : 'Edit'}
+                          <Pencil size={13} />
                         </button>
                         <button
                           onClick={() => setDeleteId(a.id)}
