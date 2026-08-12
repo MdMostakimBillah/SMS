@@ -359,7 +359,7 @@ export async function generateOMRHtml(cfg: OMRConfig, isBn: boolean = true, copy
 <style>
   @page{${paperSizeStyle}}
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#1f2937;font-size:8px;background:white;}
+  body{font-family:'Times New Roman',serif;color:#1f2937;font-size:8px;background:white;}
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:white;}}
   .no-print{margin:10px auto;text-align:center;}
   @media print{.no-print{display:none!important;}}

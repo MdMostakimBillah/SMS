@@ -28,7 +28,7 @@ export function generateAttendanceSheetHTML(params: AttendanceParams): string {
 <style>
   @page{size:A4 portrait;margin:15mm}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Times New Roman',Arial,sans-serif;font-size:12px;color:#1a1a1a;padding:0}
+  body{font-family:'Times New Roman',serif;font-size:12px;color:#1a1a1a;padding:0}
   .header{text-align:center;margin-bottom:16px;border-bottom:2px solid ${brand.brandColor};padding-bottom:10px}
   .school{font-size:18px;font-weight:700;color:${brand.brandColor}}
   .sub{font-size:11px;color:#666}

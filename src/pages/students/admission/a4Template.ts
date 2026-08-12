@@ -15,7 +15,7 @@ export function generateA4HTML(s: StudentAdmission, isBn = false, _qrDataUrl?: s
 <style>
   @page { size: A4; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Times New Roman', 'Arial', sans-serif; background: white; color: #1a1a1a; font-size: 12px; }
+  body { font-family: 'Times New Roman', serif; background: white; color: #1a1a1a; font-size: 12px; }
   .page { width: 210mm; min-height: 297mm; padding: 15mm; position: relative; }
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 2px solid #6366f1; }
   .logo-area { display: flex; align-items: center; gap: 12px; }

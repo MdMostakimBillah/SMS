@@ -110,7 +110,7 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
             const lbl = isBn ? escapeHtml(statusBn[s.status] || s.status) : getCellValue(s, c.key, i, opts.teachers)
             return `<td><b style="color:${col}">${lbl}</b></td>`
           }
-          if (c.key === 'id') return `<td><span style="font-family:monospace;font-size:8px;color:${brand.brandColor}">${escapeHtml(s.id)}</span></td>`
+          if (c.key === 'id') return `<td><span style="font-family:'Times New Roman',serif;font-size:8px;color:${brand.brandColor}">${escapeHtml(s.id)}</span></td>`
           if (c.key === 'nameEn' && isBn) return `<td>${escapeHtml(s.nameBn || s.nameEn)}</td>`
           return `<td>${getCellValue(s, c.key, i, opts.teachers)}</td>`
         })
@@ -140,7 +140,7 @@ export function generateListPDF(students: StudentAdmission[], opts: ListPDFOptio
 <style>
   @page { size: A4 ${orientation}; margin: ${'5mm'}; }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Times New Roman',Arial,sans-serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
+  body { font-family:'Times New Roman',serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
   .hdr  { display:flex; align-items:center; justify-content:space-between; padding-bottom:7px; border-bottom:2px solid ${brand.brandColor}; margin-bottom:7px; }
   .meta { text-align:right; font-size:8px; color:#666; line-height:1.7; }
   .ttl  { text-align:center; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }

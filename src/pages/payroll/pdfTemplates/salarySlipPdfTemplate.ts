@@ -119,7 +119,7 @@ export function generateSingleSalarySlipPDF(
 <style>
   @page{size:${orientation};margin:${'5mm'}}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Times New Roman','Arial',sans-serif;color:#1a1a1a;font-size:11px;background:#fff;padding:10px}
+  body{font-family:'Times New Roman',serif;color:#1a1a1a;font-size:11px;background:#fff;padding:10px}
   .slip{border:1.5px solid #c7d2fe;border-radius:8px;padding:12px;max-width:190mm;margin:0 auto}
   .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid ${brand}}
   .logo-box{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
@@ -167,7 +167,7 @@ export function generateAllSalarySlipsPDF(
 <style>
   @page{size:portrait;margin:${'5mm'}}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Times New Roman','Arial',sans-serif;color:#1a1a1a;font-size:11px;background:#fff;padding:10px}
+  body{font-family:'Times New Roman',serif;color:#1a1a1a;font-size:11px;background:#fff;padding:10px}
   .slip-wrap{margin-bottom:12px}
   .slip-wrap:last-child{margin-bottom:0}
   .slip{border:1.5px solid #c7d2fe;border-radius:8px;padding:12px;max-width:190mm;width:100%}
@@ -212,7 +212,7 @@ export function generatePayrollSummaryPDF(
       const s = calcSalary(t)
       return `<tr style="page-break-inside:avoid;${i % 2 === 0 ? '' : 'background:#f8fafc'}">
         <td style="padding:5px 6px;font-size:10px;text-align:center;border:1px solid #cbd5e1">${i + 1}</td>
-        <td style="padding:5px 6px;font-size:10px;border:1px solid #cbd5e1;font-family:monospace;color:${brand}">${escapeHtml(t.id)}</td>
+        <td style="padding:5px 6px;font-size:10px;border:1px solid #cbd5e1;font-family:'Times New Roman',serif;color:${brand}">${escapeHtml(t.id)}</td>
         <td style="padding:5px 6px;font-size:10px;font-weight:500;border:1px solid #cbd5e1">${escapeHtml(t.nameEn)}</td>
         <td style="padding:5px 6px;font-size:10px;border:1px solid #cbd5e1">${escapeHtml(t.departmentId)}</td>
         <td style="padding:5px 6px;font-size:10px;border:1px solid #cbd5e1">${escapeHtml(t.designation || '—')}</td>
@@ -235,7 +235,7 @@ export function generatePayrollSummaryPDF(
 <style>
   @page{size:${orientation};margin:${'5mm'}}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Times New Roman','Arial',sans-serif;color:#1e293b;background:#fff;font-size:10px;padding:10px}
+  body{font-family:'Times New Roman',serif;color:#1e293b;background:#fff;font-size:10px;padding:10px}
   .header{text-align:center;margin-bottom:12px;padding-bottom:8px;border-bottom:3px solid ${brand}}
   .header h1{font-size:18px;color:#1e293b;letter-spacing:1.5px;text-transform:uppercase;font-weight:800}
   .header .subtitle{font-size:11px;color:#64748b;margin-top:3px;font-weight:500}

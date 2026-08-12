@@ -138,7 +138,7 @@ export function generateInvigilatorGuardListPDF(
 <style>
   @page { size: A4 ${orientation}; margin: ${'5mm'}; }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Times New Roman',Arial,sans-serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
+  body { font-family:'Times New Roman',serif; font-size:${fontSize}; color:#1a1a1a; background:#fff; }
   .page { page-break-after:always; padding:10px; }
   .page:last-child { page-break-after:auto; }
   .hdr { display:flex; align-items:center; justify-content:space-between; padding-bottom:7px; border-bottom:2px solid ${brand.brandColor}; margin-bottom:7px; }
