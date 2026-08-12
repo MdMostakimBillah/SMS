@@ -1311,8 +1311,15 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         if (p.note) {
                           const dashIdx = p.note.indexOf(' — ')
                           if (dashIdx > 0) return p.note.substring(0, dashIdx).trim()
+                          const priceMatch = p.note.match(/৳(\d+)/)
+                          if (priceMatch) {
+                            const price = Number(priceMatch[1])
+                            const match = storeProducts.find((pp) => pp.price === price)
+                            if (match) return bn ? match.nameBn : match.name
+                          }
+                          return p.note.split(',')[0].trim()
                         }
-                        return '-'
+                        return bn ? 'শপ আইটেম' : 'Shop Item'
                       })
                       const uniqueNames = [...new Set(feeNames)]
                       const paidDate = new Date(batch.paidAt)
