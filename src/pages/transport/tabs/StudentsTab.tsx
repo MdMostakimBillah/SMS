@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from 'react'
-import { Users, UserPlus, Trash2, Bus, MapPin, FileText, FileSpreadsheet } from 'lucide-react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { Users, UserPlus, Trash2, Bus, MapPin, FileText, FileSpreadsheet, MoreVertical, ChevronDown, Filter, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTransportStore, type TransportAssignment } from '@/store/transportStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -7,13 +7,13 @@ import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { AssignmentModal } from '../modals/AssignmentModal'
 import { toBnNum } from '@/lib/i18n'
+import { printRawHTML } from '@/lib/pdf'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { XLSX } from '@/lib/excelExport'
 
 interface Props {
   searchQuery: string
 }
-
-const selectCls =
-  'h-8 px-3 pr-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-[inherit] outline-none appearance-none cursor-pointer bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%236b7280\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E")] bg-no-repeat bg-[position:right_0.5rem_center] bg-[size:10px]'
 
 export const StudentsTab = ({ searchQuery }: Props) => {
   const bn = useBn()
@@ -27,6 +27,18 @@ export const StudentsTab = ({ searchQuery }: Props) => {
   const [perPage, setPerPage] = useState(10)
   const [filterVehicle, setFilterVehicle] = useState('')
   const [filterRoute, setFilterRoute] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
+  const [showActionMenu, setShowActionMenu] = useState(false)
+  const actionMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showActionMenu) return
+    const h = (e: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node)) setShowActionMenu(false)
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [showActionMenu])
 
   const enrichedAssignments = useMemo(() => {
     return assignments.map((a) => {
@@ -69,6 +81,10 @@ export const StudentsTab = ({ searchQuery }: Props) => {
   const totalPages = Math.ceil(filtered.length / perPage)
   const paginated = filtered.slice((page - 1) * perPage, page * perPage)
 
+  const hasActiveFilters = filterVehicle || filterRoute
+
+  const clearFilters = () => { setFilterVehicle(''); setFilterRoute(''); setPage(1) }
+
   const handleDelete = () => {
     if (deleteId) {
       deleteAssignment(deleteId)
@@ -76,67 +92,44 @@ export const StudentsTab = ({ searchQuery }: Props) => {
     }
   }
 
-  const handleDownloadPDF = useCallback(() => {
-    const rows = filtered
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${bn ? 'পরিবহন ছাত্র তালিকা' : 'Transport Student List'}</title>
-<style>@page{size:A4 landscape;margin:8mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a;background:#fff;padding:8mm}table{width:100%;border-collapse:collapse}th{background:#6366f1;color:#fff;padding:5px 6px;text-align:center;font-size:8px;font-weight:700;text-transform:uppercase;border:0.5px solid #6366f1}td{padding:4px 6px;border:0.5px solid #e5e7eb;text-align:center}tr:nth-child(even) td{background:#f8f9fc}.hdr{display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:2px solid #6366f1;margin-bottom:8px}.ttl{text-align:center;font-size:12px;font-weight:700;margin-bottom:4px}.sub{text-align:center;font-size:8px;color:#666;margin-bottom:8px}.ftr{margin-top:10px;padding-top:6px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:7px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
-<div class="hdr"><div style="width:28px;height:28px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">ET</div><div><div style="font-size:11px;font-weight:700;color:#6366f1">${bn ? 'পরিবহন ছাত্র তালিকা' : 'Transport Student List'}</div><div style="font-size:7px;color:#888">${rows.length} ${bn ? 'জন ছাত্র বরাদ্দ' : 'students assigned'} · ${new Date().toLocaleDateString()}</div></div></div>
-<table><thead><tr>
-<th>#</th><th>${bn ? 'ছাত্র' : 'Student'}</th><th>${bn ? 'আইডি' : 'ID'}</th><th>${bn ? 'শ্রেণি' : 'Class'}</th><th>${bn ? 'যানবাহন' : 'Vehicle'}</th><th>${bn ? 'রুট' : 'Route'}</th><th>${bn ? 'বোর্ডিং' : 'Pickup'}</th><th>${bn ? 'ভাড়া' : 'Fare'}</th>
-</tr></thead><tbody>
-${rows.map((a, i) => `<tr>
-<td>${i + 1}</td>
-<td style="text-align:left;font-weight:500">${a.student ? (bn ? a.student.nameBn : a.student.nameEn) : '—'}</td>
-<td style="font-family:monospace;font-size:8px;color:#6366f1">${a.studentId}</td>
-<td>${a.student ? `${a.student.class}-${a.student.section}` : '—'}</td>
-<td>${a.vehicle ? (bn ? a.vehicle.nameBn : a.vehicle.name) : '—'}</td>
-<td>${a.route ? (bn ? a.route.nameBn : a.route.name) : '—'}</td>
-<td>${a.pickupStop || '—'}</td>
-<td style="font-weight:700;font-size:10px">৳${a.monthlyFare}</td>
-</tr>`).join('')}
-</tbody></table>
-<div class="ftr"><span>Powered by EduTech</span><span>${new Date().toLocaleDateString()}</span></div>
-</body></html>`
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const w = window.open(url, '_blank')
-    if (w) { w.onload = () => { w.print() } }
+  const exportExcel = useCallback(() => {
+    const rows = filtered.map((a, i) => ({
+      '#': i + 1,
+      [bn ? 'ছাত্র' : 'Student']: a.student ? (bn ? a.student.nameBn : a.student.nameEn) : '',
+      [bn ? 'আইডি' : 'ID']: a.studentId,
+      [bn ? 'শ্রেণি' : 'Class']: a.student ? `${a.student.class}-${a.student.section}` : '',
+      [bn ? 'যানবাহন' : 'Vehicle']: a.vehicle ? (bn ? a.vehicle.nameBn : a.vehicle.name) : '',
+      [bn ? 'রুট' : 'Route']: a.route ? (bn ? a.route.nameBn : a.route.name) : '',
+      [bn ? 'বোর্ডিং' : 'Pickup']: a.pickupStop || '',
+      [bn ? 'ভাড়া (৳)' : 'Fare (৳)']: a.monthlyFare,
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, bn ? 'পরিবহন ছাত্র' : 'Transport Students')
+    XLSX.writeFile(wb, `transport-students-${new Date().toISOString().split('T')[0]}.xlsx`)
   }, [filtered, bn])
 
-  const handleDownloadExcel = useCallback(() => {
-    const headers = [
-      bn ? '#' : '#',
-      bn ? 'ছাত্র' : 'Student',
-      bn ? 'আইডি' : 'ID',
-      bn ? 'শ্রেণি' : 'Class',
-      bn ? 'সেকশন' : 'Section',
-      bn ? 'যানবাহন' : 'Vehicle',
-      bn ? 'রুট' : 'Route',
-      bn ? 'বোর্ডিং' : 'Pickup',
-      bn ? 'ভাড়া' : 'Fare',
-    ]
-    const csvRows = [
-      headers.join(','),
-      ...filtered.map((a, i) => [
-        i + 1,
-        `"${a.student ? (bn ? a.student.nameBn : a.student.nameEn) : ''}"`,
-        `"${a.studentId}"`,
-        `"${a.student?.class || ''}"`,
-        `"${a.student?.section || ''}"`,
-        `"${a.vehicle ? (bn ? a.vehicle.nameBn : a.vehicle.name) : ''}"`,
-        `"${a.route ? (bn ? a.route.nameBn : a.route.name) : ''}"`,
-        `"${a.pickupStop || ''}"`,
-        a.monthlyFare,
-      ].join(','))
-    ]
-    const csv = '\uFEFF' + csvRows.join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `transport-students-${new Date().toISOString().slice(0, 10)}.csv`
-    link.click()
-    URL.revokeObjectURL(url)
+  const exportPDF = useCallback(() => {
+    const brand = getPDFBranding()
+    const rows = filtered
+    const dayHeaders = `<th style="width:20px">#</th><th>${bn ? 'ছাত্র' : 'Student'}</th><th>${bn ? 'আইডি' : 'ID'}</th><th>${bn ? 'শ্রেণি' : 'Class'}</th><th>${bn ? 'যানবাহন' : 'Vehicle'}</th><th>${bn ? 'রুট' : 'Route'}</th><th>${bn ? 'বোর্ডিং' : 'Pickup'}</th><th>${bn ? 'ভাড়া' : 'Fare'}</th>`
+    const bodyRows = rows.map((a, i) => `<tr style="background:${i % 2 === 0 ? '#f9fafb' : '#fff'}">
+      <td style="padding:4px 6px;font-size:9px;text-align:center">${i + 1}</td>
+      <td style="padding:4px 6px;font-size:9px;font-weight:500">${a.student ? (bn ? a.student.nameBn : a.student.nameEn) : '—'}</td>
+      <td style="padding:4px 6px;font-size:8px;font-family:monospace;color:${brand.brandColor}">${a.studentId}</td>
+      <td style="padding:4px 6px;font-size:9px;text-align:center">${a.student ? `${a.student.class}-${a.student.section}` : '—'}</td>
+      <td style="padding:4px 6px;font-size:9px;text-align:center">${a.vehicle ? (bn ? a.vehicle.nameBn : a.vehicle.name) : '—'}</td>
+      <td style="padding:4px 6px;font-size:9px;text-align:center">${a.route ? (bn ? a.route.nameBn : a.route.name) : '—'}</td>
+      <td style="padding:4px 6px;font-size:9px;text-align:center">${a.pickupStop || '—'}</td>
+      <td style="padding:4px 6px;font-size:10px;font-weight:700;text-align:center">৳${a.monthlyFare}</td>
+    </tr>`).join('')
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${bn ? 'পরিবহন ছাত্র তালিকা' : 'Transport Student List'}</title>
+<style>@page{size:A4 landscape;margin:6mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a;background:#fff;padding:6mm}table{width:100%;border-collapse:collapse}th{background:${brand.brandColor};color:#fff;padding:4px 6px;text-align:center;font-size:7px;font-weight:700;text-transform:uppercase;border:0.5px solid ${brand.brandColor}}td{padding:4px 6px;border:0.5px solid #e5e7eb}.hdr{display:flex;align-items:center;gap:10px;padding-bottom:5px;border-bottom:2px solid ${brand.brandColor};margin-bottom:8px}.ftr{margin-top:8px;padding-top:5px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:7px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
+<div class="hdr">${pdfLogoHTML(brand, 28)}<div><div style="font-size:11px;font-weight:700;color:${brand.brandColor}">${bn ? 'পরিবহন ছাত্র তালিকা' : 'Transport Student List'}</div><div style="font-size:7px;color:#888">${rows.length} ${bn ? 'জন ছাত্র বরাদ্দ' : 'students assigned'} · ${new Date().toLocaleDateString()}</div></div></div>
+<table><thead><tr>${dayHeaders}</tr></thead><tbody>${bodyRows}</tbody></table>
+<div class="ftr"><span>${brand.schoolName}</span><span>${new Date().toLocaleDateString()}</span></div>
+</body></html>`
+    printRawHTML(html)
   }, [filtered, bn])
 
   return (
@@ -146,20 +139,35 @@ ${rows.map((a, i) => `<tr>
           {bn ? `${filtered.length} জন ছাত্র বরাদ্দ` : `${filtered.length} students assigned`}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleDownloadPDF}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.75rem] font-medium cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors"
-          >
-            <FileText size={13} />
-            PDF
-          </button>
-          <button
-            onClick={handleDownloadExcel}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.75rem] font-medium cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors"
-          >
-            <FileSpreadsheet size={13} />
-            Excel
-          </button>
+          {filtered.length > 0 && (
+            <div className="relative">
+              <button onClick={() => setShowActionMenu(!showActionMenu)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)] transition-colors cursor-pointer">
+                <MoreVertical size={14} />
+                {bn ? 'অ্যাকশন' : 'Action'}
+                <ChevronDown size={12} />
+              </button>
+              {showActionMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
+                  <div ref={actionMenuRef}
+                    className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
+                    <button onClick={() => { exportExcel(); setShowActionMenu(false) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
+                      <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                      {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                    </button>
+                    <div className="h-px bg-[var(--border)] mx-2" />
+                    <button onClick={() => { exportPDF(); setShowActionMenu(false) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
+                      <FileText size={14} className="text-[var(--red)]" />
+                      {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           <button
             onClick={() => { setEditItem(null); setShowModal(true) }}
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90"
@@ -170,35 +178,45 @@ ${rows.map((a, i) => `<tr>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <label className="text-[0.6875rem] font-medium text-[var(--text-muted)]">{bn ? 'যানবাহন:' : 'Vehicle:'}</label>
-          <select value={filterVehicle} onChange={(e) => { setFilterVehicle(e.target.value); setPage(1) }} className={selectCls}>
+      {/* Filters toggle */}
+      <div className="flex items-center gap-2">
+        <button onClick={() => setShowFilters((v) => !v)}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium border transition-colors cursor-pointer ${showFilters || hasActiveFilters ? 'bg-[var(--brand)]/5 text-[var(--brand)] border-[var(--brand)]/20' : 'bg-transparent text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)]'}`}>
+          <Filter size={14} />
+          {bn ? 'ফিল্টার' : 'Filters'}
+          {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />}
+        </button>
+        {hasActiveFilters && (
+          <button onClick={clearFilters} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[0.75rem] text-red-500 border border-red-500/30 hover:bg-red-500/10 transition-colors cursor-pointer">
+            <X size={12} />{bn ? 'মুছুন' : 'Clear'}
+          </button>
+        )}
+      </div>
+
+      {/* Filter panel */}
+      {showFilters && (
+        <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+          <select value={filterVehicle} onChange={(e) => { setFilterVehicle(e.target.value); setPage(1) }}
+            className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors cursor-pointer">
             <option value="">{bn ? 'সব যানবাহন' : 'All Vehicles'}</option>
             {vehicles.filter((v) => v.isActive).map((v) => (
               <option key={v.id} value={v.id}>{bn ? v.nameBn : v.name}</option>
             ))}
           </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-[0.6875rem] font-medium text-[var(--text-muted)]">{bn ? 'রুট:' : 'Route:'}</label>
-          <select value={filterRoute} onChange={(e) => { setFilterRoute(e.target.value); setPage(1) }} className={selectCls}>
+          <select value={filterRoute} onChange={(e) => { setFilterRoute(e.target.value); setPage(1) }}
+            className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors cursor-pointer">
             <option value="">{bn ? 'সব রুট' : 'All Routes'}</option>
             {routes.filter((r) => r.isActive).map((r) => (
               <option key={r.id} value={r.id}>{bn ? r.nameBn : r.name}</option>
             ))}
           </select>
+          {hasActiveFilters && (
+            <button onClick={clearFilters} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[0.75rem] text-red-500 border border-red-500/30 hover:bg-red-500/10 transition-colors cursor-pointer">
+              <X size={12} />{bn ? 'মুছুন' : 'Clear'}
+            </button>
+          )}
         </div>
-        {(filterVehicle || filterRoute) && (
-          <button
-            onClick={() => { setFilterVehicle(''); setFilterRoute(''); setPage(1) }}
-            className="text-[0.6875rem] text-[var(--red)] hover:underline cursor-pointer"
-          >
-            {bn ? 'ফিল্টার মুছুন' : 'Clear filters'}
-          </button>
-        )}
-      </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="py-12 text-center">
@@ -226,7 +244,9 @@ ${rows.map((a, i) => `<tr>
               </thead>
               <tbody>
                 {paginated.map((a, i) => (
-                  <tr key={a.id} className={`border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-tertiary)] transition-colors ${(page - 1) * perPage + i % 2 === 0 ? 'bg-[var(--bg-secondary)]/50' : ''}`}>
+                  <tr key={a.id}
+                    className="border-b border-[var(--border)] last:border-0 transition-colors hover:!bg-[var(--brand)]/5"
+                    style={{ backgroundColor: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' }}>
                     <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)] text-center">{(page - 1) * perPage + i + 1}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center gap-2.5">

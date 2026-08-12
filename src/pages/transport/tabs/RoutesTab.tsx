@@ -86,7 +86,9 @@ export const RoutesTab = ({ searchQuery }: Props) => {
             </thead>
             <tbody>
               {filtered.map((r, i) => (
-                <tr key={r.id} className={`border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-tertiary)] transition-colors ${i % 2 === 0 ? 'bg-[var(--bg-secondary)]/50' : ''}`}>
+                <tr key={r.id}
+                  className="border-b border-[var(--border)] last:border-0 transition-colors hover:!bg-[var(--brand)]/5"
+                  style={{ backgroundColor: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' }}>
                   <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)] text-center">{i + 1}</td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-center gap-2.5">
