@@ -181,9 +181,9 @@ export const ReportsTab = ({ isMobile }: Props) => {
                 <tr className="bg-[var(--bg-secondary)]">
                   <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">#</th>
                   <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'পণ্য' : 'Product'}</th>
-                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'বিক্রি' : 'Qty Sold'}</th>
-                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'আয়' : 'Revenue'}</th>
-                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'লেনদেন' : 'Orders'}</th>
+                  <th className="text-center py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'বিক্রি' : 'Qty Sold'}</th>
+                  <th className="text-center py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'আয়' : 'Revenue'}</th>
+                  <th className="text-center py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'লেনদেন' : 'Orders'}</th>
                   <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'স্টক' : 'Stock'}</th>
                 </tr>
               </thead>
@@ -195,9 +195,9 @@ export const ReportsTab = ({ isMobile }: Props) => {
                     <tr key={i} className="border-t border-[var(--border)] transition-colors hover:!bg-[var(--brand)]/5" style={{ backgroundColor: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' }}>
                       <td className="py-2.5 px-3 text-[0.75rem] text-[var(--text-muted)]">{bn ? toBnNum(i + 1) : i + 1}</td>
                       <td className="py-2.5 px-3 text-[0.75rem] font-medium text-[var(--text-primary)]">{bn ? p.nameBn : p.name}</td>
-                      <td className="py-2.5 px-3 text-right text-[0.75rem] font-medium">{bn ? toBnNum(p.qty) : p.qty}</td>
-                      <td className="py-2.5 px-3 text-right text-[0.8125rem] font-semibold text-[var(--green)]">৳{bn ? toBnNum(p.revenue) : p.revenue.toLocaleString()}</td>
-                      <td className="py-2.5 px-3 text-right text-[0.75rem] text-[var(--text-secondary)]">{bn ? toBnNum(p.count) : p.count}</td>
+                      <td className="py-2.5 px-3 text-center text-[0.75rem] font-medium">{bn ? toBnNum(p.qty) : p.qty}</td>
+                      <td className="py-2.5 px-3 text-center text-[0.8125rem] font-semibold text-[var(--green)]">৳{bn ? toBnNum(p.revenue) : p.revenue.toLocaleString()}</td>
+                      <td className="py-2.5 px-3 text-center text-[0.75rem] text-[var(--text-secondary)]">{bn ? toBnNum(p.count) : p.count}</td>
                       <td className="py-2.5 px-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <span className="text-[0.75rem] font-medium" style={{ color: stockColor }}>{bn ? toBnNum(p.stock) : p.stock}</span>
