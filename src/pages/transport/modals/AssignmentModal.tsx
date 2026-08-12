@@ -4,7 +4,6 @@ import { UserPlus, X, AlertCircle, Search, ChevronDown } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTransportStore, type TransportAssignment } from '@/store/transportStore'
 import { useSessionStudents } from '@/store/admissionStore'
-import { useClassStore } from '@/store/classStore'
 import { labelCls } from '@/pages/hr/utils'
 import { getAvatarGradient } from '@/lib/i18n'
 
@@ -22,7 +21,6 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
   const bn = useBn()
   const { vehicles, routes, assignments, addAssignment, updateAssignment } = useTransportStore()
   const students = useSessionStudents()
-  const classes = useClassStore((s) => s.classes)
 
   const activeVehicles = useMemo(() => vehicles.filter((v) => v.isActive), [vehicles])
 

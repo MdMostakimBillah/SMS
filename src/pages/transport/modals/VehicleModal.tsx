@@ -55,6 +55,7 @@ export function VehicleModal({ existing, onSaved, onClose }: Props) {
       nameBn: nameBn.trim() || name.trim(),
       registrationNo: regNo.trim(),
       capacity: Number(capacity) || 0,
+      driverId: existing?.driverId || '',
       driverName: driverName.trim(),
       driverNameBn: driverNameBn.trim() || driverName.trim(),
       driverPhone: driverPhone.trim(),

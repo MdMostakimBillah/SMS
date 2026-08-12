@@ -7,6 +7,7 @@ import { labelCls } from '@/pages/hr/utils'
 
 const inputFieldCls =
   'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 hover:border-[var(--brand)]/30'
+const modalStyleCls = 'modal-box modal-content'
 
 interface Props {
   existing?: TransportRoute | null
