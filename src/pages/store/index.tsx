@@ -252,7 +252,7 @@ export default function StorePage() {
   const sales = useStoreStore((s) => s.sales)
   const deleteProduct = useStoreStore((s) => s.deleteProduct)
 
-  const [activeTab, setActiveTab] = useState<View>('products')
+  const [activeTab, setActiveTab] = useState<View>('categories')
   const [searchQuery, setSearchQuery] = useState('')
   const [showProductModal, setShowProductModal] = useState(false)
   const [editProduct, setEditProduct] = useState<StoreProduct | null>(null)
@@ -297,8 +297,8 @@ export default function StorePage() {
   }, [products, searchQuery])
 
   const tabs = useMemo(() => [
-    { id: 'products' as View, icon: Package, label: bn ? 'পণ্য' : 'Products' },
     { id: 'categories' as View, icon: Tag, label: bn ? 'ক্যাটাগরি' : 'Categories' },
+    { id: 'products' as View, icon: Package, label: bn ? 'পণ্য' : 'Products' },
     { id: 'sales' as View, icon: ShoppingCart, label: bn ? 'বিক্রয়' : 'Sales' },
     { id: 'reports' as View, icon: BarChart3, label: bn ? 'রিপোর্ট' : 'Reports' },
   ], [bn])
