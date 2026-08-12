@@ -184,6 +184,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
       for (const student of filteredStudents) {
         if (fee.class !== student.class) continue
         if (fee.section && fee.section !== student.section) continue
+        if (fee.studentId && fee.studentId !== student.id) continue
 
         if (fee.type === 'onetime') {
           const paid = payments

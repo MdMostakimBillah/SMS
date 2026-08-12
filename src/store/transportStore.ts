@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { useAdmissionStore } from './admissionStore'
+import { useFeeStore, type FeeStructure } from './feeStore'
 
 export interface TransportVehicle {
   id: string
@@ -40,6 +42,64 @@ export interface TransportAssignment {
   monthlyFare: number
   assignedDate: string
   isActive: boolean
+}
+
+export const TRANSPORT_FEE_NAME = 'Transport Fee'
+export const TRANSPORT_FEE_NAME_BN = 'পরিবহন ফি'
+
+export function transportFeeStructureId(assignmentId: string): string {
+  return `FEE-TRANS-${assignmentId}`
+}
+
+function buildTransportFeeStructure(a: TransportAssignment, student?: { class: string; section: string; academicYear: string }): FeeStructure {
+  return {
+    id: transportFeeStructureId(a.id),
+    name: TRANSPORT_FEE_NAME,
+    nameBn: TRANSPORT_FEE_NAME_BN,
+    class: student?.class || '',
+    section: student?.section || undefined,
+    academicYear: student?.academicYear || '',
+    amount: a.monthlyFare,
+    description: '',
+    descriptionBn: '',
+    isActive: a.isActive,
+    type: 'monthly',
+    studentId: a.studentId,
+    createdAt: a.assignedDate || new Date().toISOString().split('T')[0],
+  }
+}
+
+function syncTransportFeeStructure(a: TransportAssignment) {
+  const students = useAdmissionStore.getState().students
+  const student = students.find((s) => s.id === a.studentId)
+  const structureId = transportFeeStructureId(a.id)
+  const existing = useFeeStore.getState().structures.find((s) => s.id === structureId)
+
+  if (a.monthlyFare <= 0) {
+    if (existing) useFeeStore.getState().deleteStructure(structureId)
+    return
+  }
+
+  const next = buildTransportFeeStructure(a, student)
+  if (existing) {
+    useFeeStore.getState().updateStructure(structureId, {
+      amount: next.amount,
+      isActive: next.isActive,
+      class: next.class,
+      section: next.section,
+      academicYear: next.academicYear,
+    })
+  } else {
+    useFeeStore.getState().addStructure(next)
+  }
+}
+
+function removeTransportFeeStructure(assignmentId: string) {
+  const structureId = transportFeeStructureId(assignmentId)
+  const structures = useFeeStore.getState().structures
+  if (structures.some((s) => s.id === structureId)) {
+    useFeeStore.getState().deleteStructure(structureId)
+  }
 }
 
 interface TransportState {
@@ -167,10 +227,15 @@ export const useTransportStore = create<TransportState>()(
           vehicles: state.vehicles.map((v) => (v.id === id ? { ...v, ...data } : v)),
         })),
       deleteVehicle: (id) =>
-        set((state) => ({
-          vehicles: state.vehicles.filter((v) => v.id !== id),
-          assignments: state.assignments.filter((a) => a.vehicleId !== id),
-        })),
+        set((state) => {
+          for (const a of state.assignments.filter((a) => a.vehicleId === id)) {
+            removeTransportFeeStructure(a.id)
+          }
+          return {
+            vehicles: state.vehicles.filter((v) => v.id !== id),
+            assignments: state.assignments.filter((a) => a.vehicleId !== id),
+          }
+        }),
       toggleVehicleActive: (id) =>
         set((state) => ({
           vehicles: state.vehicles.map((v) => (v.id === id ? { ...v, isActive: !v.isActive } : v)),
@@ -182,32 +247,53 @@ export const useTransportStore = create<TransportState>()(
           routes: state.routes.map((r) => (r.id === id ? { ...r, ...data } : r)),
         })),
       deleteRoute: (id) =>
-        set((state) => ({
-          routes: state.routes.filter((r) => r.id !== id),
-          vehicles: state.vehicles.map((v) => ({
-            ...v,
-            routeIds: v.routeIds.filter((rid) => rid !== id),
-          })),
-          assignments: state.assignments.filter((a) => a.routeId !== id),
-        })),
+        set((state) => {
+          for (const a of state.assignments.filter((a) => a.routeId === id)) {
+            removeTransportFeeStructure(a.id)
+          }
+          return {
+            routes: state.routes.filter((r) => r.id !== id),
+            vehicles: state.vehicles.map((v) => ({
+              ...v,
+              routeIds: v.routeIds.filter((rid) => rid !== id),
+            })),
+            assignments: state.assignments.filter((a) => a.routeId !== id),
+          }
+        }),
       toggleRouteActive: (id) =>
         set((state) => ({
           routes: state.routes.map((r) => (r.id === id ? { ...r, isActive: !r.isActive } : r)),
         })),
 
-      addAssignment: (a) => set((state) => ({ assignments: [...state.assignments, a] })),
-      updateAssignment: (id, data) =>
+      addAssignment: (a) => {
+        set((state) => ({ assignments: [...state.assignments, a] }))
+        syncTransportFeeStructure(a)
+      },
+      updateAssignment: (id, data) => {
+        let updated: TransportAssignment | undefined
+        set((state) => {
+          const existing = state.assignments.find((a) => a.id === id)
+          if (!existing) return state
+          updated = { ...existing, ...data }
+          return { assignments: state.assignments.map((a) => (a.id === id ? updated! : a)) }
+        })
+        if (updated) syncTransportFeeStructure(updated)
+      },
+      deleteAssignment: (id) => {
+        set((state) => ({ assignments: state.assignments.filter((a) => a.id !== id) }))
+        removeTransportFeeStructure(id)
+      },
+      toggleAssignmentActive: (id) => {
+        let updated: TransportAssignment | undefined
         set((state) => ({
-          assignments: state.assignments.map((a) => (a.id === id ? { ...a, ...data } : a)),
-        })),
-      deleteAssignment: (id) =>
-        set((state) => ({
-          assignments: state.assignments.filter((a) => a.id !== id),
-        })),
-      toggleAssignmentActive: (id) =>
-        set((state) => ({
-          assignments: state.assignments.map((a) => (a.id === id ? { ...a, isActive: !a.isActive } : a)),
-        })),
+          assignments: state.assignments.map((a) => {
+            if (a.id !== id) return a
+            updated = { ...a, isActive: !a.isActive }
+            return updated
+          }),
+        }))
+        if (updated) syncTransportFeeStructure(updated)
+      },
     }),
     { name: 'edutech-transport', storage: createNamespacedStorage('edutech-transport'), version: 1 }
   )

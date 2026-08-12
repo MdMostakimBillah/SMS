@@ -43,8 +43,10 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
   const qSectionOptions = useMemo(() => (qClass ? sectionsMap[qClass] || [] : []), [qClass, sectionsMap])
 
+  const managedStructures = useMemo(() => structures.filter((s) => !s.studentId), [structures])
+
   const filtered = useMemo(() => {
-    let list = structures.filter((s) => s.type === feeType)
+    let list = managedStructures.filter((s) => s.type === feeType)
     if (fClass) list = list.filter((s) => s.class === fClass)
     if (fCategory) list = list.filter((s) => s.categoryId === fCategory)
     if (search) {
@@ -52,11 +54,11 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
       list = list.filter((s) => s.name.toLowerCase().includes(q) || s.nameBn.includes(q))
     }
     return list
-  }, [structures, feeType, fClass, fCategory, search])
+  }, [managedStructures, feeType, fClass, fCategory, search])
 
   const totalAmount = useMemo(() => filtered.reduce((sum, s) => sum + s.amount, 0), [filtered])
-  const monthlyCount = structures.filter((s) => s.type === 'monthly').length
-  const onetimeCount = structures.filter((s) => s.type === 'onetime').length
+  const monthlyCount = managedStructures.filter((s) => s.type === 'monthly').length
+  const onetimeCount = managedStructures.filter((s) => s.type === 'onetime').length
 
   const fmt = (n: number) => `৳${n.toLocaleString()}`
 

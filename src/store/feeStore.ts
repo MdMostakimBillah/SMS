@@ -26,6 +26,7 @@ export interface FeeStructure {
   isActive: boolean
   type: 'monthly' | 'onetime'
   categoryId?: string
+  studentId?: string
   createdAt: string
 }
 
@@ -408,7 +409,9 @@ export const useFeeStore = create<FeeState>()(
         })
 
         for (const student of filteredStudents) {
-          const studentStructures = activeStructures.filter((s) => s.class === student.class && (!s.section || s.section === student.section))
+          const studentStructures = activeStructures.filter(
+            (s) => s.class === student.class && (!s.section || s.section === student.section) && (!s.studentId || s.studentId === student.id)
+          )
 
           for (const fee of studentStructures) {
             const paid = payments
@@ -494,7 +497,9 @@ export const useFeeStore = create<FeeState>()(
 
         for (const student of students) {
           if (student.active === false) continue
-          const studentStructures = structures.filter((s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section))
+          const studentStructures = structures.filter(
+            (s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section) && (!s.studentId || s.studentId === student.id)
+          )
 
           for (const fee of studentStructures) {
             const key = `${student.class}__${student.section || ''}`

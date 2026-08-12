@@ -262,7 +262,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   }, [])
 
   const monthlyStructures = useMemo(() =>
-    structures.filter((s) => s.type === 'monthly' && s.isActive && s.class === selectedStudent?.class && (!s.section || s.section === selectedStudent?.section)),
+    structures.filter((s) => s.type === 'monthly' && s.isActive && s.class === selectedStudent?.class && (!s.section || s.section === selectedStudent?.section) && (!s.studentId || s.studentId === selectedStudent.id)),
   [structures, selectedStudent])
 
   const filteredStructures = monthlyStructures
@@ -583,6 +583,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       if (s.type !== 'onetime' || !s.isActive) return false
       if (s.class !== selectedStudent.class) return false
       if (s.section && s.section !== selectedStudent.section) return false
+      if (s.studentId && s.studentId !== selectedStudent.id) return false
       if (existingKeys.has(s.id)) return false
       const paid = payments.filter((p) => p.studentId === selectedStudent.id && p.feeStructureId === s.id).reduce((sum, p) => sum + p.amount, 0)
       const waived = waivers.filter((w) => w.studentId === selectedStudent.id && w.feeStructureId === s.id).reduce((sum, w) => sum + w.amount, 0)
