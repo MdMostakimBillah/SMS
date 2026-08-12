@@ -227,8 +227,8 @@ export const ReportsTab = ({ isMobile }: Props) => {
                 <tr className="bg-[var(--bg-secondary)]">
                   <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">#</th>
                   <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
-                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'বিক্রি' : 'Qty Sold'}</th>
-                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'আয়' : 'Revenue'}</th>
+                  <th className="text-center py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'বিক্রি' : 'Qty Sold'}</th>
+                  <th className="text-center py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'আয়' : 'Revenue'}</th>
                   <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'শেয়ার' : 'Share'}</th>
                 </tr>
               </thead>
@@ -239,8 +239,8 @@ export const ReportsTab = ({ isMobile }: Props) => {
                     <tr key={i} className="border-t border-[var(--border)] transition-colors hover:!bg-[var(--brand)]/5" style={{ backgroundColor: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' }}>
                       <td className="py-2.5 px-3 text-[0.75rem] text-[var(--text-muted)]">{bn ? toBnNum(i + 1) : i + 1}</td>
                       <td className="py-2.5 px-3 text-[0.75rem] font-medium text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</td>
-                      <td className="py-2.5 px-3 text-right text-[0.75rem] font-medium">{bn ? toBnNum(c.qty) : c.qty}</td>
-                      <td className="py-2.5 px-3 text-right text-[0.8125rem] font-semibold text-[var(--green)]">৳{bn ? toBnNum(c.revenue) : c.revenue.toLocaleString()}</td>
+                      <td className="py-2.5 px-3 text-center text-[0.75rem] font-medium">{bn ? toBnNum(c.qty) : c.qty}</td>
+                      <td className="py-2.5 px-3 text-center text-[0.8125rem] font-semibold text-[var(--green)]">৳{bn ? toBnNum(c.revenue) : c.revenue.toLocaleString()}</td>
                       <td className="py-2.5 px-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <span className="text-[0.6875rem] text-[var(--text-muted)]">{pct}%</span>
