@@ -96,7 +96,7 @@ export const VehiclesTab = ({ searchQuery }: Props) => {
             </thead>
             <tbody>
               {filtered.map((v, i) => (
-                <tr key={v.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-tertiary)] transition-colors">
+                <tr key={v.id} className={`border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-tertiary)] transition-colors ${i % 2 === 0 ? 'bg-[var(--bg-secondary)]/50' : ''}`}>
                   <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)]">{i + 1}</td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2.5">

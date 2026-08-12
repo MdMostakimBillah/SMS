@@ -86,10 +86,10 @@ export const RoutesTab = ({ searchQuery }: Props) => {
             </thead>
             <tbody>
               {filtered.map((r, i) => (
-                <tr key={r.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-tertiary)] transition-colors">
-                  <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)]">{i + 1}</td>
+                <tr key={r.id} className={`border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-tertiary)] transition-colors ${i % 2 === 0 ? 'bg-[var(--bg-secondary)]/50' : ''}`}>
+                  <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)] text-center">{i + 1}</td>
                   <td className="py-3 px-4">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center justify-center gap-2.5">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-[var(--teal)]/10 text-[var(--teal)]">
                         <MapPin size={14} />
                       </div>
@@ -98,16 +98,16 @@ export const RoutesTab = ({ searchQuery }: Props) => {
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-4">
-                    <div className="text-[0.75rem] text-[var(--text-secondary)] max-w-[250px] truncate">
+                  <td className="py-3 px-4 text-center">
+                    <div className="text-[0.75rem] text-[var(--text-secondary)] max-w-[250px] truncate mx-auto">
                       {bn ? r.stopsBn : r.stops || '—'}
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)]">
+                  <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)] text-center">
                     {r.distance || '—'}
                   </td>
-                  <td className="py-3 px-4 text-right">
-                    <span className="text-[0.875rem] font-bold text-[var(--text-primary)]">
+                  <td className="py-3 px-4 text-center">
+                    <span className="text-[1rem] font-bold text-[var(--text-primary)]">
                       ৳{bn ? toBnNum(r.fare) : r.fare}
                     </span>
                   </td>
@@ -125,7 +125,7 @@ export const RoutesTab = ({ searchQuery }: Props) => {
                     </span>
                   </td>
                   <td className="py-3 px-4">
-                    <div className="flex items-center justify-end gap-1.5">
+                    <div className="flex items-center justify-center gap-1.5">
                       <button
                         onClick={() => { setEditItem(r); setShowModal(true) }}
                         className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] cursor-pointer transition-colors"
