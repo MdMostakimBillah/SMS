@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { MapPin, X, AlertCircle } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useTransportStore, type TransportRoute } from '@/store/transportStore'
-import { modalStyleCls, labelCls } from '@/pages/hr/utils'
+import { labelCls } from '@/pages/hr/utils'
 
 const inputFieldCls =
   'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 hover:border-[var(--brand)]/30'
@@ -58,7 +58,7 @@ export function RouteModal({ existing, onSaved, onClose }: Props) {
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
-        className={`relative w-full max-w-[32rem] max-h-[92vh] bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] shadow-2xl overflow-hidden ${modalStyleCls}`}
+        className="relative w-full max-w-[50rem] max-h-[92vh] bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] shadow-2xl overflow-hidden [animation:modalPopIn_0.2s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
