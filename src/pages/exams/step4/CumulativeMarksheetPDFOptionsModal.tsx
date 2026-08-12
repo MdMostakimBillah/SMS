@@ -328,7 +328,7 @@ export const CumulativeMarksheetPDFOptionsModal = React.memo(function Cumulative
     }).join('')
 
     if (!cancelled.current) {
-      setPreviewHtml(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cumulative Marksheet</title><style>@page{size:A4 ${orientation};margin:5mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;font-size:${fontSize === 'compact' ? '8px' : '10px'};color:#1a1a2e;background:#fff;padding:5mm;}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}</style></head><body>${studentPages}</body></html>`)
+      setPreviewHtml(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cumulative Marksheet</title><style>@page{size:A4 ${orientation};margin:5mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Times New Roman','Segoe UI',system-ui,sans-serif;font-size:${fontSize === 'compact' ? '8px' : '10px'};color:#1a1a2e;background:#fff;padding:5mm;}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}</style></head><body>${studentPages}</body></html>`)
     }
     }
     build()

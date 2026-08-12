@@ -241,7 +241,7 @@ export default function AllTeachersPage() {
       const brand = getPDFBranding()
       const html = generateTeacherListPDF(list, { ...opts, institutionName: institution.name }, departments)
       openPrintWindow(opts.title || 'Teacher List', html, {
-        css: `@page{size:A4 ${opts.orientation || 'landscape'};margin:8mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10px;color:#1a1a1a;background:#fff;padding:0}table{width:100%;border-collapse:collapse}th{background:${brand.brandColor};color:#fff;padding:5px;text-align:left;font-size:8px;font-weight:700;border:0.5px solid ${brand.brandColor}}td{padding:4px 5px;border:0.5px solid #e5e7eb;vertical-align:middle}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`,
+        css: `@page{size:A4 ${opts.orientation || 'landscape'};margin:8mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Times New Roman',Arial,sans-serif;font-size:10px;color:#1a1a1a;background:#fff;padding:0}table{width:100%;border-collapse:collapse}th{background:${brand.brandColor};color:#fff;padding:5px;text-align:left;font-size:8px;font-weight:700;border:0.5px solid ${brand.brandColor}}td{padding:4px 5px;border:0.5px solid #e5e7eb;vertical-align:middle}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`,
       })
       setShowPDF(false)
     },
@@ -289,7 +289,7 @@ ${photoHtml}
 </div>
 <div class="ftr"><span>${escapeHtml(brand.schoolName)}</span><div>${isBn ? 'মুদ্রণ:' : 'Printed:'} ${new Date().toLocaleDateString()}</div></div>`
       openPrintWindow(t.nameEn, html, {
-        css: `@page{size:A4 portrait;margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:12px;padding-bottom:7px;border-bottom:2px solid ${brand.brandColor};margin-bottom:12px}.ttl{text-align:center;font-size:14px;font-weight:700;margin:10px 0 4px}.sub{text-align:center;font-size:10px;color:#666;margin-bottom:12px}.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:12px}.info div{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0}.info .lbl{font-size:10px;color:#888;width:100px;flex-shrink:0}.info .val{font-size:11px;font-weight:500;color:#1a1a1a}.ftr{margin-top:14px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`,
+        css: `@page{size:A4 portrait;margin:12mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Times New Roman',Arial,sans-serif;font-size:11px;color:#1a1a1a}.hdr{display:flex;align-items:center;gap:12px;padding-bottom:7px;border-bottom:2px solid ${brand.brandColor};margin-bottom:12px}.ttl{text-align:center;font-size:14px;font-weight:700;margin:10px 0 4px}.sub{text-align:center;font-size:10px;color:#666;margin-bottom:12px}.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:12px}.info div{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0}.info .lbl{font-size:10px;color:#888;width:100px;flex-shrink:0}.info .val{font-size:11px;font-weight:500;color:#1a1a1a}.ftr{margin-top:14px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`,
       })
     },
     [departments, isBn]
