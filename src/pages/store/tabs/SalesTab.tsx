@@ -189,7 +189,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button onClick={() => setShowFilters((v) => !v)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium border transition-colors cursor-pointer ${showFilters || hasActiveFilters ? 'bg-[var(--brand)]/8 text-[var(--brand)] border-[var(--brand)]/30' : 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--text-muted)]/30 hover:border-[var(--brand)]/40'}`}>
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium border transition-colors cursor-pointer ${showFilters || hasActiveFilters ? 'bg-[var(--brand)]/8 text-[var(--brand)] border-[var(--brand)]/30' : 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border-2)] hover:border-[var(--brand)]/40'}`}>
             <Filter size={14} />
             {bn ? 'ফিল্টার' : 'Filters'}
             {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />}
@@ -205,7 +205,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
         {filtered.length > 0 && (
           <div className="relative">
             <button onClick={() => setShowActionMenu(!showActionMenu)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium bg-[var(--surface)] border border-[var(--text-muted)]/30 text-[var(--text-secondary)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)] transition-colors cursor-pointer">
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium bg-[var(--surface)] border border-[var(--border-2)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)] transition-colors cursor-pointer">
               <MoreVertical size={14} />
               {bn ? 'অ্যাকশন' : 'Action'}
               <ChevronDown size={12} />
