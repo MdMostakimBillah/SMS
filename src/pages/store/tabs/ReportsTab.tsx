@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useBn } from '@/hooks/useBn'
 import { useStoreStore } from '@/store/storeStore'
 import { toBnNum } from '@/lib/i18n'
-import { Package, DollarSign, TrendingUp, AlertTriangle, ShoppingCart, BarChart3, Calendar, CreditCard, User, Tag } from 'lucide-react'
+import { Package, DollarSign, TrendingUp, AlertTriangle, ShoppingCart, BarChart3, Calendar, CreditCard, Tag, Layers } from 'lucide-react'
 
 interface Props {
   isMobile: boolean
@@ -47,7 +47,7 @@ export const ReportsTab = ({ isMobile }: Props) => {
   }, [sales])
 
   const studentSpending = useMemo(() => {
-    const map = new Map<string, { name: string; nameBn: string; class: string; section: string; total: number; count: number; products: Set<string> }>()
+    const map = new Map<string, { name: string; nameBn: string; id: string; class: string; section: string; total: number; count: number; products: Set<string> }>()
     sales.forEach((s) => {
       const existing = map.get(s.soldToId)
       if (existing) {
@@ -55,14 +55,14 @@ export const ReportsTab = ({ isMobile }: Props) => {
         existing.count++
         s.items.forEach((i) => existing.products.add(bn ? i.productNameBn : i.productName))
       } else {
-        map.set(s.soldToId, { name: s.soldToName, nameBn: s.soldToNameBn, class: s.soldToClass, section: s.soldToSection, total: s.total, count: 1, products: new Set(s.items.map((i) => bn ? i.productNameBn : i.productName)) })
+        map.set(s.soldToId, { name: s.soldToName, nameBn: s.soldToNameBn, id: s.soldToId, class: s.soldToClass, section: s.soldToSection, total: s.total, count: 1, products: new Set(s.items.map((i) => bn ? i.productNameBn : i.productName)) })
       }
     })
     return [...map.values()].sort((a, b) => b.total - a.total)
   }, [sales, bn])
 
   const productSales = useMemo(() => {
-    const map = new Map<string, { name: string; nameBn: string; qty: number; revenue: number; count: number; stock: number }>()
+    const map = new Map<string, { name: string; nameBn: string; qty: number; revenue: number; count: number; stock: number; minStock: number }>()
     sales.forEach((s) => {
       s.items.forEach((item) => {
         const existing = map.get(item.productId)
@@ -72,7 +72,7 @@ export const ReportsTab = ({ isMobile }: Props) => {
           existing.revenue += item.subtotal
           existing.count++
         } else {
-          map.set(item.productId, { name: item.productName, nameBn: item.productNameBn, qty: item.qty, revenue: item.subtotal, count: 1, stock: product?.stock || 0 })
+          map.set(item.productId, { name: item.productName, nameBn: item.productNameBn, qty: item.qty, revenue: item.subtotal, count: 1, stock: product?.stock || 0, minStock: product?.minStock || 0 })
         }
       })
     })
@@ -80,7 +80,8 @@ export const ReportsTab = ({ isMobile }: Props) => {
   }, [sales, products])
 
   const categorySales = useMemo(() => {
-    const map = new Map<string, { name: string; nameBn: string; qty: number; revenue: number; productIds: Set<string> }>()
+    const map = new Map<string, { name: string; nameBn: string; qty: number; revenue: number }>()
+    const totalRevenue = sales.reduce((sum, s) => sum + s.total, 0)
     sales.forEach((s) => {
       s.items.forEach((item) => {
         const product = products.find((p) => p.id === item.productId)
@@ -89,14 +90,13 @@ export const ReportsTab = ({ isMobile }: Props) => {
         if (existing) {
           existing.qty += item.qty
           existing.revenue += item.subtotal
-          existing.productIds.add(item.productId)
         } else {
           const cat = categories.find((c) => c.id === catId)
-          map.set(catId, { name: cat?.name || (bn ? 'অন্যান্য' : 'Uncategorized'), nameBn: cat?.nameBn || 'অন্যান্য', qty: item.qty, revenue: item.subtotal, productIds: new Set([item.productId]) })
+          map.set(catId, { name: cat?.name || (bn ? 'অন্যান্য' : 'Uncategorized'), nameBn: cat?.nameBn || 'অন্যান্য', qty: item.qty, revenue: item.subtotal })
         }
       })
     })
-    return [...map.values()].sort((a, b) => b.revenue - a.revenue)
+    return { items: [...map.values()].sort((a, b) => b.revenue - a.revenue), totalRevenue }
   }, [sales, products, categories, bn])
 
   const paymentLabels: Record<string, { en: string; bn: string; color: string; icon: typeof Package }> = {
@@ -106,90 +106,119 @@ export const ReportsTab = ({ isMobile }: Props) => {
     other: { en: 'Other', bn: 'অন্যান্য', color: 'var(--text-secondary)', icon: DollarSign },
   }
 
-  const Card = ({ label, value, sub, icon: Icon, color }: { label: string; value: string; sub?: string; icon: typeof Package; color: string }) => (
-    <div className="flex items-center gap-3 p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)] hover:shadow-md transition-shadow">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}15`, color }}>
-        <Icon size={18} />
-      </div>
-      <div className="min-w-0">
-        <div className="font-bold text-[1.125rem] text-[var(--text-primary)] leading-tight">{value}</div>
-        <div className="text-[0.75rem] text-[var(--text-secondary)] whitespace-nowrap">{label}</div>
-        {sub && <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">{sub}</div>}
-      </div>
+  const SectionHeader = ({ icon: Icon, title, count }: { icon: typeof Package; title: string; count?: number }) => (
+    <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2 bg-[var(--bg-secondary)]/50">
+      <Icon size={14} className="text-[var(--brand)]" />
+      <h3 className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{title}</h3>
+      {count !== undefined && <span className="ml-auto text-[0.625rem] text-[var(--text-muted)]">{count} {bn ? 'টি' : 'items'}</span>}
+    </div>
+  )
+
+  const EmptyState = ({ icon: Icon, text }: { icon: typeof Package; text: string }) => (
+    <div className="py-12 text-center">
+      <Icon size={28} className="mx-auto mb-2 text-[var(--text-muted)] opacity-40" />
+      <p className="text-[0.8125rem] text-[var(--text-muted)]">{text}</p>
     </div>
   )
 
   return (
     <div className="space-y-4">
-      {/* Products & Stock */}
-      <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{bn ? 'পণ্য ও স্টক' : 'Products & Stock'}</h3>
-      <div className={isMobile ? 'grid grid-cols-2 gap-2' : 'grid grid-cols-4 gap-3'}>
-        <Card label={bn ? 'মোট পণ্য' : 'Total Products'} value={bn ? toBnNum(stats.totalProducts) : String(stats.totalProducts)} sub={`${stats.activeProducts} ${bn ? 'সক্রিয়' : 'active'}`} icon={Package} color="var(--brand)" />
-        <Card label={bn ? 'স্টক মূল্য (ক্রয়)' : 'Stock Value (Cost)'} value={bn ? `৳${toBnNum(stats.totalStockValue)}` : `৳${stats.totalStockValue.toLocaleString()}`} icon={DollarSign} color="var(--amber)" />
-        <Card label={bn ? 'স্টক মূল্য (বিক্রয়)' : 'Stock Value (Retail)'} value={bn ? `৳${toBnNum(stats.totalRetailValue)}` : `৳${stats.totalRetailValue.toLocaleString()}`} icon={TrendingUp} color="var(--green)" />
-        <Card label={bn ? 'সর্বনিম্ন স্টক' : 'Low Stock Items'} value={bn ? toBnNum(stats.lowStockItems.length) : String(stats.lowStockItems.length)} color={stats.lowStockItems.length > 0 ? 'var(--red)' : 'var(--green)'} icon={AlertTriangle} />
+      {/* Row 1: Key Metrics */}
+      <div className={`grid gap-3 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
+        {[
+          { label: bn ? 'মোট পণ্য' : 'Total Products', value: stats.totalProducts, sub: `${stats.activeProducts} ${bn ? 'সক্রিয়' : 'active'}`, icon: Package, color: 'var(--brand)' },
+          { label: bn ? 'ক্যাটাগরি' : 'Categories', value: categories.length, icon: Layers, color: 'var(--teal)' },
+          { label: bn ? 'স্টক মূল্য' : 'Stock Value', value: `৳${stats.totalRetailValue.toLocaleString()}`, sub: `${bn ? 'ক্রয়' : 'Cost'}: ৳${stats.totalStockValue.toLocaleString()}`, icon: TrendingUp, color: 'var(--amber)' },
+          { label: bn ? 'সর্বনিম্ন স্টক' : 'Low Stock', value: stats.lowStockItems.length, icon: AlertTriangle, color: stats.lowStockItems.length > 0 ? 'var(--red)' : 'var(--green)' },
+        ].map((s) => (
+          <div key={s.label} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${s.color}15`, color: s.color }}>
+              <s.icon size={14} />
+            </div>
+            <div className="min-w-0">
+              <div className="font-bold text-[0.9375rem] text-[var(--text-primary)] leading-tight">{s.value}</div>
+              <div className="text-[0.625rem] text-[var(--text-secondary)] whitespace-nowrap">{s.label}</div>
+              {'sub' in s && s.sub && <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">{s.sub}</div>}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Sales Summary */}
-      <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{bn ? 'বিক্রয় সারসংক্ষেপ' : 'Sales Summary'}</h3>
-      <div className={isMobile ? 'grid grid-cols-2 gap-2' : 'grid grid-cols-4 gap-3'}>
-        <Card label={bn ? 'আজকের বিক্রয়' : "Today's Sales"} value={bn ? `৳${toBnNum(stats.todayRevenue)}` : `৳${stats.todayRevenue.toLocaleString()}`} sub={`${stats.todaySales} ${bn ? 'টি' : 'items'}`} icon={Calendar} color="var(--teal)" />
-        <Card label={bn ? 'মাসিক বিক্রয়' : 'Monthly Sales'} value={bn ? `৳${toBnNum(stats.monthRevenue)}` : `৳${stats.monthRevenue.toLocaleString()}`} sub={`${stats.monthSales} ${bn ? 'টি' : 'items'}`} icon={BarChart3} color="var(--brand)" />
-        <Card label={bn ? 'বার্ষিক বিক্রয়' : 'Yearly Sales'} value={bn ? `৳${toBnNum(stats.yearRevenue)}` : `৳${stats.yearRevenue.toLocaleString()}`} sub={`${stats.yearSales} ${bn ? 'টি' : 'items'}`} icon={TrendingUp} color="var(--amber)" />
-        <Card label={bn ? 'সর্বকালের মোট' : 'All-Time Total'} value={bn ? `৳${toBnNum(stats.totalRevenue)}` : `৳${stats.totalRevenue.toLocaleString()}`} sub={`${stats.totalSalesCount} ${bn ? 'টি বিক্রয়' : 'sales'}`} icon={ShoppingCart} color="var(--green)" />
+      {/* Row 2: Revenue */}
+      <div className={`grid gap-3 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
+        {[
+          { label: bn ? 'আজকের বিক্রয়' : "Today's Sales", value: `৳${stats.todayRevenue.toLocaleString()}`, sub: `${stats.todaySales} ${bn ? 'টি' : 'orders'}`, icon: Calendar, color: 'var(--teal)' },
+          { label: bn ? 'মাসিক বিক্রয়' : 'Monthly Sales', value: `৳${stats.monthRevenue.toLocaleString()}`, sub: `${stats.monthSales} ${bn ? 'টি' : 'orders'}`, icon: BarChart3, color: 'var(--brand)' },
+          { label: bn ? 'বার্ষিক বিক্রয়' : 'Yearly Sales', value: `৳${stats.yearRevenue.toLocaleString()}`, sub: `${stats.yearSales} ${bn ? 'টি' : 'orders'}`, icon: TrendingUp, color: 'var(--amber)' },
+          { label: bn ? 'সর্বকালের' : 'All-Time Total', value: `৳${stats.totalRevenue.toLocaleString()}`, sub: `${stats.totalSalesCount} ${bn ? 'টি বিক্রয়' : 'sales'}`, icon: ShoppingCart, color: 'var(--green)' },
+        ].map((s) => (
+          <div key={s.label} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${s.color}15`, color: s.color }}>
+              <s.icon size={14} />
+            </div>
+            <div className="min-w-0">
+              <div className="font-bold text-[0.9375rem] text-[var(--text-primary)] leading-tight">{s.value}</div>
+              <div className="text-[0.625rem] text-[var(--text-secondary)] whitespace-nowrap">{s.label}</div>
+              {s.sub && <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">{s.sub}</div>}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Payment Breakdown */}
-      <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{bn ? 'পেমেন্ট পদ্ধতি ভিত্তিক' : 'Payment Breakdown'}</h3>
-      <div className={isMobile ? 'grid grid-cols-2 gap-2' : 'grid grid-cols-4 gap-3'}>
+      {/* Row 3: Payment Breakdown */}
+      <div className={`grid gap-3 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
         {Object.entries(paymentBreakdown).map(([method, amount]) => {
           const cfg = paymentLabels[method]
           const Icon = cfg?.icon || DollarSign
           return (
-            <Card key={method} label={cfg?.[bn ? 'bn' : 'en'] || method} value={bn ? `৳${toBnNum(amount)}` : `৳${amount.toLocaleString()}`} icon={Icon} color={cfg?.color || 'var(--text-secondary)'} />
+            <div key={method} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${cfg?.color || 'var(--text-secondary)'}15`, color: cfg?.color || 'var(--text-secondary)' }}>
+                <Icon size={14} />
+              </div>
+              <div className="min-w-0">
+                <div className="font-bold text-[0.9375rem] text-[var(--text-primary)] leading-tight">৳{amount.toLocaleString()}</div>
+                <div className="text-[0.625rem] text-[var(--text-secondary)] whitespace-nowrap">{cfg?.[bn ? 'bn' : 'en'] || method}</div>
+              </div>
+            </div>
           )
         })}
       </div>
 
       {/* Student Spending */}
-      <div>
-        <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
-          <User size={14} className="inline mr-1.5 -mt-0.5" />
-          {bn ? 'শিক্ষার্থী খরচ' : 'Student Spending'}
-        </h3>
+      <div className="rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
+        <SectionHeader icon={Package} title={bn ? 'শিক্ষার্থী খরচ' : 'Student Spending'} count={studentSpending.length} />
         {studentSpending.length === 0 ? (
-          <div className="py-8 text-center text-[var(--text-muted)] text-[0.8125rem] rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/50">
-            {bn ? 'এখনো কোনো বিক্রয় হয়নি' : 'No sales yet'}
-          </div>
+          <EmptyState icon={Package} text={bn ? 'এখনো কোনো বিক্রয় হয়নি' : 'No sales yet'} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[var(--border)]">
-                  <th className="text-left py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">#</th>
-                  <th className="text-left py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                  <th className="text-left py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'শ্রেণি' : 'Class'}</th>
-                  <th className="text-right py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'লেনদেন' : 'Orders'}</th>
-                  <th className="text-right py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'মোট খরচ' : 'Total Spent'}</th>
-                  <th className="text-left py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পণ্য' : 'Products'}</th>
+                <tr className="bg-[var(--bg-secondary)]">
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">#</th>
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'শ্রেণি' : 'Class'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'লেনদেন' : 'Orders'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'মোট খরচ' : 'Total Spent'}</th>
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'পণ্য' : 'Products'}</th>
                 </tr>
               </thead>
               <tbody>
                 {studentSpending.map((s, i) => (
-                  <tr key={i} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)]">
-                    <td className="py-2.5 px-3 text-[0.8125rem] text-[var(--text-muted)]">{bn ? toBnNum(i + 1) : i + 1}</td>
+                  <tr key={i} className="border-t border-[var(--border)] transition-colors hover:!bg-[var(--brand)]/5" style={{ backgroundColor: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' }}>
+                    <td className="py-2.5 px-3 text-[0.75rem] text-[var(--text-muted)]">{bn ? toBnNum(i + 1) : i + 1}</td>
                     <td className="py-2.5 px-3">
-                      <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{bn ? s.nameBn : s.name}</div>
+                      <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">{bn ? s.nameBn : s.name}</div>
+                      <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono">{s.id}</div>
                     </td>
-                    <td className="py-2.5 px-3 text-[0.8125rem]">{bn ? `শ্রেণি ${s.class}` : `Class ${s.class}`}{s.section ? ` — ${s.section}` : ''}</td>
-                    <td className="py-2.5 px-3 text-right text-[0.8125rem]">{bn ? toBnNum(s.count) : s.count}</td>
+                    <td className="py-2.5 px-3 text-[0.75rem] text-[var(--text-secondary)]">{bn ? `শ্রেণি ${s.class}` : `Class ${s.class}`}{s.section ? ` — ${s.section}` : ''}</td>
+                    <td className="py-2.5 px-3 text-right text-[0.75rem] text-[var(--text-secondary)]">{bn ? toBnNum(s.count) : s.count}</td>
                     <td className="py-2.5 px-3 text-right text-[0.8125rem] font-semibold text-[var(--green)]">৳{bn ? toBnNum(s.total) : s.total.toLocaleString()}</td>
                     <td className="py-2.5 px-3">
                       <div className="flex flex-wrap gap-1">
                         {[...s.products].slice(0, 3).map((p) => (
-                          <span key={p} className="text-[0.625rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded">{p}</span>
+                          <span key={p} className="text-[0.5625rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded whitespace-nowrap">{p}</span>
                         ))}
-                        {s.products.size > 3 && <span className="text-[0.625rem] text-[var(--text-muted)]">+{s.products.size - 3}</span>}
+                        {s.products.size > 3 && <span className="text-[0.5625rem] text-[var(--text-muted)]">+{s.products.size - 3}</span>}
                       </div>
                     </td>
                   </tr>
@@ -201,39 +230,45 @@ export const ReportsTab = ({ isMobile }: Props) => {
       </div>
 
       {/* Product Sales */}
-      <div>
-        <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
-          <Package size={14} className="inline mr-1.5 -mt-0.5" />
-          {bn ? 'পণ্য বিক্রয়' : 'Product Sales'}
-        </h3>
+      <div className="rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
+        <SectionHeader icon={BarChart3} title={bn ? 'পণ্য বিক্রয়' : 'Product Sales'} count={productSales.length} />
         {productSales.length === 0 ? (
-          <div className="py-8 text-center text-[var(--text-muted)] text-[0.8125rem] rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/50">
-            {bn ? 'এখনো কোনো বিক্রয় হয়নি' : 'No sales yet'}
-          </div>
+          <EmptyState icon={BarChart3} text={bn ? 'এখনো কোনো বিক্রয় হয়নি' : 'No sales yet'} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[var(--border)]">
-                  <th className="text-left py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">#</th>
-                  <th className="text-left py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পণ্য' : 'Product'}</th>
-                  <th className="text-right py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'বিক্রি' : 'Qty Sold'}</th>
-                  <th className="text-right py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'আয়' : 'Revenue'}</th>
-                  <th className="text-right py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'লেনদেন' : 'Orders'}</th>
-                  <th className="text-right py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'স্টক' : 'Stock'}</th>
+                <tr className="bg-[var(--bg-secondary)]">
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">#</th>
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'পণ্য' : 'Product'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'বিক্রি' : 'Qty Sold'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'আয়' : 'Revenue'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'লেনদেন' : 'Orders'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'স্টক' : 'Stock'}</th>
                 </tr>
               </thead>
               <tbody>
-                {productSales.map((p, i) => (
-                  <tr key={i} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)]">
-                    <td className="py-2.5 px-3 text-[0.8125rem] text-[var(--text-muted)]">{bn ? toBnNum(i + 1) : i + 1}</td>
-                    <td className="py-2.5 px-3 text-[0.8125rem] font-medium text-[var(--text-primary)]">{bn ? p.nameBn : p.name}</td>
-                    <td className="py-2.5 px-3 text-right text-[0.8125rem] font-semibold">{bn ? toBnNum(p.qty) : p.qty}</td>
-                    <td className="py-2.5 px-3 text-right text-[0.8125rem] font-semibold text-[var(--green)]">৳{bn ? toBnNum(p.revenue) : p.revenue.toLocaleString()}</td>
-                    <td className="py-2.5 px-3 text-right text-[0.8125rem]">{bn ? toBnNum(p.count) : p.count}</td>
-                    <td className="py-2.5 px-3 text-right text-[0.8125rem]">{bn ? toBnNum(p.stock) : p.stock}</td>
-                  </tr>
-                ))}
+                {productSales.map((p, i) => {
+                  const stockPct = p.minStock > 0 ? Math.min(100, (p.stock / (p.minStock * 2)) * 100) : 100
+                  const stockColor = stockPct >= 50 ? 'var(--green)' : stockPct >= 20 ? 'var(--amber)' : 'var(--red)'
+                  return (
+                    <tr key={i} className="border-t border-[var(--border)] transition-colors hover:!bg-[var(--brand)]/5" style={{ backgroundColor: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' }}>
+                      <td className="py-2.5 px-3 text-[0.75rem] text-[var(--text-muted)]">{bn ? toBnNum(i + 1) : i + 1}</td>
+                      <td className="py-2.5 px-3 text-[0.75rem] font-medium text-[var(--text-primary)]">{bn ? p.nameBn : p.name}</td>
+                      <td className="py-2.5 px-3 text-right text-[0.75rem] font-medium">{bn ? toBnNum(p.qty) : p.qty}</td>
+                      <td className="py-2.5 px-3 text-right text-[0.8125rem] font-semibold text-[var(--green)]">৳{bn ? toBnNum(p.revenue) : p.revenue.toLocaleString()}</td>
+                      <td className="py-2.5 px-3 text-right text-[0.75rem] text-[var(--text-secondary)]">{bn ? toBnNum(p.count) : p.count}</td>
+                      <td className="py-2.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-[0.75rem] font-medium" style={{ color: stockColor }}>{bn ? toBnNum(p.stock) : p.stock}</span>
+                          <div className="w-12 h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${stockPct}%`, background: stockColor }} />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -241,37 +276,42 @@ export const ReportsTab = ({ isMobile }: Props) => {
       </div>
 
       {/* Category Breakdown */}
-      <div>
-        <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
-          <Tag size={14} className="inline mr-1.5 -mt-0.5" />
-          {bn ? 'ক্যাটাগরি ভিত্তিক' : 'Category Breakdown'}
-        </h3>
-        {categorySales.length === 0 ? (
-          <div className="py-8 text-center text-[var(--text-muted)] text-[0.8125rem] rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/50">
-            {bn ? 'এখনো কোনো বিক্রয় হয়নি' : 'No sales yet'}
-          </div>
+      <div className="rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
+        <SectionHeader icon={Tag} title={bn ? 'ক্যাটাগরি ভিত্তিক' : 'Category Breakdown'} count={categorySales.items.length} />
+        {categorySales.items.length === 0 ? (
+          <EmptyState icon={Tag} text={bn ? 'এখনো কোনো বিক্রয় হয়নি' : 'No sales yet'} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[var(--border)]">
-                  <th className="text-left py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">#</th>
-                  <th className="text-left py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
-                  <th className="text-right py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পণ্য' : 'Products'}</th>
-                  <th className="text-right py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'বিক্রি' : 'Qty Sold'}</th>
-                  <th className="text-right py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'আয়' : 'Revenue'}</th>
+                <tr className="bg-[var(--bg-secondary)]">
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">#</th>
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'বিক্রি' : 'Qty Sold'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'আয়' : 'Revenue'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'শেয়ার' : 'Share'}</th>
                 </tr>
               </thead>
               <tbody>
-                {categorySales.map((c, i) => (
-                  <tr key={i} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)]">
-                    <td className="py-2.5 px-3 text-[0.8125rem] text-[var(--text-muted)]">{bn ? toBnNum(i + 1) : i + 1}</td>
-                    <td className="py-2.5 px-3 text-[0.8125rem] font-medium text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</td>
-                    <td className="py-2.5 px-3 text-right text-[0.8125rem]">{bn ? toBnNum(c.productIds.size) : c.productIds.size}</td>
-                    <td className="py-2.5 px-3 text-right text-[0.8125rem] font-semibold">{bn ? toBnNum(c.qty) : c.qty}</td>
-                    <td className="py-2.5 px-3 text-right text-[0.8125rem] font-semibold text-[var(--green)]">৳{bn ? toBnNum(c.revenue) : c.revenue.toLocaleString()}</td>
-                  </tr>
-                ))}
+                {categorySales.items.map((c, i) => {
+                  const pct = categorySales.totalRevenue > 0 ? Math.round((c.revenue / categorySales.totalRevenue) * 100) : 0
+                  return (
+                    <tr key={i} className="border-t border-[var(--border)] transition-colors hover:!bg-[var(--brand)]/5" style={{ backgroundColor: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' }}>
+                      <td className="py-2.5 px-3 text-[0.75rem] text-[var(--text-muted)]">{bn ? toBnNum(i + 1) : i + 1}</td>
+                      <td className="py-2.5 px-3 text-[0.75rem] font-medium text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</td>
+                      <td className="py-2.5 px-3 text-right text-[0.75rem] font-medium">{bn ? toBnNum(c.qty) : c.qty}</td>
+                      <td className="py-2.5 px-3 text-right text-[0.8125rem] font-semibold text-[var(--green)]">৳{bn ? toBnNum(c.revenue) : c.revenue.toLocaleString()}</td>
+                      <td className="py-2.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-[0.6875rem] text-[var(--text-muted)]">{pct}%</span>
+                          <div className="w-16 h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
+                            <div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -280,29 +320,42 @@ export const ReportsTab = ({ isMobile }: Props) => {
 
       {/* Low Stock Alert */}
       {stats.lowStockItems.length > 0 && (
-        <div>
-          <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)] mb-3">
-            {bn ? '⚠ সর্বনিম্ন স্টক পণ্য' : '⚠ Low Stock Alert'}
-          </h3>
+        <div className="rounded-xl border border-red-500/20 overflow-hidden bg-[var(--surface)]">
+          <div className="px-4 py-3 border-b border-red-500/20 flex items-center gap-2 bg-red-500/5">
+            <AlertTriangle size={14} className="text-red-500" />
+            <h3 className="text-[0.8125rem] font-semibold text-red-500">{bn ? 'সর্বনিম্ন স্টক পণ্য' : 'Low Stock Alert'}</h3>
+            <span className="ml-auto text-[0.625rem] text-red-500/70">{stats.lowStockItems.length} {bn ? 'টি পণ্য' : 'items'}</span>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[var(--border)]">
-                  <th className="text-left py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পণ্য' : 'Product'}</th>
-                  <th className="text-right py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'বর্তমান স্টক' : 'Current Stock'}</th>
-                  <th className="text-right py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'সর্বনিম্ন' : 'Min Stock'}</th>
-                  <th className="text-right py-2 px-3 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পুরণ প্রয়োজন' : 'Need Restock'}</th>
+                <tr className="bg-[var(--bg-secondary)]">
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'পণ্য' : 'Product'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'বর্তমান' : 'Current'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'সর্বনিম্ন' : 'Min'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'প্রয়োজন' : 'Need'}</th>
+                  <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider w-24"></th>
                 </tr>
               </thead>
               <tbody>
-                {stats.lowStockItems.map((p) => (
-                  <tr key={p.id} className="border-b border-[var(--border)] last:border-0">
-                    <td className="py-2 px-3 text-[0.8125rem]">{bn ? p.nameBn : p.name}</td>
-                    <td className="py-2 px-3 text-right text-[0.8125rem] text-red-500 font-semibold">{bn ? toBnNum(p.stock) : p.stock}</td>
-                    <td className="py-2 px-3 text-right text-[0.8125rem]">{bn ? toBnNum(p.minStock) : p.minStock}</td>
-                    <td className="py-2 px-3 text-right text-[0.8125rem] font-semibold">{bn ? toBnNum(p.minStock - p.stock) : p.minStock - p.stock}</td>
-                  </tr>
-                ))}
+                {stats.lowStockItems.map((p, i) => {
+                  const pct = p.minStock > 0 ? Math.min(100, (p.stock / p.minStock) * 100) : 0
+                  return (
+                    <tr key={p.id} className="border-t border-[var(--border)] transition-colors hover:!bg-red-500/5" style={{ backgroundColor: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' }}>
+                      <td className="py-2.5 px-3 text-[0.75rem] font-medium text-[var(--text-primary)]">{bn ? p.nameBn : p.name}</td>
+                      <td className="py-2.5 px-3 text-right text-[0.75rem] font-semibold text-red-500">{bn ? toBnNum(p.stock) : p.stock}</td>
+                      <td className="py-2.5 px-3 text-right text-[0.75rem] text-[var(--text-secondary)]">{bn ? toBnNum(p.minStock) : p.minStock}</td>
+                      <td className="py-2.5 px-3 text-right text-[0.75rem] font-medium text-red-500">{bn ? toBnNum(p.minStock - p.stock) : p.minStock - p.stock}</td>
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="w-16 h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
+                            <div className="h-full rounded-full bg-red-500" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
