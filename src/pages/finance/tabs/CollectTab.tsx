@@ -145,6 +145,23 @@ function generateMonthRows(
 const labelCls = 'block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.03em] mb-[5px]'
 const fieldInputCls = 'w-full border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] text-[var(--text-primary)] bg-[var(--bg-primary)] outline-none transition-colors focus:border-[var(--brand)]'
 
+function ModernCheckbox({ checked, onChange, color = 'brand' }: { checked: boolean; onChange: (v: boolean) => void; color?: 'brand' | 'teal' }) {
+  const c = color === 'teal' ? 'var(--teal)' : 'var(--brand)'
+  return (
+    <button type="button" role="checkbox" aria-checked={checked} onClick={() => onChange(!checked)}
+      className="relative w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 cursor-pointer transition-all duration-200"
+      style={{
+        borderColor: checked ? c : 'var(--border)',
+        background: checked ? c : 'transparent',
+      }}>
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="transition-all duration-200"
+        style={{ opacity: checked ? 1 : 0, transform: checked ? 'scale(1)' : 'scale(0.5)' }}>
+        <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  )
+}
+
 export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect, initialStudentId, initialFeeStructureId, onClearCollectFromDue }: Props) {
   const bn = useBn()
   const students = useSessionStudents()
@@ -1145,18 +1162,20 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 <p className="text-[13px] text-[var(--text-muted)] text-center py-10">{bn ? 'কোনো এককালীন ফি পাওয়া যায়নি' : 'No one-time fees found'}</p>
               ) : (
                 <div className="space-y-2">
-                  {oneTimeStructures.map((s) => (
-                    <label key={s.id} className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] cursor-pointer hover:bg-[var(--bg-secondary)] hover:border-[var(--brand)]/30 transition-all">
-                      <input type="checkbox" checked={selectedOneTimeFees.has(s.id)}
-                        onChange={(e) => { const next = new Set(selectedOneTimeFees); if (e.target.checked) next.add(s.id); else next.delete(s.id); setSelectedOneTimeFees(next) }}
-                        className="w-4 h-4 accent-[var(--brand)]" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-semibold text-[var(--text-primary)]">{bn ? s.nameBn : s.name}</div>
-                        <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{s.descriptionBn || s.description || '—'}</div>
+                  {oneTimeStructures.map((s) => {
+                    const isSelected = selectedOneTimeFees.has(s.id)
+                    return (
+                      <div key={s.id} onClick={() => { const next = new Set(selectedOneTimeFees); if (isSelected) next.delete(s.id); else next.add(s.id); setSelectedOneTimeFees(next) }}
+                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-[var(--brand)]/40 bg-[var(--brand)]/5 shadow-sm' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)] hover:border-[var(--brand)]/20'}`}>
+                        <ModernCheckbox checked={isSelected} onChange={(v) => { const next = new Set(selectedOneTimeFees); if (v) next.add(s.id); else next.delete(s.id); setSelectedOneTimeFees(next) }} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] font-semibold text-[var(--text-primary)]">{bn ? s.nameBn : s.name}</div>
+                          <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{s.descriptionBn || s.description || '—'}</div>
+                        </div>
+                        <div className="text-[var(--brand)] text-[14px] font-bold">৳{s.amount.toLocaleString()}</div>
                       </div>
-                      <div className="text-[var(--brand)] text-[14px] font-bold">৳{s.amount.toLocaleString()}</div>
-                    </label>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -1198,10 +1217,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     const qty = shopQtyMap[p.id] || 1
                     const isSelected = selectedShopProducts.has(p.id)
                     return (
-                      <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isSelected ? 'border-[var(--teal)] bg-[var(--teal)]/5 shadow-sm' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)] hover:border-[var(--teal)]/20'}`}>
-                        <input type="checkbox" checked={isSelected}
-                          onChange={(e) => { const next = new Set(selectedShopProducts); if (e.target.checked) next.add(p.id); else next.delete(p.id); setSelectedShopProducts(next) }}
-                          className="w-4 h-4 accent-[var(--teal)]" />
+                      <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isSelected ? 'border-[var(--teal)]/40 bg-[var(--teal)]/5 shadow-sm' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)] hover:border-[var(--teal)]/20'}`}>
+                        <ModernCheckbox checked={isSelected} color="teal" onChange={(v) => { const next = new Set(selectedShopProducts); if (v) next.add(p.id); else next.delete(p.id); setSelectedShopProducts(next) }} />
                         <div className="flex-1 min-w-0">
                           <div className="text-[13px] font-semibold text-[var(--text-primary)]">{bn ? p.nameBn : p.name}</div>
                           <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{bn ? p.unitBn : p.unit} · {p.sku}</div>
