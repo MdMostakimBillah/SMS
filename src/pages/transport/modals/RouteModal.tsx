@@ -58,7 +58,7 @@ export function RouteModal({ existing, onSaved, onClose }: Props) {
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="relative w-full max-w-[50rem] max-h-[92vh] bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] shadow-2xl overflow-hidden [animation:modalPopIn_0.2s_ease-out]"
+        className={`relative w-full max-w-[32rem] max-h-[92vh] bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] shadow-2xl overflow-hidden ${modalStyleCls}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

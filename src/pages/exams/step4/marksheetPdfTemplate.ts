@@ -388,7 +388,7 @@ export async function generateMarksheetPDF(
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     @page { size: A4 ${orientation}; margin: ${'5mm'}; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Times New Roman', 'Inter', system-ui, sans-serif; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .marksheet-page { page-break-after: always; }
     .marksheet-page:last-child { page-break-after: auto; }
     @media print { body { margin: 0; } .marksheet-page { page-break-after: always; } .marksheet-page:last-child { page-break-after: auto; } }

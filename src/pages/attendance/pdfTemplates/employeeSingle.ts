@@ -94,7 +94,7 @@ export function genSinglePDF(params: GenSinglePDFParams): string {
 <style>
 @page{size:A4 landscape;margin:8mm}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Times New Roman',Arial,sans-serif;font-size:9px;color:#1a1a1a;background:#fff}
+body{font-family:Arial,sans-serif;font-size:9px;color:#1a1a1a;background:#fff}
 .page{padding:0}
 .hdr{display:flex;align-items:center;gap:14px;padding-bottom:8px;border-bottom:2.5px solid ${brand.brandColor};margin-bottom:10px}
 .profile{display:flex;align-items:center;gap:12px;flex:1}

@@ -16,7 +16,7 @@ function buildPrintHTML(title: string, bodyHTML: string, css?: string): string {
     @page { size: A4 portrait; margin: 0; }
     @page :first { margin-top: 0; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Times New Roman', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; background: #fff; font-size: 12px; padding: 10mm; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; background: #fff; font-size: 12px; padding: 10mm; }
   `
   const finalCss = css ? `${css}\n${printRules}` : `${defaultCss}\n${printRules}`
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title><style>${finalCss}</style></head><body>${bodyHTML}</body></html>`

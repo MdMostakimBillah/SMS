@@ -73,14 +73,14 @@ export function generateSyllabusPDFHTML(
 <style>
   @page { size: A4 ${isLandscape ? 'landscape' : 'portrait'}; margin: ${'5mm'}; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Times New Roman', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; font-size: 11px; padding: 8mm; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; font-size: 11px; padding: 8mm; }
   @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; padding: 8mm; } }
 </style></head><body>
 <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:7px;border-bottom:2px solid ${brandColor};margin-bottom:7px">
   <div style="display:flex;align-items:center;gap:10px">
     ${b.logo ? `<img src="${b.logo}" style="width:36px;height:36px;border-radius:7px;object-fit:contain" />` : `<div style="width:36px;height:36px;background:${brandColor};border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700">ET</div>`}
     <div>
-      <div style="font-size:16px;font-weight:800;color:${brandColor};letter-spacing:0.3px;font-family:'Times New Roman','Poppins','Nunito','Segoe UI',sans-serif;">${escapeHtml(b.schoolNameBn && isBn ? b.schoolNameBn : b.schoolName)}</div>
+      <div style="font-size:16px;font-weight:800;color:${brandColor};letter-spacing:0.3px;font-family:'Poppins','Nunito','Segoe UI',sans-serif;">${escapeHtml(b.schoolNameBn && isBn ? b.schoolNameBn : b.schoolName)}</div>
       ${b.address ? `<div style="font-size:8px;color:#888;margin-top:1px;">${escapeHtml(b.address)}</div>` : ''}
     </div>
   </div>
