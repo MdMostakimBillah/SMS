@@ -22,6 +22,7 @@ import { useNavPath } from '@/hooks/useNavPath'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { compressImage } from '@/lib/compressImage'
 
 type Op = 'salary' | 'phone' | 'photo' | 'department' | 'designation' | 'inTime' | 'outTime'
 
@@ -59,25 +60,6 @@ const EditCell = React.memo(function EditCell({ value, onChange, type = 'text' }
     />
   )
 })
-
-async function compressImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = document.createElement('img'),
-      url = URL.createObjectURL(file)
-    img.onload = () => {
-      const c = document.createElement('canvas'),
-        max = 300,
-        r = Math.min(max / img.width, max / img.height)
-      c.width = Math.round(img.width * r)
-      c.height = Math.round(img.height * r)
-      c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height)
-      URL.revokeObjectURL(url)
-      resolve(c.toDataURL('image/jpeg', 0.82))
-    }
-    img.onerror = reject
-    img.src = url
-  })
-}
 
 export default function TeacherBulkUpdatePage() {
   const navigate = useNavigate()

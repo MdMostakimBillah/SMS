@@ -6,6 +6,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from '@/pages/students/admission/types'
+import { compressImage } from '@/lib/compressImage'
 
 interface FP {
   l: string
@@ -54,25 +55,6 @@ const F = React.memo(function F({ l, v, onChange, type = 'text', opts, req }: FP
     </div>
   )
 })
-
-async function compressImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image(),
-      url = URL.createObjectURL(file)
-    img.onload = () => {
-      const c = document.createElement('canvas'),
-        max = 300,
-        r = Math.min(max / img.width, max / img.height)
-      c.width = Math.round(img.width * r)
-      c.height = Math.round(img.height * r)
-      c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height)
-      URL.revokeObjectURL(url)
-      resolve(c.toDataURL('image/jpeg', 0.82))
-    }
-    img.onerror = reject
-    img.src = url
-  })
-}
 
 export default function UpdateStudentPage() {
   const location = useLocation()

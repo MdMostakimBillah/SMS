@@ -32,6 +32,7 @@ apps/api/node_modules
 apps/face-service/models
 apps/face-service/__pycache__
 .env
+.env.production
 
 # Docker
 pgdata/

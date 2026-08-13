@@ -13,6 +13,7 @@ import { printRawHTML } from '@/lib/pdf'
 import QRCode from 'qrcode'
 import { RELIGION_OPTIONS, DISTRICT_OPTIONS } from '@/lib/constants'
 import { FormField } from '@/components/ui/FormField'
+import { compressImage } from '@/lib/compressImage'
 
 type FormData = Omit<StudentAdmission, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'approvedAt'>
 
@@ -51,25 +52,6 @@ const initForm = (currentSession: string): FormData => ({
   guardianPhone: '',
   teacherId: '',
 })
-
-async function compressImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      const max = 300
-      const r = Math.min(max / img.width, max / img.height)
-      canvas.width = Math.round(img.width * r)
-      canvas.height = Math.round(img.height * r)
-      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
-      resolve(canvas.toDataURL('image/jpeg', 0.7))
-      URL.revokeObjectURL(url)
-    }
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')) }
-    img.src = url
-  })
-}
 
 const tabs = [
   { key: 'personal', icon: User, labelBn: 'ব্যক্তিগত', labelEn: 'Personal' },
@@ -159,7 +141,7 @@ export default function GeneralAdmission() {
     if (!file) return
     setPhotoErr('')
     if (file.size > 2 * 1024 * 1024) { setPhotoErr(isBn ? 'ছবির সাইজ সর্বোচ্চ ২ MB' : 'Photo must be under 2MB'); return }
-    try { set('photo', await compressImage(file)) } catch { setPhotoErr(isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image') }
+    try { set('photo', await compressImage(file, 0.7)) } catch { setPhotoErr(isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image') }
   }
 
   const handleSubmit = useCallback(() => {

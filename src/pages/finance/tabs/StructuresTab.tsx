@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import React from 'react'
 import { Trash2, Edit2, ToggleLeft, ToggleRight, Copy, Search, Plus, Repeat, Zap, DollarSign, Tag } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -36,6 +36,13 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    }
+  }, [])
 
   useTabSlider({ activeTab: feeType, tabRefs, sliderRef, getContainer: (s) => s.parentElement })
 
@@ -109,7 +116,7 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
       createdAt: today,
     })
     setSaved(true)
-    setTimeout(() => {
+    savedTimerRef.current = setTimeout(() => {
       setQName('')
       setQNameBn('')
       setQClass('')

@@ -35,12 +35,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(_error: Error, _errorInfo: React.ErrorInfo) {
     if (isChunkLoadError(_error)) {
-      // Clear service worker cache and reload
       if ('caches' in globalThis) {
         caches.keys().then((names) => {
           Promise.all(names.map((name) => caches.delete(name))).then(() => {
             globalThis.location.reload()
+          }).catch(() => {
+            globalThis.location.reload()
           })
+        }).catch(() => {
+          globalThis.location.reload()
         })
       } else {
         globalThis.location.reload()
@@ -57,7 +60,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       caches.keys().then((names) => {
         Promise.all(names.map((name) => caches.delete(name))).then(() => {
           globalThis.location.reload()
+        }).catch(() => {
+          globalThis.location.reload()
         })
+      }).catch(() => {
+        globalThis.location.reload()
       })
     } else {
       globalThis.location.reload()
