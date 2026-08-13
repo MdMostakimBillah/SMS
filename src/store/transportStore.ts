@@ -77,7 +77,7 @@ function buildTransportFeeStructure(a: TransportAssignment, student?: { class: s
     isActive: a.isActive,
     type: 'monthly',
     studentId: a.studentId,
-    applicableMonths: [...a.months],
+    applicableMonths: [...(a.months || [])],
     createdAt: a.assignedDate || new Date().toISOString().split('T')[0],
   }
 }
@@ -88,7 +88,7 @@ function syncTransportFeeStructure(a: TransportAssignment) {
   const structureId = transportFeeStructureId(a.id)
   const existing = useFeeStore.getState().structures.find((s) => s.id === structureId)
 
-  if (a.monthlyFare <= 0 || a.months.length === 0) {
+  if (a.monthlyFare <= 0 || !a.months || a.months.length === 0) {
     if (existing) useFeeStore.getState().deleteStructure(structureId)
     return
   }

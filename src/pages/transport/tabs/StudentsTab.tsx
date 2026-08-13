@@ -327,7 +327,11 @@ export const StudentsTab = ({ searchQuery }: Props) => {
                     <td className="py-3 px-4 text-center">
                       <div className="flex flex-col items-center gap-1">
                         <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
-                          {bn ? `${toBnNum(a.months.length)} মাস` : `${a.months.length} ${a.months.length === 1 ? 'mo' : 'mos'}`}
+                          {(() => {
+                            const mArr = a.months || []
+                            if (mArr.length === 0) return bn ? 'কোনো মাস নির্বাচিত হয়নি' : 'No months'
+                            return bn ? `${toBnNum(mArr.length)} মাস` : `${mArr.length} ${mArr.length === 1 ? 'mo' : 'mos'}`
+                          })()}
                         </span>
                         <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[0.625rem] font-medium whitespace-nowrap ${
                           !a.isActive || a.academicYear !== currentSession
@@ -337,7 +341,13 @@ export const StudentsTab = ({ searchQuery }: Props) => {
                           <CalendarDays size={9} />
                           {!a.isActive || a.academicYear !== currentSession
                             ? (bn ? `নিষ্ক্রিয় ${a.academicYear}` : `Inactive ${a.academicYear}`)
-                            : (bn ? MONTH_NAMES_BN[a.months[0]].slice(0, 3) + '–' + MONTH_NAMES_BN[a.months[a.months.length - 1]].slice(0, 3) : MONTH_NAMES[a.months[0]].slice(0, 3) + '–' + MONTH_NAMES[a.months[a.months.length - 1]].slice(0, 3))}
+                            : (() => {
+                                const mArr = a.months || []
+                                if (mArr.length === 0) return a.academicYear || '—'
+                                const first = bn ? MONTH_NAMES_BN[mArr[0]].slice(0, 3) : MONTH_NAMES[mArr[0]].slice(0, 3)
+                                const last = bn ? MONTH_NAMES_BN[mArr[mArr.length - 1]].slice(0, 3) : MONTH_NAMES[mArr[mArr.length - 1]].slice(0, 3)
+                                return mArr.length === 1 ? first : `${first}–${last}`
+                              })()}
                         </span>
                       </div>
                     </td>
