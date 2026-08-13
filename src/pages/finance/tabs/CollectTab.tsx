@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
-import { User, Search, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2, Download, CircleCheck, ShoppingBag } from 'lucide-react'
+import { User, Search, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2, Download, CircleCheck, ShoppingBag, ChevronDown } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -1287,11 +1287,48 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
               </div>
               <button onClick={() => setShowHistoryModal(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)]"><X size={14} /></button>
             </div>
+            {/* Filter Bar */}
+            <div className="flex items-center gap-2 px-5 py-2.5 border-b border-[var(--border)] flex-shrink-0 bg-[var(--bg-secondary)]/50">
+              <div className="relative flex-1 max-w-[200px]">
+                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input type="text" value={historySearch} onChange={(e) => setHistorySearch(e.target.value)}
+                  placeholder={bn ? 'ফি অনুসন্ধান...' : 'Search fee...'}
+                  className="w-full h-7 pl-8 pr-2 text-[11px] lg:text-[12px] rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
+                {historySearch && <button onClick={() => setHistorySearch('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[var(--border)] flex items-center justify-center cursor-pointer border-0 text-[var(--text-muted)] hover:bg-[var(--text-muted)] hover:text-white transition-colors"><X size={9} /></button>}
+              </div>
+              <select value={historyMethod} onChange={(e) => setHistoryMethod(e.target.value)}
+                className="h-7 px-2 text-[11px] lg:text-[12px] rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none cursor-pointer focus:border-[var(--brand)] transition-colors">
+                <option value="all">{bn ? 'সব পদ্ধতি' : 'All methods'}</option>
+                <option value="cash">{bn ? 'নগদ' : 'Cash'}</option>
+                <option value="bank">{bn ? 'ব্যাংক' : 'Bank'}</option>
+                <option value="mobile">{bn ? 'মোবাইল' : 'Mobile'}</option>
+                <option value="other">{bn ? 'অন্যান্য' : 'Other'}</option>
+              </select>
+              <button onClick={() => setHistorySort((s) => s === 'newest' ? 'oldest' : 'newest')}
+                className="h-7 px-2.5 text-[11px] lg:text-[12px] rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors flex items-center gap-1">
+                {historySort === 'newest' ? <ChevronDown size={12} /> : <ChevronDown size={12} className="rotate-180" />}
+                {bn ? 'তারিখ' : 'Date'}
+              </button>
+            </div>
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto">
-              {studentPayments.length === 0 ? (
-                <p className="text-xs text-[var(--text-muted)] text-center py-6">{bn ? 'কোনো পেমেন্ট নেই' : 'No payments found'}</p>
-              ) : (
+              {(() => {
+                const filtered = studentPayments.filter((batch) => {
+                  if (historyMethod !== 'all' && batch.method !== historyMethod) return false
+                  if (historySearch) {
+                    const q = historySearch.toLowerCase()
+                    const names = batch.payments.map((p) => {
+                      const struct = structures.find((s) => s.id === p.feeStructureId)
+                      return struct ? (bn ? struct.nameBn : struct.name).toLowerCase() : (p.note || '').toLowerCase()
+                    })
+                    if (!names.some((n) => n.includes(q))) return false
+                  }
+                  return true
+                }).sort((a, b) => historySort === 'newest' ? b.paidAt.localeCompare(a.paidAt) : a.paidAt.localeCompare(b.paidAt))
+                if (filtered.length === 0) {
+                  return <p className="text-xs text-[var(--text-muted)] text-center py-6">{bn ? 'কোনো পেমেন্ট নেই' : 'No payments found'}</p>
+                }
+                return (
                 <table className="w-full text-[12px] lg:text-[13.5px]" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '4%' }} />
@@ -1316,7 +1353,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     </tr>
                   </thead>
                   <tbody>
-                    {studentPayments.map((batch, idx) => {
+                    {filtered.map((batch, idx) => {
                       const feeNames = batch.payments.map((p) => {
                         const struct = structures.find((s) => s.id === p.feeStructureId)
                         if (struct) return bn ? struct.nameBn : struct.name
@@ -1368,7 +1405,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     })}
                   </tbody>
                 </table>
-              )}
+                )
+              })()}
             </div>
           </div>
         </div>, document.body
