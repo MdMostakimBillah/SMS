@@ -1,25 +1,10 @@
-import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useLoadingBar } from '@/store/loadingBarStore'
 
 export function TopLoadingBar() {
-  const [progress, setProgress] = useState(0)
-  const [visible, setVisible] = useState(true)
+  const { loading, progress } = useLoadingBar()
 
-  useEffect(() => {
-    const timer1 = setTimeout(() => setProgress(70), 100)
-    const timer2 = setTimeout(() => setProgress(90), 800)
-    const timer3 = setTimeout(() => setProgress(100), 1200)
-    const timer4 = setTimeout(() => setVisible(false), 1500)
-
-    return () => {
-      clearTimeout(timer1)
-      clearTimeout(timer2)
-      clearTimeout(timer3)
-      clearTimeout(timer4)
-    }
-  }, [])
-
-  if (!visible) return null
+  if (!loading && progress === 0) return null
 
   return createPortal(
     <div
@@ -30,16 +15,17 @@ export function TopLoadingBar() {
         right: 0,
         height: '3px',
         zIndex: 99999,
-        background: 'transparent',
       }}
     >
       <div
         style={{
           height: '100%',
           width: `${progress}%`,
-          borderRadius: '0 4px 4px 0',
-          transition: 'width 300ms ease-out',
-          background: 'linear-gradient(90deg, var(--brand), var(--brand-light))',
+          borderRadius: '0 2px 2px 0',
+          transition: progress === 100 ? 'width 300ms ease-in, opacity 300ms ease-in 100ms' : 'width 400ms ease',
+          opacity: progress === 100 ? 0 : 1,
+          background: 'linear-gradient(90deg, var(--brand), var(--brand-light, color-mix(in srgb, var(--brand) 40%, white)))',
+          boxShadow: progress < 100 ? '0 0 10px var(--brand), 0 0 5px var(--brand)' : 'none',
         }}
       />
     </div>,

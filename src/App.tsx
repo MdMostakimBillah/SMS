@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layouts/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { RouteLoadingTracker } from '@/components/ui/RouteLoadingTracker'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute, RoleProtectedRoute, ViewingRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
@@ -75,6 +76,7 @@ function AppContent() {
 
   return (
     <AuthProvider>
+      <RouteLoadingTracker />
       <Routes>
         <Route path="/i/:slug" element={<F><InstitutionLanding /></F>} />
         <Route path="/i/:slug/login" element={<F><InstitutionLoginRoute /></F>} />
