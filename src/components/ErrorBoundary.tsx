@@ -30,25 +30,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    if (isChunkLoadError(error)) {
+      // Chunk error — reload immediately, don't show error UI
+      globalThis.location.reload()
+      return { hasError: false, error: null }
+    }
     return { hasError: true, error }
   }
 
   componentDidCatch(_error: Error, _errorInfo: React.ErrorInfo) {
-    if (isChunkLoadError(_error)) {
-      if ('caches' in globalThis) {
-        caches.keys().then((names) => {
-          Promise.all(names.map((name) => caches.delete(name))).then(() => {
-            globalThis.location.reload()
-          }).catch(() => {
-            globalThis.location.reload()
-          })
-        }).catch(() => {
-          globalThis.location.reload()
-        })
-      } else {
-        globalThis.location.reload()
-      }
-    }
+    // Non-chunk errors only — chunk errors already handled in getDerivedStateFromError
   }
 
   handleGoBack = () => {
