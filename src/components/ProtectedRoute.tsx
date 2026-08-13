@@ -4,21 +4,19 @@ import { useSuperAdminStore } from '@/store/superAdminStore'
 import { LOGIN_PATH } from '@/lib/constants'
 import { INSTITUTION_ROLES, type InstitutionRole } from '@/lib/navUtils'
 
-function getLoginRedirect(): string {
-  try {
-    const slug = sessionStorage.getItem('edutech_inst_slug')
-    if (slug) return `/i/${slug}`
-  } catch { /* ignore */ }
+function getLoginRedirect(slug?: string): string {
+  const s = slug || sessionStorage.getItem('edutech_inst_slug')
+  if (s) return `/i/${s}`
   return LOGIN_PATH ? `${LOGIN_PATH}/login` : '/register'
 }
 
 export function ProtectedRoute() {
   const { user, loading } = useAuth()
-  const { role } = useParams<{ role: string }>()
+  const { role, slug } = useParams<{ role: string; slug: string }>()
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
 
   if (loading) return null
-  if (!user) return <Navigate to={getLoginRedirect()} replace />
+  if (!user) return <Navigate to={getLoginRedirect(slug)} replace />
 
   const isViewing = user.role === 'super_admin' && (!!viewingInstitutionId || !!sessionStorage.getItem('edutech_viewing_id'))
 
