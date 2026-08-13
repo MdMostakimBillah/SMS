@@ -189,6 +189,9 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const [fineDescBn, setFineDescBn] = useState('')
   const [fineAmount, setFineAmount] = useState('')
   const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [historySearch, setHistorySearch] = useState('')
+  const [historyMethod, setHistoryMethod] = useState<string>('all')
+  const [historySort, setHistorySort] = useState<'newest' | 'oldest'>('newest')
   const [showShopModal, setShowShopModal] = useState(false)
   const [selectedShopProducts, setSelectedShopProducts] = useState<Set<string>>(new Set())
   const [shopQtyMap, setShopQtyMap] = useState<Record<string, number>>({})
@@ -840,10 +843,10 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             </div>
           ) : (
             <div className="border border-[var(--border)] rounded-xl overflow-hidden max-h-[360px] overflow-y-auto bg-[var(--bg-primary)]">
-              <table className="w-full text-[12.5px] table-fixed">
+              <table className="w-full text-[12.5px] lg:text-[14px] table-fixed">
                 <thead>
                   <tr className="bg-[var(--bg-secondary)]">
-                    <th className="text-center py-2.5 px-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-10">
+                    <th className="text-center py-2.5 px-3 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-10">
                       <ModernCheckbox checked={displayRows.length > 0 && displayRows.every((r) => getRowEdit(r.key).checked)}
                         onChange={() => { const ac = displayRows.every((r) => getRowEdit(r.key).checked); const next: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}; for (const r of displayRows) { const e = getRowEdit(r.key); const newChecked = !ac; next[r.key] = { ...e, checked: newChecked, receive: newChecked ? Math.max(0, r.receivable - e.discount) : 0 } }; setEditState((prev) => ({ ...prev, ...next })) }}
                         color="brand" size="xs" />
@@ -871,9 +874,9 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           }} color="brand" size="xs" />
                         </td>
                         <td className="text-center px-3 py-3">
-                          <span className="font-semibold text-[var(--text-primary)] text-[12px]">{bn ? row.feeNameBn : row.feeName}</span>
-                          {row.isOnetime && <span className="ml-1 inline-block text-[9px] font-bold uppercase bg-[var(--amber-light)] text-[var(--amber)] px-1 py-px rounded">One-time</span>}
-                          <div className="text-[10px] text-[var(--text-muted)]">{bn ? row.dateRangeBn : row.dateRange}</div>
+                          <span className="font-semibold text-[var(--text-primary)] text-[12px] lg:text-[13.5px]">{bn ? row.feeNameBn : row.feeName}</span>
+                          {row.isOnetime && <span className="ml-1 inline-block text-[9px] lg:text-[10px] font-bold uppercase bg-[var(--amber-light)] text-[var(--amber)] px-1 py-px rounded">One-time</span>}
+                          <div className="text-[10px] lg:text-[11px] text-[var(--text-muted)]">{bn ? row.dateRangeBn : row.dateRange}</div>
                         </td>
                         <td className="text-center px-3 py-3"><span className="font-semibold text-[var(--text-primary)] text-[12px]">{fmt(row.amount)}</span></td>
                         <td className="text-center px-3 py-3">
@@ -898,16 +901,16 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                               return { ...prev, [row.key]: { ...c, discount, receive: c.checked ? Math.max(0, row.receivable - discount) : c.receive } }
                             })
                           }}
-                            className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder="0" max={row.receivable} />
+                            className="h-6 lg:h-7 w-full text-[11px] lg:text-[12px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder="0" max={row.receivable} />
                         </td>
                         <td className="text-center px-3 py-3">
                           <input type="text" value={edit.remarks} onChange={(e) => updateRow(row.key, 'remarks', e.target.value)}
-                            className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder={bn ? '...' : '...'} />
+                            className="h-6 lg:h-7 w-full text-[11px] lg:text-[12px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder={bn ? '...' : '...'} />
                         </td>
                         <td className="text-center px-3 py-3"><span className="font-semibold text-[var(--text-primary)]">{fmt(row.receivable)}</span></td>
                         <td className="text-center px-3 py-3">
                           <input type="number" value={edit.receive} onChange={(e) => updateRow(row.key, 'receive', Number(e.target.value) || 0)}
-                            className="h-6 w-full text-[11px] text-center px-1 rounded border border-[var(--brand-light)] bg-[var(--bg-primary)] text-[var(--brand)] font-bold outline-none focus:border-[var(--brand)]" placeholder="0" />
+                            className="h-6 lg:h-7 w-full text-[11px] lg:text-[12px] text-center px-1 rounded border border-[var(--brand-light)] bg-[var(--bg-primary)] text-[var(--brand)] font-bold outline-none focus:border-[var(--brand)]" placeholder="0" />
                         </td>
                       </tr>
                     )
@@ -1289,7 +1292,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
               {studentPayments.length === 0 ? (
                 <p className="text-xs text-[var(--text-muted)] text-center py-6">{bn ? 'কোনো পেমেন্ট নেই' : 'No payments found'}</p>
               ) : (
-                <table className="w-full text-[12px]" style={{ tableLayout: 'fixed' }}>
+                <table className="w-full text-[12px] lg:text-[13.5px]" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '4%' }} />
                     <col style={{ width: '22%' }} />
@@ -1302,14 +1305,14 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   </colgroup>
                   <thead>
                     <tr className="bg-[var(--bg-secondary)] sticky top-0 z-10">
-                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">#</th>
-                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ফি' : 'Fee'}</th>
-                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'তারিখ' : 'Date'}</th>
-                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পদ্ধতি' : 'Method'}</th>
-                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ইনভয়েস' : 'Invoice'}</th>
-                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'মন্তব্য' : 'Comment'}</th>
-                      <th className="text-center px-2 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold"></th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">#</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ফি' : 'Fee'}</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'তারিখ' : 'Date'}</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ইনভয়েস' : 'Invoice'}</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'মন্তব্য' : 'Comment'}</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1335,27 +1338,27 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                       const monthLabel = `${paidDate.toLocaleString('en', { month: 'short' })} ${paidDate.getFullYear()}`
                       return (
                         <tr key={batch.batchId} className="border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40">
-                          <td className="text-center px-2 py-2.5 text-[var(--text-muted)]">{idx + 1}</td>
-                          <td className="text-center px-2 py-2.5">
+                          <td className="text-center px-2 lg:px-3 py-2.5 text-[var(--text-muted)]">{idx + 1}</td>
+                          <td className="text-center px-2 lg:px-3 py-2.5">
                             <div className="space-y-0.5">
-                              {uniqueNames.map((name, i) => <div key={i} className="font-semibold text-[var(--text-primary)] text-[11px]">{name}</div>)}
+                              {uniqueNames.map((name, i) => <div key={i} className="font-semibold text-[var(--text-primary)] text-[11px] lg:text-[12.5px]">{name}</div>)}
                             </div>
                           </td>
-                          <td className="text-center px-2 py-2.5 text-[var(--text-muted)]">{monthLabel}</td>
-                          <td className="text-center px-2 py-2.5"><span className="inline-block px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] font-medium text-[11px]">{batch.method}</span></td>
-                          <td className="text-center px-2 py-2.5"><span className="text-[11px] text-[var(--text-muted)]">{batch.invoiceNo}</span></td>
-                          <td className="text-center px-2 py-2.5"><span className="font-bold text-[var(--brand)]">{fmt(batch.totalAmount)}</span></td>
-                          <td className="text-center px-2 py-2.5">
-                            <span className="text-[11px] text-[var(--text-muted)] truncate block" title={batch.payments.map((p) => p.note).filter(Boolean).join(', ')}>
+                          <td className="text-center px-2 lg:px-3 py-2.5 text-[var(--text-muted)]">{monthLabel}</td>
+                          <td className="text-center px-2 lg:px-3 py-2.5"><span className="inline-block px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] font-medium text-[11px] lg:text-[12px]">{batch.method}</span></td>
+                          <td className="text-center px-2 lg:px-3 py-2.5"><span className="text-[11px] lg:text-[12px] text-[var(--text-muted)]">{batch.invoiceNo}</span></td>
+                          <td className="text-center px-2 lg:px-3 py-2.5"><span className="font-bold text-[var(--brand)]">{fmt(batch.totalAmount)}</span></td>
+                          <td className="text-center px-2 lg:px-3 py-2.5">
+                            <span className="text-[11px] lg:text-[12px] text-[var(--text-muted)] truncate block" title={batch.payments.map((p) => p.note).filter(Boolean).join(', ')}>
                               {batch.payments.map((p) => p.note).filter(Boolean).join(', ') || '—'}
                             </span>
                           </td>
-                          <td className="text-center px-2 py-2.5">
+                          <td className="text-center px-2 lg:px-3 py-2.5">
                             <div className="flex items-center justify-center gap-1">
-                              <button onClick={() => generateBatchReceipt(batch)} className="w-7 h-7 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center cursor-pointer border-0 hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'ডাউনলোড' : 'Download'}>
+                              <button onClick={() => generateBatchReceipt(batch)} className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center cursor-pointer border-0 hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'ডাউনলোড' : 'Download'}>
                                 <Receipt size={13} />
                               </button>
-                              <button onClick={() => handleDeletePayment(batch.batchId)} className="w-7 h-7 rounded-lg bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                              <button onClick={() => handleDeletePayment(batch.batchId)} className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
                                 <Trash2 size={13} />
                               </button>
                             </div>

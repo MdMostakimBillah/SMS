@@ -219,7 +219,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5 space-y-5 overflow-y-auto max-h-[calc(92vh-8rem)]">
+        <div className="px-6 py-5 space-y-4 overflow-y-auto max-h-[calc(92vh-8rem)] pb-8">
           {/* Student Selection with Filters */}
           <div>
             <label className={labelCls}>{bn ? 'ছাত্র নির্বাচন' : 'Select Student'}<span className="text-red-400 ml-0.5">*</span></label>
@@ -432,7 +432,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
           </div>
 
           {/* Month Selection */}
-          <div className={`p-4 rounded-xl border bg-gradient-to-br from-[var(--brand)]/5 via-transparent to-transparent transition-colors ${
+          <div className={`p-3 rounded-xl border bg-gradient-to-br from-[var(--brand)]/5 via-transparent to-transparent transition-colors mb-2 ${
             errors.months ? 'border-red-400' : 'border-[var(--brand)]/15'
           }`}>
             <div className="flex items-center justify-between mb-1">
@@ -444,12 +444,12 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
                 {bn ? `${toBnNum(months.length)}টি মাস নির্বাচিত` : `${months.length} months selected`}
               </span>
             </div>
-            <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
+            <p className="text-[0.6875rem] text-[var(--text-muted)] mb-2">
               {bn ? `শিক্ষাবর্ষ ${academicYear} - কোন মাসে ছাত্রটি পরিবহন ব্যবহার করবে তা নির্বাচন করুন` : `Academic year ${academicYear} — select which months the student will use transport`}
             </p>
 
             {/* Academic year select + select all */}
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <select
                 value={academicYear}
                 onChange={(e) => setAcademicYear(e.target.value)}
@@ -473,7 +473,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
             </div>
 
             {/* Month grid */}
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
               {MONTH_NAMES.map((name, idx) => {
                 const active = months.includes(idx)
                 return (
@@ -481,13 +481,13 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
                     key={name}
                     type="button"
                     onClick={() => toggleMonth(idx)}
-                    className={`relative py-2.5 px-2 rounded-xl text-[0.75rem] font-semibold cursor-pointer transition-all border flex items-center justify-center gap-1.5 ${
+                    className={`relative py-1.5 px-1.5 rounded-lg text-[0.6875rem] font-semibold cursor-pointer transition-all border flex items-center justify-center gap-1 ${
                       active
                         ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-lg shadow-[var(--brand)]/25'
                         : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)]'
                     }`}
                   >
-                    {active && <Check size={12} className="shrink-0" />}
+                    {active && <Check size={10} className="shrink-0" />}
                     {bn ? MONTH_NAMES_BN[idx] : name}
                   </button>
                 )
