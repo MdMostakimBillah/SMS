@@ -106,7 +106,11 @@ function generateMonthRows(
       })
     } else {
       const range = struct.applicableMonths
-        ? Array.from({ length: 12 }, (_, i) => i)
+        ? struct.applicableMonths.filter((m) => {
+            if (currentYearNum > year) return true
+            if (currentYearNum === year) return m <= currentMonthIdx
+            return false
+          })
         : Array.from({ length: totalMonths }, (_, i) => i)
       for (const i of range) {
         const monthIdx = struct.applicableMonths ? i : (startMonth + i) % 12
