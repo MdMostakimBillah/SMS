@@ -41,7 +41,16 @@ export interface TransportAssignment {
   pickupStop: string
   monthlyFare: number
   assignedDate: string
+  durationMonths: number
   isActive: boolean
+}
+
+export function computeExpiryDate(assignedDate: string, months?: number): string {
+  const m = months && months > 0 ? months : 12
+  const d = new Date(assignedDate + 'T00:00:00')
+  if (isNaN(d.getTime())) return ''
+  d.setMonth(d.getMonth() + m)
+  return d.toISOString().split('T')[0]
 }
 
 export const TRANSPORT_FEE_NAME = 'Transport Fee'
@@ -65,6 +74,7 @@ function buildTransportFeeStructure(a: TransportAssignment, student?: { class: s
     isActive: a.isActive,
     type: 'monthly',
     studentId: a.studentId,
+    expiryDate: computeExpiryDate(a.assignedDate, a.durationMonths),
     createdAt: a.assignedDate || new Date().toISOString().split('T')[0],
   }
 }
@@ -88,6 +98,7 @@ function syncTransportFeeStructure(a: TransportAssignment) {
       class: next.class,
       section: next.section,
       academicYear: next.academicYear,
+      expiryDate: next.expiryDate,
     })
   } else {
     useFeeStore.getState().addStructure(next)
@@ -214,11 +225,11 @@ export const useTransportStore = create<TransportState>()(
       ],
 
       assignments: [
-        { id: 'TA-001', studentId: 'ET-2025-10001', vehicleId: 'TV-001', routeId: 'TR-001', pickupStop: 'Mirpur-10', monthlyFare: 2000, assignedDate: '2025-01-20', isActive: true },
-        { id: 'TA-002', studentId: 'ET-2025-10002', vehicleId: 'TV-001', routeId: 'TR-001', pickupStop: 'Mirpur-11', monthlyFare: 2000, assignedDate: '2025-01-20', isActive: true },
-        { id: 'TA-003', studentId: 'ET-2025-10003', vehicleId: 'TV-001', routeId: 'TR-002', pickupStop: 'Uttara Sector-3', monthlyFare: 3000, assignedDate: '2025-02-01', isActive: true },
-        { id: 'TA-004', studentId: 'ET-2025-10004', vehicleId: 'TV-002', routeId: 'TR-003', pickupStop: 'Banani-11', monthlyFare: 2500, assignedDate: '2025-02-15', isActive: true },
-        { id: 'TA-005', studentId: 'ET-2025-10005', vehicleId: 'TV-003', routeId: 'TR-001', pickupStop: 'Pallabi', monthlyFare: 2000, assignedDate: '2025-03-10', isActive: true },
+        { id: 'TA-001', studentId: 'ET-2025-10001', vehicleId: 'TV-001', routeId: 'TR-001', pickupStop: 'Mirpur-10', monthlyFare: 2000, assignedDate: '2025-01-20', durationMonths: 12, isActive: true },
+        { id: 'TA-002', studentId: 'ET-2025-10002', vehicleId: 'TV-001', routeId: 'TR-001', pickupStop: 'Mirpur-11', monthlyFare: 2000, assignedDate: '2025-01-20', durationMonths: 12, isActive: true },
+        { id: 'TA-003', studentId: 'ET-2025-10003', vehicleId: 'TV-001', routeId: 'TR-002', pickupStop: 'Uttara Sector-3', monthlyFare: 3000, assignedDate: '2025-02-01', durationMonths: 12, isActive: true },
+        { id: 'TA-004', studentId: 'ET-2025-10004', vehicleId: 'TV-002', routeId: 'TR-003', pickupStop: 'Banani-11', monthlyFare: 2500, assignedDate: '2025-02-15', durationMonths: 12, isActive: true },
+        { id: 'TA-005', studentId: 'ET-2025-10005', vehicleId: 'TV-003', routeId: 'TR-001', pickupStop: 'Pallabi', monthlyFare: 2000, assignedDate: '2025-03-10', durationMonths: 12, isActive: true },
       ],
 
       addVehicle: (v) => set((state) => ({ vehicles: [...state.vehicles, v] })),
@@ -299,6 +310,18 @@ export const useTransportStore = create<TransportState>()(
   )
 )
 
+export function pruneExpiredAssignments() {
+  const { assignments, updateAssignment } = useTransportStore.getState()
+  const today = new Date().toISOString().split('T')[0]
+  for (const a of assignments) {
+    if (!a.isActive) continue
+    const expiry = computeExpiryDate(a.assignedDate, a.durationMonths)
+    if (expiry && expiry < today) {
+      updateAssignment(a.id, { isActive: false })
+    }
+  }
+}
+
 registerStoreReset(() => {
   useTransportStore.setState({ vehicles: [], routes: [], assignments: [] })
 })
@@ -313,4 +336,5 @@ registerStoreLoad(() => {
       if (parsed.state) useTransportStore.setState(parsed.state)
     }
   } catch { /* ignore */ }
+  pruneExpiredAssignments()
 })

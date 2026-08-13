@@ -110,6 +110,12 @@ function generateMonthRows(
         const yearOffset = Math.floor((startMonth + i) / 12)
         const m = months[monthIdx]
         const currentYear = year + yearOffset
+        if (struct.expiryDate) {
+          const exp = new Date(struct.expiryDate + 'T00:00:00')
+          const expMonthStart = new Date(exp.getFullYear(), exp.getMonth(), 1)
+          const thisMonthStart = new Date(currentYear, monthIdx, 1)
+          if (thisMonthStart > expMonthStart) continue
+        }
         const monthPayments = payments
           .filter((p) => { if (p.feeStructureId !== struct.id) return false; if (p.forMonth) return p.forMonth === `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}`; const d = new Date(p.paidAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
         const paid = monthPayments.reduce((sum, p) => sum + p.amount, 0)

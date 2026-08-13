@@ -232,6 +232,16 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
               continue
             }
 
+            if (fee.expiryDate) {
+              const exp = new Date(fee.expiryDate + 'T00:00:00')
+              const expMonthStart = new Date(exp.getFullYear(), exp.getMonth(), 1)
+              const thisMonthStart = new Date(fYear, m, 1)
+              if (thisMonthStart > expMonthStart) {
+                monthCells[m] = { paid: true, amount: 0, paidAmount: 0 }
+                continue
+              }
+            }
+
             const monthKey = `${fYear}-${String(m + 1).padStart(2, '0')}`
             const monthPayments = payments.filter((p) => {
               if (p.studentId !== student.id || p.feeStructureId !== fee.id) return false

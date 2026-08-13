@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Bus, MapPin, Users, Search } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
-import { useTransportStore } from '@/store/transportStore'
+import { useTransportStore, pruneExpiredAssignments } from '@/store/transportStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { toBnNum } from '@/lib/i18n'
 import { VehiclesTab } from './tabs/VehiclesTab'
@@ -56,6 +56,7 @@ export default function TransportPage() {
   })
 
   useEffect(() => {
+    pruneExpiredAssignments()
     const t = setTimeout(() => setLoading(false), 400)
     return () => clearTimeout(t)
   }, [])

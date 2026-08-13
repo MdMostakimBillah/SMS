@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { Users, UserPlus, Pencil, Trash2, Bus, MapPin, FileText, FileSpreadsheet, MoreVertical, ChevronDown, Filter, X } from 'lucide-react'
+import { Users, UserPlus, Pencil, Trash2, Bus, MapPin, FileText, FileSpreadsheet, MoreVertical, ChevronDown, Filter, X, CalendarDays } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
-import { useTransportStore, type TransportAssignment } from '@/store/transportStore'
+import { useTransportStore, type TransportAssignment, computeExpiryDate } from '@/store/transportStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { PaginationControls } from '@/components/shared/PaginationControls'
@@ -106,6 +106,8 @@ export const StudentsTab = ({ searchQuery }: Props) => {
       [bn ? 'যানবাহন' : 'Vehicle']: a.vehicle ? (bn ? a.vehicle.nameBn : a.vehicle.name) : '',
       [bn ? 'রুট' : 'Route']: a.route ? (bn ? a.route.nameBn : a.route.name) : '',
       [bn ? 'বোর্ডিং' : 'Pickup']: a.pickupStop || '',
+      [bn ? 'মেয়াদ (মাস)' : 'Duration (mo)']: a.durationMonths,
+      [bn ? 'মেয়াদ শেষ' : 'Expiry']: computeExpiryDate(a.assignedDate, a.durationMonths),
       [bn ? 'ভাড়া (৳)' : 'Fare (৳)']: a.monthlyFare,
     }))
     const ws = XLSX.utils.json_to_sheet(rows)
@@ -123,6 +125,8 @@ export const StudentsTab = ({ searchQuery }: Props) => {
     { key: 'vehicle', label: 'Vehicle', labelBn: 'যানবাহন', default: true },
     { key: 'route', label: 'Route', labelBn: 'রুট', default: true },
     { key: 'pickup', label: 'Pickup', labelBn: 'বোর্ডিং', default: true },
+    { key: 'duration', label: 'Duration', labelBn: 'মেয়াদ', default: true },
+    { key: 'expiry', label: 'Expiry', labelBn: 'শেষ তারিখ', default: true },
     { key: 'fare', label: 'Fare', labelBn: 'ভাড়া', default: true },
   ], [])
 
@@ -135,6 +139,8 @@ export const StudentsTab = ({ searchQuery }: Props) => {
     if (cols.includes('vehicle')) row[bn ? 'যানবাহন' : 'Vehicle'] = a.vehicle ? (bn ? a.vehicle.nameBn : a.vehicle.name) : '—'
     if (cols.includes('route')) row[bn ? 'রুট' : 'Route'] = a.route ? (bn ? a.route.nameBn : a.route.name) : '—'
     if (cols.includes('pickup')) row[bn ? 'বোর্ডিং' : 'Pickup'] = a.pickupStop || '—'
+    if (cols.includes('duration')) row[bn ? 'মেয়াদ' : 'Duration'] = `${a.durationMonths} ${bn ? 'মাস' : 'mo'}`
+    if (cols.includes('expiry')) row[bn ? 'শেষ তারিখ' : 'Expiry'] = computeExpiryDate(a.assignedDate, a.durationMonths) || '—'
     if (cols.includes('fare')) row[bn ? 'ভাড়া' : 'Fare'] = a.monthlyFare
     return row
   }, [bn, filtered])
@@ -272,6 +278,7 @@ export const StudentsTab = ({ searchQuery }: Props) => {
                   <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'যানবাহন' : 'Vehicle'}</th>
                   <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'রুট' : 'Route'}</th>
                   <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'বোর্ডিং' : 'Pickup'}</th>
+                  <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'মেয়াদ' : 'Duration'}</th>
                   <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ভাড়া' : 'Fare'}</th>
                   <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'কার্যক্রম' : 'Actions'}</th>
                 </tr>
@@ -314,6 +321,28 @@ export const StudentsTab = ({ searchQuery }: Props) => {
                     </td>
                     <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)] text-center">
                       {a.pickupStop || '—'}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {(() => {
+                        const expiry = computeExpiryDate(a.assignedDate, a.durationMonths)
+                        const today = new Date().toISOString().split('T')[0]
+                        const expired = expiry ? expiry < today : false
+                        return (
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
+                              {bn ? `${toBnNum(a.durationMonths)} মাস` : `${a.durationMonths} ${a.durationMonths === 1 ? 'mo' : 'mos'}`}
+                            </span>
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[0.625rem] font-medium whitespace-nowrap ${
+                              expired || !a.isActive
+                                ? 'bg-red-500/10 text-red-500'
+                                : 'bg-[var(--green-light)] text-[var(--green)]'
+                            }`}>
+                              <CalendarDays size={9} />
+                              {expired ? (bn ? `মেয়াদোত্তীর্ণ ${expiry}` : `Expired ${expiry}`) : (bn ? `${expiry}` : `${expiry}`)}
+                            </span>
+                          </div>
+                        )
+                      })()}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">

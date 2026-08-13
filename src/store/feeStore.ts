@@ -27,6 +27,7 @@ export interface FeeStructure {
   type: 'monthly' | 'onetime'
   categoryId?: string
   studentId?: string
+  expiryDate?: string
   createdAt: string
 }
 
