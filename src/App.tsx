@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layouts/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { RouteLoadingTracker } from '@/components/ui/RouteLoadingTracker'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute, RoleProtectedRoute, ViewingRoute } from '@/components/ProtectedRoute'
@@ -58,7 +57,7 @@ function P({ name }: { name: string }) {
 }
 
 const F = ({ children }: { children: React.ReactNode }) => (
-  <ErrorBoundary><Suspense fallback={<LoadingSpinner />}>{children}</Suspense></ErrorBoundary>
+  <ErrorBoundary><Suspense fallback={null}>{children}</Suspense></ErrorBoundary>
 )
 
 function AppContent() {
@@ -67,7 +66,7 @@ function AppContent() {
   if (isSubdomain && institution && resolved) {
     if (resolved.mode === 'subdomain' || resolved.mode === 'custom-domain') {
       return (
-        <Suspense fallback={<LoadingSpinner />}>
+        <Suspense fallback={null}>
           <InstitutionLanding />
         </Suspense>
       )

@@ -2,7 +2,6 @@ import { lazy, Suspense, useContext, useMemo } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { AuthContext } from '@/contexts/AuthContext'
 import { useSuperAdminStore } from '@/store/superAdminStore'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { clearSlug } from '@/lib/storage'
 
 const InstitutionLogin = lazy(() => import('@/pages/auth/InstitutionLogin'))
@@ -22,7 +21,7 @@ export default function InstitutionLoginRoute() {
   // Institution not found
   if (slug && !institution) {
     return (
-      <Suspense fallback={<LoadingSpinner />}>
+      <Suspense fallback={null}>
         <InstitutionLogin subdomain={slug} />
       </Suspense>
     )
@@ -37,7 +36,7 @@ export default function InstitutionLoginRoute() {
       localStorage.removeItem('edutech_user')
     }
     return (
-      <Suspense fallback={<LoadingSpinner />}>
+      <Suspense fallback={null}>
         <InstitutionLogin subdomain={institution.subdomain} />
       </Suspense>
     )
@@ -54,7 +53,7 @@ export default function InstitutionLoginRoute() {
   }
 
   return (
-    <Suspense fallback={<LoadingSpinner />}>
+    <Suspense fallback={null}>
       <InstitutionLogin subdomain={institution?.subdomain || slug || ''} />
     </Suspense>
   )

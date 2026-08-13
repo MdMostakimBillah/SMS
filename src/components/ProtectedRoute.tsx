@@ -1,7 +1,6 @@
 import { Navigate, Outlet, useParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSuperAdminStore } from '@/store/superAdminStore'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { LOGIN_PATH } from '@/lib/constants'
 import { INSTITUTION_ROLES, type InstitutionRole } from '@/lib/navUtils'
 
@@ -18,7 +17,7 @@ export function ProtectedRoute() {
   const { role } = useParams<{ role: string }>()
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
 
-  if (loading) return <LoadingSpinner />
+  if (loading) return null
   if (!user) return <Navigate to={getLoginRedirect()} replace />
 
   const isViewing = user.role === 'super_admin' && (!!viewingInstitutionId || !!sessionStorage.getItem('edutech_viewing_id'))
@@ -47,7 +46,7 @@ export function ViewingRoute() {
   const { user, loading } = useAuth()
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
 
-  if (loading) return <LoadingSpinner />
+  if (loading) return null
   if (!user) return <Navigate to={getLoginRedirect()} replace />
   if (user.role !== 'super_admin') return <Navigate to="/super-admin/admin/dashboard" replace />
   if (!viewingInstitutionId && !sessionStorage.getItem('edutech_viewing_id')) return <Navigate to="/super-admin/schools" replace />
@@ -58,7 +57,7 @@ export function ViewingRoute() {
 export function RoleProtectedRoute({ allowedRoles }: { allowedRoles: string[] }) {
   const { user, loading } = useAuth()
 
-  if (loading) return <LoadingSpinner />
+  if (loading) return null
   if (!user) return <Navigate to="/register" replace />
   if (!allowedRoles.includes(user.role)) {
     const slug = sessionStorage.getItem('edutech_inst_slug')

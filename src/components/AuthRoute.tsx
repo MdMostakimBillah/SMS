@@ -1,11 +1,10 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 export function AuthRoute() {
   const { user, loading } = useAuth()
 
-  if (loading) return <LoadingSpinner />
+  if (loading) return null
   if (user) {
     const slug = sessionStorage.getItem('edutech_inst_slug')
     const viewingId = sessionStorage.getItem('edutech_viewing_id')

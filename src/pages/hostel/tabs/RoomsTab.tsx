@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Home, Pencil, Trash2, Users, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText } from 'lucide-react'
+import { Home, Pencil, Trash2, Users, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Filter, X, DollarSign } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useHostelStore, type HostelRoom } from '@/store/hostelStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
@@ -27,6 +27,9 @@ export const RoomsTab = ({ searchQuery }: Props) => {
   const [perPage, setPerPage] = useState(10)
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+  const [filterFloor, setFilterFloor] = useState('')
+  const [filterAvailability, setFilterAvailability] = useState('')
   const actionMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -40,10 +43,17 @@ export const RoomsTab = ({ searchQuery }: Props) => {
 
   const enrichedRooms = useMemo(() => {
     return rooms.map((r) => {
-      const assigned = assignments.filter((a) => a.roomId === r.id && a.isActive).length
-      return { ...r, assigned, available: r.capacity - assigned }
+      const roomAssignments = assignments.filter((a) => a.roomId === r.id && a.isActive)
+      const assigned = roomAssignments.length
+      const monthlyIncome = roomAssignments.reduce((sum, a) => sum + a.monthlyRent, 0)
+      return { ...r, assigned, available: r.capacity - assigned, monthlyIncome }
     })
   }, [rooms, assignments])
+
+  const uniqueFloors = useMemo(() => {
+    const floorSet = new Set(enrichedRooms.map((r) => r.floor).filter(Boolean))
+    return Array.from(floorSet).sort()
+  }, [enrichedRooms])
 
   const filtered = useMemo(() => {
     let list = enrichedRooms
@@ -57,8 +67,18 @@ export const RoomsTab = ({ searchQuery }: Props) => {
           r.floor.toLowerCase().includes(q)
       )
     }
+    if (filterFloor) {
+      list = list.filter((r) => r.floor === filterFloor)
+    }
+    if (filterAvailability === 'available') {
+      list = list.filter((r) => r.available > 0)
+    } else if (filterAvailability === 'blocked') {
+      list = list.filter((r) => r.available === 0)
+    }
     return list
-  }, [enrichedRooms, searchQuery])
+  }, [enrichedRooms, searchQuery, filterFloor, filterAvailability])
+
+  const hasActiveFilters = filterFloor || filterAvailability
 
   const totalPages = Math.ceil(filtered.length / perPage)
   const paginated = filtered.slice((page - 1) * perPage, page * perPage)
@@ -70,6 +90,25 @@ export const RoomsTab = ({ searchQuery }: Props) => {
     }
   }
 
+  const totalMonthlyIncome = useMemo(() => enrichedRooms.reduce((sum, r) => sum + r.monthlyIncome, 0), [enrichedRooms])
+  const totalCapacity = useMemo(() => enrichedRooms.reduce((sum, r) => sum + r.capacity, 0), [enrichedRooms])
+  const totalAssigned = useMemo(() => enrichedRooms.reduce((sum, r) => sum + r.assigned, 0), [enrichedRooms])
+
+  const floorIncomeData = useMemo(() => {
+    const map = new Map<string, { rooms: number; assigned: number; capacity: number; income: number }>()
+    for (const r of enrichedRooms) {
+      const key = r.floor || (bn ? 'তলা নেই' : 'No Floor')
+      const existing = map.get(key) || { rooms: 0, assigned: 0, capacity: 0, income: 0 }
+      map.set(key, {
+        rooms: existing.rooms + 1,
+        assigned: existing.assigned + r.assigned,
+        capacity: existing.capacity + r.capacity,
+        income: existing.income + r.monthlyIncome,
+      })
+    }
+    return Array.from(map.entries()).sort((a, b) => b[1].income - a[1].income)
+  }, [enrichedRooms, bn])
+
   const exportExcel = useCallback(() => {
     const rows = filtered.map((r, i) => ({
       '#': i + 1,
@@ -79,6 +118,7 @@ export const RoomsTab = ({ searchQuery }: Props) => {
       [bn ? 'বরাদ্দ' : 'Assigned']: r.assigned,
       [bn ? 'খালি' : 'Available']: r.available,
       [bn ? 'মাসিক ভাড়া (৳)' : 'Monthly Rent (৳)']: r.monthlyRent,
+      [bn ? 'মাসিক আয় (৳)' : 'Monthly Income (৳)']: r.monthlyIncome,
       [bn ? 'অবস্থা' : 'Status']: r.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive'),
     }))
     const ws = XLSX.utils.json_to_sheet(rows)
@@ -95,6 +135,7 @@ export const RoomsTab = ({ searchQuery }: Props) => {
     { key: 'assigned', label: 'Assigned', labelBn: 'বরাদ্দ', default: true },
     { key: 'available', label: 'Available', labelBn: 'খালি', default: true },
     { key: 'rent', label: 'Rent', labelBn: 'ভাড়া', default: true },
+    { key: 'income', label: 'Income', labelBn: 'আয়', default: true },
     { key: 'status', label: 'Status', labelBn: 'অবস্থা', default: true },
   ], [])
 
@@ -107,6 +148,7 @@ export const RoomsTab = ({ searchQuery }: Props) => {
     if (cols.includes('assigned')) row[bn ? 'বরাদ্দ' : 'Assigned'] = r.assigned
     if (cols.includes('available')) row[bn ? 'খালি' : 'Available'] = r.available
     if (cols.includes('rent')) row[bn ? 'ভাড়া' : 'Rent'] = r.monthlyRent
+    if (cols.includes('income')) row[bn ? 'আয়' : 'Income'] = r.monthlyIncome
     if (cols.includes('status')) row[bn ? 'অবস্থা' : 'Status'] = r.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')
     return row
   }, [bn])
@@ -157,9 +199,22 @@ export const RoomsTab = ({ searchQuery }: Props) => {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[0.8125rem] text-[var(--text-secondary)] hidden sm:inline">
-          {bn ? `${filtered.length}টি রুম` : `${filtered.length} rooms`}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[0.8125rem] text-[var(--text-secondary)] hidden sm:inline">
+            {bn ? `${filtered.length}টি রুম` : `${filtered.length} rooms`}
+          </span>
+          <button onClick={() => setShowFilters((v) => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium border transition-colors cursor-pointer ${showFilters || hasActiveFilters ? 'bg-[var(--brand)]/5 text-[var(--brand)] border-[var(--brand)]/20' : 'bg-transparent text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)]'}`}>
+            <Filter size={14} />
+            {bn ? 'ফিল্টার' : 'Filters'}
+            {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />}
+          </button>
+          {hasActiveFilters && (
+            <button onClick={() => { setFilterFloor(''); setFilterAvailability(''); setPage(1) }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[0.75rem] text-red-500 border border-red-500/30 hover:bg-red-500/10 transition-colors cursor-pointer">
+              <X size={12} />{bn ? 'মুছুন' : 'Clear'}
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           {filtered.length > 0 && (
             <div className="relative">
@@ -200,6 +255,99 @@ export const RoomsTab = ({ searchQuery }: Props) => {
         </div>
       </div>
 
+      {showFilters && (
+        <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+          <select value={filterFloor} onChange={(e) => { setFilterFloor(e.target.value); setPage(1) }}
+            className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors cursor-pointer">
+            <option value="">{bn ? 'সব তলা' : 'All Floors'}</option>
+            {uniqueFloors.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
+          <select value={filterAvailability} onChange={(e) => { setFilterAvailability(e.target.value); setPage(1) }}
+            className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors cursor-pointer">
+            <option value="">{bn ? 'সব রুম' : 'All Rooms'}</option>
+            <option value="available">{bn ? 'খালি রুম' : 'Available Rooms'}</option>
+            <option value="blocked">{bn ? 'পূর্ণ রুম' : 'Full / Blocked Rooms'}</option>
+          </select>
+          {hasActiveFilters && (
+            <button onClick={() => { setFilterFloor(''); setFilterAvailability(''); setPage(1) }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[0.75rem] text-red-500 border border-red-500/30 hover:bg-red-500/10 transition-colors cursor-pointer">
+              <X size={12} />{bn ? 'মুছুন' : 'Clear'}
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[var(--brand)]/10 text-[var(--brand)]">
+              <Home size={14} />
+            </div>
+            <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'মোট রুম' : 'Total Rooms'}</span>
+          </div>
+          <div className="text-[1.125rem] font-bold text-[var(--text-primary)]">{bn ? toBnNum(enrichedRooms.length) : enrichedRooms.length}</div>
+        </div>
+        <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[var(--amber)]/10 text-[var(--amber)]">
+              <Users size={14} />
+            </div>
+            <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'বরাদ্দ' : 'Occupied'}</span>
+          </div>
+          <div className="text-[1.125rem] font-bold text-[var(--text-primary)]">
+            {bn ? toBnNum(totalAssigned) : totalAssigned}
+            <span className="text-[0.75rem] font-normal text-[var(--text-muted)]">/{bn ? toBnNum(totalCapacity) : totalCapacity}</span>
+          </div>
+        </div>
+        <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[var(--green-light)] text-[var(--green)]">
+              <Users size={14} />
+            </div>
+            <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'খালি' : 'Available'}</span>
+          </div>
+          <div className="text-[1.125rem] font-bold text-[var(--text-primary)]">{bn ? toBnNum(totalCapacity - totalAssigned) : totalCapacity - totalAssigned}</div>
+        </div>
+        <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[var(--brand)]/10 text-[var(--brand)]">
+              <DollarSign size={14} />
+            </div>
+            <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'মাসিক আয়' : 'Monthly Income'}</span>
+          </div>
+          <div className="text-[1.125rem] font-bold text-[var(--text-primary)]">৳{bn ? toBnNum(totalMonthlyIncome) : totalMonthlyIncome.toLocaleString()}</div>
+        </div>
+      </div>
+
+      {floorIncomeData.length > 0 && (
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
+          <h4 className="text-[0.8125rem] font-semibold text-[var(--text-primary)] mb-2">
+            {bn ? 'তলা অনুযায়ী আয়' : 'Floor-wise Income'}
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {floorIncomeData.map(([floor, data]) => (
+              <div key={floor} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[var(--brand)]/10 text-[var(--brand)]">
+                    <Home size={12} />
+                  </div>
+                  <div>
+                    <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">{floor}</div>
+                    <div className="text-[0.625rem] text-[var(--text-muted)]">
+                      {data.rooms} {bn ? 'রুম' : 'rooms'} · {data.assigned}/{data.capacity} {bn ? 'বরাদ্দ' : 'occupied'}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-[0.8125rem] font-bold text-[var(--text-primary)]">
+                  ৳{bn ? toBnNum(data.income) : data.income.toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {filtered.length === 0 ? (
         <div className="py-12 text-center">
           <Home size={32} className="mx-auto text-[var(--text-secondary)] mb-2" />
@@ -221,6 +369,7 @@ export const RoomsTab = ({ searchQuery }: Props) => {
                   <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'বরাদ্দ' : 'Assigned'}</th>
                   <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'খালি' : 'Available'}</th>
                   <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ভাড়া' : 'Rent'}</th>
+                  <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'মাসিক আয়' : 'Income'}</th>
                   <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'অবস্থা' : 'Status'}</th>
                   <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'কার্যক্রম' : 'Actions'}</th>
                 </tr>
@@ -259,6 +408,7 @@ export const RoomsTab = ({ searchQuery }: Props) => {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-[0.8125rem] font-semibold text-[var(--text-primary)] text-center">৳{bn ? toBnNum(r.monthlyRent) : r.monthlyRent.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-[0.8125rem] font-bold text-[var(--brand)] text-center">৳{bn ? toBnNum(r.monthlyIncome) : r.monthlyIncome.toLocaleString()}</td>
                     <td className="py-3 px-4 text-center">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.6875rem] font-medium ${r.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-red-500/10 text-red-500'}`}>
                         {r.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import * as Sentry from '@sentry/react'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { TopLoadingBar } from './components/ui/TopLoadingBar'
 import './index.css'
 import './styles/premium-theme.css'
 import { cleanupOrphanedBaseKeys } from '@/lib/storage'
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')!).render(
     <Sentry.ErrorBoundary fallback={<div />}>
       <ErrorBoundary>
         <BrowserRouter>
+          <TopLoadingBar />
           <App />
         </BrowserRouter>
       </ErrorBoundary>
