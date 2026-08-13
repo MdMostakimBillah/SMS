@@ -31,16 +31,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     if (isChunkLoadError(error)) {
-      // Chunk error — reload immediately, don't show error UI
+      // Stale chunk — reload to get fresh HTML
       globalThis.location.reload()
       return { hasError: false, error: null }
     }
     return { hasError: true, error }
   }
 
-  componentDidCatch(_error: Error, _errorInfo: React.ErrorInfo) {
-    // Non-chunk errors only — chunk errors already handled in getDerivedStateFromError
-  }
+  componentDidCatch() {}
 
   handleGoBack = () => {
     globalThis.location.href = '/login'
