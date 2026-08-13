@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Briefcase,
@@ -27,7 +27,8 @@ import type { AttendanceStatus, DayAttendance } from '@/store/teacherStore'
 import { genSinglePDF, genStudentSinglePDF } from './pdfTemplates'
 import { printRawHTML } from '@/lib/pdf'
 import { Skeleton, SkeletonCard, SkeletonLine } from '@/components/ui/Skeleton'
-const DeviceTab = lazy(() => import('./DeviceTab'))
+import { lazyWithRetry } from '@/lib/lazyWithRetry'
+const DeviceTab = lazyWithRetry(() => import('./DeviceTab'))
 import { today, twentyDaysAgo, getDaysBetween, isFriday, setGlobalBn } from './helpers'
 import type { Tab, StatusFilter } from './helpers'
 import { escapeHtml } from '@/lib/sanitize'

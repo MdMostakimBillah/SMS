@@ -1,10 +1,11 @@
-import { lazy, Suspense, useContext, useMemo } from 'react'
+import { Suspense, useContext, useMemo } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { AuthContext } from '@/contexts/AuthContext'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { clearSlug } from '@/lib/storage'
+import { lazyWithRetry } from '@/lib/lazyWithRetry'
 
-const InstitutionLogin = lazy(() => import('@/pages/auth/InstitutionLogin'))
+const InstitutionLogin = lazyWithRetry(() => import('@/pages/auth/InstitutionLogin'))
 
 export default function InstitutionLoginRoute() {
   const { slug } = useParams<{ slug: string }>()
