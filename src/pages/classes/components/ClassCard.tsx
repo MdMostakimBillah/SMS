@@ -1,8 +1,9 @@
 import React from 'react'
-import { Clock, Trash2, Save, Check, Plus, ChevronDown, ChevronUp, Pencil, X } from 'lucide-react'
+import { Clock, Trash2, Save, Plus, ChevronDown, ChevronUp, Pencil, X } from 'lucide-react'
 import type { ClassInfo, ClassSection, InstitutionSettings } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
 import { inputClass } from '../constants'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { ClassTimeEditForm } from './ClassTimeEditForm'
 import { SectionCard } from './SectionCard'
 
@@ -99,11 +100,8 @@ export const ClassCard = React.memo(function ClassCard({
         }}
       >
         {bulkMode && (
-          <div
-            className={`w-[1.125rem] h-[1.125rem] rounded-[0.25rem] border-[0.0938rem] flex items-center justify-center flex-shrink-0 transition-all cursor-pointer ${isSelected ? 'bg-[var(--brand)] border-[var(--brand)]' : 'border-[var(--border)] hover:border-[var(--brand)]'}`}
-            onClick={(e) => { e.stopPropagation(); toggleSelectClass(cls.id) }}
-          >
-            {isSelected && <Check size={10} className="text-white" />}
+          <div className="flex-shrink-0" onClick={(e) => { e.stopPropagation(); toggleSelectClass(cls.id) }}>
+            <ModernCheckbox checked={isSelected} onChange={() => toggleSelectClass(cls.id)} color="brand" size="xs" />
           </div>
         )}
         <div style={{

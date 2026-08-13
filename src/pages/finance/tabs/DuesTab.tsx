@@ -11,6 +11,7 @@ import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsMod
 import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface Props {
   onCollect: (due: FeeDue) => void
@@ -780,11 +781,11 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             <thead>
               <tr className="bg-[var(--bg-secondary)] sticky top-0 z-20">
                 <th className="text-center px-2 py-2 bg-[var(--bg-secondary)] z-20" style={{ width: '36px', minWidth: '36px' }}>
-                  <input
-                    type="checkbox"
+                  <ModernCheckbox
                     checked={results.length > 0 && selectedRows.size === results.length}
                     onChange={toggleAllRows}
-                    className="w-3.5 h-3.5 accent-[var(--brand)] cursor-pointer"
+                    color="brand"
+                    size="xs"
                   />
                 </th>
                 <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '40px', minWidth: '40px' }}>{bn ? 'ক্রমিক' : 'S/N'}</th>
@@ -817,11 +818,11 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 return (
                   <tr key={`${rowKey}-${i}`} className={`border-t border-[var(--border)] transition-colors ${isChecked ? 'bg-[var(--brand-light)]/60' : 'hover:bg-[var(--brand-light)]/40'}`}>
                     <td className="text-center px-2 py-3 sticky left-0 bg-[var(--bg-primary)] z-10" style={{ background: isChecked ? 'var(--brand-light)' : 'var(--bg-primary)' }}>
-                      <input
-                        type="checkbox"
+                      <ModernCheckbox
                         checked={isChecked}
                         onChange={() => toggleRowSelection(rowKey)}
-                        className="w-3.5 h-3.5 accent-[var(--brand)] cursor-pointer"
+                        color="brand"
+                        size="xs"
                       />
                     </td>
                     <td className="text-center px-2 py-3 text-[var(--text-secondary)] text-[12px]">{i + 1}</td>

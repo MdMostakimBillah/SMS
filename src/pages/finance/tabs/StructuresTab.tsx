@@ -8,6 +8,7 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import { useFeeStore } from '@/store/feeStore'
 import type { FeeStructure } from '@/store/feeStore'
 import { inputCls, selectCls, btnSecondary, btnPrimary } from '@/lib/styles'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface Props {
   onEdit: (s: FeeStructure) => void
@@ -302,11 +303,11 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
             <thead>
               <tr className="bg-[var(--bg-secondary)]">
                 <th className="w-10 px-2 py-2.5">
-                  <input
-                    type="checkbox"
+                  <ModernCheckbox
                     checked={filtered.length > 0 && selectedIds.size === filtered.length}
                     onChange={toggleSelectAll}
-                    className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer"
+                    color="brand"
+                    size="xs"
                   />
                 </th>
                 <th className="text-left px-3 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'নাম' : 'Name'}</th>
@@ -324,11 +325,11 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
                   className={`border-t border-[var(--border)] transition-colors duration-150 ${idx % 2 === 0 ? 'bg-[var(--bg-primary)]' : 'bg-[var(--bg-secondary)]/40'} ${selectedIds.has(s.id) ? 'bg-[var(--brand-light)]/30' : ''} ${s.isActive ? 'hover:bg-[var(--brand-light)]/50 hover:shadow-[inset_0_0_0_1px_var(--brand)]/10' : 'opacity-50'}`}
                 >
                   <td className="px-2 py-2 text-center">
-                    <input
-                      type="checkbox"
+                    <ModernCheckbox
                       checked={selectedIds.has(s.id)}
                       onChange={() => toggleSelect(s.id)}
-                      className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer"
+                      color="brand"
+                      size="xs"
                     />
                   </td>
                   <td className="px-3 py-2">

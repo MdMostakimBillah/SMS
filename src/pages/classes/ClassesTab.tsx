@@ -1,8 +1,9 @@
 import { useState, useCallback, useMemo } from 'react'
-import { CalendarDays, Download, Check } from 'lucide-react'
+import { CalendarDays, Download } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import type { ClassSection, ClassInfo, InstitutionSettings } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { TopBar } from './components/TopBar'
 import { AddClassForm } from './components/AddClassForm'
@@ -252,9 +253,7 @@ export default function ClassesTab({
       {bulkMode && (
         <div className="flex items-center gap-3 py-2 px-3 mb-3">
           <button onClick={toggleSelectAll} className="flex items-center gap-2 cursor-pointer bg-transparent border-none font-[inherit] text-[0.75rem] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-            <div className={`w-[1.125rem] h-[1.125rem] rounded-[0.25rem] border-[0.0938rem] flex items-center justify-center transition-all ${selectedClasses.length === classes.length ? 'bg-[var(--brand)] border-[var(--brand)]' : 'border-[var(--border)]'}`}>
-              {selectedClasses.length === classes.length && <Check size={11} className="text-white" />}
-            </div>
+            <ModernCheckbox checked={selectedClasses.length === classes.length} onChange={() => toggleSelectAll()} color="brand" size="xs" />
             {isBn ? 'সব নির্বাচন' : 'Select All'}
           </button>
           {selectedClasses.length > 0 && (

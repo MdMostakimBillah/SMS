@@ -5,6 +5,7 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import { useFeeStore } from '@/store/feeStore'
 import type { FeeStructure } from '@/store/feeStore'
 import { btnPrimary } from '@/lib/styles'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { createPortal } from 'react-dom'
 
 interface Props {
@@ -340,11 +341,11 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
             {/* Table Header */}
             <div style={{ display: 'grid', gridTemplateColumns: '2rem 1fr 1fr 7rem', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', padding: '0.5rem 0.75rem', fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-muted)' }}>
               <div>
-                <input
-                  type="checkbox"
+                <ModernCheckbox
                   checked={classOptions.length > 0 && classOptions.every((c) => classEntries[c]?.selected)}
                   onChange={toggleAll}
-                  style={{ accentColor: 'var(--brand)', cursor: 'pointer' }}
+                  color="brand"
+                  size="xs"
                 />
               </div>
               <div>{bn ? 'শ্রেণি' : 'Class'}</div>
@@ -373,11 +374,11 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
                 >
                   {/* Checkbox */}
                   <div>
-                    <input
-                      type="checkbox"
+                    <ModernCheckbox
                       checked={entry.selected}
                       onChange={() => toggleClass(cls)}
-                      style={{ accentColor: 'var(--brand)', cursor: 'pointer' }}
+                      color="brand"
+                      size="xs"
                     />
                   </div>
 
