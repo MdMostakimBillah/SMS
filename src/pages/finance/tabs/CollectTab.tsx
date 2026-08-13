@@ -907,7 +907,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           <input type="text" value={edit.remarks} onChange={(e) => updateRow(row.key, 'remarks', e.target.value)}
                             className="h-6 lg:h-7 w-full text-[11px] lg:text-[12px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder={bn ? '...' : '...'} />
                         </td>
-                        <td className="text-center px-3 py-3"><span className="font-semibold text-[var(--text-primary)]">{fmt(row.receivable)}</span></td>
+                        <td className="text-center px-3 py-3"><span className="font-semibold text-[var(--text-primary)] text-[12px] lg:text-[13.5px]">{fmt(row.receivable)}</span></td>
                         <td className="text-center px-3 py-3">
                           <input type="number" value={edit.receive} onChange={(e) => updateRow(row.key, 'receive', Number(e.target.value) || 0)}
                             className="h-6 lg:h-7 w-full text-[11px] lg:text-[12px] text-center px-1 rounded border border-[var(--brand-light)] bg-[var(--bg-primary)] text-[var(--brand)] font-bold outline-none focus:border-[var(--brand)]" placeholder="0" />
