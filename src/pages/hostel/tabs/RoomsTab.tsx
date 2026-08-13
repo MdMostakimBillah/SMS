@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Home, Pencil, Trash2, Users, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Filter, X, DollarSign } from 'lucide-react'
+import { Home, Pencil, Trash2, Users, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Filter, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useHostelStore, type HostelRoom } from '@/store/hostelStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
@@ -90,24 +90,7 @@ export const RoomsTab = ({ searchQuery }: Props) => {
     }
   }
 
-  const totalMonthlyIncome = useMemo(() => enrichedRooms.reduce((sum, r) => sum + r.monthlyIncome, 0), [enrichedRooms])
-  const totalCapacity = useMemo(() => enrichedRooms.reduce((sum, r) => sum + r.capacity, 0), [enrichedRooms])
-  const totalAssigned = useMemo(() => enrichedRooms.reduce((sum, r) => sum + r.assigned, 0), [enrichedRooms])
-
-  const floorIncomeData = useMemo(() => {
-    const map = new Map<string, { rooms: number; assigned: number; capacity: number; income: number }>()
-    for (const r of enrichedRooms) {
-      const key = r.floor || (bn ? 'তলা নেই' : 'No Floor')
-      const existing = map.get(key) || { rooms: 0, assigned: 0, capacity: 0, income: 0 }
-      map.set(key, {
-        rooms: existing.rooms + 1,
-        assigned: existing.assigned + r.assigned,
-        capacity: existing.capacity + r.capacity,
-        income: existing.income + r.monthlyIncome,
-      })
-    }
-    return Array.from(map.entries()).sort((a, b) => b[1].income - a[1].income)
-  }, [enrichedRooms, bn])
+  const filteredMonthlyIncome = useMemo(() => filtered.reduce((sum, r) => sum + r.monthlyIncome, 0), [filtered])
 
   const exportExcel = useCallback(() => {
     const rows = filtered.map((r, i) => ({
@@ -278,76 +261,6 @@ export const RoomsTab = ({ searchQuery }: Props) => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[var(--brand)]/10 text-[var(--brand)]">
-              <Home size={14} />
-            </div>
-            <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'মোট রুম' : 'Total Rooms'}</span>
-          </div>
-          <div className="text-[1.125rem] font-bold text-[var(--text-primary)]">{bn ? toBnNum(enrichedRooms.length) : enrichedRooms.length}</div>
-        </div>
-        <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[var(--amber)]/10 text-[var(--amber)]">
-              <Users size={14} />
-            </div>
-            <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'বরাদ্দ' : 'Occupied'}</span>
-          </div>
-          <div className="text-[1.125rem] font-bold text-[var(--text-primary)]">
-            {bn ? toBnNum(totalAssigned) : totalAssigned}
-            <span className="text-[0.75rem] font-normal text-[var(--text-muted)]">/{bn ? toBnNum(totalCapacity) : totalCapacity}</span>
-          </div>
-        </div>
-        <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[var(--green-light)] text-[var(--green)]">
-              <Users size={14} />
-            </div>
-            <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'খালি' : 'Available'}</span>
-          </div>
-          <div className="text-[1.125rem] font-bold text-[var(--text-primary)]">{bn ? toBnNum(totalCapacity - totalAssigned) : totalCapacity - totalAssigned}</div>
-        </div>
-        <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[var(--brand)]/10 text-[var(--brand)]">
-              <DollarSign size={14} />
-            </div>
-            <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'মাসিক আয়' : 'Monthly Income'}</span>
-          </div>
-          <div className="text-[1.125rem] font-bold text-[var(--text-primary)]">৳{bn ? toBnNum(totalMonthlyIncome) : totalMonthlyIncome.toLocaleString()}</div>
-        </div>
-      </div>
-
-      {floorIncomeData.length > 0 && (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
-          <h4 className="text-[0.8125rem] font-semibold text-[var(--text-primary)] mb-2">
-            {bn ? 'তলা অনুযায়ী আয়' : 'Floor-wise Income'}
-          </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {floorIncomeData.map(([floor, data]) => (
-              <div key={floor} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-md flex items-center justify-center bg-[var(--brand)]/10 text-[var(--brand)]">
-                    <Home size={12} />
-                  </div>
-                  <div>
-                    <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">{floor}</div>
-                    <div className="text-[0.625rem] text-[var(--text-muted)]">
-                      {data.rooms} {bn ? 'রুম' : 'rooms'} · {data.assigned}/{data.capacity} {bn ? 'বরাদ্দ' : 'occupied'}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-[0.8125rem] font-bold text-[var(--text-primary)]">
-                  ৳{bn ? toBnNum(data.income) : data.income.toLocaleString()}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {filtered.length === 0 ? (
         <div className="py-12 text-center">
           <Home size={32} className="mx-auto text-[var(--text-secondary)] mb-2" />
@@ -432,6 +345,15 @@ export const RoomsTab = ({ searchQuery }: Props) => {
                     </td>
                   </tr>
                 ))}
+                <tr className="border-t-2 border-[var(--brand)]/30 bg-[var(--bg-secondary)]">
+                  <td colSpan={7} className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--text-primary)]">
+                    {bn ? 'মোট মাসিক আয়' : 'Total Monthly Income'}
+                  </td>
+                  <td className="py-3 px-4 text-center text-[0.875rem] font-bold text-[var(--brand)]">
+                    ৳{bn ? toBnNum(filteredMonthlyIncome) : filteredMonthlyIncome.toLocaleString()}
+                  </td>
+                  <td colSpan={2}></td>
+                </tr>
               </tbody>
             </table>
           </div>
