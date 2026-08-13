@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 import { useAdmissionStore } from './admissionStore'
 import { useFeeStore, type FeeStructure } from './feeStore'
+import { useClassStore } from './classStore'
 
 export interface TransportVehicle {
   id: string
@@ -40,18 +41,20 @@ export interface TransportAssignment {
   routeId: string
   pickupStop: string
   monthlyFare: number
+  academicYear: string
+  months: number[]
   assignedDate: string
-  durationMonths: number
   isActive: boolean
 }
 
-export function computeExpiryDate(assignedDate: string, months?: number): string {
-  const m = months && months > 0 ? months : 12
-  const d = new Date(assignedDate + 'T00:00:00')
-  if (isNaN(d.getTime())) return ''
-  d.setMonth(d.getMonth() + m)
-  return d.toISOString().split('T')[0]
-}
+export const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
+export const MONTH_NAMES_BN = [
+  'জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
+  'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর',
+]
 
 export const TRANSPORT_FEE_NAME = 'Transport Fee'
 export const TRANSPORT_FEE_NAME_BN = 'পরিবহন ফি'
@@ -60,21 +63,21 @@ export function transportFeeStructureId(assignmentId: string): string {
   return `FEE-TRANS-${assignmentId}`
 }
 
-function buildTransportFeeStructure(a: TransportAssignment, student?: { class: string; section: string; academicYear: string }): FeeStructure {
+function buildTransportFeeStructure(a: TransportAssignment, student?: { class: string; section: string }): FeeStructure {
   return {
     id: transportFeeStructureId(a.id),
     name: TRANSPORT_FEE_NAME,
     nameBn: TRANSPORT_FEE_NAME_BN,
     class: student?.class || '',
     section: student?.section || undefined,
-    academicYear: student?.academicYear || '',
+    academicYear: a.academicYear,
     amount: a.monthlyFare,
     description: '',
     descriptionBn: '',
     isActive: a.isActive,
     type: 'monthly',
     studentId: a.studentId,
-    expiryDate: computeExpiryDate(a.assignedDate, a.durationMonths),
+    applicableMonths: [...a.months],
     createdAt: a.assignedDate || new Date().toISOString().split('T')[0],
   }
 }
@@ -85,7 +88,7 @@ function syncTransportFeeStructure(a: TransportAssignment) {
   const structureId = transportFeeStructureId(a.id)
   const existing = useFeeStore.getState().structures.find((s) => s.id === structureId)
 
-  if (a.monthlyFare <= 0) {
+  if (a.monthlyFare <= 0 || a.months.length === 0) {
     if (existing) useFeeStore.getState().deleteStructure(structureId)
     return
   }
@@ -98,7 +101,7 @@ function syncTransportFeeStructure(a: TransportAssignment) {
       class: next.class,
       section: next.section,
       academicYear: next.academicYear,
-      expiryDate: next.expiryDate,
+      applicableMonths: next.applicableMonths,
     })
   } else {
     useFeeStore.getState().addStructure(next)
@@ -225,11 +228,11 @@ export const useTransportStore = create<TransportState>()(
       ],
 
       assignments: [
-        { id: 'TA-001', studentId: 'ET-2025-10001', vehicleId: 'TV-001', routeId: 'TR-001', pickupStop: 'Mirpur-10', monthlyFare: 2000, assignedDate: '2025-01-20', durationMonths: 12, isActive: true },
-        { id: 'TA-002', studentId: 'ET-2025-10002', vehicleId: 'TV-001', routeId: 'TR-001', pickupStop: 'Mirpur-11', monthlyFare: 2000, assignedDate: '2025-01-20', durationMonths: 12, isActive: true },
-        { id: 'TA-003', studentId: 'ET-2025-10003', vehicleId: 'TV-001', routeId: 'TR-002', pickupStop: 'Uttara Sector-3', monthlyFare: 3000, assignedDate: '2025-02-01', durationMonths: 12, isActive: true },
-        { id: 'TA-004', studentId: 'ET-2025-10004', vehicleId: 'TV-002', routeId: 'TR-003', pickupStop: 'Banani-11', monthlyFare: 2500, assignedDate: '2025-02-15', durationMonths: 12, isActive: true },
-        { id: 'TA-005', studentId: 'ET-2025-10005', vehicleId: 'TV-003', routeId: 'TR-001', pickupStop: 'Pallabi', monthlyFare: 2000, assignedDate: '2025-03-10', durationMonths: 12, isActive: true },
+        { id: 'TA-001', studentId: 'ET-2025-10001', vehicleId: 'TV-001', routeId: 'TR-001', pickupStop: 'Mirpur-10', monthlyFare: 2000, academicYear: '2025-26', months: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], assignedDate: '2025-01-20', isActive: true },
+        { id: 'TA-002', studentId: 'ET-2025-10002', vehicleId: 'TV-001', routeId: 'TR-001', pickupStop: 'Mirpur-11', monthlyFare: 2000, academicYear: '2025-26', months: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], assignedDate: '2025-01-20', isActive: true },
+        { id: 'TA-003', studentId: 'ET-2025-10003', vehicleId: 'TV-001', routeId: 'TR-002', pickupStop: 'Uttara Sector-3', monthlyFare: 3000, academicYear: '2025-26', months: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], assignedDate: '2025-02-01', isActive: true },
+        { id: 'TA-004', studentId: 'ET-2025-10004', vehicleId: 'TV-002', routeId: 'TR-003', pickupStop: 'Banani-11', monthlyFare: 2500, academicYear: '2025-26', months: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], assignedDate: '2025-02-15', isActive: true },
+        { id: 'TA-005', studentId: 'ET-2025-10005', vehicleId: 'TV-003', routeId: 'TR-001', pickupStop: 'Pallabi', monthlyFare: 2000, academicYear: '2025-26', months: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], assignedDate: '2025-03-10', isActive: true },
       ],
 
       addVehicle: (v) => set((state) => ({ vehicles: [...state.vehicles, v] })),
@@ -310,14 +313,24 @@ export const useTransportStore = create<TransportState>()(
   )
 )
 
+function normalizeAssignment(a: TransportAssignment): TransportAssignment {
+  if (Array.isArray(a.months) && a.months.length > 0) return a
+  return {
+    ...a,
+    academicYear: a.academicYear || useClassStore.getState().institution.currentSession || '2025-26',
+    months: Array.isArray(a.months) ? a.months : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+  }
+}
+
 export function pruneExpiredAssignments() {
   const { assignments, updateAssignment } = useTransportStore.getState()
-  const today = new Date().toISOString().split('T')[0]
+  const currentSession = useClassStore.getState().institution.currentSession || '2025-26'
   for (const a of assignments) {
-    if (!a.isActive) continue
-    const expiry = computeExpiryDate(a.assignedDate, a.durationMonths)
-    if (expiry && expiry < today) {
-      updateAssignment(a.id, { isActive: false })
+    const normalized = normalizeAssignment(a)
+    if (!normalized.isActive) continue
+    const sessionExpired = normalized.academicYear !== currentSession
+    if (sessionExpired) {
+      updateAssignment(normalized.id, { isActive: false })
     }
   }
 }
@@ -333,7 +346,13 @@ registerStoreLoad(() => {
     const raw = localStorage.getItem(`edutech-transport_${slug}`)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed.state) useTransportStore.setState(parsed.state)
+      if (parsed.state) {
+        const state = parsed.state
+        if (Array.isArray(state.assignments)) {
+          state.assignments = state.assignments.map(normalizeAssignment)
+        }
+        useTransportStore.setState(state)
+      }
     }
   } catch { /* ignore */ }
   pruneExpiredAssignments()

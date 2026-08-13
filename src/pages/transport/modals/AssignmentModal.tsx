@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { UserPlus, X, AlertCircle, Search, ChevronDown, CalendarDays, Clock } from 'lucide-react'
+import { UserPlus, X, AlertCircle, Search, ChevronDown, CalendarDays, Clock, Check } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
-import { useTransportStore, type TransportAssignment, computeExpiryDate } from '@/store/transportStore'
+import { useTransportStore, type TransportAssignment, MONTH_NAMES, MONTH_NAMES_BN } from '@/store/transportStore'
 import { useSessionStudents } from '@/store/admissionStore'
+import { useClassStore } from '@/store/classStore'
 import { labelCls } from '@/pages/hr/utils'
 import { getAvatarGradient, toBnNum } from '@/lib/i18n'
 
@@ -21,6 +22,8 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
   const bn = useBn()
   const { vehicles, routes, assignments, addAssignment, updateAssignment } = useTransportStore()
   const students = useSessionStudents()
+  const currentSession = useClassStore((s) => s.institution.currentSession) || '2025-26'
+  const sessions = useClassStore((s) => s.institution.sessions) || [currentSession]
 
   const activeVehicles = useMemo(() => vehicles.filter((v) => v.isActive), [vehicles])
 
@@ -29,8 +32,12 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
   const [routeId, setRouteId] = useState(existing?.routeId || '')
   const [pickupStop, setPickupStop] = useState(existing?.pickupStop || '')
   const [monthlyFare, setMonthlyFare] = useState(existing?.monthlyFare?.toString() || '')
-  const [assignedDate, setAssignedDate] = useState(existing?.assignedDate || new Date().toISOString().split('T')[0])
-  const [durationMonths, setDurationMonths] = useState(existing?.durationMonths || 12)
+  const [academicYear, setAcademicYear] = useState(existing?.academicYear || currentSession)
+  const [months, setMonths] = useState<number[]>(
+    existing?.months && existing.months.length > 0
+      ? [...existing.months]
+      : []
+  )
   const [errors, setErrors] = useState<Record<string, boolean>>({})
 
   // Student filter states
@@ -97,10 +104,22 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
 
   const selectedRoute = useMemo(() => vehicleRoutes.find((r) => r.id === routeId), [vehicleRoutes, routeId])
 
-  const expiryDate = useMemo(() => computeExpiryDate(assignedDate, durationMonths), [assignedDate, durationMonths])
-
   const fareValue = useMemo(() => Number(monthlyFare) || 0, [monthlyFare])
-  const totalCost = useMemo(() => fareValue * durationMonths, [fareValue, durationMonths])
+  const totalCost = useMemo(() => fareValue * months.length, [fareValue, months.length])
+
+  const allMonthsSelected = months.length === 12
+
+  const toggleMonth = (idx: number) => {
+    setMonths((prev) =>
+      prev.includes(idx) ? prev.filter((m) => m !== idx) : [...prev, idx].sort((a, b) => a - b)
+    )
+    setErrors((p) => ({ ...p, months: false }))
+  }
+
+  const toggleAllMonths = () => {
+    setMonths(allMonthsSelected ? [] : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    setErrors((p) => ({ ...p, months: false }))
+  }
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -140,6 +159,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
     if (!studentId) e.student = true
     if (!vehicleId) e.vehicle = true
     if (!routeId) e.route = true
+    if (months.length === 0) e.months = true
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -153,8 +173,9 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
       routeId,
       pickupStop: pickupStop.trim(),
       monthlyFare: fareValue,
-      assignedDate,
-      durationMonths,
+      academicYear,
+      months,
+      assignedDate: existing?.assignedDate || new Date().toISOString().split('T')[0],
       isActive: existing?.isActive ?? true,
     }
     if (existing) {
@@ -410,54 +431,74 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
             </div>
           </div>
 
-          {/* Duration & Date */}
-          <div className="p-4 rounded-xl border border-[var(--brand)]/15 bg-gradient-to-br from-[var(--brand)]/5 via-transparent to-transparent">
-            <div className="flex items-center justify-between mb-3">
-              <label className={`${labelCls} mb-0`}>{bn ? 'বরাদ্দ মেয়াদ' : 'Assignment Duration'}<span className="text-red-400 ml-0.5">*</span></label>
+          {/* Month Selection */}
+          <div className={`p-4 rounded-xl border bg-gradient-to-br from-[var(--brand)]/5 via-transparent to-transparent transition-colors ${
+            errors.months ? 'border-red-400' : 'border-[var(--brand)]/15'
+          }`}>
+            <div className="flex items-center justify-between mb-1">
+              <label className={`${labelCls} mb-0`}>
+                {bn ? 'পরিবহন মাস নির্বাচন' : 'Select Transport Months'}
+                <span className="text-red-400 ml-0.5">*</span>
+              </label>
               <span className="text-[0.6875rem] font-semibold text-[var(--brand)]">
-                {bn ? `${toBnNum(durationMonths)} মাস` : `${durationMonths} ${durationMonths === 1 ? 'month' : 'months'}`}
+                {bn ? `${toBnNum(months.length)}টি মাস নির্বাচিত` : `${months.length} months selected`}
               </span>
             </div>
+            <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
+              {bn ? `শিক্ষাবর্ষ ${academicYear} - কোন মাসে ছাত্রটি পরিবহন ব্যবহার করবে তা নির্বাচন করুন` : `Academic year ${academicYear} — select which months the student will use transport`}
+            </p>
 
-            {/* Preset buttons */}
-            <div className="grid grid-cols-5 gap-2 mb-3">
-              {[1, 3, 6, 9, 12].map((m) => {
-                const active = durationMonths === m
+            {/* Academic year select + select all */}
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <select
+                value={academicYear}
+                onChange={(e) => setAcademicYear(e.target.value)}
+                className={`${selectFieldCls} !w-auto min-w-[7.5rem] py-2`}
+              >
+                <option value={currentSession}>{currentSession}</option>
+                {sessions.filter((s) => s !== currentSession).map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={toggleAllMonths}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-semibold cursor-pointer transition-colors border border-[var(--brand)]/30 bg-[var(--brand)]/8 text-[var(--brand)] hover:bg-[var(--brand)]/15"
+              >
+                <Check size={13} />
+                {allMonthsSelected
+                  ? (bn ? 'সব বাদ দিন' : 'Clear all')
+                  : (bn ? 'সব মাস নির্বাচন' : 'Select all')}
+              </button>
+            </div>
+
+            {/* Month grid */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {MONTH_NAMES.map((name, idx) => {
+                const active = months.includes(idx)
                 return (
                   <button
-                    key={m}
+                    key={name}
                     type="button"
-                    onClick={() => setDurationMonths(m)}
-                    className={`py-2.5 rounded-xl text-[0.8125rem] font-semibold cursor-pointer transition-all border ${
+                    onClick={() => toggleMonth(idx)}
+                    className={`relative py-2.5 px-2 rounded-xl text-[0.75rem] font-semibold cursor-pointer transition-all border flex items-center justify-center gap-1.5 ${
                       active
-                        ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-lg shadow-[var(--brand)]/25 scale-[1.02]'
+                        ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-lg shadow-[var(--brand)]/25'
                         : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)]'
                     }`}
                   >
-                    {bn ? `${toBnNum(m)} মাস` : `${m}M`}
+                    {active && <Check size={12} className="shrink-0" />}
+                    {bn ? MONTH_NAMES_BN[idx] : name}
                   </button>
                 )
               })}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1 block">{bn ? 'শুরুর তারিখ' : 'Start Date'}</label>
-                <input
-                  type="date"
-                  value={assignedDate}
-                  onChange={(e) => setAssignedDate(e.target.value || new Date().toISOString().split('T')[0])}
-                  className={inputFieldCls}
-                />
-              </div>
-              <div>
-                <label className="text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1 block">{bn ? 'শেষ তারিখ' : 'Expiry Date'}</label>
-                <div className="w-full py-2.5 px-3.5 rounded-xl border border-dashed border-[var(--brand)]/40 bg-[var(--brand)]/5 text-[var(--brand)] text-[0.8125rem] font-semibold flex items-center gap-2">
-                  <CalendarDays size={14} className="shrink-0" />
-                  {expiryDate || '—'}
-                </div>
-              </div>
-            </div>
+            {errors.months && (
+              <p className="text-[0.6875rem] text-red-400 mt-2 flex items-center gap-1">
+                <AlertCircle size={10} />{bn ? 'কমপক্ষে ১টি মাস নির্বাচন করুন' : 'Select at least one month'}
+              </p>
+            )}
           </div>
 
           {/* Preview */}
@@ -478,9 +519,17 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
                 <div className="flex-1 min-w-0">
                   <div className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{bn ? assignedStudent.nameBn : assignedStudent.nameEn}</div>
                   <div className="text-[0.75rem] text-[var(--text-secondary)]">{assignedStudent.class} - {assignedStudent.section} · {bn ? 'রোল' : 'Roll'}: {assignedStudent.roll}</div>
-                  <div className="flex items-center gap-3 mt-1 text-[0.6875rem] text-[var(--text-secondary)]">
-                    <span className="inline-flex items-center gap-1"><CalendarDays size={11} />{bn ? `${assignedDate} → ${expiryDate || '—'}` : `${assignedDate} → ${expiryDate || '—'}`}</span>
-                    <span className="inline-flex items-center gap-1"><Clock size={11} />{bn ? `${toBnNum(durationMonths)} মাস` : `${durationMonths} mo`}</span>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="inline-flex items-center gap-1 text-[0.6875rem] text-[var(--text-secondary)]"><CalendarDays size={11} />{academicYear}</span>
+                    {months.length > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[0.6875rem] text-[var(--text-secondary)]">
+                        <Clock size={11} />
+                        {bn ? `${toBnNum(months.length)} মাস` : `${months.length} ${months.length === 1 ? 'month' : 'months'}`}
+                        <span className="text-[var(--text-muted)]">
+                          ({months.map((m) => (bn ? MONTH_NAMES_BN[m].slice(0, 3) : MONTH_NAMES[m].slice(0, 3))).join(', ')})
+                        </span>
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="text-right shrink-0">
@@ -492,7 +541,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
               {fareValue > 0 && (
                 <div className="mt-3 pt-3 border-t border-[var(--border)] flex items-center justify-between">
                   <span className="text-[0.75rem] text-[var(--text-secondary)]">
-                    {bn ? `${toBnNum(durationMonths)} মাসের মোট খরচ` : `Total for ${durationMonths} ${durationMonths === 1 ? 'month' : 'months'}`}
+                    {bn ? `${toBnNum(months.length)} মাসের মোট খরচ` : `Total for ${months.length} ${months.length === 1 ? 'month' : 'months'}`}
                   </span>
                   <span className="text-[0.9375rem] font-bold text-[var(--brand)]">৳{bn ? toBnNum(totalCost) : totalCost.toLocaleString()}</span>
                 </div>

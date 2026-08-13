@@ -105,17 +105,15 @@ function generateMonthRows(
         waivedAmount: waived, waiverReason: waivedEntries[0]?.reason || '', waiverReasonBn: waivedEntries[0]?.reasonBn || '',
       })
     } else {
-      for (let i = 0; i < totalMonths; i++) {
-        const monthIdx = (startMonth + i) % 12
-        const yearOffset = Math.floor((startMonth + i) / 12)
+      const range = struct.applicableMonths
+        ? Array.from({ length: 12 }, (_, i) => i)
+        : Array.from({ length: totalMonths }, (_, i) => i)
+      for (const i of range) {
+        const monthIdx = struct.applicableMonths ? i : (startMonth + i) % 12
+        const yearOffset = struct.applicableMonths ? 0 : Math.floor((startMonth + i) / 12)
         const m = months[monthIdx]
         const currentYear = year + yearOffset
-        if (struct.expiryDate) {
-          const exp = new Date(struct.expiryDate + 'T00:00:00')
-          const expMonthStart = new Date(exp.getFullYear(), exp.getMonth(), 1)
-          const thisMonthStart = new Date(currentYear, monthIdx, 1)
-          if (thisMonthStart > expMonthStart) continue
-        }
+        if (struct.applicableMonths && !struct.applicableMonths.includes(monthIdx)) continue
         const monthPayments = payments
           .filter((p) => { if (p.feeStructureId !== struct.id) return false; if (p.forMonth) return p.forMonth === `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}`; const d = new Date(p.paidAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
         const paid = monthPayments.reduce((sum, p) => sum + p.amount, 0)
