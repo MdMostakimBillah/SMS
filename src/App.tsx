@@ -48,6 +48,7 @@ const OnlineClassesPage = lazy(() => import('@/pages/online'))
 const FinancePage = lazy(() => import('@/pages/finance'))
 const StorePage = lazy(() => import('@/pages/store'))
 const TransportPage = lazy(() => import('@/pages/transport'))
+const HostelPage = lazy(() => import('@/pages/hostel'))
 const NotFoundPage = lazy(() => import('@/pages/NotFound'))
 const SettingsPage = lazy(() => import('@/pages/settings'))
 
@@ -116,7 +117,7 @@ function AppContent() {
             <Route path="/i/:slug/:role/expenses" element={<P name="Expenses" />} />
             <Route path="/i/:slug/:role/library" element={<P name="Library" />} />
             <Route path="/i/:slug/:role/transport" element={<F><TransportPage /></F>} />
-            <Route path="/i/:slug/:role/hostel" element={<P name="Hostel" />} />
+            <Route path="/i/:slug/:role/hostel" element={<F><HostelPage /></F>} />
             <Route path="/i/:slug/:role/messages" element={<P name="Messages" />} />
             <Route path="/i/:slug/:role/notice" element={<P name="Notice Board" />} />
             <Route path="/i/:slug/:role/notifications" element={<P name="Notifications" />} />
@@ -180,7 +181,7 @@ function AppContent() {
             <Route path="/super-admin/admin/expenses" element={<P name="Expenses" />} />
             <Route path="/super-admin/admin/library" element={<P name="Library" />} />
             <Route path="/super-admin/admin/transport" element={<F><TransportPage /></F>} />
-            <Route path="/super-admin/admin/hostel" element={<P name="Hostel" />} />
+            <Route path="/super-admin/admin/hostel" element={<F><HostelPage /></F>} />
             <Route path="/super-admin/admin/messages" element={<P name="Messages" />} />
             <Route path="/super-admin/admin/notice" element={<P name="Notice Board" />} />
             <Route path="/super-admin/admin/notifications" element={<P name="Notifications" />} />
@@ -230,7 +231,7 @@ function AppContent() {
             <Route path="/super-admin/viewing/:role/expenses" element={<P name="Expenses" />} />
             <Route path="/super-admin/viewing/:role/library" element={<P name="Library" />} />
             <Route path="/super-admin/viewing/:role/transport" element={<F><TransportPage /></F>} />
-            <Route path="/super-admin/viewing/:role/hostel" element={<P name="Hostel" />} />
+            <Route path="/super-admin/viewing/:role/hostel" element={<F><HostelPage /></F>} />
             <Route path="/super-admin/viewing/:role/messages" element={<P name="Messages" />} />
             <Route path="/super-admin/viewing/:role/notice" element={<P name="Notice Board" />} />
             <Route path="/super-admin/viewing/:role/notifications" element={<P name="Notifications" />} />
