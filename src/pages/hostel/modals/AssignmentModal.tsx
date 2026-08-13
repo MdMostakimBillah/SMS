@@ -26,6 +26,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
   const currentSession = useClassStore((s) => s.institution.currentSession) || '2025-26'
   const sessions = useClassStore((s) => s.institution.sessions) || [currentSession]
 
+  const searchRef = useRef<HTMLInputElement>(null)
   const activeRooms = useMemo(() => rooms.filter((r) => r.isActive), [rooms])
 
   const [studentId, setStudentId] = useState(existing?.studentId || '')
@@ -212,6 +213,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
               <div className="relative">
                 <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
                 <input
+                  ref={searchRef}
                   type="text"
                   value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); setShowDropdown(true) }}
@@ -287,8 +289,8 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
           </div>
 
           {/* Room & Bed */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
               <label className={labelCls}>{bn ? 'রুম' : 'Room'}<span className="text-red-400 ml-0.5">*</span></label>
               <select
                 value={roomId}
@@ -313,21 +315,30 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
             </div>
           </div>
 
-          {/* Monthly Rent */}
-          <div>
-            <label className={labelCls}>{bn ? 'মাসিক ভাড়া (৳)' : 'Monthly Rent (৳)'}</label>
-            <input
-              type="number"
-              value={monthlyRent}
-              onChange={(e) => setMonthlyRent(e.target.value)}
-              className={inputFieldCls}
-              min="0"
-              placeholder="0"
-            />
+          {/* Monthly Rent + Room Info */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>{bn ? 'মাসিক ভাড়া (৳)' : 'Monthly Rent (৳)'}</label>
+              <input
+                type="number"
+                value={monthlyRent}
+                onChange={(e) => setMonthlyRent(e.target.value)}
+                className={inputFieldCls}
+                min="0"
+                placeholder="0"
+              />
+              {selectedRoom && (
+                <p className="text-[0.6875rem] text-[var(--text-muted)] mt-1">
+                  {bn ? 'রুমের ভাড়া: ৳' : 'Room rent: ৳'}{selectedRoom.monthlyRent}
+                </p>
+              )}
+            </div>
             {selectedRoom && (
-              <p className="text-[0.6875rem] text-[var(--text-muted)] mt-1">
-                {bn ? 'রুমের ভাড়া: ৳' : 'Room rent: ৳'}{selectedRoom.monthlyRent}
-              </p>
+              <div className="rounded-xl bg-[var(--brand)]/5 border border-[var(--brand)]/20 p-3 flex flex-col justify-center">
+                <div className="text-[0.6875rem] text-[var(--text-muted)] uppercase tracking-wider mb-1">{bn ? 'কক্ষ তথ্য' : 'Room Details'}</div>
+                <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{selectedRoom.name || selectedRoom.nameBn}</div>
+                <div className="text-[0.75rem] text-[var(--text-secondary)]">{bn ? 'ধারণ ক্ষমতা' : 'Capacity'}: {selectedRoom.capacity} {bn ? 'জন' : 'beds'}, {selectedRoom.floor}</div>
+              </div>
             )}
           </div>
 
@@ -369,7 +380,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
               {MONTH_NAMES.map((name, idx) => {
                 const active = months.includes(idx)
                 return (
@@ -377,7 +388,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
                     key={name}
                     type="button"
                     onClick={() => toggleMonth(idx)}
-                    className={`relative py-2.5 px-2 rounded-xl text-[0.75rem] font-semibold cursor-pointer transition-all border flex items-center justify-center gap-1.5 ${
+                    className={`relative py-2 px-2 rounded-xl text-[0.75rem] font-semibold cursor-pointer transition-all border flex items-center justify-center gap-1.5 ${
                       active
                         ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-lg shadow-[var(--brand)]/25'
                         : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)]'
