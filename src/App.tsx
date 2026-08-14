@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/layouts/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { RouteLoadingTracker } from '@/components/ui/RouteLoadingTracker'
+import { UpdateToast } from '@/components/ui/UpdateToast'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute, RoleProtectedRoute, ViewingRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
@@ -76,6 +77,7 @@ function AppContent() {
 
   return (
     <AuthProvider>
+      <UpdateToast />
       <RouteLoadingTracker />
       <Routes>
         <Route path="/i/:slug" element={<F><InstitutionLanding /></F>} />

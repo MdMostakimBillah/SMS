@@ -37,3 +37,6 @@ apps/face-service/__pycache__
 # Docker
 pgdata/
 face-models/
+
+# Auto-generated version file
+public/version.txt
