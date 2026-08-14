@@ -119,10 +119,11 @@ export function CategoriesTab({ searchQuery }: Props) {
 
       {deleteTarget && (
         <DeleteConfirmDialog
-          open={!!deleteTarget}
+          title={bn ? 'ক্যাটাগরি মুছে ফেলুন?' : 'Delete Category?'}
+          message={bn ? `"${deleteTarget.nameBn}" মুছে ফেলতে চান? এই ক্যাটাগরির সব বই থেকে ক্যাটাগরি সরিয়ে ফেলা হবে।` : `Delete "${deleteTarget.name}"? All books in this category will be unlinked.`}
+          isBn={bn}
           onConfirm={() => { deleteCategory(deleteTarget.id); setDeleteTarget(null) }}
           onCancel={() => setDeleteTarget(null)}
-          itemName={bn ? deleteTarget.nameBn : deleteTarget.name}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'edutech-pwa-v3'
+const CACHE_NAME = 'edutech-pwa-v4'
 let brandColor = '#6366f1'
 let institution = null // { name, brandName, slug, logo, brandColor }
 
