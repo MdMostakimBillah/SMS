@@ -51,6 +51,7 @@ const FinancePage = lazyWithRetry(() => import('@/pages/finance'))
 const StorePage = lazyWithRetry(() => import('@/pages/store'))
 const TransportPage = lazyWithRetry(() => import('@/pages/transport'))
 const HostelPage = lazyWithRetry(() => import('@/pages/hostel'))
+const LibraryPage = lazyWithRetry(() => import('@/pages/library'))
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFound'))
 const SettingsPage = lazyWithRetry(() => import('@/pages/settings'))
 
@@ -119,7 +120,7 @@ function AppContent() {
             <Route path="/i/:slug/:role/payroll" element={<F><PayrollPage /></F>} />
             <Route path="/i/:slug/:role/store" element={<F><StorePage /></F>} />
             <Route path="/i/:slug/:role/expenses" element={<P name="Expenses" />} />
-            <Route path="/i/:slug/:role/library" element={<P name="Library" />} />
+            <Route path="/i/:slug/:role/library" element={<F><LibraryPage /></F>} />
             <Route path="/i/:slug/:role/transport" element={<F><TransportPage /></F>} />
             <Route path="/i/:slug/:role/hostel" element={<F><HostelPage /></F>} />
             <Route path="/i/:slug/:role/messages" element={<P name="Messages" />} />
@@ -183,7 +184,7 @@ function AppContent() {
             <Route path="/super-admin/admin/payroll" element={<F><PayrollPage /></F>} />
             <Route path="/super-admin/admin/store" element={<F><StorePage /></F>} />
             <Route path="/super-admin/admin/expenses" element={<P name="Expenses" />} />
-            <Route path="/super-admin/admin/library" element={<P name="Library" />} />
+            <Route path="/super-admin/admin/library" element={<F><LibraryPage /></F>} />
             <Route path="/super-admin/admin/transport" element={<F><TransportPage /></F>} />
             <Route path="/super-admin/admin/hostel" element={<F><HostelPage /></F>} />
             <Route path="/super-admin/admin/messages" element={<P name="Messages" />} />
@@ -233,7 +234,7 @@ function AppContent() {
             <Route path="/super-admin/viewing/:role/payroll" element={<F><PayrollPage /></F>} />
             <Route path="/super-admin/viewing/:role/store" element={<F><StorePage /></F>} />
             <Route path="/super-admin/viewing/:role/expenses" element={<P name="Expenses" />} />
-            <Route path="/super-admin/viewing/:role/library" element={<P name="Library" />} />
+            <Route path="/super-admin/viewing/:role/library" element={<F><LibraryPage /></F>} />
             <Route path="/super-admin/viewing/:role/transport" element={<F><TransportPage /></F>} />
             <Route path="/super-admin/viewing/:role/hostel" element={<F><HostelPage /></F>} />
             <Route path="/super-admin/viewing/:role/messages" element={<P name="Messages" />} />
