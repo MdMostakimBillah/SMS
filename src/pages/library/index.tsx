@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Library, BookOpen, HandCoins, RotateCcw, Clock, AlertTriangle, Search, Monitor, BookMarked, Users, History, FileText, BarChart3, Settings } from 'lucide-react'
+import { Library, BookOpen, HandCoins, RotateCcw, Clock, AlertTriangle, Search, Monitor, BookMarked, Users, History, FileText, BarChart3, Settings, Tag } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore } from '@/store/libraryStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
@@ -17,8 +17,9 @@ import { HistoryTab } from './tabs/HistoryTab'
 import { TransactionsTab } from './tabs/TransactionsTab'
 import { ReportsTab } from './tabs/ReportsTab'
 import { SettingsTab } from './tabs/SettingsTab'
+import { CategoriesTab } from './tabs/CategoriesTab'
 
-type View = 'dashboard' | 'books' | 'issue' | 'return' | 'borrowed' | 'overdue'
+type View = 'dashboard' | 'books' | 'categories' | 'issue' | 'return' | 'borrowed' | 'overdue'
   | 'digital' | 'reading' | 'profiles' | 'history' | 'transactions' | 'reports' | 'settings'
 
 function StatCards({ stats, bn }: { stats: { totalBooks: number; available: number; issued: number; overdue: number }; bn: boolean }) {
@@ -77,6 +78,7 @@ export default function LibraryPage() {
   const tabs = useMemo(() => [
     { id: 'dashboard' as View, icon: Library, label: bn ? 'ড্যাশবোর্ড' : 'Dashboard' },
     { id: 'books' as View, icon: BookOpen, label: bn ? 'বই' : 'Books' },
+    { id: 'categories' as View, icon: Tag, label: bn ? 'ক্যাটাগরি' : 'Categories' },
     { id: 'issue' as View, icon: HandCoins, label: bn ? 'ইস্যু' : 'Issue' },
     { id: 'return' as View, icon: RotateCcw, label: bn ? 'ফেরত' : 'Return' },
     { id: 'borrowed' as View, icon: Clock, label: bn ? 'ধারে' : 'Borrowed' },
@@ -155,6 +157,7 @@ export default function LibraryPage() {
       {/* Tab Content */}
       {activeTab === 'dashboard' && <DashboardTab searchQuery={searchQuery} />}
       {activeTab === 'books' && <BooksTab searchQuery={searchQuery} />}
+      {activeTab === 'categories' && <CategoriesTab searchQuery={searchQuery} />}
       {activeTab === 'issue' && <IssueTab searchQuery={searchQuery} />}
       {activeTab === 'return' && <ReturnTab searchQuery={searchQuery} />}
       {activeTab === 'borrowed' && <BorrowedTab searchQuery={searchQuery} />}
