@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { BookOpen, Clock, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react'
+import { BookOpen, Clock, AlertTriangle, CheckCircle, TrendingUp, Tag } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore, calcFine } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -65,16 +65,40 @@ export function DashboardTab(_props: Props) {
           <TrendingUp size={14} />
           {bn ? 'ক্যাটাগরি অনুযায়ী পরিসংখ্যান' : 'Category Statistics'}
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {categoryStats.map((cat) => (
-            <div key={cat.id} className="p-3 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
-              <div className="text-[0.6875rem] text-[var(--text-secondary)] mb-1">{bn ? cat.nameBn : cat.name}</div>
-              <div className="font-bold text-lg text-[var(--text-primary)]">{bn ? toBnNum(cat.totalBooks) : cat.totalBooks}</div>
-              <div className="text-[0.625rem] text-[var(--text-secondary)]">
-                {bn ? `${toBnNum(cat.issued)} প্রদত্ত` : `${cat.issued} issued`}
+        <div className="flex flex-wrap gap-2">
+          {categoryStats.map((cat, i) => {
+            const colors = [
+              { bg: 'bg-[var(--brand)]/8', text: 'text-[var(--brand)]', dot: 'bg-[var(--brand)]' },
+              { bg: 'bg-[var(--green)]/8', text: 'text-[var(--green)]', dot: 'bg-[var(--green)]' },
+              { bg: 'bg-[var(--amber)]/8', text: 'text-[var(--amber)]', dot: 'bg-[var(--amber)]' },
+              { bg: 'bg-purple-500/8', text: 'text-purple-500', dot: 'bg-purple-500' },
+              { bg: 'bg-[var(--red)]/8', text: 'text-[var(--red)]', dot: 'bg-[var(--red)]' },
+              { bg: 'bg-cyan-500/8', text: 'text-cyan-500', dot: 'bg-cyan-500' },
+            ]
+            const c = colors[i % colors.length]
+            return (
+              <div key={cat.id} className={`flex items-center gap-2.5 px-3 py-2 rounded-lg ${c.bg} border border-transparent hover:border-[var(--border)] transition-colors`}>
+                <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${c.bg}`}>
+                  <Tag size={13} className={c.text} />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[0.75rem] font-semibold text-[var(--text-primary)] leading-tight truncate max-w-[100px]">
+                    {bn ? cat.nameBn : cat.name}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[0.6875rem] font-bold text-[var(--text-primary)]">
+                      {bn ? toBnNum(cat.totalBooks) : cat.totalBooks}
+                    </span>
+                    {cat.issued > 0 && (
+                      <span className={`text-[0.5625rem] font-medium px-1 py-0.5 rounded ${c.bg} ${c.text}`}>
+                        {bn ? `${toBnNum(cat.issued)} ধারে` : `${cat.issued} issued`}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
