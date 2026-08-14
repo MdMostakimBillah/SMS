@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { RefreshCw, X } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { useUpdateStore } from '@/store/updateStore'
 
 export function UpdateToast() {
@@ -32,13 +32,13 @@ export function UpdateToast() {
           onClick={() => window.location.reload()}
           className="px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[0.75rem] font-semibold cursor-pointer hover:opacity-90 transition-opacity shrink-0"
         >
-          Reload
+          Update
         </button>
         <button
           onClick={dismiss}
-          className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors shrink-0"
+          className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] font-semibold cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors shrink-0"
         >
-          <X size={13} />
+          Later
         </button>
       </div>
     </div>,
