@@ -59,7 +59,7 @@ export default function LibraryPage() {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
-  useTabSlider({ activeTab, tabRefs, sliderRef, getContainer: (slider) => slider.parentElement })
+  useTabSlider({ activeTab, tabRefs, sliderRef, scrollIntoView: true, getContainer: (slider) => slider.parentElement })
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 400)
