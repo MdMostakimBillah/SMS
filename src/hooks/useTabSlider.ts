@@ -56,11 +56,11 @@ export function useTabSlider({
   useEffect(() => {
     updateTabSlider()
 
-    if (scrollIntoView) {
+    if (scrollIntoView && sliderRef.current) {
       const activeEl = tabRefs.current?.get(activeTab)
       const container = getContainer
-        ? getContainer(sliderRef.current!)
-        : sliderRef.current?.parentElement
+        ? getContainer(sliderRef.current)
+        : sliderRef.current.parentElement
       if (activeEl && container) {
         const cRect = container.getBoundingClientRect()
         const aRect = activeEl.getBoundingClientRect()

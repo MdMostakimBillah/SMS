@@ -28,7 +28,7 @@ export default function StudentAdmission() {
     activeTab,
     tabRefs,
     sliderRef,
-    getContainer: (slider) => slider.parentElement,
+    getContainer: (slider) => slider?.parentElement ?? null,
   })
 
   return (

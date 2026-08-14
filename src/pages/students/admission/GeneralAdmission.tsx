@@ -115,7 +115,7 @@ export default function GeneralAdmission() {
     activeTab,
     tabRefs,
     sliderRef,
-    getContainer: (slider) => slider.parentElement,
+    getContainer: (slider) => slider?.parentElement ?? null,
   })
 
   const set = useCallback((key: keyof FormData, val: string) => {

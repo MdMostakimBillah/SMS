@@ -50,7 +50,7 @@ export default function HostelPage() {
     activeTab,
     tabRefs,
     sliderRef,
-    getContainer: (slider) => slider.parentElement,
+    getContainer: (slider) => slider?.parentElement ?? null,
   })
 
   useEffect(() => {

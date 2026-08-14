@@ -63,7 +63,7 @@ export default function ClassesPage() {
     activeTab,
     tabRefs,
     sliderRef,
-    getContainer: (slider) => slider.parentElement,
+    getContainer: (slider) => slider?.parentElement ?? null,
   })
 
   const handleSaveInstitution = () => {

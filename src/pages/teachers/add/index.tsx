@@ -121,7 +121,7 @@ export default function AddTeacherPage() {
     activeTab,
     tabRefs,
     sliderRef,
-    getContainer: (slider) => slider.parentElement,
+    getContainer: (slider) => slider?.parentElement ?? null,
   })
 
   const { pushToChain, setRedirectTimestamp } = useNavChain()
