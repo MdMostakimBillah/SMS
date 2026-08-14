@@ -1018,8 +1018,8 @@ export default function HRPage() {
       </div>
 
       {/* Tabs */}
-      <div className="relative glass rounded-xl mt-3 mb-3 w-full">
-        <div className={`relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] ${isMobile || isTablet ? 'overflow-x-auto flex-nowrap scrollbar-hide' : 'flex-wrap'}`}>
+      <div className="relative glass rounded-xl mt-3 mb-3 w-full overflow-hidden">
+        <div className="relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] overflow-x-auto scrollbar-hide">
           {/* Sliding indicator */}
           <div
             ref={sliderRef}
@@ -1038,7 +1038,7 @@ export default function HRPage() {
                 setPage(1)
                 setPerPage(20)
               }}
-              className={`relative z-10 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${isMobile || isTablet ? 'shrink-0 !py-1.5 !px-3 !text-[0.75rem]' : 'flex-1'} ${
+              className={`relative z-10 flex items-center justify-center gap-[0.375rem] shrink-0 py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${
                 activeTab === tab.id ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               style={{ background: 'transparent' }}
