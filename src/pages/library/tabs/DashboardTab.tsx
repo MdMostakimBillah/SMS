@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { BookOpen, Clock, AlertTriangle, CheckCircle, TrendingUp, Tag } from 'lucide-react'
+import { BookOpen, Clock, AlertTriangle, TrendingUp, Tag } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore, calcFine } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -42,7 +42,16 @@ export function DashboardTab(_props: Props) {
     return recent.map((b) => {
       const book = books.find((bk) => bk.id === b.bookId)
       const student = students.find((s) => s.id === b.studentId)
-      return { ...b, bookName: book?.titleBn || book?.title || '', studentName: student?.nameBn || student?.nameEn || '' }
+      const start = new Date(b.issueDate)
+      const end = b.returnDate ? new Date(b.returnDate) : new Date()
+      const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+      return {
+        ...b,
+        bookName: book?.titleBn || book?.title || '',
+        studentName: student?.nameBn || student?.nameEn || '',
+        studentId: b.studentId,
+        duration: days,
+      }
     })
   }, [borrowings, books, students])
 
@@ -110,28 +119,27 @@ export function DashboardTab(_props: Props) {
             <Clock size={14} />
             {bn ? 'সাম্প্রতিক কার্যক্রম' : 'Recent Activity'}
           </h3>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+          <div className="space-y-1.5 max-h-64 overflow-y-auto">
             {recentActivity.length === 0 && (
               <div className="text-[0.75rem] text-[var(--text-secondary)] text-center py-4">
                 {bn ? 'কোনো সাম্প্রতিক কার্যক্রম নেই' : 'No recent activity'}
               </div>
             )}
             {recentActivity.map((a) => (
-              <div key={a.id} className="flex items-center gap-3 p-2 rounded-lg bg-[var(--surface)] text-[0.75rem]">
-                <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${
-                  a.status === 'returned' ? 'bg-[var(--green-light)] text-[var(--green)]' :
-                  a.status === 'overdue' ? 'bg-red-500/10 text-red-500' :
-                  'bg-[var(--brand-light)] text-[var(--brand)]'
-                }`}>
-                  {a.status === 'returned' ? <CheckCircle size={13} /> :
-                   a.status === 'overdue' ? <AlertTriangle size={13} /> :
-                   <BookOpen size={13} />}
-                </div>
+              <div key={a.id} className="flex items-center gap-2.5 py-1.5 border-b border-[var(--border)] last:border-0 text-[0.6875rem]">
+                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                  a.status === 'returned' ? 'bg-[var(--green)]' :
+                  a.status === 'overdue' ? 'bg-red-500' :
+                  'bg-[var(--brand)]'
+                }`} />
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium text-[var(--text-primary)] truncate">{a.studentName}</div>
-                  <div className="text-[0.6875rem] text-[var(--text-secondary)] truncate">{a.bookName}</div>
+                  <span className="font-medium text-[var(--text-primary)] truncate">{a.studentName}</span>
+                  <span className="text-[var(--text-secondary)] ml-1.5">({a.studentId})</span>
                 </div>
-                <div className="text-[0.625rem] text-[var(--text-secondary)] flex-shrink-0">{a.issueDate}</div>
+                <div className="text-[var(--text-secondary)] truncate max-w-[120px]">{a.bookName}</div>
+                <div className="text-[var(--text-secondary)] flex-shrink-0 tabular-nums">
+                  {bn ? `${toBnNum(a.duration)}দিন` : `${a.duration}d`}
+                </div>
               </div>
             ))}
           </div>
