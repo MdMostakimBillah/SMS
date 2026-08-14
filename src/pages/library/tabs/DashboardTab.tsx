@@ -65,34 +65,34 @@ export function DashboardTab(_props: Props) {
           <TrendingUp size={14} />
           {bn ? 'ক্যাটাগরি অনুযায়ী পরিসংখ্যান' : 'Category Statistics'}
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
           {categoryStats.map((cat, i) => {
             const colors = [
-              { border: 'border-[var(--brand)]/20', text: 'text-[var(--brand)]', bg: 'bg-[var(--brand)]/10' },
-              { border: 'border-[var(--green)]/20', text: 'text-[var(--green)]', bg: 'bg-[var(--green)]/10' },
-              { border: 'border-[var(--amber)]/20', text: 'text-[var(--amber)]', bg: 'bg-[var(--amber)]/10' },
-              { border: 'border-purple-500/20', text: 'text-purple-500', bg: 'bg-purple-500/10' },
-              { border: 'border-[var(--red)]/20', text: 'text-[var(--red)]', bg: 'bg-[var(--red)]/10' },
-              { border: 'border-cyan-500/20', text: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+              { text: 'text-[var(--brand)]', bg: 'bg-[var(--brand)]/10' },
+              { text: 'text-[var(--green)]', bg: 'bg-[var(--green)]/10' },
+              { text: 'text-[var(--amber)]', bg: 'bg-[var(--amber)]/10' },
+              { text: 'text-purple-500', bg: 'bg-purple-500/10' },
+              { text: 'text-[var(--red)]', bg: 'bg-[var(--red)]/10' },
+              { text: 'text-cyan-500', bg: 'bg-cyan-500/10' },
             ]
             const c = colors[i % colors.length]
             return (
-              <div key={cat.id} className={`flex flex-col items-center p-3 rounded-lg bg-[var(--surface)] border ${c.border} hover:shadow-md transition-all`}>
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-2 ${c.bg}`}>
-                  <Tag size={16} className={c.text} />
+              <div key={cat.id} className={`flex flex-col items-center p-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] hover:shadow-sm transition-all`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center mb-1.5 ${c.bg}`}>
+                  <Tag size={12} className={c.text} />
                 </div>
                 <div className="text-center min-w-0 w-full">
-                  <div className="text-[0.75rem] font-semibold text-[var(--text-primary)] truncate">
+                  <div className="text-[0.6875rem] font-semibold text-[var(--text-primary)] truncate">
                     {bn ? cat.nameBn : cat.name}
                   </div>
-                  <div className="text-lg font-bold text-[var(--text-primary)] mt-1">
+                  <div className="text-base font-bold text-[var(--text-primary)] mt-0.5">
                     {bn ? toBnNum(cat.totalBooks) : cat.totalBooks}
                   </div>
-                  <div className="text-[0.625rem] text-[var(--text-secondary)]">
-                    {bn ? 'মোট বই' : 'Total Books'}
+                  <div className="text-[0.5625rem] text-[var(--text-secondary)]">
+                    {bn ? 'মোট বই' : 'Total'}
                   </div>
                   {cat.issued > 0 && (
-                    <div className={`mt-2 text-[0.6875rem] font-medium px-2 py-0.5 rounded-full ${c.bg} ${c.text}`}>
+                    <div className={`mt-1.5 text-[0.625rem] font-medium px-1.5 py-0.5 rounded-full ${c.bg} ${c.text}`}>
                       {bn ? `${toBnNum(cat.issued)} ধারে` : `${cat.issued} issued`}
                     </div>
                   )}
