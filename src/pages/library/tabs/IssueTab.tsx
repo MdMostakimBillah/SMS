@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import { Search, BookOpen, User, Calendar, AlertCircle } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
-import { useClassStore } from '@/store/classStore'
+import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { toBnNum } from '@/lib/i18n'
 import { modalOverlayCls, modalStyleCls, labelCls } from '@/pages/hr/utils'
 import type { Borrowing, BookCondition } from '../types'
@@ -27,8 +27,13 @@ export function IssueTab(_props: Props) {
   const addBorrowing = useLibraryStore((s) => s.addBorrowing)
   const settings = useLibraryStore((s) => s.settings)
   const getNextBorrowingId = useLibraryStore((s) => s.getNextBorrowingId)
+  const categories = useLibraryStore((s) => s.categories)
   const students = useAdmissionStore((s) => s.students)
   const currentSession = useClassStore((s) => s.institution.currentSession)
+  const classes = useClassStore((s) => s.classes)
+
+  const classOptions = useMemo(() => getClassOptions(classes), [classes])
+  const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
   const sessionStudents = useMemo(() =>
     students.filter((s) => s.academicYear === currentSession && s.status === 'approved'),
@@ -45,6 +50,16 @@ export function IssueTab(_props: Props) {
   const [bookSearch, setBookSearch] = useState('')
   const [showStudentDropdown, setShowStudentDropdown] = useState(false)
   const [showBookDropdown, setShowBookDropdown] = useState(false)
+  const [filterClass, setFilterClass] = useState('')
+  const [filterSection, setFilterSection] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
+  const [studentActiveIdx, setStudentActiveIdx] = useState(-1)
+  const [bookActiveIdx, setBookActiveIdx] = useState(-1)
+
+  const studentDropdownRef = useRef<HTMLDivElement>(null)
+  const bookDropdownRef = useRef<HTMLDivElement>(null)
+
+  const filterSections = useMemo(() => filterClass ? (sectionsMap[filterClass] || []) : [], [filterClass, sectionsMap])
 
   const selectedStudent = useMemo(() => sessionStudents.find((s) => s.id === selectedStudentId), [sessionStudents, selectedStudentId])
   const selectedBook = useMemo(() => books.find((b) => b.id === selectedBookId), [books, selectedBookId])
@@ -59,26 +74,83 @@ export function IssueTab(_props: Props) {
   )
 
   const filteredStudents = useMemo(() => {
-    if (!studentSearch) return sessionStudents.slice(0, 50)
-    const q = studentSearch.toLowerCase()
-    return sessionStudents.filter((s) =>
-      s.nameEn.toLowerCase().includes(q) || s.nameBn.includes(q) || s.id.includes(q) || s.roll.includes(q)
-    ).slice(0, 50)
-  }, [sessionStudents, studentSearch])
+    let list = sessionStudents
+    if (filterClass) list = list.filter((s) => s.class === filterClass)
+    if (filterSection) list = list.filter((s) => s.section === filterSection)
+    if (studentSearch) {
+      const q = studentSearch.toLowerCase()
+      list = list.filter((s) =>
+        s.nameEn.toLowerCase().includes(q) || s.nameBn.includes(q) || s.id.includes(q) || s.roll.includes(q)
+      )
+    }
+    return list.slice(0, 50)
+  }, [sessionStudents, filterClass, filterSection, studentSearch])
 
   const filteredBooks = useMemo(() => {
-    const activeBooks = books.filter((b) => b.isActive && b.availableCopies > 0)
-    if (!bookSearch) return activeBooks.slice(0, 50)
-    const q = bookSearch.toLowerCase()
-    return activeBooks.filter((b) =>
-      b.title.toLowerCase().includes(q) || b.titleBn.includes(q) ||
-      b.author.toLowerCase().includes(q) || b.authorBn.includes(q) || b.isbn.includes(q)
-    ).slice(0, 50)
-  }, [books, bookSearch])
+    let list = books.filter((b) => b.isActive && b.availableCopies > 0)
+    if (filterCategory) list = list.filter((b) => b.categoryId === filterCategory)
+    if (bookSearch) {
+      const q = bookSearch.toLowerCase()
+      list = list.filter((b) =>
+        b.title.toLowerCase().includes(q) || b.titleBn.includes(q) ||
+        b.author.toLowerCase().includes(q) || b.authorBn.includes(q) || b.isbn.includes(q)
+      )
+    }
+    return list.slice(0, 50)
+  }, [books, filterCategory, bookSearch])
 
   const dueDate = addDays(today(), settings.borrowingDurationDays)
 
   const canIssue = selectedStudent && selectedBook && selectedCopyId && studentBorrowCount < settings.maxBooksPerStudent
+
+  const selectStudent = useCallback((s: typeof filteredStudents[0]) => {
+    setSelectedStudentId(s.id)
+    setStudentSearch(bn ? (s.nameBn || s.nameEn) : (s.nameEn || s.nameBn))
+    setShowStudentDropdown(false)
+    setStudentActiveIdx(-1)
+  }, [bn])
+
+  const selectBook = useCallback((b: typeof filteredBooks[0]) => {
+    setSelectedBookId(b.id)
+    setBookSearch(bn ? (b.titleBn || b.title) : (b.title || b.titleBn))
+    setShowBookDropdown(false)
+    setBookActiveIdx(-1)
+    setSelectedCopyId('')
+  }, [bn])
+
+  const handleStudentKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!showStudentDropdown) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setStudentActiveIdx((prev) => Math.min(prev + 1, filteredStudents.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setStudentActiveIdx((prev) => Math.max(prev - 1, 0))
+    } else if (e.key === 'Enter' && studentActiveIdx >= 0 && studentActiveIdx < filteredStudents.length) {
+      e.preventDefault()
+      selectStudent(filteredStudents[studentActiveIdx])
+    } else if (e.key === 'Escape') {
+      setShowStudentDropdown(false)
+      setStudentActiveIdx(-1)
+    }
+  }, [showStudentDropdown, studentActiveIdx, filteredStudents, selectStudent])
+
+  const handleBookKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!showBookDropdown) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setBookActiveIdx((prev) => Math.min(prev + 1, filteredBooks.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setBookActiveIdx((prev) => Math.max(prev - 1, 0))
+    } else if (e.key === 'Enter' && bookActiveIdx >= 0 && bookActiveIdx < filteredBooks.length) {
+      e.preventDefault()
+      selectBook(filteredBooks[bookActiveIdx])
+    } else if (e.key === 'Escape') {
+      setShowBookDropdown(false)
+      setBookActiveIdx(-1)
+    }
+  }, [showBookDropdown, bookActiveIdx, filteredBooks, selectBook])
 
   const handleIssue = () => {
     if (!canIssue || !selectedStudent || !selectedBook) return
@@ -96,6 +168,9 @@ export function IssueTab(_props: Props) {
     setNote('')
     setStudentSearch('')
     setBookSearch('')
+    setFilterClass('')
+    setFilterSection('')
+    setFilterCategory('')
   }
 
   return (
@@ -106,12 +181,26 @@ export function IssueTab(_props: Props) {
           <User size={14} />
           {bn ? 'ছাত্র নির্বাচন' : 'Select Student'}
         </h3>
-        <div className="relative">
+        <div className="grid grid-cols-2 gap-2">
+          <select value={filterClass} onChange={(e) => { setFilterClass(e.target.value); setFilterSection('') }}
+            className="h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs outline-none">
+            <option value="">{bn ? 'সব শ্রেণি' : 'All Classes'}</option>
+            {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={filterSection} onChange={(e) => setFilterSection(e.target.value)}
+            className="h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs outline-none"
+            disabled={!filterClass}>
+            <option value="">{bn ? 'সব সেকশন' : 'All Sections'}</option>
+            {filterSections.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <div className="relative" ref={studentDropdownRef}>
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
           <input
             value={studentSearch}
-            onChange={(e) => { setStudentSearch(e.target.value); setShowStudentDropdown(true) }}
-            onFocus={() => setShowStudentDropdown(true)}
+            onChange={(e) => { setStudentSearch(e.target.value); setShowStudentDropdown(true); setStudentActiveIdx(-1) }}
+            onFocus={() => { setShowStudentDropdown(true); setStudentActiveIdx(-1) }}
+            onKeyDown={handleStudentKeyDown}
             className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none"
             placeholder={bn ? 'নাম বা আইডি দিয়ে খুঁজুন...' : 'Search by name or ID...'}
           />
@@ -119,9 +208,12 @@ export function IssueTab(_props: Props) {
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowStudentDropdown(false)} />
               <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg shadow-lg">
-                {filteredStudents.map((s) => (
-                  <button key={s.id} onClick={() => { setSelectedStudentId(s.id); setStudentSearch(bn ? (s.nameBn || s.nameEn) : (s.nameEn || s.nameBn)); setShowStudentDropdown(false) }}
-                    className="w-full text-left px-3 py-2 hover:bg-[var(--surface)] text-[0.75rem] border-b border-[var(--border)] last:border-b-0">
+                {filteredStudents.map((s, i) => (
+                  <button key={s.id} onClick={() => selectStudent(s)}
+                    onMouseEnter={() => setStudentActiveIdx(i)}
+                    className={`w-full text-left px-3 py-2 text-[0.75rem] border-b border-[var(--border)] last:border-b-0 ${
+                      i === studentActiveIdx ? 'bg-[var(--surface)]' : 'hover:bg-[var(--surface)]'
+                    }`}>
                     <div className="font-medium text-[var(--text-primary)]">{bn ? (s.nameBn || s.nameEn) : (s.nameEn || s.nameBn)}</div>
                     <div className="text-[0.625rem] text-[var(--text-secondary)]">{s.class} | {s.section} | Roll: {s.roll} | {s.id}</div>
                   </button>
@@ -160,12 +252,20 @@ export function IssueTab(_props: Props) {
           <BookOpen size={14} />
           {bn ? 'বই নির্বাচন' : 'Select Book'}
         </h3>
-        <div className="relative">
+        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}
+          className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs outline-none">
+          <option value="">{bn ? 'সব ক্যাটাগরি' : 'All Categories'}</option>
+          {categories.filter((c) => c.isActive).map((c) => (
+            <option key={c.id} value={c.id}>{bn ? c.nameBn : c.name}</option>
+          ))}
+        </select>
+        <div className="relative" ref={bookDropdownRef}>
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
           <input
             value={bookSearch}
-            onChange={(e) => { setBookSearch(e.target.value); setShowBookDropdown(true) }}
-            onFocus={() => setShowBookDropdown(true)}
+            onChange={(e) => { setBookSearch(e.target.value); setShowBookDropdown(true); setBookActiveIdx(-1) }}
+            onFocus={() => { setShowBookDropdown(true); setBookActiveIdx(-1) }}
+            onKeyDown={handleBookKeyDown}
             className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none"
             placeholder={bn ? 'বইয়ের নাম বা লেখক দিয়ে খুঁজুন...' : 'Search by title or author...'}
           />
@@ -173,9 +273,12 @@ export function IssueTab(_props: Props) {
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowBookDropdown(false)} />
               <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg shadow-lg">
-                {filteredBooks.map((b) => (
-                  <button key={b.id} onClick={() => { setSelectedBookId(b.id); setBookSearch(bn ? (b.titleBn || b.title) : (b.title || b.titleBn)); setShowBookDropdown(false); setSelectedCopyId('') }}
-                    className="w-full text-left px-3 py-2 hover:bg-[var(--surface)] text-[0.75rem] border-b border-[var(--border)] last:border-b-0">
+                {filteredBooks.map((b, i) => (
+                  <button key={b.id} onClick={() => selectBook(b)}
+                    onMouseEnter={() => setBookActiveIdx(i)}
+                    className={`w-full text-left px-3 py-2 text-[0.75rem] border-b border-[var(--border)] last:border-b-0 ${
+                      i === bookActiveIdx ? 'bg-[var(--surface)]' : 'hover:bg-[var(--surface)]'
+                    }`}>
                     <div className="font-medium text-[var(--text-primary)]">{bn ? (b.titleBn || b.title) : (b.title || b.titleBn)}</div>
                     <div className="text-[0.625rem] text-[var(--text-secondary)]">{bn ? (b.authorBn || b.author) : (b.author || b.authorBn)} | {b.isbn} | {b.availableCopies} {bn ? 'উপলব্ধ' : 'available'}</div>
                   </button>
