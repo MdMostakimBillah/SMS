@@ -65,7 +65,7 @@ export function BookModal({ existing, onSaved, onClose }: Props) {
 
   return createPortal(
     <div className={modalOverlayCls} onClick={onClose}>
-      <div className={`${modalStyleCls} max-w-[36rem]`} onClick={(e) => e.stopPropagation()}>
+      <div className={`${modalStyleCls} max-w-[52rem]`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center">
             <BookOpen size={20} />
