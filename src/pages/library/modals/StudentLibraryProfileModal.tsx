@@ -51,7 +51,7 @@ export function StudentLibraryProfileModal({ studentId, onClose }: Props) {
 
   return createPortal(
     <div className={modalOverlayCls} onClick={onClose}>
-      <div className="modal-box modal-content max-w-[40rem] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-box modal-content max-w-[52rem] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center font-bold text-lg">

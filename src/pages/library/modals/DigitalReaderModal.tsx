@@ -47,7 +47,7 @@ export function DigitalReaderModal({ digitalBookId, onClose }: Props) {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div className={`relative w-full max-w-[50rem] h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${themeClasses[theme]}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`relative w-full max-w-[64rem] h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${themeClasses[theme]}`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
           <div className="flex items-center gap-3 min-w-0">
