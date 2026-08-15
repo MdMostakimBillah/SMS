@@ -189,7 +189,7 @@ export function ReturnTab(_props: Props) {
       {/* Confirm Modal */}
       {showConfirm && selected && (
         <div className={modalOverlayCls} onClick={() => setShowConfirm(false)}>
-          <div className={`${modalStyleCls} max-w-[28rem]`} onClick={(e) => e.stopPropagation()}>
+          <div className={`${modalStyleCls} max-w-[40rem]`} onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3">{bn ? 'ফেরত নিশ্চিত করুন' : 'Confirm Return'}</h3>
             <div className="space-y-2 text-[0.8125rem]">
               <div><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.studentName}</span></div>

@@ -394,7 +394,7 @@ export function IssueTab(_props: Props) {
 
       {showConfirm && selectedStudent && selectedBook && (
         <div className={modalOverlayCls} onClick={() => setShowConfirm(false)}>
-          <div className={`${modalStyleCls} max-w-[28rem]`} onClick={(e) => e.stopPropagation()}>
+          <div className={`${modalStyleCls} max-w-[40rem]`} onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3">{bn ? 'ইস্যু নিশ্চিত করুন' : 'Confirm Issue'}</h3>
             <div className="space-y-2 text-[0.8125rem]">
               <div><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{bn ? (selectedStudent.nameBn || selectedStudent.nameEn) : (selectedStudent.nameEn || selectedStudent.nameBn)}</span></div>
