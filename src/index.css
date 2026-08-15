@@ -624,7 +624,7 @@ button {
   border: 1px solid var(--glass-border);
   border-radius: 0.875rem;
   width: 100%;
-  max-width: 26.25rem;
+  max-width: 32rem;
   padding: 1.25rem;
   max-height: 90dvh;
   overflow-y: auto;
