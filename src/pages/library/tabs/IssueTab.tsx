@@ -19,6 +19,8 @@ function addDays(dateStr: string, days: number): string {
 
 function today() { return new Date().toISOString().split('T')[0] }
 
+function capitalize(s: string) { return s.charAt(0).toUpperCase() + s.slice(1) }
+
 export function IssueTab(_props: Props) {
   const bn = useBn()
   const books = useLibraryStore((s) => s.books)
@@ -55,6 +57,7 @@ export function IssueTab(_props: Props) {
   const [filterCategory, setFilterCategory] = useState('')
   const [studentActiveIdx, setStudentActiveIdx] = useState(-1)
   const [bookActiveIdx, setBookActiveIdx] = useState(-1)
+  const [returnDate, setReturnDate] = useState(() => addDays(today(), settings.borrowingDurationDays))
 
   const studentDropdownRef = useRef<HTMLDivElement>(null)
   const bookDropdownRef = useRef<HTMLDivElement>(null)
@@ -98,8 +101,6 @@ export function IssueTab(_props: Props) {
     }
     return list.slice(0, 50)
   }, [books, filterCategory, bookSearch])
-
-  const dueDate = addDays(today(), settings.borrowingDurationDays)
 
   const canIssue = selectedStudent && selectedBook && selectedCopyId && studentBorrowCount < settings.maxBooksPerStudent
 
@@ -157,7 +158,7 @@ export function IssueTab(_props: Props) {
     const id = getNextBorrowingId()
     const borrowing: Borrowing = {
       id, studentId: selectedStudentId, bookId: selectedBookId, copyId: selectedCopyId,
-      issueDate: today(), dueDate, status: 'borrowed', condition, fine: 0, fineReason: '',
+      issueDate: today(), dueDate: returnDate, status: 'borrowed', condition, fine: 0, fineReason: '',
       renewalCount: 0, librarianNote: note, issuedBy: 'admin', createdAt: today(),
     }
     addBorrowing(borrowing)
@@ -171,6 +172,7 @@ export function IssueTab(_props: Props) {
     setFilterClass('')
     setFilterSection('')
     setFilterCategory('')
+    setReturnDate(addDays(today(), settings.borrowingDurationDays))
   }
 
   return (
@@ -335,13 +337,15 @@ export function IssueTab(_props: Props) {
               <label className={labelCls}>{bn ? 'অবস্থা' : 'Condition'}</label>
               <select value={condition} onChange={(e) => setCondition(e.target.value as BookCondition)} className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none">
                 {BOOK_CONDITIONS.map((c) => (
-                  <option key={c} value={c}>{bn ? BOOK_CONDITIONS_BN[c] : c}</option>
+                  <option key={c} value={c}>{bn ? BOOK_CONDITIONS_BN[c] : capitalize(c)}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className={labelCls}>{bn ? 'ফেরত তারিখ' : 'Due Date'}</label>
-              <div className="py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem]">{dueDate}</div>
+              <label className={labelCls}>{bn ? 'ফেরত তারিখ' : 'Returning Date'}</label>
+              <input type="date" value={returnDate} min={today()}
+                onChange={(e) => setReturnDate(e.target.value)}
+                className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none" />
             </div>
           </div>
           <div>
@@ -358,7 +362,7 @@ export function IssueTab(_props: Props) {
               <span className="font-medium">{bn ? 'বই:' : 'Book:'}</span> {bn ? (selectedBook?.titleBn || selectedBook?.title) : (selectedBook?.title || selectedBook?.titleBn)}
             </div>
             <div className="text-[0.75rem] text-[var(--text-primary)]">
-              <span className="font-medium">{bn ? 'ফেরত তারিখ:' : 'Due Date:'}</span> {dueDate}
+              <span className="font-medium">{bn ? 'ফেরত তারিখ:' : 'Returning Date:'}</span> {returnDate}
             </div>
           </div>
 
@@ -375,7 +379,7 @@ export function IssueTab(_props: Props) {
             <div className="space-y-2 text-[0.8125rem]">
               <div><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{bn ? (selectedStudent.nameBn || selectedStudent.nameEn) : (selectedStudent.nameEn || selectedStudent.nameBn)}</span></div>
               <div><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{bn ? (selectedBook.titleBn || selectedBook.title) : (selectedBook.title || selectedBook.titleBn)}</span></div>
-              <div><span className="text-[var(--text-secondary)]">{bn ? 'ফেরত তারিখ:' : 'Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{dueDate}</span></div>
+              <div><span className="text-[var(--text-secondary)]">{bn ? 'ফেরত তারিখ:' : 'Returning Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{returnDate}</span></div>
             </div>
             <div className="flex gap-2 mt-4">
               <button onClick={() => setShowConfirm(false)} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium hover:bg-[var(--surface)]">
