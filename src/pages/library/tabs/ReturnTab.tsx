@@ -48,6 +48,7 @@ export function ReturnTab(_props: Props) {
   const [returnCondition, setReturnCondition] = useState<BookCondition>('good')
   const [fine, setFine] = useState(0)
   const [fineReason, setFineReason] = useState('')
+  const [showReturnModal, setShowReturnModal] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [editId, setEditId] = useState<string | null>(null)
@@ -84,6 +85,8 @@ export function ReturnTab(_props: Props) {
   }, [enriched, search])
 
   const selected = useMemo(() => enriched.find((b) => b.id === selectedBorrowing), [enriched, selectedBorrowing])
+  const deleteTarget = useMemo(() => enriched.find((b) => b.id === deleteId), [enriched, deleteId])
+  const editTarget = useMemo(() => enriched.find((b) => b.id === editId), [enriched, editId])
 
   useEffect(() => {
     if (selected) {
@@ -100,6 +103,7 @@ export function ReturnTab(_props: Props) {
     setReturnCondition('good')
     setFine(0)
     setFineReason('')
+    setShowReturnModal(false)
     setShowConfirm(false)
   }
 
@@ -144,10 +148,8 @@ export function ReturnTab(_props: Props) {
             </div>
           )}
           {filtered.map((b) => (
-            <div key={b.id} onClick={() => setSelectedBorrowing(b.id)}
-              className={`flex items-center gap-3 px-4 py-3 border-b border-[var(--border)] last:border-b-0 cursor-pointer transition-colors ${
-                selectedBorrowing === b.id ? 'bg-[var(--brand-light)]/10 border-l-2 border-l-[var(--brand)]' : 'hover:bg-[var(--surface)]'
-              }`}>
+            <div key={b.id}
+              className={`flex items-center gap-3 px-4 py-3 border-b border-[var(--border)] last:border-b-0 transition-colors hover:bg-[var(--surface)]`}>
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
                 b.status === 'overdue' ? 'bg-red-500/10 text-red-500' : 'bg-[var(--brand-light)] text-[var(--brand)]'
               }`}>
@@ -166,12 +168,17 @@ export function ReturnTab(_props: Props) {
                 )}
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                <button onClick={(e) => { e.stopPropagation(); setEditId(b.id); setEditDueDate(b.dueDate) }}
+                <button onClick={() => { setSelectedBorrowing(b.id); setShowReturnModal(true) }}
+                  className="p-1.5 rounded-lg bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)]/20 transition-colors"
+                  title={bn ? 'ফেরত নিন' : 'Return'}>
+                  <RotateCcw size={13} />
+                </button>
+                <button onClick={() => { setEditId(b.id); setEditDueDate(b.dueDate) }}
                   className="p-1.5 rounded-lg hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors"
                   title={bn ? 'সম্পাদনা' : 'Edit'}>
                   <Edit size={13} />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); setDeleteId(b.id) }}
+                <button onClick={() => setDeleteId(b.id)}
                   className="p-1.5 rounded-lg hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-500 transition-colors"
                   title={bn ? 'মুছুন' : 'Delete'}>
                   <Trash2 size={13} />
@@ -182,50 +189,63 @@ export function ReturnTab(_props: Props) {
         </div>
       </div>
 
-      {/* Return Form */}
-      {selected && (
-        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
-            <RotateCcw size={14} />
-            {bn ? 'ফেরত বিবরণ' : 'Return Details'}
-          </h3>
-          <div className="p-3 rounded-lg bg-[var(--surface)] border border-[var(--border)] space-y-1">
-            <div className="text-[0.75rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.studentName}</span></div>
-            <div className="text-[0.75rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.bookName}</span></div>
-            <div className="text-[0.75rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ইস্যু তারিখ:' : 'Issue Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.issueDate}</span></div>
-            <div className="text-[0.75rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ফেরত তারিখ:' : 'Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.dueDate}</span></div>
-            {selected.barcode && <div className="text-[0.75rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বারকোড:' : 'Barcode:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.barcode}</span></div>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>{bn ? 'বইয়ের অবস্থা' : 'Book Condition'}</label>
-              <select value={returnCondition} onChange={(e) => setReturnCondition(e.target.value as BookCondition)} className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none">
-                {BOOK_CONDITIONS.map((c) => (
-                  <option key={c} value={c}>{bn ? BOOK_CONDITIONS_BN[c] : c}</option>
-                ))}
-              </select>
+      {/* Return Details Modal */}
+      {showReturnModal && selected && (
+        <div className={modalOverlayCls} onClick={() => setShowReturnModal(false)}>
+          <div className={`${modalStyleCls} max-w-[40rem]`} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center">
+                <RotateCcw size={20} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[var(--text-primary)]">{bn ? 'ফেরত বিবরণ' : 'Return Details'}</h3>
+                <p className="text-[0.6875rem] text-[var(--text-secondary)]">{selected.id}</p>
+              </div>
             </div>
-            <div>
-              <label className={labelCls}>{bn ? 'জরিমানা (৳)' : 'Fine (৳)'}</label>
-              <input type="number" min={0} value={fine} onChange={(e) => setFine(Math.max(0, parseInt(e.target.value) || 0))} className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none" />
+
+            <div className="p-3 rounded-lg bg-[var(--surface)] border border-[var(--border)] space-y-1.5 mb-4">
+              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.studentName}</span></div>
+              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.bookName}</span></div>
+              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ইস্যু তারিখ:' : 'Issue Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.issueDate}</span></div>
+              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ফেরত তারিখ:' : 'Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.dueDate}</span></div>
+              {selected.barcode && <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বারকোড:' : 'Barcode:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.barcode}</span></div>}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className={labelCls}>{bn ? 'বইয়ের অবস্থা' : 'Book Condition'}</label>
+                <select value={returnCondition} onChange={(e) => setReturnCondition(e.target.value as BookCondition)} className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none">
+                  {BOOK_CONDITIONS.map((c) => (
+                    <option key={c} value={c}>{bn ? BOOK_CONDITIONS_BN[c] : c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>{bn ? 'জরিমানা (৳)' : 'Fine (৳)'}</label>
+                <input type="number" min={0} value={fine} onChange={(e) => setFine(Math.max(0, parseInt(e.target.value) || 0))} className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none" />
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className={labelCls}>{bn ? 'জরিমানার কারণ' : 'Fine Reason'}</label>
+              <input value={fineReason} onChange={(e) => setFineReason(e.target.value)} className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none" placeholder={bn ? 'কারণ লিখুন...' : 'Enter reason...'} />
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={() => setShowReturnModal(false)} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium hover:bg-[var(--surface)]">
+                {bn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button onClick={() => setShowConfirm(true)} className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-medium hover:opacity-90">
+                {bn ? 'বই ফেরত নিন' : 'Return Book'}
+              </button>
             </div>
           </div>
-          <div>
-            <label className={labelCls}>{bn ? 'জরিমানার কারণ' : 'Fine Reason'}</label>
-            <input value={fineReason} onChange={(e) => setFineReason(e.target.value)} className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none" placeholder={bn ? 'কারণ লিখুন...' : 'Enter reason...'} />
-          </div>
-
-          <button onClick={() => setShowConfirm(true)} className="w-full py-2.5 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-medium hover:opacity-90 transition-opacity">
-            {bn ? 'বই ফেরত নিন' : 'Return Book'}
-          </button>
         </div>
       )}
 
-      {/* Confirm Modal */}
+      {/* Confirm Return Modal */}
       {showConfirm && selected && (
         <div className={modalOverlayCls} onClick={() => setShowConfirm(false)}>
-          <div className={`${modalStyleCls} max-w-[40rem]`} onClick={(e) => e.stopPropagation()}>
+          <div className={`${modalStyleCls} max-w-[28rem]`} onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3">{bn ? 'ফেরত নিশ্চিত করুন' : 'Confirm Return'}</h3>
             <div className="space-y-2 text-[0.8125rem]">
               <div><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.studentName}</span></div>
@@ -249,14 +269,31 @@ export function ReturnTab(_props: Props) {
       )}
 
       {/* Delete Confirmation Modal */}
-      {deleteId && (
+      {deleteId && deleteTarget && (
         <div className={modalOverlayCls} onClick={() => setDeleteId(null)}>
-          <div className={`${modalStyleCls} max-w-[28rem]`} onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3">{bn ? 'ধার মুছুন' : 'Delete Borrowing'}</h3>
-            <p className="text-[0.8125rem] text-[var(--text-secondary)]">
-              {bn ? 'আপনি কি নিশ্চিত এই ধার মুছে ফেলতে চান? এটি অপরিবর্তনীয়।' : 'Are you sure you want to delete this borrowing? This cannot be undone.'}
+          <div className={`${modalStyleCls} max-w-[40rem]`} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[var(--text-primary)]">{bn ? 'ধার মুছুন' : 'Delete Borrowing'}</h3>
+                <p className="text-[0.6875rem] text-[var(--text-secondary)]">{deleteTarget.id}</p>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10 space-y-1.5 mb-4">
+              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{deleteTarget.studentName}</span></div>
+              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{deleteTarget.bookName}</span></div>
+              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ইস্যু তারিখ:' : 'Issue Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{deleteTarget.issueDate}</span></div>
+              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ফেরত তারিখ:' : 'Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{deleteTarget.dueDate}</span></div>
+            </div>
+
+            <p className="text-[0.8125rem] text-[var(--text-secondary)] mb-4">
+              {bn ? 'আপনি কি নিশ্চিত এই ধার মুছে ফেলতে চান? এটি অপরিবর্তনীয়।' : 'Are you sure you want to delete this borrowing? This action cannot be undone.'}
             </p>
-            <div className="flex gap-2 mt-4">
+
+            <div className="flex gap-2">
               <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium hover:bg-[var(--surface)]">
                 {bn ? 'বাতিল' : 'Cancel'}
               </button>
@@ -269,17 +306,33 @@ export function ReturnTab(_props: Props) {
       )}
 
       {/* Edit Due Date Modal */}
-      {editId && (
+      {editId && editTarget && (
         <div className={modalOverlayCls} onClick={() => setEditId(null)}>
-          <div className={`${modalStyleCls} max-w-[28rem]`} onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3">{bn ? 'ফেরত তারিখ পরিবর্তন' : 'Edit Due Date'}</h3>
-            <div>
+          <div className={`${modalStyleCls} max-w-[40rem]`} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center">
+                <Edit size={20} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[var(--text-primary)]">{bn ? 'ফেরত তারিখ পরিবর্তন' : 'Edit Due Date'}</h3>
+                <p className="text-[0.6875rem] text-[var(--text-secondary)]">{editTarget.id}</p>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg bg-[var(--surface)] border border-[var(--border)] space-y-1.5 mb-4">
+              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{editTarget.studentName}</span></div>
+              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{editTarget.bookName}</span></div>
+              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বর্তমান ফেরত তারিখ:' : 'Current Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{editTarget.dueDate}</span></div>
+            </div>
+
+            <div className="mb-4">
               <label className={labelCls}>{bn ? 'নতুন ফেরত তারিখ' : 'New Due Date'}</label>
               <input type="date" value={editDueDate} min={today()}
                 onChange={(e) => setEditDueDate(e.target.value)}
                 className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none" />
             </div>
-            <div className="flex gap-2 mt-4">
+
+            <div className="flex gap-2">
               <button onClick={() => setEditId(null)} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium hover:bg-[var(--surface)]">
                 {bn ? 'বাতিল' : 'Cancel'}
               </button>
