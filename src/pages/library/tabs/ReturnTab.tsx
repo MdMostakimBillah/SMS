@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { RotateCcw, Search, BookOpen, Clock, AlertCircle } from 'lucide-react'
+import { RotateCcw, Search, BookOpen, Clock, AlertCircle, Trash2, Edit } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore, calcFine } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -38,6 +38,8 @@ export function ReturnTab(_props: Props) {
   const books = useLibraryStore((s) => s.books)
   const copies = useLibraryStore((s) => s.copies)
   const returnBook = useLibraryStore((s) => s.returnBook)
+  const deleteBorrowing = useLibraryStore((s) => s.deleteBorrowing)
+  const updateBorrowing = useLibraryStore((s) => s.updateBorrowing)
   const settings = useLibraryStore((s) => s.settings)
   const students = useAdmissionStore((s) => s.students)
 
@@ -47,6 +49,9 @@ export function ReturnTab(_props: Props) {
   const [fine, setFine] = useState(0)
   const [fineReason, setFineReason] = useState('')
   const [showConfirm, setShowConfirm] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editDueDate, setEditDueDate] = useState('')
 
   const activeBorrowings = useMemo(() =>
     borrowings.filter((b) => b.status === 'borrowed' || b.status === 'overdue'),
@@ -98,6 +103,19 @@ export function ReturnTab(_props: Props) {
     setShowConfirm(false)
   }
 
+  const handleDelete = () => {
+    if (!deleteId) return
+    deleteBorrowing(deleteId)
+    setDeleteId(null)
+  }
+
+  const handleEdit = () => {
+    if (!editId || !editDueDate) return
+    updateBorrowing(editId, { dueDate: editDueDate })
+    setEditId(null)
+    setEditDueDate('')
+  }
+
   return (
     <div className="space-y-4">
       {/* Search */}
@@ -146,6 +164,18 @@ export function ReturnTab(_props: Props) {
                     {bn ? `৳${toBnNum(b.currentFine)} জরিমানা` : `৳${b.currentFine} fine`}
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button onClick={(e) => { e.stopPropagation(); setEditId(b.id); setEditDueDate(b.dueDate) }}
+                  className="p-1.5 rounded-lg hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors"
+                  title={bn ? 'সম্পাদনা' : 'Edit'}>
+                  <Edit size={13} />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); setDeleteId(b.id) }}
+                  className="p-1.5 rounded-lg hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-500 transition-colors"
+                  title={bn ? 'মুছুন' : 'Delete'}>
+                  <Trash2 size={13} />
+                </button>
               </div>
             </div>
           ))}
@@ -212,6 +242,49 @@ export function ReturnTab(_props: Props) {
               </button>
               <button onClick={handleReturn} className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-medium hover:opacity-90">
                 {bn ? 'নিশ্চিত করুন' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteId && (
+        <div className={modalOverlayCls} onClick={() => setDeleteId(null)}>
+          <div className={`${modalStyleCls} max-w-[28rem]`} onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3">{bn ? 'ধার মুছুন' : 'Delete Borrowing'}</h3>
+            <p className="text-[0.8125rem] text-[var(--text-secondary)]">
+              {bn ? 'আপনি কি নিশ্চিত এই ধার মুছে ফেলতে চান? এটি অপরিবর্তনীয়।' : 'Are you sure you want to delete this borrowing? This cannot be undone.'}
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium hover:bg-[var(--surface)]">
+                {bn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button onClick={handleDelete} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-[0.8125rem] font-medium hover:opacity-90">
+                {bn ? 'মুছুন' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Due Date Modal */}
+      {editId && (
+        <div className={modalOverlayCls} onClick={() => setEditId(null)}>
+          <div className={`${modalStyleCls} max-w-[28rem]`} onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3">{bn ? 'ফেরত তারিখ পরিবর্তন' : 'Edit Due Date'}</h3>
+            <div>
+              <label className={labelCls}>{bn ? 'নতুন ফেরত তারিখ' : 'New Due Date'}</label>
+              <input type="date" value={editDueDate} min={today()}
+                onChange={(e) => setEditDueDate(e.target.value)}
+                className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none" />
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setEditId(null)} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium hover:bg-[var(--surface)]">
+                {bn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button onClick={handleEdit} className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-medium hover:opacity-90">
+                {bn ? 'সংরক্ষণ' : 'Save'}
               </button>
             </div>
           </div>

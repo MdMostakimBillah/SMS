@@ -58,6 +58,7 @@ interface LibraryState {
 
   addBorrowing: (b: Borrowing) => void
   updateBorrowing: (id: string, data: Partial<Borrowing>) => void
+  deleteBorrowing: (id: string) => void
   returnBook: (borrowingId: string, condition: BookCondition, fine: number, fineReason: string) => void
   renewBorrowing: (id: string) => void
 
@@ -222,6 +223,17 @@ export const useLibraryStore = create<LibraryState>()(
         set((state) => ({
           borrowings: state.borrowings.map((b) => (b.id === id ? { ...b, ...data } : b)),
         })),
+      deleteBorrowing: (id) =>
+        set((state) => {
+          const b = state.borrowings.find((br) => br.id === id)
+          if (!b) return state
+          const book = state.books.find((bk) => bk.id === b.bookId)
+          return {
+            borrowings: state.borrowings.filter((br) => br.id !== id),
+            copies: state.copies.map((c) => c.id === b.copyId ? { ...c, status: 'available' as BookCopyStatus, issuedTo: undefined, dueDate: undefined } : c),
+            books: book ? state.books.map((bk) => bk.id === b.bookId ? { ...bk, availableCopies: bk.availableCopies + 1 } : bk) : state.books,
+          }
+        }),
       returnBook: (borrowingId, condition, fine, fineReason) => {
         set((state) => {
           const b = state.borrowings.find((br) => br.id === borrowingId)
