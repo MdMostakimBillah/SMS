@@ -56,17 +56,22 @@ export function DashboardTab(_props: Props) {
   }, [borrowings, books, students, bn])
 
   const overdueList = useMemo(() => {
+    const now = new Date()
     return borrowings
       .filter((b) => b.status === 'overdue')
       .map((b) => {
         const book = books.find((bk) => bk.id === b.bookId)
         const student = students.find((s) => s.id === b.studentId)
         const fine = calcFine(b.dueDate, settings.finePerDay)
+        const dueDate = new Date(b.dueDate)
+        const daysOverdue = Math.ceil((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
         return {
           ...b,
           bookName: bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || ''),
           studentName: bn ? (student?.nameBn || student?.nameEn || '') : (student?.nameEn || student?.nameBn || ''),
+          studentId: b.studentId,
           currentFine: fine,
+          daysOverdue,
         }
       })
   }, [borrowings, books, students, settings.finePerDay, bn])
@@ -156,28 +161,25 @@ export function DashboardTab(_props: Props) {
             <AlertTriangle size={14} className="text-red-500" />
             {bn ? 'বিলম্বিত বই' : 'Overdue Books'} ({bn ? toBnNum(overdueList.length) : overdueList.length})
           </h3>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+          <div className="space-y-1.5 max-h-64 overflow-y-auto">
             {overdueList.length === 0 && (
               <div className="text-[0.75rem] text-[var(--text-secondary)] text-center py-4">
                 {bn ? 'কোনো বিলম্বিত বই নেই' : 'No overdue books'}
               </div>
             )}
             {overdueList.map((o) => (
-              <div key={o.id} className="flex items-center gap-3 p-2 rounded-lg bg-red-500/5 border border-red-500/10 text-[0.75rem]">
-                <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 bg-red-500/10 text-red-500">
-                  <AlertTriangle size={13} />
-                </div>
+              <div key={o.id} className="flex items-center gap-2.5 py-1.5 border-b border-[var(--border)] last:border-0 text-[0.6875rem]">
+                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-red-500" />
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium text-[var(--text-primary)] truncate">{o.studentName}</div>
-                  <div className="text-[0.6875rem] text-[var(--text-secondary)] truncate">{o.bookName}</div>
+                  <span className="font-medium text-[var(--text-primary)] truncate">{o.studentName}</span>
+                  <span className="text-[var(--text-secondary)] ml-1.5">({o.studentId})</span>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <div className="text-[0.6875rem] text-red-500 font-medium">
-                    {bn ? `৳${toBnNum(o.currentFine)}` : `৳${o.currentFine}`}
-                  </div>
-                  <div className="text-[0.625rem] text-[var(--text-secondary)]">
-                    {bn ? `বােঝা: ${o.dueDate}` : `Due: ${o.dueDate}`}
-                  </div>
+                <div className="text-[var(--text-secondary)] truncate max-w-[120px]">{o.bookName}</div>
+                <div className="text-[var(--text-secondary)] flex-shrink-0 tabular-nums">
+                  {bn ? `${toBnNum(o.daysOverdue)}দিন` : `${o.daysOverdue}d`}
+                </div>
+                <div className="text-red-500 font-medium flex-shrink-0 tabular-nums">
+                  {bn ? `৳${toBnNum(o.currentFine)}` : `৳${o.currentFine}`}
                 </div>
               </div>
             ))}
