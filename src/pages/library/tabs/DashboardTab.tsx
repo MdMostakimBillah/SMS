@@ -47,13 +47,13 @@ export function DashboardTab(_props: Props) {
       const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
       return {
         ...b,
-        bookName: book?.titleBn || book?.title || '',
-        studentName: student?.nameBn || student?.nameEn || '',
+        bookName: bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || ''),
+        studentName: bn ? (student?.nameBn || student?.nameEn || '') : (student?.nameEn || student?.nameBn || ''),
         studentId: b.studentId,
         duration: days,
       }
     })
-  }, [borrowings, books, students])
+  }, [borrowings, books, students, bn])
 
   const overdueList = useMemo(() => {
     return borrowings
@@ -62,9 +62,14 @@ export function DashboardTab(_props: Props) {
         const book = books.find((bk) => bk.id === b.bookId)
         const student = students.find((s) => s.id === b.studentId)
         const fine = calcFine(b.dueDate, settings.finePerDay)
-        return { ...b, bookName: book?.titleBn || book?.title || '', studentName: student?.nameBn || student?.nameEn || '', currentFine: fine }
+        return {
+          ...b,
+          bookName: bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || ''),
+          studentName: bn ? (student?.nameBn || student?.nameEn || '') : (student?.nameEn || student?.nameBn || ''),
+          currentFine: fine,
+        }
       })
-  }, [borrowings, books, students, settings.finePerDay])
+  }, [borrowings, books, students, settings.finePerDay, bn])
 
   return (
     <div className="space-y-4">
@@ -91,17 +96,17 @@ export function DashboardTab(_props: Props) {
                   <Tag size={12} className={c.text} />
                 </div>
                 <div className="text-center min-w-0 w-full">
-                  <div className={`text-[0.6875rem] font-semibold text-[var(--text-primary)] truncate ${bn ? 'bn-text' : ''}`}>
+                  <div className="text-[0.6875rem] font-semibold text-[var(--text-primary)] truncate">
                     {bn ? cat.nameBn : cat.name}
                   </div>
                   <div className="text-base font-bold text-[var(--text-primary)] mt-0.5">
                     {bn ? toBnNum(cat.totalBooks) : cat.totalBooks}
                   </div>
-                  <div className={`text-[0.5625rem] text-[var(--text-secondary)] ${bn ? 'bn-text' : ''}`}>
+                  <div className="text-[0.5625rem] text-[var(--text-secondary)]">
                     {bn ? 'মোট বই' : 'Total'}
                   </div>
                   {cat.issued > 0 && (
-                    <div className={`mt-1.5 text-[0.625rem] font-medium px-1.5 py-0.5 rounded-full ${c.bg} ${c.text} ${bn ? 'bn-text' : ''}`}>
+                    <div className={`mt-1.5 text-[0.625rem] font-medium px-1.5 py-0.5 rounded-full ${c.bg} ${c.text}`}>
                       {bn ? `${toBnNum(cat.issued)} ধারে` : `${cat.issued} issued`}
                     </div>
                   )}
@@ -133,10 +138,10 @@ export function DashboardTab(_props: Props) {
                   'bg-[var(--brand)]'
                 }`} />
                 <div className="min-w-0 flex-1">
-                  <span className={`font-medium text-[var(--text-primary)] truncate ${bn ? 'bn-text' : ''}`}>{a.studentName}</span>
+                  <span className="font-medium text-[var(--text-primary)] truncate">{a.studentName}</span>
                   <span className="text-[var(--text-secondary)] ml-1.5">({a.studentId})</span>
                 </div>
-                <div className={`text-[var(--text-secondary)] truncate max-w-[120px] ${bn ? 'bn-text' : ''}`}>{a.bookName}</div>
+                <div className="text-[var(--text-secondary)] truncate max-w-[120px]">{a.bookName}</div>
                 <div className="text-[var(--text-secondary)] flex-shrink-0 tabular-nums">
                   {bn ? `${toBnNum(a.duration)}দিন` : `${a.duration}d`}
                 </div>
@@ -163,8 +168,8 @@ export function DashboardTab(_props: Props) {
                   <AlertTriangle size={13} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className={`font-medium text-[var(--text-primary)] truncate ${bn ? 'bn-text' : ''}`}>{o.studentName}</div>
-                  <div className={`text-[0.6875rem] text-[var(--text-secondary)] truncate ${bn ? 'bn-text' : ''}`}>{o.bookName}</div>
+                  <div className="font-medium text-[var(--text-primary)] truncate">{o.studentName}</div>
+                  <div className="text-[0.6875rem] text-[var(--text-secondary)] truncate">{o.bookName}</div>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className="text-[0.6875rem] text-red-500 font-medium">
