@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
-import { Search, BookOpen, User, Calendar, AlertCircle } from 'lucide-react'
+import { Search, BookOpen, User, Calendar, AlertCircle, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -203,9 +203,15 @@ export function IssueTab(_props: Props) {
             onChange={(e) => { setStudentSearch(e.target.value); setShowStudentDropdown(true); setStudentActiveIdx(-1) }}
             onFocus={() => { setShowStudentDropdown(true); setStudentActiveIdx(-1) }}
             onKeyDown={handleStudentKeyDown}
-            className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none"
+            className="w-full h-9 pl-9 pr-9 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none"
             placeholder={bn ? 'নাম বা আইডি দিয়ে খুঁজুন...' : 'Search by name or ID...'}
           />
+          {studentSearch && (
+            <button onClick={() => { setStudentSearch(''); setStudentActiveIdx(-1) }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+              <X size={13} />
+            </button>
+          )}
           {showStudentDropdown && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowStudentDropdown(false)} />
@@ -230,14 +236,18 @@ export function IssueTab(_props: Props) {
             <div className="w-10 h-10 rounded-full bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center font-bold text-sm">
               {(selectedStudent.nameEn || '').charAt(0)}
             </div>
-            <div>
-              <div className="font-medium text-[var(--text-primary)] text-[0.8125rem]">{bn ? (selectedStudent.nameBn || selectedStudent.nameEn) : (selectedStudent.nameEn || selectedStudent.nameBn)}</div>
+            <div className="min-w-0 flex-1">
+              <div className="font-medium text-[var(--text-primary)] text-[0.8125rem] truncate">{bn ? (selectedStudent.nameBn || selectedStudent.nameEn) : (selectedStudent.nameEn || selectedStudent.nameBn)}</div>
               <div className="text-[0.6875rem] text-[var(--text-secondary)]">{selectedStudent.class} | {selectedStudent.section} | Roll: {selectedStudent.roll}</div>
             </div>
-            <div className="ml-auto text-right">
+            <div className="text-right flex-shrink-0">
               <div className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'ধারে' : 'Borrowed'}</div>
               <div className="font-bold text-[var(--text-primary)]">{bn ? toBnNum(studentBorrowCount) : studentBorrowCount}/{bn ? toBnNum(settings.maxBooksPerStudent) : settings.maxBooksPerStudent}</div>
             </div>
+            <button onClick={() => { setSelectedStudentId(''); setStudentSearch('') }}
+              className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-500/10 transition-colors">
+              <X size={14} />
+            </button>
           </div>
         )}
         {selectedStudent && studentBorrowCount >= settings.maxBooksPerStudent && (
@@ -268,9 +278,15 @@ export function IssueTab(_props: Props) {
             onChange={(e) => { setBookSearch(e.target.value); setShowBookDropdown(true); setBookActiveIdx(-1) }}
             onFocus={() => { setShowBookDropdown(true); setBookActiveIdx(-1) }}
             onKeyDown={handleBookKeyDown}
-            className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none"
+            className="w-full h-9 pl-9 pr-9 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none"
             placeholder={bn ? 'বইয়ের নাম বা লেখক দিয়ে খুঁজুন...' : 'Search by title or author...'}
           />
+          {bookSearch && (
+            <button onClick={() => { setBookSearch(''); setBookActiveIdx(-1) }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+              <X size={13} />
+            </button>
+          )}
           {showBookDropdown && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowBookDropdown(false)} />
@@ -299,10 +315,14 @@ export function IssueTab(_props: Props) {
               <div className="font-medium text-[var(--text-primary)] text-[0.8125rem] truncate">{bn ? (selectedBook.titleBn || selectedBook.title) : (selectedBook.title || selectedBook.titleBn)}</div>
               <div className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? (selectedBook.authorBn || selectedBook.author) : (selectedBook.author || selectedBook.authorBn)} | {selectedBook.shelf}</div>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0">
               <div className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'উপলব্ধ' : 'Available'}</div>
               <div className="font-bold text-[var(--green)]">{bn ? toBnNum(availableCopies.length) : availableCopies.length}</div>
             </div>
+            <button onClick={() => { setSelectedBookId(''); setSelectedCopyId(''); setBookSearch('') }}
+              className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-500/10 transition-colors">
+              <X size={14} />
+            </button>
           </div>
         )}
 
