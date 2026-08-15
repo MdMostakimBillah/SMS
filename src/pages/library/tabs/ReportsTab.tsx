@@ -40,23 +40,23 @@ export function ReportsTab(_props: Props) {
     return Object.entries(counts)
       .map(([bookId, count]) => {
         const book = books.find((b) => b.id === bookId)
-        return { title: book?.titleBn || book?.title || '', count }
+        return { title: bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || ''), count }
       })
       .sort((a, b) => b.count - a.count)
       .slice(0, 5)
-  }, [borrowings, books])
+  }, [borrowings, books, bn])
 
   const topDefaulters = useMemo(() => {
     const fines: Record<string, { name: string; fine: number; count: number }> = {}
     borrowings.filter((b) => b.status === 'overdue' || b.fine > 0).forEach((b) => {
       const student = students.find((s) => s.id === b.studentId)
-      const name = student?.nameBn || student?.nameEn || b.studentId
+      const name = bn ? (student?.nameBn || student?.nameEn || b.studentId) : (student?.nameEn || student?.nameBn || b.studentId)
       if (!fines[b.studentId]) fines[b.studentId] = { name, fine: 0, count: 0 }
       fines[b.studentId].fine += b.fine
       if (b.status === 'overdue') fines[b.studentId].count++
     })
     return Object.values(fines).sort((a, b) => b.fine - a.fine).slice(0, 5)
-  }, [borrowings, students])
+  }, [borrowings, students, bn])
 
   const digitalReport = useMemo(() => {
     const totalSessions = readingSessions.length

@@ -26,8 +26,8 @@ export function TransactionsTab({ searchQuery }: Props) {
     borrowings.forEach((b) => {
       const book = books.find((bk) => bk.id === b.bookId)
       const student = students.find((s) => s.id === b.studentId)
-      const name = student?.nameBn || student?.nameEn || ''
-      const bookName = book?.titleBn || book?.title || ''
+      const name = bn ? (student?.nameBn || student?.nameEn || '') : (student?.nameEn || student?.nameBn || '')
+      const bookName = bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || '')
 
       items.push({ id: `t-issue-${b.id}`, type: 'issue', date: b.issueDate, studentName: name, bookName, amount: 0, note: bn ? 'বই ইস্যু' : 'Book issued' })
       if (b.returnDate) {

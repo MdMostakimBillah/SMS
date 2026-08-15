@@ -31,9 +31,14 @@ export function BooksTab({ searchQuery }: Props) {
       const cat = categories.find((c) => c.id === b.categoryId)
       const bookCopies = copies.filter((c) => c.bookId === b.id && c.isActive)
       const available = bookCopies.filter((c) => c.status === 'available').length
-      return { ...b, categoryName: cat?.nameBn || cat?.name || '', available, totalActiveCopies: bookCopies.length }
+      return {
+        ...b,
+        categoryName: bn ? (cat?.nameBn || cat?.name || '') : (cat?.name || cat?.nameBn || ''),
+        available,
+        totalActiveCopies: bookCopies.length,
+      }
     })
-  }, [books, categories, copies])
+  }, [books, categories, copies, bn])
 
   const filtered = useMemo(() => {
     let list = enrichedBooks

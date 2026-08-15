@@ -31,13 +31,13 @@ export function ReadingActivityTab({ searchQuery }: Props) {
       const student = students.find((s) => s.id === rs.studentId)
       return {
         ...rs,
-        bookTitle: book?.titleBn || book?.title || '',
-        studentName: student?.nameBn || student?.nameEn || '',
+        bookTitle: bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || ''),
+        studentName: bn ? (student?.nameBn || student?.nameEn || '') : (student?.nameEn || student?.nameBn || ''),
         className: student?.class || '',
         chapterCount: db?.chapters.length || 0,
       }
     })
-  }, [readingSessions, digitalBooks, books, students])
+  }, [readingSessions, digitalBooks, books, students, bn])
 
   const filtered = useMemo(() => {
     if (!searchQuery) return enriched

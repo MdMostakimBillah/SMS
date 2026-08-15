@@ -51,14 +51,14 @@ export function BorrowedTab({ searchQuery }: Props) {
       const copy = copies.find((c) => c.id === b.copyId)
       return {
         ...b,
-        bookName: book?.titleBn || book?.title || '',
-        studentName: student?.nameBn || student?.nameEn || '',
+        bookName: bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || ''),
+        studentName: bn ? (student?.nameBn || student?.nameEn || '') : (student?.nameEn || student?.nameBn || ''),
         className: student?.class || '',
         section: student?.section || '',
         barcode: copy?.barcode || '',
       }
     })
-  }, [borrowings, books, students, copies])
+  }, [borrowings, books, students, copies, bn])
 
   const filtered = useMemo(() => {
     let list = enriched

@@ -59,9 +59,15 @@ export function ReturnTab(_props: Props) {
       const student = students.find((s) => s.id === b.studentId)
       const copy = copies.find((c) => c.id === b.copyId)
       const currentFine = calcFine(b.dueDate, settings.finePerDay)
-      return { ...b, bookName: book?.titleBn || book?.title || '', studentName: student?.nameBn || student?.nameEn || '', barcode: copy?.barcode || '', currentFine }
+      return {
+        ...b,
+        bookName: bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || ''),
+        studentName: bn ? (student?.nameBn || student?.nameEn || '') : (student?.nameEn || student?.nameBn || ''),
+        barcode: copy?.barcode || '',
+        currentFine,
+      }
     })
-  }, [activeBorrowings, books, students, copies, settings.finePerDay])
+  }, [activeBorrowings, books, students, copies, settings.finePerDay, bn])
 
   const filtered = useMemo(() => {
     if (!search) return enriched

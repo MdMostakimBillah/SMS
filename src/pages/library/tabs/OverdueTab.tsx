@@ -31,9 +31,9 @@ export function OverdueTab({ searchQuery }: Props) {
         const daysOverdue = Math.max(0, Math.floor((new Date().getTime() - new Date(b.dueDate).getTime()) / 86400000))
         return {
           ...b,
-          bookName: book?.titleBn || book?.title || '',
-          authorName: book?.authorBn || book?.author || '',
-          studentName: student?.nameBn || student?.nameEn || '',
+          bookName: bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || ''),
+          authorName: bn ? (book?.authorBn || book?.author || '') : (book?.author || book?.authorBn || ''),
+          studentName: bn ? (student?.nameBn || student?.nameEn || '') : (student?.nameEn || student?.nameBn || ''),
           className: student?.class || '',
           section: student?.section || '',
           email: student?.email || '',
@@ -42,7 +42,7 @@ export function OverdueTab({ searchQuery }: Props) {
           daysOverdue,
         }
       })
-  }, [borrowings, books, students, copies, settings.finePerDay])
+  }, [borrowings, books, students, copies, settings.finePerDay, bn])
 
   const filtered = useMemo(() => {
     let list = enriched

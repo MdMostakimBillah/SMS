@@ -28,8 +28,8 @@ export function HistoryTab({ searchQuery }: Props) {
     borrowings.forEach((b) => {
       const book = books.find((bk) => bk.id === b.bookId)
       const student = students.find((s) => s.id === b.studentId)
-      const name = student?.nameBn || student?.nameEn || ''
-      const bookName = book?.titleBn || book?.title || ''
+      const name = bn ? (student?.nameBn || student?.nameEn || '') : (student?.nameEn || student?.nameBn || '')
+      const bookName = bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || '')
 
       items.push({ id: `issue-${b.id}`, type: 'issue', date: b.issueDate, studentName: name, detail: bookName, icon: 'issue' })
       if (b.returnDate) {
@@ -46,14 +46,14 @@ export function HistoryTab({ searchQuery }: Props) {
       const student = students.find((s) => s.id === rs.studentId)
       items.push({
         id: `read-${rs.id}`, type: 'reading', date: rs.lastRead,
-        studentName: student?.nameBn || student?.nameEn || '',
-        detail: book?.titleBn || book?.title || '',
+        studentName: bn ? (student?.nameBn || student?.nameEn || '') : (student?.nameEn || student?.nameBn || ''),
+        detail: bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || ''),
         icon: 'reading',
       })
     })
 
     return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [borrowings, books, readingSessions, digitalBooks, students])
+  }, [borrowings, books, readingSessions, digitalBooks, students, bn])
 
   const filtered = useMemo(() => {
     let list = allActivities

@@ -96,7 +96,7 @@ export function StudentProfilesTab({ searchQuery }: Props) {
                         {(p.nameEn || '').charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <div className="font-medium text-[var(--text-primary)] truncate max-w-[140px]">{p.nameBn || p.nameEn}</div>
+                        <div className="font-medium text-[var(--text-primary)] truncate max-w-[140px]">{bn ? (p.nameBn || p.nameEn) : (p.nameEn || p.nameBn)}</div>
                         <div className="text-[0.625rem] text-[var(--text-secondary)]">{p.class} | {p.section} | Roll: {p.roll}</div>
                       </div>
                     </div>
