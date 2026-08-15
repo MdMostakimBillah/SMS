@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { BookOpen, Clock, AlertTriangle, TrendingUp, Tag } from 'lucide-react'
+import { Clock, AlertTriangle, TrendingUp, Tag } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore, calcFine } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
