@@ -120,9 +120,9 @@ export function IssueTab(_props: Props) {
               <div className="fixed inset-0 z-40" onClick={() => setShowStudentDropdown(false)} />
               <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg shadow-lg">
                 {filteredStudents.map((s) => (
-                  <button key={s.id} onClick={() => { setSelectedStudentId(s.id); setStudentSearch(s.nameBn || s.nameEn); setShowStudentDropdown(false) }}
+                  <button key={s.id} onClick={() => { setSelectedStudentId(s.id); setStudentSearch(bn ? (s.nameBn || s.nameEn) : (s.nameEn || s.nameBn)); setShowStudentDropdown(false) }}
                     className="w-full text-left px-3 py-2 hover:bg-[var(--surface)] text-[0.75rem] border-b border-[var(--border)] last:border-b-0">
-                    <div className="font-medium text-[var(--text-primary)]">{s.nameBn || s.nameEn}</div>
+                    <div className="font-medium text-[var(--text-primary)]">{bn ? (s.nameBn || s.nameEn) : (s.nameEn || s.nameBn)}</div>
                     <div className="text-[0.625rem] text-[var(--text-secondary)]">{s.class} | {s.section} | Roll: {s.roll} | {s.id}</div>
                   </button>
                 ))}
@@ -137,7 +137,7 @@ export function IssueTab(_props: Props) {
               {(selectedStudent.nameEn || '').charAt(0)}
             </div>
             <div>
-              <div className="font-medium text-[var(--text-primary)] text-[0.8125rem]">{selectedStudent.nameBn || selectedStudent.nameEn}</div>
+              <div className="font-medium text-[var(--text-primary)] text-[0.8125rem]">{bn ? (selectedStudent.nameBn || selectedStudent.nameEn) : (selectedStudent.nameEn || selectedStudent.nameBn)}</div>
               <div className="text-[0.6875rem] text-[var(--text-secondary)]">{selectedStudent.class} | {selectedStudent.section} | Roll: {selectedStudent.roll}</div>
             </div>
             <div className="ml-auto text-right">
@@ -174,10 +174,10 @@ export function IssueTab(_props: Props) {
               <div className="fixed inset-0 z-40" onClick={() => setShowBookDropdown(false)} />
               <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg shadow-lg">
                 {filteredBooks.map((b) => (
-                  <button key={b.id} onClick={() => { setSelectedBookId(b.id); setBookSearch(b.titleBn || b.title); setShowBookDropdown(false); setSelectedCopyId('') }}
+                  <button key={b.id} onClick={() => { setSelectedBookId(b.id); setBookSearch(bn ? (b.titleBn || b.title) : (b.title || b.titleBn)); setShowBookDropdown(false); setSelectedCopyId('') }}
                     className="w-full text-left px-3 py-2 hover:bg-[var(--surface)] text-[0.75rem] border-b border-[var(--border)] last:border-b-0">
-                    <div className="font-medium text-[var(--text-primary)]">{b.titleBn || b.title}</div>
-                    <div className="text-[0.625rem] text-[var(--text-secondary)]">{b.authorBn || b.author} | {b.isbn} | {b.availableCopies} {bn ? 'উপলব্ধ' : 'available'}</div>
+                    <div className="font-medium text-[var(--text-primary)]">{bn ? (b.titleBn || b.title) : (b.title || b.titleBn)}</div>
+                    <div className="text-[0.625rem] text-[var(--text-secondary)]">{bn ? (b.authorBn || b.author) : (b.author || b.authorBn)} | {b.isbn} | {b.availableCopies} {bn ? 'উপলব্ধ' : 'available'}</div>
                   </button>
                 ))}
                 {filteredBooks.length === 0 && <div className="px-3 py-4 text-center text-[0.75rem] text-[var(--text-secondary)]">{bn ? 'কোনো বই পাওয়া যায়নি' : 'No books found'}</div>}
@@ -191,8 +191,8 @@ export function IssueTab(_props: Props) {
               <BookOpen size={16} />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-[var(--text-primary)] text-[0.8125rem] truncate">{selectedBook.titleBn || selectedBook.title}</div>
-              <div className="text-[0.6875rem] text-[var(--text-secondary)]">{selectedBook.authorBn || selectedBook.author} | {selectedBook.shelf}</div>
+              <div className="font-medium text-[var(--text-primary)] text-[0.8125rem] truncate">{bn ? (selectedBook.titleBn || selectedBook.title) : (selectedBook.title || selectedBook.titleBn)}</div>
+              <div className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? (selectedBook.authorBn || selectedBook.author) : (selectedBook.author || selectedBook.authorBn)} | {selectedBook.shelf}</div>
             </div>
             <div className="text-right">
               <div className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'উপলব্ধ' : 'Available'}</div>
@@ -249,10 +249,10 @@ export function IssueTab(_props: Props) {
           {/* Summary */}
           <div className="p-3 rounded-lg bg-[var(--brand-light)]/5 border border-[var(--brand)]/10 space-y-1">
             <div className="text-[0.75rem] text-[var(--text-primary)]">
-              <span className="font-medium">{bn ? 'ছাত্র:' : 'Student:'}</span> {selectedStudent?.nameBn || selectedStudent?.nameEn}
+              <span className="font-medium">{bn ? 'ছাত্র:' : 'Student:'}</span> {bn ? (selectedStudent?.nameBn || selectedStudent?.nameEn) : (selectedStudent?.nameEn || selectedStudent?.nameBn)}
             </div>
             <div className="text-[0.75rem] text-[var(--text-primary)]">
-              <span className="font-medium">{bn ? 'বই:' : 'Book:'}</span> {selectedBook?.titleBn || selectedBook?.title}
+              <span className="font-medium">{bn ? 'বই:' : 'Book:'}</span> {bn ? (selectedBook?.titleBn || selectedBook?.title) : (selectedBook?.title || selectedBook?.titleBn)}
             </div>
             <div className="text-[0.75rem] text-[var(--text-primary)]">
               <span className="font-medium">{bn ? 'ফেরত তারিখ:' : 'Due Date:'}</span> {dueDate}
@@ -270,8 +270,8 @@ export function IssueTab(_props: Props) {
           <div className={`${modalStyleCls} max-w-[28rem]`} onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3">{bn ? 'ইস্যু নিশ্চিত করুন' : 'Confirm Issue'}</h3>
             <div className="space-y-2 text-[0.8125rem]">
-              <div><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{selectedStudent.nameBn || selectedStudent.nameEn}</span></div>
-              <div><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{selectedBook.titleBn || selectedBook.title}</span></div>
+              <div><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{bn ? (selectedStudent.nameBn || selectedStudent.nameEn) : (selectedStudent.nameEn || selectedStudent.nameBn)}</span></div>
+              <div><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{bn ? (selectedBook.titleBn || selectedBook.title) : (selectedBook.title || selectedBook.titleBn)}</span></div>
               <div><span className="text-[var(--text-secondary)]">{bn ? 'ফেরত তারিখ:' : 'Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{dueDate}</span></div>
             </div>
             <div className="flex gap-2 mt-4">
