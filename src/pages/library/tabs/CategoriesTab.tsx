@@ -165,10 +165,10 @@ export function CategoriesTab({ searchQuery }: Props) {
       return row
     })
 
-    const headers = opts.selectedCols.map((key) => {
+    const headers = ['#', ...opts.selectedCols.map((key) => {
       const col = pdfColumns.find((c) => c.key === key)
       return col ? (opts.isBn ? col.labelBn : col.label) : key
-    })
+    })]
 
     const branding = getPDFBranding()
     const logo = pdfLogoHTML(branding, 28)
