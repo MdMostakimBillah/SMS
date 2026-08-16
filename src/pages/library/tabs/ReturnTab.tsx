@@ -1,13 +1,18 @@
-import { useState, useMemo, useEffect } from 'react'
-import { RotateCcw, Search, BookOpen, Clock, AlertCircle, Trash2, Edit } from 'lucide-react'
+import { useState, useMemo, useEffect, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { RotateCcw, BookOpen, Clock, AlertCircle, Trash2, Edit, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore, calcFine } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { toBnNum } from '@/lib/i18n'
-import { modalOverlayCls, modalStyleCls, labelCls } from '@/pages/hr/utils'
+import { labelCls } from '@/pages/hr/utils'
 import { BOOK_CONDITIONS, BOOK_CONDITIONS_BN, type BookCondition } from '../types'
 
 interface Props { searchQuery: string }
+
+function ModalPortal({ children }: { children: ReactNode }) {
+  return createPortal(children, document.body)
+}
 
 function daysBetween(a: string, b: string): number {
   return Math.floor((new Date(b).getTime() - new Date(a).getTime()) / 86400000)
@@ -32,7 +37,7 @@ function CountdownTimer({ dueDate }: { dueDate: string }) {
   )
 }
 
-export function ReturnTab(_props: Props) {
+export function ReturnTab({ searchQuery }: Props) {
   const bn = useBn()
   const borrowings = useLibraryStore((s) => s.borrowings)
   const books = useLibraryStore((s) => s.books)
@@ -43,7 +48,6 @@ export function ReturnTab(_props: Props) {
   const settings = useLibraryStore((s) => s.settings)
   const students = useAdmissionStore((s) => s.students)
 
-  const [search, setSearch] = useState('')
   const [selectedBorrowing, setSelectedBorrowing] = useState<string | null>(null)
   const [returnCondition, setReturnCondition] = useState<BookCondition>('good')
   const [fine, setFine] = useState(0)
@@ -76,13 +80,13 @@ export function ReturnTab(_props: Props) {
   }, [activeBorrowings, books, students, copies, settings.finePerDay, bn])
 
   const filtered = useMemo(() => {
-    if (!search) return enriched
-    const q = search.toLowerCase()
+    if (!searchQuery) return enriched
+    const q = searchQuery.toLowerCase()
     return enriched.filter((b) =>
       b.bookName.toLowerCase().includes(q) || b.studentName.toLowerCase().includes(q) ||
       b.barcode.toLowerCase().includes(q) || b.id.toLowerCase().includes(q)
     )
-  }, [enriched, search])
+  }, [enriched, searchQuery])
 
   const selected = useMemo(() => enriched.find((b) => b.id === selectedBorrowing), [enriched, selectedBorrowing])
   const deleteTarget = useMemo(() => enriched.find((b) => b.id === deleteId), [enriched, deleteId])
@@ -122,17 +126,6 @@ export function ReturnTab(_props: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Search */}
-      <div className="relative">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none"
-          placeholder={bn ? 'ছাত্র, বই, বারকোড দিয়ে খুঁজুন...' : 'Search by student, book, barcode...'}
-        />
-      </div>
-
       {/* Active Borrowings */}
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
         <div className="px-4 py-2.5 border-b border-[var(--border)] bg-[var(--surface)]">
@@ -191,157 +184,191 @@ export function ReturnTab(_props: Props) {
 
       {/* Return Details Modal */}
       {showReturnModal && selected && (
-        <div className={modalOverlayCls} onClick={() => setShowReturnModal(false)}>
-          <div className={`${modalStyleCls} max-w-[40rem]`} onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center">
-                <RotateCcw size={20} />
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowReturnModal(false)}>
+            <div className="relative w-full max-w-[40rem] bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-[var(--border)] bg-gradient-to-r from-[var(--brand)]/5 to-[var(--brand)]/10">
+                <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center">
+                  <RotateCcw size={20} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">{bn ? 'ফেরত বিবরণ' : 'Return Details'}</h3>
+                  <p className="text-[0.6875rem] text-[var(--text-secondary)]">{selected.id}</p>
+                </div>
+                <button onClick={() => setShowReturnModal(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors">
+                  <X size={18} />
+                </button>
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-[var(--text-primary)]">{bn ? 'ফেরত বিবরণ' : 'Return Details'}</h3>
-                <p className="text-[0.6875rem] text-[var(--text-secondary)]">{selected.id}</p>
-              </div>
-            </div>
 
-            <div className="p-3 rounded-lg bg-[var(--surface)] border border-[var(--border)] space-y-1.5 mb-4">
-              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.studentName}</span></div>
-              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.bookName}</span></div>
-              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ইস্যু তারিখ:' : 'Issue Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.issueDate}</span></div>
-              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ফেরত তারিখ:' : 'Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.dueDate}</span></div>
-              {selected.barcode && <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বারকোড:' : 'Barcode:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.barcode}</span></div>}
-            </div>
+              <div className="px-6 py-5 space-y-4">
+                <div className="p-3 rounded-lg bg-[var(--surface)] border border-[var(--border)] space-y-1.5">
+                  <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.studentName}</span></div>
+                  <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.bookName}</span></div>
+                  <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ইস্যু তারিখ:' : 'Issue Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.issueDate}</span></div>
+                  <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ফেরত তারিখ:' : 'Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.dueDate}</span></div>
+                  {selected.barcode && <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বারকোড:' : 'Barcode:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.barcode}</span></div>}
+                </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div>
-                <label className={labelCls}>{bn ? 'বইয়ের অবস্থা' : 'Book Condition'}</label>
-                <select value={returnCondition} onChange={(e) => setReturnCondition(e.target.value as BookCondition)} className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none">
-                  {BOOK_CONDITIONS.map((c) => (
-                    <option key={c} value={c}>{bn ? BOOK_CONDITIONS_BN[c] : c.charAt(0).toUpperCase() + c.slice(1)}</option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>{bn ? 'বইয়ের অবস্থা' : 'Book Condition'}</label>
+                    <select value={returnCondition} onChange={(e) => setReturnCondition(e.target.value as BookCondition)} className="w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 hover:border-[var(--brand)]/30">
+                      {BOOK_CONDITIONS.map((c) => (
+                        <option key={c} value={c}>{bn ? BOOK_CONDITIONS_BN[c] : c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>{bn ? 'জরিমানা (৳)' : 'Fine (৳)'}</label>
+                    <input type="number" min={0} value={fine} onChange={(e) => setFine(Math.max(0, parseInt(e.target.value) || 0))} className="w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 hover:border-[var(--brand)]/30" />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelCls}>{bn ? 'জরিমানার কারণ' : 'Fine Reason'}</label>
+                  <input value={fineReason} onChange={(e) => setFineReason(e.target.value)} className="w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 hover:border-[var(--brand)]/30" placeholder={bn ? 'কারণ লিখুন...' : 'Enter reason...'} />
+                </div>
               </div>
-              <div>
-                <label className={labelCls}>{bn ? 'জরিমানা (৳)' : 'Fine (৳)'}</label>
-                <input type="number" min={0} value={fine} onChange={(e) => setFine(Math.max(0, parseInt(e.target.value) || 0))} className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none" />
-              </div>
-            </div>
-            <div className="mb-4">
-              <label className={labelCls}>{bn ? 'জরিমানার কারণ' : 'Fine Reason'}</label>
-              <input value={fineReason} onChange={(e) => setFineReason(e.target.value)} className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none" placeholder={bn ? 'কারণ লিখুন...' : 'Enter reason...'} />
-            </div>
 
-            <div className="flex gap-2">
-              <button onClick={() => setShowReturnModal(false)} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium hover:bg-[var(--surface)]">
-                {bn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button onClick={() => setShowConfirm(true)} className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-medium hover:opacity-90">
-                {bn ? 'বই ফেরত নিন' : 'Return Book'}
-              </button>
+              <div className="flex items-center gap-3 px-6 py-4 bg-[var(--bg-primary)] border-t border-[var(--border)]">
+                <button onClick={() => setShowReturnModal(false)} className="flex-1 py-3 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-semibold cursor-pointer font-[inherit] hover:bg-[var(--bg-tertiary)] transition-colors">
+                  {bn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button onClick={() => setShowConfirm(true)} className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[var(--brand)]/25 hover:scale-[1.01] active:scale-[0.99]">
+                  {bn ? 'বই ফেরত নিন' : 'Return Book'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Confirm Return Modal */}
       {showConfirm && selected && (
-        <div className={modalOverlayCls} onClick={() => setShowConfirm(false)}>
-          <div className={`${modalStyleCls} max-w-[28rem]`} onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3">{bn ? 'ফেরত নিশ্চিত করুন' : 'Confirm Return'}</h3>
-            <div className="space-y-2 text-[0.8125rem]">
-              <div><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.studentName}</span></div>
-              <div><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.bookName}</span></div>
-              {fine > 0 && (
-                <div className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/10 text-amber-600">
-                  {bn ? `জরিমানা: ৳${toBnNum(fine)} — ${fineReason}` : `Fine: ৳${fine} — ${fineReason}`}
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowConfirm(false)}>
+            <div className="relative w-full max-w-[40rem] bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-[var(--border)] bg-gradient-to-r from-[var(--brand)]/5 to-[var(--brand)]/10">
+                <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center">
+                  <RotateCcw size={20} />
                 </div>
-              )}
-            </div>
-            <div className="flex gap-2 mt-4">
-              <button onClick={() => setShowConfirm(false)} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium hover:bg-[var(--surface)]">
-                {bn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button onClick={handleReturn} className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-medium hover:opacity-90">
-                {bn ? 'নিশ্চিত করুন' : 'Confirm'}
-              </button>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">{bn ? 'ফেরত নিশ্চিত করুন' : 'Confirm Return'}</h3>
+                </div>
+                <button onClick={() => setShowConfirm(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="px-6 py-5 space-y-2 text-[0.8125rem]">
+                <div><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.studentName}</span></div>
+                <div><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.bookName}</span></div>
+                {fine > 0 && (
+                  <div className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/10 text-amber-600">
+                    {bn ? `জরিমানা: ৳${toBnNum(fine)} — ${fineReason}` : `Fine: ৳${fine} — ${fineReason}`}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3 px-6 py-4 bg-[var(--bg-primary)] border-t border-[var(--border)]">
+                <button onClick={() => setShowConfirm(false)} className="flex-1 py-3 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-semibold cursor-pointer font-[inherit] hover:bg-[var(--bg-tertiary)] transition-colors">
+                  {bn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button onClick={handleReturn} className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[var(--brand)]/25 hover:scale-[1.01] active:scale-[0.99]">
+                  {bn ? 'নিশ্চিত করুন' : 'Confirm'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Delete Confirmation Modal */}
       {deleteId && deleteTarget && (
-        <div className={modalOverlayCls} onClick={() => setDeleteId(null)}>
-          <div className={`${modalStyleCls} max-w-[40rem]`} onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
-                <Trash2 size={20} />
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setDeleteId(null)}>
+            <div className="relative w-full max-w-[40rem] bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-[var(--border)] bg-gradient-to-r from-red-500/5 to-red-500/10">
+                <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+                  <Trash2 size={20} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">{bn ? 'ধার মুছুন' : 'Delete Borrowing'}</h3>
+                  <p className="text-[0.6875rem] text-[var(--text-secondary)]">{deleteTarget.id}</p>
+                </div>
+                <button onClick={() => setDeleteId(null)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors">
+                  <X size={18} />
+                </button>
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-[var(--text-primary)]">{bn ? 'ধার মুছুন' : 'Delete Borrowing'}</h3>
-                <p className="text-[0.6875rem] text-[var(--text-secondary)]">{deleteTarget.id}</p>
+
+              <div className="px-6 py-5 space-y-4">
+                <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10 space-y-1.5">
+                  <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{deleteTarget.studentName}</span></div>
+                  <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{deleteTarget.bookName}</span></div>
+                  <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ইস্যু তারিখ:' : 'Issue Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{deleteTarget.issueDate}</span></div>
+                  <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ফেরত তারিখ:' : 'Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{deleteTarget.dueDate}</span></div>
+                </div>
+                <p className="text-[0.8125rem] text-[var(--text-secondary)]">
+                  {bn ? 'আপনি কি নিশ্চিত এই ধার মুছে ফেলতে চান? এটি অপরিবর্তনীয়।' : 'Are you sure you want to delete this borrowing? This action cannot be undone.'}
+                </p>
               </div>
-            </div>
 
-            <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10 space-y-1.5 mb-4">
-              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{deleteTarget.studentName}</span></div>
-              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{deleteTarget.bookName}</span></div>
-              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ইস্যু তারিখ:' : 'Issue Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{deleteTarget.issueDate}</span></div>
-              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ফেরত তারিখ:' : 'Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{deleteTarget.dueDate}</span></div>
-            </div>
-
-            <p className="text-[0.8125rem] text-[var(--text-secondary)] mb-4">
-              {bn ? 'আপনি কি নিশ্চিত এই ধার মুছে ফেলতে চান? এটি অপরিবর্তনীয়।' : 'Are you sure you want to delete this borrowing? This action cannot be undone.'}
-            </p>
-
-            <div className="flex gap-2">
-              <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium hover:bg-[var(--surface)]">
-                {bn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button onClick={handleDelete} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-[0.8125rem] font-medium hover:opacity-90">
-                {bn ? 'মুছুন' : 'Delete'}
-              </button>
+              <div className="flex items-center gap-3 px-6 py-4 bg-[var(--bg-primary)] border-t border-[var(--border)]">
+                <button onClick={() => setDeleteId(null)} className="flex-1 py-3 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-semibold cursor-pointer font-[inherit] hover:bg-[var(--bg-tertiary)] transition-colors">
+                  {bn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button onClick={handleDelete} className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-500 text-white text-[0.8125rem] font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-red-500/25 hover:scale-[1.01] active:scale-[0.99]">
+                  {bn ? 'মুছুন' : 'Delete'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Edit Due Date Modal */}
       {editId && editTarget && (
-        <div className={modalOverlayCls} onClick={() => setEditId(null)}>
-          <div className={`${modalStyleCls} max-w-[40rem]`} onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center">
-                <Edit size={20} />
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setEditId(null)}>
+            <div className="relative w-full max-w-[40rem] bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-[var(--border)] bg-gradient-to-r from-[var(--brand)]/5 to-[var(--brand)]/10">
+                <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center">
+                  <Edit size={20} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">{bn ? 'ফেরত তারিখ পরিবর্তন' : 'Edit Due Date'}</h3>
+                  <p className="text-[0.6875rem] text-[var(--text-secondary)]">{editTarget.id}</p>
+                </div>
+                <button onClick={() => setEditId(null)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors">
+                  <X size={18} />
+                </button>
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-[var(--text-primary)]">{bn ? 'ফেরত তারিখ পরিবর্তন' : 'Edit Due Date'}</h3>
-                <p className="text-[0.6875rem] text-[var(--text-secondary)]">{editTarget.id}</p>
+
+              <div className="px-6 py-5 space-y-4">
+                <div className="p-3 rounded-lg bg-[var(--surface)] border border-[var(--border)] space-y-1.5">
+                  <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{editTarget.studentName}</span></div>
+                  <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{editTarget.bookName}</span></div>
+                  <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বর্তমান ফেরত তারিখ:' : 'Current Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{editTarget.dueDate}</span></div>
+                </div>
+
+                <div>
+                  <label className={labelCls}>{bn ? 'নতুন ফেরত তারিখ' : 'New Due Date'}</label>
+                  <input type="date" value={editDueDate} min={today()}
+                    onChange={(e) => setEditDueDate(e.target.value)}
+                    className="w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 hover:border-[var(--brand)]/30" />
+                </div>
               </div>
-            </div>
 
-            <div className="p-3 rounded-lg bg-[var(--surface)] border border-[var(--border)] space-y-1.5 mb-4">
-              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{editTarget.studentName}</span></div>
-              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{editTarget.bookName}</span></div>
-              <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বর্তমান ফেরত তারিখ:' : 'Current Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{editTarget.dueDate}</span></div>
-            </div>
-
-            <div className="mb-4">
-              <label className={labelCls}>{bn ? 'নতুন ফেরত তারিখ' : 'New Due Date'}</label>
-              <input type="date" value={editDueDate} min={today()}
-                onChange={(e) => setEditDueDate(e.target.value)}
-                className="w-full py-2 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none" />
-            </div>
-
-            <div className="flex gap-2">
-              <button onClick={() => setEditId(null)} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-medium hover:bg-[var(--surface)]">
-                {bn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button onClick={handleEdit} className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-medium hover:opacity-90">
-                {bn ? 'সংরক্ষণ' : 'Save'}
-              </button>
+              <div className="flex items-center gap-3 px-6 py-4 bg-[var(--bg-primary)] border-t border-[var(--border)]">
+                <button onClick={() => setEditId(null)} className="flex-1 py-3 px-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] font-semibold cursor-pointer font-[inherit] hover:bg-[var(--bg-tertiary)] transition-colors">
+                  {bn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button onClick={handleEdit} className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[var(--brand)]/25 hover:scale-[1.01] active:scale-[0.99]">
+                  {bn ? 'সংরক্ষণ' : 'Save'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   )

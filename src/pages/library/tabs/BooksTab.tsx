@@ -1,14 +1,30 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Plus, Search, Edit, Trash2, Eye, BookOpen } from 'lucide-react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { Plus, Search, Edit, Trash2, Eye, BookOpen, MoreVertical, ChevronDown, FileSpreadsheet, FileText } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore } from '@/store/libraryStore'
 import { toBnNum } from '@/lib/i18n'
+import { XLSX } from '@/lib/excelExport'
+import { openPrintWindow } from '@/lib/pdf'
+import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
+import { GenericPDFOptionsModal, type PDFColumnDef, type GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { BookModal } from '../modals/BookModal'
 import type { Book } from '../types'
 
 interface Props { searchQuery: string }
+
+const pdfColumns: PDFColumnDef[] = [
+  { key: 'title', label: 'Title', labelBn: 'শিরোনাম', default: true },
+  { key: 'author', label: 'Author', labelBn: 'লেখক', default: true },
+  { key: 'isbn', label: 'ISBN', labelBn: 'আইএসবিএন', default: true },
+  { key: 'category', label: 'Category', labelBn: 'ক্যাটাগরি', default: true },
+  { key: 'shelf', label: 'Shelf', labelBn: 'শেল্ফ', default: true },
+  { key: 'copies', label: 'Copies', labelBn: 'কপি', default: true },
+  { key: 'available', label: 'Available', labelBn: 'উপলব্ধ', default: true },
+  { key: 'status', label: 'Status', labelBn: 'অবস্থা', default: true },
+]
 
 export function BooksTab({ searchQuery }: Props) {
   const bn = useBn()
@@ -25,6 +41,10 @@ export function BooksTab({ searchQuery }: Props) {
   const [perPage, setPerPage] = useState(10)
   const [filterCategory, setFilterCategory] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [showActionMenu, setShowActionMenu] = useState(false)
+  const [showPdfModal, setShowPdfModal] = useState(false)
+  const actionMenuRef = useRef<HTMLDivElement>(null)
 
   const enrichedBooks = useMemo(() => {
     return books.map((b) => {
@@ -59,8 +79,104 @@ export function BooksTab({ searchQuery }: Props) {
 
   useEffect(() => { setPage(1) }, [searchQuery, filterCategory])
 
+  useEffect(() => {
+    if (!showActionMenu) return
+    const h = (e: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node))
+        setShowActionMenu(false)
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [showActionMenu])
+
+  const toggleAll = useCallback(() => {
+    if (selected.size === paged.length) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(paged.map((b) => b.id)))
+    }
+  }, [selected.size, paged])
+
+  const toggleRow = useCallback((id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
   const handleEdit = useCallback((b: Book) => { setEditBook(b); setShowModal(true) }, [])
   const handleAdd = useCallback(() => { setEditBook(null); setShowModal(true) }, [])
+
+  const exportExcel = useCallback(() => {
+    const data = selected.size > 0 ? filtered.filter((b) => selected.has(b.id)) : filtered
+    const rows = data.map((b, i) => ({
+      '#': i + 1,
+      [bn ? 'শিরোনাম' : 'Title']: bn ? b.titleBn : b.title,
+      [bn ? 'লেখক' : 'Author']: bn ? b.authorBn : b.author,
+      'ISBN': b.isbn,
+      [bn ? 'ক্যাটাগরি' : 'Category']: b.categoryName,
+      [bn ? 'শেল্ফ' : 'Shelf']: b.shelf,
+      [bn ? 'মোট কপি' : 'Total Copies']: b.totalActiveCopies,
+      [bn ? 'উপলব্ধ' : 'Available']: b.available,
+      [bn ? 'অবস্থা' : 'Status']: b.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive'),
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, bn ? 'বই' : 'Books')
+    XLSX.writeFile(wb, `books-${new Date().toISOString().split('T')[0]}.xlsx`)
+  }, [filtered, selected, bn])
+
+  const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
+    const data = selected.size > 0 ? filtered.filter((b) => selected.has(b.id)) : filtered
+    const rows = data.map((b, i) => {
+      const row: Record<string, string> = { '#': String(i + 1) }
+      for (const key of opts.selectedCols) {
+        switch (key) {
+          case 'title': row[bn ? 'শিরোনাম' : 'Title'] = bn ? b.titleBn : b.title; break
+          case 'author': row[bn ? 'লেখক' : 'Author'] = bn ? b.authorBn : b.author; break
+          case 'isbn': row['ISBN'] = b.isbn; break
+          case 'category': row[bn ? 'ক্যাটাগরি' : 'Category'] = b.categoryName; break
+          case 'shelf': row[bn ? 'শেল্ফ' : 'Shelf'] = b.shelf; break
+          case 'copies': row[bn ? 'কপি' : 'Copies'] = String(b.totalActiveCopies); break
+          case 'available': row[bn ? 'উপলব্ধ' : 'Available'] = String(b.available); break
+          case 'status': row[bn ? 'অবস্থা' : 'Status'] = b.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive'); break
+        }
+      }
+      return row
+    })
+
+    const headers = ['#', ...opts.selectedCols.map((key) => {
+      const col = pdfColumns.find((c) => c.key === key)
+      return col ? (opts.isBn ? col.labelBn : col.label) : key
+    })]
+
+    const branding = getPDFBranding()
+    const logo = pdfLogoHTML(branding)
+    const css = `@page{size:${opts.orientation};margin:5mm}body{font-family:Inter,sans-serif;font-size:10px;color:#1a1a2e}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #e2e8f0;padding:5px 8px;text-align:left}th{background:#f1f5f9;font-weight:600;font-size:9px}tr:nth-child(even){background:#f8fafc}.hdr{display:flex;align-items:center;gap:8px;margin-bottom:6px}.ttl{font-size:14px;font-weight:700;margin:6px 0 4px}.ftr{margin-top:8px;font-size:8px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:4px}`
+
+    let bodyHTML = `<div class="hdr">${logo}<div><div style="font-size:10px;color:#64748b">${branding.address || ''}</div></div></div>`
+    bodyHTML += `<div class="ttl">${opts.title}</div>`
+    bodyHTML += '<table><thead><tr>'
+    for (const h of headers) bodyHTML += `<th>${h}</th>`
+    bodyHTML += '</tr></thead><tbody>'
+    for (const row of rows) {
+      bodyHTML += '<tr>'
+      bodyHTML += `<td>${row['#'] || ''}</td>`
+      for (const key of opts.selectedCols) {
+        const col = pdfColumns.find((c) => c.key === key)
+        const label = col ? (opts.isBn ? col.labelBn : col.label) : key
+        bodyHTML += `<td>${row[label] || ''}</td>`
+      }
+      bodyHTML += '</tr>'
+    }
+    bodyHTML += '</tbody></table>'
+    bodyHTML += `<div class="ftr">${bn ? 'তৈরি: ' : 'Generated: '}${new Date().toLocaleDateString()}</div>`
+
+    openPrintWindow(opts.title, bodyHTML, { css })
+    setShowPdfModal(false)
+  }, [filtered, selected, bn])
 
   return (
     <div className="space-y-3">
@@ -83,7 +199,46 @@ export function BooksTab({ searchQuery }: Props) {
             {bn ? 'মুছুন' : 'Clear'}
           </button>
         )}
+        {selected.size > 0 && (
+          <span className="text-[0.6875rem] text-[var(--brand)] font-medium">
+            {bn ? `${toBnNum(selected.size)} টি নির্বাচিত` : `${selected.size} selected`}
+          </span>
+        )}
         <div className="flex-1" />
+        {filtered.length > 0 && (
+          <div className="relative">
+            <button
+              onClick={() => setShowActionMenu(!showActionMenu)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)] transition-colors cursor-pointer"
+            >
+              <MoreVertical size={13} />
+              {bn ? 'অ্যাকশন' : 'Action'}
+              <ChevronDown size={12} />
+            </button>
+            {showActionMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
+                <div ref={actionMenuRef} className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
+                  <button
+                    onClick={() => { exportExcel(); setShowActionMenu(false) }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
+                  >
+                    <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                    {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                  </button>
+                  <div className="h-px bg-[var(--border)] mx-2" />
+                  <button
+                    onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
+                  >
+                    <FileText size={14} className="text-[var(--red)]" />
+                    {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
         <button onClick={handleAdd} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity">
           <Plus size={13} />
           {bn ? 'বই যোগ করুন' : 'Add Book'}
@@ -111,6 +266,14 @@ export function BooksTab({ searchQuery }: Props) {
           <table className="w-full text-[0.75rem]">
             <thead>
               <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
+                <th className="py-2.5 px-2 w-9">
+                  <ModernCheckbox
+                    checked={selected.size === paged.length && paged.length > 0}
+                    onChange={toggleAll}
+                    color="brand"
+                    size="xs"
+                  />
+                </th>
                 <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">#</th>
                 <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Book'}</th>
                 <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'লেখক' : 'Author'}</th>
@@ -123,7 +286,15 @@ export function BooksTab({ searchQuery }: Props) {
             </thead>
             <tbody>
               {paged.map((b, idx) => (
-                <tr key={b.id} className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--surface)] transition-colors">
+                <tr key={b.id} className={`border-b border-[var(--border)] last:border-b-0 transition-colors hover:bg-[var(--surface)] ${selected.has(b.id) ? 'bg-[var(--brand)]/5' : ''}`}>
+                  <td className="py-2.5 px-2">
+                    <ModernCheckbox
+                      checked={selected.has(b.id)}
+                      onChange={() => toggleRow(b.id)}
+                      color="brand"
+                      size="xs"
+                    />
+                  </td>
                   <td className="py-2.5 px-3 text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
                   <td className="py-2.5 px-3">
                     <div className="flex items-center gap-2">
@@ -171,7 +342,7 @@ export function BooksTab({ searchQuery }: Props) {
               ))}
               {paged.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-[var(--text-secondary)]">
+                  <td colSpan={9} className="py-8 text-center text-[var(--text-secondary)]">
                     {bn ? 'কোনো বই পাওয়া যায়নি' : 'No books found'}
                   </td>
                 </tr>
@@ -190,6 +361,20 @@ export function BooksTab({ searchQuery }: Props) {
           onConfirm={() => { deleteBook(deleteTarget.id); setDeleteTarget(null) }}
           onCancel={() => setDeleteTarget(null)}
           isBn={bn}
+        />
+      )}
+      {showPdfModal && (
+        <GenericPDFOptionsModal
+          columns={pdfColumns}
+          defaultTitle="Books List"
+          defaultTitleBn="বইয়ের তালিকা"
+          recordLabel="book"
+          recordLabelBn="বই"
+          count={selected.size}
+          isBn={bn}
+          showColumns={true}
+          onClose={() => setShowPdfModal(false)}
+          onDownload={handlePdfDownload}
         />
       )}
     </div>
