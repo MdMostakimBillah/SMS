@@ -105,21 +105,21 @@ export function TransactionsTab({ searchQuery }: Props) {
           <table className="w-full text-[0.75rem]">
             <thead>
               <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">#</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'তারিখ' : 'Date'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ধরন' : 'Type'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Book'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'নোট' : 'Note'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">#</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'তারিখ' : 'Date'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধরন' : 'Type'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Book'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'নোট' : 'Note'}</th>
               </tr>
             </thead>
             <tbody>
               {paged.map((t, idx) => (
                 <tr key={t.id} className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--surface)] transition-colors">
-                  <td className="py-2.5 px-3 text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
-                  <td className="py-2.5 px-3 text-[var(--text-primary)]">{t.date}</td>
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-3 text-center text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
+                  <td className="py-2.5 px-3 text-center text-[var(--text-primary)]">{t.date}</td>
+                  <td className="py-2.5 px-3 text-center">
                     <span className={`px-2 py-0.5 rounded-full text-[0.625rem] font-medium ${
                       t.type === 'issue' ? 'bg-[var(--brand-light)] text-[var(--brand)]' :
                       t.type === 'return' ? 'bg-[var(--green-light)] text-[var(--green)]' :
@@ -132,12 +132,12 @@ export function TransactionsTab({ searchQuery }: Props) {
                        (bn ? 'পুনর্নবীকরণ' : 'Renewal')}
                     </span>
                   </td>
-                  <td className="py-2.5 px-3 text-[var(--text-primary)] truncate max-w-[120px]">{t.studentName}</td>
-                  <td className="py-2.5 px-3 text-[var(--text-primary)] truncate max-w-[140px]">{t.bookName}</td>
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-3 text-center text-[var(--text-primary)] truncate max-w-[120px]">{t.studentName}</td>
+                  <td className="py-2.5 px-3 text-center text-[var(--text-primary)] truncate max-w-[140px]">{t.bookName}</td>
+                  <td className="py-2.5 px-3 text-center">
                     {t.amount > 0 ? <span className="font-bold text-amber-600">{bn ? `৳${toBnNum(t.amount)}` : `৳${t.amount}`}</span> : <span className="text-[var(--text-secondary)]">—</span>}
                   </td>
-                  <td className="py-2.5 px-3 text-[var(--text-secondary)] truncate max-w-[140px]">{t.note}</td>
+                  <td className="py-2.5 px-3 text-center text-[var(--text-secondary)] truncate max-w-[140px]">{t.note}</td>
                 </tr>
               ))}
               {paged.length === 0 && (

@@ -101,11 +101,11 @@ export function HistoryTab({ searchQuery }: Props) {
           <table className="w-full text-[0.75rem]">
             <thead>
               <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">#</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'তারিখ' : 'Date'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ধরন' : 'Type'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বিবরণ' : 'Detail'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">#</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'তারিখ' : 'Date'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধরন' : 'Type'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বিবরণ' : 'Detail'}</th>
               </tr>
             </thead>
             <tbody>
@@ -113,9 +113,9 @@ export function HistoryTab({ searchQuery }: Props) {
                 const ic = iconMap[a.icon] || iconMap.issue
                 return (
                   <tr key={a.id} className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--surface)] transition-colors">
-                    <td className="py-2.5 px-3 text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
-                    <td className="py-2.5 px-3 text-[var(--text-primary)]">{a.date}</td>
-                    <td className="py-2.5 px-3">
+                    <td className="py-2.5 px-3 text-center text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
+                    <td className="py-2.5 px-3 text-center text-[var(--text-primary)]">{a.date}</td>
+                    <td className="py-2.5 px-3 text-center">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.625rem] font-medium" style={{ background: `${ic.color}18`, color: ic.color }}>
                         {ic.icon}
                         {a.type === 'issue' ? (bn ? 'ইস্যু' : 'Issue') :
@@ -124,8 +124,8 @@ export function HistoryTab({ searchQuery }: Props) {
                          (bn ? 'পড়াশোনা' : 'Reading')}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-[var(--text-primary)] truncate max-w-[140px]">{a.studentName}</td>
-                    <td className="py-2.5 px-3 text-[var(--text-primary)] truncate max-w-[180px]">{a.detail}</td>
+                    <td className="py-2.5 px-3 text-center text-[var(--text-primary)] truncate max-w-[140px]">{a.studentName}</td>
+                    <td className="py-2.5 px-3 text-center text-[var(--text-primary)] truncate max-w-[180px]">{a.detail}</td>
                   </tr>
                 )
               })}

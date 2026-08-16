@@ -77,21 +77,21 @@ export function StudentProfilesTab({ searchQuery }: Props) {
           <table className="w-full text-[0.75rem]">
             <thead>
               <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">#</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ধারে' : 'Borrowed'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বিলম্বিত' : 'Overdue'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ডিজিটাল' : 'Digital'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'জরিমানা' : 'Fine'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">#</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধারে' : 'Borrowed'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বিলম্বিত' : 'Overdue'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ডিজিটাল' : 'Digital'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'জরিমানা' : 'Fine'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody>
               {paged.map((p, idx) => (
                 <tr key={p.id} className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--surface)] transition-colors">
-                  <td className="py-2.5 px-3 text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
-                  <td className="py-2.5 px-3">
-                    <div className="flex items-center gap-2">
+                  <td className="py-2.5 px-3 text-center text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0 font-bold text-[0.6875rem]">
                         {(p.nameEn || '').charAt(0)}
                       </div>
@@ -101,23 +101,23 @@ export function StudentProfilesTab({ searchQuery }: Props) {
                       </div>
                     </div>
                   </td>
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-3 text-center">
                     <span className="font-bold text-[var(--text-primary)]">{bn ? toBnNum(p.activeCount) : p.activeCount}</span>
                   </td>
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-3 text-center">
                     <span className={`font-bold ${p.overdueCount > 0 ? 'text-red-500' : 'text-[var(--text-secondary)]'}`}>
                       {bn ? toBnNum(p.overdueCount) : p.overdueCount}
                     </span>
                   </td>
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-3 text-center">
                     <span className="font-bold text-[var(--brand)]">{bn ? toBnNum(p.digitalBooksRead) : p.digitalBooksRead}</span>
                   </td>
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-3 text-center">
                     <span className={`font-bold ${p.pendingFine > 0 ? 'text-amber-600' : 'text-[var(--text-secondary)]'}`}>
                       {p.pendingFine > 0 ? (bn ? `৳${toBnNum(p.pendingFine)}` : `৳${p.pendingFine}`) : '৳০'}
                     </span>
                   </td>
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-3 text-center">
                     <button onClick={() => setSelectedStudentId(p.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
                       <Eye size={13} />
                     </button>

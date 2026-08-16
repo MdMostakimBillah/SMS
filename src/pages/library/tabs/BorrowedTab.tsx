@@ -110,22 +110,22 @@ export function BorrowedTab({ searchQuery }: Props) {
           <table className="w-full text-[0.75rem]">
             <thead>
               <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">#</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Book'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ইস্যু' : 'Issue Date'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ফেরত' : 'Due Date'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'কাউন্টডাউন' : 'Countdown'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'অবস্থা' : 'Status'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">#</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Book'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ইস্যু' : 'Issue Date'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ফেরত' : 'Due Date'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কাউন্টডাউন' : 'Countdown'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'অবস্থা' : 'Status'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody>
               {paged.map((b, idx) => (
                 <tr key={b.id} className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--surface)] transition-colors">
-                  <td className="py-2.5 px-3 text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
-                  <td className="py-2.5 px-3">
-                    <div className="flex items-center gap-2">
+                  <td className="py-2.5 px-3 text-center text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0 font-bold text-[0.625rem]">
                         {(b.studentName).charAt(0)}
                       </div>
@@ -135,23 +135,23 @@ export function BorrowedTab({ searchQuery }: Props) {
                       </div>
                     </div>
                   </td>
-                  <td className="py-2.5 px-3">
-                    <div className="flex items-center gap-2">
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
                       <BookOpen size={13} className="text-[var(--brand)] flex-shrink-0" />
                       <span className="text-[var(--text-primary)] truncate max-w-[140px]">{b.bookName}</span>
                     </div>
                   </td>
-                  <td className="py-2.5 px-3 text-[var(--text-primary)]">{b.issueDate}</td>
-                  <td className="py-2.5 px-3 text-[var(--text-primary)]">{b.dueDate}</td>
-                  <td className="py-2.5 px-3"><CountdownTimer dueDate={b.dueDate} /></td>
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-3 text-center text-[var(--text-primary)]">{b.issueDate}</td>
+                  <td className="py-2.5 px-3 text-center text-[var(--text-primary)]">{b.dueDate}</td>
+                  <td className="py-2.5 px-3 text-center"><CountdownTimer dueDate={b.dueDate} /></td>
+                  <td className="py-2.5 px-3 text-center">
                     <span className={`px-2 py-0.5 rounded-full text-[0.625rem] font-medium ${
                       b.status === 'overdue' ? 'bg-red-500/10 text-red-500' : 'bg-[var(--green-light)] text-[var(--green)]'
                     }`}>
                       {b.status === 'overdue' ? (bn ? 'বিলম্বিত' : 'Overdue') : (bn ? 'ধারে' : 'Borrowed')}
                     </span>
                   </td>
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-3 text-center">
                     {b.status === 'borrowed' && b.renewalCount < settings.renewalLimit && settings.allowRenewal && (
                       <button onClick={() => renewBorrowing(b.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors" title={bn ? 'পুনর্নবীকরণ' : 'Renew'}>
                         <RefreshCw size={13} />

@@ -78,24 +78,24 @@ export function ReportsTab(_props: Props) {
           <table className="w-full text-[0.75rem]">
             <thead>
               <tr className="border-b border-[var(--border)]">
-                <th className="py-2 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
-                <th className="py-2 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Books'}</th>
-                <th className="py-2 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'কপি' : 'Copies'}</th>
-                <th className="py-2 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'প্রদত্ত' : 'Issued'}</th>
-                <th className="py-2 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বিলম্বিত' : 'Overdue'}</th>
-                <th className="py-2 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ব্যবহার' : 'Utilization'}</th>
+                <th className="py-2 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
+                <th className="py-2 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Books'}</th>
+                <th className="py-2 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কপি' : 'Copies'}</th>
+                <th className="py-2 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'প্রদত্ত' : 'Issued'}</th>
+                <th className="py-2 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বিলম্বিত' : 'Overdue'}</th>
+                <th className="py-2 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ব্যবহার' : 'Utilization'}</th>
               </tr>
             </thead>
             <tbody>
               {categoryReport.map((r) => (
                 <tr key={r.category} className="border-b border-[var(--border)] last:border-b-0">
-                  <td className="py-2 px-3 font-medium text-[var(--text-primary)]">{r.category}</td>
-                  <td className="py-2 px-3 text-[var(--text-primary)]">{bn ? toBnNum(r.totalBooks) : r.totalBooks}</td>
-                  <td className="py-2 px-3 text-[var(--text-primary)]">{bn ? toBnNum(r.totalCopies) : r.totalCopies}</td>
-                  <td className="py-2 px-3 text-[var(--brand)] font-medium">{bn ? toBnNum(r.issued) : r.issued}</td>
-                  <td className="py-2 px-3 text-red-500 font-medium">{bn ? toBnNum(r.overdue) : r.overdue}</td>
-                  <td className="py-2 px-3">
-                    <div className="flex items-center gap-2">
+                  <td className="py-2 px-3 text-center font-medium text-[var(--text-primary)]">{r.category}</td>
+                  <td className="py-2 px-3 text-center text-[var(--text-primary)]">{bn ? toBnNum(r.totalBooks) : r.totalBooks}</td>
+                  <td className="py-2 px-3 text-center text-[var(--text-primary)]">{bn ? toBnNum(r.totalCopies) : r.totalCopies}</td>
+                  <td className="py-2 px-3 text-center text-[var(--brand)] font-medium">{bn ? toBnNum(r.issued) : r.issued}</td>
+                  <td className="py-2 px-3 text-center text-red-500 font-medium">{bn ? toBnNum(r.overdue) : r.overdue}</td>
+                  <td className="py-2 px-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
                       <div className="w-16 h-1.5 rounded-full bg-[var(--surface)] overflow-hidden">
                         <div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${r.utilization}%` }} />
                       </div>

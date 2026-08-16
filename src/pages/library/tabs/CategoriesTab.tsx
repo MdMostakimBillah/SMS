@@ -264,12 +264,12 @@ export function CategoriesTab({ searchQuery }: Props) {
                       size="xs"
                     />
                   </th>
-                  <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">#</th>
-                  <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
-                  <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বিবরণ' : 'Description'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">#</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বিবরণ' : 'Description'}</th>
                   <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Books'}</th>
                   <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'অবস্থা' : 'Status'}</th>
-                  <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -283,9 +283,9 @@ export function CategoriesTab({ searchQuery }: Props) {
                         size="xs"
                       />
                     </td>
-                    <td className="py-2.5 px-3 text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
-                    <td className="py-2.5 px-3">
-                      <div className="flex items-center gap-2">
+                    <td className="py-2.5 px-3 text-center text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
+                    <td className="py-2.5 px-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
                         <div className="w-8 h-8 rounded-md bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0">
                           <Tag size={14} />
                         </div>
@@ -296,7 +296,7 @@ export function CategoriesTab({ searchQuery }: Props) {
                         </div>
                       </div>
                     </td>
-                    <td className="py-2.5 px-3 text-[var(--text-secondary)] max-w-[200px] truncate">
+                    <td className="py-2.5 px-3 text-center text-[var(--text-secondary)] max-w-[200px] truncate">
                       {(bn ? c.descriptionBn : c.description) || '—'}
                     </td>
                     <td className="py-2.5 px-3 text-center">
@@ -311,8 +311,8 @@ export function CategoriesTab({ searchQuery }: Props) {
                         {c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3">
-                      <div className="flex items-center gap-1">
+                    <td className="py-2.5 px-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => { setEditItem(c); setShowModal(true) }}
                           className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors cursor-pointer"
