@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Tag, Pencil, Trash2, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText } from 'lucide-react'
+import { Tag, Pencil, Trash2, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Eye } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore } from '@/store/libraryStore'
 import { toBnNum } from '@/lib/i18n'
@@ -7,6 +7,7 @@ import { XLSX } from '@/lib/excelExport'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { PaginationControls } from '@/components/shared/PaginationControls'
 import { GenericPDFOptionsModal, type PDFColumnDef, type GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { CategoryModal } from '../modals/CategoryModal'
@@ -28,27 +29,38 @@ export function CategoriesTab({ searchQuery }: Props) {
   const categories = useLibraryStore((s) => s.categories)
   const books = useLibraryStore((s) => s.books)
   const deleteCategory = useLibraryStore((s) => s.deleteCategory)
+  const toggleCategoryActive = useLibraryStore((s) => s.toggleCategoryActive)
 
   const [showModal, setShowModal] = useState(false)
   const [editItem, setEditItem] = useState<BookCategory | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<BookCategory | null>(null)
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(10)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
   const actionMenuRef = useRef<HTMLDivElement>(null)
 
+  const enriched = useMemo(() => {
+    return categories.map((c) => ({
+      ...c,
+      bookCount: books.filter((b) => b.categoryId === c.id).length,
+    }))
+  }, [categories, books])
+
   const filtered = useMemo(() => {
-    let list = [...categories]
+    let list = enriched
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
       list = list.filter((c) => c.name.toLowerCase().includes(q) || c.nameBn.includes(q))
     }
     return list.sort((a, b) => a.name.localeCompare(b.name))
-  }, [categories, searchQuery])
+  }, [enriched, searchQuery])
 
-  const getBookCount = useCallback((catId: string) => {
-    return books.filter((b) => b.categoryId === catId).length
-  }, [books])
+  const totalPages = Math.ceil(filtered.length / perPage)
+  const paged = filtered.slice((page - 1) * perPage, page * perPage)
+
+  useEffect(() => { setPage(1) }, [searchQuery])
 
   useEffect(() => {
     if (!showActionMenu) return
@@ -61,12 +73,12 @@ export function CategoriesTab({ searchQuery }: Props) {
   }, [showActionMenu])
 
   const toggleAll = useCallback(() => {
-    if (selected.size === filtered.length) {
+    if (selected.size === paged.length) {
       setSelected(new Set())
     } else {
-      setSelected(new Set(filtered.map((c) => c.id)))
+      setSelected(new Set(paged.map((c) => c.id)))
     }
-  }, [selected.size, filtered])
+  }, [selected.size, paged])
 
   const toggleRow = useCallback((id: string) => {
     setSelected((prev) => {
@@ -77,15 +89,8 @@ export function CategoriesTab({ searchQuery }: Props) {
     })
   }, [])
 
-  const enriched = useMemo(() => {
-    return filtered.map((c) => ({
-      ...c,
-      bookCount: getBookCount(c.id),
-    }))
-  }, [filtered, getBookCount])
-
   const exportExcel = useCallback(() => {
-    const data = selected.size > 0 ? enriched.filter((c) => selected.has(c.id)) : enriched
+    const data = selected.size > 0 ? filtered.filter((c) => selected.has(c.id)) : filtered
     const rows = data.map((c, i) => ({
       '#': i + 1,
       [bn ? 'নাম' : 'Name']: bn ? c.nameBn : c.name,
@@ -97,10 +102,10 @@ export function CategoriesTab({ searchQuery }: Props) {
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, bn ? 'ক্যাটাগরি' : 'Categories')
     XLSX.writeFile(wb, `categories-${new Date().toISOString().split('T')[0]}.xlsx`)
-  }, [enriched, selected, bn])
+  }, [filtered, selected, bn])
 
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
-    const data = selected.size > 0 ? enriched.filter((c) => selected.has(c.id)) : enriched
+    const data = selected.size > 0 ? filtered.filter((c) => selected.has(c.id)) : filtered
     const rows = data.map((c, i) => {
       const row: Record<string, string> = { '#': String(i + 1) }
       for (const key of opts.selectedCols) {
@@ -143,10 +148,10 @@ export function CategoriesTab({ searchQuery }: Props) {
 
     openPrintWindow(opts.title, bodyHTML, { css })
     setShowPdfModal(false)
-  }, [enriched, selected, bn])
+  }, [filtered, selected, bn])
 
   const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
-    const data = selected.size > 0 ? enriched.filter((c) => selected.has(c.id)) : enriched
+    const data = selected.size > 0 ? filtered.filter((c) => selected.has(c.id)) : filtered
     const rows = data.slice(0, 20).map((c, i) => {
       const row: Record<string, string> = { '#': String(i + 1) }
       for (const key of opts.selectedCols) {
@@ -183,61 +188,58 @@ export function CategoriesTab({ searchQuery }: Props) {
       : ''
 
     return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a"><div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid ${branding.brandColor};padding-bottom:8px;margin-bottom:10px">${logo}<div><div style="font-size:14px;font-weight:700;color:${branding.brandColor}">${branding.schoolName}</div><div style="font-size:9px;color:#666">${branding.address}</div></div></div><div style="font-size:13px;font-weight:700;color:${branding.brandColor};margin:8px 0">${opts.title}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headerRow}</tr></thead><tbody>${bodyRows}</tbody></table>${overflowNote}</div>`
-  }, [enriched, selected, bn])
+  }, [filtered, selected, bn])
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="text-[0.8125rem] text-[var(--text-secondary)]">
-            {bn ? `${filtered.length} টি ক্যাটাগরি` : `${filtered.length} categories`}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="text-[0.8125rem] text-[var(--text-secondary)]">
+          {bn ? `${filtered.length} টি ক্যাটাগরি` : `${filtered.length} categories`}
+        </div>
+        {selected.size > 0 && (
+          <span className="text-[0.6875rem] text-[var(--brand)] font-medium">
+            {bn ? `${toBnNum(selected.size)} টি নির্বাচিত` : `${selected.size} selected`}
+          </span>
+        )}
+        <div className="flex-1" />
+        {filtered.length > 0 && (
+          <div className="relative">
+            <button
+              onClick={() => setShowActionMenu(!showActionMenu)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)] transition-colors cursor-pointer"
+            >
+              <MoreVertical size={13} />
+              {bn ? 'অ্যাকশন' : 'Action'}
+              <ChevronDown size={12} />
+            </button>
+            {showActionMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
+                <div ref={actionMenuRef} className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
+                  <button
+                    onClick={() => { exportExcel(); setShowActionMenu(false) }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
+                  >
+                    <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                    {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                  </button>
+                  <div className="h-px bg-[var(--border)] mx-2" />
+                  <button
+                    onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
+                  >
+                    <FileText size={14} className="text-[var(--red)]" />
+                    {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-          {selected.size > 0 && (
-            <span className="text-[0.6875rem] text-[var(--brand)] font-medium">
-              {bn ? `${toBnNum(selected.size)} টি নির্বাচিত` : `${selected.size} selected`}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {filtered.length > 0 && (
-            <div className="relative">
-              <button
-                onClick={() => setShowActionMenu(!showActionMenu)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)] transition-colors cursor-pointer"
-              >
-                <MoreVertical size={13} />
-                {bn ? 'অ্যাকশন' : 'Action'}
-                <ChevronDown size={12} />
-              </button>
-              {showActionMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
-                  <div ref={actionMenuRef} className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
-                    <button
-                      onClick={() => { exportExcel(); setShowActionMenu(false) }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
-                    >
-                      <FileSpreadsheet size={14} className="text-[var(--green)]" />
-                      {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
-                    </button>
-                    <div className="h-px bg-[var(--border)] mx-2" />
-                    <button
-                      onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
-                    >
-                      <FileText size={14} className="text-[var(--red)]" />
-                      {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-          <button onClick={() => { setEditItem(null); setShowModal(true) }} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90">
-            <Plus size={15} />
-            {bn ? 'ক্যাটাগরি' : 'Category'}
-          </button>
-        </div>
+        )}
+        <button onClick={() => { setEditItem(null); setShowModal(true) }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity cursor-pointer">
+          <Plus size={13} />
+          {bn ? 'ক্যাটাগরি' : 'Category'}
+        </button>
       </div>
 
       {filtered.length === 0 ? (
@@ -249,31 +251,31 @@ export function CategoriesTab({ searchQuery }: Props) {
           </button>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)]">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)]">
-                <th className="py-2.5 px-2 w-9">
-                  <ModernCheckbox
-                    checked={selected.size === filtered.length && filtered.length > 0}
-                    onChange={toggleAll}
-                    color="brand"
-                    size="xs"
-                  />
-                </th>
-                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">#</th>
-                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'নাম' : 'Name'}</th>
-                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'বিবরণ' : 'Description'}</th>
-                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'বই' : 'Books'}</th>
-                <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'কার্যক্রম' : 'Actions'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((c, i) => {
-                const count = getBookCount(c.id)
-                return (
-                  <tr key={c.id} className={`border-b border-[var(--border)] last:border-0 transition-colors hover:bg-[var(--bg-tertiary)] ${selected.has(c.id) ? 'bg-[var(--brand)]/5' : ''}`}>
-                    <td className="py-3 px-2">
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-[0.75rem]">
+              <thead>
+                <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
+                  <th className="py-2.5 px-2 w-9">
+                    <ModernCheckbox
+                      checked={selected.size === paged.length && paged.length > 0}
+                      onChange={toggleAll}
+                      color="brand"
+                      size="xs"
+                    />
+                  </th>
+                  <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">#</th>
+                  <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
+                  <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বিবরণ' : 'Description'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Books'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'অবস্থা' : 'Status'}</th>
+                  <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paged.map((c, idx) => (
+                  <tr key={c.id} className={`border-b border-[var(--border)] last:border-b-0 transition-colors hover:bg-[var(--surface)] ${selected.has(c.id) ? 'bg-[var(--brand)]/5' : ''}`}>
+                    <td className="py-2.5 px-2">
                       <ModernCheckbox
                         checked={selected.has(c.id)}
                         onChange={() => toggleRow(c.id)}
@@ -281,48 +283,70 @@ export function CategoriesTab({ searchQuery }: Props) {
                         size="xs"
                       />
                     </td>
-                    <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)]">{i + 1}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 bg-[var(--brand)]/10 text-[var(--brand)]">
-                          <Tag size={13} />
+                    <td className="py-2.5 px-3 text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-md bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0">
+                          <Tag size={14} />
                         </div>
-                        <div>
-                          <span className="text-[0.8125rem] font-medium text-[var(--text-primary)] block leading-tight">{bn ? c.nameBn : c.name}</span>
-                          {!bn && c.nameBn && <span className="text-[0.6875rem] text-[var(--text-secondary)]">{c.nameBn}</span>}
-                          {bn && c.name !== c.nameBn && <span className="text-[0.6875rem] text-[var(--text-secondary)]">{c.name}</span>}
+                        <div className="min-w-0">
+                          <div className="font-medium text-[var(--text-primary)] truncate max-w-[180px]">{bn ? c.nameBn : c.name}</div>
+                          {!bn && c.nameBn && <div className="text-[0.625rem] text-[var(--text-secondary)]">{c.nameBn}</div>}
+                          {bn && c.name !== c.nameBn && <div className="text-[0.625rem] text-[var(--text-secondary)]">{c.name}</div>}
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)] max-w-[250px] truncate">
+                    <td className="py-2.5 px-3 text-[var(--text-secondary)] max-w-[200px] truncate">
                       {(bn ? c.descriptionBn : c.description) || '—'}
                     </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-md bg-[var(--brand)]/8 text-[var(--brand)] text-[0.75rem] font-semibold">
-                        {count}
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-md bg-[var(--brand-light)] text-[var(--brand)] text-[0.6875rem] font-semibold">
+                        {bn ? toBnNum(c.bookCount) : c.bookCount}
                       </span>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-2.5 px-3 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[0.625rem] font-medium ${
+                        c.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-red-500/10 text-red-500'
+                      }`}>
+                        {c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => { setEditItem(c); setShowModal(true) }}
-                          className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] cursor-pointer transition-colors"
+                          className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors cursor-pointer"
                         >
                           <Pencil size={13} />
                         </button>
                         <button
+                          onClick={() => toggleCategoryActive(c.id)}
+                          className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors cursor-pointer"
+                          title={c.isActive ? (bn ? 'নিষ্ক্রিয় করুন' : 'Deactivate') : (bn ? 'সক্রিয় করুন' : 'Activate')}
+                        >
+                          <Eye size={13} />
+                        </button>
+                        <button
                           onClick={() => setDeleteTarget(c)}
-                          className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-500 cursor-pointer transition-colors"
+                          className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors cursor-pointer"
                         >
                           <Trash2 size={13} />
                         </button>
                       </div>
                     </td>
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                ))}
+                {paged.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-[var(--text-secondary)]">
+                      {bn ? 'কোনো ক্যাটাগরি পাওয়া যায়নি' : 'No categories found'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} isBn={bn} />
         </div>
       )}
 

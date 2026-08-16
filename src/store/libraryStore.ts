@@ -51,6 +51,7 @@ interface LibraryState {
   addCategory: (cat: BookCategory) => void
   updateCategory: (id: string, data: Partial<BookCategory>) => void
   deleteCategory: (id: string) => void
+  toggleCategoryActive: (id: string) => void
 
   addCopy: (copy: BookCopy) => void
   updateCopy: (id: string, data: Partial<BookCopy>) => void
@@ -201,6 +202,10 @@ export const useLibraryStore = create<LibraryState>()(
         set((state) => ({
           categories: state.categories.filter((c) => c.id !== id),
           books: state.books.map((b) => (b.categoryId === id ? { ...b, categoryId: '' } : b)),
+        })),
+      toggleCategoryActive: (id) =>
+        set((state) => ({
+          categories: state.categories.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c)),
         })),
 
       addCopy: (copy) => set((state) => ({ copies: [...state.copies, copy] })),
