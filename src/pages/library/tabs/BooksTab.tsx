@@ -178,6 +178,50 @@ export function BooksTab({ searchQuery }: Props) {
     setShowPdfModal(false)
   }, [filtered, selected, bn])
 
+  const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
+    const data = selected.size > 0 ? filtered.filter((b) => selected.has(b.id)) : filtered
+    const rows = data.slice(0, 20).map((b, i) => {
+      const row: Record<string, string> = { '#': String(i + 1) }
+      for (const key of opts.selectedCols) {
+        switch (key) {
+          case 'title': row[bn ? 'শিরোনাম' : 'Title'] = bn ? b.titleBn : b.title; break
+          case 'author': row[bn ? 'লেখক' : 'Author'] = bn ? b.authorBn : b.author; break
+          case 'isbn': row['ISBN'] = b.isbn; break
+          case 'category': row[bn ? 'ক্যাটাগরি' : 'Category'] = b.categoryName; break
+          case 'shelf': row[bn ? 'শেল্ফ' : 'Shelf'] = b.shelf; break
+          case 'copies': row[bn ? 'কপি' : 'Copies'] = String(b.totalActiveCopies); break
+          case 'available': row[bn ? 'উপলব্ধ' : 'Available'] = String(b.available); break
+          case 'status': row[bn ? 'অবস্থা' : 'Status'] = b.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive'); break
+        }
+      }
+      return row
+    })
+
+    const headers = opts.selectedCols.map((key) => {
+      const col = pdfColumns.find((c) => c.key === key)
+      return col ? (opts.isBn ? col.labelBn : col.label) : key
+    })
+
+    const branding = getPDFBranding()
+    const logo = pdfLogoHTML(branding, 28)
+    const headerRow = headers.map((h) => `<th style="background:${branding.brandColor};color:#fff;padding:4px 6px;text-align:center">${h}</th>`).join('')
+    const bodyRows = rows.map((r) => {
+      const cells = [`<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r['#'] || ''}</td>`]
+      for (const key of opts.selectedCols) {
+        const col = pdfColumns.find((c) => c.key === key)
+        const label = col ? (opts.isBn ? col.labelBn : col.label) : key
+        cells.push(`<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r[label] || ''}</td>`)
+      }
+      return `<tr>${cells.join('')}</tr>`
+    }).join('')
+
+    const overflowNote = data.length > 20
+      ? `<div style="font-size:9px;color:#999;margin-top:6px;text-align:center">... and ${data.length - 20} more records</div>`
+      : ''
+
+    return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a"><div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid ${branding.brandColor};padding-bottom:8px;margin-bottom:10px">${logo}<div><div style="font-size:14px;font-weight:700;color:${branding.brandColor}">${branding.schoolName}</div><div style="font-size:9px;color:#666">${branding.address}</div></div></div><div style="font-size:13px;font-weight:700;color:${branding.brandColor};margin:8px 0">${opts.title}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headerRow}</tr></thead><tbody>${bodyRows}</tbody></table>${overflowNote}</div>`
+  }, [filtered, selected, bn])
+
   return (
     <div className="space-y-3">
       {/* Filter bar */}
@@ -373,6 +417,7 @@ export function BooksTab({ searchQuery }: Props) {
           count={selected.size}
           isBn={bn}
           showColumns={true}
+          previewRenderer={pdfPreviewRenderer}
           onClose={() => setShowPdfModal(false)}
           onDownload={handlePdfDownload}
         />
