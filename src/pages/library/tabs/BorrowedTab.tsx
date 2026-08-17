@@ -117,6 +117,7 @@ export function BorrowedTab({ searchQuery }: Props) {
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ফেরত' : 'Due Date'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কাউন্টডাউন' : 'Countdown'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'অবস্থা' : 'Status'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ইস্যুকারী' : 'Issued By'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
               </tr>
             </thead>
@@ -145,6 +146,11 @@ export function BorrowedTab({ searchQuery }: Props) {
                   <td className="py-2.5 px-3 text-center text-[var(--text-primary)]">{b.dueDate}</td>
                   <td className="py-2.5 px-3 text-center"><CountdownTimer dueDate={b.dueDate} /></td>
                   <td className="py-2.5 px-3 text-center">
+                    <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-medium bg-[var(--brand-light)] text-[var(--brand)]">
+                      {b.issuedBy || '—'}
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-3 text-center">
                     <span className={`px-2 py-0.5 rounded-full text-[0.625rem] font-medium ${
                       b.status === 'overdue' ? 'bg-red-500/10 text-red-500' : 'bg-[var(--green-light)] text-[var(--green)]'
                     }`}>
@@ -162,7 +168,7 @@ export function BorrowedTab({ searchQuery }: Props) {
               ))}
               {paged.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-[var(--text-secondary)]">
+                  <td colSpan={9} className="py-8 text-center text-[var(--text-secondary)]">
                     {bn ? 'কোনো ধার পাওয়া যায়নি' : 'No borrowings found'}
                   </td>
                 </tr>

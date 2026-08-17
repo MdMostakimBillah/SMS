@@ -59,6 +59,7 @@ export interface Borrowing {
   renewalCount: number
   librarianNote: string
   issuedBy: string
+  returnedBy?: string
   createdAt: string
 }
 

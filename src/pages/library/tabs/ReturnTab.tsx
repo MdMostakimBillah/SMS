@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { RotateCcw, BookOpen, Clock, AlertCircle, Trash2, Edit, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useAuth } from '@/contexts/AuthContext'
 import { useLibraryStore, calcFine } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { toBnNum } from '@/lib/i18n'
@@ -39,6 +40,7 @@ function CountdownTimer({ dueDate }: { dueDate: string }) {
 
 export function ReturnTab({ searchQuery }: Props) {
   const bn = useBn()
+  const { user } = useAuth()
   const borrowings = useLibraryStore((s) => s.borrowings)
   const books = useLibraryStore((s) => s.books)
   const copies = useLibraryStore((s) => s.copies)
@@ -102,7 +104,7 @@ export function ReturnTab({ searchQuery }: Props) {
 
   const handleReturn = () => {
     if (!selectedBorrowing) return
-    returnBook(selectedBorrowing, returnCondition, fine, fineReason)
+    returnBook(selectedBorrowing, returnCondition, fine, fineReason, user?.name || user?.email || 'admin')
     setSelectedBorrowing(null)
     setReturnCondition('good')
     setFine(0)
@@ -207,6 +209,7 @@ export function ReturnTab({ searchQuery }: Props) {
                   <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ইস্যু তারিখ:' : 'Issue Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.issueDate}</span></div>
                   <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ফেরত তারিখ:' : 'Due Date:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.dueDate}</span></div>
                   {selected.barcode && <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'বারকোড:' : 'Barcode:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.barcode}</span></div>}
+                  <div className="text-[0.8125rem]"><span className="text-[var(--text-secondary)]">{bn ? 'ইস্যুকারী:' : 'Issued By:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.issuedBy || '—'}</span></div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -262,6 +265,8 @@ export function ReturnTab({ searchQuery }: Props) {
               <div className="px-6 py-5 space-y-2 text-[0.8125rem]">
                 <div><span className="text-[var(--text-secondary)]">{bn ? 'ছাত্র:' : 'Student:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.studentName}</span></div>
                 <div><span className="text-[var(--text-secondary)]">{bn ? 'বই:' : 'Book:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.bookName}</span></div>
+                <div><span className="text-[var(--text-secondary)]">{bn ? 'ইস্যুকারী:' : 'Issued By:'}</span> <span className="font-medium text-[var(--text-primary)]">{selected.issuedBy || '—'}</span></div>
+                <div><span className="text-[var(--text-secondary)]">{bn ? 'ফেরতকারী:' : 'Returned By:'}</span> <span className="font-medium text-[var(--text-primary)]">{user?.name || user?.email || 'admin'}</span></div>
                 {fine > 0 && (
                   <div className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/10 text-amber-600">
                     {bn ? `জরিমানা: ৳${toBnNum(fine)} — ${fineReason}` : `Fine: ৳${fine} — ${fineReason}`}

@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { Search, BookOpen, User, Calendar, AlertCircle, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useAuth } from '@/contexts/AuthContext'
 import { useLibraryStore } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -23,6 +24,7 @@ function capitalize(s: string) { return s.charAt(0).toUpperCase() + s.slice(1) }
 
 export function IssueTab(_props: Props) {
   const bn = useBn()
+  const { user } = useAuth()
   const books = useLibraryStore((s) => s.books)
   const copies = useLibraryStore((s) => s.copies)
   const borrowings = useLibraryStore((s) => s.borrowings)
@@ -159,7 +161,7 @@ export function IssueTab(_props: Props) {
     const borrowing: Borrowing = {
       id, studentId: selectedStudentId, bookId: selectedBookId, copyId: selectedCopyId,
       issueDate: today(), dueDate: returnDate, status: 'borrowed', condition, fine: 0, fineReason: '',
-      renewalCount: 0, librarianNote: note, issuedBy: 'admin', createdAt: today(),
+      renewalCount: 0, librarianNote: note, issuedBy: user?.name || user?.email || 'admin', createdAt: today(),
     }
     addBorrowing(borrowing)
     setSelectedStudentId('')

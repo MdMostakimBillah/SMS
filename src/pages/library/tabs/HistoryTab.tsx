@@ -23,7 +23,7 @@ export function HistoryTab({ searchQuery }: Props) {
   const [filterType, setFilterType] = useState<ActivityType>('all')
 
   const allActivities = useMemo(() => {
-    const items: { id: string; type: string; date: string; studentName: string; detail: string; icon: string }[] = []
+    const items: { id: string; type: string; date: string; studentName: string; detail: string; icon: string; byUser: string }[] = []
 
     borrowings.forEach((b) => {
       const book = books.find((bk) => bk.id === b.bookId)
@@ -31,12 +31,12 @@ export function HistoryTab({ searchQuery }: Props) {
       const name = bn ? (student?.nameBn || student?.nameEn || '') : (student?.nameEn || student?.nameBn || '')
       const bookName = bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || '')
 
-      items.push({ id: `issue-${b.id}`, type: 'issue', date: b.issueDate, studentName: name, detail: bookName, icon: 'issue' })
+      items.push({ id: `issue-${b.id}`, type: 'issue', date: b.issueDate, studentName: name, detail: bookName, icon: 'issue', byUser: b.issuedBy || '' })
       if (b.returnDate) {
-        items.push({ id: `return-${b.id}`, type: 'return', date: b.returnDate, studentName: name, detail: bookName, icon: 'return' })
+        items.push({ id: `return-${b.id}`, type: 'return', date: b.returnDate, studentName: name, detail: bookName, icon: 'return', byUser: b.returnedBy || '' })
       }
       if (b.status === 'overdue') {
-        items.push({ id: `overdue-${b.id}`, type: 'overdue', date: b.dueDate, studentName: name, detail: bookName, icon: 'overdue' })
+        items.push({ id: `overdue-${b.id}`, type: 'overdue', date: b.dueDate, studentName: name, detail: bookName, icon: 'overdue', byUser: '' })
       }
     })
 
@@ -49,6 +49,7 @@ export function HistoryTab({ searchQuery }: Props) {
         studentName: bn ? (student?.nameBn || student?.nameEn || '') : (student?.nameEn || student?.nameBn || ''),
         detail: bn ? (book?.titleBn || book?.title || '') : (book?.title || book?.titleBn || ''),
         icon: 'reading',
+        byUser: '',
       })
     })
 
@@ -106,6 +107,7 @@ export function HistoryTab({ searchQuery }: Props) {
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধরন' : 'Type'}</th>
                 <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
                 <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বিবরণ' : 'Detail'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কারো দ্বারা' : 'By'}</th>
               </tr>
             </thead>
             <tbody>
@@ -126,11 +128,18 @@ export function HistoryTab({ searchQuery }: Props) {
                     </td>
                     <td className="py-2.5 px-3 text-left text-[var(--text-primary)] truncate max-w-[140px]">{a.studentName}</td>
                     <td className="py-2.5 px-3 text-left text-[var(--text-primary)] truncate max-w-[180px]">{a.detail}</td>
+                    <td className="py-2.5 px-3 text-center">
+                      {a.byUser ? (
+                        <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-medium bg-[var(--brand-light)] text-[var(--brand)]">
+                          {a.byUser}
+                        </span>
+                      ) : '—'}
+                    </td>
                   </tr>
                 )
               })}
               {paged.length === 0 && (
-                <tr><td colSpan={5} className="py-8 text-center text-[var(--text-secondary)]">{bn ? 'কোনো ইতিহাস নেই' : 'No history found'}</td></tr>
+                    <tr><td colSpan={6} className="py-8 text-center text-[var(--text-secondary)]">{bn ? 'কোনো ইতিহাস নেই' : 'No history found'}</td></tr>
               )}
             </tbody>
           </table>
