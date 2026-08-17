@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { Plus, Search, Edit, Trash2, Eye, BookOpen, MoreVertical, ChevronDown, FileSpreadsheet, FileText } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Eye, BookOpen, MoreVertical, ChevronDown, FileSpreadsheet, FileText, LayoutGrid, List } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore } from '@/store/libraryStore'
 import { toBnNum } from '@/lib/i18n'
@@ -44,6 +44,7 @@ export function BooksTab({ searchQuery }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const actionMenuRef = useRef<HTMLDivElement>(null)
 
   const enrichedBooks = useMemo(() => {
@@ -250,6 +251,24 @@ export function BooksTab({ searchQuery }: Props) {
         )}
         <div className="flex-1" />
         {filtered.length > 0 && (
+          <div className="flex items-center gap-1 p-0.5 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+              title={bn ? 'টেবিল' : 'Table'}
+            >
+              <List size={13} />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+              title={bn ? 'গ্রিড' : 'Grid'}
+            >
+              <LayoutGrid size={13} />
+            </button>
+          </div>
+        )}
+        {filtered.length > 0 && (
           <div className="relative">
             <button
               onClick={() => setShowActionMenu(!showActionMenu)}
@@ -304,98 +323,158 @@ export function BooksTab({ searchQuery }: Props) {
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-[0.75rem]">
-            <thead>
-              <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
-                <th className="py-2.5 pl-3 pr-2 w-9">
-                  <ModernCheckbox
-                    checked={selected.size === paged.length && paged.length > 0}
-                    onChange={toggleAll}
-                    color="brand"
-                    size="xs"
-                  />
-                </th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">#</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Book'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'লেখক' : 'Author'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'শেল্ফ' : 'Shelf'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কপি' : 'Copies'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'অবস্থা' : 'Status'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paged.map((b, idx) => (
-                <tr key={b.id} className={`border-b border-[var(--border)] last:border-b-0 transition-colors hover:bg-[var(--surface)] ${selected.has(b.id) ? 'bg-[var(--brand)]/5' : ''}`}>
-                  <td className="py-2.5 pl-3 pr-2">
+      {/* Table View */}
+      {viewMode === 'table' && (
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-[0.75rem]">
+              <thead>
+                <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
+                  <th className="py-2.5 pl-3 pr-2 w-9">
                     <ModernCheckbox
-                      checked={selected.has(b.id)}
-                      onChange={() => toggleRow(b.id)}
+                      checked={selected.size === paged.length && paged.length > 0}
+                      onChange={toggleAll}
                       color="brand"
                       size="xs"
                     />
-                  </td>
-                  <td className="py-2.5 px-3 text-center text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
-                  <td className="py-2.5 px-3 text-left">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-md bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0">
-                        <BookOpen size={14} />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-medium text-[var(--text-primary)] truncate max-w-[180px]">{bn ? b.titleBn : b.title}</div>
-                        <div className="text-[0.625rem] text-[var(--text-secondary)]">{b.isbn}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-2.5 px-3 text-left text-[var(--text-primary)]">{bn ? b.authorBn : b.author}</td>
-                  <td className="py-2.5 px-3 text-center">
-                    <span className="px-2 py-0.5 rounded-full bg-[var(--brand-light)] text-[var(--brand)] text-[0.625rem] font-medium">
-                      {b.categoryName}
-                    </span>
-                  </td>
-                  <td className="py-2.5 px-3 text-center text-[var(--text-primary)]">{b.shelf}</td>
-                  <td className="py-2.5 px-3 text-center">
-                    <span className="text-[var(--text-primary)]">{bn ? toBnNum(b.available) : b.available}</span>
-                    <span className="text-[var(--text-secondary)]">/{bn ? toBnNum(b.totalActiveCopies) : b.totalActiveCopies}</span>
-                  </td>
-                  <td className="py-2.5 px-3 text-center">
-                    <span className={`px-2 py-0.5 rounded-full text-[0.625rem] font-medium ${
-                      b.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-red-500/10 text-red-500'
-                    }`}>
-                      {b.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
-                    </span>
-                  </td>
-                  <td className="py-2.5 px-3 text-center">
-                    <div className="flex items-center gap-1 justify-center">
-                      <button onClick={() => handleEdit(b)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
-                        <Edit size={13} />
-                      </button>
-                      <button onClick={() => toggleBookActive(b.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors">
-                        <Eye size={13} />
-                      </button>
-                      <button onClick={() => setDeleteTarget(b)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </td>
+                  </th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">#</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Book'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'লেখক' : 'Author'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'শেল্ফ' : 'Shelf'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কপি' : 'Copies'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'অবস্থা' : 'Status'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
                 </tr>
-              ))}
-              {paged.length === 0 && (
-                <tr>
-                  <td colSpan={9} className="py-8 text-center text-[var(--text-secondary)]">
-                    {bn ? 'কোনো বই পাওয়া যায়নি' : 'No books found'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paged.map((b, idx) => (
+                  <tr key={b.id} className={`border-b border-[var(--border)] last:border-b-0 transition-colors hover:bg-[var(--surface)] ${selected.has(b.id) ? 'bg-[var(--brand)]/5' : ''}`}>
+                    <td className="py-2.5 pl-3 pr-2">
+                      <ModernCheckbox
+                        checked={selected.has(b.id)}
+                        onChange={() => toggleRow(b.id)}
+                        color="brand"
+                        size="xs"
+                      />
+                    </td>
+                    <td className="py-2.5 px-3 text-center text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
+                    <td className="py-2.5 px-3 text-left">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-md bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0">
+                          <BookOpen size={14} />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-medium text-[var(--text-primary)] truncate max-w-[180px]">{bn ? b.titleBn : b.title}</div>
+                          <div className="text-[0.625rem] text-[var(--text-secondary)]">{b.isbn}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3 text-left text-[var(--text-primary)]">{bn ? b.authorBn : b.author}</td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded-full bg-[var(--brand-light)] text-[var(--brand)] text-[0.625rem] font-medium">
+                        {b.categoryName}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center text-[var(--text-primary)]">{b.shelf}</td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="text-[var(--text-primary)]">{bn ? toBnNum(b.available) : b.available}</span>
+                      <span className="text-[var(--text-secondary)]">/{bn ? toBnNum(b.totalActiveCopies) : b.totalActiveCopies}</span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[0.625rem] font-medium ${
+                        b.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-red-500/10 text-red-500'
+                      }`}>
+                        {b.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <div className="flex items-center gap-1 justify-center">
+                        <button onClick={() => handleEdit(b)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
+                          <Edit size={13} />
+                        </button>
+                        <button onClick={() => toggleBookActive(b.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors">
+                          <Eye size={13} />
+                        </button>
+                        <button onClick={() => setDeleteTarget(b)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {paged.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="py-8 text-center text-[var(--text-secondary)]">
+                      {bn ? 'কোনো বই পাওয়া যায়নি' : 'No books found'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} isBn={bn} />
         </div>
-        <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} isBn={bn} />
-      </div>
+      )}
+
+      {/* Grid View */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {paged.map((b) => (
+            <div key={b.id} className="group bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden hover:shadow-lg hover:shadow-[var(--brand)]/5 hover:border-[var(--brand)]/20 transition-all duration-300">
+              <div className="relative h-20 bg-gradient-to-br from-[var(--brand)]/15 to-purple-500/5 flex items-center justify-center">
+                <div className="w-12 h-14 rounded-lg bg-gradient-to-br from-[var(--brand)] to-purple-600 text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-300">
+                  <BookOpen size={20} />
+                </div>
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className={`px-2 py-0.5 rounded-full text-[0.5625rem] font-medium ${b.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-red-500/10 text-red-500'}`}>
+                    {b.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
+                  </span>
+                </div>
+              </div>
+              <div className="p-3.5 space-y-2.5">
+                <div>
+                  <h3 className="font-semibold text-[0.8125rem] text-[var(--text-primary)] line-clamp-1">{bn ? b.titleBn : b.title}</h3>
+                  <p className="text-[0.6875rem] text-[var(--text-secondary)] line-clamp-1">{bn ? b.authorBn : b.author}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-full bg-[var(--brand-light)] text-[var(--brand)] text-[0.5625rem] font-medium">{b.categoryName}</span>
+                  <span className="text-[0.5625rem] text-[var(--text-secondary)]">{b.shelf}</span>
+                </div>
+                <div className="flex items-center justify-between text-[0.6875rem]">
+                  <div className="flex items-center gap-1">
+                    <span className="font-semibold text-[var(--text-primary)]">{bn ? toBnNum(b.available) : b.available}</span>
+                    <span className="text-[var(--text-secondary)]">/{bn ? toBnNum(b.totalActiveCopies) : b.totalActiveCopies}</span>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    <button onClick={() => handleEdit(b)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
+                      <Edit size={12} />
+                    </button>
+                    <button onClick={() => toggleBookActive(b.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors">
+                      <Eye size={12} />
+                    </button>
+                    <button onClick={() => setDeleteTarget(b)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {paged.length === 0 && (
+            <div className="col-span-full py-16 text-center">
+              <BookOpen size={40} className="mx-auto text-[var(--text-secondary)] mb-3 opacity-50" />
+              <p className="text-[0.875rem] text-[var(--text-secondary)]">{bn ? 'কোনো বই পাওয়া যায়নি' : 'No books found'}</p>
+            </div>
+          )}
+          {paged.length > 0 && (
+            <div className="col-span-full">
+              <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} isBn={bn} />
+            </div>
+          )}
+        </div>
+      )}
 
       {showModal && <BookModal existing={editBook} onSaved={() => { setShowModal(false); setEditBook(null) }} onClose={() => { setShowModal(false); setEditBook(null) }} />}
       {deleteTarget && (
