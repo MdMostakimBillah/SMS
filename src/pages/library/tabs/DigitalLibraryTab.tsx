@@ -9,6 +9,15 @@ import { DigitalBookModal } from '../modals/DigitalBookModal'
 
 interface Props { searchQuery: string }
 
+const cardColors = [
+  { from: 'from-violet-500', to: 'to-purple-600', accent: 'bg-violet-500', light: 'bg-violet-500/10', text: 'text-violet-400' },
+  { from: 'from-blue-500', to: 'to-cyan-500', accent: 'bg-blue-500', light: 'bg-blue-500/10', text: 'text-blue-400' },
+  { from: 'from-emerald-500', to: 'to-teal-500', accent: 'bg-emerald-500', light: 'bg-emerald-500/10', text: 'text-emerald-400' },
+  { from: 'from-amber-500', to: 'to-orange-500', accent: 'bg-amber-500', light: 'bg-amber-500/10', text: 'text-amber-400' },
+  { from: 'from-rose-500', to: 'to-pink-500', accent: 'bg-rose-500', light: 'bg-rose-500/10', text: 'text-rose-400' },
+  { from: 'from-cyan-500', to: 'to-blue-500', accent: 'bg-cyan-500', light: 'bg-cyan-500/10', text: 'text-cyan-400' },
+]
+
 export function DigitalLibraryTab({ searchQuery }: Props) {
   const bn = useBn()
   const digitalBooks = useLibraryStore((s) => s.digitalBooks)
@@ -77,7 +86,7 @@ export function DigitalLibraryTab({ searchQuery }: Props) {
         </button>
       </div>
 
-      {/* Stat Cards - Modern style matching main page */}
+      {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         {statCards.map((s) => (
           <div key={s.labelEn} className="flex items-center gap-3 p-3 rounded-[0.625rem] bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
@@ -94,78 +103,85 @@ export function DigitalLibraryTab({ searchQuery }: Props) {
         ))}
       </div>
 
-      {/* Book Cards - Modern grid */}
+      {/* Book Cards - Left accent design */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((db) => (
-          <div key={db.id} className="group bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden hover:shadow-lg hover:shadow-[var(--brand)]/5 hover:border-[var(--brand)]/20 transition-all duration-300">
-            {/* Card Header with gradient */}
-            <div className="relative h-24 bg-gradient-to-br from-[var(--brand)]/20 via-purple-500/10 to-[var(--brand)]/5 flex items-center justify-center">
-              <div className="w-16 h-18 rounded-xl bg-gradient-to-br from-[var(--brand)] to-purple-600 text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
-                <BookOpen size={24} />
-              </div>
-              {db.fileUrl && (
-                <button
-                  onClick={() => handleDownload(db.fileUrl, db.title)}
-                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 backdrop-blur-sm text-[var(--text-secondary)] hover:text-[var(--brand)] hover:bg-white transition-all opacity-0 group-hover:opacity-100"
-                  title={bn ? 'ডাউনলোড' : 'Download'}
-                >
-                  <Download size={13} />
-                </button>
-              )}
-            </div>
+        {filtered.map((db, idx) => {
+          const color = cardColors[idx % cardColors.length]
+          return (
+            <div key={db.id} className="group relative bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden hover:shadow-lg hover:shadow-black/10 hover:border-[var(--border)] transition-all duration-300">
+              {/* Left accent bar */}
+              <div className={`absolute left-0 top-0 bottom-0 w-1 ${color.accent} rounded-l-xl`} />
 
-            {/* Card Body */}
-            <div className="p-4 space-y-3">
-              <div>
-                <h3 className="font-semibold text-[0.875rem] text-[var(--text-primary)] line-clamp-2 leading-snug min-h-[2.2rem]">{db.title}</h3>
-                <p className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5">{db.author}</p>
-              </div>
+              {/* Card Content */}
+              <div className="pl-5 pr-4 py-4">
+                {/* Top row: icon + actions */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`w-10 h-10 rounded-xl ${color.light} flex items-center justify-center`}>
+                    <BookOpen size={18} className={color.text} />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {db.fileUrl && (
+                      <button
+                        onClick={() => handleDownload(db.fileUrl, db.title)}
+                        className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--green)] hover:bg-[var(--green)]/10 transition-all"
+                        title={bn ? 'ডাউনলোড' : 'Download'}
+                      >
+                        <Download size={13} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setDeleteTarget(db.id)}
+                      className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-500/10 transition-all"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
 
-              {/* Stats Row */}
-              <div className="flex items-center gap-3 text-[0.6875rem]">
-                <div className="flex items-center gap-1 text-[var(--text-secondary)]">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />
-                  <span>{bn ? `${toBnNum(db.chapterCount)} অধ্যায়` : `${db.chapterCount} chapters`}</span>
+                {/* Title & Author */}
+                <div className="mb-3">
+                  <h3 className="font-semibold text-[0.875rem] text-[var(--text-primary)] line-clamp-2 leading-snug min-h-[2.2rem]">{db.title}</h3>
+                  <p className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5">{db.author}</p>
                 </div>
-                <div className="flex items-center gap-1 text-[var(--text-secondary)]">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)]" />
-                  <span>{bn ? `${toBnNum(db.totalReaders)} পাঠক` : `${db.totalReaders} readers`}</span>
-                </div>
-              </div>
 
-              {/* Progress */}
-              <div>
-                <div className="flex justify-between text-[0.625rem] text-[var(--text-secondary)] mb-1">
-                  <span>{bn ? 'অগ্রগতি' : 'Progress'}</span>
-                  <span className="font-medium">{bn ? toBnNum(db.avgProgress) : db.avgProgress}%</span>
+                {/* Stats */}
+                <div className="flex items-center gap-3 mb-3 text-[0.6875rem]">
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-1.5 h-1.5 rounded-full ${color.accent}`} />
+                    <span className="text-[var(--text-secondary)]">{bn ? `${toBnNum(db.chapterCount)} অধ্যায়` : `${db.chapterCount} ch`}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)]" />
+                    <span className="text-[var(--text-secondary)]">{bn ? `${toBnNum(db.totalReaders)} পাঠক` : `${db.totalReaders} readers`}</span>
+                  </div>
                 </div>
-                <div className="h-1.5 rounded-full bg-[var(--surface)] overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-[var(--brand)] to-purple-500 transition-all duration-500"
-                    style={{ width: `${db.avgProgress}%` }}
-                  />
-                </div>
-              </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-2 pt-1">
+                {/* Progress */}
+                <div className="mb-3">
+                  <div className="flex justify-between text-[0.625rem] text-[var(--text-secondary)] mb-1">
+                    <span>{bn ? 'অগ্রগতি' : 'Progress'}</span>
+                    <span className="font-medium text-[var(--text-primary)]">{bn ? toBnNum(db.avgProgress) : db.avgProgress}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-[var(--surface)] overflow-hidden">
+                    <div
+                      className={`h-full rounded-full bg-gradient-to-r ${color.from} ${color.to} transition-all duration-500`}
+                      style={{ width: `${db.avgProgress}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Read Button */}
                 <button
                   onClick={() => setShowReader(db.id)}
-                  className="flex-1 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.75rem] font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5"
+                  className="w-full py-2 rounded-lg bg-[var(--brand)] text-white text-[0.75rem] font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5"
                 >
                   <Eye size={13} />
-                  {bn ? 'পড়ুন' : 'Read'}
-                </button>
-                <button
-                  onClick={() => setDeleteTarget(db.id)}
-                  className="py-2 px-3 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-red-500 hover:border-red-500/30 hover:bg-red-500/5 transition-all"
-                >
-                  <Trash2 size={13} />
+                  {bn ? 'পড়ুন' : 'Read Book'}
                 </button>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
         {filtered.length === 0 && (
           <div className="col-span-full py-16 text-center">
             <Monitor size={40} className="mx-auto text-[var(--text-secondary)] mb-3 opacity-50" />
