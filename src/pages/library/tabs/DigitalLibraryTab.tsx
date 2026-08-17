@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react'
-import { BookOpen, Eye, Trash2 } from 'lucide-react'
+import { BookOpen, Eye, Trash2, Plus, Download } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore } from '@/store/libraryStore'
 import { toBnNum } from '@/lib/i18n'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { DigitalReaderModal } from '../modals/DigitalReaderModal'
+import { DigitalBookModal } from '../modals/DigitalBookModal'
 
 interface Props { searchQuery: string }
 
@@ -15,9 +16,9 @@ export function DigitalLibraryTab({ searchQuery }: Props) {
   const readingSessions = useLibraryStore((s) => s.readingSessions)
   const deleteDigitalBook = useLibraryStore((s) => s.deleteDigitalBook)
 
-
   const [showReader, setShowReader] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [showAddModal, setShowAddModal] = useState(false)
 
   const enriched = useMemo(() => {
     return digitalBooks.map((db) => {
@@ -44,8 +45,29 @@ export function DigitalLibraryTab({ searchQuery }: Props) {
     )
   }, [enriched, searchQuery])
 
+  const handleDownload = (fileUrl: string, title: string) => {
+    if (!fileUrl) return
+    const a = document.createElement('a')
+    a.href = fileUrl
+    a.download = `${title}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
   return (
     <div className="space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="text-[0.8125rem] text-[var(--text-secondary)]">
+          {bn ? `${toBnNum(enriched.length)} টি ডিজিটাল বই` : `${enriched.length} digital books`}
+        </div>
+        <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90 transition-opacity">
+          <Plus size={15} />
+          {bn ? 'ডিজিটাল বই' : 'Digital Book'}
+        </button>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
@@ -97,7 +119,12 @@ export function DigitalLibraryTab({ searchQuery }: Props) {
               <button onClick={() => setShowReader(db.id)} className="flex-1 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[0.75rem] font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-1">
                 <Eye size={12} /> {bn ? 'পড়ুন' : 'Read'}
               </button>
-              <button onClick={() => setDeleteTarget(db.id)} className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-red-500 hover:border-red-500/30 transition-colors">
+              {db.fileUrl && (
+                <button onClick={() => handleDownload(db.fileUrl, db.title)} className="py-1.5 px-2.5 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--green)] hover:border-[var(--green)]/30 transition-colors" title={bn ? 'ডাউনলোড' : 'Download'}>
+                  <Download size={12} />
+                </button>
+              )}
+              <button onClick={() => setDeleteTarget(db.id)} className="py-1.5 px-2.5 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-red-500 hover:border-red-500/30 transition-colors">
                 <Trash2 size={12} />
               </button>
             </div>
@@ -111,6 +138,7 @@ export function DigitalLibraryTab({ searchQuery }: Props) {
       </div>
 
       {showReader && <DigitalReaderModal digitalBookId={showReader} onClose={() => setShowReader(null)} />}
+      {showAddModal && <DigitalBookModal onClose={() => setShowAddModal(false)} onSaved={() => setShowAddModal(false)} />}
       {deleteTarget && (
         <DeleteConfirmDialog
           title={bn ? 'ডিজিটাল বই মুছুন' : 'Delete Digital Book'}
