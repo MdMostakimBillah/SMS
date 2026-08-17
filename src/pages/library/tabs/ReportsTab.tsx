@@ -78,7 +78,7 @@ export function ReportsTab(_props: Props) {
           <table className="w-full text-[0.75rem]">
             <thead>
               <tr className="border-b border-[var(--border)]">
-                <th className="py-2 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
+                <th className="py-2 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
                 <th className="py-2 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Books'}</th>
                 <th className="py-2 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কপি' : 'Copies'}</th>
                 <th className="py-2 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'প্রদত্ত' : 'Issued'}</th>
@@ -89,7 +89,7 @@ export function ReportsTab(_props: Props) {
             <tbody>
               {categoryReport.map((r) => (
                 <tr key={r.category} className="border-b border-[var(--border)] last:border-b-0">
-                  <td className="py-2 px-3 text-center font-medium text-[var(--text-primary)]">{r.category}</td>
+                  <td className="py-2 px-3 text-left font-medium text-[var(--text-primary)]">{r.category}</td>
                   <td className="py-2 px-3 text-center text-[var(--text-primary)]">{bn ? toBnNum(r.totalBooks) : r.totalBooks}</td>
                   <td className="py-2 px-3 text-center text-[var(--text-primary)]">{bn ? toBnNum(r.totalCopies) : r.totalCopies}</td>
                   <td className="py-2 px-3 text-center text-[var(--brand)] font-medium">{bn ? toBnNum(r.issued) : r.issued}</td>

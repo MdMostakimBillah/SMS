@@ -104,8 +104,8 @@ export function HistoryTab({ searchQuery }: Props) {
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">#</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'তারিখ' : 'Date'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধরন' : 'Type'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বিবরণ' : 'Detail'}</th>
+                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
+                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বিবরণ' : 'Detail'}</th>
               </tr>
             </thead>
             <tbody>
@@ -124,8 +124,8 @@ export function HistoryTab({ searchQuery }: Props) {
                          (bn ? 'পড়াশোনা' : 'Reading')}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-center text-[var(--text-primary)] truncate max-w-[140px]">{a.studentName}</td>
-                    <td className="py-2.5 px-3 text-center text-[var(--text-primary)] truncate max-w-[180px]">{a.detail}</td>
+                    <td className="py-2.5 px-3 text-left text-[var(--text-primary)] truncate max-w-[140px]">{a.studentName}</td>
+                    <td className="py-2.5 px-3 text-left text-[var(--text-primary)] truncate max-w-[180px]">{a.detail}</td>
                   </tr>
                 )
               })}

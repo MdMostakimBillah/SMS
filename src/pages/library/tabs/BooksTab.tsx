@@ -340,8 +340,8 @@ export function BooksTab({ searchQuery }: Props) {
                     />
                   </td>
                   <td className="py-2.5 px-3 text-center text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
-                  <td className="py-2.5 px-3 text-center">
-                    <div className="flex items-center gap-2 justify-center">
+                  <td className="py-2.5 px-3 text-left">
+                    <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-md bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0">
                         <BookOpen size={14} />
                       </div>
@@ -351,7 +351,7 @@ export function BooksTab({ searchQuery }: Props) {
                       </div>
                     </div>
                   </td>
-                  <td className="py-2.5 px-3 text-center text-[var(--text-primary)]">{bn ? b.authorBn : b.author}</td>
+                  <td className="py-2.5 px-3 text-left text-[var(--text-primary)]">{bn ? b.authorBn : b.author}</td>
                   <td className="py-2.5 px-3 text-center">
                     <span className="px-2 py-0.5 rounded-full bg-[var(--brand-light)] text-[var(--brand)] text-[0.625rem] font-medium">
                       {b.categoryName}

@@ -90,8 +90,8 @@ export function StudentProfilesTab({ searchQuery }: Props) {
               {paged.map((p, idx) => (
                 <tr key={p.id} className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--surface)] transition-colors">
                   <td className="py-2.5 px-3 text-center text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
-                  <td className="py-2.5 px-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
+                  <td className="py-2.5 px-3 text-left">
+                    <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0 font-bold text-[0.6875rem]">
                         {(p.nameEn || '').charAt(0)}
                       </div>

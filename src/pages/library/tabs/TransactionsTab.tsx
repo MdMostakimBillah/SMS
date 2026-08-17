@@ -108,10 +108,10 @@ export function TransactionsTab({ searchQuery }: Props) {
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">#</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'তারিখ' : 'Date'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধরন' : 'Type'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Book'}</th>
+                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
+                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Book'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'নোট' : 'Note'}</th>
+                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'নোট' : 'Note'}</th>
               </tr>
             </thead>
             <tbody>
@@ -132,12 +132,12 @@ export function TransactionsTab({ searchQuery }: Props) {
                        (bn ? 'পুনর্নবীকরণ' : 'Renewal')}
                     </span>
                   </td>
-                  <td className="py-2.5 px-3 text-center text-[var(--text-primary)] truncate max-w-[120px]">{t.studentName}</td>
-                  <td className="py-2.5 px-3 text-center text-[var(--text-primary)] truncate max-w-[140px]">{t.bookName}</td>
+                  <td className="py-2.5 px-3 text-left text-[var(--text-primary)] truncate max-w-[120px]">{t.studentName}</td>
+                  <td className="py-2.5 px-3 text-left text-[var(--text-primary)] truncate max-w-[140px]">{t.bookName}</td>
                   <td className="py-2.5 px-3 text-center">
                     {t.amount > 0 ? <span className="font-bold text-amber-600">{bn ? `৳${toBnNum(t.amount)}` : `৳${t.amount}`}</span> : <span className="text-[var(--text-secondary)]">—</span>}
                   </td>
-                  <td className="py-2.5 px-3 text-center text-[var(--text-secondary)] truncate max-w-[140px]">{t.note}</td>
+                  <td className="py-2.5 px-3 text-left text-[var(--text-secondary)] truncate max-w-[140px]">{t.note}</td>
                 </tr>
               ))}
               {paged.length === 0 && (

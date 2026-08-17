@@ -111,8 +111,8 @@ export function BorrowedTab({ searchQuery }: Props) {
             <thead>
               <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">#</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Book'}</th>
+                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
+                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Book'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ইস্যু' : 'Issue Date'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ফেরত' : 'Due Date'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কাউন্টডাউন' : 'Countdown'}</th>
@@ -124,8 +124,8 @@ export function BorrowedTab({ searchQuery }: Props) {
               {paged.map((b, idx) => (
                 <tr key={b.id} className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--surface)] transition-colors">
                   <td className="py-2.5 px-3 text-center text-[var(--text-secondary)]">{(page - 1) * perPage + idx + 1}</td>
-                  <td className="py-2.5 px-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
+                  <td className="py-2.5 px-3 text-left">
+                    <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center flex-shrink-0 font-bold text-[0.625rem]">
                         {(b.studentName).charAt(0)}
                       </div>
@@ -135,8 +135,8 @@ export function BorrowedTab({ searchQuery }: Props) {
                       </div>
                     </div>
                   </td>
-                  <td className="py-2.5 px-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
+                  <td className="py-2.5 px-3 text-left">
+                    <div className="flex items-center gap-2">
                       <BookOpen size={13} className="text-[var(--brand)] flex-shrink-0" />
                       <span className="text-[var(--text-primary)] truncate max-w-[140px]">{b.bookName}</span>
                     </div>
