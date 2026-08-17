@@ -177,56 +177,77 @@ export function DigitalLibraryTab({ searchQuery }: Props) {
         </div>
       )}
 
-      {/* Detailed Cards */}
+      {/* Details Table */}
       {filtered.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-            {bn ? 'বিস্তারিত' : 'Details'}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((db) => (
-              <div key={db.id} className="group bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-4 hover:shadow-lg hover:shadow-[var(--brand)]/5 hover:border-[var(--brand)]/20 transition-all duration-300">
-                <div className="flex items-start gap-3">
-                  <div className={`w-10 h-12 rounded-lg bg-gradient-to-br ${bookColors[db.colorIndex]} text-white flex items-center justify-center flex-shrink-0 shadow-md`}>
-                    <BookOpen size={16} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-[0.8125rem] text-[var(--text-primary)] line-clamp-1 group-hover:text-[var(--brand)] transition-colors">{db.title}</h3>
-                    <p className="text-[0.6875rem] text-[var(--text-secondary)]">{db.author}</p>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex items-center gap-3 text-[0.6875rem]">
-                  <div className="flex items-center gap-1 text-[var(--text-secondary)]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />
-                    <span>{bn ? `${toBnNum(db.chapterCount)} অধ্যায়` : `${db.chapterCount} ch`}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-[var(--text-secondary)]">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)]" />
-                    <span>{bn ? `${toBnNum(db.totalReaders)} পাঠক` : `${db.totalReaders} readers`}</span>
-                  </div>
-                </div>
-
-                <div className="mt-2.5">
-                  <div className="flex justify-between text-[0.625rem] text-[var(--text-secondary)] mb-1">
-                    <span>{bn ? 'অগ্রগতি' : 'Progress'}</span>
-                    <span className="font-medium">{bn ? toBnNum(db.avgProgress) : db.avgProgress}%</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-[var(--surface)] overflow-hidden">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[var(--brand)] to-purple-500 transition-all duration-500" style={{ width: `${db.avgProgress}%` }} />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[var(--border)]">
-                  <button onClick={() => setShowReader(db.id)} className="flex-1 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-1">
-                    <Eye size={11} /> {bn ? 'পড়ুন' : 'Read'}
-                  </button>
-                  <button onClick={() => setDeleteTarget(db.id)} className="py-1.5 px-2 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-red-500 hover:border-red-500/30 transition-colors">
-                    <Trash2 size={11} />
-                  </button>
-                </div>
-              </div>
-            ))}
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-[var(--border)] bg-[var(--surface)]">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+              {bn ? 'বিস্তারিত' : 'Details'}
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-[0.75rem]">
+              <thead>
+                <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">#</th>
+                  <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বই' : 'Book'}</th>
+                  <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'লেখক' : 'Author'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'অধ্যায়' : 'Chapters'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'পাঠক' : 'Readers'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'অগ্রগতি' : 'Progress'}</th>
+                  <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((db, idx) => (
+                  <tr key={db.id} className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--surface)] transition-colors">
+                    <td className="py-2.5 px-3 text-center text-[var(--text-secondary)]">{idx + 1}</td>
+                    <td className="py-2.5 px-3 text-left">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-10 rounded-md bg-gradient-to-br ${bookColors[db.colorIndex]} text-white flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                          <BookOpen size={12} />
+                        </div>
+                        <span className="font-medium text-[var(--text-primary)] truncate max-w-[180px]">{db.title}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3 text-left text-[var(--text-primary)]">{db.author}</td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded-full bg-[var(--brand-light)] text-[var(--brand)] text-[0.625rem] font-medium">
+                        {bn ? toBnNum(db.chapterCount) : db.chapterCount}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded-full bg-[var(--green-light)] text-[var(--green)] text-[0.625rem] font-medium">
+                        {bn ? toBnNum(db.totalReaders) : db.totalReaders}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <div className="flex items-center gap-2 justify-center">
+                        <div className="w-16 h-1.5 rounded-full bg-[var(--surface)] overflow-hidden">
+                          <div className="h-full rounded-full bg-gradient-to-r from-[var(--brand)] to-purple-500" style={{ width: `${db.avgProgress}%` }} />
+                        </div>
+                        <span className="text-[0.625rem] text-[var(--text-secondary)] font-medium w-7">{bn ? toBnNum(db.avgProgress) : db.avgProgress}%</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <div className="flex items-center gap-1 justify-center">
+                        <button onClick={() => setShowReader(db.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors" title={bn ? 'পড়ুন' : 'Read'}>
+                          <Eye size={13} />
+                        </button>
+                        {db.fileUrl && (
+                          <button onClick={() => handleDownload(db.fileUrl, db.title)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--green)] transition-colors" title={bn ? 'ডাউনলোড' : 'Download'}>
+                            <Download size={13} />
+                          </button>
+                        )}
+                        <button onClick={() => setDeleteTarget(db.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
