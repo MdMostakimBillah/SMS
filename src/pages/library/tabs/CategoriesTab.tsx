@@ -256,7 +256,7 @@ export function CategoriesTab({ searchQuery }: Props) {
             <table className="w-full text-[0.75rem]">
               <thead>
                 <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
-                  <th className="py-2.5 px-2 w-9">
+                  <th className="py-2.5 pl-3 pr-2 w-9">
                     <ModernCheckbox
                       checked={selected.size === paged.length && paged.length > 0}
                       onChange={toggleAll}
@@ -275,7 +275,7 @@ export function CategoriesTab({ searchQuery }: Props) {
               <tbody>
                 {paged.map((c, idx) => (
                   <tr key={c.id} className={`border-b border-[var(--border)] last:border-b-0 transition-colors hover:bg-[var(--surface)] ${selected.has(c.id) ? 'bg-[var(--brand)]/5' : ''}`}>
-                    <td className="py-2.5 px-2">
+                    <td className="py-2.5 pl-3 pr-2">
                       <ModernCheckbox
                         checked={selected.has(c.id)}
                         onChange={() => toggleRow(c.id)}
