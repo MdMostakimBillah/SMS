@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Tag, Pencil, Trash2, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Eye, LayoutGrid, List, BookOpen } from 'lucide-react'
+import { Tag, Pencil, Trash2, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Eye, BookOpen } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore } from '@/store/libraryStore'
 import { toBnNum } from '@/lib/i18n'
@@ -52,7 +52,6 @@ export function CategoriesTab({ searchQuery }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid')
   const actionMenuRef = useRef<HTMLDivElement>(null)
 
   const enriched = useMemo(() => {
@@ -218,18 +217,6 @@ export function CategoriesTab({ searchQuery }: Props) {
         )}
         <div className="flex-1" />
 
-        {/* View Toggle */}
-        <div className="flex items-center gap-1 p-0.5 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
-          <button onClick={() => setViewMode('table')}
-            className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
-            <List size={14} />
-          </button>
-          <button onClick={() => setViewMode('grid')}
-            className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
-            <LayoutGrid size={14} />
-          </button>
-        </div>
-
         {filtered.length > 0 && (
           <div className="relative">
             <button
@@ -278,7 +265,7 @@ export function CategoriesTab({ searchQuery }: Props) {
             {bn ? '+ প্রথম ক্যাটাগরি যোগ করুন' : '+ Add your first category'}
           </button>
         </div>
-      ) : viewMode === 'table' ? (
+      ) : (
         <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-[0.75rem]">
@@ -375,87 +362,6 @@ export function CategoriesTab({ searchQuery }: Props) {
             </table>
           </div>
           <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} isBn={bn} />
-        </div>
-      ) : (
-        /* Grid View - Bookshelf with books inside each category */
-        <div className="space-y-6">
-          {paged.map((c) => {
-            const categoryBooks = books.filter((b) => b.categoryId === c.id && b.isActive).slice(0, 6)
-            return (
-              <div key={c.id} className="group">
-                {/* Category Header */}
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${categoryColors[c.colorIndex]} flex items-center justify-center shadow-md`}>
-                    <Tag size={16} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-[0.9375rem] text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</h3>
-                    <p className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? toBnNum(c.bookCount) : c.bookCount} {bn ? 'টি বই' : 'books'}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <button onClick={() => { setEditItem(c); setShowModal(true) }} className="p-1.5 rounded-lg hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
-                      <Pencil size={13} />
-                    </button>
-                    <button onClick={() => toggleCategoryActive(c.id)} className="p-1.5 rounded-lg hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors">
-                      <Eye size={13} />
-                    </button>
-                    <button onClick={() => setDeleteTarget(c)} className="p-1.5 rounded-lg hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Bookshelf */}
-                <div className="relative p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
-                  {/* Shelf background */}
-                  <div className="absolute bottom-0 left-0 right-0 h-3 bg-gradient-to-b from-[var(--border)] to-transparent rounded-b-xl" />
-                  
-                  {categoryBooks.length > 0 ? (
-                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-                      {categoryBooks.map((b, idx) => (
-                        <div key={b.id} className="flex-shrink-0 w-[130px]">
-                          <div className={`w-full h-[160px] rounded-lg bg-gradient-to-br ${categoryColors[(c.colorIndex + idx) % categoryColors.length]} shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center p-3 cursor-pointer`}>
-                            <div className="text-center">
-                              <BookOpen size={22} className="mx-auto text-white/80 mb-1.5" />
-                              <p className="text-[0.5rem] text-white/70 leading-tight line-clamp-3">{bn ? b.titleBn : b.title}</p>
-                            </div>
-                          </div>
-                          <div className="mt-2 px-0.5">
-                            <p className="font-medium text-[0.6875rem] text-[var(--text-primary)] line-clamp-1">{bn ? b.titleBn : b.title}</p>
-                            <p className="text-[0.5625rem] text-[var(--text-secondary)] line-clamp-1">{bn ? b.authorBn : b.author}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {c.bookCount > 6 && (
-                        <div className="flex-shrink-0 w-[100px] flex items-center justify-center">
-                          <div className="text-center py-6">
-                            <span className="text-[0.875rem] font-bold text-[var(--text-secondary)]">+{c.bookCount - 6}</span>
-                            <p className="text-[0.5625rem] text-[var(--text-secondary)]">{bn ? 'আরও' : 'more'}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="text-center">
-                        <BookOpen size={24} className="mx-auto text-[var(--text-secondary)] mb-1 opacity-40" />
-                        <p className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'কোনো বই নেই' : 'No books'}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-          {paged.length === 0 && (
-            <div className="py-16 text-center">
-              <Tag size={40} className="mx-auto text-[var(--text-secondary)] mb-3 opacity-50" />
-              <p className="text-[0.875rem] text-[var(--text-secondary)]">{bn ? 'কোনো ক্যাটাগরি পাওয়া যায়নি' : 'No categories found'}</p>
-            </div>
-          )}
-          {paged.length > 0 && (
-            <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} isBn={bn} />
-          )}
         </div>
       )}
 
