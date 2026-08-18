@@ -433,57 +433,99 @@ export function BooksTab({ searchQuery }: Props) {
 
       {/* Grid View - Bookshelf */}
       {viewMode === 'grid' && (
-        <div className="space-y-4">
-          <div className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-            {paged.map((b, idx) => (
-              <div key={b.id} className="flex-shrink-0 w-[160px] group">
-                <div className="relative">
-                  <div className={`w-full h-[200px] rounded-lg bg-gradient-to-br ${bookColors[idx % bookColors.length]} shadow-lg group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300 flex items-center justify-center p-4`}>
-                    <div className="text-center">
-                      <BookOpen size={28} className="mx-auto text-white/80 mb-2" />
-                      <p className="text-[0.5625rem] text-white/60 leading-tight line-clamp-4">{bn ? b.titleBn : b.title}</p>
-                    </div>
-                  </div>
-                  <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="flex gap-2">
-                      <button onClick={() => handleEdit(b)} className="p-2 rounded-full bg-white text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors" title={bn ? 'সম্পাদনা' : 'Edit'}>
-                        <Edit size={14} />
-                      </button>
-                      <button onClick={() => toggleBookActive(b.id)} className="p-2 rounded-full bg-white text-[var(--amber)] hover:bg-[var(--amber)] hover:text-white transition-colors" title={bn ? 'অবস্থা' : 'Status'}>
-                        <Eye size={14} />
-                      </button>
-                      <button onClick={() => setDeleteTarget(b)} className="p-2 rounded-full bg-white text-red-500 hover:bg-red-500 hover:text-white transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3 px-0.5">
-                  <h4 className="font-semibold text-[0.8125rem] text-[var(--text-primary)] line-clamp-1">{bn ? b.titleBn : b.title}</h4>
-                  <p className="text-[0.6875rem] text-[var(--text-secondary)] line-clamp-1 mt-0.5">{bn ? b.authorBn : b.author}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className="px-2 py-0.5 rounded-full bg-[var(--brand-light)] text-[var(--brand)] text-[0.5625rem] font-medium">{b.categoryName}</span>
-                    <span className="text-[0.5625rem] text-[var(--text-secondary)]">{b.shelf}</span>
-                  </div>
-                  <div className="flex items-center gap-1 mt-1 text-[0.625rem]">
-                    <span className="font-semibold text-[var(--text-primary)]">{bn ? toBnNum(b.available) : b.available}</span>
-                    <span className="text-[var(--text-secondary)]">/{bn ? toBnNum(b.totalActiveCopies) : b.totalActiveCopies}</span>
-                    <span className={`ml-auto px-1.5 py-0.5 rounded-full text-[0.5rem] font-medium ${b.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-red-500/10 text-red-500'}`}>
-                      {b.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          {paged.length === 0 && (
+        <div className="space-y-6">
+          {paged.length === 0 ? (
             <div className="py-16 text-center">
               <BookOpen size={40} className="mx-auto text-[var(--text-secondary)] mb-3 opacity-50" />
               <p className="text-[0.875rem] text-[var(--text-secondary)]">{bn ? 'কোনো বই পাওয়া যায়নি' : 'No books found'}</p>
             </div>
-          )}
-          {paged.length > 0 && (
-            <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} isBn={bn} />
+          ) : (
+            <>
+              {/* Bookshelf Rows */}
+              {Array.from({ length: Math.ceil(paged.length / 6) }).map((_, shelfIdx) => {
+                const shelfBooks = paged.slice(shelfIdx * 6, shelfIdx * 6 + 6)
+                return (
+                  <div key={shelfIdx} className="relative">
+                    {/* Shelf Label */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 rounded bg-amber-800/20 flex items-center justify-center">
+                        <span className="text-[0.625rem] font-bold text-amber-700">{shelfIdx + 1}</span>
+                      </div>
+                      <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'শেল্ফ' : 'Shelf'} {shelfIdx + 1}</span>
+                    </div>
+
+                    {/* Books on Shelf */}
+                    <div className="relative bg-gradient-to-b from-amber-900/10 to-amber-900/5 rounded-xl p-4 pb-6 border border-amber-900/10">
+                      {/* Top trim */}
+                      <div className="absolute top-0 left-2 right-2 h-1 bg-gradient-to-r from-amber-800/30 via-amber-700/40 to-amber-800/30 rounded-full" />
+                      
+                      <div className="flex items-end gap-3 justify-center min-h-[200px]">
+                        {shelfBooks.map((b, idx) => {
+                          const heightVariation = [180, 190, 175, 195, 185, 170][idx] || 180
+                          return (
+                            <div key={b.id} className="group relative cursor-pointer" style={{ height: `${heightVariation}px` }}>
+                              {/* Book spine - standing upright */}
+                              <div
+                                className={`w-[70px] h-full rounded-r-md bg-gradient-to-r ${bookColors[(shelfIdx * 6 + idx) % bookColors.length]} shadow-lg group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-200 flex items-center justify-center relative overflow-hidden`}
+                                onClick={() => handleEdit(b)}
+                              >
+                                {/* Spine line */}
+                                <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-black/20" />
+                                {/* Title on spine */}
+                                <div className="transform -rotate-90 whitespace-nowrap px-2">
+                                  <p className="text-[0.5rem] text-white/90 font-medium truncate max-w-[120px]">{bn ? b.titleBn : b.title}</p>
+                                </div>
+                                {/* Bottom label */}
+                                <div className="absolute bottom-1 left-1 right-1">
+                                  <div className="w-full h-[2px] bg-white/20 rounded" />
+                                </div>
+                              </div>
+
+                              {/* Hover overlay */}
+                              <div className="absolute inset-0 rounded-r-md bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 -translate-y-1">
+                                <div className="flex gap-1.5">
+                                  <button onClick={(e) => { e.stopPropagation(); handleEdit(b) }} className="p-1.5 rounded-full bg-white text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors" title={bn ? 'সম্পাদনা' : 'Edit'}>
+                                    <Edit size={12} />
+                                  </button>
+                                  <button onClick={(e) => { e.stopPropagation(); toggleBookActive(b.id) }} className="p-1.5 rounded-full bg-white text-[var(--amber)] hover:bg-[var(--amber)] hover:text-white transition-colors" title={bn ? 'অবস্থা' : 'Status'}>
+                                    <Eye size={12} />
+                                  </button>
+                                  <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(b) }} className="p-1.5 rounded-full bg-white text-red-500 hover:bg-red-500 hover:text-white transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Book info tooltip */}
+                              <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[140px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                                <div className="bg-[var(--bg-primary)] rounded-lg border border-[var(--border)] shadow-xl p-2 text-center">
+                                  <p className="font-medium text-[0.625rem] text-[var(--text-primary)] line-clamp-1">{bn ? b.titleBn : b.title}</p>
+                                  <p className="text-[0.5rem] text-[var(--text-secondary)] line-clamp-1">{bn ? b.authorBn : b.author}</p>
+                                  <div className="flex items-center justify-center gap-1 mt-1">
+                                    <span className="text-[0.5rem] text-[var(--brand)]">{b.categoryName}</span>
+                                    <span className="text-[0.5rem] text-[var(--text-secondary)]">·</span>
+                                    <span className="text-[0.5rem] text-[var(--text-secondary)]">{b.shelf}</span>
+                                  </div>
+                                  <div className="flex items-center justify-center gap-1 mt-0.5">
+                                    <span className="font-semibold text-[0.5rem] text-[var(--text-primary)]">{bn ? toBnNum(b.available) : b.available}</span>
+                                    <span className="text-[0.5rem] text-[var(--text-secondary)]">/{bn ? toBnNum(b.totalActiveCopies) : b.totalActiveCopies}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* Shelf board */}
+                      <div className="absolute bottom-0 left-0 right-0 h-3 bg-gradient-to-b from-amber-800/40 to-amber-900/60 rounded-b-xl shadow-inner" />
+                      <div className="absolute bottom-3 left-0 right-0 h-[2px] bg-amber-700/30" />
+                    </div>
+                  </div>
+                )
+              })}
+              <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} isBn={bn} />
+            </>
           )}
         </div>
       )}
