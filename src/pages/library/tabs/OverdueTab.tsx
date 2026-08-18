@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { BookOpen } from 'lucide-react'
+import { BookOpen, AlertTriangle, DollarSign, Clock } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore, calcFine } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -70,13 +70,20 @@ export function OverdueTab({ searchQuery }: Props) {
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { labelBn: 'মোট বিলম্বিত', labelEn: 'Total Overdue', value: summary.totalOverdue, color: 'var(--red, #ef4444)' },
-          { labelBn: 'মোট জরিমানা', labelEn: 'Total Fine', value: `৳${summary.totalFine}`, color: 'var(--amber)' },
-          { labelBn: 'গড় বিলম্ব', labelEn: 'Avg Days Late', value: summary.avgDays, color: 'var(--brand)' },
+          { labelBn: 'মোট বিলম্বিত', labelEn: 'Total Overdue', value: summary.totalOverdue, icon: <AlertTriangle size={14} />, color: 'var(--red, #ef4444)' },
+          { labelBn: 'মোট জরিমানা', labelEn: 'Total Fine', value: `৳${summary.totalFine}`, icon: <DollarSign size={14} />, color: 'var(--amber)' },
+          { labelBn: 'গড় বিলম্ব', labelEn: 'Avg Days Late', value: summary.avgDays, icon: <Clock size={14} />, color: 'var(--brand)' },
         ].map((s) => (
-          <div key={s.labelEn} className="p-3 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
-            <div className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? s.labelBn : s.labelEn}</div>
-            <div className="font-bold text-lg text-[var(--text-primary)]">{typeof s.value === 'number' ? (bn ? toBnNum(s.value) : s.value) : s.value}</div>
+          <div key={s.labelEn} className="flex items-center gap-3 p-3 rounded-[0.625rem] bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
+            <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: `${s.color}18`, color: s.color }}>
+              {s.icon}
+            </div>
+            <div className="min-w-0">
+              <div className="font-bold text-[1.125rem] text-[var(--text-primary)] leading-tight">
+                {typeof s.value === 'number' ? (bn ? toBnNum(s.value) : s.value) : s.value}
+              </div>
+              <div className="text-[0.6875rem] text-[var(--text-secondary)] whitespace-nowrap">{bn ? s.labelBn : s.labelEn}</div>
+            </div>
           </div>
         ))}
       </div>
