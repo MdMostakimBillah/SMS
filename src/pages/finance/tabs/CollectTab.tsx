@@ -108,7 +108,7 @@ function generateMonthRows(
       const range = struct.applicableMonths
         ? struct.applicableMonths.filter((m) => {
             if (currentYearNum > year) return true
-            if (currentYearNum === year) return m <= currentMonthIdx
+            if (currentYearNum === year) return m <= currentMonthIdx + structAdvance
             return false
           })
         : Array.from({ length: totalMonths }, (_, i) => i)
