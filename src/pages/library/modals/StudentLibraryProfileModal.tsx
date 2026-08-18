@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, BookOpen, CheckCircle, BookMarked, AlertTriangle, Clock, DollarSign, Star, TrendingUp } from 'lucide-react'
+import { X, BookOpen, CheckCircle, BookMarked, Clock, DollarSign, Star, TrendingUp } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore, calcFine } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -39,7 +39,6 @@ export function StudentLibraryProfileModal({ studentId, onClose }: Props) {
 
   const activeBorrowings = studentBorrowings.filter((b) => b.status === 'borrowed' || b.status === 'overdue')
   const history = studentBorrowings.filter((b) => b.status === 'returned')
-  const totalFine = studentBorrowings.reduce((s, b) => s + b.fine, 0)
   const pendingFine = activeBorrowings.reduce((s, b) => s + calcFine(b.dueDate, settings.finePerDay), 0)
   const totalReadBooks = history.length + new Set(studentSessions.map((r) => r.digitalBookId)).size
   const readingTime = studentSessions.reduce((sum, r) => sum + r.totalTime, 0)
