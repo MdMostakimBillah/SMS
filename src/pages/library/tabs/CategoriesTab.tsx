@@ -377,49 +377,76 @@ export function CategoriesTab({ searchQuery }: Props) {
           <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} isBn={bn} />
         </div>
       ) : (
-        /* Grid View - Bookshelf */
-        <div className="space-y-4">
-          <div className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-            {paged.map((c) => (
-              <div key={c.id} className="flex-shrink-0 w-[180px] group">
-                <div className="relative">
-                  <div className={`w-full h-[220px] rounded-lg bg-gradient-to-br ${categoryColors[c.colorIndex]} shadow-lg group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300 flex items-center justify-center p-4`}>
-                    <div className="text-center">
-                      <Tag size={32} className="mx-auto text-white/80 mb-2" />
-                      <p className="text-[0.6875rem] text-white font-semibold leading-tight line-clamp-2">{bn ? c.nameBn : c.name}</p>
-                      <p className="text-[0.5625rem] text-white/60 mt-1">{bn ? toBnNum(c.bookCount) : c.bookCount} {bn ? 'বই' : 'books'}</p>
-                    </div>
+        /* Grid View - Bookshelf with books inside each category */
+        <div className="space-y-6">
+          {paged.map((c) => {
+            const categoryBooks = books.filter((b) => b.categoryId === c.id && b.isActive).slice(0, 6)
+            return (
+              <div key={c.id} className="group">
+                {/* Category Header */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${categoryColors[c.colorIndex]} flex items-center justify-center shadow-md`}>
+                    <Tag size={16} className="text-white" />
                   </div>
-                  <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="flex gap-2">
-                      <button onClick={() => { setEditItem(c); setShowModal(true) }} className="p-2 rounded-full bg-white text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors" title={bn ? 'সম্পাদনা' : 'Edit'}>
-                        <Pencil size={14} />
-                      </button>
-                      <button onClick={() => toggleCategoryActive(c.id)} className="p-2 rounded-full bg-white text-[var(--amber)] hover:bg-[var(--amber)] hover:text-white transition-colors" title={bn ? 'অবস্থা' : 'Status'}>
-                        <Eye size={14} />
-                      </button>
-                      <button onClick={() => setDeleteTarget(c)} className="p-2 rounded-full bg-white text-red-500 hover:bg-red-500 hover:text-white transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-[0.9375rem] text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</h3>
+                    <p className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? toBnNum(c.bookCount) : c.bookCount} {bn ? 'টি বই' : 'books'}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button onClick={() => { setEditItem(c); setShowModal(true) }} className="p-1.5 rounded-lg hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
+                      <Pencil size={13} />
+                    </button>
+                    <button onClick={() => toggleCategoryActive(c.id)} className="p-1.5 rounded-lg hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors">
+                      <Eye size={13} />
+                    </button>
+                    <button onClick={() => setDeleteTarget(c)} className="p-1.5 rounded-lg hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
+                      <Trash2 size={13} />
+                    </button>
                   </div>
                 </div>
-                <div className="mt-3 px-0.5">
-                  <h4 className="font-semibold text-[0.8125rem] text-[var(--text-primary)] line-clamp-1">{bn ? c.nameBn : c.name}</h4>
-                  <p className="text-[0.6875rem] text-[var(--text-secondary)] line-clamp-1 mt-0.5">{(bn ? c.descriptionBn : c.description) || '—'}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--brand-light)] text-[var(--brand)] text-[0.5625rem] font-medium">
-                      <BookOpen size={10} />
-                      {bn ? toBnNum(c.bookCount) : c.bookCount}
-                    </span>
-                    <span className={`px-1.5 py-0.5 rounded-full text-[0.5rem] font-medium ${c.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-red-500/10 text-red-500'}`}>
-                      {c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
-                    </span>
-                  </div>
+
+                {/* Bookshelf */}
+                <div className="relative p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
+                  {/* Shelf background */}
+                  <div className="absolute bottom-0 left-0 right-0 h-3 bg-gradient-to-b from-[var(--border)] to-transparent rounded-b-xl" />
+                  
+                  {categoryBooks.length > 0 ? (
+                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+                      {categoryBooks.map((b, idx) => (
+                        <div key={b.id} className="flex-shrink-0 w-[130px]">
+                          <div className={`w-full h-[160px] rounded-lg bg-gradient-to-br ${categoryColors[(c.colorIndex + idx) % categoryColors.length]} shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center p-3 cursor-pointer`}>
+                            <div className="text-center">
+                              <BookOpen size={22} className="mx-auto text-white/80 mb-1.5" />
+                              <p className="text-[0.5rem] text-white/70 leading-tight line-clamp-3">{bn ? b.titleBn : b.title}</p>
+                            </div>
+                          </div>
+                          <div className="mt-2 px-0.5">
+                            <p className="font-medium text-[0.6875rem] text-[var(--text-primary)] line-clamp-1">{bn ? b.titleBn : b.title}</p>
+                            <p className="text-[0.5625rem] text-[var(--text-secondary)] line-clamp-1">{bn ? b.authorBn : b.author}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {c.bookCount > 6 && (
+                        <div className="flex-shrink-0 w-[100px] flex items-center justify-center">
+                          <div className="text-center py-6">
+                            <span className="text-[0.875rem] font-bold text-[var(--text-secondary)]">+{c.bookCount - 6}</span>
+                            <p className="text-[0.5625rem] text-[var(--text-secondary)]">{bn ? 'আরও' : 'more'}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="text-center">
+                        <BookOpen size={24} className="mx-auto text-[var(--text-secondary)] mb-1 opacity-40" />
+                        <p className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'কোনো বই নেই' : 'No books'}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+            )
+          })}
           {paged.length === 0 && (
             <div className="py-16 text-center">
               <Tag size={40} className="mx-auto text-[var(--text-secondary)] mb-3 opacity-50" />
