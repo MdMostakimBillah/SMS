@@ -471,9 +471,9 @@ export function BooksTab({ searchQuery }: Props) {
                               >
                                 {/* Spine line */}
                                 <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-black/20" />
-                                {/* Title on spine */}
-                                <div className="transform -rotate-90 whitespace-nowrap px-2">
-                                  <p className="text-[0.5rem] text-white/90 font-medium truncate max-w-[120px]">{bn ? b.titleBn : b.title}</p>
+                                {/* Title on spine - vertical */}
+                                <div className="transform -rotate-90 whitespace-nowrap">
+                                  <p className="text-[0.6875rem] text-white font-semibold tracking-wide">{bn ? b.titleBn : b.title}</p>
                                 </div>
                                 {/* Bottom label */}
                                 <div className="absolute bottom-1 left-1 right-1">
@@ -481,8 +481,14 @@ export function BooksTab({ searchQuery }: Props) {
                                 </div>
                               </div>
 
+                              {/* Book title below - always visible */}
+                              <div className="mt-2 px-0.5 text-center">
+                                <p className="font-medium text-[0.6875rem] text-[var(--text-primary)] line-clamp-2 leading-tight">{bn ? b.titleBn : b.title}</p>
+                                <p className="text-[0.5625rem] text-[var(--text-secondary)] line-clamp-1 mt-0.5">{bn ? b.authorBn : b.author}</p>
+                              </div>
+
                               {/* Hover overlay */}
-                              <div className="absolute inset-0 rounded-r-md bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 -translate-y-1">
+                              <div className="absolute inset-0 rounded-r-md bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 -translate-y-8">
                                 <div className="flex gap-1.5">
                                   <button onClick={(e) => { e.stopPropagation(); handleEdit(b) }} className="p-1.5 rounded-full bg-white text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors" title={bn ? 'সম্পাদনা' : 'Edit'}>
                                     <Edit size={12} />
@@ -496,21 +502,12 @@ export function BooksTab({ searchQuery }: Props) {
                                 </div>
                               </div>
 
-                              {/* Book info tooltip */}
-                              <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[140px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                                <div className="bg-[var(--bg-primary)] rounded-lg border border-[var(--border)] shadow-xl p-2 text-center">
-                                  <p className="font-medium text-[0.625rem] text-[var(--text-primary)] line-clamp-1">{bn ? b.titleBn : b.title}</p>
-                                  <p className="text-[0.5rem] text-[var(--text-secondary)] line-clamp-1">{bn ? b.authorBn : b.author}</p>
-                                  <div className="flex items-center justify-center gap-1 mt-1">
-                                    <span className="text-[0.5rem] text-[var(--brand)]">{b.categoryName}</span>
-                                    <span className="text-[0.5rem] text-[var(--text-secondary)]">·</span>
-                                    <span className="text-[0.5rem] text-[var(--text-secondary)]">{b.shelf}</span>
-                                  </div>
-                                  <div className="flex items-center justify-center gap-1 mt-0.5">
-                                    <span className="font-semibold text-[0.5rem] text-[var(--text-primary)]">{bn ? toBnNum(b.available) : b.available}</span>
-                                    <span className="text-[0.5rem] text-[var(--text-secondary)]">/{bn ? toBnNum(b.totalActiveCopies) : b.totalActiveCopies}</span>
-                                  </div>
-                                </div>
+                              {/* Book info badge */}
+                              <div className="flex items-center justify-center gap-1 mt-1">
+                                <span className="px-1.5 py-0.5 rounded bg-[var(--brand-light)] text-[var(--brand)] text-[0.5rem] font-medium">{b.categoryName}</span>
+                                <span className={`px-1 py-0.5 rounded text-[0.5rem] font-medium ${b.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-red-500/10 text-red-500'}`}>
+                                  {bn ? toBnNum(b.available) : b.available}/{bn ? toBnNum(b.totalActiveCopies) : b.totalActiveCopies}
+                                </span>
                               </div>
                             </div>
                           )
