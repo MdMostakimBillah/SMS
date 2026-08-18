@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Tag, Pencil, Trash2, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Eye, BookOpen } from 'lucide-react'
+import { Tag, Pencil, Trash2, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Eye } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore } from '@/store/libraryStore'
 import { toBnNum } from '@/lib/i18n'
