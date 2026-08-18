@@ -38,9 +38,10 @@ export function StudentProfilesTab({ searchQuery }: Props) {
       const sessions = readingSessions.filter((r) => r.studentId === s.id)
       const digitalBooksRead = new Set(sessions.map((r) => r.digitalBookId)).size
       const readingTime = sessions.reduce((sum, r) => sum + r.totalTime, 0)
+      const totalReadBooks = totalBorrowed + digitalBooksRead
       return {
         ...s, activeCount: activeBorrowings.length, overdueCount, totalFine, pendingFine,
-        totalBorrowed, digitalBooksRead, readingTime,
+        totalBorrowed, digitalBooksRead, readingTime, totalReadBooks,
       }
     })
   }, [sessionStudents, borrowings, readingSessions, settings.finePerDay])
@@ -59,10 +60,11 @@ export function StudentProfilesTab({ searchQuery }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         {[
           { labelBn: 'মোট ছাত্র', labelEn: 'Total Students', value: profiles.length, color: 'var(--brand)' },
-          { labelBn: 'সক্রিয় ধারী', labelEn: 'Active Borrowers', value: profiles.filter((p) => p.activeCount > 0).length, color: 'var(--green)' },
+          { labelBn: 'মোট পড়েছে', labelEn: 'Total Read', value: profiles.reduce((sum, p) => sum + p.totalReadBooks, 0), color: 'var(--green)' },
+          { labelBn: 'সক্রিয় ধারী', labelEn: 'Active Borrowers', value: profiles.filter((p) => p.activeCount > 0).length, color: 'var(--amber)' },
           { labelBn: 'বিলম্বিত', labelEn: 'With Overdue', value: profiles.filter((p) => p.overdueCount > 0).length, color: 'var(--red, #ef4444)' },
         ].map((s) => (
           <div key={s.labelEn} className="p-3 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
@@ -78,8 +80,9 @@ export function StudentProfilesTab({ searchQuery }: Props) {
             <thead>
               <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">#</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধারে' : 'Borrowed'}</th>
+                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'পড়েছে' : 'Read'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধারে' : 'Active'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'বিলম্বিত' : 'Overdue'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ডিজিটাল' : 'Digital'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'জরিমানা' : 'Fine'}</th>
@@ -100,6 +103,9 @@ export function StudentProfilesTab({ searchQuery }: Props) {
                         <div className="text-[0.625rem] text-[var(--text-secondary)]">{p.class} | {p.section} | Roll: {p.roll}</div>
                       </div>
                     </div>
+                  </td>
+                  <td className="py-2.5 px-3 text-center">
+                    <span className="font-bold text-[var(--green)]">{bn ? toBnNum(p.totalReadBooks) : p.totalReadBooks}</span>
                   </td>
                   <td className="py-2.5 px-3 text-center">
                     <span className="font-bold text-[var(--text-primary)]">{bn ? toBnNum(p.activeCount) : p.activeCount}</span>
@@ -125,7 +131,7 @@ export function StudentProfilesTab({ searchQuery }: Props) {
                 </tr>
               ))}
               {paged.length === 0 && (
-                <tr><td colSpan={7} className="py-8 text-center text-[var(--text-secondary)]">{bn ? 'কোনো ছাত্র পাওয়া যায়নি' : 'No students found'}</td></tr>
+                <tr><td colSpan={8} className="py-8 text-center text-[var(--text-secondary)]">{bn ? 'কোনো ছাত্র পাওয়া যায়নি' : 'No students found'}</td></tr>
               )}
             </tbody>
           </table>
