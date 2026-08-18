@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { ChevronRight, Check } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore } from '@/store/libraryStore'
 
@@ -26,21 +25,6 @@ export function SettingsTab() {
       </div>
       {right}
     </div>
-  )
-
-  const Radio = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
-    <button onClick={onChange} className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-      checked ? 'border-[var(--brand)] bg-[var(--brand)]' : 'border-[var(--border)] bg-transparent'
-    }`}>
-      {checked && <Check size={12} className="text-white" />}
-    </button>
-  )
-
-  const Select = ({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) => (
-    <select value={value} onChange={(e) => onChange(e.target.value)}
-      className="py-1.5 px-3 pr-8 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] appearance-none cursor-pointer">
-      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
   )
 
   return (
