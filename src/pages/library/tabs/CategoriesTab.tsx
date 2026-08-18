@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Tag, Pencil, Trash2, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Eye } from 'lucide-react'
+import { Tag, Pencil, Trash2, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Eye, LayoutGrid, List, BookOpen } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useLibraryStore } from '@/store/libraryStore'
 import { toBnNum } from '@/lib/i18n'
@@ -16,6 +16,19 @@ import type { BookCategory } from '../types'
 interface Props {
   searchQuery: string
 }
+
+const categoryColors = [
+  'from-indigo-600 to-indigo-800',
+  'from-emerald-600 to-emerald-800',
+  'from-amber-600 to-amber-800',
+  'from-rose-600 to-rose-800',
+  'from-cyan-600 to-cyan-800',
+  'from-violet-600 to-violet-800',
+  'from-teal-600 to-teal-800',
+  'from-orange-600 to-orange-800',
+  'from-sky-600 to-sky-800',
+  'from-pink-600 to-pink-800',
+]
 
 const pdfColumns: PDFColumnDef[] = [
   { key: 'name', label: 'Name', labelBn: 'নাম', default: true },
@@ -39,12 +52,14 @@ export function CategoriesTab({ searchQuery }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid')
   const actionMenuRef = useRef<HTMLDivElement>(null)
 
   const enriched = useMemo(() => {
-    return categories.map((c) => ({
+    return categories.map((c, idx) => ({
       ...c,
       bookCount: books.filter((b) => b.categoryId === c.id).length,
+      colorIndex: idx % categoryColors.length,
     }))
   }, [categories, books])
 
@@ -202,6 +217,19 @@ export function CategoriesTab({ searchQuery }: Props) {
           </span>
         )}
         <div className="flex-1" />
+
+        {/* View Toggle */}
+        <div className="flex items-center gap-1 p-0.5 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
+          <button onClick={() => setViewMode('table')}
+            className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
+            <List size={14} />
+          </button>
+          <button onClick={() => setViewMode('grid')}
+            className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
+            <LayoutGrid size={14} />
+          </button>
+        </div>
+
         {filtered.length > 0 && (
           <div className="relative">
             <button
@@ -250,7 +278,7 @@ export function CategoriesTab({ searchQuery }: Props) {
             {bn ? '+ প্রথম ক্যাটাগরি যোগ করুন' : '+ Add your first category'}
           </button>
         </div>
-      ) : (
+      ) : viewMode === 'table' ? (
         <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-[0.75rem]">
@@ -347,6 +375,60 @@ export function CategoriesTab({ searchQuery }: Props) {
             </table>
           </div>
           <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} isBn={bn} />
+        </div>
+      ) : (
+        /* Grid View - Bookshelf */
+        <div className="space-y-4">
+          <div className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+            {paged.map((c) => (
+              <div key={c.id} className="flex-shrink-0 w-[180px] group">
+                <div className="relative">
+                  <div className={`w-full h-[220px] rounded-lg bg-gradient-to-br ${categoryColors[c.colorIndex]} shadow-lg group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300 flex items-center justify-center p-4`}>
+                    <div className="text-center">
+                      <Tag size={32} className="mx-auto text-white/80 mb-2" />
+                      <p className="text-[0.6875rem] text-white font-semibold leading-tight line-clamp-2">{bn ? c.nameBn : c.name}</p>
+                      <p className="text-[0.5625rem] text-white/60 mt-1">{bn ? toBnNum(c.bookCount) : c.bookCount} {bn ? 'বই' : 'books'}</p>
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <div className="flex gap-2">
+                      <button onClick={() => { setEditItem(c); setShowModal(true) }} className="p-2 rounded-full bg-white text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors" title={bn ? 'সম্পাদনা' : 'Edit'}>
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => toggleCategoryActive(c.id)} className="p-2 rounded-full bg-white text-[var(--amber)] hover:bg-[var(--amber)] hover:text-white transition-colors" title={bn ? 'অবস্থা' : 'Status'}>
+                        <Eye size={14} />
+                      </button>
+                      <button onClick={() => setDeleteTarget(c)} className="p-2 rounded-full bg-white text-red-500 hover:bg-red-500 hover:text-white transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 px-0.5">
+                  <h4 className="font-semibold text-[0.8125rem] text-[var(--text-primary)] line-clamp-1">{bn ? c.nameBn : c.name}</h4>
+                  <p className="text-[0.6875rem] text-[var(--text-secondary)] line-clamp-1 mt-0.5">{(bn ? c.descriptionBn : c.description) || '—'}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--brand-light)] text-[var(--brand)] text-[0.5625rem] font-medium">
+                      <BookOpen size={10} />
+                      {bn ? toBnNum(c.bookCount) : c.bookCount}
+                    </span>
+                    <span className={`px-1.5 py-0.5 rounded-full text-[0.5rem] font-medium ${c.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-red-500/10 text-red-500'}`}>
+                      {c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {paged.length === 0 && (
+            <div className="py-16 text-center">
+              <Tag size={40} className="mx-auto text-[var(--text-secondary)] mb-3 opacity-50" />
+              <p className="text-[0.875rem] text-[var(--text-secondary)]">{bn ? 'কোনো ক্যাটাগরি পাওয়া যায়নি' : 'No categories found'}</p>
+            </div>
+          )}
+          {paged.length > 0 && (
+            <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} isBn={bn} />
+          )}
         </div>
       )}
 
