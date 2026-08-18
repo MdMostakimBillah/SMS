@@ -152,10 +152,10 @@ export function StudentLibraryProfileModal({ studentId, onClose }: Props) {
             <div className="px-6 pt-6 pb-4 bg-gradient-to-br from-[var(--brand)]/5 via-purple-500/5 to-pink-500/5">
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--brand)] to-purple-600 text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-[var(--brand)]/20 flex-shrink-0">
-                  {(student.nameEn || '').charAt(0)}
+                  {(bn ? (student.nameBn || student.nameEn) : (student.nameEn || student.nameBn) || '').charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-bold text-[var(--text-primary)]">{student.nameBn || student.nameEn}</h2>
+                  <h2 className="text-lg font-bold text-[var(--text-primary)]">{bn ? (student.nameBn || student.nameEn) : (student.nameEn || student.nameBn)}</h2>
                   <div className="flex items-center gap-1.5 mt-1 text-[0.75rem] text-[var(--text-secondary)] flex-wrap">
                     <span className="px-2 py-0.5 rounded-md bg-[var(--brand-light)] text-[var(--brand)] font-medium">{student.class}</span>
                     <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-500 font-medium">{student.section}</span>
