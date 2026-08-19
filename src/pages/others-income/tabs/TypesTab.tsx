@@ -6,7 +6,6 @@ import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { CategoryModal } from '../modals/CategoryModal'
 import { toBnNum } from '@/lib/i18n'
-import { MONTH_NAMES, MONTH_NAMES_BN } from '@/store/transportStore'
 import { XLSX } from '@/lib/excelExport'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
@@ -148,7 +147,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
             </thead>
             <tbody>
               {paginated.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো ক্যাটাগরি পাওয়া যায়নি' : 'No categories found'}</td></tr>
+                <tr><td colSpan={5} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো ক্যাটাগরি পাওয়া যায়নি' : 'No categories found'}</td></tr>
               ) : paginated.map((c) => (
                 <tr key={c.id} className="border-t border-[var(--border)] hover:bg-[var(--bg-secondary)] transition-colors">
                   <td className="text-center pl-3 pr-2 py-3"><input type="checkbox" className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer" /></td>
@@ -170,16 +169,6 @@ export const TypesTab = ({ searchQuery }: Props) => {
                     </span>
                   </td>
                   <td className="text-center px-3 py-3">
-                    {c.totalMonths ? (
-                      <div className="flex flex-wrap gap-0.5 justify-center">
-                        {c.totalMonths.slice(0, 3).map((m) => (
-                          <span key={m} className="text-[8px] px-1 py-px rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">{bn ? MONTH_NAMES_BN[m] : MONTH_NAMES[m].slice(0, 3)}</span>
-                        ))}
-                        {c.totalMonths.length > 3 && <span className="text-[8px] px-1 py-px rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">+{c.totalMonths.length - 3}</span>}
-                      </div>
-                    ) : '—'}
-                  </td>
-                  <td className="text-center px-3 py-3">
                     <span className={`inline-block text-[9px] font-bold uppercase px-2 py-0.5 rounded ${c.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
                       {c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
                     </span>
@@ -189,8 +178,8 @@ export const TypesTab = ({ searchQuery }: Props) => {
                       <button onClick={() => { setEditItem(c); setShowModal(true) }} className="w-7 h-7 rounded-md flex items-center justify-center border-none cursor-pointer bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] transition-colors">
                         <Pencil size={13} />
                       </button>
-                      <button onClick={() => toggleCategoryActive(c.id)} className="w-7 h-7 rounded-md flex items-center justify-center border-none cursor-pointer bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--amber)] transition-colors">
-                        <span className="text-[10px] font-bold">{c.isActive ? 'ON' : 'OFF'}</span>
+                      <button onClick={() => toggleCategoryActive(c.id)} className={`relative w-9 h-5 rounded-full border-none cursor-pointer transition-colors ${c.isActive ? 'bg-[var(--green)]' : 'bg-[var(--border)]'}`}>
+                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${c.isActive ? 'left-[18px]' : 'left-0.5'}`} />
                       </button>
                       <button onClick={() => setDeleteId(c.id)} className="w-7 h-7 rounded-md flex items-center justify-center border-none cursor-pointer bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--red)] transition-colors">
                         <Trash2 size={13} />
