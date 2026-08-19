@@ -277,7 +277,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   [structures, selectedStudent])
 
   const hasClassLevelFees = useMemo(() =>
-    monthlyStructures.some((s) => !s.studentId),
+    monthlyStructures.some((s) => !s.studentId) ||
+    monthlyStructures.some((s) => s.id.startsWith('FEE-OTHER-')),
   [monthlyStructures])
 
   const filteredStructures = monthlyStructures
@@ -879,7 +880,15 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         </td>
                         <td className="text-center px-3 py-3">
                           <span className="font-semibold text-[var(--text-primary)] text-[12px] lg:text-[13.5px]">{bn ? row.feeNameBn : row.feeName}</span>
-                          {row.isOnetime && <span className="ml-1 inline-block text-[9px] lg:text-[10px] font-bold uppercase bg-[var(--amber-light)] text-[var(--amber)] px-1 py-px rounded">One-time</span>}
+                          {row.isOnetime && (
+                            <span className={`ml-1 inline-block text-[9px] lg:text-[10px] font-bold uppercase px-1 py-px rounded ${
+                              row.structureId.startsWith('FEE-OTHER-')
+                                ? 'bg-[var(--purple-light)] text-[var(--purple)]'
+                                : 'bg-[var(--amber-light)] text-[var(--amber)]'
+                            }`}>
+                              {row.structureId.startsWith('FEE-OTHER-') ? (bn ? 'অন্যান্য আয়' : 'Others Income') : 'One-time'}
+                            </span>
+                          )}
                           <div className="text-[10px] lg:text-[11px] text-[var(--text-muted)]">{bn ? row.dateRangeBn : row.dateRange}</div>
                         </td>
                         <td className="text-center px-3 py-3"><span className="font-semibold text-[var(--text-primary)] text-[12px]">{fmt(row.amount)}</span></td>

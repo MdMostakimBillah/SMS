@@ -190,6 +190,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
         { key: 'nav_library', page: `${navBase}/library`, icon: 'library' },
         { key: 'nav_transport', page: `${navBase}/transport`, icon: 'bus' },
         { key: 'nav_hostel', page: `${navBase}/hostel`, icon: 'building-2' },
+        { key: 'nav_others_income', page: `${navBase}/others-income`, icon: 'wallet' },
       ],
     },
     {

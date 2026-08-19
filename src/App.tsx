@@ -52,6 +52,7 @@ const StorePage = lazyWithRetry(() => import('@/pages/store'))
 const TransportPage = lazyWithRetry(() => import('@/pages/transport'))
 const HostelPage = lazyWithRetry(() => import('@/pages/hostel'))
 const LibraryPage = lazyWithRetry(() => import('@/pages/library'))
+const OthersIncomePage = lazyWithRetry(() => import('@/pages/others-income'))
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFound'))
 const SettingsPage = lazyWithRetry(() => import('@/pages/settings'))
 
@@ -123,6 +124,7 @@ function AppContent() {
             <Route path="/i/:slug/:role/library" element={<F><LibraryPage /></F>} />
             <Route path="/i/:slug/:role/transport" element={<F><TransportPage /></F>} />
             <Route path="/i/:slug/:role/hostel" element={<F><HostelPage /></F>} />
+            <Route path="/i/:slug/:role/others-income" element={<F><OthersIncomePage /></F>} />
             <Route path="/i/:slug/:role/messages" element={<P name="Messages" />} />
             <Route path="/i/:slug/:role/notice" element={<P name="Notice Board" />} />
             <Route path="/i/:slug/:role/notifications" element={<P name="Notifications" />} />
@@ -187,6 +189,7 @@ function AppContent() {
             <Route path="/super-admin/admin/library" element={<F><LibraryPage /></F>} />
             <Route path="/super-admin/admin/transport" element={<F><TransportPage /></F>} />
             <Route path="/super-admin/admin/hostel" element={<F><HostelPage /></F>} />
+            <Route path="/super-admin/admin/others-income" element={<F><OthersIncomePage /></F>} />
             <Route path="/super-admin/admin/messages" element={<P name="Messages" />} />
             <Route path="/super-admin/admin/notice" element={<P name="Notice Board" />} />
             <Route path="/super-admin/admin/notifications" element={<P name="Notifications" />} />
@@ -237,6 +240,7 @@ function AppContent() {
             <Route path="/super-admin/viewing/:role/library" element={<F><LibraryPage /></F>} />
             <Route path="/super-admin/viewing/:role/transport" element={<F><TransportPage /></F>} />
             <Route path="/super-admin/viewing/:role/hostel" element={<F><HostelPage /></F>} />
+            <Route path="/super-admin/viewing/:role/others-income" element={<F><OthersIncomePage /></F>} />
             <Route path="/super-admin/viewing/:role/messages" element={<P name="Messages" />} />
             <Route path="/super-admin/viewing/:role/notice" element={<P name="Notice Board" />} />
             <Route path="/super-admin/viewing/:role/notifications" element={<P name="Notifications" />} />
