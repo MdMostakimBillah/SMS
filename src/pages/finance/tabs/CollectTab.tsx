@@ -276,6 +276,10 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     structures.filter((s) => s.type === 'monthly' && s.isActive && s.class === selectedStudent?.class && (!s.section || s.section === selectedStudent?.section) && (!s.studentId || s.studentId === selectedStudent.id)),
   [structures, selectedStudent])
 
+  const hasClassLevelFees = useMemo(() =>
+    monthlyStructures.some((s) => !s.studentId),
+  [monthlyStructures])
+
   const filteredStructures = monthlyStructures
 
   const monthRows = useMemo(() => {
@@ -1097,7 +1101,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
         {/* Right Sidebar */}
           <div className="space-y-2">
-            {monthlyStructures.length > 0 && (
+            {hasClassLevelFees && (
               <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
                 <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'অগ্রিম' : 'Advance'}</div>
                 {monthlyStructures.map((s) => (
