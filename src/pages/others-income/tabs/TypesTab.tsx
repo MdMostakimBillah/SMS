@@ -201,8 +201,8 @@ export const TypesTab = ({ searchQuery }: Props) => {
       <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} />
 
       {showModal && <CategoryModal existing={editItem} onSaved={() => { setShowModal(false); setEditItem(null) }} onClose={() => { setShowModal(false); setEditItem(null) }} />}
-      {deleteId && <DeleteConfirmDialog onConfirm={() => { deleteCategory(deleteId); setDeleteId(null) }} onClose={() => setDeleteId(null)} />}
-      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয়ের ক্যাটাগরি' : 'Others Income Categories'} defaultTitleBn="অন্যান্য আয়ের ক্যাটাগরি" recordLabel={bn ? 'ক্যাটাগরি' : 'category'} recordLabelBn="ক্যাটাগরি" count={filtered.length} isBn={bn} onExport={(opts) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
+      {deleteId && <DeleteConfirmDialog title={bn ? 'ক্যাটাগরি মুছে ফেলুন?' : 'Delete category?'} message={bn ? 'এই ক্যাটাগরি এবং এর সব বরাদ্দ স্থায়ীভাবে মুছে ফেলা হবে।' : 'This category and all its assignments will be permanently deleted.'} onConfirm={() => { deleteCategory(deleteId); setDeleteId(null) }} onCancel={() => setDeleteId(null)} isBn={bn} />}
+      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয়ের ক্যাটাগরি' : 'Others Income Categories'} defaultTitleBn="অন্যান্য আয়ের ক্যাটাগরি" recordLabel={bn ? 'ক্যাটাগরি' : 'category'} recordLabelBn="ক্যাটাগরি" count={filtered.length} isBn={bn} onDownload={(opts: GenericPDFOptionsResult) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
     </div>
   )
 }

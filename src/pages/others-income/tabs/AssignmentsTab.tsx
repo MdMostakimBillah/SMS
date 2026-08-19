@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { Pencil, Trash2, Plus, MoreVertical, FileSpreadsheet, FileText } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useOthersIncomeStore, type OthersIncomeAssignment } from '@/store/othersIncomeStore'
@@ -240,8 +240,8 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
       <PaginationControls page={page} setPage={setPage} perPage={perPage} setPerPage={setPerPage} total={filtered.length} totalPages={totalPages} />
 
       {showModal && <AssignmentModal existing={editItem} onSaved={() => { setShowModal(false); setEditItem(null) }} onClose={() => { setShowModal(false); setEditItem(null) }} />}
-      {deleteId && <DeleteConfirmDialog onConfirm={() => { deleteAssignment(deleteId); setDeleteId(null) }} onClose={() => setDeleteId(null)} />}
-      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয় বরাদ্দ' : 'Others Income Assignments'} defaultTitleBn="অন্যান্য আয় বরাদ্দ" recordLabel={bn ? 'বরাদ্দ' : 'assignment'} recordLabelBn="বরাদ্দ" count={filtered.length} isBn={bn} onExport={(opts) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
+      {deleteId && <DeleteConfirmDialog title={bn ? 'বরাদ্দ মুছে ফেলুন?' : 'Delete assignment?'} message={bn ? 'এই বরাদ্দটি স্থায়ীভাবে মুছে ফেলা হবে।' : 'This assignment will be permanently deleted.'} onConfirm={() => { deleteAssignment(deleteId); setDeleteId(null) }} onCancel={() => setDeleteId(null)} isBn={bn} />}
+      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয় বরাদ্দ' : 'Others Income Assignments'} defaultTitleBn="অন্যান্য আয় বরাদ্দ" recordLabel={bn ? 'বরাদ্দ' : 'assignment'} recordLabelBn="বরাদ্দ" count={filtered.length} isBn={bn} onDownload={(opts: GenericPDFOptionsResult) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
     </div>
   )
 }
