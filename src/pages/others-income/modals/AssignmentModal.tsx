@@ -88,7 +88,13 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
     setMonths((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]))
   }
 
-  const selectAllMonths = () => setMonths([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+  const selectAllMonths = () => {
+    if (selectedCategory?.totalMonths && selectedCategory.totalMonths.length > 0) {
+      setMonths([...selectedCategory.totalMonths])
+    } else {
+      setMonths([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    }
+  }
   const clearMonths = () => setMonths([])
 
   const validate = () => {
@@ -201,19 +207,19 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
           {selectedCategory && (
             <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'মাসিক পরিমাণ' : 'Monthly Amount'}</span>
+                <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'পরিমাণ' : 'Amount'}</span>
                 <span className="text-[13px] font-bold text-[var(--brand)]">৳{selectedCategory.amount.toLocaleString()}</span>
               </div>
-              <div className="flex items-center justify-between mt-1">
+              <div className="flex items-center justify-between mt-1.5">
                 <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'ধরন' : 'Type'}</span>
-                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${selectedCategory.type === 'monthly' ? 'bg-[var(--teal-light)] text-[var(--teal)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'}`}>
+                <span className={`inline-block text-[9px] font-bold uppercase px-2 py-0.5 rounded ${selectedCategory.type === 'monthly' ? 'bg-[var(--teal-light)] text-[var(--teal)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'}`}>
                   {selectedCategory.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')}
                 </span>
               </div>
             </div>
           )}
 
-          {selectedCategory?.type === 'monthly' && (
+          {selectedCategory && selectedCategory.type === 'monthly' && (
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className={labelCls} style={{ marginBottom: 0 }}>{bn ? 'মাস নির্বাচন' : 'Select Months'}</label>

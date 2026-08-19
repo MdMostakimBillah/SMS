@@ -60,7 +60,6 @@ export const TypesTab = ({ searchQuery }: Props) => {
       [bn ? 'নাম' : 'Name']: bn ? c.nameBn : c.name,
       [bn ? 'পরিমাণ' : 'Amount']: c.amount,
       [bn ? 'ধরন' : 'Type']: c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'),
-      [bn ? 'মোট মাস' : 'Total Months']: c.totalMonths ? (bn ? c.totalMonths.map((m) => MONTH_NAMES_BN[m]).join(', ') : c.totalMonths.map((m) => MONTH_NAMES[m].slice(0, 3)).join(', ')) : '—',
       [bn ? 'স্ট্যাটাস' : 'Status']: c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive'),
     }))
     const ws = XLSX.utils.json_to_sheet(rows)
@@ -75,7 +74,6 @@ export const TypesTab = ({ searchQuery }: Props) => {
     { key: 'name', label: 'Name', labelBn: 'নাম', default: true },
     { key: 'amount', label: 'Amount', labelBn: 'পরিমাণ', default: true },
     { key: 'type', label: 'Type', labelBn: 'ধরন', default: true },
-    { key: 'months', label: 'Months', labelBn: 'মোট মাস', default: true },
   ], [])
 
   const buildPdfRow = useCallback((c: (typeof filtered)[number], cols: string[], idx: number): Record<string, string | number> => {
@@ -84,7 +82,6 @@ export const TypesTab = ({ searchQuery }: Props) => {
     if (cols.includes('name')) row[bn ? 'নাম' : 'Name'] = bn ? c.nameBn : c.name
     if (cols.includes('amount')) row[bn ? 'পরিমাণ' : 'Amount'] = c.amount
     if (cols.includes('type')) row[bn ? 'ধরন' : 'Type'] = c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')
-    if (cols.includes('months')) row[bn ? 'মোট মাস' : 'Months'] = c.totalMonths ? (bn ? c.totalMonths.map((m) => MONTH_NAMES_BN[m]).join(', ') : c.totalMonths.map((m) => MONTH_NAMES[m].slice(0, 3)).join(', ')) : '—'
     return row
   }, [bn])
 
@@ -145,14 +142,13 @@ export const TypesTab = ({ searchQuery }: Props) => {
                 <th className="text-left px-4 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'নাম' : 'Name'}</th>
                 <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'পরিমাণ' : 'Amount'}</th>
                 <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'ধরন' : 'Type'}</th>
-                <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'মোট মাস' : 'Months'}</th>
                 <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
                 <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[8%]"></th>
               </tr>
             </thead>
             <tbody>
               {paginated.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো ক্যাটাগরি পাওয়া যায়নি' : 'No categories found'}</td></tr>
+                <tr><td colSpan={6} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো ক্যাটাগরি পাওয়া যায়নি' : 'No categories found'}</td></tr>
               ) : paginated.map((c) => (
                 <tr key={c.id} className="border-t border-[var(--border)] hover:bg-[var(--bg-secondary)] transition-colors">
                   <td className="text-center pl-3 pr-2 py-3"><input type="checkbox" className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer" /></td>
@@ -173,7 +169,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
                       {c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')}
                     </span>
                   </td>
-                  <td className="text-center px-3 py-3 text-[12px] text-[var(--text-primary)]">
+                  <td className="text-center px-3 py-3">
                     {c.totalMonths ? (
                       <div className="flex flex-wrap gap-0.5 justify-center">
                         {c.totalMonths.slice(0, 3).map((m) => (

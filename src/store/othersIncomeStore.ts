@@ -115,7 +115,6 @@ function removeOtherFeeStructure(assignmentId: string) {
 }
 
 function normalizeAssignment(a: OthersIncomeAssignment): OthersIncomeAssignment {
-  if (Array.isArray(a.months) && a.months.length > 0) return a
   return {
     ...a,
     academicYear: a.academicYear || useClassStore.getState().institution.currentSession || '2025-26',
