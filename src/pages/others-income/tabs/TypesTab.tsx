@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Pencil, Trash2, Plus, MoreVertical, Tag, FileSpreadsheet, FileText, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Pencil, Trash2, Plus, MoreVertical, Tag, FileSpreadsheet, FileText, CheckCircle } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useOthersIncomeStore, type OthersIncomeCategory } from '@/store/othersIncomeStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
@@ -178,8 +178,8 @@ export const TypesTab = ({ searchQuery }: Props) => {
                       <button onClick={() => { setEditItem(c); setShowModal(true) }} className="w-7 h-7 rounded-md flex items-center justify-center border-none cursor-pointer bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] transition-colors">
                         <Pencil size={13} />
                       </button>
-                      <button onClick={() => toggleCategoryActive(c.id)} className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--brand)] hover:bg-[var(--brand-light)] transition-colors" title={c.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}>
-                        {c.isActive ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
+                      <button onClick={() => toggleCategoryActive(c.id)} className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer transition-colors ${c.isActive ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:border-[var(--green)]/50'}`} title={c.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}>
+                        <CheckCircle size={13} />
                       </button>
                       <button onClick={() => setDeleteId(c.id)} className="w-7 h-7 rounded-md flex items-center justify-center border-none cursor-pointer bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--red)] transition-colors">
                         <Trash2 size={13} />
