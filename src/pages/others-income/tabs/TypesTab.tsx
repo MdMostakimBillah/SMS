@@ -6,6 +6,7 @@ import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { CategoryModal } from '../modals/CategoryModal'
 import { toBnNum } from '@/lib/i18n'
+import { MONTH_NAMES, MONTH_NAMES_BN } from '@/store/transportStore'
 import { XLSX } from '@/lib/excelExport'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
@@ -59,7 +60,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
       [bn ? 'নাম' : 'Name']: bn ? c.nameBn : c.name,
       [bn ? 'পরিমাণ' : 'Amount']: c.amount,
       [bn ? 'ধরন' : 'Type']: c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'),
-      [bn ? 'মোট মাস' : 'Total Months']: c.totalMonths || '—',
+      [bn ? 'মোট মাস' : 'Total Months']: c.totalMonths ? (bn ? c.totalMonths.map((m) => MONTH_NAMES_BN[m]).join(', ') : c.totalMonths.map((m) => MONTH_NAMES[m].slice(0, 3)).join(', ')) : '—',
       [bn ? 'স্ট্যাটাস' : 'Status']: c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive'),
     }))
     const ws = XLSX.utils.json_to_sheet(rows)
@@ -83,7 +84,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
     if (cols.includes('name')) row[bn ? 'নাম' : 'Name'] = bn ? c.nameBn : c.name
     if (cols.includes('amount')) row[bn ? 'পরিমাণ' : 'Amount'] = c.amount
     if (cols.includes('type')) row[bn ? 'ধরন' : 'Type'] = c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')
-    if (cols.includes('months')) row[bn ? 'মোট মাস' : 'Months'] = c.totalMonths || '—'
+    if (cols.includes('months')) row[bn ? 'মোট মাস' : 'Months'] = c.totalMonths ? (bn ? c.totalMonths.map((m) => MONTH_NAMES_BN[m]).join(', ') : c.totalMonths.map((m) => MONTH_NAMES[m].slice(0, 3)).join(', ')) : '—'
     return row
   }, [bn])
 
@@ -172,7 +173,16 @@ export const TypesTab = ({ searchQuery }: Props) => {
                       {c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')}
                     </span>
                   </td>
-                  <td className="text-center px-3 py-3 text-[12px] text-[var(--text-primary)]">{c.totalMonths || '—'}</td>
+                  <td className="text-center px-3 py-3 text-[12px] text-[var(--text-primary)]">
+                    {c.totalMonths ? (
+                      <div className="flex flex-wrap gap-0.5 justify-center">
+                        {c.totalMonths.slice(0, 3).map((m) => (
+                          <span key={m} className="text-[8px] px-1 py-px rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">{bn ? MONTH_NAMES_BN[m] : MONTH_NAMES[m].slice(0, 3)}</span>
+                        ))}
+                        {c.totalMonths.length > 3 && <span className="text-[8px] px-1 py-px rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">+{c.totalMonths.length - 3}</span>}
+                      </div>
+                    ) : '—'}
+                  </td>
                   <td className="text-center px-3 py-3">
                     <span className={`inline-block text-[9px] font-bold uppercase px-2 py-0.5 rounded ${c.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
                       {c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}

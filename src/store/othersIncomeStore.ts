@@ -11,7 +11,7 @@ export interface OthersIncomeCategory {
   nameBn: string
   amount: number
   type: 'monthly' | 'onetime'
-  totalMonths?: number
+  totalMonths?: number[]
   description: string
   descriptionBn: string
   isActive: boolean

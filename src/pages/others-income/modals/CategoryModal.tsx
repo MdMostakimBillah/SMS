@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Tag, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useOthersIncomeStore, otherIncomeCategoryId, type OthersIncomeCategory } from '@/store/othersIncomeStore'
+import { MONTH_NAMES, MONTH_NAMES_BN } from '@/store/transportStore'
 
 const inputCls = 'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10'
 const labelCls = 'block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.03em] mb-[5px]'
@@ -21,7 +22,7 @@ export function CategoryModal({ existing, onSaved, onClose }: Props) {
   const [nameBn, setNameBn] = useState(existing?.nameBn || '')
   const [amount, setAmount] = useState(existing?.amount?.toString() || '')
   const [type, setType] = useState<'monthly' | 'onetime'>(existing?.type || 'monthly')
-  const [totalMonths, setTotalMonths] = useState(existing?.totalMonths?.toString() || '12')
+  const [applicableMonths, setApplicableMonths] = useState<number[]>(existing?.totalMonths || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
   const [description, setDescription] = useState(existing?.description || '')
   const [descriptionBn, setDescriptionBn] = useState(existing?.descriptionBn || '')
   const [errors, setErrors] = useState<Record<string, boolean>>({})
@@ -30,9 +31,13 @@ export function CategoryModal({ existing, onSaved, onClose }: Props) {
     const e: Record<string, boolean> = {}
     if (!name.trim()) e.name = true
     if (!amount || Number(amount) <= 0) e.amount = true
-    if (type === 'monthly' && (!totalMonths || Number(totalMonths) <= 0)) e.totalMonths = true
+    if (type === 'monthly' && applicableMonths.length === 0) e.months = true
     setErrors(e)
     return Object.keys(e).length === 0
+  }
+
+  const toggleMonth = (m: number) => {
+    setApplicableMonths((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]))
   }
 
   const handleSave = () => {
@@ -44,7 +49,7 @@ export function CategoryModal({ existing, onSaved, onClose }: Props) {
         nameBn: nameBn.trim(),
         amount: Number(amount),
         type,
-        totalMonths: type === 'monthly' ? Number(totalMonths) : undefined,
+        totalMonths: type === 'monthly' ? applicableMonths : undefined,
         description: description.trim(),
         descriptionBn: descriptionBn.trim(),
       })
@@ -55,7 +60,7 @@ export function CategoryModal({ existing, onSaved, onClose }: Props) {
         nameBn: nameBn.trim(),
         amount: Number(amount),
         type,
-        totalMonths: type === 'monthly' ? Number(totalMonths) : undefined,
+        totalMonths: type === 'monthly' ? applicableMonths : undefined,
         description: description.trim(),
         descriptionBn: descriptionBn.trim(),
         isActive: true,
@@ -112,8 +117,30 @@ export function CategoryModal({ existing, onSaved, onClose }: Props) {
           </div>
           {type === 'monthly' && (
             <div>
-              <label className={labelCls}>{bn ? 'মোট মাস' : 'Total Months'}</label>
-              <input type="number" value={totalMonths} onChange={(e) => setTotalMonths(e.target.value)} min={1} max={12} className={`${inputCls} max-w-[120px]} ${errors.totalMonths ? 'border-[var(--red)]' : ''}`} />
+              <div className="flex items-center justify-between mb-2">
+                <label className={labelCls} style={{ marginBottom: 0 }}>{bn ? 'মাস নির্বাচন' : 'Select Months'}</label>
+                <div className="flex gap-1">
+                  <button type="button" onClick={() => setApplicableMonths([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])} className="text-[9px] px-1.5 py-0.5 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-pointer hover:bg-[var(--border)] transition-colors">
+                    {bn ? 'সব' : 'All'}
+                  </button>
+                  <button type="button" onClick={() => setApplicableMonths([])} className="text-[9px] px-1.5 py-0.5 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-pointer hover:bg-[var(--border)] transition-colors">
+                    {bn ? 'পরিষ্কার' : 'Clear'}
+                  </button>
+                </div>
+              </div>
+              <div className={`grid grid-cols-4 gap-1.5 p-2.5 rounded-xl border ${errors.months ? 'border-[var(--red)]' : 'border-[var(--border)]'} bg-[var(--bg-primary)]`}>
+                {MONTH_NAMES.map((m, i) => (
+                  <button key={i} type="button" onClick={() => toggleMonth(i)}
+                    className={`flex items-center justify-center gap-1 h-8 rounded-lg border text-[10px] font-medium cursor-pointer transition-all ${
+                      applicableMonths.includes(i)
+                        ? 'border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]'
+                        : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-muted)] hover:border-[var(--brand)]/30'
+                    }`}>
+                    {bn ? MONTH_NAMES_BN[i] : m.slice(0, 3)}
+                  </button>
+                ))}
+              </div>
+              {errors.months && <p className="text-[10px] text-[var(--red)] mt-1">{bn ? 'অন্তত একটি মাস নির্বাচন করুন' : 'Select at least one month'}</p>}
             </div>
           )}
           <div>
