@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Pencil, Trash2, Plus, MoreVertical, Tag, FileSpreadsheet, FileText } from 'lucide-react'
+import { Pencil, Trash2, Plus, MoreVertical, Tag, FileSpreadsheet, FileText, ToggleLeft, ToggleRight } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useOthersIncomeStore, type OthersIncomeCategory } from '@/store/othersIncomeStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
@@ -178,8 +178,8 @@ export const TypesTab = ({ searchQuery }: Props) => {
                       <button onClick={() => { setEditItem(c); setShowModal(true) }} className="w-7 h-7 rounded-md flex items-center justify-center border-none cursor-pointer bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] transition-colors">
                         <Pencil size={13} />
                       </button>
-                      <button onClick={() => toggleCategoryActive(c.id)} className={`relative w-9 h-5 rounded-full border-none cursor-pointer transition-colors ${c.isActive ? 'bg-[var(--green)]' : 'bg-[var(--border)]'}`}>
-                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${c.isActive ? 'left-[18px]' : 'left-0.5'}`} />
+                      <button onClick={() => toggleCategoryActive(c.id)} className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--brand)] hover:bg-[var(--brand-light)] transition-colors" title={c.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}>
+                        {c.isActive ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
                       </button>
                       <button onClick={() => setDeleteId(c.id)} className="w-7 h-7 rounded-md flex items-center justify-center border-none cursor-pointer bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--red)] transition-colors">
                         <Trash2 size={13} />
