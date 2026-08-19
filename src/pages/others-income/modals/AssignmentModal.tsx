@@ -27,7 +27,6 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
 
   const [categoryId, setCategoryId] = useState(existing?.categoryId || '')
   const [studentId, setStudentId] = useState(existing?.studentId || '')
-  const [academicYear, setAcademicYear] = useState(existing?.academicYear || currentSession)
   const [months, setMonths] = useState<number[]>(existing?.months && existing.months.length > 0 ? [...existing.months] : [])
   const [errors, setErrors] = useState<Record<string, boolean>>({})
 
@@ -108,7 +107,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
       updateAssignment(existing.id, {
         categoryId,
         studentId,
-        academicYear,
+        academicYear: existing.academicYear,
         months: selectedCategory?.type === 'monthly' ? months : [],
       })
     } else {
@@ -116,7 +115,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
         id: otherIncomeAssignmentId(),
         categoryId,
         studentId,
-        academicYear,
+        academicYear: currentSession,
         months: selectedCategory?.type === 'monthly' ? months : [],
         assignedDate: now,
         isActive: true,

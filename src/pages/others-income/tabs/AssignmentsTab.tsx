@@ -1,9 +1,8 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Pencil, Trash2, Plus, MoreVertical, Users, FileSpreadsheet, FileText } from 'lucide-react'
+import { Pencil, Trash2, Plus, MoreVertical, FileSpreadsheet, FileText } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useOthersIncomeStore, type OthersIncomeAssignment } from '@/store/othersIncomeStore'
 import { useSessionStudents } from '@/store/admissionStore'
-import { useClassStore } from '@/store/classStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { AssignmentModal } from '../modals/AssignmentModal'
@@ -23,8 +22,6 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
   const bn = useBn()
   const { categories, assignments, deleteAssignment, toggleAssignmentActive } = useOthersIncomeStore()
   const students = useSessionStudents()
-  const sessions = useClassStore((s) => s.institution.sessions) || []
-  const currentSession = useClassStore((s) => s.institution.currentSession) || '2025-26'
 
   const [showModal, setShowModal] = useState(false)
   const [editItem, setEditItem] = useState<OthersIncomeAssignment | null>(null)
@@ -83,49 +80,56 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
   const fmt = (n: number) => `৳${n.toLocaleString()}`
 
   const handleExportExcel = () => {
-    XLSX.export(`others-income-assignments`, filtered.map((a) => ({
+    const rows = filtered.map((a) => ({
       [bn ? 'ছাত্র' : 'Student']: bn ? a.studentNameBn : a.studentNameEn,
       [bn ? 'ক্যাটাগরি' : 'Category']: a.categoryName,
       [bn ? 'পরিমাণ' : 'Amount']: a.amount,
       [bn ? 'ধরন' : 'Type']: a.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'),
       [bn ? 'মাস' : 'Months']: a.monthLabels.join(', '),
       [bn ? 'স্ট্যাটাস' : 'Status']: a.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive'),
-    })))
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, bn ? 'অন্যান্য আয় বরাদ্দ' : 'Others Income Assignments')
+    XLSX.writeFile(wb, `others-income-assignments-${new Date().toISOString().split('T')[0]}.xlsx`)
     setShowActionMenu(false)
   }
 
-  const handlePdfExport = (opts: GenericPDFOptionsResult) => {
-    setShowPdfModal(false)
-    const b = getPDFBranding()
-    const cols: PDFColumnDef[] = [
-      { header: '#', field: '_idx', align: 'center', width: 8 },
-      { header: bn ? 'ছাত্র' : 'Student', field: 'studentName', align: 'left', width: 30 },
-      { header: bn ? 'ক্যাটাগরি' : 'Category', field: 'categoryName', align: 'left', width: 22 },
-      { header: bn ? 'পরিমাণ' : 'Amount', field: 'amount', align: 'center', width: 16 },
-      { header: bn ? 'ধরন' : 'Type', field: 'type', align: 'center', width: 16 },
-      { header: bn ? 'মাস' : 'Months', field: 'monthLabels', align: 'left', width: 30 },
-    ]
-    const rows = filtered.map((a, i) => ({
-      _idx: i + 1,
-      studentName: bn ? a.studentNameBn : a.studentNameEn,
-      categoryName: a.categoryName,
-      amount: fmt(a.amount),
-      type: a.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'),
-      monthLabels: a.type === 'monthly' ? a.monthLabels.join(', ') : '—',
-    }))
-    openPrintWindow({
-      title: bn ? 'অন্যান্য আয় বরাদ্দ' : 'Others Income Assignments',
-      html: `
-        ${pdfLogoHTML(b)}
-        <div style="text-align:center;margin-bottom:12px;font-size:16px;font-weight:700">${bn ? 'অন্যান্য আয় বরাদ্দ' : 'Others Income Assignments'}</div>
-        <table style="width:100%;border-collapse:collapse;font-size:11px">
-          <thead><tr>${cols.map((c) => `<th style="border:1px solid #333;padding:4px 6px;text-align:${c.align};background:${b.brandColor};color:#fff">${c.header}</th>`).join('')}</tr></thead>
-          <tbody>${rows.map((r) => `<tr>${cols.map((c) => `<td style="border:1px solid #ddd;padding:3px 6px;text-align:${c.align}">${r[c.field as keyof typeof r] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody>
-        </table>
-      `,
-      opts,
-    })
-  }
+  const pdfColumns: PDFColumnDef[] = useMemo(() => [
+    { key: 'sn', label: 'S/N', labelBn: 'ক্রমিক', default: true },
+    { key: 'student', label: 'Student', labelBn: 'ছাত্র', default: true },
+    { key: 'category', label: 'Category', labelBn: 'ক্যাটাগরি', default: true },
+    { key: 'amount', label: 'Amount', labelBn: 'পরিমাণ', default: true },
+    { key: 'type', label: 'Type', labelBn: 'ধরন', default: true },
+    { key: 'months', label: 'Months', labelBn: 'মাস', default: true },
+  ], [])
+
+  const buildPdfRow = useCallback((a: (typeof filtered)[number], cols: string[], idx: number): Record<string, string | number> => {
+    const row: Record<string, string | number> = {}
+    if (cols.includes('sn')) row[bn ? 'ক্রমিক' : 'S/N'] = idx + 1
+    if (cols.includes('student')) row[bn ? 'ছাত্র' : 'Student'] = bn ? a.studentNameBn : a.studentNameEn
+    if (cols.includes('category')) row[bn ? 'ক্যাটাগরি' : 'Category'] = a.categoryName
+    if (cols.includes('amount')) row[bn ? 'পরিমাণ' : 'Amount'] = a.amount
+    if (cols.includes('type')) row[bn ? 'ধরন' : 'Type'] = a.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')
+    if (cols.includes('months')) row[bn ? 'মাস' : 'Months'] = a.type === 'monthly' ? a.monthLabels.join(', ') : '—'
+    return row
+  }, [bn])
+
+  const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
+    const rows = filtered.map((a, i) => buildPdfRow(a, opts.selectedCols, i))
+    const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
+    const pdfBranding = getPDFBranding()
+    const logoHtml = pdfLogoHTML(pdfBranding)
+    const css = `@page{size:${opts.orientation};margin:5mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact}}`
+    const bodyRows = rows.map((r) => {
+      const cells = headers.map((h) => `<td>${r[h] ?? ''}</td>`).join('')
+      return `<tr>${cells}</tr>`
+    }).join('')
+    const headerCells = headers.map((h) => `<th>${h}</th>`).join('')
+    const genDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table><div class="ftr">Generated: ${genDate}</div>`
+    openPrintWindow(opts.title, bodyHTML, { css })
+  }, [filtered, pdfColumns, bn, buildPdfRow])
 
   return (
     <div className="space-y-3">
@@ -237,7 +241,7 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
 
       {showModal && <AssignmentModal existing={editItem} onSaved={() => { setShowModal(false); setEditItem(null) }} onClose={() => { setShowModal(false); setEditItem(null) }} />}
       {deleteId && <DeleteConfirmDialog onConfirm={() => { deleteAssignment(deleteId); setDeleteId(null) }} onClose={() => setDeleteId(null)} />}
-      {showPdfModal && <GenericPDFOptionsModal onExport={handlePdfExport} onClose={() => setShowPdfModal(false)} />}
+      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয় বরাদ্দ' : 'Others Income Assignments'} defaultTitleBn="অন্যান্য আয় বরাদ্দ" recordLabel={bn ? 'বরাদ্দ' : 'assignment'} recordLabelBn="বরাদ্দ" count={filtered.length} isBn={bn} onExport={(opts) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
     </div>
   )
 }

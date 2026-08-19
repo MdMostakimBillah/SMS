@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { Pencil, Trash2, Plus, MoreVertical, Tag, FileSpreadsheet, FileText } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useOthersIncomeStore, type OthersIncomeCategory } from '@/store/othersIncomeStore'
@@ -55,46 +55,53 @@ export const TypesTab = ({ searchQuery }: Props) => {
   const fmt = (n: number) => `৳${n.toLocaleString()}`
 
   const handleExportExcel = () => {
-    XLSX.export(`others-income-categories`, filtered.map((c) => ({
+    const rows = filtered.map((c) => ({
       [bn ? 'নাম' : 'Name']: bn ? c.nameBn : c.name,
       [bn ? 'পরিমাণ' : 'Amount']: c.amount,
       [bn ? 'ধরন' : 'Type']: c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'),
       [bn ? 'মোট মাস' : 'Total Months']: c.totalMonths || '—',
       [bn ? 'স্ট্যাটাস' : 'Status']: c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive'),
-    })))
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, bn ? 'অন্যান্য আয়ের ক্যাটাগরি' : 'Others Income Categories')
+    XLSX.writeFile(wb, `others-income-categories-${new Date().toISOString().split('T')[0]}.xlsx`)
     setShowActionMenu(false)
   }
 
-  const handlePdfExport = (opts: GenericPDFOptionsResult) => {
-    setShowPdfModal(false)
-    const b = getPDFBranding()
-    const cols: PDFColumnDef[] = [
-      { header: '#', field: '_idx', align: 'center', width: 8 },
-      { header: bn ? 'নাম' : 'Name', field: 'name', align: 'left', width: 40 },
-      { header: bn ? 'পরিমাণ' : 'Amount', field: 'amount', align: 'center', width: 18 },
-      { header: bn ? 'ধরন' : 'Type', field: 'type', align: 'center', width: 18 },
-      { header: bn ? 'মোট মাস' : 'Months', field: 'totalMonths', align: 'center', width: 16 },
-    ]
-    const rows = filtered.map((c, i) => ({
-      _idx: i + 1,
-      name: bn ? c.nameBn : c.name,
-      amount: fmt(c.amount),
-      type: c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'),
-      totalMonths: c.totalMonths || '—',
-    }))
-    openPrintWindow({
-      title: bn ? 'অন্যান্য আয়ের ক্যাটাগরি' : 'Others Income Categories',
-      html: `
-        ${pdfLogoHTML(b)}
-        <div style="text-align:center;margin-bottom:12px;font-size:16px;font-weight:700">${bn ? 'অন্যান্য আয়ের ক্যাটাগরি' : 'Others Income Categories'}</div>
-        <table style="width:100%;border-collapse:collapse;font-size:11px">
-          <thead><tr>${cols.map((c) => `<th style="border:1px solid #333;padding:4px 6px;text-align:${c.align};background:${b.brandColor};color:#fff">${c.header}</th>`).join('')}</tr></thead>
-          <tbody>${rows.map((r) => `<tr>${cols.map((c) => `<td style="border:1px solid #ddd;padding:3px 6px;text-align:${c.align}">${r[c.field as keyof typeof r] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody>
-        </table>
-      `,
-      opts,
-    })
-  }
+  const pdfColumns: PDFColumnDef[] = useMemo(() => [
+    { key: 'sn', label: 'S/N', labelBn: 'ক্রমিক', default: true },
+    { key: 'name', label: 'Name', labelBn: 'নাম', default: true },
+    { key: 'amount', label: 'Amount', labelBn: 'পরিমাণ', default: true },
+    { key: 'type', label: 'Type', labelBn: 'ধরন', default: true },
+    { key: 'months', label: 'Months', labelBn: 'মোট মাস', default: true },
+  ], [])
+
+  const buildPdfRow = useCallback((c: (typeof filtered)[number], cols: string[], idx: number): Record<string, string | number> => {
+    const row: Record<string, string | number> = {}
+    if (cols.includes('sn')) row[bn ? 'ক্রমিক' : 'S/N'] = idx + 1
+    if (cols.includes('name')) row[bn ? 'নাম' : 'Name'] = bn ? c.nameBn : c.name
+    if (cols.includes('amount')) row[bn ? 'পরিমাণ' : 'Amount'] = c.amount
+    if (cols.includes('type')) row[bn ? 'ধরন' : 'Type'] = c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')
+    if (cols.includes('months')) row[bn ? 'মোট মাস' : 'Months'] = c.totalMonths || '—'
+    return row
+  }, [bn])
+
+  const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
+    const rows = filtered.map((c, i) => buildPdfRow(c, opts.selectedCols, i))
+    const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
+    const pdfBranding = getPDFBranding()
+    const logoHtml = pdfLogoHTML(pdfBranding)
+    const css = `@page{size:${opts.orientation};margin:5mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact}}`
+    const bodyRows = rows.map((r) => {
+      const cells = headers.map((h) => `<td>${r[h] ?? ''}</td>`).join('')
+      return `<tr>${cells}</tr>`
+    }).join('')
+    const headerCells = headers.map((h) => `<th>${h}</th>`).join('')
+    const genDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table><div class="ftr">Generated: ${genDate}</div>`
+    openPrintWindow(opts.title, bodyHTML, { css })
+  }, [filtered, pdfColumns, bn, buildPdfRow])
 
   return (
     <div className="space-y-3">
@@ -195,7 +202,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
 
       {showModal && <CategoryModal existing={editItem} onSaved={() => { setShowModal(false); setEditItem(null) }} onClose={() => { setShowModal(false); setEditItem(null) }} />}
       {deleteId && <DeleteConfirmDialog onConfirm={() => { deleteCategory(deleteId); setDeleteId(null) }} onClose={() => setDeleteId(null)} />}
-      {showPdfModal && <GenericPDFOptionsModal onExport={handlePdfExport} onClose={() => setShowPdfModal(false)} />}
+      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয়ের ক্যাটাগরি' : 'Others Income Categories'} defaultTitleBn="অন্যান্য আয়ের ক্যাটাগরি" recordLabel={bn ? 'ক্যাটাগরি' : 'category'} recordLabelBn="ক্যাটাগরি" count={filtered.length} isBn={bn} onExport={(opts) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
     </div>
   )
 }
