@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Edit, Trash2, Plus, MoreVertical, FileSpreadsheet, FileText, Eye } from 'lucide-react'
+import { Edit, Trash2, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Eye } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useOthersIncomeStore, type OthersIncomeAssignment } from '@/store/othersIncomeStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -167,20 +167,28 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative" ref={actionMenuRef}>
+          <div className="relative">
             <button onClick={() => setShowActionMenu(!showActionMenu)}
-              className="h-8 px-3 flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[11px] font-medium text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--border)] transition-colors">
-              {bn ? 'একশন' : 'Actions'} <MoreVertical size={12} />
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)] transition-colors cursor-pointer">
+              <MoreVertical size={13} />
+              {bn ? 'অ্যাকশন' : 'Action'}
+              <ChevronDown size={12} />
             </button>
             {showActionMenu && (
-              <div className="absolute right-0 top-full mt-1 z-50 w-40 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg py-1">
-                <button onClick={handleExportExcel} className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] cursor-pointer border-none bg-transparent">
-                  <FileSpreadsheet size={13} className="text-[var(--green)]" /> {bn ? 'এক্সেল' : 'Excel'}
-                </button>
-                <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }} className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] cursor-pointer border-none bg-transparent">
-                  <FileText size={13} className="text-[var(--red)]" /> PDF
-                </button>
-              </div>
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
+                <div ref={actionMenuRef} className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
+                  <button onClick={handleExportExcel} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
+                    <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                    {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                  </button>
+                  <div className="h-px bg-[var(--border)] mx-2" />
+                  <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
+                    <FileText size={14} className="text-[var(--red)]" />
+                    {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                  </button>
+                </div>
+              </>
             )}
           </div>
           <button onClick={() => { setEditItem(null); setShowModal(true) }}
