@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Pencil, Trash2, Plus, MoreVertical, Tag, FileSpreadsheet, FileText, CheckCircle } from 'lucide-react'
+import { Pencil, Trash2, Plus, MoreVertical, Tag, FileSpreadsheet, FileText, Eye } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useOthersIncomeStore, type OthersIncomeCategory } from '@/store/othersIncomeStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
@@ -142,7 +142,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
                 <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'পরিমাণ' : 'Amount'}</th>
                 <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'ধরন' : 'Type'}</th>
                 <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
-                <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[8%]"></th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody>
@@ -173,15 +173,15 @@ export const TypesTab = ({ searchQuery }: Props) => {
                       {c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
                     </span>
                   </td>
-                  <td className="text-center px-3 py-3">
-                    <div className="flex items-center justify-center gap-1">
-                      <button onClick={() => { setEditItem(c); setShowModal(true) }} className="w-7 h-7 rounded-md flex items-center justify-center border-none cursor-pointer bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] transition-colors">
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="flex items-center gap-1 justify-center">
+                      <button onClick={() => { setEditItem(c); setShowModal(true) }} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
                         <Pencil size={13} />
                       </button>
-                      <button onClick={() => toggleCategoryActive(c.id)} className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer transition-colors ${c.isActive ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:border-[var(--green)]/50'}`} title={c.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}>
-                        <CheckCircle size={13} />
+                      <button onClick={() => toggleCategoryActive(c.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors" title={c.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}>
+                        <Eye size={13} />
                       </button>
-                      <button onClick={() => setDeleteId(c.id)} className="w-7 h-7 rounded-md flex items-center justify-center border-none cursor-pointer bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--red)] transition-colors">
+                      <button onClick={() => setDeleteId(c.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
                         <Trash2 size={13} />
                       </button>
                     </div>
