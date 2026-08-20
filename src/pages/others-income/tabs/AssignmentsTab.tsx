@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Pencil, Trash2, Plus, MoreVertical, FileSpreadsheet, FileText, Eye } from 'lucide-react'
+import { Edit, Trash2, Plus, MoreVertical, FileSpreadsheet, FileText, Eye } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useOthersIncomeStore, type OthersIncomeAssignment } from '@/store/othersIncomeStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -258,7 +258,7 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
                   <td className="py-2.5 px-3 text-center">
                     <div className="flex items-center gap-1 justify-center">
                       <button onClick={() => { setEditItem(assignments.find((x) => x.id === a.id) || null); setShowModal(true) }} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
-                        <Pencil size={13} />
+                        <Edit size={13} />
                       </button>
                       <button onClick={() => toggleAssignmentActive(a.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors" title={a.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}>
                         <Eye size={13} />
