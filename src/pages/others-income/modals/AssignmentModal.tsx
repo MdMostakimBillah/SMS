@@ -39,9 +39,17 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
   const selectedCategory = useMemo(() => activeCategories.find((c) => c.id === categoryId), [activeCategories, categoryId])
 
   const assignedStudentIds = useMemo(
-    () => assignments.filter((a) => a.isActive && a.id !== existing?.id).map((a) => a.studentId),
-    [assignments, existing?.id]
+    () => {
+      if (!categoryId) return assignments.filter((a) => a.isActive && a.id !== existing?.id).map((a) => a.studentId)
+      return assignments.filter((a) => a.isActive && a.id !== existing?.id && a.categoryId === categoryId).map((a) => a.studentId)
+    },
+    [assignments, existing?.id, categoryId]
   )
+
+  const duplicateError = useMemo(() => {
+    if (!categoryId || !studentId) return false
+    return assignments.some((a) => a.isActive && a.id !== existing?.id && a.categoryId === categoryId && a.studentId === studentId)
+  }, [assignments, existing?.id, categoryId, studentId])
 
   const studentClasses = useMemo(() => {
     const classSet = new Set(students.filter((s) => s.status === 'approved' && s.active !== false).map((s) => s.class))
@@ -101,6 +109,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
     const e: Record<string, boolean> = {}
     if (!categoryId) e.categoryId = true
     if (!studentId) e.studentId = true
+    if (duplicateError) e.duplicate = true
     if (selectedCategory?.type === 'monthly' && months.length === 0) e.months = true
     setErrors(e)
     return Object.keys(e).length === 0
@@ -203,6 +212,12 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
               )}
             </div>
           </div>
+
+          {duplicateError && (
+            <div className="p-2.5 rounded-xl bg-[var(--red-light)] border border-[var(--red)]/20">
+              <p className="text-[11px] text-[var(--red)] font-medium">{bn ? 'এই ছাত্র ইতিমধ্যে এই ক্যাটাগরিতে বরাদ্দ আছে।' : 'This student is already assigned to this category.'}</p>
+            </div>
+          )}
 
           {selectedCategory && (
             <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
