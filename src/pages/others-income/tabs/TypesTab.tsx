@@ -11,6 +11,7 @@ import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsModal'
 import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface Props {
   searchQuery: string
@@ -27,6 +28,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
   const [perPage, setPerPage] = useState(10)
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
   const actionMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -52,10 +54,31 @@ export const TypesTab = ({ searchQuery }: Props) => {
 
   useEffect(() => { setPage(1) }, [searchQuery, perPage])
 
+  useEffect(() => { setSelected(new Set()) }, [searchQuery, perPage])
+
+  useEffect(() => {
+    if (selected.size === 0) return
+    const validIds = new Set(paginated.map((c) => c.id))
+    setSelected((prev) => {
+      const next = new Set<string>()
+      for (const id of prev) { if (validIds.has(id)) next.add(id) }
+      return next.size === prev.size ? prev : next
+    })
+  }, [paginated])
+
+  const toggleAll = useCallback(() => {
+    if (selected.size === paginated.length) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(paginated.map((c) => c.id)))
+    }
+  }, [selected.size, paginated])
+
   const fmt = (n: number) => `৳${n.toLocaleString()}`
 
   const handleExportExcel = () => {
-    const rows = filtered.map((c) => ({
+    const data = selected.size > 0 ? filtered.filter((c) => selected.has(c.id)) : filtered
+    const rows = data.map((c) => ({
       [bn ? 'নাম' : 'Name']: bn ? c.nameBn : c.name,
       [bn ? 'পরিমাণ' : 'Amount']: c.amount,
       [bn ? 'ধরন' : 'Type']: c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'),
@@ -85,7 +108,8 @@ export const TypesTab = ({ searchQuery }: Props) => {
   }, [bn])
 
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
-    const rows = filtered.map((c, i) => buildPdfRow(c, opts.selectedCols, i))
+    const data = selected.size > 0 ? filtered.filter((c) => selected.has(c.id)) : filtered
+    const rows = data.map((c, i) => buildPdfRow(c, opts.selectedCols, i))
     const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
     const pdfBranding = getPDFBranding()
     const logoHtml = pdfLogoHTML(pdfBranding)
@@ -98,14 +122,19 @@ export const TypesTab = ({ searchQuery }: Props) => {
     const genDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table><div class="ftr">Generated: ${genDate}</div>`
     openPrintWindow(opts.title, bodyHTML, { css })
-  }, [filtered, pdfColumns, bn, buildPdfRow])
+  }, [filtered, selected, pdfColumns, bn, buildPdfRow])
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-[12px] text-[var(--text-secondary)]">
-          {bn ? `মোট: ${toBnNum(filtered.length)}টি ক্যাটাগরি` : `Total: ${filtered.length} categories`}
-        </span>
+        <div className="flex items-center gap-2">
+          {selected.size > 0 && (
+            <span className="text-[11px] text-[var(--brand)] font-medium">{bn ? `${toBnNum(selected.size)} টি নির্বাচিত` : `${selected.size} selected`}</span>
+          )}
+          <span className="text-[12px] text-[var(--text-secondary)]">
+            {bn ? `মোট: ${toBnNum(filtered.length)}টি ক্যাটাগরি` : `Total: ${filtered.length} categories`}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           <div className="relative" ref={actionMenuRef}>
             <button onClick={() => setShowActionMenu(!showActionMenu)}
@@ -135,40 +164,49 @@ export const TypesTab = ({ searchQuery }: Props) => {
           <table className="w-full text-left">
             <thead>
               <tr>
-                <th className="text-center pl-3 pr-2 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[5%]">
-                  <input type="checkbox" className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer" />
+                <th className="py-2.5 pl-3 pr-2">
+                  <ModernCheckbox checked={selected.size === paginated.length && paginated.length > 0} onChange={toggleAll} />
                 </th>
-                <th className="text-left px-4 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'নাম' : 'Name'}</th>
-                <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'ধরন' : 'Type'}</th>
-                <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'নাম' : 'Name'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধরন' : 'Type'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody>
               {paginated.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো ক্যাটাগরি পাওয়া যায়নি' : 'No categories found'}</td></tr>
+                <tr><td colSpan={6} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো ক্যাটাগরি পাওয়া যায়নি' : 'No categories found'}</td></tr>
               ) : paginated.map((c) => (
-                <tr key={c.id} className="border-t border-[var(--border)] hover:bg-[var(--bg-secondary)] transition-colors">
-                  <td className="text-center pl-3 pr-2 py-3"><input type="checkbox" className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer" /></td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                <tr key={c.id} className={`border-b border-[var(--border)] last:border-b-0 transition-colors hover:bg-[var(--surface)] ${selected.has(c.id) ? 'bg-[var(--brand)]/5' : ''}`}>
+                  <td className="py-2.5 pl-3 pr-2">
+                    <ModernCheckbox checked={selected.has(c.id)} onChange={() => {
+                      setSelected((prev) => {
+                        const next = new Set(prev)
+                        if (next.has(c.id)) next.delete(c.id)
+                        else next.add(c.id)
+                        return next
+                      })
+                    }} />
+                  </td>
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="flex items-center gap-2 justify-center">
                       <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand)18', color: 'var(--brand)' }}>
                         <Tag size={13} />
                       </div>
-                      <div>
+                      <div className="text-left">
                         <div className="text-[12px] font-semibold text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</div>
                         {c.description && <div className="text-[10px] text-[var(--text-muted)]">{bn ? c.descriptionBn : c.description}</div>}
                       </div>
                     </div>
                   </td>
-                  <td className="text-center px-3 py-3 text-[12px] font-bold text-[var(--brand)]">{fmt(c.amount)}</td>
-                  <td className="text-center px-3 py-3">
+                  <td className="py-2.5 px-3 text-center text-[12px] font-bold text-[var(--brand)]">{fmt(c.amount)}</td>
+                  <td className="py-2.5 px-3 text-center">
                     <span className={`inline-block text-[9px] font-bold uppercase px-2 py-0.5 rounded ${c.type === 'monthly' ? 'bg-[var(--teal-light)] text-[var(--teal)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'}`}>
                       {c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')}
                     </span>
                   </td>
-                  <td className="text-center px-3 py-3">
+                  <td className="py-2.5 px-3 text-center">
                     <span className={`inline-block text-[9px] font-bold uppercase px-2 py-0.5 rounded ${c.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
                       {c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
                     </span>
@@ -197,7 +235,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
 
       {showModal && <CategoryModal existing={editItem} onSaved={() => { setShowModal(false); setEditItem(null) }} onClose={() => { setShowModal(false); setEditItem(null) }} />}
       {deleteId && <DeleteConfirmDialog title={bn ? 'ক্যাটাগরি মুছে ফেলুন?' : 'Delete category?'} message={bn ? 'এই ক্যাটাগরি এবং এর সব বরাদ্দ স্থায়ীভাবে মুছে ফেলা হবে।' : 'This category and all its assignments will be permanently deleted.'} onConfirm={() => { deleteCategory(deleteId); setDeleteId(null) }} onCancel={() => setDeleteId(null)} isBn={bn} />}
-      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয়ের ক্যাটাগরি' : 'Others Income Categories'} defaultTitleBn="অন্যান্য আয়ের ক্যাটাগরি" recordLabel={bn ? 'ক্যাটাগরি' : 'category'} recordLabelBn="ক্যাটাগরি" count={filtered.length} isBn={bn} onDownload={(opts: GenericPDFOptionsResult) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
+      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয়ের ক্যাটাগরি' : 'Others Income Categories'} defaultTitleBn="অন্যান্য আয়ের ক্যাটাগরি" recordLabel={bn ? 'ক্যাটাগরি' : 'category'} recordLabelBn="ক্যাটাগরি" count={selected.size > 0 ? selected.size : filtered.length} isBn={bn} onDownload={(opts: GenericPDFOptionsResult) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
     </div>
   )
 }

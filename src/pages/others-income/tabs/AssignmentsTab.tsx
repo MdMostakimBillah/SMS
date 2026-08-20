@@ -13,6 +13,7 @@ import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsModal'
 import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface Props {
   searchQuery: string
@@ -30,6 +31,7 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
   const [perPage, setPerPage] = useState(10)
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
   const actionMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -77,10 +79,31 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
 
   useEffect(() => { setPage(1) }, [searchQuery, perPage])
 
+  useEffect(() => { setSelected(new Set()) }, [searchQuery, perPage])
+
+  useEffect(() => {
+    if (selected.size === 0) return
+    const validIds = new Set(paginated.map((a) => a.id))
+    setSelected((prev) => {
+      const next = new Set<string>()
+      for (const id of prev) { if (validIds.has(id)) next.add(id) }
+      return next.size === prev.size ? prev : next
+    })
+  }, [paginated])
+
+  const toggleAll = useCallback(() => {
+    if (selected.size === paginated.length) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(paginated.map((a) => a.id)))
+    }
+  }, [selected.size, paginated])
+
   const fmt = (n: number) => `৳${n.toLocaleString()}`
 
   const handleExportExcel = () => {
-    const rows = filtered.map((a) => ({
+    const data = selected.size > 0 ? filtered.filter((a) => selected.has(a.id)) : filtered
+    const rows = data.map((a) => ({
       [bn ? 'ছাত্র' : 'Student']: bn ? a.studentNameBn : a.studentNameEn,
       [bn ? 'ক্যাটাগরি' : 'Category']: a.categoryName,
       [bn ? 'পরিমাণ' : 'Amount']: a.amount,
@@ -116,7 +139,8 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
   }, [bn])
 
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
-    const rows = filtered.map((a, i) => buildPdfRow(a, opts.selectedCols, i))
+    const data = selected.size > 0 ? filtered.filter((a) => selected.has(a.id)) : filtered
+    const rows = data.map((a, i) => buildPdfRow(a, opts.selectedCols, i))
     const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
     const pdfBranding = getPDFBranding()
     const logoHtml = pdfLogoHTML(pdfBranding)
@@ -129,14 +153,19 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
     const genDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table><div class="ftr">Generated: ${genDate}</div>`
     openPrintWindow(opts.title, bodyHTML, { css })
-  }, [filtered, pdfColumns, bn, buildPdfRow])
+  }, [filtered, selected, pdfColumns, bn, buildPdfRow])
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-[12px] text-[var(--text-secondary)]">
-          {bn ? `মোট: ${toBnNum(filtered.length)}টি বরাদ্দ` : `Total: ${filtered.length} assignments`}
-        </span>
+        <div className="flex items-center gap-2">
+          {selected.size > 0 && (
+            <span className="text-[11px] text-[var(--brand)] font-medium">{bn ? `${toBnNum(selected.size)} টি নির্বাচিত` : `${selected.size} selected`}</span>
+          )}
+          <span className="text-[12px] text-[var(--text-secondary)]">
+            {bn ? `মোট: ${toBnNum(filtered.length)}টি বরাদ্দ` : `Total: ${filtered.length} assignments`}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           <div className="relative" ref={actionMenuRef}>
             <button onClick={() => setShowActionMenu(!showActionMenu)}
@@ -166,15 +195,15 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
           <table className="w-full text-left">
             <thead>
               <tr>
-                <th className="text-center pl-3 pr-2 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[5%]">
-                  <input type="checkbox" className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer" />
+                <th className="py-2.5 pl-3 pr-2">
+                  <ModernCheckbox checked={selected.size === paginated.length && paginated.length > 0} onChange={toggleAll} />
                 </th>
-                <th className="text-left px-4 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'ছাত্র' : 'Student'}</th>
-                <th className="text-left px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
-                <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'ধরন' : 'Type'}</th>
-                <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'মাস' : 'Months'}</th>
-                <th className="text-center px-3 py-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
+                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
+                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধরন' : 'Type'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'মাস' : 'Months'}</th>
+                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
               </tr>
             </thead>
@@ -182,9 +211,18 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
               {paginated.length === 0 ? (
                 <tr><td colSpan={8} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো বরাদ্দ পাওয়া যায়নি' : 'No assignments found'}</td></tr>
               ) : paginated.map((a) => (
-                <tr key={a.id} className="border-t border-[var(--border)] hover:bg-[var(--bg-secondary)] transition-colors">
-                  <td className="text-center pl-3 pr-2 py-3"><input type="checkbox" className="accent-[var(--brand)] w-3.5 h-3.5 cursor-pointer" /></td>
-                  <td className="px-4 py-3">
+                <tr key={a.id} className={`border-b border-[var(--border)] last:border-b-0 transition-colors hover:bg-[var(--surface)] ${selected.has(a.id) ? 'bg-[var(--brand)]/5' : ''}`}>
+                  <td className="py-2.5 pl-3 pr-2">
+                    <ModernCheckbox checked={selected.has(a.id)} onChange={() => {
+                      setSelected((prev) => {
+                        const next = new Set(prev)
+                        if (next.has(a.id)) next.delete(a.id)
+                        else next.add(a.id)
+                        return next
+                      })
+                    }} />
+                  </td>
+                  <td className="py-2.5 px-3">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white" style={{ background: 'var(--brand)' }}>
                         {a.studentNameEn?.charAt(0) || '?'}
@@ -195,14 +233,14 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-3 text-[12px] text-[var(--text-primary)]">{a.categoryName}</td>
-                  <td className="text-center px-3 py-3 text-[12px] font-bold text-[var(--brand)]">{fmt(a.amount)}</td>
-                  <td className="text-center px-3 py-3">
+                  <td className="py-2.5 px-3 text-[12px] text-[var(--text-primary)]">{a.categoryName}</td>
+                  <td className="py-2.5 px-3 text-center text-[12px] font-bold text-[var(--brand)]">{fmt(a.amount)}</td>
+                  <td className="py-2.5 px-3 text-center">
                     <span className={`inline-block text-[9px] font-bold uppercase px-2 py-0.5 rounded ${a.type === 'monthly' ? 'bg-[var(--teal-light)] text-[var(--teal)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'}`}>
                       {a.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')}
                     </span>
                   </td>
-                  <td className="text-center px-3 py-3">
+                  <td className="py-2.5 px-3 text-center">
                     {a.type === 'monthly' ? (
                       <div className="flex flex-wrap gap-0.5 justify-center">
                         {a.monthLabels.slice(0, 3).map((m, i) => (
@@ -212,7 +250,7 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
                       </div>
                     ) : <span className="text-[10px] text-[var(--text-muted)]">—</span>}
                   </td>
-                  <td className="text-center px-3 py-3">
+                  <td className="py-2.5 px-3 text-center">
                     <span className={`inline-block text-[9px] font-bold uppercase px-2 py-0.5 rounded ${a.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
                       {a.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
                     </span>
@@ -241,7 +279,7 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
 
       {showModal && <AssignmentModal existing={editItem} onSaved={() => { setShowModal(false); setEditItem(null) }} onClose={() => { setShowModal(false); setEditItem(null) }} />}
       {deleteId && <DeleteConfirmDialog title={bn ? 'বরাদ্দ মুছে ফেলুন?' : 'Delete assignment?'} message={bn ? 'এই বরাদ্দটি স্থায়ীভাবে মুছে ফেলা হবে।' : 'This assignment will be permanently deleted.'} onConfirm={() => { deleteAssignment(deleteId); setDeleteId(null) }} onCancel={() => setDeleteId(null)} isBn={bn} />}
-      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয় বরাদ্দ' : 'Others Income Assignments'} defaultTitleBn="অন্যান্য আয় বরাদ্দ" recordLabel={bn ? 'বরাদ্দ' : 'assignment'} recordLabelBn="বরাদ্দ" count={filtered.length} isBn={bn} onDownload={(opts: GenericPDFOptionsResult) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
+      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয় বরাদ্দ' : 'Others Income Assignments'} defaultTitleBn="অন্যান্য আয় বরাদ্দ" recordLabel={bn ? 'বরাদ্দ' : 'assignment'} recordLabelBn="বরাদ্দ" count={selected.size > 0 ? selected.size : filtered.length} isBn={bn} onDownload={(opts: GenericPDFOptionsResult) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
     </div>
   )
 }
