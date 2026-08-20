@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { ScanFace, CheckCircle, Fingerprint, Search } from 'lucide-react'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import type { FaceEntry } from '../types'
 import { StatsRow } from './StatsRow'
 
@@ -11,31 +12,41 @@ interface FaceScanTabProps {
 
 export function FaceScanTab({ isBn, faceEntries, setFaceEntries }: FaceScanTabProps) {
   const [faceSearch, setFaceSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(faceSearch, 200)
+
+  const filteredEntries = useMemo(() => {
+    if (!debouncedSearch) return faceEntries
+    const q = debouncedSearch.toLowerCase()
+    return faceEntries.filter((e) => e.staffName.toLowerCase().includes(q))
+  }, [faceEntries, debouncedSearch])
+
+  const stats = useMemo(
+    () => [
+      {
+        label: isBn ? 'মোট' : 'Total',
+        value: faceEntries.length,
+        icon: <ScanFace size={15} />,
+        color: 'var(--green)',
+      },
+      {
+        label: isBn ? 'এনরোলড' : 'Enrolled',
+        value: faceEntries.filter((e) => e.status === 'enrolled').length,
+        icon: <CheckCircle size={15} />,
+        color: 'var(--green)',
+      },
+      {
+        label: isBn ? 'গড কোয়ালিটি' : 'Good Quality',
+        value: faceEntries.filter((e) => e.quality >= 80).length,
+        icon: <Fingerprint size={15} />,
+        color: 'var(--brand)',
+      },
+    ],
+    [isBn, faceEntries]
+  )
 
   return (
     <>
-      <StatsRow
-        stats={[
-          {
-            label: isBn ? 'মোট' : 'Total',
-            value: faceEntries.length,
-            icon: <ScanFace size={15} />,
-            color: 'var(--green)',
-          },
-          {
-            label: isBn ? 'এনরোলড' : 'Enrolled',
-            value: faceEntries.filter((e) => e.status === 'enrolled').length,
-            icon: <CheckCircle size={15} />,
-            color: 'var(--green)',
-          },
-          {
-            label: isBn ? 'গড কোয়ালিটি' : 'Good Quality',
-            value: faceEntries.filter((e) => e.quality >= 80).length,
-            icon: <Fingerprint size={15} />,
-            color: 'var(--brand)',
-          },
-        ]}
-      />
+      <StatsRow stats={stats} />
 
       <div className="flex items-center gap-2 mb-3">
         <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-[0.375rem] flex-1 max-w-[18.75rem]">
@@ -48,7 +59,7 @@ export function FaceScanTab({ isBn, faceEntries, setFaceEntries }: FaceScanTabPr
           />
         </div>
         <span className="text-[0.6875rem] text-[var(--text-muted)]">
-          {faceEntries.filter((e) => !faceSearch || e.staffName.toLowerCase().includes(faceSearch.toLowerCase())).length}{' '}
+          {filteredEntries.length}{' '}
           {isBn ? 'টি ফলাফল' : 'results'}
         </span>
       </div>
@@ -68,9 +79,7 @@ export function FaceScanTab({ isBn, faceEntries, setFaceEntries }: FaceScanTabPr
               </tr>
             </thead>
             <tbody>
-              {faceEntries
-                .filter((e) => !faceSearch || e.staffName.toLowerCase().includes(faceSearch.toLowerCase()))
-                .map((e, i) => (
+              {filteredEntries.map((e, i) => (
                   <tr
                     key={e.staffId}
                     className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)] transition-colors"
@@ -159,7 +168,7 @@ export function FaceScanTab({ isBn, faceEntries, setFaceEntries }: FaceScanTabPr
                     </td>
                   </tr>
                 ))}
-              {faceEntries.filter((e) => !faceSearch || e.staffName.toLowerCase().includes(faceSearch.toLowerCase())).length === 0 && (
+              {filteredEntries.length === 0 && (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-[var(--text-muted)] text-[0.75rem]">
                     {isBn ? 'কোনো ফেস ডেটা পাওয়া যায়নি' : 'No face data found'}

@@ -532,7 +532,7 @@ export const useFeeStore = create<FeeState>()(
     }),
     {
       name: 'edutech-fees',
-      storage: createNamespacedStorage('edutech-fees'),
+      storage: createNamespacedStorage('edutech-fees', undefined, { debounce: true }),
       version: 8,
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {

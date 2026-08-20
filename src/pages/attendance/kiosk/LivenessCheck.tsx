@@ -29,6 +29,8 @@ export default function LivenessCheck({ isBn, getVideo, detectWithExpressions, o
   const stateRef = useRef<LivenessState>(createLivenessState())
   const blinkFrameCountRef = useRef(0)
   const detectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const aliveRef = useRef(true)
   const onPassedRef = useRef(onPassed)
   onPassedRef.current = onPassed
 
@@ -43,10 +45,28 @@ export default function LivenessCheck({ isBn, getVideo, detectWithExpressions, o
     return updated
   }, [isBn])
 
+  const scheduleNextChallenge = useCallback((state: LivenessState) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => {
+      timeoutRef.current = null
+      if (aliveRef.current) startChallenge(state)
+    }, 1000)
+  }, [startChallenge])
+
+  const scheduleNextAfterPass = useCallback((state: LivenessState) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => {
+      timeoutRef.current = null
+      if (aliveRef.current) startChallenge(state)
+    }, 1500)
+  }, [startChallenge])
+
   useEffect(() => {
+    aliveRef.current = true
     const initial = startChallenge(createLivenessState())
     stateRef.current = initial
 
+    if (detectIntervalRef.current) clearInterval(detectIntervalRef.current)
     detectIntervalRef.current = setInterval(async () => {
       const video = getVideo()
       if (!video || video.readyState < 2 || video.videoWidth === 0) return
@@ -64,13 +84,14 @@ export default function LivenessCheck({ isBn, getVideo, detectWithExpressions, o
           setCompleted(true)
           onPassedRef.current()
         } else if (getPassCount(updated) < REQUIRED_PASSES) {
-          setTimeout(() => startChallenge(updated), 1000)
+          scheduleNextChallenge(updated)
         }
         return
       }
 
       try {
         const result = await detectWithExpressions(video)
+        if (!aliveRef.current) return
         if (!result) return
 
         const eval_ = evaluateLiveness(result as never, currentState.currentChallenge, blinkFrameCountRef.current)
@@ -90,7 +111,7 @@ export default function LivenessCheck({ isBn, getVideo, detectWithExpressions, o
             setCompleted(true)
             onPassedRef.current()
           } else {
-            setTimeout(() => startChallenge(updated), 1500)
+            scheduleNextAfterPass(updated)
           }
         }
       } catch {
@@ -99,9 +120,11 @@ export default function LivenessCheck({ isBn, getVideo, detectWithExpressions, o
     }, 350)
 
     return () => {
+      aliveRef.current = false
       if (detectIntervalRef.current) clearInterval(detectIntervalRef.current)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
-  }, [getVideo, detectWithExpressions, startChallenge])
+  }, [getVideo, detectWithExpressions, startChallenge, scheduleNextChallenge, scheduleNextAfterPass])
 
   return (
     <div className="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none">

@@ -28,6 +28,7 @@ import { useClassStore } from '@/store/classStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useNavPath } from '@/hooks/useNavPath'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { openPrintWindow } from '@/lib/pdf'
 import { escapeHtml } from '@/lib/sanitize'
 import { TeacherPDFOptionsModal } from '@/components/shared/TeacherPDFOptionsModal'
@@ -55,6 +56,7 @@ export default function AllTeachersPage() {
   const { institution } = useClassStore()
 
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 200)
   const [fDept, setFDept] = useState('')
   const [fGender, setFGender] = useState('')
   const [fStatus, setFStatus] = useState('')
@@ -87,11 +89,11 @@ export default function AllTeachersPage() {
   const filtered = useMemo(
     () =>
       teachers.filter((t) => {
-        if (search) {
-          const q = search.toLowerCase()
+        if (debouncedSearch) {
+          const q = debouncedSearch.toLowerCase()
           if (
             !t.nameEn.toLowerCase().includes(q) &&
-            !t.nameBn.includes(search) &&
+            !t.nameBn.includes(debouncedSearch) &&
             !t.id.includes(q) &&
             !t.phone.includes(q) &&
             !t.email.toLowerCase().includes(q) &&
@@ -110,7 +112,7 @@ export default function AllTeachersPage() {
         if (fReligion && !t.religion.includes(fReligion)) return false
         return true
       }),
-    [teachers, search, fDept, fGender, fStatus, fBlood, fReligion]
+    [teachers, debouncedSearch, fDept, fGender, fStatus, fBlood, fReligion]
   )
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))

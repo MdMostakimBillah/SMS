@@ -66,6 +66,28 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const { structures, payments, generateWaivers } = useFeeStore()
   const waivers = useMemo(() => generateWaivers(students), [generateWaivers, structures, payments, students])
 
+  const paymentsByKey = useMemo(() => {
+    const map = new Map<string, typeof payments>()
+    for (const p of payments) {
+      const key = `${p.studentId}|${p.feeStructureId}`
+      const arr = map.get(key)
+      if (arr) arr.push(p)
+      else map.set(key, [p])
+    }
+    return map
+  }, [payments])
+
+  const waiversByKey = useMemo(() => {
+    const map = new Map<string, typeof waivers>()
+    for (const w of waivers) {
+      const key = `${w.studentId}|${w.feeStructureId}`
+      const arr = map.get(key)
+      if (arr) arr.push(w)
+      else map.set(key, [w])
+    }
+    return map
+  }, [waivers])
+
   const [fType, setFType] = useState<'monthly' | 'onetime' | ''>('')
   const [fCategory, setFCategory] = useState('')
   const [fClass, setFClass] = useState('')
@@ -187,13 +209,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         if (fee.section && fee.section !== student.section) continue
         if (fee.studentId && fee.studentId !== student.id) continue
 
+        const feePayments = paymentsByKey.get(`${student.id}|${fee.id}`) || []
+        const feeWaivers = waiversByKey.get(`${student.id}|${fee.id}`) || []
+
         if (fee.type === 'onetime') {
-          const paid = payments
-            .filter((p) => p.studentId === student.id && p.feeStructureId === fee.id)
-            .reduce((sum, p) => sum + p.amount, 0)
-          const waived = waivers
-            .filter((w) => w.studentId === student.id && w.feeStructureId === fee.id)
-            .reduce((sum, w) => sum + w.amount, 0)
+          const paid = feePayments.reduce((sum, p) => sum + p.amount, 0)
+          const waived = feeWaivers.reduce((sum, w) => sum + w.amount, 0)
           const due = fee.amount - paid - waived
           rows.push({
             studentId: student.id,
@@ -239,16 +260,14 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             }
 
             const monthKey = `${fYear}-${String(m + 1).padStart(2, '0')}`
-            const monthPayments = payments.filter((p) => {
-              if (p.studentId !== student.id || p.feeStructureId !== fee.id) return false
+            const monthPayments = feePayments.filter((p) => {
               if (p.forMonth) return p.forMonth === monthKey
               const d = new Date(p.paidAt)
               return d.getFullYear() === fYear && d.getMonth() === m
             })
             const paid = monthPayments.reduce((sum, p) => sum + p.amount, 0)
             const discount = monthPayments.reduce((sum, p) => sum + (p.discount || 0), 0)
-            const monthWaivers = waivers.filter((w) => {
-              if (w.studentId !== student.id || w.feeStructureId !== fee.id) return false
+            const monthWaivers = feeWaivers.filter((w) => {
               if (w.forMonth) {
                 return w.forMonth === `${fYear}-${String(m + 1).padStart(2, '0')}`
               }
@@ -286,7 +305,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     }
 
     return rows
-  }, [showResults, feeStructuresForCategory, activeStudents, fClass, fSection, payments, waivers, fYear, sortedMonths, showMonthPicker, fSession])
+  }, [showResults, feeStructuresForCategory, activeStudents, fClass, fSection, paymentsByKey, waiversByKey, fYear, sortedMonths, showMonthPicker, fSession])
 
   const results = useMemo(() => {
     let list = allResults

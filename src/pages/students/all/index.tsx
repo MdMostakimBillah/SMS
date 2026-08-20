@@ -25,6 +25,7 @@ import { XLSX } from '@/lib/excelExport'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useSessionStudents, useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -72,6 +73,7 @@ export default function AllStudentsPage() {
   }, [classes])
 
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 200)
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
   const [fGender, setFGender] = useState('')
@@ -114,16 +116,16 @@ export default function AllStudentsPage() {
         } else {
           if (s.status !== fStatus) return false
         }
-        if (search) {
-          const q = search.toLowerCase()
+        if (debouncedSearch) {
+          const q = debouncedSearch.toLowerCase()
           if (
             !s.nameEn.toLowerCase().includes(q) &&
-            !s.nameBn.includes(search) &&
-            !s.id.includes(search) &&
-            !s.phone.includes(search) &&
-            !s.roll.includes(search) &&
-            !s.fatherPhone.includes(search) &&
-            !s.motherPhone.includes(search)
+            !s.nameBn.includes(debouncedSearch) &&
+            !s.id.includes(debouncedSearch) &&
+            !s.phone.includes(debouncedSearch) &&
+            !s.roll.includes(debouncedSearch) &&
+            !s.fatherPhone.includes(debouncedSearch) &&
+            !s.motherPhone.includes(debouncedSearch)
           )
             return false
         }
@@ -136,7 +138,7 @@ export default function AllStudentsPage() {
         if (fBlood && s.bloodGroup !== fBlood) return false
         return true
       }),
-    [students, currentSession, search, fClass, fSection, fGender, fStatus, fActive, fReligion, fBlood]
+    [students, currentSession, debouncedSearch, fClass, fSection, fGender, fStatus, fActive, fReligion, fBlood]
   )
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))

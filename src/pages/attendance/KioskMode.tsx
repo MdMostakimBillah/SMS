@@ -7,25 +7,12 @@ import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { useFaceApi, type RegisteredFace } from '@/hooks/useFaceApi'
 import { logAuditEvent } from '@/lib/faceAudit'
+import { loadFaces, saveFaces } from '@/lib/faceStorage'
 import RegistrationPopup from './kiosk/RegistrationPopup'
 import AttendancePopup from './kiosk/AttendancePopup'
 import RegisteredFacesTable from './kiosk/RegisteredFacesTable'
 import AuditLog from './kiosk/AuditLog'
 import ExportImport from './kiosk/ExportImport'
-
-const STORAGE_KEY = 'kioskFaces'
-
-function loadFaces(): RegisteredFace[] {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
-  } catch {
-    return []
-  }
-}
-
-function saveFaces(faces: RegisteredFace[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(faces))
-}
 
 export default function KioskMode({ isBn, date }: { isBn: boolean; date: string }) {
   const { teachers, attendance } = useTeacherStore(

@@ -15,6 +15,18 @@ export interface DayAttendance {
   punches: PunchRecord[]
 }
 
+const ATTENDANCE_RETENTION_MS = 365 * 24 * 60 * 60 * 1000
+
+function pruneAttendance(attendance: Record<string, Record<string, DayAttendance>>): Record<string, Record<string, DayAttendance>> {
+  const cutoff = Date.now() - ATTENDANCE_RETENTION_MS
+  const pruned: Record<string, Record<string, DayAttendance>> = {}
+  for (const [dateStr, dayAtt] of Object.entries(attendance)) {
+    const t = new Date(dateStr).getTime()
+    if (isNaN(t) || t >= cutoff) pruned[dateStr] = dayAtt
+  }
+  return pruned
+}
+
 interface TeacherState {
   teachers: Teacher[]
   departments: Department[]
@@ -104,13 +116,13 @@ export const useTeacherStore = create<TeacherState>()(
           const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
           const newPunches = status === 'present' ? [...punches, { time, type: 'in' as const }] : punches
           return {
-            attendance: {
+            attendance: pruneAttendance({
               ...state.attendance,
               [date]: {
                 ...dayAtt,
                 [teacherId]: { status, punches: newPunches },
               },
-            },
+            }),
           }
         }),
 
@@ -124,7 +136,7 @@ export const useTeacherStore = create<TeacherState>()(
             .forEach((t) => {
               dayAtt[t.id] = { status: 'present', punches: [{ time, type: 'in' }] }
             })
-          return { attendance: { ...state.attendance, [date]: dayAtt } }
+          return { attendance: pruneAttendance({ ...state.attendance, [date]: dayAtt }) }
         }),
 
       getAttendanceStats: (date) => {
@@ -145,7 +157,7 @@ export const useTeacherStore = create<TeacherState>()(
     }),
     {
       name: 'edutech-teachers',
-      storage: createNamespacedStorage('edutech-teachers'),
+      storage: createNamespacedStorage('edutech-teachers', undefined, { debounce: true }),
       version: 3,
       migrate: (persistedState: any, version: number) => {
         if (version < 3) {
@@ -175,7 +187,12 @@ registerStoreLoad(() => {
     const raw = localStorage.getItem(`edutech-teachers_${slug}`)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed.state) useTeacherStore.setState(parsed.state)
+      if (parsed.state) {
+        useTeacherStore.setState({
+          ...parsed.state,
+          attendance: pruneAttendance(parsed.state.attendance || {}),
+        })
+      }
     } else {
       useTeacherStore.setState({ teachers: [], subjects: [], departments: [], designations: [], attendance: {} })
     }

@@ -108,6 +108,8 @@ model Teacher {
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@index([schoolId])
+  @@index([email])
+  @@index([schoolId, status])
   @@map("teachers")
 }
 
@@ -183,6 +185,7 @@ model Student {
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@index([schoolId])
+  @@index([schoolId, class, section])
   @@map("students")
 }
 

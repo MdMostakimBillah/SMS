@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { X, User, GraduationCap, AlertTriangle } from 'lucide-react'
 import { useFaceApi, type RegisteredFace } from '@/hooks/useFaceApi'
 import { logAuditEvent } from '@/lib/faceAudit'
+import { saveFaces } from '@/lib/faceStorage'
 import LivenessCheck from './LivenessCheck'
 
 interface Person {
@@ -21,13 +22,8 @@ interface RegistrationPopupProps {
   onClose: () => void
 }
 
-const STORAGE_KEY = 'kioskFaces'
 const STABLE_THRESHOLD = 5
 const REG_DETECT_MS = 400
-
-function saveFaces(faces: RegisteredFace[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(faces))
-}
 
 function playSuccessSound() {
   try {
@@ -62,13 +58,32 @@ export default function RegistrationPopup({ isBn, person, existingFaces, onEnrol
   const autoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const stableCountRef = useRef(0)
   const autoDoneRef = useRef(false)
+  const aliveRef = useRef(true)
+  const timersRef = useRef(new Set<ReturnType<typeof setTimeout>>())
+
+  const clearTimers = () => {
+    timersRef.current.forEach((id) => clearTimeout(id))
+    timersRef.current.clear()
+  }
+
+  const safeTimeout = (fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timersRef.current.delete(id)
+      if (aliveRef.current) fn()
+    }, ms)
+    timersRef.current.add(id)
+    return id
+  }
 
   const isVideoReady = (v: HTMLVideoElement) =>
     v.readyState >= 2 && v.videoWidth > 0 && v.videoHeight > 0
 
   useEffect(() => {
+    aliveRef.current = true
     startCamera()
     return () => {
+      aliveRef.current = false
+      clearTimers()
       if (autoIntervalRef.current) clearInterval(autoIntervalRef.current)
       if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop())
     }
@@ -80,10 +95,15 @@ export default function RegistrationPopup({ isBn, person, existingFaces, onEnrol
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
       })
+      if (!aliveRef.current) {
+        stream.getTracks().forEach((t) => t.stop())
+        return
+      }
       streamRef.current = stream
       setCamActive(true)
       setPhase('camera')
     } catch (err) {
+      if (!aliveRef.current) return
       setErrorMsg(err instanceof Error ? err.message : 'Camera access denied')
       setPhase('error')
     }
@@ -94,7 +114,7 @@ export default function RegistrationPopup({ isBn, person, existingFaces, onEnrol
       videoRef.current.srcObject = streamRef.current
       videoRef.current.onloadedmetadata = () => {
         videoRef.current?.play().catch(() => {})
-        setTimeout(() => {
+        safeTimeout(() => {
           setPhase('liveness')
         }, 500)
       }
@@ -113,17 +133,20 @@ export default function RegistrationPopup({ isBn, person, existingFaces, onEnrol
   }
 
   const startMultiAngleCapture = () => {
+    if (autoIntervalRef.current) clearInterval(autoIntervalRef.current)
     setPhase('capturing')
     setAutoStatus('detecting')
     stableCountRef.current = 0
     autoDoneRef.current = false
 
     autoIntervalRef.current = setInterval(async () => {
+      if (!aliveRef.current) return
       if (autoDoneRef.current) return
       const v = videoRef.current
       if (!v || !isVideoReady(v)) return
 
       const result = await detectFace(v)
+      if (!aliveRef.current) return
       if (result?.face_detected) {
         setFaceDetected(true)
         stableCountRef.current++
@@ -134,6 +157,7 @@ export default function RegistrationPopup({ isBn, person, existingFaces, onEnrol
 
           try {
             const enrollResult = await enrollFace(v, { multiAngle: true })
+            if (!aliveRef.current) return
             if (enrollResult?.success) {
               const photo = capturePhoto()
               const entry: RegisteredFace = {
@@ -158,14 +182,15 @@ export default function RegistrationPopup({ isBn, person, existingFaces, onEnrol
                 livenessPassed: true,
                 reason: `${enrollResult.embeddings?.length || 1} angle(s)`,
               })
-              setTimeout(() => onClose(), 2000)
+              safeTimeout(() => onClose(), 2000)
             } else {
               throw new Error('Enrollment failed')
             }
           } catch (err) {
+            if (!aliveRef.current) return
             setErrorMsg(err instanceof Error ? err.message : 'Enrollment failed')
             setAutoStatus('error')
-            setTimeout(() => {
+            safeTimeout(() => {
               autoDoneRef.current = false
               setAutoStatus('detecting')
               stableCountRef.current = 0

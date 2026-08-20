@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express'
 import type { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { createHash, timingSafeEqual } from 'crypto'
 import { z } from 'zod'
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js'
 
@@ -134,8 +135,10 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string) {
       return res.status(403).json({ error: 'Forbidden' })
     }
     try {
-      const emailConfig = await prisma.systemConfig.findUnique({ where: { key: 'super_admin_email' } })
-      const passwordConfig = await prisma.systemConfig.findUnique({ where: { key: 'super_admin_password' } })
+      const [emailConfig, passwordConfig] = await Promise.all([
+        prisma.systemConfig.findUnique({ where: { key: 'super_admin_email' } }),
+        prisma.systemConfig.findUnique({ where: { key: 'super_admin_password' } }),
+      ])
       res.json({
         email: emailConfig?.value || process.env.VITE_SUPER_ADMIN_EMAIL || 'admin@edutech.com',
         hasCustomPassword: !!passwordConfig,
@@ -188,8 +191,10 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string) {
       const body = z.object({ email: z.string().email(), password: z.string() }).parse(req.body)
 
       // Check database first
-      const emailConfig = await prisma.systemConfig.findUnique({ where: { key: 'super_admin_email' } })
-      const passwordConfig = await prisma.systemConfig.findUnique({ where: { key: 'super_admin_password' } })
+      const [emailConfig, passwordConfig] = await Promise.all([
+        prisma.systemConfig.findUnique({ where: { key: 'super_admin_email' } }),
+        prisma.systemConfig.findUnique({ where: { key: 'super_admin_password' } }),
+      ])
 
       const storedEmail = emailConfig?.value || process.env.VITE_SUPER_ADMIN_EMAIL || 'admin@edutech.com'
       const storedPasswordHash = passwordConfig?.value
@@ -204,9 +209,11 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.json({ valid })
       }
 
-      // Fallback to .env password (plain text comparison for default)
+      // Fallback to .env password (timing-safe comparison)
       const envPassword = process.env.VITE_SUPER_ADMIN_PASSWORD || 'Admin@123456'
-      res.json({ valid: body.password === envPassword })
+      const submitted = createHash('sha256').update(body.password).digest()
+      const expected = createHash('sha256').update(envPassword).digest()
+      res.json({ valid: timingSafeEqual(submitted, expected) })
     } catch {
       res.status(500).json({ error: 'Internal server error' })
     }

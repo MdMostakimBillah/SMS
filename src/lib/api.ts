@@ -165,8 +165,16 @@ export interface TeacherData {
   updatedAt: string
 }
 
+export interface PaginatedTeachers {
+  data: TeacherData[]
+  total: number
+  page: number
+  pageSize: number
+}
+
 export const teachersApi = {
-  list: () => apiRequest<TeacherData[]>('/api/teachers'),
+  list: (page = 1, pageSize = 100) =>
+    apiRequest<PaginatedTeachers>(`/api/teachers?page=${page}&pageSize=${pageSize}`),
 
   get: (id: string) => apiRequest<TeacherData>(`/api/teachers/${id}`),
 

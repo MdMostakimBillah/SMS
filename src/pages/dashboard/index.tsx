@@ -159,12 +159,18 @@ export default function DashboardPage() {
   const weeklyTrend = useMemo(() => {
     const days: { name: string; students: number; teachers: number }[] = []
     const now = new Date()
+
+    const studentsByDate = new Map<string, number>()
+    students.forEach((s) => studentsByDate.set(s.createdAt, (studentsByDate.get(s.createdAt) || 0) + 1))
+    const teachersByDate = new Map<string, number>()
+    teachers.forEach((t) => teachersByDate.set(t.createdAt, (teachersByDate.get(t.createdAt) || 0) + 1))
+
     for (let i = 6; i >= 0; i--) {
       const d = new Date(now)
       d.setDate(d.getDate() - i)
       const dateStr = d.toISOString().split('T')[0]
-      const dayStudents = students.filter((s) => s.createdAt === dateStr).length
-      const dayTeachers = teachers.filter((t) => t.createdAt === dateStr).length
+      const dayStudents = studentsByDate.get(dateStr) || 0
+      const dayTeachers = teachersByDate.get(dateStr) || 0
       const label = d.toLocaleDateString(isBn ? 'bn' : 'en', { weekday: 'short' })
       days.push({ name: label, students: dayStudents, teachers: dayTeachers })
     }

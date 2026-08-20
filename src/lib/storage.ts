@@ -110,33 +110,86 @@ export function clearSlug(): void {
   resetAllStores()
 }
 
-export function createNamespacedStorage<T>(base: string, fallback?: string): PersistStorage<T> {
+export function createNamespacedStorage<T>(base: string, fallback?: string, opts?: { debounce?: boolean }): PersistStorage<T> {
   function resolveKey(slug: string | null): string {
     return slug ? `${base}_${slug}` : (fallback || base)
   }
+
+  const shouldDebounce = !!opts?.debounce
 
   return {
     getItem: (_name: string): StorageValue<T> | null => {
       const slug = getSlug()
       const key = resolveKey(slug)
+      const pending = pendingWrites.get(key)
+      if (pending) return JSON.parse(pending.value) as StorageValue<T>
       try {
         const raw = localStorage.getItem(key)
         return raw ? (JSON.parse(raw) as StorageValue<T>) : null
       } catch { return null }
     },
     setItem: (_name: string, value: StorageValue<T>): void => {
+      const slug = getSlug()
+      const key = resolveKey(slug)
+      if (shouldDebounce) {
+        scheduleWrite(key, value)
+        return
+      }
       try {
-        const slug = getSlug()
-        const key = resolveKey(slug)
         localStorage.setItem(key, JSON.stringify(value))
-      } catch { /* ignore */ }
+      } catch {
+        // Quota exceeded — drop the write rather than breaking the UI.
+      }
     },
     removeItem: (_name: string): void => {
+      const slug = getSlug()
+      const key = resolveKey(slug)
+      cancelWrite(key)
       try {
-        const slug = getSlug()
-        const key = resolveKey(slug)
         localStorage.removeItem(key)
       } catch { /* ignore */ }
     },
   }
+}
+
+const WRITE_DEBOUNCE_MS = 300
+const pendingWrites = new Map<string, { timer: ReturnType<typeof setTimeout>; value: string }>()
+
+function scheduleWrite(key: string, value: unknown): void {
+  const json = JSON.stringify(value)
+  const existing = pendingWrites.get(key)
+  if (existing) clearTimeout(existing.timer)
+  const timer = setTimeout(() => {
+    pendingWrites.delete(key)
+    try {
+      localStorage.setItem(key, json)
+    } catch {
+      // Quota exceeded — drop the write rather than breaking the UI.
+    }
+  }, WRITE_DEBOUNCE_MS)
+  pendingWrites.set(key, { timer, value: json })
+}
+
+function cancelWrite(key: string): void {
+  const existing = pendingWrites.get(key)
+  if (existing) {
+    clearTimeout(existing.timer)
+    pendingWrites.delete(key)
+  }
+}
+
+function flushPendingWrites(): void {
+  pendingWrites.forEach((entry, key) => {
+    clearTimeout(entry.timer)
+    try {
+      localStorage.setItem(key, entry.value)
+    } catch {
+      // Quota exceeded — drop the write.
+    }
+  })
+  pendingWrites.clear()
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => flushPendingWrites())
 }

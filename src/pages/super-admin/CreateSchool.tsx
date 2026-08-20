@@ -155,6 +155,7 @@ export default function CreateSchool() {
   const [simulated, setSimulated] = useState(false)
   const [inputWidth, setInputWidth] = useState(420)
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null)
+  const dragHandlersRef = useRef<{ onMove: (ev: MouseEvent) => void; onUp: () => void } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [stepAnim, setStepAnim] = useState<{ key: number; dir: 'next' | 'prev' }>({ key: 0, dir: 'next' })
   const [bounceBtn, setBounceBtn] = useState<'next' | 'back' | null>(null)
@@ -218,12 +219,26 @@ export default function CreateSchool() {
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
       dragRef.current = null
+      dragHandlersRef.current = null
     }
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
+    dragHandlersRef.current = { onMove, onUp }
     document.addEventListener('mousemove', onMove)
     document.addEventListener('mouseup', onUp)
   }
+
+  useEffect(() => {
+    return () => {
+      if (dragHandlersRef.current) {
+        document.removeEventListener('mousemove', dragHandlersRef.current.onMove)
+        document.removeEventListener('mouseup', dragHandlersRef.current.onUp)
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        dragHandlersRef.current = null
+      }
+    }
+  }, [])
 
   const handleCreate = () => {
     const subdomain = form.subdomain.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')

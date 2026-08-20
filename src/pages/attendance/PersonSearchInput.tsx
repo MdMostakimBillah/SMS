@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Search, User, GraduationCap, X } from 'lucide-react'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import type { Person } from './types'
 
 export function PersonSearchInput({
@@ -36,9 +37,11 @@ export function PersonSearchInput({
     }
   }, [highlightedIdx])
 
+  const debouncedQuery = useDebouncedValue(query, 200)
+
   const filtered = useMemo(() => {
-    if (!query.trim()) return []
-    const q = query.toLowerCase()
+    if (!debouncedQuery.trim()) return []
+    const q = debouncedQuery.toLowerCase()
     return people.filter((p) => {
       if (p.name.toLowerCase().includes(q)) return true
       if (p.id.toLowerCase().includes(q)) return true
@@ -48,7 +51,7 @@ export function PersonSearchInput({
       }
       return false
     })
-  }, [query, people])
+  }, [debouncedQuery, people])
 
   const select = useCallback(
     (p: Person) => {

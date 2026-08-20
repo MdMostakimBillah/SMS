@@ -53,13 +53,32 @@ export default function AttendancePopup({ isBn, date: _date, registeredFaces, in
   const identifiedRef = useRef(false)
   const cooldownRef = useRef<Record<string, number>>({})
   const recognizingRef = useRef(false)
+  const aliveRef = useRef(true)
+  const timersRef = useRef(new Set<ReturnType<typeof setTimeout>>())
+
+  const clearTimers = () => {
+    timersRef.current.forEach((id) => clearTimeout(id))
+    timersRef.current.clear()
+  }
+
+  const safeTimeout = (fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timersRef.current.delete(id)
+      if (aliveRef.current) fn()
+    }, ms)
+    timersRef.current.add(id)
+    return id
+  }
 
   const isVideoReady = (v: HTMLVideoElement) =>
     v.readyState >= 2 && v.videoWidth > 0 && v.videoHeight > 0
 
   useEffect(() => {
+    aliveRef.current = true
     startCamera()
     return () => {
+      aliveRef.current = false
+      clearTimers()
       stopDetectLoop()
       if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop())
     }
@@ -71,10 +90,14 @@ export default function AttendancePopup({ isBn, date: _date, registeredFaces, in
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
       })
+      if (!aliveRef.current) {
+        stream.getTracks().forEach((t) => t.stop())
+        return
+      }
       streamRef.current = stream
       setCamActive(true)
     } catch {
-      onClose()
+      if (aliveRef.current) onClose()
     }
   }
 
@@ -83,7 +106,7 @@ export default function AttendancePopup({ isBn, date: _date, registeredFaces, in
       videoRef.current.srcObject = streamRef.current
       videoRef.current.onloadedmetadata = () => {
         videoRef.current?.play().catch(() => {})
-        setTimeout(() => startDetectLoop(), 300)
+        safeTimeout(() => startDetectLoop(), 300)
       }
     }
   }, [camActive])
@@ -119,7 +142,7 @@ export default function AttendancePopup({ isBn, date: _date, registeredFaces, in
       confidence: 1,
     })
 
-    setTimeout(() => {
+    safeTimeout(() => {
       setIdentified(null)
       identifiedRef.current = false
     }, 4000)
@@ -132,6 +155,7 @@ export default function AttendancePopup({ isBn, date: _date, registeredFaces, in
     setFaceDetected(false)
 
     detectIntervalRef.current = setInterval(async () => {
+      if (!aliveRef.current) return
       if (identifiedRef.current) return
       if (recognizingRef.current) return
       const v = videoRef.current
@@ -139,6 +163,7 @@ export default function AttendancePopup({ isBn, date: _date, registeredFaces, in
 
       try {
         const result = await detectFace(v)
+        if (!aliveRef.current) return
         if (result?.face_detected) {
           setFaceDetected(true)
           stableCountRef.current++
@@ -150,6 +175,7 @@ export default function AttendancePopup({ isBn, date: _date, registeredFaces, in
 
             try {
               const matchResult = await recognizeFace(v, registeredFaces)
+              if (!aliveRef.current) return
               if (matchResult?.personId) {
                 const match = registeredFaces.find((f) => f.staffId === matchResult.personId)
                 if (match) {
@@ -163,7 +189,7 @@ export default function AttendancePopup({ isBn, date: _date, registeredFaces, in
               setRecognizing(false)
               recognizingRef.current = false
               setFaceDetected(false)
-              setTimeout(() => startDetectLoop(), 500)
+              safeTimeout(() => startDetectLoop(), 500)
             }
           }
         } else {

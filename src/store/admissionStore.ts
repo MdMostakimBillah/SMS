@@ -100,7 +100,7 @@ export const useAdmissionStore = create<AdmissionState>()(
     }),
     {
       name: 'edutech-admissions',
-      storage: createNamespacedStorage('edutech-admissions'),
+      storage: createNamespacedStorage('edutech-admissions', undefined, { debounce: true }),
       version: 4,
       migrate: (persistedState: any, version: number) => {
         if (version < 3) {

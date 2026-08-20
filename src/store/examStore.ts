@@ -669,21 +669,37 @@ export const useExamStore = create<ExamState>()(
       saveBulkStudentMarks: (marks) => {
         const state = get()
         const updated = [...state.studentMarks]
+
+        const configByKey = new Map<string, (typeof state.subjectMarkConfigs)[number]>()
+        for (const c of state.subjectMarkConfigs) {
+          configByKey.set(`${c.examId}|${c.subjectId}`, c)
+        }
+
+        const existingByKey = new Map<string, { idx: number; mark: (typeof state.studentMarks)[number] }>()
+        state.studentMarks.forEach((m, idx) => {
+          existingByKey.set(`${m.examId}|${m.studentId}|${m.subjectId}`, { idx, mark: m })
+        })
+
+        const nowIso = new Date().toISOString()
         for (const mark of marks) {
-          const fullConfig = state.subjectMarkConfigs.find((s) => s.examId === mark.examId && s.subjectId === mark.subjectId)
+          const fullConfig = configByKey.get(`${mark.examId}|${mark.subjectId}`)
           const total = Object.values(mark.subExamMarks).reduce((a, b) => a + b, 0)
           const grade = computeGrade(total, fullConfig?.fullMarks || 100)
-          const existing = updated.find((m) => m.examId === mark.examId && m.studentId === mark.studentId && m.subjectId === mark.subjectId)
+          const existing = existingByKey.get(`${mark.examId}|${mark.studentId}|${mark.subjectId}`)
           if (existing) {
-            const idx = updated.findIndex((m) => m.id === existing.id)
-            updated[idx] = { ...existing, ...mark, totalMarks: total, grade, updatedAt: new Date().toISOString() }
+            updated[existing.idx] = { ...existing.mark, ...mark, totalMarks: total, grade, updatedAt: nowIso }
           } else {
-            updated.push({
+            const newMark = {
               ...mark,
               id: `SM-${Date.now()}-${mark.studentId}`,
               totalMarks: total,
               grade,
-              updatedAt: new Date().toISOString(),
+              updatedAt: nowIso,
+            }
+            updated.push(newMark)
+            existingByKey.set(`${mark.examId}|${mark.studentId}|${mark.subjectId}`, {
+              idx: updated.length - 1,
+              mark: newMark,
             })
           }
         }
@@ -1095,7 +1111,7 @@ export const useExamStore = create<ExamState>()(
     }),
     {
       name: 'edutech-exams',
-      storage: createNamespacedStorage('edutech-exams'),
+      storage: createNamespacedStorage('edutech-exams', undefined, { debounce: true }),
       version: 8,
       migrate: (persistedState: any, version: number) => {
         if (version < 5) {

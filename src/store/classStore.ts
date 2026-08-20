@@ -418,7 +418,7 @@ export const useClassStore = create<ClassState>()(
     }),
     {
       name: 'edutech-classes',
-      storage: createNamespacedStorage('edutech-classes'),
+      storage: createNamespacedStorage('edutech-classes', undefined, { debounce: true }),
       version: 7,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
