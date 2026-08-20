@@ -163,7 +163,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr>
+              <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
                 <th className="py-2.5 pl-3 pr-2">
                   <ModernCheckbox checked={selected.size === paginated.length && paginated.length > 0} onChange={toggleAll} />
                 </th>
