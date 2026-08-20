@@ -138,6 +138,47 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
     return row
   }, [bn])
 
+  const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
+    const data = selected.size > 0 ? filtered.filter((a) => selected.has(a.id)) : filtered
+    const rows = data.slice(0, 20).map((a, i) => {
+      const row: Record<string, string> = { '#': String(i + 1) }
+      for (const key of opts.selectedCols) {
+        switch (key) {
+          case 'student': row[bn ? 'ছাত্র' : 'Student'] = bn ? a.studentNameBn : a.studentNameEn; break
+          case 'category': row[bn ? 'ক্যাটাগরি' : 'Category'] = a.categoryName; break
+          case 'amount': row[bn ? 'পরিমাণ' : 'Amount'] = `৳${a.amount.toLocaleString()}`; break
+          case 'type': row[bn ? 'ধরন' : 'Type'] = a.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'); break
+          case 'months': row[bn ? 'মাস' : 'Months'] = a.type === 'monthly' ? a.monthLabels.join(', ') : '—'; break
+        }
+      }
+      return row
+    })
+
+    const headers = ['#', ...opts.selectedCols.map((key) => {
+      const col = pdfColumns.find((c) => c.key === key)
+      return col ? (opts.isBn ? col.labelBn : col.label) : key
+    })]
+
+    const branding = getPDFBranding()
+    const logo = pdfLogoHTML(branding, 28)
+    const headerRow = headers.map((h) => `<th style="background:${branding.brandColor};color:#fff;padding:4px 6px;text-align:center">${h}</th>`).join('')
+    const bodyRows = rows.map((r) => {
+      const cells = [`<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r['#'] || ''}</td>`]
+      for (const key of opts.selectedCols) {
+        const col = pdfColumns.find((c) => c.key === key)
+        const label = col ? (opts.isBn ? col.labelBn : col.label) : key
+        cells.push(`<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r[label] || ''}</td>`)
+      }
+      return `<tr>${cells.join('')}</tr>`
+    }).join('')
+
+    const overflowNote = data.length > 20
+      ? `<div style="font-size:9px;color:#999;margin-top:6px;text-align:center">... and ${data.length - 20} more records</div>`
+      : ''
+
+    return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a"><div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid ${branding.brandColor};padding-bottom:8px;margin-bottom:10px">${logo}<div><div style="font-size:14px;font-weight:700;color:${branding.brandColor}">${branding.schoolName}</div><div style="font-size:9px;color:#666">${branding.address}</div></div></div><div style="font-size:13px;font-weight:700;color:${branding.brandColor};margin:8px 0">${opts.title}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headerRow}</tr></thead><tbody>${bodyRows}</tbody></table>${overflowNote}</div>`
+  }, [filtered, selected, bn, pdfColumns])
+
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
     const data = selected.size > 0 ? filtered.filter((a) => selected.has(a.id)) : filtered
     const rows = data.map((a, i) => buildPdfRow(a, opts.selectedCols, i))
@@ -287,7 +328,7 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
 
       {showModal && <AssignmentModal existing={editItem} onSaved={() => { setShowModal(false); setEditItem(null) }} onClose={() => { setShowModal(false); setEditItem(null) }} />}
       {deleteId && <DeleteConfirmDialog title={bn ? 'বরাদ্দ মুছে ফেলুন?' : 'Delete assignment?'} message={bn ? 'এই বরাদ্দটি স্থায়ীভাবে মুছে ফেলা হবে।' : 'This assignment will be permanently deleted.'} onConfirm={() => { deleteAssignment(deleteId); setDeleteId(null) }} onCancel={() => setDeleteId(null)} isBn={bn} />}
-      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয় বরাদ্দ' : 'Others Income Assignments'} defaultTitleBn="অন্যান্য আয় বরাদ্দ" recordLabel={bn ? 'বরাদ্দ' : 'assignment'} recordLabelBn="বরাদ্দ" count={selected.size > 0 ? selected.size : filtered.length} isBn={bn} onDownload={(opts: GenericPDFOptionsResult) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
+      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয় বরাদ্দ' : 'Others Income Assignments'} defaultTitleBn="অন্যান্য আয় বরাদ্দ" recordLabel={bn ? 'বরাদ্দ' : 'assignment'} recordLabelBn="বরাদ্দ" count={selected.size > 0 ? selected.size : filtered.length} isBn={bn} previewRenderer={pdfPreviewRenderer} onDownload={(opts: GenericPDFOptionsResult) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
     </div>
   )
 }

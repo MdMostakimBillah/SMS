@@ -107,6 +107,45 @@ export const TypesTab = ({ searchQuery }: Props) => {
     return row
   }, [bn])
 
+  const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
+    const data = selected.size > 0 ? filtered.filter((c) => selected.has(c.id)) : filtered
+    const rows = data.slice(0, 20).map((c, i) => {
+      const row: Record<string, string> = { '#': String(i + 1) }
+      for (const key of opts.selectedCols) {
+        switch (key) {
+          case 'name': row[bn ? 'নাম' : 'Name'] = bn ? c.nameBn : c.name; break
+          case 'amount': row[bn ? 'পরিমাণ' : 'Amount'] = `৳${c.amount.toLocaleString()}`; break
+          case 'type': row[bn ? 'ধরন' : 'Type'] = c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'); break
+        }
+      }
+      return row
+    })
+
+    const headers = ['#', ...opts.selectedCols.map((key) => {
+      const col = pdfColumns.find((c) => c.key === key)
+      return col ? (opts.isBn ? col.labelBn : col.label) : key
+    })]
+
+    const branding = getPDFBranding()
+    const logo = pdfLogoHTML(branding, 28)
+    const headerRow = headers.map((h) => `<th style="background:${branding.brandColor};color:#fff;padding:4px 6px;text-align:center">${h}</th>`).join('')
+    const bodyRows = rows.map((r) => {
+      const cells = [`<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r['#'] || ''}</td>`]
+      for (const key of opts.selectedCols) {
+        const col = pdfColumns.find((c) => c.key === key)
+        const label = col ? (opts.isBn ? col.labelBn : col.label) : key
+        cells.push(`<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r[label] || ''}</td>`)
+      }
+      return `<tr>${cells.join('')}</tr>`
+    }).join('')
+
+    const overflowNote = data.length > 20
+      ? `<div style="font-size:9px;color:#999;margin-top:6px;text-align:center">... and ${data.length - 20} more records</div>`
+      : ''
+
+    return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a"><div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid ${branding.brandColor};padding-bottom:8px;margin-bottom:10px">${logo}<div><div style="font-size:14px;font-weight:700;color:${branding.brandColor}">${branding.schoolName}</div><div style="font-size:9px;color:#666">${branding.address}</div></div></div><div style="font-size:13px;font-weight:700;color:${branding.brandColor};margin:8px 0">${opts.title}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headerRow}</tr></thead><tbody>${bodyRows}</tbody></table>${overflowNote}</div>`
+  }, [filtered, selected, bn, pdfColumns])
+
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
     const data = selected.size > 0 ? filtered.filter((c) => selected.has(c.id)) : filtered
     const rows = data.map((c, i) => buildPdfRow(c, opts.selectedCols, i))
@@ -243,7 +282,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
 
       {showModal && <CategoryModal existing={editItem} onSaved={() => { setShowModal(false); setEditItem(null) }} onClose={() => { setShowModal(false); setEditItem(null) }} />}
       {deleteId && <DeleteConfirmDialog title={bn ? 'ক্যাটাগরি মুছে ফেলুন?' : 'Delete category?'} message={bn ? 'এই ক্যাটাগরি এবং এর সব বরাদ্দ স্থায়ীভাবে মুছে ফেলা হবে।' : 'This category and all its assignments will be permanently deleted.'} onConfirm={() => { deleteCategory(deleteId); setDeleteId(null) }} onCancel={() => setDeleteId(null)} isBn={bn} />}
-      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয়ের ক্যাটাগরি' : 'Others Income Categories'} defaultTitleBn="অন্যান্য আয়ের ক্যাটাগরি" recordLabel={bn ? 'ক্যাটাগরি' : 'category'} recordLabelBn="ক্যাটাগরি" count={selected.size > 0 ? selected.size : filtered.length} isBn={bn} onDownload={(opts: GenericPDFOptionsResult) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
+      {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={bn ? 'অন্যান্য আয়ের ক্যাটাগরি' : 'Others Income Categories'} defaultTitleBn="অন্যান্য আয়ের ক্যাটাগরি" recordLabel={bn ? 'ক্যাটাগরি' : 'category'} recordLabelBn="ক্যাটাগরি" count={selected.size > 0 ? selected.size : filtered.length} isBn={bn} previewRenderer={pdfPreviewRenderer} onDownload={(opts: GenericPDFOptionsResult) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
     </div>
   )
 }
