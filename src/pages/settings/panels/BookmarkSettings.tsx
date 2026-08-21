@@ -150,6 +150,7 @@ const allPages: PageItem[] = [
   { key: 'payroll', path: 'payroll', icon: 'wallet', title: 'Payroll', titleBn: 'বেতন' },
   { key: 'store', path: 'store', icon: 'shopping-bag', title: 'School Store', titleBn: 'স্কুল স্টোর' },
   { key: 'expenses', path: 'expenses', icon: 'receipt', title: 'Expenses', titleBn: 'খরচ' },
+  { key: 'accounting-report', path: 'accounting-report', icon: 'bar-chart-3', title: 'Accounting Report', titleBn: 'হিসাব রিপোর্ট' },
   { key: 'library', path: 'library', icon: 'library', title: 'Library', titleBn: 'লাইব্রেরি' },
   { key: 'transport', path: 'transport', icon: 'bus', title: 'Transport', titleBn: 'পরিবহন' },
   { key: 'hostel', path: 'hostel', icon: 'building-2', title: 'Hostel', titleBn: 'হোস্টেল' },

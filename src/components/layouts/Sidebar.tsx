@@ -182,6 +182,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
         { key: 'nav_payroll', page: `${navBase}/payroll`, icon: 'wallet' },
         { key: 'nav_store', page: `${navBase}/store`, icon: 'shopping-bag' },
         { key: 'nav_expenses', page: `${navBase}/expenses`, icon: 'receipt' },
+        { key: 'nav_accounting_report', page: `${navBase}/accounting-report`, icon: 'bar-chart-2' },
       ],
     },
     {

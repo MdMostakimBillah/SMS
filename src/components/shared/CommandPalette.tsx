@@ -155,6 +155,12 @@ const navigationItems: Omit<SearchItem, 'icon'>[] = [
   { id: 'expenses-category', label: 'Expense Categories', labelBn: 'খরচ বিভাগ', path: '/expenses', group: 'Finance', groupBn: 'আর্থিক' },
   { id: 'expenses-report', label: 'Expense Report', labelBn: 'খরচ রিপোর্ট', path: '/expenses', group: 'Finance', groupBn: 'আর্থিক' },
 
+  // Accounting Report
+  { id: 'accounting-report', label: 'Accounting Report', labelBn: 'হিসাব রিপোর্ট', path: '/accounting-report', group: 'Finance', groupBn: 'আর্থিক' },
+  { id: 'accounting-income', label: 'Income Report', labelBn: 'আয় রিপোর্ট', path: '/accounting-report', group: 'Finance', groupBn: 'আর্থিক' },
+  { id: 'accounting-expenses', label: 'Expense Report', labelBn: 'খরচ রিপোর্ট', path: '/accounting-report', group: 'Finance', groupBn: 'আর্থিক' },
+  { id: 'accounting-profit-loss', label: 'Profit/Loss Report', labelBn: 'লাভ/ক্ষতি রিপোর্ট', path: '/accounting-report', group: 'Finance', groupBn: 'আর্থিক' },
+
   // Library
   { id: 'library', label: 'Library', labelBn: 'লাইব্রেরি', path: '/library', group: 'Facilities', groupBn: 'সুবিধাদি' },
   { id: 'library-books', label: 'Books', labelBn: 'বই', path: '/library', group: 'Facilities', groupBn: 'সুবিধাদি' },
