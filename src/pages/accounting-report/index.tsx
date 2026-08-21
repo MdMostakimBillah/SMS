@@ -226,14 +226,6 @@ export default function AccountingReportPage() {
   }
 
   const navigateToCategory = useCallback((row: { name: string; nameBn: string; sourceType?: SourceType; categoryId?: string }) => {
-    if (row.sourceType === 'store') {
-      navigate(`${basePath.replace('finance', 'store')}`)
-      return
-    }
-    if (row.sourceType === 'other') {
-      navigate(`${basePath.replace('finance', 'others-income')}`)
-      return
-    }
     const struct = feeStructures.find((s) => s.name === row.name || s.nameBn === row.nameBn)
     const params = new URLSearchParams({ view: 'dues', status: 'paid', months: '0,1,2,3,4,5,6,7,8,9,10,11' })
     if (struct) {
