@@ -201,49 +201,49 @@ export const CategoriesTab = ({ searchQuery }: Props) => {
         </div>
       </div>
 
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+      <div className="rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] overflow-hidden">
+        <div className="overflow-x-auto rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)]">
+          <table className="w-full">
             <thead>
-              <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
-                <th className="py-2.5 pl-3 pr-2">
+              <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+                <th className="py-2.5 pl-4 pr-2">
                   <ModernCheckbox checked={selected.size === paginated.length && paginated.length > 0} onChange={toggleAll} />
                 </th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'নাম' : 'Name'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধরন' : 'Type'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
+                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'নাম' : 'Name'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ধরন' : 'Type'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'কার্যক্রম' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody>
               {paginated.length === 0 ? (
                 <tr><td colSpan={5} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো ক্যাটাগরি পাওয়া যায়নি' : 'No categories found'}</td></tr>
               ) : paginated.map((c) => (
-                <tr key={c.id} className={`border-b border-[var(--border)] last:border-b-0 transition-colors hover:bg-[var(--surface)] ${selected.has(c.id) ? 'bg-[var(--brand)]/5' : ''}`}>
-                  <td className="py-2.5 pl-3 pr-2">
+                <tr key={c.id} className={`border-b border-[var(--border)] last:border-0 transition-colors hover:bg-[var(--bg-tertiary)] ${selected.has(c.id) ? 'bg-[var(--brand)]/5' : ''}`}>
+                  <td className="py-3 pl-4 pr-2">
                     <ModernCheckbox checked={selected.has(c.id)} onChange={() => {
                       setSelected((prev) => { const next = new Set(prev); if (next.has(c.id)) next.delete(c.id); else next.add(c.id); return next })
                     }} />
                   </td>
-                  <td className="py-2.5 px-3">
-                    <div className="flex items-center gap-2">
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand)18', color: 'var(--brand)' }}>
                         {(() => { const Icon = ICON_MAP[c.icon] || Tag; return <Icon size={13} /> })()}
                       </div>
-                      <div className="text-[12px] font-semibold text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</div>
+                      <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</div>
                     </div>
                   </td>
-                  <td className="py-2.5 px-3 text-center">
+                  <td className="py-3 px-4 text-center">
                     <span className={`inline-block text-[9px] font-bold uppercase px-2 py-0.5 rounded ${c.isSystem ? 'bg-[var(--teal-light)] text-[var(--teal)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'}`}>
                       {c.isSystem ? (bn ? 'সিস্টেম' : 'System') : (bn ? 'কাস্টম' : 'Custom')}
                     </span>
                   </td>
-                  <td className="py-2.5 px-3 text-center">
+                  <td className="py-3 px-4 text-center">
                     <span className={`inline-block text-[9px] font-bold uppercase px-2 py-0.5 rounded ${c.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
                       {c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
                     </span>
                   </td>
-                  <td className="py-2.5 px-3 text-center">
+                  <td className="py-3 px-4 text-center">
                     <div className="flex items-center gap-1 justify-center">
                       <button onClick={() => { setEditItem(c); setShowModal(true) }} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
                         <Edit size={13} />
