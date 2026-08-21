@@ -455,6 +455,14 @@ export default function AccountingReportPage() {
                   )
                 })
               )}
+              {activeTab === 'income' && incomeByCategory.length > 0 && (
+                <tr className="border-t-2 border-[var(--border)] bg-[var(--bg-secondary)]">
+                  <td className="py-3 px-4 text-[0.8125rem] font-bold text-[var(--text-primary)]" colSpan={3}>{bn ? 'মোট' : 'Total'}</td>
+                  <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--green)]">{fmt(totalIncome)}</td>
+                  <td className="py-3 px-4 text-center text-[0.8125rem] font-bold text-[var(--text-primary)]">{incomeByCategory.reduce((s, r) => s + r.count, 0)}</td>
+                  <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--text-primary)]">100%</td>
+                </tr>
+              )}
               {activeTab === 'expenses' && (
                 expensesByCategory.length === 0 ? (
                   <tr><td colSpan={5} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো খরচের তথ্য পাওয়া যায়নি' : 'No expense data found'}</td></tr>
@@ -468,6 +476,14 @@ export default function AccountingReportPage() {
                   </tr>
                 ))
               )}
+              {activeTab === 'expenses' && expensesByCategory.length > 0 && (
+                <tr className="border-t-2 border-[var(--border)] bg-[var(--bg-secondary)]">
+                  <td className="py-3 px-4 text-[0.8125rem] font-bold text-[var(--text-primary)]" colSpan={2}>{bn ? 'মোট' : 'Total'}</td>
+                  <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--red)]">{fmt(totalExpenses)}</td>
+                  <td className="py-3 px-4 text-center text-[0.8125rem] font-bold text-[var(--text-primary)]">{expensesByCategory.reduce((s, r) => s + r.count, 0)}</td>
+                  <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--text-primary)]">100%</td>
+                </tr>
+              )}
               {activeTab === 'profit-loss' && (
                 profitLossByCategory.length === 0 ? (
                   <tr><td colSpan={5} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো তথ্য পাওয়া যায়নি' : 'No data found'}</td></tr>
@@ -480,6 +496,14 @@ export default function AccountingReportPage() {
                     <td className="py-3 px-4 text-right text-[0.8125rem] font-bold" style={{ color: r.profit >= 0 ? 'var(--green)' : 'var(--red)' }}>{r.profit >= 0 ? '+' : ''}{fmt(r.profit)}</td>
                   </tr>
                 ))
+              )}
+              {activeTab === 'profit-loss' && profitLossByCategory.length > 0 && (
+                <tr className="border-t-2 border-[var(--border)] bg-[var(--bg-secondary)]">
+                  <td className="py-3 px-4 text-[0.8125rem] font-bold text-[var(--text-primary)]" colSpan={2}>{bn ? 'মোট' : 'Total'}</td>
+                  <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--green)]">{fmt(profitLossByCategory.reduce((s, r) => s + r.income, 0))}</td>
+                  <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--red)]">{fmt(profitLossByCategory.reduce((s, r) => s + r.expense, 0))}</td>
+                  <td className="py-3 px-4 text-right text-[0.8125rem] font-bold" style={{ color: netProfit >= 0 ? 'var(--green)' : 'var(--red)' }}>{netProfit >= 0 ? '+' : ''}{fmt(Math.abs(netProfit))}</td>
+                </tr>
               )}
             </tbody>
           </table>
