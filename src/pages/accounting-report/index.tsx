@@ -131,8 +131,10 @@ export default function AccountingReportPage() {
     otherAssignments.filter((a) => a.isActive).forEach((a) => {
       const cat = otherCategories.find((c) => c.id === a.categoryId)
       if (!cat) return
-      const months = a.months.length > 0 ? a.months : [0,1,2,3,4,5,6,7,8,9,10,11]
-      const total = months.length * cat.amount
+      const structId = `FEE-OTHER-${a.id}`
+      const otherPayments = feePayments.filter((p) => p.feeStructureId === structId && filterByDate(p.paidAt.split('T')[0]))
+      const total = otherPayments.reduce((sum, p) => sum + p.amount - p.discount, 0)
+      if (total <= 0) return
       const key = `other-${cat.name.trim().toLowerCase()}`
       const existing = map.get(key)
       if (existing) {
@@ -147,7 +149,7 @@ export default function AccountingReportPage() {
         })
         studentSets.set(key, new Set())
       }
-      studentSets.get(key)!.add(a.studentId)
+      otherPayments.forEach((p) => studentSets.get(key)!.add(p.studentId))
       map.get(key)!.count = studentSets.get(key)!.size
     })
 
