@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Tag, Receipt, RefreshCw, Coins, Search } from 'lucide-react'
+import { Tag, Receipt, RefreshCw, Search } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useExpenseStore } from '@/store/expenseStore'
 import { useTabSlider } from '@/hooks/useTabSlider'

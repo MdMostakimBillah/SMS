@@ -119,7 +119,6 @@ registerStoreLoad(() => {
       const parsed = JSON.parse(raw)
       if (parsed.state) {
         const state = parsed.state
-        const systemIds = PREDEFINED_CATEGORIES.map((c) => c.id)
         const existingIds = (state.categories || []).map((c: ExpenseCategory) => c.id)
         const missing = PREDEFINED_CATEGORIES.filter((c) => !existingIds.includes(c.id))
         state.categories = [...(state.categories || []), ...missing]
