@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { TrendingUp, TrendingDown, DollarSign, FileSpreadsheet, FileText, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, MoreVertical, ChevronDown, FileSpreadsheet, FileText, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useFeeStore } from '@/store/feeStore'
 import { useOthersIncomeStore } from '@/store/othersIncomeStore'
@@ -15,7 +15,6 @@ import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/
 type View = 'income' | 'expenses' | 'profit-loss'
 
 interface CategoryRow {
-  id: string
   name: string
   nameBn: string
   amount: number
@@ -62,17 +61,23 @@ export default function AccountingReportPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [showActionMenu, setShowActionMenu] = useState(false)
   const [loading, setLoading] = useState(true)
+  const actionMenuRef = useRef<HTMLDivElement>(null)
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
   useTabSlider({ activeTab, tabRefs, sliderRef, getContainer: (slider) => slider?.parentElement ?? null })
 
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 400); return () => clearTimeout(t) }, [])
+
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(t)
-  }, [])
+    if (!showActionMenu) return
+    const h = (e: MouseEvent) => { if (actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node)) setShowActionMenu(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [showActionMenu])
 
   const filterByDate = useCallback((dateStr: string) => {
     if (!dateFrom && !dateTo) return true
@@ -83,23 +88,22 @@ export default function AccountingReportPage() {
 
   const incomeByCategory = useMemo(() => {
     const map = new Map<string, { name: string; nameBn: string; amount: number; count: number }>()
-
     feePayments.filter((p) => filterByDate(p.paidAt.split('T')[0])).forEach((p) => {
       const struct = feeStructures.find((s) => s.id === p.feeStructureId)
-      const catId = struct?.categoryId || 'FEE-UNCAT'
-      const cat = feeCategories.find((c) => c.id === catId)
-      const name = cat ? (bn ? cat.nameBn : cat.name) : (bn ? 'ফি' : 'Fees')
-      const nameBn = cat?.nameBn || 'ফি'
-      const existing = map.get(catId) || { name, nameBn, amount: 0, count: 0 }
+      const catId = struct?.categoryId
+      const cat = catId ? feeCategories.find((c) => c.id === catId) : null
+      const name = cat ? (bn ? cat.nameBn : cat.name) : (struct ? (bn ? struct.nameBn : struct.name) : (bn ? 'ফি' : 'Fees'))
+      const nameBn = cat?.nameBn || struct?.nameBn || 'ফি'
+      const key = catId || struct?.id || 'FEE-UNCAT'
+      const existing = map.get(key) || { name, nameBn, amount: 0, count: 0 }
       existing.amount += p.amount - p.discount
       existing.count += 1
-      map.set(catId, existing)
+      map.set(key, existing)
     })
-
     otherAssignments.filter((a) => a.isActive).forEach((a) => {
       const cat = otherCategories.find((c) => c.id === a.categoryId)
       if (!cat) return
-      const months = a.months.length > 0 ? a.months : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+      const months = a.months.length > 0 ? a.months : [0,1,2,3,4,5,6,7,8,9,10,11]
       const total = months.length * cat.amount
       const name = bn ? cat.nameBn : cat.name
       const existing = map.get(a.categoryId) || { name, nameBn: cat.nameBn, amount: 0, count: 0 }
@@ -107,13 +111,11 @@ export default function AccountingReportPage() {
       existing.count += 1
       map.set(a.categoryId, existing)
     })
-
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount)
   }, [feePayments, feeStructures, feeCategories, otherAssignments, otherCategories, bn, filterByDate])
 
   const expensesByCategory = useMemo(() => {
     const map = new Map<string, { name: string; nameBn: string; amount: number; count: number }>()
-
     expenses.filter((e) => e.isActive && filterByDate(e.date)).forEach((e) => {
       const cat = expenseCategories.find((c) => c.id === e.categoryId)
       const name = cat ? (bn ? cat.nameBn : cat.name) : (bn ? 'অন্যান্য' : 'Others')
@@ -123,7 +125,6 @@ export default function AccountingReportPage() {
       existing.count += 1
       map.set(e.categoryId, existing)
     })
-
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount)
   }, [expenses, expenseCategories, bn, filterByDate])
 
@@ -134,19 +135,16 @@ export default function AccountingReportPage() {
 
   const profitLossByCategory = useMemo(() => {
     const map = new Map<string, { name: string; nameBn: string; income: number; expense: number }>()
-
     incomeByCategory.forEach((r) => {
       const existing = map.get(r.name) || { name: r.name, nameBn: r.nameBn, income: 0, expense: 0 }
       existing.income += r.amount
       map.set(r.name, existing)
     })
-
     expensesByCategory.forEach((r) => {
       const existing = map.get(r.name) || { name: r.name, nameBn: r.nameBn, income: 0, expense: 0 }
       existing.expense += r.amount
       map.set(r.name, existing)
     })
-
     return Array.from(map.values()).map((r) => ({ ...r, profit: r.income - r.expense })).sort((a, b) => b.profit - a.profit)
   }, [incomeByCategory, expensesByCategory])
 
@@ -158,42 +156,23 @@ export default function AccountingReportPage() {
 
   const fmt = (n: number) => `৳${n.toLocaleString()}`
 
-  const handleExportExcel = (view: View) => {
+  const handleExportExcel = () => {
     const wb = XLSX.utils.book_new()
     const addSheet = (data: Record<string, string | number>[], name: string) => {
       const ws = XLSX.utils.json_to_sheet(data)
       XLSX.utils.book_append_sheet(wb, ws, name)
     }
-
-    if (view === 'income' || view === 'profit-loss') {
-      addSheet(incomeByCategory.map((r, i) => ({
-        [bn ? 'ক্রমিক' : 'S/N']: i + 1,
-        [bn ? 'ক্যাটাগরি' : 'Category']: bn ? r.nameBn : r.name,
-        [bn ? 'পরিমাণ' : 'Amount']: r.amount,
-        [bn ? 'সংখ্যা' : 'Count']: r.count,
-      })), bn ? 'আয়' : 'Income')
+    if (activeTab === 'income' || activeTab === 'profit-loss') {
+      addSheet(incomeByCategory.map((r, i) => ({ [bn ? 'ক্রমিক' : 'S/N']: i + 1, [bn ? 'ক্যাটাগরি' : 'Category']: bn ? r.nameBn : r.name, [bn ? 'পরিমাণ' : 'Amount']: r.amount, [bn ? 'সংখ্যা' : 'Count']: r.count })), bn ? 'আয়' : 'Income')
     }
-
-    if (view === 'expenses' || view === 'profit-loss') {
-      addSheet(expensesByCategory.map((r, i) => ({
-        [bn ? 'ক্রমিক' : 'S/N']: i + 1,
-        [bn ? 'ক্যাটাগরি' : 'Category']: bn ? r.nameBn : r.name,
-        [bn ? 'পরিমাণ' : 'Amount']: r.amount,
-        [bn ? 'সংখ্যা' : 'Count']: r.count,
-      })), bn ? 'খরচ' : 'Expenses')
+    if (activeTab === 'expenses' || activeTab === 'profit-loss') {
+      addSheet(expensesByCategory.map((r, i) => ({ [bn ? 'ক্রমিক' : 'S/N']: i + 1, [bn ? 'ক্যাটাগরি' : 'Category']: bn ? r.nameBn : r.name, [bn ? 'পরিমাণ' : 'Amount']: r.amount, [bn ? 'সংখ্যা' : 'Count']: r.count })), bn ? 'খরচ' : 'Expenses')
     }
-
-    if (view === 'profit-loss') {
-      addSheet(profitLossByCategory.map((r, i) => ({
-        [bn ? 'ক্রমিক' : 'S/N']: i + 1,
-        [bn ? 'ক্যাটাগরি' : 'Category']: bn ? r.nameBn : r.name,
-        [bn ? 'আয়' : 'Income']: r.income,
-        [bn ? 'খরচ' : 'Expense']: r.expense,
-        [bn ? 'লাভ/ক্ষতি' : 'Profit/Loss']: r.profit,
-      })), bn ? 'লাভ/ক্ষতি' : 'Profit-Loss')
+    if (activeTab === 'profit-loss') {
+      addSheet(profitLossByCategory.map((r, i) => ({ [bn ? 'ক্রমিক' : 'S/N']: i + 1, [bn ? 'ক্যাটাগরি' : 'Category']: bn ? r.nameBn : r.name, [bn ? 'আয়' : 'Income']: r.income, [bn ? 'খরচ' : 'Expense']: r.expense, [bn ? 'লাভ/ক্ষতি' : 'Profit/Loss']: r.profit })), bn ? 'লাভ/ক্ষতি' : 'Profit-Loss')
     }
-
-    XLSX.writeFile(wb, `accounting-report-${view}-${new Date().toISOString().split('T')[0]}.xlsx`)
+    XLSX.writeFile(wb, `accounting-report-${activeTab}-${new Date().toISOString().split('T')[0]}.xlsx`)
+    setShowActionMenu(false)
   }
 
   const pdfColumns: PDFColumnDef[] = useMemo(() => {
@@ -215,8 +194,7 @@ export default function AccountingReportPage() {
   }, [activeTab])
 
   const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
-    const isPL = activeTab === 'profit-loss'
-    const data = isPL ? profitLossByCategory : (activeTab === 'income' ? incomeByCategory : expensesByCategory)
+    const data = activeTab === 'profit-loss' ? profitLossByCategory : (activeTab === 'income' ? incomeByCategory : expensesByCategory)
     const rows = data.slice(0, 20).map((r, i) => {
       const row: Record<string, string> = { '#': String(i + 1) }
       for (const key of opts.selectedCols) {
@@ -245,8 +223,7 @@ export default function AccountingReportPage() {
   }, [activeTab, incomeByCategory, expensesByCategory, profitLossByCategory, bn, pdfColumns])
 
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
-    const isPL = activeTab === 'profit-loss'
-    const data = isPL ? profitLossByCategory : (activeTab === 'income' ? incomeByCategory : expensesByCategory)
+    const data = activeTab === 'profit-loss' ? profitLossByCategory : (activeTab === 'income' ? incomeByCategory : expensesByCategory)
     const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
     const rows = data.map((r, i) => {
       const row: Record<string, string | number> = { '#': i + 1 }
@@ -268,7 +245,7 @@ export default function AccountingReportPage() {
     const bodyRows = rows.map((r) => { const cells = headers.map((h) => `<td>${r[h] ?? ''}</td>`).join(''); return `<tr>${cells}</tr>` }).join('')
     const headerCells = headers.map((h) => `<th>${h}</th>`).join('')
     const genDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    const title = isPL ? (bn ? 'লাভ/ক্ষতি রিপোর্ট' : 'Profit/Loss Report') : activeTab === 'income' ? (bn ? 'আয় রিপোর্ট' : 'Income Report') : (bn ? 'খরচ রিপোর্ট' : 'Expense Report')
+    const title = activeTab === 'income' ? (bn ? 'আয় রিপোর্ট' : 'Income Report') : activeTab === 'expenses' ? (bn ? 'খরচ রিপোর্ট' : 'Expense Report') : (bn ? 'লাভ/ক্ষতি রিপোর্ট' : 'Profit/Loss Report')
     const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table><div class="ftr">Generated: ${genDate}</div>`
     openPrintWindow(title, bodyHTML, { css })
   }, [activeTab, incomeByCategory, expensesByCategory, profitLossByCategory, bn, pdfColumns])
@@ -277,9 +254,7 @@ export default function AccountingReportPage() {
     return (
       <div className="space-y-4">
         <div className="skeleton h-7 w-48 rounded-lg" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-[3.25rem] rounded-[0.625rem]" />)}
-        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{[1,2,3,4].map((i) => <div key={i} className="skeleton h-[3.25rem] rounded-[0.625rem]" />)}</div>
         <div className="skeleton h-10 w-full rounded-xl" />
         <div className="skeleton h-64 w-full rounded-[0.625rem]" />
       </div>
@@ -288,12 +263,7 @@ export default function AccountingReportPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-          {bn ? 'হিসাব রিপোর্ট' : 'Accounting Report'}
-        </h1>
-      </div>
-
+      <div><h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">{bn ? 'হিসাব রিপোর্ট' : 'Accounting Report'}</h1></div>
       <StatCards stats={{ totalIncome, totalExpenses, netProfit, margin }} bn={bn} />
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -318,8 +288,7 @@ export default function AccountingReportPage() {
           <button key={tab.id} ref={(el) => { if (el) tabRefs.current.set(tab.id, el) }} onClick={() => setActiveTab(tab.id)}
             className={`relative z-10 flex-1 flex items-center justify-center gap-[0.375rem] py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${activeTab === tab.id ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
             style={{ background: 'transparent' }}>
-            <tab.icon size={15} />
-            {tab.label}
+            <tab.icon size={15} />{tab.label}
           </button>
         ))}
       </div>
@@ -330,13 +299,22 @@ export default function AccountingReportPage() {
           {activeTab === 'expenses' && (bn ? `মোট: ${toBnNum(expensesByCategory.length)}টি ক্যাটাগরি — ${fmt(totalExpenses)}` : `Total: ${expensesByCategory.length} categories — ${fmt(totalExpenses)}`)}
           {activeTab === 'profit-loss' && (bn ? `মোট: ${toBnNum(profitLossByCategory.length)}টি ক্যাটাগরি` : `Total: ${profitLossByCategory.length} categories`)}
         </span>
-        <div className="flex items-center gap-2">
-          <button onClick={() => handleExportExcel(activeTab)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--green)]/40 hover:text-[var(--green)] transition-colors cursor-pointer">
-            <FileSpreadsheet size={13} /> Excel
+        <div className="relative">
+          <button onClick={() => setShowActionMenu(!showActionMenu)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)] transition-colors cursor-pointer">
+            <MoreVertical size={13} />{bn ? 'অ্যাকশন' : 'Action'}<ChevronDown size={12} />
           </button>
-          <button onClick={() => setShowPdfModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--red)]/40 hover:text-[var(--red)] transition-colors cursor-pointer">
-            <FileText size={13} /> PDF
-          </button>
+          {showActionMenu && (<>
+            <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
+            <div ref={actionMenuRef} className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
+              <button onClick={handleExportExcel} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
+                <FileSpreadsheet size={14} className="text-[var(--green)]" />{bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+              </button>
+              <div className="h-px bg-[var(--border)] mx-2" />
+              <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
+                <FileText size={14} className="text-[var(--red)]" />{bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+              </button>
+            </div>
+          </>)}
         </div>
       </div>
 
@@ -376,7 +354,6 @@ export default function AccountingReportPage() {
                   </tr>
                 ))
               )}
-
               {activeTab === 'expenses' && (
                 expensesByCategory.length === 0 ? (
                   <tr><td colSpan={5} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো খরচের তথ্য পাওয়া যায়নি' : 'No expense data found'}</td></tr>
@@ -390,7 +367,6 @@ export default function AccountingReportPage() {
                   </tr>
                 ))
               )}
-
               {activeTab === 'profit-loss' && (
                 profitLossByCategory.length === 0 ? (
                   <tr><td colSpan={5} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো তথ্য পাওয়া যায়নি' : 'No data found'}</td></tr>
@@ -400,9 +376,7 @@ export default function AccountingReportPage() {
                     <td className="py-3 px-4 text-[0.8125rem] font-semibold text-[var(--text-primary)]">{bn ? r.nameBn : r.name}</td>
                     <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--green)]">{fmt(r.income)}</td>
                     <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--red)]">{fmt(r.expense)}</td>
-                    <td className="py-3 px-4 text-right text-[0.8125rem] font-bold" style={{ color: r.profit >= 0 ? 'var(--green)' : 'var(--red)' }}>
-                      {r.profit >= 0 ? '+' : ''}{fmt(r.profit)}
-                    </td>
+                    <td className="py-3 px-4 text-right text-[0.8125rem] font-bold" style={{ color: r.profit >= 0 ? 'var(--green)' : 'var(--red)' }}>{r.profit >= 0 ? '+' : ''}{fmt(r.profit)}</td>
                   </tr>
                 ))
               )}
