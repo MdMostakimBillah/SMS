@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { TrendingUp, TrendingDown, DollarSign, MoreVertical, ChevronDown, FileSpreadsheet, FileText, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useFeeStore } from '@/store/feeStore'
@@ -59,6 +59,8 @@ export default function AccountingReportPage() {
   const expenses = useExpenseStore((s) => s.expenses)
 
   const navigate = useNavigate()
+  const location = useLocation()
+  const basePath = location.pathname.replace(/accounting-report.*$/, 'finance')
   const [activeTab, setActiveTab] = useState<View>('income')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
@@ -169,7 +171,7 @@ export default function AccountingReportPage() {
     if (cat) {
       params.set('feeType', cat.type)
     }
-    navigate(`/finance?${params.toString()}`)
+    navigate(`${basePath}?${params.toString()}`)
   }, [feeStructures, feeCategories, bn, navigate])
 
   const handleExportExcel = () => {
