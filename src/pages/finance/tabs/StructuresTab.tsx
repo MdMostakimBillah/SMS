@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import React from 'react'
 import { Trash2, Edit2, ToggleLeft, ToggleRight, Copy, Search, Plus, Repeat, Zap, DollarSign, Tag } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { useBn } from '@/hooks/useBn'
 import { toBnNum } from '@/lib/i18n'
 import { useTabSlider } from '@/hooks/useTabSlider'
@@ -20,10 +21,13 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
   const bn = useBn()
   const { classes, institution } = useClassStore()
   const { structures, feeCategories, addStructure, deleteStructure, toggleStructureActive } = useFeeStore()
+  const [searchParams] = useSearchParams()
+  const initFeeType = (searchParams.get('feeType') || 'monthly') as 'monthly' | 'onetime'
+  const initCategoryId = searchParams.get('fCategory') || ''
   const [search, setSearch] = useState('')
   const [fClass, setFClass] = useState('')
-  const [fCategory, setFCategory] = useState('')
-  const [feeType, setFeeType] = useState<'monthly' | 'onetime'>('monthly')
+  const [fCategory, setFCategory] = useState(initCategoryId)
+  const [feeType, setFeeType] = useState<'monthly' | 'onetime'>(initFeeType)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [qName, setQName] = useState('')
   const [qNameBn, setQNameBn] = useState('')

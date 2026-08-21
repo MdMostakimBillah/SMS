@@ -5,6 +5,7 @@ import { useBn } from '@/hooks/useBn'
 import { useFeeStore } from '@/store/feeStore'
 import { useOthersIncomeStore } from '@/store/othersIncomeStore'
 import { useExpenseStore } from '@/store/expenseStore'
+import { useStoreStore } from '@/store/storeStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { toBnNum } from '@/lib/i18n'
 import { XLSX } from '@/lib/excelExport'
@@ -57,6 +58,9 @@ export default function AccountingReportPage() {
   const otherAssignments = useOthersIncomeStore((s) => s.assignments)
   const expenseCategories = useExpenseStore((s) => s.categories)
   const expenses = useExpenseStore((s) => s.expenses)
+  const storeCategories = useStoreStore((s) => s.categories)
+  const storeProducts = useStoreStore((s) => s.products)
+  const storeSales = useStoreStore((s) => s.sales)
 
   const navigate = useNavigate()
   const location = useLocation()
@@ -91,32 +95,51 @@ export default function AccountingReportPage() {
   }, [dateFrom, dateTo])
 
   const incomeByCategory = useMemo(() => {
-    const map = new Map<string, { name: string; nameBn: string; amount: number; count: number }>()
+    const map = new Map<string, { name: string; nameBn: string; amount: number; count: number; type: 'fee' | 'other' | 'store'; categoryId?: string }>()
+
     feePayments.filter((p) => filterByDate(p.paidAt.split('T')[0])).forEach((p) => {
       const struct = feeStructures.find((s) => s.id === p.feeStructureId)
       const catId = struct?.categoryId
       const cat = catId ? feeCategories.find((c) => c.id === catId) : null
       const displayName = cat ? (bn ? cat.nameBn : cat.name) : (struct ? (bn ? struct.nameBn : struct.name) : (bn ? 'ফি' : 'Fees'))
       const displayNameBn = cat?.nameBn || struct?.nameBn || 'ফি'
-      const key = cat ? cat.name : (struct?.name || 'UNCAT')
-      const existing = map.get(key) || { name: displayName, nameBn: displayNameBn, amount: 0, count: 0 }
+      const key = cat ? `fee-${cat.name}` : `fee-${struct?.name || 'UNCAT'}`
+      const existing = map.get(key) || { name: displayName, nameBn: displayNameBn, amount: 0, count: 0, type: 'fee' as const, categoryId: catId }
       existing.amount += p.amount - p.discount
       existing.count += 1
       map.set(key, existing)
     })
+
     otherAssignments.filter((a) => a.isActive).forEach((a) => {
       const cat = otherCategories.find((c) => c.id === a.categoryId)
       if (!cat) return
       const months = a.months.length > 0 ? a.months : [0,1,2,3,4,5,6,7,8,9,10,11]
       const total = months.length * cat.amount
       const name = bn ? cat.nameBn : cat.name
-      const existing = map.get(a.categoryId) || { name, nameBn: cat.nameBn, amount: 0, count: 0 }
+      const key = `other-${cat.name}`
+      const existing = map.get(key) || { name, nameBn: cat.nameBn, amount: 0, count: 0, type: 'other' as const }
       existing.amount += total
       existing.count += 1
-      map.set(a.categoryId, existing)
+      map.set(key, existing)
     })
+
+    storeSales.forEach((sale) => {
+      if (!filterByDate(sale.createdAt.split('T')[0])) return
+      sale.items.forEach((item) => {
+        const product = storeProducts.find((p) => p.id === item.productId)
+        const cat = product ? storeCategories.find((c) => c.id === product.categoryId) : null
+        const displayName = cat ? (bn ? cat.nameBn : cat.name) : (bn ? 'দোকান' : 'Store')
+        const displayNameBn = cat?.nameBn || (bn ? 'দোকান' : 'Store')
+        const key = cat ? `store-${cat.name}` : `store-${displayName}`
+        const existing = map.get(key) || { name: displayName, nameBn: displayNameBn, amount: 0, count: 0, type: 'store' as const }
+        existing.amount += item.subtotal
+        existing.count += 1
+        map.set(key, existing)
+      })
+    })
+
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount)
-  }, [feePayments, feeStructures, feeCategories, otherAssignments, otherCategories, bn, filterByDate])
+  }, [feePayments, feeStructures, feeCategories, otherAssignments, otherCategories, storeSales, storeProducts, storeCategories, bn, filterByDate])
 
   const expensesByCategory = useMemo(() => {
     const map = new Map<string, { name: string; nameBn: string; amount: number; count: number }>()
@@ -160,22 +183,32 @@ export default function AccountingReportPage() {
 
   const fmt = (n: number) => `৳${n.toLocaleString()}`
 
-  const navigateToDue = useCallback((categoryName: string) => {
-    const params = new URLSearchParams({ view: 'dues', status: 'paid' })
-    const cat = feeCategories.find((c) => c.name === categoryName || c.nameBn === categoryName)
+  const navigateToCategory = useCallback((row: { name: string; nameBn: string; type?: string; categoryId?: string }) => {
+    const catName = bn ? row.nameBn : row.name
+
+    if (row.type === 'store') {
+      navigate(`${basePath.replace('finance', 'store')}`)
+      return
+    }
+
+    if (row.type === 'other') {
+      navigate(`${basePath.replace('finance', 'others-income')}`)
+      return
+    }
+
+    const cat = feeCategories.find((c) => c.name === catName || c.nameBn === catName || c.name === row.name || c.nameBn === row.nameBn)
     if (cat) {
-      const struct = feeStructures.find((s) => s.categoryId === cat.id)
-      params.set('feeType', (struct?.type || cat.type))
-      params.set('category', struct?.name || cat.name)
+      const params = new URLSearchParams({ view: 'structures', feeType: cat.type, fCategory: cat.id })
+      navigate(`${basePath}?${params.toString()}`)
     } else {
-      const struct = feeStructures.find((s) => s.name === categoryName || s.nameBn === categoryName)
+      const struct = feeStructures.find((s) => s.name === row.name || s.nameBn === row.nameBn)
       if (struct) {
-        params.set('feeType', struct.type)
-        params.set('category', struct.name)
+        const params = new URLSearchParams({ view: 'structures', feeType: struct.type })
+        if (struct.categoryId) params.set('fCategory', struct.categoryId)
+        navigate(`${basePath}?${params.toString()}`)
       }
     }
-    navigate(`${basePath}?${params.toString()}`)
-  }, [feeStructures, feeCategories, navigate, basePath])
+  }, [feeStructures, feeCategories, bn, navigate, basePath])
 
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new()
@@ -370,7 +403,7 @@ export default function AccountingReportPage() {
                     <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)]">{i + 1}</td>
                     <td className="py-3 px-4 text-[0.8125rem] font-semibold text-[var(--text-primary)]">{bn ? r.nameBn : r.name}</td>
                     <td className="py-3 px-4 text-right">
-                      <button onClick={() => navigateToDue(r.name)} className="text-[0.8125rem] font-bold text-[var(--green)] hover:underline cursor-pointer bg-transparent border-none p-0 font-[inherit]">{fmt(r.amount)}</button>
+                      <button onClick={() => navigateToCategory(r)} className="text-[0.8125rem] font-bold text-[var(--green)] hover:underline cursor-pointer bg-transparent border-none p-0 font-[inherit]">{fmt(r.amount)}</button>
                     </td>
                     <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-primary)]">{r.count}</td>
                     <td className="py-3 px-4 text-right text-[0.8125rem] text-[var(--text-secondary)]">{totalIncome > 0 ? `${((r.amount / totalIncome) * 100).toFixed(1)}%` : '0%'}</td>
