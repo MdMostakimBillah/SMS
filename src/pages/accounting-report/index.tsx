@@ -96,10 +96,10 @@ export default function AccountingReportPage() {
       const struct = feeStructures.find((s) => s.id === p.feeStructureId)
       const catId = struct?.categoryId
       const cat = catId ? feeCategories.find((c) => c.id === catId) : null
-      const name = cat ? (bn ? cat.nameBn : cat.name) : (struct ? (bn ? struct.nameBn : struct.name) : (bn ? 'ফি' : 'Fees'))
-      const nameBn = cat?.nameBn || struct?.nameBn || 'ফি'
-      const key = catId || struct?.name || 'UNCAT'
-      const existing = map.get(key) || { name, nameBn, amount: 0, count: 0 }
+      const displayName = cat ? (bn ? cat.nameBn : cat.name) : (struct ? (bn ? struct.nameBn : struct.name) : (bn ? 'ফি' : 'Fees'))
+      const displayNameBn = cat?.nameBn || struct?.nameBn || 'ফি'
+      const key = cat ? cat.name : (struct?.name || 'UNCAT')
+      const existing = map.get(key) || { name: displayName, nameBn: displayNameBn, amount: 0, count: 0 }
       existing.amount += p.amount - p.discount
       existing.count += 1
       map.set(key, existing)
@@ -162,24 +162,20 @@ export default function AccountingReportPage() {
 
   const navigateToDue = useCallback((categoryName: string) => {
     const params = new URLSearchParams({ view: 'dues', status: 'paid' })
-    const cat = feeCategories.find((c) => (bn ? c.nameBn : c.name) === categoryName || c.name === categoryName)
+    const cat = feeCategories.find((c) => c.name === categoryName || c.nameBn === categoryName)
     if (cat) {
       const struct = feeStructures.find((s) => s.categoryId === cat.id)
-      if (struct) {
-        params.set('feeType', struct.type)
-        params.set('category', struct.name)
-      } else {
-        params.set('feeType', cat.type)
-      }
+      params.set('feeType', (struct?.type || cat.type))
+      params.set('category', struct?.name || cat.name)
     } else {
-      const struct = feeStructures.find((s) => (bn ? s.nameBn : s.name) === categoryName || s.name === categoryName)
+      const struct = feeStructures.find((s) => s.name === categoryName || s.nameBn === categoryName)
       if (struct) {
         params.set('feeType', struct.type)
         params.set('category', struct.name)
       }
     }
     navigate(`${basePath}?${params.toString()}`)
-  }, [feeStructures, feeCategories, bn, navigate, basePath])
+  }, [feeStructures, feeCategories, navigate, basePath])
 
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new()
