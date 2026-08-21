@@ -235,7 +235,7 @@ export default function AccountingReportPage() {
       return
     }
     const struct = feeStructures.find((s) => s.name === row.name || s.nameBn === row.nameBn)
-    const params = new URLSearchParams({ view: 'dues', status: 'paid' })
+    const params = new URLSearchParams({ view: 'dues', status: 'paid', months: '0,1,2,3,4,5,6,7,8,9,10,11' })
     if (struct) {
       params.set('feeType', struct.type)
       params.set('category', struct.name)
