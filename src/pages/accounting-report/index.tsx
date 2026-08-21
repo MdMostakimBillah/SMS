@@ -192,14 +192,14 @@ export default function AccountingReportPage() {
       return
     }
     const struct = feeStructures.find((s) => s.name === row.name || s.nameBn === row.nameBn)
+    const params = new URLSearchParams({ view: 'dues', status: 'paid' })
     if (struct) {
-      const params = new URLSearchParams({ view: 'structures', feeType: struct.type })
-      if (struct.categoryId) params.set('fCategory', struct.categoryId)
-      navigate(`${basePath}?${params.toString()}`)
+      params.set('feeType', struct.type)
+      params.set('category', struct.name)
     } else {
-      const params = new URLSearchParams({ view: 'structures' })
-      navigate(`${basePath}?${params.toString()}`)
+      params.set('category', row.name)
     }
+    navigate(`${basePath}?${params.toString()}`)
   }, [feeStructures, navigate, basePath])
 
   const handleExportExcel = () => {
