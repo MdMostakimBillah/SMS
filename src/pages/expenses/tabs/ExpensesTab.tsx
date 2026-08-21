@@ -171,42 +171,42 @@ export const ExpensesTab = ({ searchQuery }: Props) => {
           </button>
         </div>
       </div>
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] overflow-hidden">
+      <div className="rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full">
             <thead>
-              <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
-                <th className="py-2.5 pl-3 pr-2"><ModernCheckbox checked={selected.size === paginated.length && paginated.length > 0} onChange={toggleAll} /></th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'তারিখ' : 'Date'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'বিবরণ' : 'Description'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'পেমেন্ট' : 'Payment'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
+              <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+                <th className="py-2.5 pl-4 pr-2"><ModernCheckbox checked={selected.size === paginated.length && paginated.length > 0} onChange={toggleAll} /></th>
+                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'তারিখ' : 'Date'}</th>
+                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'বিবরণ' : 'Description'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পেমেন্ট' : 'Payment'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'কার্যক্রম' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody>
               {paginated.length === 0 ? (
                 <tr><td colSpan={8} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো খরচ পাওয়া যায়নি' : 'No expenses found'}</td></tr>
               ) : paginated.map((e) => (
-                <tr key={e.id} className={`border-b border-[var(--border)] last:border-b-0 transition-colors hover:bg-[var(--surface)] ${selected.has(e.id) ? 'bg-[var(--brand)]/5' : ''}`}>
-                  <td className="py-2.5 pl-3 pr-2"><ModernCheckbox checked={selected.has(e.id)} onChange={() => { setSelected((prev) => { const next = new Set(prev); if (next.has(e.id)) next.delete(e.id); else next.add(e.id); return next }) }} /></td>
-                  <td className="py-2.5 px-3 text-[12px] text-[var(--text-primary)]">{e.date}</td>
-                  <td className="py-2.5 px-3 text-[12px] text-[var(--text-primary)]">{e.categoryName}</td>
-                  <td className="py-2.5 px-3 text-center text-[12px] font-bold text-[var(--red)]">{fmt(e.amount)}</td>
-                  <td className="py-2.5 px-3 text-[12px] text-[var(--text-primary)] max-w-[200px] truncate">{bn ? e.descriptionBn || e.description : e.description}</td>
-                  <td className="py-2.5 px-3 text-center">
+                <tr key={e.id} className={`border-b border-[var(--border)] last:border-0 transition-colors hover:bg-[var(--bg-tertiary)] ${selected.has(e.id) ? 'bg-[var(--brand)]/5' : ''}`}>
+                  <td className="py-3 pl-4 pr-2"><ModernCheckbox checked={selected.has(e.id)} onChange={() => { setSelected((prev) => { const next = new Set(prev); if (next.has(e.id)) next.delete(e.id); else next.add(e.id); return next }) }} /></td>
+                  <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-primary)]">{e.date}</td>
+                  <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-primary)]">{e.categoryName}</td>
+                  <td className="py-3 px-4 text-center text-[0.8125rem] font-bold text-[var(--red)]">{fmt(e.amount)}</td>
+                  <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-primary)] max-w-[200px] truncate">{bn ? e.descriptionBn || e.description : e.description}</td>
+                  <td className="py-3 px-4 text-center">
                     <span className="inline-block text-[9px] font-bold uppercase px-2 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">
                       {e.paymentLabel ? (bn ? e.paymentLabel.labelBn : e.paymentLabel.label) : e.paymentMethod}
                     </span>
                   </td>
-                  <td className="py-2.5 px-3 text-center">
+                  <td className="py-3 px-4 text-center">
                     <span className={`inline-block text-[9px] font-bold uppercase px-2 py-0.5 rounded ${e.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
                       {e.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
                     </span>
                   </td>
-                  <td className="py-2.5 px-3 text-center">
+                  <td className="py-3 px-4 text-center">
                     <div className="flex items-center gap-1 justify-center">
                       <button onClick={() => { setEditItem(e); setShowModal(true) }} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors"><Edit size={13} /></button>
                       <button onClick={() => toggleExpenseActive(e.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors" title={e.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}><Eye size={13} /></button>
