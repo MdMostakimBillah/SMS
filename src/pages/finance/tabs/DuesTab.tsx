@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
 import { Search, DollarSign, Users, CalendarDays, Ban, CheckCircle2, ChevronDown, CircleCheck, FileSpreadsheet, FileText, MoreVertical } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -88,20 +89,32 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     return map
   }, [waivers])
 
-  const [fType, setFType] = useState<'monthly' | 'onetime' | ''>('')
-  const [fCategory, setFCategory] = useState('')
+  const [searchParams] = useSearchParams()
+  const initType = (searchParams.get('feeType') || '') as 'monthly' | 'onetime' | ''
+  const initCategory = searchParams.get('category') || ''
+  const initStatus = (searchParams.get('status') || 'all') as 'all' | 'paid' | 'due' | 'paiddue'
+  const initMonths = searchParams.get('months')
+
+  const [fType, setFType] = useState<'monthly' | 'onetime' | ''>(initType)
+  const [fCategory, setFCategory] = useState(initCategory)
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
-  const [fStatus, setFStatus] = useState<'all' | 'paid' | 'due' | 'paiddue'>('all')
+  const [fStatus, setFStatus] = useState<'all' | 'paid' | 'due' | 'paiddue'>(initStatus)
   const [searchText, setSearchText] = useState('')
   const { institution } = useClassStore()
   const sessions = institution?.sessions || []
   const [fSession, setFSession] = useState(() => institution?.currentSession || '')
   const fYear = parseInt(fSession.split('-')[0]) || new Date().getFullYear()
-  const [selectedMonths, setSelectedMonths] = useState<Set<number>>(new Set([new Date().getMonth()]))
+  const [selectedMonths, setSelectedMonths] = useState<Set<number>>(() => {
+    if (initMonths) {
+      const parsed = initMonths.split(',').map(Number).filter((n) => !isNaN(n) && n >= 0 && n <= 11)
+      if (parsed.length > 0) return new Set(parsed)
+    }
+    return new Set([new Date().getMonth()])
+  })
   const [showMonthDropdown, setShowMonthDropdown] = useState(false)
   const monthDropdownRef = useRef<HTMLDivElement>(null)
-  const [showResults, setShowResults] = useState(false)
+  const [showResults, setShowResults] = useState(() => searchParams.has('feeType') || searchParams.has('category'))
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
   const [showActionMenu, setShowActionMenu] = useState(false)
   const actionMenuRef = useRef<HTMLDivElement>(null)
