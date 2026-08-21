@@ -209,7 +209,7 @@ export const CategoriesTab = ({ searchQuery }: Props) => {
                 <th className="py-2.5 pl-3 pr-2">
                   <ModernCheckbox checked={selected.size === paginated.length && paginated.length > 0} onChange={toggleAll} />
                 </th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'নাম' : 'Name'}</th>
+                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'নাম' : 'Name'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধরন' : 'Type'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
                 <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
