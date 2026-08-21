@@ -244,11 +244,9 @@ export const CategoriesTab = ({ searchQuery }: Props) => {
                       <button onClick={() => toggleCategoryActive(c.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors" title={c.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}>
                         <Eye size={13} />
                       </button>
-                      {!c.isSystem && (
-                        <button onClick={() => setDeleteId(c.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
-                          <Trash2 size={13} />
-                        </button>
-                      )}
+                      <button onClick={() => setDeleteId(c.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </td>
                 </tr>
