@@ -94,7 +94,7 @@ export default function AccountingReportPage() {
       const cat = catId ? feeCategories.find((c) => c.id === catId) : null
       const name = cat ? (bn ? cat.nameBn : cat.name) : (struct ? (bn ? struct.nameBn : struct.name) : (bn ? 'ফি' : 'Fees'))
       const nameBn = cat?.nameBn || struct?.nameBn || 'ফি'
-      const key = catId || struct?.id || 'FEE-UNCAT'
+      const key = name
       const existing = map.get(key) || { name, nameBn, amount: 0, count: 0 }
       existing.amount += p.amount - p.discount
       existing.count += 1
