@@ -15,12 +15,14 @@ import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsMod
 import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
 
 type View = 'income' | 'expenses' | 'profit-loss'
+type SourceType = 'monthly' | 'onetime' | 'other' | 'store'
 
 interface CategoryRow {
   name: string
   nameBn: string
   amount: number
   count: number
+  sourceType?: SourceType
 }
 
 function StatCards({ stats, bn }: { stats: { totalIncome: number; totalExpenses: number; netProfit: number; margin: number }; bn: boolean }) {
@@ -53,12 +55,10 @@ export default function AccountingReportPage() {
   const bn = useBn()
   const feePayments = useFeeStore((s) => s.payments)
   const feeStructures = useFeeStore((s) => s.structures)
-  const feeCategories = useFeeStore((s) => s.feeCategories)
   const otherCategories = useOthersIncomeStore((s) => s.categories)
   const otherAssignments = useOthersIncomeStore((s) => s.assignments)
   const expenseCategories = useExpenseStore((s) => s.categories)
   const expenses = useExpenseStore((s) => s.expenses)
-  const storeCategories = useStoreStore((s) => s.categories)
   const storeProducts = useStoreStore((s) => s.products)
   const storeSales = useStoreStore((s) => s.sales)
 
@@ -95,18 +95,37 @@ export default function AccountingReportPage() {
   }, [dateFrom, dateTo])
 
   const incomeByCategory = useMemo(() => {
-    const map = new Map<string, { name: string; nameBn: string; amount: number; count: number; type: 'fee' | 'other' | 'store'; categoryId?: string }>()
+    interface IncomeEntry {
+      name: string
+      nameBn: string
+      amount: number
+      count: number
+      sourceType: SourceType
+      categoryId?: string
+    }
+    const map = new Map<string, IncomeEntry>()
+    const studentSets = new Map<string, Set<string>>()
 
     feePayments.filter((p) => filterByDate(p.paidAt.split('T')[0])).forEach((p) => {
       const struct = feeStructures.find((s) => s.id === p.feeStructureId)
       if (!struct) return
-      const displayName = bn ? struct.nameBn : struct.name
-      const displayNameBn = struct.nameBn
-      const key = `fee-${struct.name}`
-      const existing = map.get(key) || { name: displayName, nameBn: displayNameBn, amount: 0, count: 0, type: 'fee' as const, categoryId: struct.categoryId }
-      existing.amount += p.amount - p.discount
-      existing.count += 1
-      map.set(key, existing)
+      const key = `fee-${struct.name.trim().toLowerCase()}`
+      const existing = map.get(key)
+      if (existing) {
+        existing.amount += p.amount - p.discount
+      } else {
+        map.set(key, {
+          name: struct.name,
+          nameBn: struct.nameBn,
+          amount: p.amount - p.discount,
+          count: 0,
+          sourceType: struct.type === 'monthly' ? 'monthly' : 'onetime',
+          categoryId: struct.categoryId,
+        })
+        studentSets.set(key, new Set())
+      }
+      studentSets.get(key)!.add(p.studentId)
+      map.get(key)!.count = studentSets.get(key)!.size
     })
 
     otherAssignments.filter((a) => a.isActive).forEach((a) => {
@@ -114,31 +133,48 @@ export default function AccountingReportPage() {
       if (!cat) return
       const months = a.months.length > 0 ? a.months : [0,1,2,3,4,5,6,7,8,9,10,11]
       const total = months.length * cat.amount
-      const name = bn ? cat.nameBn : cat.name
-      const key = `other-${cat.name}`
-      const existing = map.get(key) || { name, nameBn: cat.nameBn, amount: 0, count: 0, type: 'other' as const }
-      existing.amount += total
-      existing.count += 1
-      map.set(key, existing)
+      const key = `other-${cat.name.trim().toLowerCase()}`
+      const existing = map.get(key)
+      if (existing) {
+        existing.amount += total
+      } else {
+        map.set(key, {
+          name: cat.name,
+          nameBn: cat.nameBn,
+          amount: total,
+          count: 0,
+          sourceType: 'other',
+        })
+        studentSets.set(key, new Set())
+      }
+      studentSets.get(key)!.add(a.studentId)
+      map.get(key)!.count = studentSets.get(key)!.size
     })
 
     storeSales.forEach((sale) => {
       if (!filterByDate(sale.createdAt.split('T')[0])) return
       sale.items.forEach((item) => {
         const product = storeProducts.find((p) => p.id === item.productId)
-        const cat = product ? storeCategories.find((c) => c.id === product.categoryId) : null
-        const displayName = cat ? (bn ? cat.nameBn : cat.name) : (bn ? 'দোকান' : 'Store')
-        const displayNameBn = cat?.nameBn || (bn ? 'দোকান' : 'Store')
-        const key = cat ? `store-${cat.name}` : `store-${displayName}`
-        const existing = map.get(key) || { name: displayName, nameBn: displayNameBn, amount: 0, count: 0, type: 'store' as const }
-        existing.amount += item.subtotal
-        existing.count += 1
-        map.set(key, existing)
+        if (!product) return
+        const key = `store-${product.name.trim().toLowerCase()}`
+        const existing = map.get(key)
+        if (existing) {
+          existing.amount += item.subtotal
+          existing.count += item.qty
+        } else {
+          map.set(key, {
+            name: product.name,
+            nameBn: product.nameBn,
+            amount: item.subtotal,
+            count: item.qty,
+            sourceType: 'store',
+          })
+        }
       })
     })
 
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount)
-  }, [feePayments, feeStructures, feeCategories, otherAssignments, otherCategories, storeSales, storeProducts, storeCategories, bn, filterByDate])
+  }, [feePayments, feeStructures, otherAssignments, otherCategories, storeSales, storeProducts, filterByDate])
 
   const expensesByCategory = useMemo(() => {
     const map = new Map<string, { name: string; nameBn: string; amount: number; count: number }>()
@@ -182,12 +218,19 @@ export default function AccountingReportPage() {
 
   const fmt = (n: number) => `৳${n.toLocaleString()}`
 
-  const navigateToCategory = useCallback((row: { name: string; nameBn: string; type?: string; categoryId?: string }) => {
-    if (row.type === 'store') {
+  const sourceBadge: Record<SourceType, { label: string; labelBn: string; bg: string; color: string }> = {
+    monthly: { label: 'Monthly', labelBn: 'মাসিক', bg: 'var(--brand-light)', color: 'var(--brand)' },
+    onetime: { label: 'One-Time', labelBn: 'এককালীন', bg: 'var(--purple-light)', color: 'var(--purple)' },
+    other: { label: 'Other', labelBn: 'অন্যান্য', bg: 'var(--amber-light)', color: 'var(--amber)' },
+    store: { label: 'Store', labelBn: 'দোকান', bg: 'var(--green-light)', color: 'var(--green)' },
+  }
+
+  const navigateToCategory = useCallback((row: { name: string; nameBn: string; sourceType?: SourceType; categoryId?: string }) => {
+    if (row.sourceType === 'store') {
       navigate(`${basePath.replace('finance', 'store')}`)
       return
     }
-    if (row.type === 'other') {
+    if (row.sourceType === 'other') {
       navigate(`${basePath.replace('finance', 'others-income')}`)
       return
     }
@@ -209,7 +252,7 @@ export default function AccountingReportPage() {
       XLSX.utils.book_append_sheet(wb, ws, name)
     }
     if (activeTab === 'income' || activeTab === 'profit-loss') {
-      addSheet(incomeByCategory.map((r, i) => ({ [bn ? 'ক্রমিক' : 'S/N']: i + 1, [bn ? 'ক্যাটাগরি' : 'Category']: bn ? r.nameBn : r.name, [bn ? 'পরিমাণ' : 'Amount']: r.amount, [bn ? 'সংখ্যা' : 'Count']: r.count })), bn ? 'আয়' : 'Income')
+      addSheet(incomeByCategory.map((r, i) => ({ [bn ? 'ক্রমিক' : 'S/N']: i + 1, [bn ? 'ক্যাটাগরি' : 'Category']: bn ? r.nameBn : r.name, [bn ? 'ধরন' : 'Type']: r.sourceType ? (bn ? sourceBadge[r.sourceType].labelBn : sourceBadge[r.sourceType].label) : '', [bn ? 'পরিমাণ' : 'Amount']: r.amount, [bn ? 'শিক্ষার্থী' : 'Students']: r.count })), bn ? 'আয়' : 'Income')
     }
     if (activeTab === 'expenses' || activeTab === 'profit-loss') {
       addSheet(expensesByCategory.map((r, i) => ({ [bn ? 'ক্রমিক' : 'S/N']: i + 1, [bn ? 'ক্যাটাগরি' : 'Category']: bn ? r.nameBn : r.name, [bn ? 'পরিমাণ' : 'Amount']: r.amount, [bn ? 'সংখ্যা' : 'Count']: r.count })), bn ? 'খরচ' : 'Expenses')
@@ -234,8 +277,9 @@ export default function AccountingReportPage() {
     return [
       { key: 'sn', label: 'S/N', labelBn: 'ক্রমিক', default: true },
       { key: 'category', label: 'Category', labelBn: 'ক্যাটাগরি', default: true },
+      { key: 'type', label: 'Type', labelBn: 'ধরন', default: true },
       { key: 'amount', label: 'Amount', labelBn: 'পরিমাণ', default: true },
-      { key: 'count', label: 'Count', labelBn: 'সংখ্যা', default: true },
+      { key: 'count', label: 'Students', labelBn: 'শিক্ষার্থী', default: true },
     ]
   }, [activeTab])
 
@@ -247,7 +291,8 @@ export default function AccountingReportPage() {
         switch (key) {
           case 'category': row[bn ? 'ক্যাটাগরি' : 'Category'] = bn ? r.nameBn : r.name; break
           case 'amount': row[bn ? 'পরিমাণ' : 'Amount'] = `৳${(r as CategoryRow).amount.toLocaleString()}`; break
-          case 'count': row[bn ? 'সংখ্যা' : 'Count'] = String((r as CategoryRow).count); break
+          case 'count': row[bn ? 'শিক্ষার্থী' : 'Students'] = String((r as CategoryRow).count); break
+          case 'type': { const t = (r as CategoryRow).sourceType; row[bn ? 'ধরন' : 'Type'] = t ? (bn ? sourceBadge[t].labelBn : sourceBadge[t].label) : ''; break }
           case 'income': row[bn ? 'আয়' : 'Income'] = `৳${(r as { income: number }).income.toLocaleString()}`; break
           case 'expense': row[bn ? 'খরচ' : 'Expense'] = `৳${(r as { expense: number }).expense.toLocaleString()}`; break
           case 'profit': row[bn ? 'লাভ/ক্ষতি' : 'Profit/Loss'] = `৳${(r as { profit: number }).profit.toLocaleString()}`; break
@@ -277,7 +322,8 @@ export default function AccountingReportPage() {
         switch (key) {
           case 'category': row[opts.isBn ? 'ক্যাটাগরি' : 'Category'] = bn ? r.nameBn : r.name; break
           case 'amount': row[opts.isBn ? 'পরিমাণ' : 'Amount'] = (r as CategoryRow).amount; break
-          case 'count': row[opts.isBn ? 'সংখ্যা' : 'Count'] = (r as CategoryRow).count; break
+          case 'count': row[opts.isBn ? 'শিক্ষার্থী' : 'Students'] = (r as CategoryRow).count; break
+          case 'type': { const t = (r as CategoryRow).sourceType; row[opts.isBn ? 'ধরন' : 'Type'] = t ? (opts.isBn ? sourceBadge[t].labelBn : sourceBadge[t].label) : ''; break }
           case 'income': row[opts.isBn ? 'আয়' : 'Income'] = (r as { income: number }).income; break
           case 'expense': row[opts.isBn ? 'খরচ' : 'Expense'] = (r as { expense: number }).expense; break
           case 'profit': row[opts.isBn ? 'লাভ/ক্ষতি' : 'Profit/Loss'] = (r as { profit: number }).profit; break
@@ -379,8 +425,9 @@ export default function AccountingReportPage() {
                   </>
                 ) : (
                   <>
+                    {activeTab === 'income' && <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ধরন' : 'Type'}</th>}
                     <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                    <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'সংখ্যা' : 'Count'}</th>
+                    <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{activeTab === 'income' ? (bn ? 'শিক্ষার্থী' : 'Students') : (bn ? 'সংখ্যা' : 'Count')}</th>
                     <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'শতাংশ' : 'Share'}</th>
                   </>
                 )}
@@ -389,18 +436,24 @@ export default function AccountingReportPage() {
             <tbody>
               {activeTab === 'income' && (
                 incomeByCategory.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো আয়ের তথ্য পাওয়া যায়নি' : 'No income data found'}</td></tr>
-                ) : incomeByCategory.map((r, i) => (
-                  <tr key={i} className="border-b border-[var(--border)] last:border-0 transition-colors hover:bg-[var(--bg-tertiary)]">
-                    <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)]">{i + 1}</td>
-                    <td className="py-3 px-4 text-[0.8125rem] font-semibold text-[var(--text-primary)]">{bn ? r.nameBn : r.name}</td>
-                    <td className="py-3 px-4 text-right">
-                      <button onClick={() => navigateToCategory(r)} className="text-[0.8125rem] font-bold text-[var(--green)] hover:underline cursor-pointer bg-transparent border-none p-0 font-[inherit]">{fmt(r.amount)}</button>
-                    </td>
-                    <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-primary)]">{r.count}</td>
-                    <td className="py-3 px-4 text-right text-[0.8125rem] text-[var(--text-secondary)]">{totalIncome > 0 ? `${((r.amount / totalIncome) * 100).toFixed(1)}%` : '0%'}</td>
-                  </tr>
-                ))
+                  <tr><td colSpan={6} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো আয়ের তথ্য পাওয়া যায়নি' : 'No income data found'}</td></tr>
+                ) : incomeByCategory.map((r, i) => {
+                  const badge = r.sourceType ? sourceBadge[r.sourceType] : null
+                  return (
+                    <tr key={i} className="border-b border-[var(--border)] last:border-0 transition-colors hover:bg-[var(--bg-tertiary)]">
+                      <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)]">{i + 1}</td>
+                      <td className="py-3 px-4 text-[0.8125rem] font-semibold text-[var(--text-primary)]">{bn ? r.nameBn : r.name}</td>
+                      <td className="py-3 px-4">
+                        {badge && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[0.625rem] font-semibold" style={{ background: badge.bg, color: badge.color }}>{bn ? badge.labelBn : badge.label}</span>}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button onClick={() => navigateToCategory(r)} className="text-[0.8125rem] font-bold text-[var(--green)] hover:underline cursor-pointer bg-transparent border-none p-0 font-[inherit]">{fmt(r.amount)}</button>
+                      </td>
+                      <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-primary)]">{r.count}</td>
+                      <td className="py-3 px-4 text-right text-[0.8125rem] text-[var(--text-secondary)]">{totalIncome > 0 ? `${((r.amount / totalIncome) * 100).toFixed(1)}%` : '0%'}</td>
+                    </tr>
+                  )
+                })
               )}
               {activeTab === 'expenses' && (
                 expensesByCategory.length === 0 ? (
