@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Edit, Trash2, Plus, MoreVertical, ChevronDown, Tag, FileSpreadsheet, FileText, Eye } from 'lucide-react'
+import { Edit, Trash2, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Eye, Wallet, Home, Zap, Wrench, Paperclip, Package, Truck, Tag, Cpu, BookOpen, Users, Heart, Gift, Shield, Music, Camera } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useExpenseStore, type ExpenseCategory } from '@/store/expenseStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
@@ -15,6 +16,12 @@ import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 interface Props {
   searchQuery: string
+}
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  wallet: Wallet, home: Home, zap: Zap, wrench: Wrench, paperclip: Paperclip,
+  package: Package, truck: Truck, tag: Tag, cpu: Cpu, book: BookOpen,
+  users: Users, heart: Heart, gift: Gift, shield: Shield, music: Music, camera: Camera,
 }
 
 export const CategoriesTab = ({ searchQuery }: Props) => {
@@ -221,7 +228,7 @@ export const CategoriesTab = ({ searchQuery }: Props) => {
                   <td className="py-2.5 px-3">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand)18', color: 'var(--brand)' }}>
-                        <Tag size={13} />
+                        {(() => { const Icon = ICON_MAP[c.icon] || Tag; return <Icon size={13} /> })()}
                       </div>
                       <div className="text-[12px] font-semibold text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</div>
                     </div>
