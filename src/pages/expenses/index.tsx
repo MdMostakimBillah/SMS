@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Tag, Receipt, RefreshCw, Search } from 'lucide-react'
+import { Tag, Receipt, RefreshCw, Search, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useExpenseStore } from '@/store/expenseStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
@@ -136,6 +136,11 @@ export default function ExpensesManagementPage() {
           className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs font-[inherit] outline-none box-border"
           placeholder={bn ? 'খুঁজুন...' : 'Search...'}
         />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[var(--border)] flex items-center justify-center cursor-pointer border-0 text-[var(--text-muted)] hover:bg-[var(--text-muted)] hover:text-white transition-colors">
+            <X size={9} />
+          </button>
+        )}
       </div>
 
       {activeTab === 'categories' && <CategoriesTab searchQuery={searchQuery} />}
