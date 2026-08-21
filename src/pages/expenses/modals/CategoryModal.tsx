@@ -1,13 +1,31 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Tag, X } from 'lucide-react'
+import { Tag, X, Wallet, Home, Zap, Wrench, Paperclip, Package, Truck, Cpu, BookOpen, Users, Heart, Gift, Shield, Music, Camera } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useExpenseStore, expenseCategoryId, type ExpenseCategory } from '@/store/expenseStore'
 
 const inputCls = 'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10'
 const labelCls = 'block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.03em] mb-[5px]'
 
-const ICON_OPTIONS = ['wallet', 'home', 'zap', 'wrench', 'paperclip', 'package', 'truck', 'tag', 'cpu', 'book', 'users', 'heart', 'gift', 'shield', 'music', 'camera']
+const ICON_OPTIONS: { key: string; icon: LucideIcon }[] = [
+  { key: 'wallet', icon: Wallet },
+  { key: 'home', icon: Home },
+  { key: 'zap', icon: Zap },
+  { key: 'wrench', icon: Wrench },
+  { key: 'paperclip', icon: Paperclip },
+  { key: 'package', icon: Package },
+  { key: 'truck', icon: Truck },
+  { key: 'tag', icon: Tag },
+  { key: 'cpu', icon: Cpu },
+  { key: 'book', icon: BookOpen },
+  { key: 'users', icon: Users },
+  { key: 'heart', icon: Heart },
+  { key: 'gift', icon: Gift },
+  { key: 'shield', icon: Shield },
+  { key: 'music', icon: Music },
+  { key: 'camera', icon: Camera },
+]
 
 interface Props {
   existing?: ExpenseCategory | null
@@ -79,10 +97,10 @@ export function CategoryModal({ existing, onSaved, onClose }: Props) {
           <div>
             <label className={labelCls}>{bn ? 'আইকন' : 'Icon'}</label>
             <div className="grid grid-cols-8 gap-1.5">
-              {ICON_OPTIONS.map((ic) => (
-                <button key={ic} type="button" onClick={() => setIcon(ic)}
-                  className={`w-9 h-9 rounded-lg border flex items-center justify-center cursor-pointer transition-all text-[var(--text-muted)] ${icon === ic ? 'border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/30'}`}>
-                  <span className="text-[11px] font-bold uppercase">{ic.charAt(0)}</span>
+              {ICON_OPTIONS.map(({ key, icon: Icon }) => (
+                <button key={key} type="button" onClick={() => setIcon(key)}
+                  className={`w-9 h-9 rounded-lg border flex items-center justify-center cursor-pointer transition-all text-[var(--text-muted)] ${icon === key ? 'border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/30'}`}>
+                  <Icon size={15} />
                 </button>
               ))}
             </div>
