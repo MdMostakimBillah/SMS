@@ -218,14 +218,12 @@ export const CategoriesTab = ({ searchQuery }: Props) => {
                       setSelected((prev) => { const next = new Set(prev); if (next.has(c.id)) next.delete(c.id); else next.add(c.id); return next })
                     }} />
                   </td>
-                  <td className="py-2.5 px-3 text-center">
-                    <div className="flex items-center gap-2 justify-center">
+                  <td className="py-2.5 px-3">
+                    <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand)18', color: 'var(--brand)' }}>
                         <Tag size={13} />
                       </div>
-                      <div className="text-left">
-                        <div className="text-[12px] font-semibold text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</div>
-                      </div>
+                      <div className="text-[12px] font-semibold text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</div>
                     </div>
                   </td>
                   <td className="py-2.5 px-3 text-center">
