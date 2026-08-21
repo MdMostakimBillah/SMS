@@ -53,7 +53,7 @@ export default function AccountingReportPage() {
   const bn = useBn()
   const feePayments = useFeeStore((s) => s.payments)
   const feeStructures = useFeeStore((s) => s.structures)
-  const feeCategories = useFeeStore((s) => s.categories)
+  const feeCategories = useFeeStore((s) => s.feeCategories)
   const otherCategories = useOthersIncomeStore((s) => s.categories)
   const otherAssignments = useOthersIncomeStore((s) => s.assignments)
   const expenseCategories = useExpenseStore((s) => s.categories)
