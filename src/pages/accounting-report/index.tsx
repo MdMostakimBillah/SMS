@@ -1,9 +1,10 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { TrendingUp, TrendingDown, DollarSign, MoreVertical, ChevronDown, FileSpreadsheet, FileText, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, MoreVertical, ChevronDown, FileSpreadsheet, FileText, ArrowUpRight, ArrowDownRight, X, User, ChevronLeft } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useFeeStore } from '@/store/feeStore'
 import { useOthersIncomeStore } from '@/store/othersIncomeStore'
 import { useExpenseStore } from '@/store/expenseStore'
+import { useAdmissionStore } from '@/store/admissionStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { toBnNum } from '@/lib/i18n'
 import { XLSX } from '@/lib/excelExport'
@@ -56,6 +57,7 @@ export default function AccountingReportPage() {
   const otherAssignments = useOthersIncomeStore((s) => s.assignments)
   const expenseCategories = useExpenseStore((s) => s.categories)
   const expenses = useExpenseStore((s) => s.expenses)
+  const students = useAdmissionStore((s) => s.students)
 
   const [activeTab, setActiveTab] = useState<View>('income')
   const [dateFrom, setDateFrom] = useState('')
@@ -63,6 +65,7 @@ export default function AccountingReportPage() {
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [drillCategory, setDrillCategory] = useState<string | null>(null)
   const actionMenuRef = useRef<HTMLDivElement>(null)
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
@@ -113,6 +116,82 @@ export default function AccountingReportPage() {
     })
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount)
   }, [feePayments, feeStructures, feeCategories, otherAssignments, otherCategories, bn, filterByDate])
+
+  interface IncomeDetail {
+    id: string
+    studentName: string
+    studentNameBn: string
+    roll: string
+    className: string
+    amount: number
+    date: string
+    method: string
+    note: string
+    forMonth?: string
+    source: 'fee' | 'other'
+  }
+
+  const incomeDetailsMap = useMemo(() => {
+    const map = new Map<string, IncomeDetail[]>()
+    feePayments.filter((p) => filterByDate(p.paidAt.split('T')[0])).forEach((p) => {
+      const struct = feeStructures.find((s) => s.id === p.feeStructureId)
+      const catId = struct?.categoryId
+      const cat = catId ? feeCategories.find((c) => c.id === catId) : null
+      const catName = cat ? (bn ? cat.nameBn : cat.name) : (struct ? (bn ? struct.nameBn : struct.name) : (bn ? 'ফি' : 'Fees'))
+      const stu = students.find((s) => s.id === p.studentId)
+      const methodLabels: Record<string, string> = { cash: bn ? 'নগদ' : 'Cash', bank: bn ? 'ব্যাংক' : 'Bank', mobile: bn ? 'মোবাইল' : 'Mobile', other: bn ? 'অন্যান্য' : 'Other' }
+      const detail: IncomeDetail = {
+        id: p.id,
+        studentName: stu?.nameEn || p.studentId,
+        studentNameBn: stu?.nameBn || p.studentId,
+        roll: stu?.roll || '-',
+        className: stu?.class || '-',
+        amount: p.amount - p.discount,
+        date: p.paidAt.split('T')[0],
+        method: methodLabels[p.method] || p.method,
+        note: p.note || '-',
+        forMonth: p.forMonth,
+        source: 'fee',
+      }
+      const arr = map.get(catName) || []
+      arr.push(detail)
+      map.set(catName, arr)
+    })
+    otherAssignments.filter((a) => a.isActive).forEach((a) => {
+      const cat = otherCategories.find((c) => c.id === a.categoryId)
+      if (!cat) return
+      const months = a.months.length > 0 ? a.months : [0,1,2,3,4,5,6,7,8,9,10,11]
+      const catName = bn ? cat.nameBn : cat.name
+      const stu = students.find((s) => s.id === a.studentId)
+      months.forEach((m) => {
+        const monthNames = bn ? ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'] : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+        const detail: IncomeDetail = {
+          id: `${a.id}-${m}`,
+          studentName: stu?.nameEn || a.studentId,
+          studentNameBn: stu?.nameBn || a.studentId,
+          roll: stu?.roll || '-',
+          className: stu?.class || '-',
+          amount: cat.amount,
+          date: a.assignedDate,
+          method: bn ? 'বরাদ্দ' : 'Assigned',
+          note: monthNames[m],
+          forMonth: monthNames[m],
+          source: 'other',
+        }
+        const arr = map.get(catName) || []
+        arr.push(detail)
+        map.set(catName, arr)
+      })
+    })
+    return map
+  }, [feePayments, feeStructures, feeCategories, otherAssignments, otherCategories, students, bn, filterByDate])
+
+  const drillDetails = useMemo(() => {
+    if (!drillCategory) return []
+    return incomeDetailsMap.get(drillCategory) || []
+  }, [drillCategory, incomeDetailsMap])
+
+  const drillTotal = useMemo(() => drillDetails.reduce((s, r) => s + r.amount, 0), [drillDetails])
 
   const expensesByCategory = useMemo(() => {
     const map = new Map<string, { name: string; nameBn: string; amount: number; count: number }>()
@@ -348,7 +427,9 @@ export default function AccountingReportPage() {
                   <tr key={i} className="border-b border-[var(--border)] last:border-0 transition-colors hover:bg-[var(--bg-tertiary)]">
                     <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)]">{i + 1}</td>
                     <td className="py-3 px-4 text-[0.8125rem] font-semibold text-[var(--text-primary)]">{bn ? r.nameBn : r.name}</td>
-                    <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--green)]">{fmt(r.amount)}</td>
+                    <td className="py-3 px-4 text-right">
+                      <button onClick={() => setDrillCategory(drillCategory === r.name ? null : r.name)} className="text-[0.8125rem] font-bold text-[var(--green)] hover:underline cursor-pointer bg-transparent border-none p-0 font-[inherit]">{fmt(r.amount)}</button>
+                    </td>
                     <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-primary)]">{r.count}</td>
                     <td className="py-3 px-4 text-right text-[0.8125rem] text-[var(--text-secondary)]">{totalIncome > 0 ? `${((r.amount / totalIncome) * 100).toFixed(1)}%` : '0%'}</td>
                   </tr>
@@ -384,6 +465,64 @@ export default function AccountingReportPage() {
           </table>
         </div>
       </div>
+
+      {drillCategory && (
+        <div className="rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setDrillCategory(null)} className="flex items-center justify-center w-7 h-7 rounded-md bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] cursor-pointer transition-colors">
+                <ChevronLeft size={14} />
+              </button>
+              <div>
+                <div className="text-[0.875rem] font-bold text-[var(--text-primary)]">{drillCategory}</div>
+                <div className="text-[0.6875rem] text-[var(--text-secondary)]">
+                  {bn ? `${drillDetails.length}টি লেনদেন — মোট ${fmt(drillTotal)}` : `${drillDetails.length} transactions — Total ${fmt(drillTotal)}`}
+                </div>
+              </div>
+            </div>
+            <button onClick={() => setDrillCategory(null)} className="flex items-center justify-center w-7 h-7 rounded-md bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] cursor-pointer transition-colors">
+              <X size={14} />
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+                  <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">#</th>
+                  <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ছাত্র/ছাত্রী' : 'Student'}</th>
+                  <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'শ্রেণি' : 'Class'}</th>
+                  <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'রোল' : 'Roll'}</th>
+                  <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                  <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'মাস' : 'Month'}</th>
+                  <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'তারিখ' : 'Date'}</th>
+                  <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {drillDetails.length === 0 ? (
+                  <tr><td colSpan={8} className="text-center py-12 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো তথ্য পাওয়া যায়নি' : 'No data found'}</td></tr>
+                ) : drillDetails.map((d, i) => (
+                  <tr key={d.id} className="border-b border-[var(--border)] last:border-0 transition-colors hover:bg-[var(--bg-tertiary)]">
+                    <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)]">{i + 1}</td>
+                    <td className="py-3 px-4 text-[0.8125rem] font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-[var(--brand)]15 flex items-center justify-center flex-shrink-0">
+                        <User size={11} className="text-[var(--brand)]" />
+                      </div>
+                      {bn ? d.studentNameBn : d.studentName}
+                    </td>
+                    <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-primary)]">{d.className}</td>
+                    <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-secondary)]">{d.roll}</td>
+                    <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--green)]">{fmt(d.amount)}</td>
+                    <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-secondary)]">{d.forMonth || '-'}</td>
+                    <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-secondary)]">{d.date}</td>
+                    <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-secondary)]">{d.method}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={activeTab === 'income' ? (bn ? 'আয় রিপোর্ট' : 'Income Report') : activeTab === 'expenses' ? (bn ? 'খরচ রিপোর্ট' : 'Expense Report') : (bn ? 'লাভ/ক্ষতি রিপোর্ট' : 'Profit/Loss Report')} defaultTitleBn={activeTab === 'income' ? 'আয় রিপোর্ট' : activeTab === 'expenses' ? 'খরচ রিপোর্ট' : 'লাভ/ক্ষতি রিপোর্ট'} recordLabel={bn ? 'ক্যাটাগরি' : 'category'} recordLabelBn="ক্যাটাগরি" count={activeTab === 'income' ? incomeByCategory.length : activeTab === 'expenses' ? expensesByCategory.length : profitLossByCategory.length} isBn={bn} previewRenderer={pdfPreviewRenderer} onDownload={(opts: GenericPDFOptionsResult) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
     </div>
