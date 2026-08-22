@@ -94,6 +94,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const initCategory = searchParams.get('category') || ''
   const initStatus = (searchParams.get('status') || 'all') as 'all' | 'paid' | 'due' | 'paiddue'
   const initMonths = searchParams.get('months')
+  const initDateFrom = searchParams.get('dateFrom') || ''
+  const initDateTo = searchParams.get('dateTo') || ''
 
   const [fType, setFType] = useState<'monthly' | 'onetime' | ''>(initType)
   const [fCategory, setFCategory] = useState(initCategory)
@@ -114,6 +116,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   })
   const [showMonthDropdown, setShowMonthDropdown] = useState(false)
   const monthDropdownRef = useRef<HTMLDivElement>(null)
+  const dateFrom = initDateFrom
+  const dateTo = initDateTo
   const [showResults, setShowResults] = useState(() => searchParams.has('feeType') || searchParams.has('category'))
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
   const [showActionMenu, setShowActionMenu] = useState(false)
@@ -140,6 +144,13 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     const names = new Set(list.map((s) => s.name))
     return Array.from(names)
   }, [activeStructures, fType])
+
+  const filterByDate = useCallback((dateStr: string) => {
+    if (!dateFrom && !dateTo) return true
+    if (dateFrom && dateStr < dateFrom) return false
+    if (dateTo && dateStr > dateTo) return false
+    return true
+  }, [dateFrom, dateTo])
 
   const feeStructuresForCategory = useMemo(() => {
     let list = activeStructures
@@ -274,9 +285,14 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
             const monthKey = `${fYear}-${String(m + 1).padStart(2, '0')}`
             const monthPayments = feePayments.filter((p) => {
-              if (p.forMonth) return p.forMonth === monthKey
-              const d = new Date(p.paidAt)
-              return d.getFullYear() === fYear && d.getMonth() === m
+              if (p.forMonth) {
+                if (p.forMonth !== monthKey) return false
+              } else {
+                const d = new Date(p.paidAt)
+                if (d.getFullYear() !== fYear || d.getMonth() !== m) return false
+              }
+              if ((dateFrom || dateTo) && !filterByDate(p.paidAt.split('T')[0])) return false
+              return true
             })
             const paid = monthPayments.reduce((sum, p) => sum + p.amount, 0)
             const discount = monthPayments.reduce((sum, p) => sum + (p.discount || 0), 0)
@@ -318,7 +334,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     }
 
     return rows
-  }, [showResults, feeStructuresForCategory, activeStudents, fClass, fSection, paymentsByKey, waiversByKey, fYear, sortedMonths, showMonthPicker, fSession])
+  }, [showResults, feeStructuresForCategory, activeStudents, fClass, fSection, paymentsByKey, waiversByKey, fYear, sortedMonths, showMonthPicker, fSession, dateFrom, dateTo, filterByDate])
 
   const results = useMemo(() => {
     let list = allResults

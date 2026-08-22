@@ -109,7 +109,7 @@ export default function AccountingReportPage() {
     feePayments.filter((p) => filterByDate(p.paidAt.split('T')[0])).forEach((p) => {
       const struct = feeStructures.find((s) => s.id === p.feeStructureId)
       if (!struct) return
-      const key = `fee-${struct.name.trim().toLowerCase()}`
+      const key = struct.name.trim().toLowerCase()
       const existing = map.get(key)
       if (existing) {
         existing.amount += p.amount - p.discount
@@ -135,7 +135,7 @@ export default function AccountingReportPage() {
       const otherPayments = feePayments.filter((p) => p.feeStructureId === structId && filterByDate(p.paidAt.split('T')[0]))
       const total = otherPayments.reduce((sum, p) => sum + p.amount - p.discount, 0)
       if (total <= 0) return
-      const key = `other-${cat.name.trim().toLowerCase()}`
+      const key = cat.name.trim().toLowerCase()
       const existing = map.get(key)
       if (existing) {
         existing.amount += total
@@ -236,8 +236,10 @@ export default function AccountingReportPage() {
     } else {
       params.set('category', row.name)
     }
+    if (dateFrom) params.set('dateFrom', dateFrom)
+    if (dateTo) params.set('dateTo', dateTo)
     navigate(`${basePath}?${params.toString()}`)
-  }, [feeStructures, navigate, basePath])
+  }, [feeStructures, navigate, basePath, dateFrom, dateTo])
 
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new()
