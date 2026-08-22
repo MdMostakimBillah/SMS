@@ -237,7 +237,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         const feeWaivers = waiversByKey.get(`${student.id}|${fee.id}`) || []
 
         if (fee.type === 'onetime') {
-          const paid = feePayments.reduce((sum, p) => sum + p.amount, 0)
+          const filteredPayments = (dateFrom || dateTo) ? feePayments.filter((p) => filterByDate(p.paidAt.split('T')[0])) : feePayments
+          const paid = filteredPayments.reduce((sum, p) => sum + p.amount, 0)
           const waived = feeWaivers.reduce((sum, w) => sum + w.amount, 0)
           const due = fee.amount - paid - waived
           rows.push({
