@@ -66,8 +66,9 @@ export default function AccountingReportPage() {
   const location = useLocation()
   const basePath = location.pathname.replace(/accounting-report.*$/, 'finance')
   const [activeTab, setActiveTab] = useState<View>('income')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const today = new Date().toISOString().split('T')[0]
+  const [dateFrom, setDateFrom] = useState(today)
+  const [dateTo, setDateTo] = useState(today)
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [loading, setLoading] = useState(true)
