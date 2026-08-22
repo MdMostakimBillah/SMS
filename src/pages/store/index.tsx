@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Package, AlertTriangle, DollarSign, TrendingUp, Tag, BarChart3, ShoppingCart, Search, Plus, Minus, Pencil, Trash2, ChevronDown } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
@@ -252,7 +253,9 @@ export default function StorePage() {
   const sales = useStoreStore((s) => s.sales)
   const deleteProduct = useStoreStore((s) => s.deleteProduct)
 
-  const [activeTab, setActiveTab] = useState<View>('categories')
+  const [searchParams] = useSearchParams()
+  const initView = (searchParams.get('view') || 'categories') as View
+  const [activeTab, setActiveTab] = useState<View>(initView)
   const [searchQuery, setSearchQuery] = useState('')
   const [showProductModal, setShowProductModal] = useState(false)
   const [editProduct, setEditProduct] = useState<StoreProduct | null>(null)

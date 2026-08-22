@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useBn } from '@/hooks/useBn'
 import { useStoreStore } from '@/store/storeStore'
 import { toBnNum } from '@/lib/i18n'
@@ -21,11 +22,16 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const products = useStoreStore((s) => s.products)
   const deleteSale = useStoreStore((s) => s.deleteSale)
 
-  const [dateFrom, setDateFrom] = useState(() => new Date().toISOString().split('T')[0])
-  const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0])
+  const [searchParams] = useSearchParams()
+  const initDateFrom = searchParams.get('dateFrom') || ''
+  const initDateTo = searchParams.get('dateTo') || ''
+  const initProduct = searchParams.get('product') || ''
+
+  const [dateFrom, setDateFrom] = useState(initDateFrom)
+  const [dateTo, setDateTo] = useState(initDateTo)
   const [filterPayment, setFilterPayment] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
-  const [quickSearch, setQuickSearch] = useState('')
+  const [quickSearch, setQuickSearch] = useState(initProduct)
   const [showFilters, setShowFilters] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())

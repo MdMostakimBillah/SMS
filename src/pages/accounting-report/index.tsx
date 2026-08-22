@@ -227,7 +227,16 @@ export default function AccountingReportPage() {
     store: { label: 'Store', labelBn: 'দোকান', bg: 'var(--green-light)', color: 'var(--green)' },
   }
 
+  const storeBasePath = location.pathname.replace(/accounting-report.*$/, 'store')
+
   const navigateToCategory = useCallback((row: { name: string; nameBn: string; sourceType?: SourceType; categoryId?: string }) => {
+    if (row.sourceType === 'store') {
+      const params = new URLSearchParams({ view: 'sales', product: row.name })
+      if (dateFrom) params.set('dateFrom', dateFrom)
+      if (dateTo) params.set('dateTo', dateTo)
+      navigate(`${storeBasePath}?${params.toString()}`)
+      return
+    }
     const struct = feeStructures.find((s) => s.name === row.name || s.nameBn === row.nameBn)
     const params = new URLSearchParams({ view: 'dues', status: 'paid', months: '0,1,2,3,4,5,6,7,8,9,10,11' })
     if (struct) {
@@ -239,7 +248,7 @@ export default function AccountingReportPage() {
     if (dateFrom) params.set('dateFrom', dateFrom)
     if (dateTo) params.set('dateTo', dateTo)
     navigate(`${basePath}?${params.toString()}`)
-  }, [feeStructures, navigate, basePath, dateFrom, dateTo])
+  }, [feeStructures, navigate, basePath, storeBasePath, dateFrom, dateTo])
 
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new()
