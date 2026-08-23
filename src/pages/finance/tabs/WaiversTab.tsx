@@ -200,7 +200,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
         const student = students.find((s) => s.id === sw.studentId)
         if (!student) continue
         const matchingStructures = structures.filter(
-          (s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section) && s.categoryId === sw.feeCategoryId
+          (s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section)
         )
         for (const struct of matchingStructures) {
           const perPeriod = sw.mode === 'percent' ? Math.round(struct.amount * sw.value / 100) : Math.min(sw.value, struct.amount)
@@ -265,7 +265,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
       const student = students.find((s) => s.id === sw.studentId)
       if (!student) continue
       const matchingStructures = structures.filter(
-        (s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section) && s.categoryId === sw.feeCategoryId
+        (s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section)
       )
       for (const struct of matchingStructures) {
         const group = ensureGroup(sw.studentId)
