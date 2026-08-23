@@ -28,7 +28,6 @@ import { ReportsTab } from './tabs/ReportsTab'
 import { InactiveDuesTab } from './tabs/InactiveDuesTab'
 import { CollectTab } from './tabs/CollectTab'
 import { FeeStructureModal } from './modals/FeeStructureModal'
-import { FeeCategoryModal } from './modals/FeeCategoryModal'
 import { CollectPaymentModal } from './modals/CollectPaymentModal'
 import { BulkAssignModal } from './modals/BulkAssignModal'
 import { FeeBatchCreateModal } from './modals/FeeBatchCreateModal'
@@ -196,8 +195,6 @@ export default function FeeManagementPage() {
   const [showWaiverModal, setShowWaiverModal] = useState(false)
   const [waiverModalMode, setWaiverModalMode] = useState<'category' | 'full'>('full')
   const [showStudentWaiverModal, setShowStudentWaiverModal] = useState(false)
-  const [showCategoryModal, setShowCategoryModal] = useState(false)
-  const [categoryFeeType, setCategoryFeeType] = useState<'monthly' | 'onetime'>('monthly')
   const [showBatchCreate, setShowBatchCreate] = useState(false)
   const [receiptData, setReceiptData] = useState<(FeePayment & { studentName: string; studentNameBn: string; feeName: string; feeNameBn: string }) | null>(null)
   const [collectFromDue, setCollectFromDue] = useState<{ studentId: string; feeStructureId: string } | null>(null)
@@ -376,7 +373,7 @@ export default function FeeManagementPage() {
         </div>
 
         <div className="gsap-fade-up">
-          {activeView === 'structures' && <StructuresTab onEdit={(s) => setEditStruct(s)} onBulkAssign={() => setShowBulkAssign(true)} onManageCategories={(ft) => { setCategoryFeeType(ft); setShowCategoryModal(true) }} />}
+          {activeView === 'structures' && <StructuresTab onEdit={(s) => setEditStruct(s)} onBulkAssign={() => setShowBulkAssign(true)} />}
           {activeView === 'dues' && <DuesTab onCollect={(d) => {
             setCollectFromDue({ studentId: d.studentId, feeStructureId: d.feeStructureId })
             setActiveView('collect')
@@ -477,10 +474,6 @@ export default function FeeManagementPage() {
             onSaved={() => setShowStudentWaiverModal(false)}
             onClose={() => setShowStudentWaiverModal(false)}
           />
-        )}
-
-        {showCategoryModal && (
-          <FeeCategoryModal feeType={categoryFeeType} onClose={() => setShowCategoryModal(false)} />
         )}
 
         {receiptData && (

@@ -67,6 +67,7 @@ export default function AccountingReportPage() {
   const basePath = location.pathname.replace(/accounting-report.*$/, 'finance')
   const [activeTab, setActiveTab] = useState<View>('income')
   const today = new Date().toISOString().split('T')[0]
+  const monthStart = (() => { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0] })()
   const [dateFrom, setDateFrom] = useState(today)
   const [dateTo, setDateTo] = useState(today)
   const [showPdfModal, setShowPdfModal] = useState(false)
@@ -383,9 +384,9 @@ export default function AccountingReportPage() {
           <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'পর্যন্ত' : 'To'}</label>
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] font-[inherit] outline-none" />
         </div>
-        {(dateFrom || dateTo) && (
-          <button onClick={() => { setDateFrom(''); setDateTo('') }} className="h-8 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[11px] font-medium cursor-pointer hover:bg-[var(--border)] transition-colors">
-            {bn ? 'পরিষ্কার' : 'Clear'}
+        {(dateFrom !== monthStart || dateTo !== today) && (
+          <button onClick={() => { setDateFrom(monthStart); setDateTo(today) }} className="h-8 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[11px] font-medium cursor-pointer hover:bg-[var(--border)] transition-colors">
+            {bn ? 'এই মাস' : 'This Month'}
           </button>
         )}
       </div>

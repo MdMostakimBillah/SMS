@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import React from 'react'
-import { Trash2, Edit2, ToggleLeft, ToggleRight, Copy, Search, Plus, Repeat, Zap, DollarSign, Tag } from 'lucide-react'
+import { Trash2, Edit2, ToggleLeft, ToggleRight, Copy, Search, Plus, Repeat, Zap, DollarSign } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useBn } from '@/hooks/useBn'
 import { toBnNum } from '@/lib/i18n'
@@ -14,19 +14,16 @@ import ModernCheckbox from '@/components/ui/ModernCheckbox'
 interface Props {
   onEdit: (s: FeeStructure) => void
   onBulkAssign: () => void
-  onManageCategories: (feeType: 'monthly' | 'onetime') => void
 }
 
-export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkAssign, onManageCategories }: Props) {
+export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkAssign }: Props) {
   const bn = useBn()
   const { classes, institution } = useClassStore()
-  const { structures, feeCategories, addStructure, deleteStructure, toggleStructureActive } = useFeeStore()
+  const { structures, addStructure, deleteStructure, toggleStructureActive } = useFeeStore()
   const [searchParams] = useSearchParams()
   const initFeeType = (searchParams.get('feeType') || 'monthly') as 'monthly' | 'onetime'
-  const initCategoryId = searchParams.get('fCategory') || ''
   const [search, setSearch] = useState('')
   const [fClass, setFClass] = useState('')
-  const [fCategory, setFCategory] = useState(initCategoryId)
   const [feeType, setFeeType] = useState<'monthly' | 'onetime'>(initFeeType)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [qName, setQName] = useState('')
@@ -35,7 +32,6 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
   const [qSection, setQSection] = useState('')
   const [qAmount, setQAmount] = useState('')
   const [qDesc, setQDesc] = useState('')
-  const [qCategoryId, setQCategoryId] = useState('')
   const [saved, setSaved] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
@@ -60,13 +56,12 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
   const filtered = useMemo(() => {
     let list = managedStructures.filter((s) => s.type === feeType)
     if (fClass) list = list.filter((s) => s.class === fClass)
-    if (fCategory) list = list.filter((s) => s.categoryId === fCategory)
     if (search) {
       const q = search.toLowerCase()
       list = list.filter((s) => s.name.toLowerCase().includes(q) || s.nameBn.includes(q))
     }
     return list
-  }, [managedStructures, feeType, fClass, fCategory, search])
+  }, [managedStructures, feeType, fClass, search])
 
   const totalAmount = useMemo(() => filtered.reduce((sum, s) => sum + s.amount, 0), [filtered])
   const monthlyCount = managedStructures.filter((s) => s.type === 'monthly').length
@@ -117,7 +112,6 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
       descriptionBn: qDesc,
       isActive: true,
       type: feeType,
-      categoryId: qCategoryId || undefined,
       createdAt: today,
     })
     setSaved(true)
@@ -128,7 +122,6 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
       setQSection('')
       setQAmount('')
       setQDesc('')
-      setQCategoryId('')
       setSaved(false)
       setShowQuickAdd(false)
     }, 800)
@@ -147,9 +140,6 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => onManageCategories(feeType)} className={`${btnSecondary} text-xs`}>
-            <Tag size={12} /> {bn ? 'ক্যাটাগরি' : 'Categories'}
-          </button>
           <button onClick={onBulkAssign} className={`${btnSecondary} text-xs`}>
             <Copy size={12} /> {bn ? 'বাল্ক আপডেট' : 'Bulk Update'}
           </button>
@@ -241,15 +231,6 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
           </div>
           <div className="grid grid-cols-2 gap-2 mb-2">
             <div>
-              <label className="text-[0.65rem] font-medium text-[var(--text-muted)] block mb-0.5">{bn ? 'ক্যাটাগরি' : 'Category'}</label>
-              <select value={qCategoryId} onChange={(e) => setQCategoryId(e.target.value)} className={`${selectCls} w-full h-8 text-xs`}>
-                <option value="">{bn ? 'নেই' : 'None'}</option>
-                {feeCategories.filter((c) => c.isActive && c.type === feeType).map((c) => (
-                  <option key={c.id} value={c.id}>{bn && c.nameBn ? c.nameBn : c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
               <label className="text-[0.65rem] font-medium text-[var(--text-muted)] block mb-0.5">{bn ? 'বিবরণ' : 'Description'}</label>
               <input value={qDesc} onChange={(e) => setQDesc(e.target.value)} className={`${inputCls} w-full h-8 text-xs`} placeholder={bn ? 'ঐচ্ছিক' : 'Optional'} />
             </div>
@@ -277,12 +258,6 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
         <select value={fClass} onChange={(e) => setFClass(e.target.value)} className={`${selectCls} h-8 text-xs w-auto`}>
           <option value="">{bn ? 'সব শ্রেণি' : 'All Classes'}</option>
           {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select value={fCategory} onChange={(e) => setFCategory(e.target.value)} className={`${selectCls} h-8 text-xs w-auto`}>
-          <option value="">{bn ? 'সব ক্যাটাগরি' : 'All Categories'}</option>
-          {feeCategories.filter((c) => c.isActive && c.type === feeType).map((c) => (
-            <option key={c.id} value={c.id}>{bn && c.nameBn ? c.nameBn : c.name}</option>
-          ))}
         </select>
       </div>
 
@@ -316,7 +291,6 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
                 </th>
                 <th className="text-left px-3 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'নাম' : 'Name'}</th>
                 <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'শ্রেণি' : 'Class'}</th>
-                <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
                 <th className="text-right px-4 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
                 <th className="text-center px-4 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'অবস্থা' : 'Status'}</th>
                 <th className="text-right px-4 py-2.5 font-semibold text-[var(--text-secondary)] w-[100px]">{bn ? 'কাজ' : 'Actions'}</th>
@@ -344,18 +318,6 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
                     <span className="text-[var(--text-secondary)] bg-[var(--bg-secondary)] px-2 py-0.5 rounded-md text-[0.7rem]">
                       {s.class}{s.section ? ` - ${s.section}` : ''}
                     </span>
-                  </td>
-                  <td className="px-3 py-2">
-                    {s.categoryId ? (
-                      <span className="text-[var(--brand)] bg-[var(--brand-light)] px-2 py-0.5 rounded-md text-[0.7rem] font-medium">
-                        {(() => {
-                          const cat = feeCategories.find((c) => c.id === s.categoryId)
-                          return cat ? (bn && cat.nameBn ? cat.nameBn : cat.name) : '—'
-                        })()}
-                      </span>
-                    ) : (
-                      <span className="text-[var(--text-muted)] text-[0.7rem]">—</span>
-                    )}
                   </td>
                   <td className="px-3 py-2 text-right font-semibold text-[var(--text-primary)]">{fmt(s.amount)}</td>
                   <td className="px-3 py-2 text-center">
