@@ -168,7 +168,7 @@ export default function QuickAccessFAB() {
     if (onDashboard) return null
 
     // Extract the prefix before the section (e.g., /super-admin/admin or /i/{slug}/admin)
-    const prefixMatch = location.pathname.match(new RegExp(`(.+)/${result.section}/`))
+    const prefixMatch = location.pathname.match(new RegExp(`(.+)/${result.section}/?`))
     const prefix = prefixMatch ? prefixMatch[1] : ''
 
     const siblings = result.items.filter((item) => {
