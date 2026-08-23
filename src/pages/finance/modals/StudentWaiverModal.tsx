@@ -23,14 +23,13 @@ const MONTH_LABELS = [
 export function StudentWaiverModal({ onSaved, onClose }: Props) {
   const bn = useBn()
   const students = useSessionStudents()
-  const { structures, feeCategories: feeCategoriesAll, waiverCategories, addStudentWaiver } = useFeeStore()
+  const { structures, waiverCategories, addStudentWaiver } = useFeeStore()
   const { institution, classes } = useClassStore()
   const sessions = institution?.sessions || []
 
   const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
   const activeStructures = useMemo(() => structures.filter((s) => s.isActive), [structures])
   const activeCategories = useMemo(() => waiverCategories.filter((c) => c.isActive), [waiverCategories])
-  const activeFeeCategories = useMemo(() => feeCategoriesAll.filter((c) => c.isActive), [feeCategoriesAll])
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
@@ -43,7 +42,6 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
   const [fSection, setFSection] = useState('')
   const [search, setSearch] = useState('')
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set())
-  const [selectedFeeCategoryId, setSelectedFeeCategoryId] = useState('')
   const [feeStructureId, setFeeStructureId] = useState('')
   const [waiverMode, setWaiverMode] = useState<'amount' | 'percent'>('amount')
   const [amount, setAmount] = useState('')
@@ -81,23 +79,20 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
     return list.sort((a, b) => a.nameEn.localeCompare(b.nameEn))
   }, [activeStudents, fSession, fClass, fSection, search])
 
-  // Fee categories that have structures for the effective class+section
-  const feeCategoriesForClass = useMemo(() => {
-    let structs = activeStructures
-    if (effectiveClass) structs = structs.filter((s) => s.class === effectiveClass)
-    if (effectiveSection) structs = structs.filter((s) => !s.section || s.section === effectiveSection)
-    const catIds = new Set(structs.filter((s) => s.categoryId).map((s) => s.categoryId))
-    return activeFeeCategories.filter((c) => catIds.has(c.id))
-  }, [activeStructures, activeFeeCategories, effectiveClass, effectiveSection])
-
-  // Fee structures filtered by effective class, section, and selected fee category
+  // Fee structures filtered by effective class and section
   const filteredStructures = useMemo(() => {
     let list = activeStructures
     if (effectiveClass) list = list.filter((s) => s.class === effectiveClass)
     if (effectiveSection) list = list.filter((s) => !s.section || s.section === effectiveSection)
-    if (selectedFeeCategoryId) list = list.filter((s) => s.categoryId === selectedFeeCategoryId)
     return list
-  }, [activeStructures, effectiveClass, effectiveSection, selectedFeeCategoryId])
+  }, [activeStructures, effectiveClass, effectiveSection])
+
+  // Group filtered structures by type
+  const structuresByType = useMemo(() => {
+    const monthly = filteredStructures.filter((s) => s.type === 'monthly')
+    const onetime = filteredStructures.filter((s) => s.type !== 'monthly')
+    return { monthly, onetime }
+  }, [filteredStructures])
 
   // Auto-select class/section when students are selected
   useEffect(() => {
@@ -116,7 +111,6 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
 
   // Reset fee selection when effective class/section changes
   useEffect(() => {
-    setSelectedFeeCategoryId('')
     setFeeStructureId('')
     setAmount('')
     setPercent('')
@@ -387,83 +381,73 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
                       </div>
                     )}
 
-                    {selectedFeeCategoryId ? (
-                      <div className="space-y-1.5">
-                        <button
-                          type="button"
-                          onClick={() => { setSelectedFeeCategoryId(''); setFeeStructureId(''); setAmount(''); setPercent(''); setSelectedMonths(new Set()) }}
-                          className="text-[0.75rem] text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0 font-semibold"
-                        >
-                          ← {bn ? 'ফি ক্যাটাগরি পরিবর্তন' : 'Change fee category'}
-                        </button>
-                        {filteredStructures.length === 0 ? (
-                          <p className="text-[0.75rem] text-[var(--text-muted)] py-2 text-center rounded-lg bg-[var(--bg-secondary)]/30">
-                            {effectiveClass
-                              ? (bn ? `এই শ্রেণির জন্য কোনো ফি কাঠামো নেই` : 'No structures for this class')
-                              : (bn ? 'কোনো ফি কাঠামো নেই' : 'No fee structures found')
-                            }
-                          </p>
-                        ) : (
-                          <div className="space-y-1 max-h-[120px] overflow-y-auto">
-                            {filteredStructures.map((s) => {
-                              const isSelected = feeStructureId === s.id
-                              return (
-                                <button
-                                  key={s.id}
-                                  type="button"
-                                  onClick={() => { setFeeStructureId(s.id); setAmount(''); setPercent(''); setSelectedMonths(new Set()) }}
-                                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg border text-[0.75rem] cursor-pointer transition-all ${isSelected ? 'border-[var(--purple)] bg-[var(--purple-light)] shadow-sm' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--purple)]/50'}`}
-                                >
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-[var(--purple)]' : 'border-[var(--text-muted)]'}`}>
-                                      {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[var(--purple)]" />}
+                    {filteredStructures.length === 0 ? (
+                      <p className="text-[0.75rem] text-[var(--text-muted)] py-2 text-center rounded-lg bg-[var(--bg-secondary)]/30">
+                        {effectiveClass
+                          ? (bn ? 'এই শ্রেণির জন্য কোনো ফি কাঠামো নেই' : 'No structures for this class')
+                          : (bn ? 'শিক্ষার্থী নির্বাচন করুন বা শ্রেণি বাছাই করুন' : 'Select students or choose a class')
+                        }
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-[180px] overflow-y-auto">
+                        {structuresByType.monthly.length > 0 && (
+                          <div>
+                            <p className="text-[0.65rem] font-semibold text-[var(--text-muted)] uppercase mb-1">{bn ? 'মাসিক' : 'Monthly'}</p>
+                            <div className="space-y-1">
+                              {structuresByType.monthly.map((s) => {
+                                const isSelected = feeStructureId === s.id
+                                return (
+                                  <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => { setFeeStructureId(s.id); setAmount(''); setPercent(''); setSelectedMonths(new Set()) }}
+                                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg border text-[0.75rem] cursor-pointer transition-all ${isSelected ? 'border-[var(--purple)] bg-[var(--purple-light)] shadow-sm' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--purple)]/50'}`}
+                                  >
+                                    <div className="flex items-center gap-1.5">
+                                      <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-[var(--purple)]' : 'border-[var(--text-muted)]'}`}>
+                                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[var(--purple)]" />}
+                                      </span>
+                                      <span className={`font-medium ${isSelected ? 'text-[var(--purple)]' : 'text-[var(--text-primary)]'}`}>
+                                        {bn ? s.nameBn || s.name : s.name}
+                                      </span>
+                                    </div>
+                                    <span className={`font-semibold ${isSelected ? 'text-[var(--purple)]' : 'text-[var(--text-secondary)]'}`}>
+                                      {fmt(s.amount)}
                                     </span>
-                                    <span className={`font-medium ${isSelected ? 'text-[var(--purple)]' : 'text-[var(--text-primary)]'}`}>
-                                      {bn ? s.nameBn || s.name : s.name}
-                                    </span>
-                                    <span className="text-[0.55rem] text-[var(--text-muted)] px-1 py-0.5 rounded bg-[var(--bg-secondary)]">
-                                      {s.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')}
-                                    </span>
-                                  </div>
-                                  <span className={`font-semibold ${isSelected ? 'text-[var(--purple)]' : 'text-[var(--text-secondary)]'}`}>
-                                    {fmt(s.amount)}
-                                  </span>
-                                </button>
-                              )
-                            })}
+                                  </button>
+                                )
+                              })}
+                            </div>
                           </div>
                         )}
-                      </div>
-                    ) : (
-                      <div className="space-y-1.5">
-                        {feeCategoriesForClass.length === 0 ? (
-                          <p className="text-[0.75rem] text-[var(--text-muted)] py-2 text-center rounded-lg bg-[var(--bg-secondary)]/30">
-                            {effectiveClass
-                              ? (bn ? 'এই শ্রেণির জন্য কোনো ফি ক্যাটাগরি নেই' : 'No fee categories for this class')
-                              : (bn ? 'শিক্ষার্থী নির্বাচন করুন বা শ্রেণি বাছাই করুন' : 'Select students or choose a class')
-                            }
-                          </p>
-                        ) : (
-                          <div className="space-y-1 max-h-[120px] overflow-y-auto">
-                            {feeCategoriesForClass.map((cat) => (
-                              <button
-                                key={cat.id}
-                                type="button"
-                                onClick={() => setSelectedFeeCategoryId(cat.id)}
-                                className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--purple)]/50 cursor-pointer transition-all text-left group"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <div className="w-6 h-6 rounded-md bg-[var(--purple-light)] flex items-center justify-center">
-                                    <Gift size={12} className="text-[var(--purple)]" />
-                                  </div>
-                                  <div>
-                                    <p className="text-[0.75rem] font-medium text-[var(--text-primary)]">{bn ? cat.nameBn || cat.name : cat.name}</p>
-                                    {cat.description && <p className="text-[0.55rem] text-[var(--text-muted)] mt-0.5">{bn ? cat.descriptionBn || cat.description : cat.description}</p>}
-                                  </div>
-                                </div>
-                                <ChevronRight size={12} className="text-[var(--text-muted)] group-hover:text-[var(--purple)] transition-colors" />
-                              </button>
-                            ))}
+                        {structuresByType.onetime.length > 0 && (
+                          <div>
+                            <p className="text-[0.65rem] font-semibold text-[var(--text-muted)] uppercase mb-1">{bn ? 'এককালীন' : 'One-Time'}</p>
+                            <div className="space-y-1">
+                              {structuresByType.onetime.map((s) => {
+                                const isSelected = feeStructureId === s.id
+                                return (
+                                  <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => { setFeeStructureId(s.id); setAmount(''); setPercent(''); setSelectedMonths(new Set()) }}
+                                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg border text-[0.75rem] cursor-pointer transition-all ${isSelected ? 'border-[var(--purple)] bg-[var(--purple-light)] shadow-sm' : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--purple)]/50'}`}
+                                  >
+                                    <div className="flex items-center gap-1.5">
+                                      <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-[var(--purple)]' : 'border-[var(--text-muted)]'}`}>
+                                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[var(--purple)]" />}
+                                      </span>
+                                      <span className={`font-medium ${isSelected ? 'text-[var(--purple)]' : 'text-[var(--text-primary)]'}`}>
+                                        {bn ? s.nameBn || s.name : s.name}
+                                      </span>
+                                    </div>
+                                    <span className={`font-semibold ${isSelected ? 'text-[var(--purple)]' : 'text-[var(--text-secondary)]'}`}>
+                                      {fmt(s.amount)}
+                                    </span>
+                                  </button>
+                                )
+                              })}
+                            </div>
                           </div>
                         )}
                       </div>
