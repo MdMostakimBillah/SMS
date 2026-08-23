@@ -4,7 +4,7 @@ import { useBn } from '@/hooks/useBn'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
 import type { FeeStructure } from '@/store/feeStore'
-import { inputCls, selectCls, btnPrimary } from '@/lib/styles'
+import { inputCls, btnPrimary } from '@/lib/styles'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { createPortal } from 'react-dom'
 
@@ -22,14 +22,13 @@ interface ClassEntry {
 export function FeeBatchCreateModal({ onSaved, onClose }: Props) {
   const bn = useBn()
   const { classes, institution } = useClassStore()
-  const { structures, feeCategories } = useFeeStore()
+  const { structures } = useFeeStore()
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
   const [feeType, setFeeType] = useState<'monthly' | 'onetime'>('monthly')
   const [name, setName] = useState('')
   const [nameBn, setNameBn] = useState('')
-  const [categoryId, setCategoryId] = useState('')
   const [description, setDescription] = useState('')
   const [descriptionBn, setDescriptionBn] = useState('')
   const [copyFromId, setCopyFromId] = useState('')
@@ -55,8 +54,6 @@ export function FeeBatchCreateModal({ onSaved, onClose }: Props) {
     }
     return entries
   })
-
-  const activeCategories = useMemo(() => feeCategories.filter((c) => c.isActive && c.type === feeType), [feeCategories, feeType])
 
   // Existing structures grouped by name for copy dropdown
   const existingFees = useMemo(() => {
@@ -175,7 +172,6 @@ export function FeeBatchCreateModal({ onSaved, onClose }: Props) {
             descriptionBn: descriptionBn.trim() || description.trim(),
             isActive: true,
             type: feeType,
-            categoryId: categoryId || undefined,
             createdAt: today,
           })
         }
@@ -192,7 +188,6 @@ export function FeeBatchCreateModal({ onSaved, onClose }: Props) {
           descriptionBn: descriptionBn.trim() || description.trim(),
           isActive: true,
           type: feeType,
-          categoryId: categoryId || undefined,
           createdAt: today,
         })
       }
@@ -289,14 +284,7 @@ export function FeeBatchCreateModal({ onSaved, onClose }: Props) {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-            <div>
-              <label style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>{bn ? 'ক্যাটাগরি' : 'Category'}</label>
-              <select className={selectCls} style={{ width: '100%' }} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                <option value="">{bn ? 'নির্বাচন করুন' : 'Select'}</option>
-                {activeCategories.map((c) => <option key={c.id} value={c.id}>{bn ? c.nameBn : c.name}</option>)}
-              </select>
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>{bn ? 'বিবরণ (ইংরেজি)' : 'Description (EN)'}</label>
               <input className={inputCls} style={{ width: '100%' }} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={bn ? 'ঐচ্ছিক' : 'Optional'} />
