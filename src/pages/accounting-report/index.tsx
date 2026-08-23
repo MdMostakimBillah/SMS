@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { TrendingUp, TrendingDown, DollarSign, MoreVertical, ChevronDown, FileSpreadsheet, FileText, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useFeeStore } from '@/store/feeStore'
@@ -62,7 +62,6 @@ export default function AccountingReportPage() {
   const storeProducts = useStoreStore((s) => s.products)
   const storeSales = useStoreStore((s) => s.sales)
 
-  const navigate = useNavigate()
   const location = useLocation()
   const basePath = location.pathname.replace(/accounting-report.*$/, 'finance')
   const [activeTab, setActiveTab] = useState<View>('income')
@@ -236,7 +235,7 @@ export default function AccountingReportPage() {
       const params = new URLSearchParams({ view: 'sales', product: row.name })
       if (dateFrom) params.set('dateFrom', dateFrom)
       if (dateTo) params.set('dateTo', dateTo)
-      navigate(`${storeBasePath}?${params.toString()}`)
+      window.open(`${storeBasePath}?${params.toString()}`, '_blank')
       return
     }
     const struct = feeStructures.find((s) => s.name === row.name || s.nameBn === row.nameBn)
@@ -249,8 +248,8 @@ export default function AccountingReportPage() {
     }
     if (dateFrom) params.set('dateFrom', dateFrom)
     if (dateTo) params.set('dateTo', dateTo)
-    navigate(`${basePath}?${params.toString()}`)
-  }, [feeStructures, navigate, basePath, storeBasePath, dateFrom, dateTo])
+    window.open(`${basePath}?${params.toString()}`, '_blank')
+  }, [feeStructures, basePath, storeBasePath, dateFrom, dateTo])
 
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new()
