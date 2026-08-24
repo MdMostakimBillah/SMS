@@ -353,7 +353,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
       let fnName: string
       let fnNameBn: string
       if (!p.feeStructureId && p.note) {
-        const catMatch = p.note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+        const catMatch = p.note.match(/^\[cat:(.+?)\|catbn:(.+?)\]\s*/)
         if (catMatch) {
           const catName = catMatch[1]
           const catNameBn = catMatch[2]
