@@ -57,7 +57,7 @@ interface MonthRow {
 }
 
 function stripCatPrefix(note: string): string {
-  const m = note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+  const m = note.match(/^\[cat:(.+?)\|catbn:(.+?)\]\s*/)
   return m ? note.slice(m[0].length) : note
 }
 
@@ -614,7 +614,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       let feeName = struct?.name || '-'
       let feeNameBn = struct?.nameBn || '-'
       if (!p.feeStructureId && p.note) {
-        const catMatch = p.note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+        const catMatch = p.note.match(/^\[cat:(.+?)\|catbn:(.+?)\]\s*/)
         if (catMatch) {
           const catName = catMatch[1]
           const catNameBn = catMatch[2]
@@ -1445,7 +1445,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                       const struct = structures.find((s) => s.id === p.feeStructureId)
                       if (struct) return (bn ? struct.nameBn : struct.name).toLowerCase()
                       if (p.note) {
-                        const catMatch = p.note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+                        const catMatch = p.note.match(/^\[cat:(.+?)\|catbn:(.+?)\]\s*/)
                         if (catMatch) {
                           const rest = p.note.slice(catMatch[0].length)
                           const di = rest.indexOf(' — ')
@@ -1501,7 +1501,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         const struct = structures.find((s) => s.id === p.feeStructureId)
                         if (struct) return bn ? struct.nameBn : struct.name
                         if (p.note) {
-                          const catMatch = p.note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+                          const catMatch = p.note.match(/^\[cat:(.+?)\|catbn:(.+?)\]\s*/)
                           if (catMatch) {
                             const rest = p.note.slice(catMatch[0].length)
                             const di = rest.indexOf(' — ')

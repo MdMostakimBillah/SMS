@@ -36,7 +36,7 @@ interface Props {
 }
 
 function stripCatPrefix(note: string): string {
-  const m = note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+  const m = note.match(/^\[cat:(.+?)\|catbn:(.+?)\]\s*/)
   return m ? note.slice(m[0].length) : note
 }
 
@@ -195,7 +195,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     if (selectedCols.includes('fees')) {
       const feeNames = b.payments.map((p) => {
         if (!p.feeStructureId && p.note) {
-          const catMatch = p.note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+          const catMatch = p.note.match(/^\[cat:(.+?)\|catbn:(.+?)\]\s*/)
           if (catMatch) {
             const rest = p.note.slice(catMatch[0].length)
             const di = rest.indexOf(' — ')
@@ -287,7 +287,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     const sheetData = data.map((b) => {
       const feeNames = b.payments.map((p) => {
         if (!p.feeStructureId && p.note) {
-          const catMatch = p.note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+          const catMatch = p.note.match(/^\[cat:(.+?)\|catbn:(.+?)\]\s*/)
           if (catMatch) {
             const rest = p.note.slice(catMatch[0].length)
             const di = rest.indexOf(' — ')
