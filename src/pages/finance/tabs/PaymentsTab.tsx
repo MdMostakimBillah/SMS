@@ -61,8 +61,10 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const structureMap = useMemo(() => {
     const map: Record<string, { name: string; nameBn: string; type: string }> = {}
     structures.forEach((s) => { map[s.id] = { name: s.name, nameBn: s.nameBn, type: s.type } })
+    // Add special entry for shop/store items (empty feeStructureId)
+    map['__shop__'] = { name: bn ? 'দোকান' : 'Store', nameBn: 'দোকান', type: 'shop' }
     return map
-  }, [structures])
+  }, [structures, bn])
 
   const batches = useMemo(() => {
     let list = [...payments].sort((a, b) => b.paidAt.localeCompare(a.paidAt) || b.createdAt.localeCompare(a.createdAt))
@@ -178,7 +180,8 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     if (selectedCols.includes('receipt')) row[bn ? 'রসিদ নং' : 'Receipt No'] = b.receiptNo
     if (selectedCols.includes('fees')) {
       const feeNames = b.payments.map((p) => {
-        const fn = structureMap[p.feeStructureId]
+        const structId = p.feeStructureId || (p.note?.includes('Fee Collect') ? '__shop__' : p.feeStructureId)
+        const fn = structureMap[structId] || structureMap['__shop__']
         return bn ? (fn?.nameBn || fn?.name || '') : (fn?.name || '')
       }).join(', ')
       row[bn ? 'পরিশোধিত ফি' : 'Fees Paid'] = feeNames
@@ -253,7 +256,8 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     const data = hasSelection ? selectedBatches : batches
     const sheetData = data.map((b) => {
       const feeNames = b.payments.map((p) => {
-        const fn = structureMap[p.feeStructureId]
+        const structId = p.feeStructureId || (p.note?.includes('Fee Collect') ? '__shop__' : p.feeStructureId)
+        const fn = structureMap[structId] || structureMap['__shop__']
         return bn ? (fn?.nameBn || fn?.name || '') : (fn?.name || '')
       }).join(', ')
       return {
@@ -300,7 +304,8 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     const logoHtml = pdfLogoHTML(b, 50)
     const watermarkHtml = b.logo ? `<img src="${b.logo}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:350px;height:350px;opacity:0.05;pointer-events:none;object-fit:contain" />` : ''
     const feeRows = batch.payments.map((p, i) => {
-      const fn = structureMap[p.feeStructureId]
+      const structId = p.feeStructureId || (p.note?.includes('Fee Collect') ? '__shop__' : p.feeStructureId)
+      const fn = structureMap[structId] || structureMap['__shop__']
       const period = p.forMonth ? (() => { const [yr, mo] = p.forMonth.split('-').map(Number); return `<span style="font-size:8px;color:#555;font-weight:400">(${MONTH_LABELS[(mo || 1) - 1]}-${String(yr).slice(-2)})</span>` })() : (fn?.type === 'onetime' ? `<span style="font-size:8px;color:#555;font-weight:400">(One-time)</span>` : '')
       const rem = p.note ? `<div style="font-size:7px;color:#555;font-style:italic">${(p.discount || 0).toLocaleString()} amount discount for ${p.note}</div>` : ''
       return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? fn?.nameBn || fn?.name || '-' : fn?.name || '-'} ${period}</div>${rem}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${p.amount.toLocaleString()}</td></tr>`

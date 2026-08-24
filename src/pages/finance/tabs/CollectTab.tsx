@@ -1376,7 +1376,14 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     const q = historySearch.toLowerCase()
                     const names = batch.payments.map((p) => {
                       const struct = structures.find((s) => s.id === p.feeStructureId)
-                      return struct ? (bn ? struct.nameBn : struct.name).toLowerCase() : (p.note || '').toLowerCase()
+                      if (struct) return (bn ? struct.nameBn : struct.name).toLowerCase()
+                      // For shop items, use the note/fee name
+                      if (p.note) {
+                        const dashIdx = p.note.indexOf(' — ')
+                        if (dashIdx > 0) return p.note.substring(0, dashIdx).trim().toLowerCase()
+                        return p.note.toLowerCase()
+                      }
+                      return (bn ? 'শপ আইটেম' : 'Shop Item').toLowerCase()
                     })
                     if (!names.some((n) => n.includes(q))) return false
                   }
