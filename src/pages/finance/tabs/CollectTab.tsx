@@ -56,6 +56,11 @@ interface MonthRow {
   waiverReasonBn: string
 }
 
+function stripCatPrefix(note: string): string {
+  const m = note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+  return m ? note.slice(m[0].length) : note
+}
+
 function generateMonthRows(
   structures: FeeStructure[],
   payments: { feeStructureId: string; amount: number; discount?: number; paidAt: string; forMonth?: string }[],
@@ -205,8 +210,15 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const { structures, payments, generateWaivers, addPayment, deletePayment } = useFeeStore()
   const waivers = useMemo(() => generateWaivers(students), [generateWaivers, structures, payments, students])
   const storeProducts = useStoreStore((s) => s.products)
+  const storeCategories = useStoreStore((s) => s.categories)
   const addSale = useStoreStore((s) => s.addSale)
   const storeSales = useStoreStore((s) => s.sales)
+
+  const storeCategoryMap = useMemo(() => {
+    const map: Record<string, { name: string; nameBn: string }> = {}
+    storeCategories.forEach((c) => { map[c.id] = { name: c.name, nameBn: c.nameBn } })
+    return map
+  }, [storeCategories])
 
   const [fSession, setFSession] = useState(institution?.currentSession || '')
   const [fClass, setFClass] = useState('')
@@ -409,7 +421,17 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       const lastDash = row.key.lastIndexOf('-')
       const secondLastDash = row.key.lastIndexOf('-', lastDash - 1)
       const forMonth = row.isOnetime ? undefined : `${row.key.substring(secondLastDash + 1, lastDash)}-${String(Number(row.key.substring(lastDash + 1)) + 1).padStart(2, '0')}`
-      const paymentNote = row.key.startsWith('shop-') ? `${row.feeName} — ${edit.remarks || ''}` : edit.remarks
+      let paymentNote = row.key.startsWith('shop-') ? `${row.feeName} — ${edit.remarks || ''}` : edit.remarks
+      if (row.key.startsWith('shop-') && !row.structureId) {
+        const shopPid = row.key.substring(5, row.key.lastIndexOf('-'))
+        const shopProd = storeProducts.find((pp) => pp.id === shopPid)
+        if (shopProd) {
+          const shopCat = storeCategoryMap[shopProd.categoryId]
+          if (shopCat) {
+            paymentNote = `[cat:${shopCat.name}|catbn:${shopCat.nameBn}] ${row.feeName} — ${edit.remarks || ''}`
+          }
+        }
+      }
       const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: paymentNote, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
       addPayment(payment)
       // Handle shop product sales — deduct stock
@@ -423,9 +445,23 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
           shopSaleItems.push({ productId: product.id, productName: product.name, productNameBn: product.nameBn, qty, unitPrice: product.price })
         }
       }
+      let feeName = row.feeName
+      let feeNameBn = row.feeNameBn
+      if (row.key.startsWith('shop-') && !row.structureId) {
+        const lastDash = row.key.lastIndexOf('-')
+        const productId = row.key.substring(5, lastDash)
+        const product = storeProducts.find((pp) => pp.id === productId)
+        if (product) {
+          const cat = storeCategoryMap[product.categoryId]
+          if (cat) {
+            feeName = `${cat.name} - ${product.name}`
+            feeNameBn = `${cat.nameBn} - ${product.nameBn}`
+          }
+        }
+      }
       const feeItem: ReceiptData['fees'][number] = {
-        name: row.feeName,
-        nameBn: row.feeNameBn,
+        name: feeName,
+        nameBn: feeNameBn,
         amount: edit.receive,
         due: Math.max(0, row.receivable - edit.receive - edit.discount),
         isOnetime: row.isOnetime,
@@ -494,7 +530,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     setExtraRows((prev) => prev.filter((r) => !receivedKeys.has(r.key)))
     setEditState({})
     setFindDueTrigger((t) => t + 1)
-  }, [selectedStudent, displayRows, getRowEdit, receivedDate, addPayment, addSale, storeProducts, fSession])
+  }, [selectedStudent, displayRows, getRowEdit, receivedDate, addPayment, addSale, storeProducts, storeCategoryMap, fSession])
 
   const numberToWords = useCallback((n: number): string => {
     if (n === 0) return 'Zero'
@@ -575,14 +611,45 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       const struct = structures.find((s) => s.id === p.feeStructureId)
       const isOnetime = struct?.type === 'onetime'
       const wEntry = waivers.find((w) => w.studentId === selectedStudent.id && w.feeStructureId === p.feeStructureId && (!p.forMonth || w.forMonth === p.forMonth))
+      let feeName = struct?.name || '-'
+      let feeNameBn = struct?.nameBn || '-'
+      if (!p.feeStructureId && p.note) {
+        const catMatch = p.note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+        if (catMatch) {
+          const catName = catMatch[1]
+          const catNameBn = catMatch[2]
+          const rest = p.note.slice(catMatch[0].length)
+          const dashIdx = rest.indexOf(' — ')
+          const productName = dashIdx > 0 ? rest.substring(0, dashIdx).trim() : rest.trim()
+          feeName = `${catName} - ${productName}`
+          feeNameBn = `${catNameBn} - ${productName}`
+        } else {
+          const dashIdx = p.note.indexOf(' — ')
+          const productName = dashIdx > 0 ? p.note.substring(0, dashIdx).trim() : p.note.split(',')[0].trim()
+          const product = storeProducts.find((pp) => pp.name === productName || pp.nameBn === productName)
+          if (product) {
+            const cat = storeCategoryMap[product.categoryId]
+            if (cat) {
+              feeName = `${cat.name} - ${product.name}`
+              feeNameBn = `${cat.nameBn} - ${product.nameBn}`
+            } else {
+              feeName = product.name
+              feeNameBn = product.nameBn
+            }
+          } else {
+            feeName = bn ? 'দোকান আইটেম' : 'Store Item'
+            feeNameBn = 'দোকান আইটেম'
+          }
+        }
+      }
       const item: ReceiptData['fees'][number] = {
-        name: struct?.name || '-',
-        nameBn: struct?.nameBn || '-',
+        name: feeName,
+        nameBn: feeNameBn,
         amount: p.amount,
         due: 0,
         isOnetime,
         discount: p.discount || undefined,
-        remarks: p.note || undefined,
+        remarks: p.note ? stripCatPrefix(p.note) : undefined,
         waived: wEntry?.amount || undefined,
         waiverReason: wEntry?.reason || undefined,
         waiverReasonBn: wEntry?.reasonBn || undefined,
@@ -616,7 +683,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       totalReceived,
       totalDue: 0,
       paymentMethod: batch.payments[0]?.method || 'cash',
-      comment: batch.payments.map((p) => p.note).filter(Boolean).join(', ') || undefined,
+      comment: batch.payments.map((p) => p.note ? stripCatPrefix(p.note) : '').filter(Boolean).join(', ') || undefined,
     }
     const leftCopy = buildReceiptHTML(bn ? 'শিক্ষার্থী কপি' : 'Student Copy', receiptData)
     const rightCopy = buildReceiptHTML(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy', receiptData)
@@ -624,7 +691,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const css = `@page{size:A4 landscape;margin:5mm}html,body{height:100%;margin:0;padding:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.container{display:flex;gap:16px;height:100%}.copy{flex:1;height:100%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:16px}th{background:${brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600}@media print{html,body{height:100%!important;margin:0!important;padding:0!important}body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;padding:5mm!important}}`
     const bodyHTML = `<div class=container style=width:100%><div class=copy>${leftCopy}</div><div class=copy>${rightCopy}</div></div>`
     openPrintWindow(rn, bodyHTML, { css })
-  }, [selectedStudent, institution, structures, fSession, bn, buildReceiptHTML])
+  }, [selectedStudent, institution, structures, fSession, bn, buildReceiptHTML, storeProducts, storeCategoryMap])
 
   const handleDownloadReceipt = useCallback(() => {
     if (!receiptData) return
@@ -1377,13 +1444,25 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     const names = batch.payments.map((p) => {
                       const struct = structures.find((s) => s.id === p.feeStructureId)
                       if (struct) return (bn ? struct.nameBn : struct.name).toLowerCase()
-                      // For shop items, use the note/fee name
                       if (p.note) {
+                        const catMatch = p.note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+                        if (catMatch) {
+                          const rest = p.note.slice(catMatch[0].length)
+                          const di = rest.indexOf(' — ')
+                          const pn = di > 0 ? rest.substring(0, di).trim() : rest.trim()
+                          return `${bn ? catMatch[2] : catMatch[1]} - ${pn}`.toLowerCase()
+                        }
                         const dashIdx = p.note.indexOf(' — ')
-                        if (dashIdx > 0) return p.note.substring(0, dashIdx).trim().toLowerCase()
-                        return p.note.toLowerCase()
+                        const productName = dashIdx > 0 ? p.note.substring(0, dashIdx).trim() : p.note.split(',')[0].trim()
+                        const product = storeProducts.find((pp) => pp.name === productName || pp.nameBn === productName)
+                        if (product) {
+                          const cat = storeCategoryMap[product.categoryId]
+                          if (cat) return `${bn ? cat.nameBn : cat.name} - ${bn ? product.nameBn : product.name}`.toLowerCase()
+                          return (bn ? product.nameBn : product.name).toLowerCase()
+                        }
+                        return productName.toLowerCase()
                       }
-                      return (bn ? 'শপ আইটেম' : 'Shop Item').toLowerCase()
+                      return (bn ? 'দোকান আইটেম' : 'Store Item').toLowerCase()
                     })
                     if (!names.some((n) => n.includes(q))) return false
                   }
@@ -1422,17 +1501,34 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         const struct = structures.find((s) => s.id === p.feeStructureId)
                         if (struct) return bn ? struct.nameBn : struct.name
                         if (p.note) {
+                          const catMatch = p.note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+                          if (catMatch) {
+                            const rest = p.note.slice(catMatch[0].length)
+                            const di = rest.indexOf(' — ')
+                            const pn = di > 0 ? rest.substring(0, di).trim() : rest.trim()
+                            return `${bn ? catMatch[2] : catMatch[1]} - ${pn}`
+                          }
                           const dashIdx = p.note.indexOf(' — ')
-                          if (dashIdx > 0) return p.note.substring(0, dashIdx).trim()
+                          const productName = dashIdx > 0 ? p.note.substring(0, dashIdx).trim() : p.note.split(',')[0].trim()
+                          const product = storeProducts.find((pp) => pp.name === productName || pp.nameBn === productName)
+                          if (product) {
+                            const cat = storeCategoryMap[product.categoryId]
+                            if (cat) return `${bn ? cat.nameBn : cat.name} - ${bn ? product.nameBn : product.name}`
+                            return bn ? product.nameBn : product.name
+                          }
                           const priceMatch = p.note.match(/৳(\d+)/)
                           if (priceMatch) {
                             const price = Number(priceMatch[1])
                             const match = storeProducts.find((pp) => pp.price === price)
-                            if (match) return bn ? match.nameBn : match.name
+                            if (match) {
+                              const cat = storeCategoryMap[match.categoryId]
+                              if (cat) return `${bn ? cat.nameBn : cat.name} - ${bn ? match.nameBn : match.name}`
+                              return bn ? match.nameBn : match.name
+                            }
                           }
                           return p.note.split(',')[0].trim()
                         }
-                        return bn ? 'শপ আইটেম' : 'Shop Item'
+                        return bn ? 'দোকান আইটেম' : 'Store Item'
                       })
                       const uniqueNames = [...new Set(feeNames)]
                       const paidDate = new Date(batch.paidAt)
@@ -1450,8 +1546,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           <td className="text-center px-2 lg:px-3 py-2.5"><span className="text-[11px] lg:text-[12px] text-[var(--text-muted)]">{batch.invoiceNo}</span></td>
                           <td className="text-center px-2 lg:px-3 py-2.5"><span className="font-bold text-[var(--brand)]">{fmt(batch.totalAmount)}</span></td>
                           <td className="text-center px-2 lg:px-3 py-2.5">
-                            <span className="text-[11px] lg:text-[12px] text-[var(--text-muted)] truncate block" title={batch.payments.map((p) => p.note).filter(Boolean).join(', ')}>
-                              {batch.payments.map((p) => p.note).filter(Boolean).join(', ') || '—'}
+                            <span className="text-[11px] lg:text-[12px] text-[var(--text-muted)] truncate block" title={batch.payments.map((p) => p.note ? stripCatPrefix(p.note) : '').filter(Boolean).join(', ')}>
+                              {batch.payments.map((p) => p.note ? stripCatPrefix(p.note) : '').filter(Boolean).join(', ') || '—'}
                             </span>
                           </td>
                           <td className="text-center px-2 lg:px-3 py-2.5">

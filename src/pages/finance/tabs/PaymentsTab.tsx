@@ -6,6 +6,7 @@ import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
 import type { FeePayment } from '@/store/feeStore'
+import { useStoreStore } from '@/store/storeStore'
 import { XLSX } from '@/lib/excelExport'
 import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsModal'
 import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
@@ -34,11 +35,18 @@ interface Props {
   onViewReceipt?: (batch: PaymentBatch) => void
 }
 
+function stripCatPrefix(note: string): string {
+  const m = note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+  return m ? note.slice(m[0].length) : note
+}
+
 export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const bn = useBn()
   const students = useSessionStudents()
   const { institution } = useClassStore()
   const { payments, structures, deletePayment } = useFeeStore()
+  const storeProducts = useStoreStore((s) => s.products)
+  const storeCategories = useStoreStore((s) => s.categories)
   const [search, setSearch] = useState('')
   const [fMethod, setFMethod] = useState('')
   const [fCollector, setFCollector] = useState('')
@@ -57,6 +65,12 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     students.forEach((s) => { map[s.id] = { nameEn: s.nameEn, nameBn: s.nameBn, class: s.class, section: s.section || '' } })
     return map
   }, [students])
+
+  const storeCategoryMap = useMemo(() => {
+    const map: Record<string, { name: string; nameBn: string }> = {}
+    storeCategories.forEach((c) => { map[c.id] = { name: c.name, nameBn: c.nameBn } })
+    return map
+  }, [storeCategories])
 
   const structureMap = useMemo(() => {
     const map: Record<string, { name: string; nameBn: string; type: string }> = {}
@@ -180,8 +194,24 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     if (selectedCols.includes('receipt')) row[bn ? 'রসিদ নং' : 'Receipt No'] = b.receiptNo
     if (selectedCols.includes('fees')) {
       const feeNames = b.payments.map((p) => {
-        const structId = p.feeStructureId || (p.note?.includes('Fee Collect') ? '__shop__' : p.feeStructureId)
-        const fn = structureMap[structId] || structureMap['__shop__']
+        if (!p.feeStructureId && p.note) {
+          const catMatch = p.note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+          if (catMatch) {
+            const rest = p.note.slice(catMatch[0].length)
+            const di = rest.indexOf(' — ')
+            const pn = di > 0 ? rest.substring(0, di).trim() : rest.trim()
+            return bn ? `${catMatch[2]} - ${pn}` : `${catMatch[1]} - ${pn}`
+          }
+          const dashIdx = p.note.indexOf(' — ')
+          const productName = dashIdx > 0 ? p.note.substring(0, dashIdx).trim() : p.note.split(',')[0].trim()
+          const product = storeProducts.find((pp) => pp.name === productName || pp.nameBn === productName)
+          if (product) {
+            const cat = storeCategoryMap[product.categoryId]
+            if (cat) return bn ? `${cat.nameBn} - ${product.nameBn}` : `${cat.name} - ${product.name}`
+            return bn ? product.nameBn : product.name
+          }
+        }
+        const fn = structureMap[p.feeStructureId] || structureMap['__shop__']
         return bn ? (fn?.nameBn || fn?.name || '') : (fn?.name || '')
       }).join(', ')
       row[bn ? 'পরিশোধিত ফি' : 'Fees Paid'] = feeNames
@@ -191,7 +221,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     if (selectedCols.includes('method')) row[bn ? 'পদ্ধতি' : 'Method'] = methodLabel(b.method)
     if (selectedCols.includes('collectedBy')) row[bn ? 'সংগ্রাহক' : 'Receipted By'] = b.collectedBy || '—'
     return row
-  }, [bn, structureMap])
+  }, [bn, structureMap, storeProducts, storeCategoryMap])
 
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
     const data = hasSelection ? selectedBatches : batches
@@ -256,8 +286,24 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     const data = hasSelection ? selectedBatches : batches
     const sheetData = data.map((b) => {
       const feeNames = b.payments.map((p) => {
-        const structId = p.feeStructureId || (p.note?.includes('Fee Collect') ? '__shop__' : p.feeStructureId)
-        const fn = structureMap[structId] || structureMap['__shop__']
+        if (!p.feeStructureId && p.note) {
+          const catMatch = p.note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+          if (catMatch) {
+            const rest = p.note.slice(catMatch[0].length)
+            const di = rest.indexOf(' — ')
+            const pn = di > 0 ? rest.substring(0, di).trim() : rest.trim()
+            return bn ? `${catMatch[2]} - ${pn}` : `${catMatch[1]} - ${pn}`
+          }
+          const dashIdx = p.note.indexOf(' — ')
+          const productName = dashIdx > 0 ? p.note.substring(0, dashIdx).trim() : p.note.split(',')[0].trim()
+          const product = storeProducts.find((pp) => pp.name === productName || pp.nameBn === productName)
+          if (product) {
+            const cat = storeCategoryMap[product.categoryId]
+            if (cat) return bn ? `${cat.nameBn} - ${product.nameBn}` : `${cat.name} - ${product.name}`
+            return bn ? product.nameBn : product.name
+          }
+        }
+        const fn = structureMap[p.feeStructureId] || structureMap['__shop__']
         return bn ? (fn?.nameBn || fn?.name || '') : (fn?.name || '')
       }).join(', ')
       return {
@@ -274,7 +320,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, bn ? 'পেমেন্ট' : 'Payments')
     XLSX.writeFile(wb, `payments-${new Date().toISOString().split('T')[0]}.xlsx`)
-  }, [batches, selectedBatches, hasSelection, bn, structureMap])
+  }, [batches, selectedBatches, hasSelection, bn, structureMap, storeProducts, storeCategoryMap])
 
   const handleDeleteBatch = useCallback((batch: PaymentBatch) => {
     const msg = bn
@@ -304,11 +350,45 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     const logoHtml = pdfLogoHTML(b, 50)
     const watermarkHtml = b.logo ? `<img src="${b.logo}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:350px;height:350px;opacity:0.05;pointer-events:none;object-fit:contain" />` : ''
     const feeRows = batch.payments.map((p, i) => {
-      const structId = p.feeStructureId || (p.note?.includes('Fee Collect') ? '__shop__' : p.feeStructureId)
-      const fn = structureMap[structId] || structureMap['__shop__']
-      const period = p.forMonth ? (() => { const [yr, mo] = p.forMonth.split('-').map(Number); return `<span style="font-size:8px;color:#555;font-weight:400">(${MONTH_LABELS[(mo || 1) - 1]}-${String(yr).slice(-2)})</span>` })() : (fn?.type === 'onetime' ? `<span style="font-size:8px;color:#555;font-weight:400">(One-time)</span>` : '')
-      const rem = p.note ? `<div style="font-size:7px;color:#555;font-style:italic">${(p.discount || 0).toLocaleString()} amount discount for ${p.note}</div>` : ''
-      return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? fn?.nameBn || fn?.name || '-' : fn?.name || '-'} ${period}</div>${rem}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${p.amount.toLocaleString()}</td></tr>`
+      let fnName: string
+      let fnNameBn: string
+      if (!p.feeStructureId && p.note) {
+        const catMatch = p.note.match(/^\[(.+?)\|catbn:(.+?)\]\s*/)
+        if (catMatch) {
+          const catName = catMatch[1]
+          const catNameBn = catMatch[2]
+          const rest = p.note.slice(catMatch[0].length)
+          const dashIdx = rest.indexOf(' — ')
+          const productName = dashIdx > 0 ? rest.substring(0, dashIdx).trim() : rest.trim()
+          fnName = `${catName} - ${productName}`
+          fnNameBn = `${catNameBn} - ${productName}`
+        } else {
+          const dashIdx = p.note.indexOf(' — ')
+          const productName = dashIdx > 0 ? p.note.substring(0, dashIdx).trim() : p.note.split(',')[0].trim()
+          const product = storeProducts.find((pp) => pp.name === productName || pp.nameBn === productName)
+          if (product) {
+            const cat = storeCategoryMap[product.categoryId]
+            if (cat) {
+              fnName = `${cat.name} - ${product.name}`
+              fnNameBn = `${cat.nameBn} - ${product.nameBn}`
+            } else {
+              fnName = product.name
+              fnNameBn = product.nameBn
+            }
+          } else {
+            const fn = structureMap['__shop__']
+            fnName = fn?.name || '-'
+            fnNameBn = fn?.nameBn || '-'
+          }
+        }
+      } else {
+        const fn = structureMap[p.feeStructureId] || structureMap['__shop__']
+        fnName = fn?.name || '-'
+        fnNameBn = fn?.nameBn || '-'
+      }
+      const period = p.forMonth ? (() => { const [yr, mo] = p.forMonth.split('-').map(Number); return `<span style="font-size:8px;color:#555;font-weight:400">(${MONTH_LABELS[(mo || 1) - 1]}-${String(yr).slice(-2)})</span>` })() : (fnName !== (structureMap['__shop__']?.name || '-') ? `<span style="font-size:8px;color:#555;font-weight:400">(One-time)</span>` : '')
+      const rem = p.note ? `<div style="font-size:7px;color:#555;font-style:italic">${(p.discount || 0).toLocaleString()} amount discount for ${stripCatPrefix(p.note)}</div>` : ''
+      return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? fnNameBn : fnName} ${period}</div>${rem}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${p.amount.toLocaleString()}</td></tr>`
     }).join('')
     const ds = new Date(batch.paidAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     const receiptData = {
@@ -325,7 +405,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
       totalReceived: batch.totalAmount,
       totalDue: 0,
       paymentMethod: batch.method,
-      comment: batch.payments.map((p) => p.note).filter(Boolean).join(', ') || undefined,
+      comment: batch.payments.map((p) => p.note ? stripCatPrefix(p.note) : '').filter(Boolean).join(', ') || undefined,
     }
     const copyHtml = (copyLabel: string) => `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;height:100%;padding:0 10px;display:flex;flex-direction:column;position:relative">
       ${watermarkHtml}
@@ -368,7 +448,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     const css = `@page{size:A4 landscape;margin:5mm}html,body{height:100%;margin:0;padding:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.container{display:flex;gap:16px;height:100%}.copy{flex:1;height:100%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:16px}th{background:${b.brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600}@media print{html,body{height:100%!important;margin:0!important;padding:0!important}body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;padding:5mm!important}}`
     const bodyHTML = `<div class="container" style="width:100%"><div class="copy">${leftCopy}</div><div class="copy">${rightCopy}</div></div>`
     openPrintWindow(batch.receiptNo, bodyHTML, { css })
-  }, [bn, structureMap, numberToWords, fSession])
+  }, [bn, structureMap, numberToWords, fSession, storeProducts, storeCategoryMap])
 
   return (
     <div className="space-y-4">
