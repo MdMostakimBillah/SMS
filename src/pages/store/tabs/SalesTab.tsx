@@ -83,6 +83,36 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const directCount = filtered.length - feeCollectCount
   const hasActiveFilters = dateFrom || dateTo || filterPayment || filterCategory || quickSearch
 
+  const productRevenue = useMemo(() => {
+    if (!quickSearch) return 0
+    const q = quickSearch.toLowerCase()
+    let sum = 0
+    for (const s of filtered) {
+      for (const item of s.items) {
+        const productName = (bn ? item.productNameBn : item.productName).toLowerCase()
+        if (productName.includes(q)) {
+          sum += item.subtotal
+        }
+      }
+    }
+    return sum
+  }, [filtered, quickSearch, bn])
+
+  const productQty = useMemo(() => {
+    if (!quickSearch) return 0
+    const q = quickSearch.toLowerCase()
+    let sum = 0
+    for (const s of filtered) {
+      for (const item of s.items) {
+        const productName = (bn ? item.productNameBn : item.productName).toLowerCase()
+        if (productName.includes(q)) {
+          sum += item.qty
+        }
+      }
+    }
+    return sum
+  }, [filtered, quickSearch, bn])
+
   const toggleSelect = (id: string) => {
     setSelected((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
   }
@@ -170,16 +200,27 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
     XLSX.writeFile(wb, `store-sales-${new Date().toISOString().split('T')[0]}.xlsx`)
   }, [filtered, selected, bn])
 
+  // Compute summary cards data
+  const summaryCards = useMemo(() => {
+    if (quickSearch) {
+      return [
+        { label: bn ? 'মোট বিক্রয়' : 'Total Sales', value: bn ? toBnNum(filtered.length) : String(filtered.length), sub: `${totalItems} ${bn ? 'পণ্য' : 'items'}`, icon: <Receipt size={14} />, color: 'var(--brand)' },
+        { label: bn ? 'পণ্যের আয়' : 'Product Revenue', value: bn ? `৳${toBnNum(productRevenue)}` : `৳${productRevenue.toLocaleString()}`, sub: `${productQty} ${bn ? 'পণ্য' : 'items'}`, icon: <ShoppingBag size={14} />, color: 'var(--green)' },
+      ]
+    }
+    return [
+      { label: bn ? 'মোট বিক্রয়' : 'Total Sales', value: bn ? toBnNum(filtered.length) : String(filtered.length), sub: `${totalItems} ${bn ? 'পণ্য' : 'items'}`, icon: <Receipt size={14} />, color: 'var(--brand)' },
+      { label: bn ? 'মোট আয়' : 'Total Revenue', value: bn ? `৳${toBnNum(totalRevenue)}` : `৳${totalRevenue.toLocaleString()}`, icon: <ShoppingBag size={14} />, color: 'var(--green)' },
+      { label: bn ? 'ফি কালেক্ট' : 'Fee Collect', value: bn ? toBnNum(feeCollectCount) : String(feeCollectCount), icon: <Receipt size={14} />, color: 'var(--teal)' },
+      { label: bn ? 'সরাসরি বিক্রয়' : 'Direct Sale', value: bn ? toBnNum(directCount) : String(directCount), icon: <ShoppingBag size={14} />, color: 'var(--amber)' },
+    ]
+  }, [filtered, totalItems, totalRevenue, feeCollectCount, directCount, productRevenue, productQty, quickSearch, bn])
+
   return (
     <div className="space-y-4">
       {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: bn ? 'মোট বিক্রয়' : 'Total Sales', value: bn ? toBnNum(filtered.length) : String(filtered.length), sub: `${totalItems} ${bn ? 'পণ্য' : 'items'}`, icon: <Receipt size={14} />, color: 'var(--brand)' },
-          { label: bn ? 'মোট আয়' : 'Total Revenue', value: bn ? `৳${toBnNum(totalRevenue)}` : `৳${totalRevenue.toLocaleString()}`, icon: <ShoppingBag size={14} />, color: 'var(--green)' },
-          { label: bn ? 'ফি কালেক্ট' : 'Fee Collect', value: bn ? toBnNum(feeCollectCount) : String(feeCollectCount), icon: <Receipt size={14} />, color: 'var(--teal)' },
-          { label: bn ? 'সরাসরি বিক্রয়' : 'Direct Sale', value: bn ? toBnNum(directCount) : String(directCount), icon: <ShoppingBag size={14} />, color: 'var(--amber)' },
-        ].map((s) => (
+        {summaryCards.map((s) => (
           <div key={s.label} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-xs)]">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${s.color}15`, color: s.color }}>{s.icon}</div>
             <div className="min-w-0">
