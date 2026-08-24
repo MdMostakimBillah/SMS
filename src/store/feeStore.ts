@@ -88,7 +88,7 @@ export interface StudentWaiver {
   id: string
   studentId: string
   waiverCategoryId: string
-  feeCategoryId: string
+  feeStructureId: string
   mode: 'amount' | 'percent'
   value: number
   academicYear: string
@@ -348,32 +348,17 @@ export const useFeeStore = create<FeeState>()(
           for (const sw of activeSW) {
             const student = students.find((s) => s.id === sw.studentId)
             if (!student) continue
-            const matchingStructures = structures.filter(
-              (s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section)
-            )
-            for (const structure of matchingStructures) {
-              const perPeriod = sw.mode === 'percent' ? Math.round(structure.amount * sw.value / 100) : Math.min(sw.value, structure.amount)
-              if (perPeriod <= 0) continue
-              if (structure.type === 'monthly') {
-                for (let m = 0; m < 12; m++) {
-                  const now = new Date()
-                  const year = now.getFullYear()
-                  const monthKey = `${year}-${String(m + 1).padStart(2, '0')}`
-                  result.push({
-                    id: `SWVR-${sw.id}-${structure.id}-${m}`,
-                    studentId: sw.studentId,
-                    feeStructureId: structure.id,
-                    amount: perPeriod,
-                    reason: sw.reason,
-                    reasonBn: sw.reasonBn,
-                    approvedBy: sw.approvedBy,
-                    createdAt: sw.createdAt,
-                    forMonth: monthKey,
-                  })
-                }
-              } else {
+            const structure = structures.find((s) => s.id === sw.feeStructureId)
+            if (!structure) continue
+            const perPeriod = sw.mode === 'percent' ? Math.round(structure.amount * sw.value / 100) : Math.min(sw.value, structure.amount)
+            if (perPeriod <= 0) continue
+            if (structure.type === 'monthly') {
+              for (let m = 0; m < 12; m++) {
+                const now = new Date()
+                const year = now.getFullYear()
+                const monthKey = `${year}-${String(m + 1).padStart(2, '0')}`
                 result.push({
-                  id: `SWVR-${sw.id}-${structure.id}`,
+                  id: `SWVR-${sw.id}-${structure.id}-${m}`,
                   studentId: sw.studentId,
                   feeStructureId: structure.id,
                   amount: perPeriod,
@@ -381,8 +366,20 @@ export const useFeeStore = create<FeeState>()(
                   reasonBn: sw.reasonBn,
                   approvedBy: sw.approvedBy,
                   createdAt: sw.createdAt,
+                  forMonth: monthKey,
                 })
               }
+            } else {
+              result.push({
+                id: `SWVR-${sw.id}-${structure.id}`,
+                studentId: sw.studentId,
+                feeStructureId: structure.id,
+                amount: perPeriod,
+                reason: sw.reason,
+                reasonBn: sw.reasonBn,
+                approvedBy: sw.approvedBy,
+                createdAt: sw.createdAt,
+              })
             }
           }
         }

@@ -199,16 +199,13 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
       for (const sw of studentWaiversForCat) {
         const student = students.find((s) => s.id === sw.studentId)
         if (!student) continue
-        const matchingStructures = structures.filter(
-          (s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section)
-        )
-        for (const struct of matchingStructures) {
-          const perPeriod = sw.mode === 'percent' ? Math.round(struct.amount * sw.value / 100) : Math.min(sw.value, struct.amount)
-          if (struct.type === 'monthly') {
-            totalWaived += perPeriod * 12
-          } else {
-            totalWaived += perPeriod
-          }
+        const structure = structures.find((s) => s.id === sw.feeStructureId)
+        if (!structure) continue
+        const perPeriod = sw.mode === 'percent' ? Math.round(structure.amount * sw.value / 100) : Math.min(sw.value, structure.amount)
+        if (structure.type === 'monthly') {
+          totalWaived += perPeriod * 12
+        } else {
+          totalWaived += perPeriod
         }
       }
 
@@ -264,26 +261,23 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
     for (const sw of swFiltered) {
       const student = students.find((s) => s.id === sw.studentId)
       if (!student) continue
-      const matchingStructures = structures.filter(
-        (s) => s.isActive && s.class === student.class && (!s.section || s.section === student.section)
-      )
-      for (const struct of matchingStructures) {
-        const group = ensureGroup(sw.studentId)
-        if (!group) continue
-        group.entries.push({
-          id: `${sw.id}-${struct.id}`,
-          originalId: sw.id,
-          categoryId: sw.waiverCategoryId,
-          studentId: sw.studentId,
-          feeStructureId: struct.id,
-          mode: sw.mode,
-          value: sw.value,
-          months: struct.type === 'monthly' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] : [],
-          reason: sw.reason,
-          reasonBn: sw.reasonBn,
-          source: 'student',
-        })
-      }
+      const structure = structures.find((s) => s.id === sw.feeStructureId)
+      if (!structure) continue
+      const group = ensureGroup(sw.studentId)
+      if (!group) continue
+      group.entries.push({
+        id: `${sw.id}-${structure.id}`,
+        originalId: sw.id,
+        categoryId: sw.waiverCategoryId,
+        studentId: sw.studentId,
+        feeStructureId: structure.id,
+        mode: sw.mode,
+        value: sw.value,
+        months: structure.type === 'monthly' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] : [],
+        reason: sw.reason,
+        reasonBn: sw.reasonBn,
+        source: 'student',
+      })
     }
 
     // Compute totalWaived for each group

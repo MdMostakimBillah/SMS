@@ -169,14 +169,11 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
   const handleSave = () => {
     if (!selectedCategoryId || selectedStudentIds.size === 0 || !feeStructureId || totalPerStudent <= 0 || !reason) return
 
-    const selectedStructure = structures.find((s) => s.id === feeStructureId)
-    const feeCategoryId = selectedStructure?.categoryId || ''
-
     const swEntries: StudentWaiver[] = Array.from(selectedStudentIds).map((sid) => ({
       id: `SWVR-${Date.now()}-${sid.slice(-4)}`,
       studentId: sid,
       waiverCategoryId: selectedCategoryId,
-      feeCategoryId,
+      feeStructureId,
       mode: waiverMode,
       value: waiverMode === 'amount' ? Number(amount) : Number(percent),
       academicYear: institution?.currentSession || '',
