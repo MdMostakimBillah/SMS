@@ -87,67 +87,111 @@ function generateMonthRows(
   const currentMonthIdx = now.getMonth()
   const currentYearNum = now.getFullYear()
 
+  // First, collect one-time fees
+  const oneTimeRows: MonthRow[] = []
   for (const struct of structures) {
-    if (!struct.isActive) continue
+    if (!struct.isActive || struct.type !== 'onetime') continue
+    const paid = payments.filter((p) => p.feeStructureId === struct.id).reduce((sum, p) => sum + p.amount, 0)
+    const waivedEntries = waivers.filter((w) => w.feeStructureId === struct.id)
+    const waived = waivedEntries.reduce((sum, w) => sum + w.amount, 0)
+    const receivable = struct.amount - paid - waived
+    if (receivable <= 0) continue
+    oneTimeRows.push({
+      key: `${struct.id}-onetime`, feeName: struct.name, feeNameBn: struct.nameBn,
+      dateRange: `${academicYear}`, dateRangeBn: `${academicYear}`,
+      amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable,
+      structureId: struct.id, isOnetime: true,
+      waivedAmount: waived, waiverReason: waivedEntries[0]?.reason || '', waiverReasonBn: waivedEntries[0]?.reasonBn || '',
+    })
+  }
+
+  // For monthly fees, group by month (year-month) - chronological order
+  // Collect all months that have at least one fee with receivable > 0
+  const monthMap = new Map<string, { year: number; monthIdx: number; fees: MonthRow[] }>()
+
+  for (const struct of structures) {
+    if (!struct.isActive || struct.type !== 'monthly') continue
     const structAdvance = typeof advanceMonths === 'number' ? advanceMonths : (advanceMonths[struct.id] || 0)
     const totalMonths = (currentYearNum - year) * 12 + (currentMonthIdx - startMonth) + 1 + structAdvance
-    if (struct.type === 'onetime') {
-      const paid = payments.filter((p) => p.feeStructureId === struct.id).reduce((sum, p) => sum + p.amount, 0)
-      const waivedEntries = waivers.filter((w) => w.feeStructureId === struct.id)
-      const waived = waivedEntries.reduce((sum, w) => sum + w.amount, 0)
-      const receivable = struct.amount - paid - waived
-      if (receivable <= 0) continue
-        rows.push({
-        key: `${struct.id}-onetime`, feeName: struct.name, feeNameBn: struct.nameBn,
-        dateRange: `${academicYear}`, dateRangeBn: `${academicYear}`,
-        amount: struct.amount, discount: 0, remarks: '', receivable, receive: receivable,
-        structureId: struct.id, isOnetime: true,
-        waivedAmount: waived, waiverReason: waivedEntries[0]?.reason || '', waiverReasonBn: waivedEntries[0]?.reasonBn || '',
-      })
-    } else {
-      const range = struct.applicableMonths
-        ? struct.applicableMonths.filter((m) => {
-            if (currentYearNum > year) return true
-            if (currentYearNum === year) return m <= currentMonthIdx + structAdvance
-            return false
-          })
-        : Array.from({ length: totalMonths }, (_, i) => i)
-      for (const i of range) {
-        const monthIdx = struct.applicableMonths ? i : (startMonth + i) % 12
-        const yearOffset = struct.applicableMonths ? 0 : Math.floor((startMonth + i) / 12)
-        const m = months[monthIdx]
-        const currentYear = year + yearOffset
-        if (struct.applicableMonths && !struct.applicableMonths.includes(monthIdx)) continue
-        const monthPayments = payments
-          .filter((p) => { if (p.feeStructureId !== struct.id) return false; if (p.forMonth) return p.forMonth === `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}`; const d = new Date(p.paidAt); return d.getFullYear() === currentYear && d.getMonth() === monthIdx })
-        const paid = monthPayments.reduce((sum, p) => sum + p.amount, 0)
-        const discountFromPayments = monthPayments.reduce((sum, p) => sum + (p.discount || 0), 0)
-        const waivedEntries = waivers
-          .filter((w) => {
-            if (w.feeStructureId !== struct.id) return false
-            if (w.forMonth) {
-              return w.forMonth === `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}`
-            }
-            const d = new Date(w.createdAt)
-            return d.getFullYear() === currentYear && d.getMonth() === monthIdx
-          })
-        const waived = waivedEntries.reduce((sum, w) => sum + w.amount, 0)
-        const receivable = struct.amount - paid - discountFromPayments - Math.min(waived, struct.amount)
-        if (receivable <= 0) continue
-        const startDate = `01 ${m.label} ${currentYear}`
-        const endDate = `${m.days} ${m.label} ${currentYear}`
-        const startDateBn = `০১ ${m.labelBn} ${currentYear}`
-        const endDateBn = `${m.days} ${m.labelBn} ${currentYear}`
-        rows.push({
-          key: `${struct.id}-${currentYear}-${monthIdx}`, feeName: struct.name, feeNameBn: struct.nameBn,
-          dateRange: `(${startDate} - ${endDate})`, dateRangeBn: `(${startDateBn} - ${endDateBn})`,
-          amount: struct.amount, discount: 0, remarks: '', receivable: Math.max(0, receivable), receive: Math.max(0, receivable),
-          structureId: struct.id, isOnetime: false,
-          waivedAmount: waived, waiverReason: waivedEntries[0]?.reason || '', waiverReasonBn: waivedEntries[0]?.reasonBn || '',
+    const range = struct.applicableMonths
+      ? struct.applicableMonths.filter((m) => {
+          if (currentYearNum > year) return true
+          if (currentYearNum === year) return m <= currentMonthIdx + structAdvance
+          return false
         })
+      : Array.from({ length: totalMonths }, (_, i) => i)
+
+    for (const i of range) {
+      const monthIdx = struct.applicableMonths ? i : (startMonth + i) % 12
+      const yearOffset = struct.applicableMonths ? 0 : Math.floor((startMonth + i) / 12)
+      const currentYear = year + yearOffset
+      if (struct.applicableMonths && !struct.applicableMonths.includes(monthIdx)) continue
+
+      const monthKey = `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}`
+      const m = months[monthIdx]
+
+      const monthPayments = payments
+        .filter((p) => {
+          if (p.feeStructureId !== struct.id) return false
+          if (p.forMonth) return p.forMonth === monthKey
+          const d = new Date(p.paidAt)
+          return d.getFullYear() === currentYear && d.getMonth() === monthIdx
+        })
+      const paid = monthPayments.reduce((sum, p) => sum + p.amount, 0)
+      const discountFromPayments = monthPayments.reduce((sum, p) => sum + (p.discount || 0), 0)
+      const waivedEntries = waivers
+        .filter((w) => {
+          if (w.feeStructureId !== struct.id) return false
+          if (w.forMonth) return w.forMonth === monthKey
+          const d = new Date(w.createdAt)
+          return d.getFullYear() === currentYear && d.getMonth() === monthIdx
+        })
+      const waived = waivedEntries.reduce((sum, w) => sum + w.amount, 0)
+      const receivable = struct.amount - paid - discountFromPayments - Math.min(waived, struct.amount)
+      if (receivable <= 0) continue
+
+      const startDate = `01 ${m.label} ${currentYear}`
+      const endDate = `${m.days} ${m.label} ${currentYear}`
+      const startDateBn = `০১ ${m.labelBn} ${currentYear}`
+      const endDateBn = `${m.days} ${m.labelBn} ${currentYear}`
+
+      const feeRow: MonthRow = {
+        key: `${struct.id}-${monthKey}`,
+        feeName: struct.name,
+        feeNameBn: struct.nameBn,
+        dateRange: `(${startDate} - ${endDate})`,
+        dateRangeBn: `(${startDateBn} - ${endDateBn})`,
+        amount: struct.amount,
+        discount: 0,
+        remarks: '',
+        receivable: Math.max(0, receivable),
+        receive: Math.max(0, receivable),
+        structureId: struct.id,
+        isOnetime: false,
+        waivedAmount: waived,
+        waiverReason: waivedEntries[0]?.reason || '',
+        waiverReasonBn: waivedEntries[0]?.reasonBn || '',
       }
+
+      if (!monthMap.has(monthKey)) {
+        monthMap.set(monthKey, { year: currentYear, monthIdx, fees: [] })
+      }
+      monthMap.get(monthKey)!.fees.push(feeRow)
     }
   }
+
+  // Sort months chronologically (oldest first) and flatten
+  const sortedMonthKeys = Array.from(monthMap.keys()).sort()
+  for (const monthKey of sortedMonthKeys) {
+    const monthData = monthMap.get(monthKey)!
+    for (const fee of monthData.fees) {
+      rows.push(fee)
+    }
+  }
+
+  // Add one-time fees at the end
+  rows.push(...oneTimeRows)
+
   return rows
 }
 
