@@ -436,7 +436,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       const edit = getRowEdit(row.key)
       const lastDash = row.key.lastIndexOf('-')
       const secondLastDash = row.key.lastIndexOf('-', lastDash - 1)
-      const forMonth = row.isOnetime ? undefined : `${row.key.substring(secondLastDash + 1, lastDash)}-${String(Number(row.key.substring(lastDash + 1)) + 1).padStart(2, '0')}`
+      const forMonth = row.isOnetime ? undefined : `${row.key.substring(secondLastDash + 1, lastDash)}-${row.key.substring(lastDash + 1)}`
       let paymentNote = row.key.startsWith('shop-') ? `${row.feeName} — ${edit.remarks || ''}` : edit.remarks
       if (row.key.startsWith('shop-') && !row.structureId) {
         const shopPid = row.key.substring(5, row.key.lastIndexOf('-'))
