@@ -1533,7 +1533,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                       })
                       const uniqueNames = [...new Set(feeNames)]
                       const paidDate = new Date(batch.paidAt)
-                      const monthLabel = `${paidDate.toLocaleString('en', { month: 'short' })} ${paidDate.getFullYear()}`
+                      const monthLabel = paidDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                       return (
                         <tr key={batch.batchId} className="border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40">
                           <td className="text-center px-2 lg:px-3 py-2.5 text-[var(--text-muted)]">{idx + 1}</td>
