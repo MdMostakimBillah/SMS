@@ -113,6 +113,15 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
     return sum
   }, [filtered, quickSearch, bn])
 
+  const getSaleProductTotal = useCallback((sale: typeof sales[number]) => {
+    if (!quickSearch) return sale.total
+    const q = quickSearch.toLowerCase()
+    return sale.items.reduce((sum, item) => {
+      const productName = (bn ? item.productNameBn : item.productName).toLowerCase()
+      return productName.includes(q) ? sum + item.subtotal : sum
+    }, 0)
+  }, [quickSearch, bn])
+
   const toggleSelect = (id: string) => {
     setSelected((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
   }
@@ -204,7 +213,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const summaryCards = useMemo(() => {
     if (quickSearch) {
       return [
-        { label: bn ? 'মোট বিক্রয়' : 'Total Sales', value: bn ? toBnNum(filtered.length) : String(filtered.length), sub: `${totalItems} ${bn ? 'পণ্য' : 'items'}`, icon: <Receipt size={14} />, color: 'var(--brand)' },
+        { label: bn ? 'মোট বিক্রয়' : 'Total Sales', value: bn ? `৳${toBnNum(productRevenue)}` : `৳${productRevenue.toLocaleString()}`, sub: `${filtered.length} ${bn ? 'টি বিক্রয়' : 'sales'} · ${productQty} ${bn ? 'পণ্য' : 'items'}`, icon: <Receipt size={14} />, color: 'var(--brand)' },
         { label: bn ? 'পণ্যের আয়' : 'Product Revenue', value: bn ? `৳${toBnNum(productRevenue)}` : `৳${productRevenue.toLocaleString()}`, sub: `${productQty} ${bn ? 'পণ্য' : 'items'}`, icon: <ShoppingBag size={14} />, color: 'var(--green)' },
       ]
     }
@@ -387,7 +396,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
                         </span>
                       </td>
                       <td className="py-2.5 px-3 text-right">
-                        <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">৳{bn ? toBnNum(s.total) : s.total.toLocaleString()}</span>
+                        <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">৳{bn ? toBnNum(getSaleProductTotal(s)) : getSaleProductTotal(s).toLocaleString()}</span>
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         <button onClick={() => { if (confirm(bn ? 'এই বিক্রয় মুছে ফেলতে চান?' : 'Delete this sale?')) deleteSale(s.id) }}
