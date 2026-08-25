@@ -401,9 +401,19 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const fmt = (n: number) => Math.round(n).toLocaleString()
 
   const todayStr = new Date().toISOString().split('T')[0]
-  const todayIncome = useMemo(() => payments.filter((p) => p.paidAt === todayStr && !p.feeStructureId.startsWith('FEE-OTHER-')).reduce((s, p) => s + p.amount, 0), [payments, todayStr])
+  const todayIncome = useMemo(() => payments.filter((p) => p.paidAt === todayStr && p.feeStructureId !== '' && !p.feeStructureId.startsWith('FEE-OTHER-')).reduce((s, p) => s + p.amount, 0), [payments, todayStr])
   const todayOtherIncome = useMemo(() => payments.filter((p) => p.paidAt === todayStr && p.feeStructureId.startsWith('FEE-OTHER-')).reduce((s, p) => s + p.amount, 0), [payments, todayStr])
-  const todayShopIncome = useMemo(() => storeSales.filter((s) => s.createdAt.startsWith(todayStr)).reduce((sum, s) => sum + s.total, 0), [storeSales, todayStr])
+  const todayShopIncome = useMemo(() => {
+    const otherPaymentIds = new Set(
+      payments
+        .filter((p) => p.paidAt === todayStr && p.feeStructureId.startsWith('FEE-OTHER-'))
+        .map((p) => p.note)
+    )
+    return storeSales
+      .filter((s) => s.createdAt.startsWith(todayStr))
+      .filter((s) => !otherPaymentIds.has(`Fee Collect — ${s.note?.replace('Fee Collect — ', '')}`))
+      .reduce((sum, s) => sum + s.total, 0)
+  }, [storeSales, todayStr, payments])
   const todayDiscount = useMemo(() => payments.filter((p) => p.paidAt === todayStr).reduce((s, p) => s + (p.discount || 0), 0), [payments, todayStr])
   const todayWaiver = useMemo(() => waivers.filter((w) => w.createdAt?.startsWith(todayStr)).reduce((s, w) => s + w.amount, 0), [waivers, todayStr])
 
