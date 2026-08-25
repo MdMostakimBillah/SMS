@@ -111,15 +111,15 @@ export default function AccountingReportPage() {
     feePayments.filter((p) => filterByDate(p.paidAt.split('T')[0])).forEach((p) => {
       const struct = feeStructures.find((s) => s.id === p.feeStructureId)
       if (!struct) return
-      const key = struct.name.trim().toLowerCase()
+      const key = `fee-${struct.name.trim().toLowerCase()}`
       const existing = map.get(key)
       if (existing) {
-        existing.amount += p.amount - p.discount
+        existing.amount += p.amount
       } else {
         map.set(key, {
           name: struct.name,
           nameBn: struct.nameBn,
-          amount: p.amount - p.discount,
+          amount: p.amount,
           count: 0,
           sourceType: struct.type === 'monthly' ? 'monthly' : 'onetime',
           categoryId: struct.categoryId,
@@ -135,9 +135,9 @@ export default function AccountingReportPage() {
       if (!cat) return
       const structId = `FEE-OTHER-${a.id}`
       const otherPayments = feePayments.filter((p) => p.feeStructureId === structId && filterByDate(p.paidAt.split('T')[0]))
-      const total = otherPayments.reduce((sum, p) => sum + p.amount - p.discount, 0)
+      const total = otherPayments.reduce((sum, p) => sum + p.amount, 0)
       if (total <= 0) return
-      const key = cat.name.trim().toLowerCase()
+      const key = `other-${cat.name.trim().toLowerCase()}`
       const existing = map.get(key)
       if (existing) {
         existing.amount += total
@@ -230,6 +230,7 @@ export default function AccountingReportPage() {
   }
 
   const storeBasePath = location.pathname.replace(/accounting-report.*$/, 'store')
+  const othersIncomeBasePath = location.pathname.replace(/accounting-report.*$/, 'others-income')
 
   const safeOpen = useCallback((url: string) => {
     const w = window.open(url, '_blank')
@@ -244,6 +245,10 @@ export default function AccountingReportPage() {
       safeOpen(`${storeBasePath}?${params.toString()}`)
       return
     }
+    if (row.sourceType === 'other') {
+      safeOpen(othersIncomeBasePath)
+      return
+    }
     const struct = feeStructures.find((s) => s.name === row.name || s.nameBn === row.nameBn)
     const params = new URLSearchParams({ view: 'dues', status: 'paid', months: '0,1,2,3,4,5,6,7,8,9,10,11' })
     if (struct) {
@@ -255,7 +260,7 @@ export default function AccountingReportPage() {
     if (dateFrom) params.set('dateFrom', dateFrom)
     if (dateTo) params.set('dateTo', dateTo)
     safeOpen(`${basePath}?${params.toString()}`)
-  }, [feeStructures, basePath, storeBasePath, dateFrom, dateTo, safeOpen])
+  }, [feeStructures, basePath, storeBasePath, othersIncomeBasePath, dateFrom, dateTo, safeOpen])
 
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new()

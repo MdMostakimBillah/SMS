@@ -401,7 +401,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const fmt = (n: number) => Math.round(n).toLocaleString()
 
   const todayStr = new Date().toISOString().split('T')[0]
-  const todayIncome = useMemo(() => payments.filter((p) => p.paidAt === todayStr).reduce((s, p) => s + p.amount, 0), [payments, todayStr])
+  const todayIncome = useMemo(() => payments.filter((p) => p.paidAt === todayStr && !p.feeStructureId.startsWith('FEE-OTHER-')).reduce((s, p) => s + p.amount, 0), [payments, todayStr])
+  const todayOtherIncome = useMemo(() => payments.filter((p) => p.paidAt === todayStr && p.feeStructureId.startsWith('FEE-OTHER-')).reduce((s, p) => s + p.amount, 0), [payments, todayStr])
   const todayShopIncome = useMemo(() => storeSales.filter((s) => s.createdAt.startsWith(todayStr)).reduce((sum, s) => sum + s.total, 0), [storeSales, todayStr])
   const todayDiscount = useMemo(() => payments.filter((p) => p.paidAt === todayStr).reduce((s, p) => s + (p.discount || 0), 0), [payments, todayStr])
   const todayWaiver = useMemo(() => waivers.filter((w) => w.createdAt?.startsWith(todayStr)).reduce((s, w) => s + w.amount, 0), [waivers, todayStr])
@@ -798,7 +799,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             <Receipt size={15} style={{ color: 'var(--green)' }} />
           </div>
           <div className="min-w-0">
-            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(todayIncome + todayShopIncome)}</div>
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(todayIncome + todayOtherIncome + todayShopIncome)}</div>
             <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'আজকের আয়' : "Today's income"}</div>
           </div>
         </div>
