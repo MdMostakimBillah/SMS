@@ -405,7 +405,22 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const todayOtherIncome = useMemo(() => payments.filter((p) => p.paidAt === todayStr && p.feeStructureId.startsWith('FEE-OTHER-')).reduce((s, p) => s + p.amount, 0), [payments, todayStr])
   const todayShopIncome = useMemo(() => storeSales.filter((s) => s.createdAt.startsWith(todayStr) && !s.note?.startsWith('Fee Collect —')).reduce((sum, s) => sum + s.total, 0), [storeSales, todayStr])
   const todayDiscount = useMemo(() => payments.filter((p) => p.paidAt === todayStr).reduce((s, p) => s + (p.discount || 0), 0), [payments, todayStr])
-  const todayWaiver = useMemo(() => waivers.reduce((s, w) => s + w.amount, 0), [waivers])
+  const todayWaiver = useMemo(() => {
+    const todayPayments = payments.filter((p) => p.paidAt === todayStr)
+    if (todayPayments.length === 0) return 0
+    const matchedWaiverIds = new Set<string>()
+    let total = 0
+    for (const p of todayPayments) {
+      for (const w of waivers) {
+        if (matchedWaiverIds.has(w.id)) continue
+        if (w.studentId !== p.studentId || w.feeStructureId !== p.feeStructureId) continue
+        if (w.forMonth && w.forMonth !== p.forMonth) continue
+        matchedWaiverIds.add(w.id)
+        total += w.amount
+      }
+    }
+    return total
+  }, [waivers, payments, todayStr])
 
 
   const handleReceiveFee = useCallback(() => {
