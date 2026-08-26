@@ -17,14 +17,6 @@ import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/
 type View = 'income' | 'expenses' | 'profit-loss'
 type SourceType = 'monthly' | 'onetime' | 'other' | 'store'
 
-interface CategoryRow {
-  name: string
-  nameBn: string
-  amount: number
-  count: number
-  sourceType?: SourceType
-}
-
 function StatCards({ stats, bn }: { stats: { totalIncome: number; totalExpenses: number; netProfit: number; margin: number }; bn: boolean }) {
   const isProfit = stats.netProfit >= 0
   return (
@@ -181,12 +173,12 @@ export default function AccountingReportPage() {
   }, [feePayments, feeStructures, otherAssignments, otherCategories, storeSales, storeProducts, filterByDate])
 
   const expensesByCategory = useMemo(() => {
-    const map = new Map<string, { name: string; nameBn: string; amount: number; count: number }>()
+    const map = new Map<string, { name: string; nameBn: string; amount: number; count: number; sourceType: SourceType }>()
     expenses.filter((e) => e.isActive && filterByDate(e.date)).forEach((e) => {
       const cat = expenseCategories.find((c) => c.id === e.categoryId)
       const name = cat ? (bn ? cat.nameBn : cat.name) : (bn ? 'অন্যান্য' : 'Others')
       const nameBn = cat?.nameBn || 'অন্যান্য'
-      const existing = map.get(e.categoryId) || { name, nameBn, amount: 0, count: 0 }
+      const existing = map.get(e.categoryId) || { name, nameBn, amount: 0, count: 0, sourceType: 'other' as SourceType }
       existing.amount += e.amount
       existing.count += 1
       map.set(e.categoryId, existing)
@@ -384,7 +376,6 @@ export default function AccountingReportPage() {
 
       const profitColor = netProfit >= 0 ? '#22c55e' : '#ef4444'
       const profitLabel = netProfit >= 0 ? (bn ? 'নিট লাভ' : 'Net Profit') : (bn ? 'নিট ক্ষতি' : 'Net Loss')
-      const profitHeaders = ['#', bn ? 'বিবরণ' : 'Description', bn ? 'পরিমাণ' : 'Amount']
       const profitRows = [
         [String(1), bn ? 'মোট আয়' : 'Total Income', `<span style="color:#22c55e;font-weight:700">৳${totalIncome.toLocaleString()}</span>`],
         [String(2), bn ? 'মোট খরচ' : 'Total Expenses', `<span style="color:#ef4444;font-weight:700">৳${totalExpenses.toLocaleString()}</span>`]
