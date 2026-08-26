@@ -304,7 +304,7 @@ export default function AccountingReportPage() {
     const branding = getPDFBranding()
     const logo = pdfLogoHTML(branding, 28)
     const baseStyle = `font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a`
-    const hdr = `<div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid ${branding.brandColor};padding-bottom:8px;margin-bottom:10px">${logo}<div><div style="font-size:14px;font-weight:700;color:${branding.brandColor}">${branding.schoolName}</div><div style="font-size:9px;color:#666">${branding.address}</div></div></div>`
+    const hdr = `<table style="width:100%;border-bottom:3px solid ${branding.brandColor};padding-bottom:8px;margin-bottom:10px"><tr><td>${logo}</td><td style="vertical-align:middle"><div style="font-size:14px;font-weight:700;color:${branding.brandColor}">${branding.schoolName}</div><div style="font-size:9px;color:#666">${branding.address}</div></td></tr></table>`
 
     if (activeTab === 'profit-loss') {
       const buildTable = (title: string, titleColor: string, headers: string[], rows: string[][], totalHtml: string) => {
@@ -365,28 +365,35 @@ export default function AccountingReportPage() {
     const genDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
     if (activeTab === 'profit-loss') {
-      const buildTableHtml = (title: string, titleColor: string, headers: string[], rows: string[][], totalHtml: string) => {
-        const th = headers.map((h) => `<th>${h}</th>`).join('')
-        const trs = rows.map((cells) => `<tr>${cells.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')
-        return `<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:${titleColor};margin-bottom:4px;padding:3px 6px;background:${titleColor}0D;border-left:3px solid ${titleColor}">${title}</div><table><thead><tr>${th}</tr></thead><tbody>${trs}${totalHtml}</tbody></table></div>`
-      }
+      const thStyle = `background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600`
+      const tdStyle = `padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center`
 
-      const incHeaders = ['#', bn ? 'ক্যাটাগরি' : 'Category', bn ? 'ধরন' : 'Type', bn ? 'আয়ের পরিমাণ' : 'Income Amount', bn ? 'শিক্ষার্থী' : 'Students']
-      const incRows = incomeByCategory.map((r, i) => {
+      const incRowsHtml = incomeByCategory.map((r, i) => {
         const t = r.sourceType
-        return [String(i + 1), bn ? r.nameBn : r.name, t ? (bn ? sourceBadge[t].labelBn : sourceBadge[t].label) : '', `৳${r.amount.toLocaleString()}`, String(r.count)]
-      })
-      const incTotal = `<tr style="border-top:2px solid #22c55e;font-weight:700;background:#22c55e0D"><td colspan="3" style="padding:4px 6px;text-align:center;color:#22c55e">${bn ? 'মোট আয়' : 'Total Income'}</td><td style="padding:4px 6px;text-align:center;color:#22c55e;font-weight:700">৳${totalIncome.toLocaleString()}</td><td style="padding:4px 6px;text-align:center">${incomeByCategory.reduce((s, r) => s + r.count, 0)}</td></tr>`
+        const type = t ? (bn ? sourceBadge[t].labelBn : sourceBadge[t].label) : ''
+        return `<tr><td style="${tdStyle}">${i + 1}</td><td style="${tdStyle};text-align:left;font-weight:600">${bn ? r.nameBn : r.name}</td><td style="${tdStyle}">${type}</td><td style="${tdStyle};color:#22c55e;font-weight:700">৳${r.amount.toLocaleString()}</td><td style="${tdStyle}">${r.count}</td></tr>`
+      }).join('')
+      const incTotalRow = `<tr style="border-top:2px solid #22c55e;font-weight:700;background:#22c55e0D"><td style="${tdStyle}" colspan="3">Total Income</td><td style="${tdStyle};color:#22c55e;font-weight:700">৳${totalIncome.toLocaleString()}</td><td style="${tdStyle}">${incomeByCategory.reduce((s, r) => s + r.count, 0)}</td></tr>`
+      const incTable = `<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:700;color:#22c55e;margin-bottom:4px;padding:4px 8px;background:#22c55e0D;border-left:3px solid #22c55e">${bn ? 'আয়ের ক্যাটাগরি' : 'Income Categories'}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr><th style="${thStyle}">#</th><th style="${thStyle};text-align:left">${bn ? 'ক্যাটাগরি' : 'Category'}</th><th style="${thStyle}">${bn ? 'ধরন' : 'Type'}</th><th style="${thStyle}">${bn ? 'আয়ের পরিমাণ' : 'Income Amount'}</th><th style="${thStyle}">${bn ? 'শিক্ষার্থী' : 'Students'}</th></tr></thead><tbody>${incRowsHtml}${incTotalRow}</tbody></table></div>`
 
-      const expHeaders = ['#', bn ? 'ক্যাটাগরি' : 'Category', bn ? 'খরচের পরিমাণ' : 'Expense Amount', bn ? 'সংখ্যা' : 'Count']
-      const expRows = expensesByCategory.map((r, i) => [String(i + 1), bn ? r.nameBn : r.name, `৳${r.amount.toLocaleString()}`, String(r.count)])
-      const expTotal = `<tr style="border-top:2px solid #ef4444;font-weight:700;background:#ef44440D"><td colspan="2" style="padding:4px 6px;text-align:center;color:#ef4444">${bn ? 'মোট খরচ' : 'Total Expenses'}</td><td style="padding:4px 6px;text-align:center;color:#ef4444;font-weight:700">৳${totalExpenses.toLocaleString()}</td><td style="padding:4px 6px;text-align:center">${expensesByCategory.reduce((s, r) => s + r.count, 0)}</td></tr>`
+      const expRowsHtml = expensesByCategory.map((r, i) => {
+        return `<tr><td style="${tdStyle}">${i + 1}</td><td style="${tdStyle};text-align:left;font-weight:600">${bn ? r.nameBn : r.name}</td><td style="${tdStyle};color:#ef4444;font-weight:700">৳${r.amount.toLocaleString()}</td><td style="${tdStyle}">${r.count}</td></tr>`
+      }).join('')
+      const expTotalRow = `<tr style="border-top:2px solid #ef4444;font-weight:700;background:#ef44440D"><td style="${tdStyle}" colspan="2">Total Expenses</td><td style="${tdStyle};color:#ef4444;font-weight:700">৳${totalExpenses.toLocaleString()}</td><td style="${tdStyle}">${expensesByCategory.reduce((s, r) => s + r.count, 0)}</td></tr>`
+      const expTable = `<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:4px;padding:4px 8px;background:#ef44440D;border-left:3px solid #ef4444">${bn ? 'খরচের ক্যাটাগরি' : 'Expense Categories'}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr><th style="${thStyle}">#</th><th style="${thStyle};text-align:left">${bn ? 'ক্যাটাগরি' : 'Category'}</th><th style="${thStyle}">${bn ? 'খরচের পরিমাণ' : 'Expense Amount'}</th><th style="${thStyle}">${bn ? 'সংখ্যা' : 'Count'}</th></tr></thead><tbody>${expRowsHtml}${expTotalRow}</tbody></table></div>`
 
       const profitColor = netProfit >= 0 ? '#22c55e' : '#ef4444'
       const profitLabel = netProfit >= 0 ? (bn ? 'নিট লাভ' : 'Net Profit') : (bn ? 'নিট ক্ষতি' : 'Net Loss')
-      const summary = `<table style="width:100%;margin-top:14px;border:2px solid ${profitColor};background:${profitColor}08;border-radius:4px;border-collapse:collapse"><tr><td style="padding:10px 14px"><div style="font-size:13px;font-weight:700;color:${profitColor}">${profitLabel}</div><div style="font-size:9px;color:#666;margin-top:2px">${bn ? `আয় ৳${totalIncome.toLocaleString()} − খরচ ৳${totalExpenses.toLocaleString()}` : `Income ৳${totalIncome.toLocaleString()} − Expenses ৳${totalExpenses.toLocaleString()}`}</div></td><td style="padding:10px 14px;text-align:right"><div style="font-size:18px;font-weight:700;color:${profitColor}">${netProfit >= 0 ? '+' : '−'}৳${Math.abs(netProfit).toLocaleString()}</div>${totalIncome > 0 ? `<div style="font-size:9px;color:#666">${bn ? 'লাভের হার' : 'Margin'}: ${((Math.abs(netProfit) / totalIncome) * 100).toFixed(1)}%</div>` : ''}</td></tr></table>`
+      const profitHeaders = ['#', bn ? 'বিবরণ' : 'Description', bn ? 'পরিমাণ' : 'Amount']
+      const profitRows = [
+        [String(1), bn ? 'মোট আয়' : 'Total Income', `<span style="color:#22c55e;font-weight:700">৳${totalIncome.toLocaleString()}</span>`],
+        [String(2), bn ? 'মোট খরচ' : 'Total Expenses', `<span style="color:#ef4444;font-weight:700">৳${totalExpenses.toLocaleString()}</span>`]
+      ]
+      const profitTotalRow = `<tr style="border-top:2px solid ${profitColor};font-weight:700;background:${profitColor}0D"><td style="${tdStyle}" colspan="2">${profitLabel}</td><td style="${tdStyle};color:${profitColor};font-weight:700">${netProfit >= 0 ? '+' : '−'}৳${Math.abs(netProfit).toLocaleString()}</td></tr>`
+      const summaryHtml = `<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:700;color:${profitColor};margin-bottom:4px;padding:4px 8px;background:${profitColor}0D;border-left:3px solid ${profitColor}">${bn ? 'লাভ/ক্ষতি' : 'Profit/Loss'}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr><th style="${thStyle}">#</th><th style="${thStyle};text-align:left">${bn ? 'বিবরণ' : 'Description'}</th><th style="${thStyle}">${bn ? 'পরিমাণ' : 'Amount'}</th></tr></thead><tbody>${profitRows.map((cells) => `<tr>${cells.map((c) => `<td style="${tdStyle}">${c}</td>`).join('')}</tr>`).join('')}${profitTotalRow}</tbody></table>${totalIncome > 0 ? `<div style="font-size:9px;color:#666;margin-top:4px;text-align:right">${bn ? 'লাভের হার' : 'Margin'}: ${((Math.abs(netProfit) / totalIncome) * 100).toFixed(1)}%</div>` : ''}</div>`
 
-      const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div>${buildTableHtml(bn ? 'আয়ের ক্যাটাগরি' : 'Income Categories', '#22c55e', incHeaders, incRows, incTotal)}${buildTableHtml(bn ? 'খরচের ক্যাটাগরি' : 'Expense Categories', '#ef4444', expHeaders, expRows, expTotal)}${summary}<div class="ftr">Generated: ${genDate}</div>`
+      const bodyHTML = `<table style="width:100%;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px"><tr><td>${logoHtml}</td><td style="vertical-align:middle"><div style="font-size:16px;font-weight:700;color:${pdfBranding.brandColor}">${pdfBranding.schoolName}</div><div style="font-size:10px;color:#666">${pdfBranding.address}</div></td></tr></table><div style="font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0">${opts.title}</div>${incTable}${expTable}${summaryHtml}<div style="margin-top:12px;font-size:9px;color:#999;text-align:right">Generated: ${genDate}</div>`
+
       openPrintWindow(opts.title, bodyHTML, { css })
       return
     }
