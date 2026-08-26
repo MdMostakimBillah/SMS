@@ -83,21 +83,6 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const directCount = filtered.length - feeCollectCount
   const hasActiveFilters = dateFrom || dateTo || filterPayment || filterCategory || quickSearch
 
-  const productRevenue = useMemo(() => {
-    if (!quickSearch) return 0
-    const q = quickSearch.toLowerCase()
-    let sum = 0
-    for (const s of filtered) {
-      for (const item of s.items) {
-        const productName = (bn ? item.productNameBn : item.productName).toLowerCase()
-        if (productName.includes(q)) {
-          sum += item.subtotal
-        }
-      }
-    }
-    return sum
-  }, [filtered, quickSearch, bn])
-
   interface FlatItemRow {
     key: string
     saleId: string
@@ -116,13 +101,15 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   }
 
   const flatRows = useMemo<FlatItemRow[]>(() => {
-    if (!quickSearch) return []
-    const q = quickSearch.toLowerCase()
+    if (!hasActiveFilters) return []
+    const q = quickSearch?.toLowerCase() || ''
     const rows: FlatItemRow[] = []
     for (const s of filtered) {
       for (const item of s.items) {
-        const name = (bn ? item.productNameBn : item.productName).toLowerCase()
-        if (!name.includes(q)) continue
+        if (q) {
+          const name = (bn ? item.productNameBn : item.productName).toLowerCase()
+          if (!name.includes(q)) continue
+        }
         rows.push({
           key: `${s.id}-${item.productId}`,
           saleId: s.id,
@@ -142,13 +129,13 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
       }
     }
     return rows
-  }, [filtered, quickSearch, bn])
+  }, [filtered, quickSearch, hasActiveFilters, bn])
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
   }
   const toggleAll = () => {
-    if (quickSearch) {
+    if (hasActiveFilters) {
       if (selected.size === flatRows.length) setSelected(new Set()); else setSelected(new Set(flatRows.map((r) => r.key)))
     } else {
       if (selected.size === filtered.length) setSelected(new Set()); else setSelected(new Set(filtered.map((s) => s.id)))
@@ -156,7 +143,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   }
   const deleteSelected = () => {
     if (!confirm(bn ? 'নির্বাচিত বিক্রয় মুছে ফেলতে চান?' : 'Delete selected sales?')) return
-    if (quickSearch) {
+    if (hasActiveFilters) {
       const saleIds = new Set(flatRows.filter((r) => selected.has(r.key)).map((r) => r.saleId))
       saleIds.forEach((id) => deleteSale(id))
     } else {
@@ -196,56 +183,117 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
     return row
   }, [bn])
 
+  const buildFlatPdfRow = useCallback((r: FlatItemRow, cols: string[], idx: number): Record<string, string | number> => {
+    const row: Record<string, string | number> = {}
+    if (cols.includes('sn')) row[bn ? 'ক্রমিক' : 'S/N'] = idx + 1
+    if (cols.includes('date')) row[bn ? 'তারিখ' : 'Date'] = formatDate(r.createdAt)
+    if (cols.includes('receipt')) row[bn ? 'রসিদ' : 'Receipt'] = r.receipt
+    if (cols.includes('student')) row[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? r.studentNameBn : r.studentName
+    if (cols.includes('class')) row[bn ? 'শ্রেণি' : 'Class'] = `${r.studentClass}${r.studentSection ? '-' + r.studentSection : ''}`
+    if (cols.includes('items')) row[bn ? 'পণ্য' : 'Items'] = `${bn ? r.productNameBn : r.productName}×${r.qty}`
+    if (cols.includes('payment')) row[bn ? 'পেমেন্ট' : 'Payment'] = paymentLabels[r.paymentMethod]?.[bn ? 'bn' : 'en'] || r.paymentMethod
+    if (cols.includes('total')) row[bn ? 'মোট' : 'Total'] = r.subtotal
+    return row
+  }, [bn])
+
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
-    const data = selected.size > 0 ? filtered.filter((s) => selected.has(s.id)) : filtered
-    const rows = data.map((s, i) => buildPdfRow(s, opts.selectedCols, i))
-    const totalRow: Record<string, string | number> = {}
-    const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
-    totalRow[bn ? 'ক্রমিক' : 'S/N'] = ''
-    totalRow[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? 'মোট' : 'Total'
-    if (opts.selectedCols.includes('total')) totalRow[bn ? 'মোট' : 'Total'] = data.reduce((s, r) => s + r.total, 0)
-    rows.push(totalRow)
-    const pdfBranding = getPDFBranding()
-    const logoHtml = pdfLogoHTML(pdfBranding)
-    const css = `@page{size:${opts.orientation};margin:5mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact}}`
-    const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r, i) => `<tr${i === rows.length - 1 ? ' style="font-weight:700;border-top:2px solid #333;background:#f0f0f0"' : ''}>${headers.map((h) => `<td>${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="ftr">Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>`
-    openPrintWindow(opts.title, bodyHTML, { css })
-  }, [filtered, selected, pdfColumns, bn, buildPdfRow])
+    const useFlat = hasActiveFilters && flatRows.length > 0
+    if (useFlat) {
+      const data = selected.size > 0 ? flatRows.filter((r) => selected.has(r.key)) : flatRows
+      const rows = data.map((r, i) => buildFlatPdfRow(r, opts.selectedCols, i))
+      const totalRow: Record<string, string | number> = {}
+      const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
+      totalRow[bn ? 'ক্রমিক' : 'S/N'] = ''
+      totalRow[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? 'মোট' : 'Total'
+      if (opts.selectedCols.includes('total')) totalRow[bn ? 'মোট' : 'Total'] = data.reduce((s, r) => s + r.subtotal, 0)
+      rows.push(totalRow)
+      const pdfBranding = getPDFBranding()
+      const logoHtml = pdfLogoHTML(pdfBranding)
+      const css = `@page{size:${opts.orientation};margin:5mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact}}`
+      const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r, i) => `<tr${i === rows.length - 1 ? ' style="font-weight:700;border-top:2px solid #333;background:#f0f0f0"' : ''}>${headers.map((h) => `<td>${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="ftr">Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>`
+      openPrintWindow(opts.title, bodyHTML, { css })
+    } else {
+      const data = selected.size > 0 ? filtered.filter((s) => selected.has(s.id)) : filtered
+      const rows = data.map((s, i) => buildPdfRow(s, opts.selectedCols, i))
+      const totalRow: Record<string, string | number> = {}
+      const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
+      totalRow[bn ? 'ক্রমিক' : 'S/N'] = ''
+      totalRow[bn ? 'শিক্ষার্থী' : 'Student'] = bn ? 'মোট' : 'Total'
+      if (opts.selectedCols.includes('total')) totalRow[bn ? 'মোট' : 'Total'] = data.reduce((s, r) => s + r.total, 0)
+      rows.push(totalRow)
+      const pdfBranding = getPDFBranding()
+      const logoHtml = pdfLogoHTML(pdfBranding)
+      const css = `@page{size:${opts.orientation};margin:5mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact}}`
+      const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r, i) => `<tr${i === rows.length - 1 ? ' style="font-weight:700;border-top:2px solid #333;background:#f0f0f0"' : ''}>${headers.map((h) => `<td>${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="ftr">Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>`
+      openPrintWindow(opts.title, bodyHTML, { css })
+    }
+  }, [filtered, flatRows, selected, pdfColumns, bn, buildPdfRow, buildFlatPdfRow, hasActiveFilters])
 
   const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
-    const data = selected.size > 0 ? filtered.filter((s) => selected.has(s.id)) : filtered
-    const rows = data.slice(0, 20).map((s, i) => buildPdfRow(s, opts.selectedCols, i))
-    const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
-    const pdfBranding = getPDFBranding()
-    return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a"><div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:8px;margin-bottom:10px">${pdfLogoHTML(pdfBranding, 28)}<div><div style="font-size:14px;font-weight:700;color:${pdfBranding.brandColor}">${pdfBranding.schoolName}</div><div style="font-size:9px;color:#666">${pdfBranding.address}</div></div></div><div style="font-size:13px;font-weight:700;color:${pdfBranding.brandColor};margin:8px 0">${opts.title}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headers.map((h) => `<th style="background:${pdfBranding.brandColor};color:#fff;padding:4px 6px;text-align:center">${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${headers.map((h) => `<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table>${data.length > 20 ? `<div style="font-size:9px;color:#999;margin-top:6px;text-align:center">... and ${data.length - 20} more records</div>` : ''}</div>`
-  }, [filtered, selected, pdfColumns, bn, buildPdfRow])
+    const useFlat = hasActiveFilters && flatRows.length > 0
+    if (useFlat) {
+      const data = selected.size > 0 ? flatRows.filter((r) => selected.has(r.key)) : flatRows
+      const rows = data.slice(0, 20).map((r, i) => buildFlatPdfRow(r, opts.selectedCols, i))
+      const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
+      const pdfBranding = getPDFBranding()
+      return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a"><div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:8px;margin-bottom:10px">${pdfLogoHTML(pdfBranding, 28)}<div><div style="font-size:14px;font-weight:700;color:${pdfBranding.brandColor}">${pdfBranding.schoolName}</div><div style="font-size:9px;color:#666">${pdfBranding.address}</div></div></div><div style="font-size:13px;font-weight:700;color:${pdfBranding.brandColor};margin:8px 0">${opts.title}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headers.map((h) => `<th style="background:${pdfBranding.brandColor};color:#fff;padding:4px 6px;text-align:center">${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${headers.map((h) => `<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table>${data.length > 20 ? `<div style="font-size:9px;color:#999;margin-top:6px;text-align:center">... and ${data.length - 20} more records</div>` : ''}</div>`
+    } else {
+      const data = selected.size > 0 ? filtered.filter((s) => selected.has(s.id)) : filtered
+      const rows = data.slice(0, 20).map((s, i) => buildPdfRow(s, opts.selectedCols, i))
+      const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
+      const pdfBranding = getPDFBranding()
+      return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a"><div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:8px;margin-bottom:10px">${pdfLogoHTML(pdfBranding, 28)}<div><div style="font-size:14px;font-weight:700;color:${pdfBranding.brandColor}">${pdfBranding.schoolName}</div><div style="font-size:9px;color:#666">${pdfBranding.address}</div></div></div><div style="font-size:13px;font-weight:700;color:${pdfBranding.brandColor};margin:8px 0">${opts.title}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headers.map((h) => `<th style="background:${pdfBranding.brandColor};color:#fff;padding:4px 6px;text-align:center">${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${headers.map((h) => `<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table>${data.length > 20 ? `<div style="font-size:9px;color:#999;margin-top:6px;text-align:center">... and ${data.length - 20} more records</div>` : ''}</div>`
+    }
+  }, [filtered, flatRows, selected, pdfColumns, bn, buildPdfRow, buildFlatPdfRow, hasActiveFilters])
 
   // ─── Excel ──────────────────────────────────────────────────────────
   const exportExcel = useCallback(() => {
-    const data = selected.size > 0 ? filtered.filter((s) => selected.has(s.id)) : filtered
-    const sheetData = data.map((s, idx) => ({
-      [bn ? 'ক্রমিক' : 'S/N']: idx + 1,
-      [bn ? 'তারিখ' : 'Date']: formatDate(s.createdAt),
-      [bn ? 'সময়' : 'Time']: formatTime(s.createdAt),
-      [bn ? 'রসিদ' : 'Receipt']: getReceiptNo(s.note) + (isFeeCollect(s) ? ' (Fee)' : ''),
-      [bn ? 'শিক্ষার্থী' : 'Student']: bn ? s.soldToNameBn : s.soldToName,
-      [bn ? 'শ্রেণি' : 'Class']: `${s.soldToClass}${s.soldToSection ? '-' + s.soldToSection : ''}`,
-      [bn ? 'পণ্য' : 'Items']: s.items.map((i) => `${bn ? i.productNameBn : i.productName} ×${i.qty}`).join(', '),
-      [bn ? 'পেমেন্ট' : 'Payment']: paymentLabels[s.paymentMethod]?.[bn ? 'bn' : 'en'] || s.paymentMethod,
-      [bn ? 'মোট' : 'Total']: s.total,
-    }))
-    const ws = XLSX.utils.json_to_sheet(sheetData)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, bn ? 'বিক্রয়' : 'Sales')
-    XLSX.writeFile(wb, `store-sales-${new Date().toISOString().split('T')[0]}.xlsx`)
-  }, [filtered, selected, bn])
+    const useFlat = hasActiveFilters && flatRows.length > 0
+    if (useFlat) {
+      const data = selected.size > 0 ? flatRows.filter((r) => selected.has(r.key)) : flatRows
+      const sheetData = data.map((r, idx) => ({
+        [bn ? 'ক্রমিক' : 'S/N']: idx + 1,
+        [bn ? 'তারিখ' : 'Date']: formatDate(r.createdAt),
+        [bn ? 'সময়' : 'Time']: formatTime(r.createdAt),
+        [bn ? 'রসিদ' : 'Receipt']: r.receipt,
+        [bn ? 'শিক্ষার্থী' : 'Student']: bn ? r.studentNameBn : r.studentName,
+        [bn ? 'শ্রেণি' : 'Class']: `${r.studentClass}${r.studentSection ? '-' + r.studentSection : ''}`,
+        [bn ? 'পণ্য' : 'Items']: `${bn ? r.productNameBn : r.productName} ×${r.qty}`,
+        [bn ? 'পেমেন্ট' : 'Payment']: paymentLabels[r.paymentMethod]?.[bn ? 'bn' : 'en'] || r.paymentMethod,
+        [bn ? 'মোট' : 'Total']: r.subtotal,
+      }))
+      const ws = XLSX.utils.json_to_sheet(sheetData)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, bn ? 'বিক্রয়' : 'Sales')
+      XLSX.writeFile(wb, `store-sales-${new Date().toISOString().split('T')[0]}.xlsx`)
+    } else {
+      const data = selected.size > 0 ? filtered.filter((s) => selected.has(s.id)) : filtered
+      const sheetData = data.map((s, idx) => ({
+        [bn ? 'ক্রমিক' : 'S/N']: idx + 1,
+        [bn ? 'তারিখ' : 'Date']: formatDate(s.createdAt),
+        [bn ? 'সময়' : 'Time']: formatTime(s.createdAt),
+        [bn ? 'রসিদ' : 'Receipt']: getReceiptNo(s.note) + (isFeeCollect(s) ? ' (Fee)' : ''),
+        [bn ? 'শিক্ষার্থী' : 'Student']: bn ? s.soldToNameBn : s.soldToName,
+        [bn ? 'শ্রেণি' : 'Class']: `${s.soldToClass}${s.soldToSection ? '-' + s.soldToSection : ''}`,
+        [bn ? 'পণ্য' : 'Items']: s.items.map((i) => `${bn ? i.productNameBn : i.productName} ×${i.qty}`).join(', '),
+        [bn ? 'পেমেন্ট' : 'Payment']: paymentLabels[s.paymentMethod]?.[bn ? 'bn' : 'en'] || s.paymentMethod,
+        [bn ? 'মোট' : 'Total']: s.total,
+      }))
+      const ws = XLSX.utils.json_to_sheet(sheetData)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, bn ? 'বিক্রয়' : 'Sales')
+      XLSX.writeFile(wb, `store-sales-${new Date().toISOString().split('T')[0]}.xlsx`)
+    }
+  }, [filtered, flatRows, selected, bn, hasActiveFilters])
 
   // Compute summary cards data
   const summaryCards = useMemo(() => {
-    if (quickSearch) {
+    if (hasActiveFilters) {
+      const flatTotal = flatRows.reduce((s, r) => s + r.subtotal, 0)
+      const flatQty = flatRows.reduce((s, r) => s + r.qty, 0)
       return [
-        { label: bn ? 'মোট বিক্রয়' : 'Total Sales', value: bn ? `৳${toBnNum(productRevenue)}` : `৳${productRevenue.toLocaleString()}`, sub: `${flatRows.length} ${bn ? 'টি আইটেম' : 'items'} · ${flatRows.reduce((s, r) => s + r.qty, 0)} ${bn ? 'পণ্য' : 'pcs'}`, icon: <Receipt size={14} />, color: 'var(--brand)' },
-        { label: bn ? 'পণ্যের আয়' : 'Product Revenue', value: bn ? `৳${toBnNum(productRevenue)}` : `৳${productRevenue.toLocaleString()}`, sub: `${flatRows.reduce((s, r) => s + r.qty, 0)} ${bn ? 'পণ্য' : 'pcs'}`, icon: <ShoppingBag size={14} />, color: 'var(--green)' },
+        { label: bn ? 'মোট বিক্রয়' : 'Total Sales', value: bn ? `৳${toBnNum(flatTotal)}` : `৳${flatTotal.toLocaleString()}`, sub: `${flatRows.length} ${bn ? 'টি আইটেম' : 'items'} · ${flatQty} ${bn ? 'পণ্য' : 'pcs'}`, icon: <Receipt size={14} />, color: 'var(--brand)' },
+        { label: bn ? 'পণ্যের আয়' : 'Product Revenue', value: bn ? `৳${toBnNum(flatTotal)}` : `৳${flatTotal.toLocaleString()}`, sub: `${flatQty} ${bn ? 'পণ্য' : 'pcs'}`, icon: <ShoppingBag size={14} />, color: 'var(--green)' },
       ]
     }
     return [
@@ -254,7 +302,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
       { label: bn ? 'ফি কালেক্ট' : 'Fee Collect', value: bn ? toBnNum(feeCollectCount) : String(feeCollectCount), icon: <Receipt size={14} />, color: 'var(--teal)' },
       { label: bn ? 'সরাসরি বিক্রয়' : 'Direct Sale', value: bn ? toBnNum(directCount) : String(directCount), icon: <ShoppingBag size={14} />, color: 'var(--amber)' },
     ]
-  }, [filtered, totalItems, totalRevenue, feeCollectCount, directCount, productRevenue, quickSearch, flatRows, bn])
+  }, [filtered, totalItems, totalRevenue, feeCollectCount, directCount, flatRows, hasActiveFilters, bn])
 
   return (
     <div className="space-y-4">
@@ -371,7 +419,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
                 <tr className="bg-[var(--bg-secondary)]">
                   <th className="w-10 py-2.5 px-3">
                     <button onClick={toggleAll} className="cursor-pointer" title={bn ? 'সব নির্বাচন' : 'Select all'}>
-                      {quickSearch
+                      {hasActiveFilters
                         ? (selected.size === flatRows.length && flatRows.length > 0 ? <CheckSquare size={15} className="text-[var(--brand)]" /> : <Square size={15} className="text-[var(--text-muted)]" />)
                         : (selected.size === filtered.length && filtered.length > 0 ? <CheckSquare size={15} className="text-[var(--brand)]" /> : <Square size={15} className="text-[var(--text-muted)]" />)}
                     </button>
@@ -380,14 +428,14 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
                   <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
                   <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'রসিদ' : 'Receipt'}</th>
                   <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{quickSearch ? (bn ? 'পণ্য' : 'Product') : (bn ? 'পণ্য' : 'Items')}</th>
+                  <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{hasActiveFilters ? (bn ? 'পণ্য' : 'Product') : (bn ? 'পণ্য' : 'Items')}</th>
                   <th className="text-left py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'পেমেন্ট' : 'Payment'}</th>
                   <th className="text-right py-2.5 px-3 text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'মোট' : 'Total'}</th>
                   <th className="text-center py-2.5 px-3 w-10"></th>
                 </tr>
               </thead>
               <tbody>
-                {quickSearch ? (
+                {hasActiveFilters ? (
                   flatRows.map((r, idx) => {
                     const isSelected = selected.has(r.key)
                     return (
@@ -501,7 +549,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
           defaultTitleBn="স্কুল স্টোর — বিক্রয় রিপোর্ট"
           recordLabel="sale"
           recordLabelBn="বিক্রয়"
-          count={filtered.length}
+          count={hasActiveFilters ? flatRows.length : filtered.length}
           isBn={bn}
           showColumns={true}
           previewRenderer={pdfPreviewRenderer}
