@@ -301,25 +301,50 @@ export default function AccountingReportPage() {
   }, [activeTab])
 
   const pdfPreviewRenderer = useCallback((opts: GenericPDFOptionsResult): string => {
-    const data = activeTab === 'profit-loss' ? profitLossByCategory : (activeTab === 'income' ? incomeByCategory : expensesByCategory)
+    const branding = getPDFBranding()
+    const logo = pdfLogoHTML(branding, 28)
+    const baseStyle = `font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a`
+    const hdr = `<div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid ${branding.brandColor};padding-bottom:8px;margin-bottom:10px">${logo}<div><div style="font-size:14px;font-weight:700;color:${branding.brandColor}">${branding.schoolName}</div><div style="font-size:9px;color:#666">${branding.address}</div></div></div>`
+
+    if (activeTab === 'profit-loss') {
+      const buildTable = (title: string, titleColor: string, headers: string[], rows: string[][], totalHtml: string) => {
+        const th = headers.map((h) => `<th style="background:${branding.brandColor};color:#fff;padding:4px 6px;text-align:center;font-size:10px">${h}</th>`).join('')
+        const trs = rows.map((cells) => `<tr>${cells.map((c) => `<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center;font-size:10px">${c}</td>`).join('')}</tr>`).join('')
+        return `<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:${titleColor};margin-bottom:4px;padding:3px 6px;background:${titleColor}0D;border-left:3px solid ${titleColor}">${title}</div><table style="width:100%;border-collapse:collapse"><thead><tr>${th}</tr></thead><tbody>${trs}${totalHtml}</tbody></table></div>`
+      }
+
+      const incHeaders = ['#', bn ? 'ক্যাটাগরি' : 'Category', bn ? 'ধরন' : 'Type', bn ? 'আয়ের পরিমাণ' : 'Income Amount', bn ? 'শিক্ষার্থী' : 'Students']
+      const incRows = incomeByCategory.slice(0, 20).map((r, i) => {
+        const t = r.sourceType
+        return [String(i + 1), bn ? r.nameBn : r.name, t ? (bn ? sourceBadge[t].labelBn : sourceBadge[t].label) : '', `৳${r.amount.toLocaleString()}`, String(r.count)]
+      })
+      const incTotal = `<tr style="border-top:2px solid #22c55e;font-weight:700;background:#22c55e0D"><td colspan="3" style="padding:4px 6px;text-align:center;color:#22c55e">${bn ? 'মোট আয়' : 'Total Income'}</td><td style="padding:4px 6px;text-align:center;color:#22c55e;font-weight:700">৳${totalIncome.toLocaleString()}</td><td style="padding:4px 6px;text-align:center">${incomeByCategory.reduce((s, r) => s + r.count, 0)}</td></tr>`
+
+      const expHeaders = ['#', bn ? 'ক্যাটাগরি' : 'Category', bn ? 'খরচের পরিমাণ' : 'Expense Amount', bn ? 'সংখ্যা' : 'Count']
+      const expRows = expensesByCategory.slice(0, 20).map((r, i) => [String(i + 1), bn ? r.nameBn : r.name, `৳${r.amount.toLocaleString()}`, String(r.count)])
+      const expTotal = `<tr style="border-top:2px solid #ef4444;font-weight:700;background:#ef44440D"><td colspan="2" style="padding:4px 6px;text-align:center;color:#ef4444">${bn ? 'মোট খরচ' : 'Total Expenses'}</td><td style="padding:4px 6px;text-align:center;color:#ef4444;font-weight:700">৳${totalExpenses.toLocaleString()}</td><td style="padding:4px 6px;text-align:center">${expensesByCategory.reduce((s, r) => s + r.count, 0)}</td></tr>`
+
+      const profitColor = netProfit >= 0 ? '#22c55e' : '#ef4444'
+      const profitLabel = netProfit >= 0 ? (bn ? 'নিট লাভ' : 'Net Profit') : (bn ? 'নিট ক্ষতি' : 'Net Loss')
+      const summary = `<div style="margin-top:14px;padding:10px 14px;border:2px solid ${profitColor};background:${profitColor}08;border-radius:4px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:700;color:${profitColor}">${profitLabel}</div><div style="font-size:9px;color:#666;margin-top:2px">${bn ? `আয় ৳${totalIncome.toLocaleString()} − খরচ ৳${totalExpenses.toLocaleString()}` : `Income ৳${totalIncome.toLocaleString()} − Expenses ৳${totalExpenses.toLocaleString()}`}</div></div><div style="text-align:right"><div style="font-size:18px;font-weight:700;color:${profitColor}">${netProfit >= 0 ? '+' : '−'}৳${Math.abs(netProfit).toLocaleString()}</div>${totalIncome > 0 ? `<div style="font-size:9px;color:#666">${bn ? 'লাভের হার' : 'Margin'}: ${((Math.abs(netProfit) / totalIncome) * 100).toFixed(1)}%</div>` : ''}</div></div></div>`
+
+      return `<div style="${baseStyle}">${hdr}<div style="font-size:13px;font-weight:700;color:${branding.brandColor};margin:8px 0">${opts.title}</div>${buildTable(bn ? 'আয়ের ক্যাটাগরি' : 'Income Categories', '#22c55e', incHeaders, incRows, incTotal)}${buildTable(bn ? 'খরচের ক্যাটাগরি' : 'Expense Categories', '#ef4444', expHeaders, expRows, expTotal)}${summary}</div>`
+    }
+
+    const data = activeTab === 'income' ? incomeByCategory : expensesByCategory
     const rows = data.slice(0, 20).map((r, i) => {
       const row: Record<string, string> = { '#': String(i + 1) }
       for (const key of opts.selectedCols) {
         switch (key) {
           case 'category': row[bn ? 'ক্যাটাগরি' : 'Category'] = bn ? r.nameBn : r.name; break
-          case 'amount': row[bn ? 'পরিমাণ' : 'Amount'] = `৳${(r as CategoryRow).amount.toLocaleString()}`; break
-          case 'count': row[bn ? 'শিক্ষার্থী' : 'Students'] = String((r as CategoryRow).count); break
-          case 'type': { const t = (r as CategoryRow).sourceType; row[bn ? 'ধরন' : 'Type'] = t ? (bn ? sourceBadge[t].labelBn : sourceBadge[t].label) : ''; break }
-          case 'income': row[bn ? 'আয়' : 'Income'] = `৳${(r as { income: number }).income.toLocaleString()}`; break
-          case 'expense': row[bn ? 'খরচ' : 'Expense'] = `৳${(r as { expense: number }).expense.toLocaleString()}`; break
-          case 'profit': row[bn ? 'লাভ/ক্ষতি' : 'Profit/Loss'] = `৳${(r as { profit: number }).profit.toLocaleString()}`; break
+          case 'amount': row[bn ? 'পরিমাণ' : 'Amount'] = `৳${r.amount.toLocaleString()}`; break
+          case 'count': row[bn ? 'শিক্ষার্থী' : 'Students'] = String(r.count); break
+          case 'type': { const t = r.sourceType; row[bn ? 'ধরন' : 'Type'] = t ? (bn ? sourceBadge[t].labelBn : sourceBadge[t].label) : ''; break }
         }
       }
       return row
     })
     const headers = ['#', ...opts.selectedCols.map((key) => { const col = pdfColumns.find((c) => c.key === key); return col ? (opts.isBn ? col.labelBn : col.label) : key })]
-    const branding = getPDFBranding()
-    const logo = pdfLogoHTML(branding, 28)
     const headerRow = headers.map((h) => `<th style="background:${branding.brandColor};color:#fff;padding:4px 6px;text-align:center">${h}</th>`).join('')
     const bodyRows = rows.map((r) => {
       const cells = [`<td style="padding:3px 6px;border-bottom:1px solid #e0e0e0;text-align:center">${r['#'] || ''}</td>`]
@@ -329,42 +354,63 @@ export default function AccountingReportPage() {
     const overflowNote = data.length > 20 ? `<div style="font-size:9px;color:#999;margin-top:6px;text-align:center">... and ${data.length - 20} more</div>` : ''
     const totalRow = activeTab === 'income'
       ? `<tr style="border-top:2px solid #333;font-weight:700;background:#f5f5f5"><td style="padding:4px 6px;text-align:center" colspan="3">Total</td><td style="padding:4px 6px;text-align:center">৳${totalIncome.toLocaleString()}</td><td style="padding:4px 6px;text-align:center">${incomeByCategory.reduce((s, r) => s + r.count, 0)}</td><td style="padding:4px 6px;text-align:center">100%</td></tr>`
-      : activeTab === 'expenses'
-      ? `<tr style="border-top:2px solid #333;font-weight:700;background:#f5f5f5"><td style="padding:4px 6px;text-align:center" colspan="2">Total</td><td style="padding:4px 6px;text-align:center">৳${totalExpenses.toLocaleString()}</td><td style="padding:4px 6px;text-align:center">${expensesByCategory.reduce((s, r) => s + r.count, 0)}</td><td style="padding:4px 6px;text-align:center">100%</td></tr>`
-      : `<tr style="border-top:2px solid #333;font-weight:700;background:#f5f5f5"><td style="padding:4px 6px;text-align:center" colspan="2">Total</td><td style="padding:4px 6px;text-align:center">৳${profitLossByCategory.reduce((s, r) => s + r.income, 0).toLocaleString()}</td><td style="padding:4px 6px;text-align:center">৳${profitLossByCategory.reduce((s, r) => s + r.expense, 0).toLocaleString()}</td><td style="padding:4px 6px;text-align:center">৳${Math.abs(netProfit).toLocaleString()}</td></tr>`
-    return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a"><div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid ${branding.brandColor};padding-bottom:8px;margin-bottom:10px">${logo}<div><div style="font-size:14px;font-weight:700;color:${branding.brandColor}">${branding.schoolName}</div><div style="font-size:9px;color:#666">${branding.address}</div></div></div><div style="font-size:13px;font-weight:700;color:${branding.brandColor};margin:8px 0">${opts.title}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headerRow}</tr></thead><tbody>${bodyRows}${totalRow}</tbody></table>${overflowNote}</div>`
-  }, [activeTab, incomeByCategory, expensesByCategory, profitLossByCategory, bn, pdfColumns])
+      : `<tr style="border-top:2px solid #333;font-weight:700;background:#f5f5f5"><td style="padding:4px 6px;text-align:center" colspan="2">Total</td><td style="padding:4px 6px;text-align:center">৳${totalExpenses.toLocaleString()}</td><td style="padding:4px 6px;text-align:center">${expensesByCategory.reduce((s, r) => s + r.count, 0)}</td><td style="padding:4px 6px;text-align:center">100%</td></tr>`
+    return `<div style="${baseStyle}">${hdr}<div style="font-size:13px;font-weight:700;color:${branding.brandColor};margin:8px 0">${opts.title}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headerRow}</tr></thead><tbody>${bodyRows}${totalRow}</tbody></table>${overflowNote}</div>`
+  }, [activeTab, incomeByCategory, expensesByCategory, bn, pdfColumns, totalIncome, totalExpenses, netProfit, sourceBadge])
 
   const handlePdfDownload = useCallback((opts: GenericPDFOptionsResult) => {
-    const data = activeTab === 'profit-loss' ? profitLossByCategory : (activeTab === 'income' ? incomeByCategory : expensesByCategory)
+    const pdfBranding = getPDFBranding()
+    const logoHtml = pdfLogoHTML(pdfBranding)
+    const css = `@page{size:${opts.orientation};margin:5mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact}}`
+    const genDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+
+    if (activeTab === 'profit-loss') {
+      const buildTableHtml = (title: string, titleColor: string, headers: string[], rows: string[][], totalHtml: string) => {
+        const th = headers.map((h) => `<th>${h}</th>`).join('')
+        const trs = rows.map((cells) => `<tr>${cells.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')
+        return `<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:${titleColor};margin-bottom:4px;padding:3px 6px;background:${titleColor}0D;border-left:3px solid ${titleColor}">${title}</div><table><thead><tr>${th}</tr></thead><tbody>${trs}${totalHtml}</tbody></table></div>`
+      }
+
+      const incHeaders = ['#', bn ? 'ক্যাটাগরি' : 'Category', bn ? 'ধরন' : 'Type', bn ? 'আয়ের পরিমাণ' : 'Income Amount', bn ? 'শিক্ষার্থী' : 'Students']
+      const incRows = incomeByCategory.map((r, i) => {
+        const t = r.sourceType
+        return [String(i + 1), bn ? r.nameBn : r.name, t ? (bn ? sourceBadge[t].labelBn : sourceBadge[t].label) : '', `৳${r.amount.toLocaleString()}`, String(r.count)]
+      })
+      const incTotal = `<tr style="border-top:2px solid #22c55e;font-weight:700;background:#22c55e0D"><td colspan="3" style="padding:4px 6px;text-align:center;color:#22c55e">${bn ? 'মোট আয়' : 'Total Income'}</td><td style="padding:4px 6px;text-align:center;color:#22c55e;font-weight:700">৳${totalIncome.toLocaleString()}</td><td style="padding:4px 6px;text-align:center">${incomeByCategory.reduce((s, r) => s + r.count, 0)}</td></tr>`
+
+      const expHeaders = ['#', bn ? 'ক্যাটাগরি' : 'Category', bn ? 'খরচের পরিমাণ' : 'Expense Amount', bn ? 'সংখ্যা' : 'Count']
+      const expRows = expensesByCategory.map((r, i) => [String(i + 1), bn ? r.nameBn : r.name, `৳${r.amount.toLocaleString()}`, String(r.count)])
+      const expTotal = `<tr style="border-top:2px solid #ef4444;font-weight:700;background:#ef44440D"><td colspan="2" style="padding:4px 6px;text-align:center;color:#ef4444">${bn ? 'মোট খরচ' : 'Total Expenses'}</td><td style="padding:4px 6px;text-align:center;color:#ef4444;font-weight:700">৳${totalExpenses.toLocaleString()}</td><td style="padding:4px 6px;text-align:center">${expensesByCategory.reduce((s, r) => s + r.count, 0)}</td></tr>`
+
+      const profitColor = netProfit >= 0 ? '#22c55e' : '#ef4444'
+      const profitLabel = netProfit >= 0 ? (bn ? 'নিট লাভ' : 'Net Profit') : (bn ? 'নিট ক্ষতি' : 'Net Loss')
+      const summary = `<div style="margin-top:14px;padding:10px 14px;border:2px solid ${profitColor};background:${profitColor}08;border-radius:4px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:700;color:${profitColor}">${profitLabel}</div><div style="font-size:9px;color:#666;margin-top:2px">${bn ? `আয় ৳${totalIncome.toLocaleString()} − খরচ ৳${totalExpenses.toLocaleString()}` : `Income ৳${totalIncome.toLocaleString()} − Expenses ৳${totalExpenses.toLocaleString()}`}</div></div><div style="text-align:right"><div style="font-size:18px;font-weight:700;color:${profitColor}">${netProfit >= 0 ? '+' : '−'}৳${Math.abs(netProfit).toLocaleString()}</div>${totalIncome > 0 ? `<div style="font-size:9px;color:#666">${bn ? 'লাভের হার' : 'Margin'}: ${((Math.abs(netProfit) / totalIncome) * 100).toFixed(1)}%</div>` : ''}</div></div></div>`
+
+      const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div>${buildTableHtml(bn ? 'আয়ের ক্যাটাগরি' : 'Income Categories', '#22c55e', incHeaders, incRows, incTotal)}${buildTableHtml(bn ? 'খরচের ক্যাটাগরি' : 'Expense Categories', '#ef4444', expHeaders, expRows, expTotal)}${summary}<div class="ftr">Generated: ${genDate}</div>`
+      openPrintWindow(opts.title, bodyHTML, { css })
+      return
+    }
+
+    const data = activeTab === 'income' ? incomeByCategory : expensesByCategory
     const headers = opts.selectedCols.map((c) => { const col = pdfColumns.find((p) => p.key === c); return col ? (opts.isBn ? col.labelBn : col.label) : c })
     const rows = data.map((r, i) => {
       const row: Record<string, string | number> = { '#': i + 1 }
       for (const key of opts.selectedCols) {
         switch (key) {
           case 'category': row[opts.isBn ? 'ক্যাটাগরি' : 'Category'] = bn ? r.nameBn : r.name; break
-          case 'amount': row[opts.isBn ? 'পরিমাণ' : 'Amount'] = (r as CategoryRow).amount; break
-          case 'count': row[opts.isBn ? 'শিক্ষার্থী' : 'Students'] = (r as CategoryRow).count; break
-          case 'type': { const t = (r as CategoryRow).sourceType; row[opts.isBn ? 'ধরন' : 'Type'] = t ? (opts.isBn ? sourceBadge[t].labelBn : sourceBadge[t].label) : ''; break }
-          case 'income': row[opts.isBn ? 'আয়' : 'Income'] = (r as { income: number }).income; break
-          case 'expense': row[opts.isBn ? 'খরচ' : 'Expense'] = (r as { expense: number }).expense; break
-          case 'profit': row[opts.isBn ? 'লাভ/ক্ষতি' : 'Profit/Loss'] = (r as { profit: number }).profit; break
+          case 'amount': row[opts.isBn ? 'পরিমাণ' : 'Amount'] = r.amount; break
+          case 'count': row[opts.isBn ? 'শিক্ষার্থী' : 'Students'] = r.count; break
+          case 'type': { const t = r.sourceType; row[opts.isBn ? 'ধরন' : 'Type'] = t ? (opts.isBn ? sourceBadge[t].labelBn : sourceBadge[t].label) : ''; break }
         }
       }
       return row
     })
-    const pdfBranding = getPDFBranding()
-    const logoHtml = pdfLogoHTML(pdfBranding)
-    const css = `@page{size:${opts.orientation};margin:5mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.hdr{display:flex;align-items:center;gap:16px;border-bottom:3px solid ${pdfBranding.brandColor};padding-bottom:10px;margin-bottom:12px}.sname{font-size:16px;font-weight:700;color:${pdfBranding.brandColor}}.saddr{font-size:10px;color:#666}.ttl{font-size:14px;font-weight:700;color:${pdfBranding.brandColor};margin:10px 0}table{width:100%;border-collapse:collapse;font-size:10px}th{background:${pdfBranding.brandColor};color:#fff;padding:5px 7px;text-align:center;font-weight:600}td{padding:4px 7px;border-bottom:1px solid #e0e0e0;text-align:center}tr:nth-child(even){background:#f8f9fa}.ftr{margin-top:12px;font-size:9px;color:#999;text-align:right}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact}}`
     const bodyRows = rows.map((r) => { const cells = headers.map((h) => `<td>${r[h] ?? ''}</td>`).join(''); return `<tr>${cells}</tr>` }).join('')
     const totalRowPdf = activeTab === 'income'
       ? `<tr style="border-top:2px solid #333;font-weight:700;background:#f5f5f5"><td colspan="3">Total</td><td>৳${totalIncome.toLocaleString()}</td><td>${incomeByCategory.reduce((s, r) => s + r.count, 0)}</td><td>100%</td></tr>`
-      : activeTab === 'expenses'
-      ? `<tr style="border-top:2px solid #333;font-weight:700;background:#f5f5f5"><td colspan="2">Total</td><td>৳${totalExpenses.toLocaleString()}</td><td>${expensesByCategory.reduce((s, r) => s + r.count, 0)}</td><td>100%</td></tr>`
-      : `<tr style="border-top:2px solid #333;font-weight:700;background:#f5f5f5"><td colspan="2">Total</td><td>৳${profitLossByCategory.reduce((s, r) => s + r.income, 0).toLocaleString()}</td><td>৳${profitLossByCategory.reduce((s, r) => s + r.expense, 0).toLocaleString()}</td><td>৳${Math.abs(netProfit).toLocaleString()}</td></tr>`
+      : `<tr style="border-top:2px solid #333;font-weight:700;background:#f5f5f5"><td colspan="2">Total</td><td>৳${totalExpenses.toLocaleString()}</td><td>${expensesByCategory.reduce((s, r) => s + r.count, 0)}</td><td>100%</td></tr>`
     const headerCells = headers.map((h) => `<th>${h}</th>`).join('')
-    const genDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    const title = activeTab === 'income' ? (bn ? 'আয় রিপোর্ট' : 'Income Report') : activeTab === 'expenses' ? (bn ? 'খরচ রিপোর্ট' : 'Expense Report') : (bn ? 'লাভ/ক্ষতি রিপোর্ট' : 'Profit/Loss Report')
+    const title = activeTab === 'income' ? (bn ? 'আয় রিপোর্ট' : 'Income Report') : (bn ? 'খরচ রিপোর্ট' : 'Expense Report')
     const bodyHTML = `<div class="hdr">${logoHtml}<div><div class="sname">${pdfBranding.schoolName}</div><div class="saddr">${pdfBranding.address}</div></div></div><div class="ttl">${opts.title}</div><table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}${totalRowPdf}</tbody></table><div class="ftr">Generated: ${genDate}</div>`
     openPrintWindow(title, bodyHTML, { css })
   }, [activeTab, incomeByCategory, expensesByCategory, profitLossByCategory, bn, pdfColumns])
