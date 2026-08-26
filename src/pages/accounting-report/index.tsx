@@ -437,6 +437,8 @@ export default function AccountingReportPage() {
         </div>
       </div>
 
+      {/* Main table for income/expenses tabs */}
+      {activeTab !== 'profit-loss' && (
       <div className="rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -444,20 +446,10 @@ export default function AccountingReportPage() {
               <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)]">
                 <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">#</th>
                 <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
-                {activeTab === 'profit-loss' ? (
-                  <>
-                    <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'আয়' : 'Income'}</th>
-                    <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'খরচ' : 'Expense'}</th>
-                    <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'লাভ/ক্ষতি' : 'Profit/Loss'}</th>
-                  </>
-                ) : (
-                  <>
-                    {activeTab === 'income' && <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ধরন' : 'Type'}</th>}
-                    <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                    <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{activeTab === 'income' ? (bn ? 'শিক্ষার্থী' : 'Students') : (bn ? 'সংখ্যা' : 'Count')}</th>
-                    <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'শতাংশ' : 'Share'}</th>
-                  </>
-                )}
+                {activeTab === 'income' && <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ধরন' : 'Type'}</th>}
+                <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{activeTab === 'income' ? (bn ? 'শিক্ষার্থী' : 'Students') : (bn ? 'সংখ্যা' : 'Count')}</th>
+                <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'শতাংশ' : 'Share'}</th>
               </tr>
             </thead>
             <tbody>
@@ -511,89 +503,125 @@ export default function AccountingReportPage() {
                   <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--text-primary)]">100%</td>
                 </tr>
               )}
-              {activeTab === 'profit-loss' && (
-                <>
-                  {/* Income section */}
-                  <tr className="bg-[var(--green)]/5 border-b border-[var(--border)]">
-                    <td colSpan={5} className="py-2.5 px-4 text-[0.75rem] font-bold text-[var(--green)] uppercase tracking-wider">
-                      {bn ? 'আয়ের ক্যাটাগরি' : 'Income Categories'}
-                    </td>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      )}
+
+      {/* Profit/Loss tab: two separate tables + summary */}
+      {activeTab === 'profit-loss' && (
+        <div className="space-y-4">
+          {/* Income Table */}
+          <div className="rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] overflow-hidden">
+            <div className="px-4 py-2.5 bg-[var(--green)]/5 border-b border-[var(--green)]/10">
+              <span className="text-[0.8125rem] font-bold text-[var(--green)]">{bn ? 'আয়ের ক্যাটাগরি' : 'Income Categories'}</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+                    <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">#</th>
+                    <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
+                    <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ধরন' : 'Type'}</th>
+                    <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'আয়ের পরিমাণ' : 'Income Amount'}</th>
+                    <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'শিক্ষার্থী' : 'Students'}</th>
                   </tr>
+                </thead>
+                <tbody>
                   {incomeByCategory.length === 0 ? (
                     <tr><td colSpan={5} className="text-center py-8 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো আয়ের তথ্য পাওয়া যায়নি' : 'No income data found'}</td></tr>
                   ) : incomeByCategory.map((r, i) => {
                     const badge = r.sourceType ? sourceBadge[r.sourceType] : null
                     return (
-                      <tr key={`inc-${i}`} className="border-b border-[var(--border)] last:border-0 transition-colors hover:bg-[var(--bg-tertiary)]">
+                      <tr key={i} className="border-b border-[var(--border)] last:border-0 transition-colors hover:bg-[var(--bg-tertiary)]">
                         <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)]">{i + 1}</td>
+                        <td className="py-3 px-4 text-[0.8125rem] font-semibold text-[var(--text-primary)]">{bn ? r.nameBn : r.name}</td>
                         <td className="py-3 px-4">
-                          <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{bn ? r.nameBn : r.name}</div>
-                          {badge && <span className="inline-flex items-center px-1.5 py-0.5 mt-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: badge.bg, color: badge.color }}>{bn ? badge.labelBn : badge.label}</span>}
+                          {badge && <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[0.625rem] font-semibold" style={{ background: badge.bg, color: badge.color }}>{bn ? badge.labelBn : badge.label}</span>}
                         </td>
-                        <td colSpan={2} className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--green)]">{fmt(r.amount)}</td>
-                        <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-secondary)]">{r.count}</td>
+                        <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--green)]">{fmt(r.amount)}</td>
+                        <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-primary)]">{r.count}</td>
                       </tr>
                     )
                   })}
                   {incomeByCategory.length > 0 && (
-                    <tr className="border-b-2 border-[var(--green)]/20 bg-[var(--green)]/5">
-                      <td className="py-2.5 px-4 text-[0.8125rem] font-bold text-[var(--green)]" colSpan={2}>{bn ? 'মোট আয়' : 'Total Income'}</td>
-                      <td colSpan={2} className="py-2.5 px-4 text-right text-[0.875rem] font-bold text-[var(--green)]">{fmt(totalIncome)}</td>
+                    <tr className="border-t-2 border-[var(--green)]/20 bg-[var(--green)]/5">
+                      <td className="py-2.5 px-4 text-[0.8125rem] font-bold text-[var(--green)]" colSpan={3}>{bn ? 'মোট আয়' : 'Total Income'}</td>
+                      <td className="py-2.5 px-4 text-right text-[0.875rem] font-bold text-[var(--green)]">{fmt(totalIncome)}</td>
                       <td className="py-2.5 px-4 text-center text-[0.8125rem] font-bold text-[var(--text-primary)]">{incomeByCategory.reduce((s, r) => s + r.count, 0)}</td>
                     </tr>
                   )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-                  {/* Expense section */}
-                  <tr className="bg-[var(--red)]/5 border-b border-[var(--border)]">
-                    <td colSpan={5} className="py-2.5 px-4 text-[0.75rem] font-bold text-[var(--red)] uppercase tracking-wider">
-                      {bn ? 'খরচের ক্যাটাগরি' : 'Expense Categories'}
-                    </td>
+          {/* Expense Table */}
+          <div className="rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] overflow-hidden">
+            <div className="px-4 py-2.5 bg-[var(--red)]/5 border-b border-[var(--red)]/10">
+              <span className="text-[0.8125rem] font-bold text-[var(--red)]">{bn ? 'খরচের ক্যাটাগরি' : 'Expense Categories'}</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+                    <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">#</th>
+                    <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
+                    <th className="text-right py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'খরচের পরিমাণ' : 'Expense Amount'}</th>
+                    <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'সংখ্যা' : 'Count'}</th>
                   </tr>
+                </thead>
+                <tbody>
                   {expensesByCategory.length === 0 ? (
-                    <tr><td colSpan={5} className="text-center py-8 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো খরচের তথ্য পাওয়া যায়নি' : 'No expense data found'}</td></tr>
+                    <tr><td colSpan={4} className="text-center py-8 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো খরচের তথ্য পাওয়া যায়নি' : 'No expense data found'}</td></tr>
                   ) : expensesByCategory.map((r, i) => (
-                    <tr key={`exp-${i}`} className="border-b border-[var(--border)] last:border-0 transition-colors hover:bg-[var(--bg-tertiary)]">
+                    <tr key={i} className="border-b border-[var(--border)] last:border-0 transition-colors hover:bg-[var(--bg-tertiary)]">
                       <td className="py-3 px-4 text-[0.8125rem] text-[var(--text-secondary)]">{i + 1}</td>
                       <td className="py-3 px-4 text-[0.8125rem] font-semibold text-[var(--text-primary)]">{bn ? r.nameBn : r.name}</td>
-                      <td colSpan={2} className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--red)]">{fmt(r.amount)}</td>
-                      <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-secondary)]">{r.count}</td>
+                      <td className="py-3 px-4 text-right text-[0.8125rem] font-bold text-[var(--red)]">{fmt(r.amount)}</td>
+                      <td className="py-3 px-4 text-center text-[0.8125rem] text-[var(--text-primary)]">{r.count}</td>
                     </tr>
                   ))}
                   {expensesByCategory.length > 0 && (
-                    <tr className="border-b-2 border-[var(--red)]/20 bg-[var(--red)]/5">
+                    <tr className="border-t-2 border-[var(--red)]/20 bg-[var(--red)]/5">
                       <td className="py-2.5 px-4 text-[0.8125rem] font-bold text-[var(--red)]" colSpan={2}>{bn ? 'মোট খরচ' : 'Total Expenses'}</td>
-                      <td colSpan={2} className="py-2.5 px-4 text-right text-[0.875rem] font-bold text-[var(--red)]">{fmt(totalExpenses)}</td>
+                      <td className="py-2.5 px-4 text-right text-[0.875rem] font-bold text-[var(--red)]">{fmt(totalExpenses)}</td>
                       <td className="py-2.5 px-4 text-center text-[0.8125rem] font-bold text-[var(--text-primary)]">{expensesByCategory.reduce((s, r) => s + r.count, 0)}</td>
                     </tr>
                   )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-                  {/* Profit/Loss summary */}
-                  {(incomeByCategory.length > 0 || expensesByCategory.length > 0) && (
-                    <tr className="border-t-2 border-[var(--border)]" style={{ background: netProfit >= 0 ? 'var(--green)' + '0D' : 'var(--red)' + '0D' }}>
-                      <td colSpan={2} className="py-4 px-4">
-                        <div className="text-[1rem] font-bold" style={{ color: netProfit >= 0 ? 'var(--green)' : 'var(--red)' }}>
-                          {netProfit >= 0 ? (bn ? 'নিট লাভ' : 'Net Profit') : (bn ? 'নিট ক্ষতি' : 'Net Loss')}
-                        </div>
-                        <div className="text-[0.6875rem] text-[var(--text-secondary)]">
-                          {bn ? `আয় ${fmt(totalIncome)} — খরচ ${fmt(totalExpenses)}` : `Income ${fmt(totalIncome)} — Expenses ${fmt(totalExpenses)}`}
-                        </div>
-                      </td>
-                      <td colSpan={3} className="py-4 px-4 text-right">
-                        <span className="text-[1.25rem] font-bold" style={{ color: netProfit >= 0 ? 'var(--green)' : 'var(--red)' }}>
-                          {netProfit >= 0 ? '+' : '-'}{fmt(Math.abs(netProfit))}
-                        </span>
-                        <div className="text-[0.6875rem] text-[var(--text-secondary)]">
-                          {totalIncome > 0 ? `${bn ? 'লাভের হার' : 'Margin'}: ${((Math.abs(netProfit) / totalIncome) * 100).toFixed(1)}%` : ''}
-                        </div>
-                      </td>
-                    </tr>
+          {/* Profit/Loss Summary */}
+          {(incomeByCategory.length > 0 || expensesByCategory.length > 0) && (
+            <div className="rounded-[0.625rem] border-2 overflow-hidden" style={{ borderColor: netProfit >= 0 ? 'var(--green)' : 'var(--red)', background: netProfit >= 0 ? 'var(--green)' + '08' : 'var(--red)' + '08' }}>
+              <div className="px-4 py-3 flex items-center justify-between">
+                <div>
+                  <div className="text-[1rem] font-bold" style={{ color: netProfit >= 0 ? 'var(--green)' : 'var(--red)' }}>
+                    {netProfit >= 0 ? (bn ? 'নিট লাভ' : 'Net Profit') : (bn ? 'নিট ক্ষতি' : 'Net Loss')}
+                  </div>
+                  <div className="text-[0.75rem] text-[var(--text-secondary)] mt-0.5">
+                    {bn ? `আয় ${fmt(totalIncome)} − খরচ ${fmt(totalExpenses)}` : `Income ${fmt(totalIncome)} − Expenses ${fmt(totalExpenses)}`}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[1.5rem] font-bold" style={{ color: netProfit >= 0 ? 'var(--green)' : 'var(--red)' }}>
+                    {netProfit >= 0 ? '+' : '−'}{fmt(Math.abs(netProfit))}
+                  </div>
+                  {totalIncome > 0 && (
+                    <div className="text-[0.75rem] text-[var(--text-secondary)]">
+                      {bn ? `লাভের হার: ${((Math.abs(netProfit) / totalIncome) * 100).toFixed(1)}%` : `Margin: ${((Math.abs(netProfit) / totalIncome) * 100).toFixed(1)}%`}
+                    </div>
                   )}
-                </>
-              )}
-            </tbody>
-          </table>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {showPdfModal && <GenericPDFOptionsModal columns={pdfColumns} defaultTitle={activeTab === 'income' ? (bn ? 'আয় রিপোর্ট' : 'Income Report') : activeTab === 'expenses' ? (bn ? 'খরচ রিপোর্ট' : 'Expense Report') : (bn ? 'লাভ/ক্ষতি রিপোর্ট' : 'Profit/Loss Report')} defaultTitleBn={activeTab === 'income' ? 'আয় রিপোর্ট' : activeTab === 'expenses' ? 'খরচ রিপোর্ট' : 'লাভ/ক্ষতি রিপোর্ট'} recordLabel={bn ? 'ক্যাটাগরি' : 'category'} recordLabelBn="ক্যাটাগরি" count={activeTab === 'income' ? incomeByCategory.length : activeTab === 'expenses' ? expensesByCategory.length : profitLossByCategory.length} isBn={bn} previewRenderer={pdfPreviewRenderer} onDownload={(opts: GenericPDFOptionsResult) => { setShowPdfModal(false); handlePdfDownload(opts) }} onClose={() => setShowPdfModal(false)} />}
     </div>
