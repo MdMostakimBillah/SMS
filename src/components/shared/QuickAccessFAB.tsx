@@ -212,6 +212,15 @@ function getSectionForPath(pathname: string): { section: string; items: RouteIte
     }
   }
 
+  // For super admin viewing paths like /super-admin/viewing/:role/{section}/{subpage}
+  const superAdminViewingMatch = pathname.match(/^\/super-admin\/viewing\/[^/]+\/([^/]+)/)
+  if (superAdminViewingMatch) {
+    const section = superAdminViewingMatch[1]
+    if (sectionRoutes[section]) {
+      return { section, items: sectionRoutes[section] }
+    }
+  }
+
   return null
 }
 

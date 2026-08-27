@@ -132,7 +132,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const totalCollected = useMemo(() => batches.reduce((sum, b) => sum + b.totalAmount, 0), [batches])
   const totalDiscount = useMemo(() => batches.reduce((sum, b) => sum + b.totalDiscount, 0), [batches])
   const todayStr = new Date().toISOString().split('T')[0]
-  const todayCollected = useMemo(() => batches.filter((b) => b.paidAt === todayStr).reduce((sum, b) => sum + b.totalAmount, 0), [batches, todayStr])
+  const todayCollected = useMemo(() => batches.filter((b) => b.paidAt.startsWith(todayStr)).reduce((sum, b) => sum + b.totalAmount, 0), [batches, todayStr])
 
   const fmt = (n: number) => n.toLocaleString()
 

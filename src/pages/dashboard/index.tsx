@@ -184,7 +184,7 @@ export default function DashboardPage() {
     const waivers = generateWaivers(students)
 
     const todayIncome = payments
-      .filter((p) => p.paidAt === today)
+      .filter((p) => p.paidAt.startsWith(today))
       .reduce((s, p) => s + p.amount, 0)
 
     const activeStructures = structures.filter((s) => s.isActive && s.type === 'monthly')
