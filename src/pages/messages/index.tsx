@@ -485,8 +485,8 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6 pointer-events-none" style={{ background: 'rgba(0,0,0,0.15)' }}>
-      <div className="w-full max-w-[36rem] rounded-t-2xl bg-[var(--bg-card)] border border-[var(--border)] shadow-2xl pointer-events-auto flex flex-col" style={{ maxHeight: '85vh' }}>
+    <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6" style={{ background: 'rgba(0,0,0,0.4)' }}>
+      <div className="w-full max-w-[36rem] rounded-t-2xl bg-[var(--bg-card)] border border-[var(--border)] shadow-2xl flex flex-col" style={{ maxHeight: '85vh' }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 rounded-t-2xl" style={{ background: 'var(--brand)' }}>
           <h2 className="font-medium text-[0.875rem] text-white">
