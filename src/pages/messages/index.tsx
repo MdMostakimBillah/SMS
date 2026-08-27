@@ -382,7 +382,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
 
   if (isFullscreen) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-[var(--bg-card)]">
+      <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'var(--bg-card)' }}>
         {/* Fullscreen Header */}
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border)]">
           <h2 className="font-medium text-[0.9375rem] text-[var(--text-primary)]">
@@ -400,9 +400,9 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
           {/* To */}
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--border)]">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--border)]" style={{ background: 'var(--bg-card)' }}>
             <span className="text-[0.8125rem] text-[var(--text-muted)] shrink-0">{bn ? 'প্রাপক' : 'To'}</span>
-            <select value={recipientId} onChange={(e) => setRecipientId(e.target.value)} className="flex-1 bg-transparent border-none outline-none text-[0.875rem] text-[var(--text-primary)] cursor-pointer appearance-none">
+            <select value={recipientId} onChange={(e) => setRecipientId(e.target.value)} className="flex-1 border-none outline-none text-[0.875rem] text-[var(--text-primary)] cursor-pointer appearance-none" style={{ background: 'var(--bg-card)' }}>
               {RECIPIENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{bn ? o.labelBn : o.label}</option>)}
             </select>
             <button type="button" onClick={() => setShowCcBcc(!showCcBcc)} className="text-[0.75rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] shrink-0">
@@ -411,30 +411,32 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
           </div>
 
           {/* Subject */}
-          <div className="px-4 py-2.5 border-b border-[var(--border)]">
+          <div className="px-4 py-2.5 border-b border-[var(--border)]" style={{ background: 'var(--bg-card)' }}>
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder={bn ? 'বিষয়' : 'Subject'}
-              className="w-full bg-transparent border-none outline-none text-[0.9375rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+              className="w-full border-none outline-none text-[0.9375rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+              style={{ background: 'var(--bg-card)' }}
               required
             />
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-auto px-4 py-3">
+          <div className="flex-1 overflow-auto px-4 py-3" style={{ background: 'var(--bg-card)' }}>
             <textarea
               ref={textareaRef}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder={bn ? 'বার্তা লিখুন...' : 'Write your message...'}
-              className="w-full h-full min-h-[300px] bg-transparent border-none outline-none text-[0.875rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none leading-relaxed"
+              className="w-full h-full min-h-[300px] border-none outline-none text-[0.875rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none leading-relaxed"
+              style={{ background: 'var(--bg-card)' }}
               required
             />
           </div>
 
           {/* Formatting Toolbar */}
-          <div className="flex items-center gap-0.5 px-4 py-1.5 border-t border-[var(--border)]">
+          <div className="flex items-center gap-0.5 px-4 py-1.5 border-t border-[var(--border)]" style={{ background: 'var(--bg-card)' }}>
             <button type="button" onClick={() => {}} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Undo2 size={15} /></button>
             <button type="button" onClick={() => {}} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Redo2 size={15} /></button>
             <div className="w-px h-4 bg-[var(--border)] mx-1" />
@@ -457,7 +459,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
           </div>
 
           {/* Bottom Action Bar */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-t border-[var(--border)]">
+          <div className="flex items-center justify-between px-4 py-2.5 border-t border-[var(--border)]" style={{ background: 'var(--bg-card)' }}>
             <div className="flex items-center gap-1">
               <button type="submit" className="flex items-center gap-1.5 px-5 py-2 rounded-full text-[0.875rem] font-medium text-white bg-[var(--brand)] hover:opacity-90 transition-opacity">
                 <Send size={14} />
@@ -485,8 +487,8 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6" style={{ background: 'rgba(0,0,0,0.4)' }}>
-      <div className="w-full max-w-[36rem] rounded-t-2xl bg-[var(--bg-card)] border border-[var(--border)] shadow-2xl flex flex-col" style={{ maxHeight: '85vh' }}>
+    <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6" style={{ background: 'rgba(0,0,0,0.5)' }}>
+      <div className="w-full max-w-[36rem] rounded-t-2xl border border-[var(--border)] shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '85vh', background: 'var(--bg-card)' }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 rounded-t-2xl" style={{ background: 'var(--brand)' }}>
           <h2 className="font-medium text-[0.875rem] text-white">
@@ -504,9 +506,9 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
 
         <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden" style={{ maxHeight: 'calc(85vh - 2.5rem)' }}>
           {/* To */}
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--border)]">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--border)]" style={{ background: 'var(--bg-card)' }}>
             <span className="text-[0.8125rem] text-[var(--text-muted)] shrink-0">{bn ? 'প্রাপক' : 'To'}</span>
-            <select value={recipientId} onChange={(e) => setRecipientId(e.target.value)} className="flex-1 bg-transparent border-none outline-none text-[0.8125rem] text-[var(--text-primary)] cursor-pointer appearance-none">
+            <select value={recipientId} onChange={(e) => setRecipientId(e.target.value)} className="flex-1 border-none outline-none text-[0.8125rem] text-[var(--text-primary)] cursor-pointer appearance-none" style={{ background: 'var(--bg-card)' }}>
               {RECIPIENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{bn ? o.labelBn : o.label}</option>)}
             </select>
             <button type="button" onClick={() => setShowCcBcc(!showCcBcc)} className="text-[0.6875rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] shrink-0">
@@ -515,30 +517,32 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
           </div>
 
           {/* Subject */}
-          <div className="px-4 py-2 border-b border-[var(--border)]">
+          <div className="px-4 py-2 border-b border-[var(--border)]" style={{ background: 'var(--bg-card)' }}>
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder={bn ? 'বিষয়' : 'Subject'}
-              className="w-full bg-transparent border-none outline-none text-[0.875rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+              className="w-full border-none outline-none text-[0.875rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+              style={{ background: 'var(--bg-card)' }}
               required
             />
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-auto px-4 py-3 min-h-[200px]">
+          <div className="flex-1 overflow-auto px-4 py-3 min-h-[200px]" style={{ background: 'var(--bg-card)' }}>
             <textarea
               ref={textareaRef}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder={bn ? 'বার্তা লিখুন...' : 'Write your message...'}
-              className="w-full h-full min-h-[180px] bg-transparent border-none outline-none text-[0.8125rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none leading-relaxed"
+              className="w-full h-full min-h-[180px] border-none outline-none text-[0.8125rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none leading-relaxed"
+              style={{ background: 'var(--bg-card)' }}
               required
             />
           </div>
 
           {/* Formatting Toolbar */}
-          <div className="flex items-center gap-0.5 px-3 py-1.5 border-t border-[var(--border)]">
+          <div className="flex items-center gap-0.5 px-3 py-1.5 border-t border-[var(--border)]" style={{ background: 'var(--bg-card)' }}>
             <button type="button" onClick={() => {}} className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Undo2 size={14} /></button>
             <button type="button" onClick={() => {}} className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Redo2 size={14} /></button>
             <div className="w-px h-3.5 bg-[var(--border)] mx-0.5" />
@@ -558,7 +562,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
           </div>
 
           {/* Bottom Action Bar */}
-          <div className="flex items-center justify-between px-3 py-2 border-t border-[var(--border)] rounded-b-2xl">
+          <div className="flex items-center justify-between px-3 py-2 border-t border-[var(--border)] rounded-b-2xl" style={{ background: 'var(--bg-card)' }}>
             <div className="flex items-center gap-1">
               <button type="submit" className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[0.8125rem] font-medium text-white bg-[var(--brand)] hover:opacity-90 transition-opacity">
                 <Send size={13} />
