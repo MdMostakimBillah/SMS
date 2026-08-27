@@ -55,6 +55,9 @@ const LibraryPage = lazyWithRetry(() => import('@/pages/library'))
 const OthersIncomePage = lazyWithRetry(() => import('@/pages/others-income'))
 const ExpensesManagementPage = lazyWithRetry(() => import('@/pages/expenses'))
 const AccountingReportPage = lazyWithRetry(() => import('@/pages/accounting-report'))
+const MessagesPage = lazyWithRetry(() => import('@/pages/messages'))
+const NoticeBoardPage = lazyWithRetry(() => import('@/pages/notice'))
+const NotificationsPage = lazyWithRetry(() => import('@/pages/notifications'))
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFound'))
 const SettingsPage = lazyWithRetry(() => import('@/pages/settings'))
 
@@ -128,9 +131,9 @@ function AppContent() {
             <Route path="/i/:slug/:role/transport" element={<F><TransportPage /></F>} />
             <Route path="/i/:slug/:role/hostel" element={<F><HostelPage /></F>} />
             <Route path="/i/:slug/:role/others-income" element={<F><OthersIncomePage /></F>} />
-            <Route path="/i/:slug/:role/messages" element={<P name="Messages" />} />
-            <Route path="/i/:slug/:role/notice" element={<P name="Notice Board" />} />
-            <Route path="/i/:slug/:role/notifications" element={<P name="Notifications" />} />
+            <Route path="/i/:slug/:role/messages" element={<F><MessagesPage /></F>} />
+            <Route path="/i/:slug/:role/notice" element={<F><NoticeBoardPage /></F>} />
+            <Route path="/i/:slug/:role/notifications" element={<F><NotificationsPage /></F>} />
             <Route path="/i/:slug/:role/parent-portal" element={<P name="Parent Portal" />} />
             <Route path="/i/:slug/:role/student-portal" element={<P name="Student Portal" />} />
             <Route path="/i/:slug/:role/analytics" element={<P name="Analytics" />} />
@@ -194,9 +197,9 @@ function AppContent() {
             <Route path="/super-admin/admin/transport" element={<F><TransportPage /></F>} />
             <Route path="/super-admin/admin/hostel" element={<F><HostelPage /></F>} />
             <Route path="/super-admin/admin/others-income" element={<F><OthersIncomePage /></F>} />
-            <Route path="/super-admin/admin/messages" element={<P name="Messages" />} />
-            <Route path="/super-admin/admin/notice" element={<P name="Notice Board" />} />
-            <Route path="/super-admin/admin/notifications" element={<P name="Notifications" />} />
+            <Route path="/super-admin/admin/messages" element={<F><MessagesPage /></F>} />
+            <Route path="/super-admin/admin/notice" element={<F><NoticeBoardPage /></F>} />
+            <Route path="/super-admin/admin/notifications" element={<F><NotificationsPage /></F>} />
             <Route path="/super-admin/admin/parent-portal" element={<P name="Parent Portal" />} />
             <Route path="/super-admin/admin/student-portal" element={<P name="Student Portal" />} />
             <Route path="/super-admin/admin/analytics" element={<P name="Analytics" />} />
@@ -246,9 +249,9 @@ function AppContent() {
             <Route path="/super-admin/viewing/:role/transport" element={<F><TransportPage /></F>} />
             <Route path="/super-admin/viewing/:role/hostel" element={<F><HostelPage /></F>} />
             <Route path="/super-admin/viewing/:role/others-income" element={<F><OthersIncomePage /></F>} />
-            <Route path="/super-admin/viewing/:role/messages" element={<P name="Messages" />} />
-            <Route path="/super-admin/viewing/:role/notice" element={<P name="Notice Board" />} />
-            <Route path="/super-admin/viewing/:role/notifications" element={<P name="Notifications" />} />
+            <Route path="/super-admin/viewing/:role/messages" element={<F><MessagesPage /></F>} />
+            <Route path="/super-admin/viewing/:role/notice" element={<F><NoticeBoardPage /></F>} />
+            <Route path="/super-admin/viewing/:role/notifications" element={<F><NotificationsPage /></F>} />
             <Route path="/super-admin/viewing/:role/parent-portal" element={<P name="Parent Portal" />} />
             <Route path="/super-admin/viewing/:role/student-portal" element={<P name="Student Portal" />} />
             <Route path="/super-admin/viewing/:role/analytics" element={<P name="Analytics" />} />
