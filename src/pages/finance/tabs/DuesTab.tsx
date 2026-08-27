@@ -153,11 +153,11 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   }, [dateFrom, dateTo])
 
   const feeStructuresForCategory = useMemo(() => {
-    let list = activeStructures
+    let list = structures
     if (fCategory) list = list.filter((s) => s.name === fCategory)
     if (fType) list = list.filter((s) => s.type === fType)
     return list
-  }, [activeStructures, fCategory, fType])
+  }, [structures, fCategory, fType])
 
   const showMonthPicker = fType === 'monthly' || (!fType && feeStructuresForCategory.some((s) => s.type === 'monthly'))
 
@@ -229,7 +229,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
     for (const fee of feeStructuresForCategory) {
       for (const student of filteredStudents) {
-        if (fee.class !== student.class) continue
+        if (fee.class && fee.class !== student.class) continue
         if (fee.section && fee.section !== student.section) continue
         if (fee.studentId && fee.studentId !== student.id) continue
 
