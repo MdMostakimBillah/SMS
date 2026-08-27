@@ -119,7 +119,7 @@ export default function NotificationsPage() {
       ) : (
         <div className="space-y-2">
           {filtered.map((n) => {
-            const config = TYPE_CONFIG[n.type]
+            const config = TYPE_CONFIG[n.type] || TYPE_CONFIG.info
             const Icon = config.icon
             const timeAgo = getTimeAgo(n.createdAt, bn)
             return (

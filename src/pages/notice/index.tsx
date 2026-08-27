@@ -129,7 +129,7 @@ export default function NoticeBoardPage() {
         <div className="space-y-3">
           {filtered.map((notice) => {
             const priority = PRIORITY_OPTIONS.find((p) => p.value === notice.priority) || PRIORITY_OPTIONS[0]
-            const PriorityIcon = PRIORITY_ICONS[notice.priority]
+            const PriorityIcon = PRIORITY_ICONS[notice.priority] || Megaphone
             const target = TARGET_OPTIONS.find((t) => t.value === notice.target)
             return (
               <div

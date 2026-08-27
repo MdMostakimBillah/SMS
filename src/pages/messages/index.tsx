@@ -287,7 +287,7 @@ function StatusBadge({ status, bn }: { status: MessageStatus; bn: boolean }) {
     failed: { icon: AlertCircle, color: 'var(--red)', bg: 'var(--red)', label: 'Failed', labelBn: 'ব্যর্থ' },
     delivered: { icon: CheckCircle2, color: 'var(--text-muted)', bg: 'var(--text-muted)', label: 'Delivered', labelBn: 'পৌঁছেছে' },
   }
-  const c = config[status]
+  const c = config[status] || config.sent
   return (
     <span className="inline-flex items-center gap-0.5 text-[0.5625rem] font-medium px-1 py-px rounded-full" style={{ color: c.color, background: `${c.color}15` }}>
       <c.icon size={10} />
