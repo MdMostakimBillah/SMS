@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { Mail, Inbox, Send, Plus, Search, Trash2, ArrowLeft, X, RotateCcw, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Mail, Inbox, Send, Plus, Search, Trash2, ArrowLeft, X, RotateCcw, Clock, CheckCircle2, AlertCircle, Minus, Maximize2, Paperclip, Link2, Smile, Image, Bold, Italic, Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote, Undo2, Redo2, ChevronDown } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useMessageStore, type Message, type MessageRecipient, messageId, type MessageStatus } from '@/store/messageStore'
@@ -8,8 +8,6 @@ import { useTabSlider } from '@/hooks/useTabSlider'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 
 const inputCls = 'px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors'
-const selectCls = inputCls + ' cursor-pointer appearance-none pr-7 bg-no-repeat bg-[right_0.5rem_center] bg-[length:0.75rem] bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'m6 9 6 6 6-6\'/%3E%3C/svg%3E")]'
-const textareaCls = inputCls + ' resize-none'
 
 const RECIPIENT_OPTIONS = [
   { value: 'all', label: 'All Users', labelBn: 'সকল ব্যবহারকারী' },
@@ -253,7 +251,6 @@ export default function MessagesPage() {
           onSave={handleSend}
           onClose={() => setShowCompose(false)}
           bn={bn}
-          userName={user?.name || 'Admin'}
         />
       )}
 
@@ -346,10 +343,13 @@ function MessageDetail({ message, onBack, onReply, onDelete, bn }: { message: Me
   )
 }
 
-function ComposeModal({ onSave, onClose, bn, userName }: { onSave: (data: { recipientId: MessageRecipient; recipientName: string; subject: string; body: string }) => void; onClose: () => void; bn: boolean; userName: string }) {
+function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: MessageRecipient; recipientName: string; subject: string; body: string }) => void; onClose: () => void; bn: boolean }) {
   const [recipientId, setRecipientId] = useState<MessageRecipient>('all')
+  const [showCcBcc, setShowCcBcc] = useState(false)
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const selectedRecipient = RECIPIENT_OPTIONS.find((o) => o.value === recipientId)
 
@@ -364,42 +364,221 @@ function ComposeModal({ onSave, onClose, bn, userName }: { onSave: (data: { reci
     })
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-[var(--bg-card)] border border-[var(--border)] shadow-xl">
-        <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
-          <h2 className="font-semibold text-[1rem] text-[var(--text-primary)]">
+  const handleFormatting = (action: string) => {
+    const ta = textareaRef.current
+    if (!ta) return
+    const start = ta.selectionStart
+    const end = ta.selectionEnd
+    const selected = body.substring(start, end)
+    let wrapped = ''
+    switch (action) {
+      case 'bold': wrapped = `**${selected || 'text'}**`; break
+      case 'italic': wrapped = `_${selected || 'text'}_`; break
+      case 'underline': wrapped = `__${selected || 'text'}__`; break
+      default: return
+    }
+    setBody(body.substring(0, start) + wrapped + body.substring(end))
+  }
+
+  if (isFullscreen) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col bg-[var(--bg-card)]">
+        {/* Fullscreen Header */}
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border)]">
+          <h2 className="font-medium text-[0.9375rem] text-[var(--text-primary)]">
             {bn ? 'নতুন বার্তা' : 'New Message'}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><X size={18} /></button>
-        </div>
-        <form onSubmit={handleSubmit} className="p-4 space-y-3">
-          <div className="flex items-center gap-2 text-[0.75rem] text-[var(--text-muted)]">
-            <span>{bn ? 'প্রেরক' : 'From'}:</span>
-            <span className="font-medium text-[var(--text-primary)]">{userName}</span>
+          <div className="flex items-center gap-0.5">
+            <button onClick={() => setIsFullscreen(false)} className="p-2 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'ছোট করুন' : 'Minimize'}>
+              <Minus size={16} />
+            </button>
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'বন্ধ করুন' : 'Close'}>
+              <X size={16} />
+            </button>
           </div>
-          <div>
-            <label className="block text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'প্রাপক' : 'To'} *</label>
-            <select value={recipientId} onChange={(e) => setRecipientId(e.target.value)} className={selectCls + ' w-full'}>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+          {/* To */}
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--border)]">
+            <span className="text-[0.8125rem] text-[var(--text-muted)] shrink-0">{bn ? 'প্রাপক' : 'To'}</span>
+            <select value={recipientId} onChange={(e) => setRecipientId(e.target.value)} className="flex-1 bg-transparent border-none outline-none text-[0.875rem] text-[var(--text-primary)] cursor-pointer appearance-none">
               {RECIPIENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{bn ? o.labelBn : o.label}</option>)}
             </select>
-          </div>
-          <div>
-            <label className="block text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'বিষয়' : 'Subject'} *</label>
-            <input value={subject} onChange={(e) => setSubject(e.target.value)} className={inputCls + ' w-full'} required />
-          </div>
-          <div>
-            <label className="block text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'বার্তা' : 'Message'} *</label>
-            <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={6} className={textareaCls + ' w-full'} required />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-[0.8125rem] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]">
-              {bn ? 'বাতিল' : 'Cancel'}
+            <button type="button" onClick={() => setShowCcBcc(!showCcBcc)} className="text-[0.75rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] shrink-0">
+              Cc Bcc
             </button>
-            <button type="submit" className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white" style={{ background: 'var(--brand)' }}>
-              <Send size={14} />
-              {bn ? 'পাঠান' : 'Send'}
+          </div>
+
+          {/* Subject */}
+          <div className="px-4 py-2.5 border-b border-[var(--border)]">
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder={bn ? 'বিষয়' : 'Subject'}
+              className="w-full bg-transparent border-none outline-none text-[0.9375rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+              required
+            />
+          </div>
+
+          {/* Body */}
+          <div className="flex-1 overflow-auto px-4 py-3">
+            <textarea
+              ref={textareaRef}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder={bn ? 'বার্তা লিখুন...' : 'Write your message...'}
+              className="w-full h-full min-h-[300px] bg-transparent border-none outline-none text-[0.875rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none leading-relaxed"
+              required
+            />
+          </div>
+
+          {/* Formatting Toolbar */}
+          <div className="flex items-center gap-0.5 px-4 py-1.5 border-t border-[var(--border)]">
+            <button type="button" onClick={() => {}} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Undo2 size={15} /></button>
+            <button type="button" onClick={() => {}} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Redo2 size={15} /></button>
+            <div className="w-px h-4 bg-[var(--border)] mx-1" />
+            <button type="button" className="flex items-center gap-0.5 px-2 py-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.75rem]">
+              Sans Serif <ChevronDown size={12} />
             </button>
+            <div className="w-px h-4 bg-[var(--border)] mx-1" />
+            <button type="button" onClick={() => handleFormatting('bold')} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Bold size={15} /></button>
+            <button type="button" onClick={() => handleFormatting('italic')} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Italic size={15} /></button>
+            <button type="button" onClick={() => handleFormatting('underline')} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><UnderlineIcon size={15} /></button>
+            <div className="w-px h-4 bg-[var(--border)] mx-1" />
+            <button type="button" className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><AlignLeft size={15} /></button>
+            <button type="button" className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><AlignCenter size={15} /></button>
+            <button type="button" className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><AlignRight size={15} /></button>
+            <div className="w-px h-4 bg-[var(--border)] mx-1" />
+            <button type="button" className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><List size={15} /></button>
+            <button type="button" className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><ListOrdered size={15} /></button>
+            <div className="w-px h-4 bg-[var(--border)] mx-1" />
+            <button type="button" className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Quote size={15} /></button>
+          </div>
+
+          {/* Bottom Action Bar */}
+          <div className="flex items-center justify-between px-4 py-2.5 border-t border-[var(--border)]">
+            <div className="flex items-center gap-1">
+              <button type="submit" className="flex items-center gap-1.5 px-5 py-2 rounded-full text-[0.875rem] font-medium text-white bg-[var(--brand)] hover:opacity-90 transition-opacity">
+                <Send size={14} />
+                {bn ? 'পাঠান' : 'Send'}
+              </button>
+            </div>
+            <div className="flex items-center gap-0.5">
+              <button type="button" className="p-2 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'সংযুক্তি' : 'Attach'}>
+                <Paperclip size={16} />
+              </button>
+              <button type="button" className="p-2 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'লিংক' : 'Link'}>
+                <Link2 size={16} />
+              </button>
+              <button type="button" className="p-2 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'ইমোজি' : 'Emoji'}>
+                <Smile size={16} />
+              </button>
+              <button type="button" className="p-2 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'ছবি' : 'Photo'}>
+                <Image size={16} />
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6 pointer-events-none" style={{ background: 'rgba(0,0,0,0.15)' }}>
+      <div className="w-full max-w-[36rem] rounded-t-2xl bg-[var(--bg-card)] border border-[var(--border)] shadow-2xl pointer-events-auto flex flex-col" style={{ maxHeight: '85vh' }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-t-2xl" style={{ background: 'var(--brand)' }}>
+          <h2 className="font-medium text-[0.875rem] text-white">
+            {bn ? 'নতুন বার্তা' : 'New Message'}
+          </h2>
+          <div className="flex items-center gap-0.5">
+            <button onClick={() => setIsFullscreen(true)} className="p-1.5 rounded-lg hover:bg-white/20 text-white" title={bn ? 'পূর্ণ পর্দা' : 'Fullscreen'}>
+              <Maximize2 size={14} />
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/20 text-white" title={bn ? 'বন্ধ করুন' : 'Close'}>
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden" style={{ maxHeight: 'calc(85vh - 2.5rem)' }}>
+          {/* To */}
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--border)]">
+            <span className="text-[0.8125rem] text-[var(--text-muted)] shrink-0">{bn ? 'প্রাপক' : 'To'}</span>
+            <select value={recipientId} onChange={(e) => setRecipientId(e.target.value)} className="flex-1 bg-transparent border-none outline-none text-[0.8125rem] text-[var(--text-primary)] cursor-pointer appearance-none">
+              {RECIPIENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{bn ? o.labelBn : o.label}</option>)}
+            </select>
+            <button type="button" onClick={() => setShowCcBcc(!showCcBcc)} className="text-[0.6875rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] shrink-0">
+              Cc Bcc
+            </button>
+          </div>
+
+          {/* Subject */}
+          <div className="px-4 py-2 border-b border-[var(--border)]">
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder={bn ? 'বিষয়' : 'Subject'}
+              className="w-full bg-transparent border-none outline-none text-[0.875rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+              required
+            />
+          </div>
+
+          {/* Body */}
+          <div className="flex-1 overflow-auto px-4 py-3 min-h-[200px]">
+            <textarea
+              ref={textareaRef}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder={bn ? 'বার্তা লিখুন...' : 'Write your message...'}
+              className="w-full h-full min-h-[180px] bg-transparent border-none outline-none text-[0.8125rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none leading-relaxed"
+              required
+            />
+          </div>
+
+          {/* Formatting Toolbar */}
+          <div className="flex items-center gap-0.5 px-3 py-1.5 border-t border-[var(--border)]">
+            <button type="button" onClick={() => {}} className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Undo2 size={14} /></button>
+            <button type="button" onClick={() => {}} className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Redo2 size={14} /></button>
+            <div className="w-px h-3.5 bg-[var(--border)] mx-0.5" />
+            <button type="button" className="flex items-center gap-0.5 px-1.5 py-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem]">
+              Sans Serif <ChevronDown size={10} />
+            </button>
+            <div className="w-px h-3.5 bg-[var(--border)] mx-0.5" />
+            <button type="button" onClick={() => handleFormatting('bold')} className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Bold size={14} /></button>
+            <button type="button" onClick={() => handleFormatting('italic')} className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Italic size={14} /></button>
+            <button type="button" onClick={() => handleFormatting('underline')} className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><UnderlineIcon size={14} /></button>
+            <div className="w-px h-3.5 bg-[var(--border)] mx-0.5" />
+            <button type="button" className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><AlignLeft size={14} /></button>
+            <button type="button" className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><AlignRight size={14} /></button>
+            <div className="w-px h-3.5 bg-[var(--border)] mx-0.5" />
+            <button type="button" className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><List size={14} /></button>
+            <button type="button" className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><ListOrdered size={14} /></button>
+          </div>
+
+          {/* Bottom Action Bar */}
+          <div className="flex items-center justify-between px-3 py-2 border-t border-[var(--border)] rounded-b-2xl">
+            <div className="flex items-center gap-1">
+              <button type="submit" className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[0.8125rem] font-medium text-white bg-[var(--brand)] hover:opacity-90 transition-opacity">
+                <Send size={13} />
+                {bn ? 'পাঠান' : 'Send'}
+              </button>
+            </div>
+            <div className="flex items-center gap-0.5">
+              <button type="button" className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'সংযুক্তি' : 'Attach'}>
+                <Paperclip size={15} />
+              </button>
+              <button type="button" className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'লিংক' : 'Link'}>
+                <Link2 size={15} />
+              </button>
+              <button type="button" className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'ইমোজি' : 'Emoji'}>
+                <Smile size={15} />
+              </button>
+              <button type="button" className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'ছবি' : 'Photo'}>
+                <Image size={15} />
+              </button>
+            </div>
           </div>
         </form>
       </div>
