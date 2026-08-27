@@ -35,6 +35,10 @@ import {
   Ban,
   Banknote,
   X,
+  Store,
+  Bus,
+  DollarSign,
+  Settings,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -67,6 +71,10 @@ const iconMap: Record<string, LucideIcon> = {
   'bar-chart-3': BarChart3,
   ban: Ban,
   banknote: Banknote,
+  store: Store,
+  bus: Bus,
+  'dollar-sign': DollarSign,
+  settings: Settings,
 }
 
 interface RouteItem {
@@ -113,6 +121,69 @@ const sectionRoutes: Record<string, RouteItem[]> = {
     { path: '/exams/results', label: 'Results', labelBn: 'ফলাফল', icon: 'bar-chart-2' },
     { path: '/exams/marksheet', label: 'Marksheet', labelBn: 'মার্কশিট', icon: 'file-bar-chart' },
     { path: '/exams/omr', label: 'OMR Sheet', labelBn: 'ওএমআর শিট', icon: 'file-text' },
+  ],
+  classes: [
+    { path: '/classes', label: 'All Classes', labelBn: 'সকল শ্রেণি', icon: 'layout-dashboard' },
+    { path: '/classes/add', label: 'Add Class', labelBn: 'শ্রেণি যোগ', icon: 'user' },
+  ],
+  attendance: [
+    { path: '/attendance', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
+    { path: '/attendance/today', label: 'Today', labelBn: 'আজ', icon: 'calendar-check' },
+    { path: '/attendance/range', label: 'Date Range', labelBn: 'তারিখ পরিসীমা', icon: 'file-text' },
+  ],
+  syllabus: [
+    { path: '/syllabus', label: 'All Syllabus', labelBn: 'সকল পাঠ্যক্রম', icon: 'layout-dashboard' },
+  ],
+  assignments: [
+    { path: '/assignments', label: 'All Assignments', labelBn: 'সকল অ্যাসাইনমেন্ট', icon: 'layout-dashboard' },
+  ],
+  online: [
+    { path: '/online', label: 'All Classes', labelBn: 'সকল অনলাইন ক্লাস', icon: 'layout-dashboard' },
+  ],
+  hr: [
+    { path: '/hr', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
+    { path: '/hr/employees', label: 'Employees', labelBn: 'কর্মচারী', icon: 'users' },
+  ],
+  payroll: [
+    { path: '/payroll', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
+    { path: '/payroll/salary', label: 'Salary', labelBn: 'বেতন', icon: 'banknote' },
+  ],
+  store: [
+    { path: '/store', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
+    { path: '/store?view=products', label: 'Products', labelBn: 'পণ্য', icon: 'store' },
+    { path: '/store?view=sales', label: 'Sales', labelBn: 'বিক্রয়', icon: 'banknote' },
+    { path: '/store?view=categories', label: 'Categories', labelBn: 'ক্যাটাগরি', icon: 'layers' },
+  ],
+  expenses: [
+    { path: '/expenses', label: 'All Expenses', labelBn: 'সকল খরচ', icon: 'layout-dashboard' },
+    { path: '/expenses/categories', label: 'Categories', labelBn: 'ক্যাটাগরি', icon: 'layers' },
+  ],
+  'accounting-report': [
+    { path: '/accounting-report', label: 'Income', labelBn: 'আয়', icon: 'dollar-sign' },
+    { path: '/accounting-report?tab=expenses', label: 'Expenses', labelBn: 'খরচ', icon: 'bar-chart-2' },
+    { path: '/accounting-report?tab=profit-loss', label: 'Profit/Loss', labelBn: 'লাভ/ক্ষতি', icon: 'bar-chart-3' },
+  ],
+  library: [
+    { path: '/library', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
+    { path: '/library/books', label: 'Books', labelBn: 'বই', icon: 'book-open' },
+    { path: '/library/issue', label: 'Issue', labelBn: 'ইস্যু', icon: 'file-text' },
+  ],
+  transport: [
+    { path: '/transport', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
+    { path: '/transport/vehicles', label: 'Vehicles', labelBn: 'যানবাহন', icon: 'bus' },
+    { path: '/transport/routes', label: 'Routes', labelBn: 'রুট', icon: 'globe' },
+  ],
+  hostel: [
+    { path: '/hostel', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
+    { path: '/hostel/rooms', label: 'Rooms', labelBn: 'কক্ষ', icon: 'building-2' },
+  ],
+  'others-income': [
+    { path: '/others-income', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', icon: 'layout-dashboard' },
+    { path: '/others-income/categories', label: 'Categories', labelBn: 'ক্যাটাগরি', icon: 'layers' },
+    { path: '/others-income/assignments', label: 'Assignments', labelBn: 'বরাদ্দ', icon: 'clipboard-list' },
+  ],
+  settings: [
+    { path: '/settings', label: 'General', labelBn: 'সাধারণ', icon: 'layout-dashboard' },
   ],
   'super-admin': SUPER_ADMIN_ROUTES.map((r) => ({
     path: r.path,

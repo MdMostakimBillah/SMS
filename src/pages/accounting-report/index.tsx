@@ -100,7 +100,7 @@ export default function AccountingReportPage() {
     const map = new Map<string, IncomeEntry>()
     const studentSets = new Map<string, Set<string>>()
 
-    feePayments.filter((p) => filterByDate(p.paidAt.split('T')[0])).forEach((p) => {
+    feePayments.filter((p) => filterByDate(p.paidAt.split('T')[0]) && !p.feeStructureId.startsWith('FEE-OTHER-')).forEach((p) => {
       const struct = feeStructures.find((s) => s.id === p.feeStructureId)
       if (!struct) return
       const key = `fee-${struct.name.trim().toLowerCase()}`
@@ -222,7 +222,6 @@ export default function AccountingReportPage() {
   }
 
   const storeBasePath = location.pathname.replace(/accounting-report.*$/, 'store')
-  const othersIncomeBasePath = location.pathname.replace(/accounting-report.*$/, 'others-income')
 
   const safeOpen = useCallback((url: string) => {
     const w = window.open(url, '_blank')
@@ -237,12 +236,8 @@ export default function AccountingReportPage() {
       safeOpen(`${storeBasePath}?${params.toString()}`)
       return
     }
-    if (row.sourceType === 'other') {
-      safeOpen(othersIncomeBasePath)
-      return
-    }
     const struct = feeStructures.find((s) => s.name === row.name || s.nameBn === row.nameBn)
-    const params = new URLSearchParams({ view: 'dues', status: 'paid', months: '0,1,2,3,4,5,6,7,8,9,10,11' })
+    const params = new URLSearchParams({ view: 'dues', status: 'all', months: '0,1,2,3,4,5,6,7,8,9,10,11' })
     if (struct) {
       params.set('feeType', struct.type)
       params.set('category', struct.name)
@@ -252,7 +247,7 @@ export default function AccountingReportPage() {
     if (dateFrom) params.set('dateFrom', dateFrom)
     if (dateTo) params.set('dateTo', dateTo)
     safeOpen(`${basePath}?${params.toString()}`)
-  }, [feeStructures, basePath, storeBasePath, othersIncomeBasePath, dateFrom, dateTo, safeOpen])
+  }, [feeStructures, basePath, storeBasePath, dateFrom, dateTo, safeOpen])
 
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new()
