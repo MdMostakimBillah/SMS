@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { Mail, Inbox, Send, Plus, Search, Trash2, ArrowLeft, X } from 'lucide-react'
+import { Mail, Inbox, Send, Plus, Search, Trash2, ArrowLeft, X, RotateCcw, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useMessageStore, type Message, type MessageRecipient, messageId } from '@/store/messageStore'
+import { useMessageStore, type Message, type MessageRecipient, messageId, type MessageStatus } from '@/store/messageStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
@@ -25,13 +25,15 @@ export default function MessagesPage() {
   const messages = useMessageStore((s) => s.messages)
   const markRead = useMessageStore((s) => s.markRead)
   const deleteMessage = useMessageStore((s) => s.deleteMessage)
+  const resendMessage = useMessageStore((s) => s.resendMessage)
 
-  const [activeTab, setActiveTab] = useState<'inbox' | 'sent'>('inbox')
+  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'outgoing'>('inbox')
   const [search, setSearch] = useState('')
   const [showCompose, setShowCompose] = useState(false)
   const [viewMessage, setViewMessage] = useState<Message | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [resendConfirm, setResendConfirm] = useState<string | null>(null)
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
@@ -60,12 +62,22 @@ export default function MessagesPage() {
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [messages, search])
 
+  const outgoingMessages = useMemo(() => {
+    let list = messages.filter((m) => m.senderId === 'me' && m.status !== 'delivered')
+    if (search) {
+      const q = search.toLowerCase()
+      list = list.filter((m) => m.subject.toLowerCase().includes(q) || m.recipientName.toLowerCase().includes(q) || m.body.toLowerCase().includes(q))
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }, [messages, search])
+
   const unreadCount = useMemo(() => messages.filter((m) => m.senderId !== 'me' && !m.read).length, [messages])
 
-  const currentList = activeTab === 'inbox' ? inboxMessages : sentMessages
+  const currentList = activeTab === 'inbox' ? inboxMessages : activeTab === 'sent' ? sentMessages : outgoingMessages
   const tabs = [
     { key: 'inbox', label: bn ? 'ইনবক্স' : 'Inbox', icon: Inbox, count: unreadCount },
     { key: 'sent', label: bn ? 'পাঠানো' : 'Sent', icon: Send, count: 0 },
+    { key: 'outgoing', label: bn ? 'বহিঃগামী' : 'Outgoing', icon: Clock, count: outgoingMessages.length },
   ]
 
   const handleSend = (data: { recipientId: MessageRecipient; recipientName: string; subject: string; body: string }) => {
@@ -80,6 +92,7 @@ export default function MessagesPage() {
       subject: data.subject,
       body: data.body,
       read: false,
+      status: 'sent',
       createdAt: new Date().toISOString(),
     }
     useMessageStore.getState().addMessage(msg)
@@ -139,7 +152,7 @@ export default function MessagesPage() {
             <button
               key={tab.key}
               ref={(el) => { if (el) tabRefs.current.set(tab.key, el) }}
-              onClick={() => setActiveTab(tab.key as 'inbox' | 'sent')}
+              onClick={() => setActiveTab(tab.key as 'inbox' | 'sent' | 'outgoing')}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-[0.8125rem] font-medium transition-colors relative ${
                 activeTab === tab.key ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
@@ -173,7 +186,9 @@ export default function MessagesPage() {
           <Mail size={48} className="mb-3 opacity-30" />
           <p className="text-[0.9375rem]">
             {search ? (bn ? 'কোনো বার্তা পাওয়া যায়নি' : 'No messages found') :
-              activeTab === 'inbox' ? (bn ? 'ইনবক্স খালি' : 'Inbox is empty') : (bn ? 'কোনো বার্তা পাঠানো হয়নি' : 'No sent messages')}
+              activeTab === 'inbox' ? (bn ? 'ইনবক্স খালি' : 'Inbox is empty') :
+              activeTab === 'outgoing' ? (bn ? 'কোনো বহিঃগামী বার্তা নেই' : 'No outgoing messages') :
+              (bn ? 'কোনো বার্তা পাঠানো হয়নি' : 'No sent messages')}
           </p>
           {!search && activeTab === 'inbox' && (
             <p className="text-[0.75rem] mt-1">{bn ? 'নতুন বার্তা এখানে দেখা যাবে' : 'New messages will appear here'}</p>
@@ -200,6 +215,9 @@ export default function MessagesPage() {
                     {activeTab === 'inbox' ? msg.senderName : msg.recipientName}
                   </span>
                   {!msg.read && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--brand)' }} />}
+                  {activeTab === 'outgoing' && (
+                    <StatusBadge status={msg.status} bn={bn} />
+                  )}
                   <span className="text-[0.625rem] text-[var(--text-muted)] ml-auto shrink-0">
                     {new Date(msg.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                   </span>
@@ -207,12 +225,23 @@ export default function MessagesPage() {
                 <p className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">{msg.subject}</p>
                 <p className="text-[0.75rem] text-[var(--text-muted)] truncate mt-0.5">{msg.body}</p>
               </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); setDeleteTarget(msg.id) }}
-                className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] shrink-0"
-              >
-                <Trash2 size={14} />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                {activeTab === 'outgoing' && (msg.status === 'failed' || msg.status === 'queued') && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setResendConfirm(msg.id) }}
+                    className="p-1.5 rounded-lg hover:bg-[var(--brand)]10 text-[var(--brand)] transition-colors"
+                    title={bn ? 'পুনঃপাঠান' : 'Resend'}
+                  >
+                    <RotateCcw size={14} />
+                  </button>
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setDeleteTarget(msg.id) }}
+                  className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -237,7 +266,33 @@ export default function MessagesPage() {
           isBn={bn}
         />
       )}
+
+      {resendConfirm && (
+        <DeleteConfirmDialog
+          onConfirm={() => { resendMessage(resendConfirm); setResendConfirm(null) }}
+          onCancel={() => setResendConfirm(null)}
+          title={bn ? 'বার্তা পুনঃপাঠান' : 'Resend Message'}
+          message={bn ? 'আপনি কি এই বার্তাটি পুনঃপাঠাতে চান?' : 'Are you sure you want to resend this message?'}
+          isBn={bn}
+        />
+      )}
     </div>
+  )
+}
+
+function StatusBadge({ status, bn }: { status: MessageStatus; bn: boolean }) {
+  const config: Record<MessageStatus, { icon: typeof Clock; color: string; bg: string; label: string; labelBn: string }> = {
+    sent: { icon: CheckCircle2, color: 'var(--green)', bg: 'var(--green)', label: 'Sent', labelBn: 'পাঠানো' },
+    queued: { icon: Clock, color: 'var(--orange)', bg: 'var(--orange)', label: 'Queued', labelBn: 'সারিবদ্ধ' },
+    failed: { icon: AlertCircle, color: 'var(--red)', bg: 'var(--red)', label: 'Failed', labelBn: 'ব্যর্থ' },
+    delivered: { icon: CheckCircle2, color: 'var(--text-muted)', bg: 'var(--text-muted)', label: 'Delivered', labelBn: 'পৌঁছেছে' },
+  }
+  const c = config[status]
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[0.5625rem] font-medium px-1 py-px rounded-full" style={{ color: c.color, background: `${c.color}15` }}>
+      <c.icon size={10} />
+      {bn ? c.labelBn : c.label}
+    </span>
   )
 }
 

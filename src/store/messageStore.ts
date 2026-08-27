@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
 
 export type MessageRecipient = 'all' | 'students' | 'teachers' | 'parents' | string
+export type MessageStatus = 'sent' | 'queued' | 'failed' | 'delivered'
 
 export interface Message {
   id: string
@@ -15,6 +16,7 @@ export interface Message {
   subject: string
   body: string
   read: boolean
+  status: MessageStatus
   createdAt: string
 }
 
@@ -36,6 +38,7 @@ const SEED_MESSAGES: Message[] = [
     subject: 'Parent-Teacher Meeting Next Friday',
     body: 'Dear parents and guardians,\n\nWe are scheduling a parent-teacher meeting this Friday at 3:00 PM. Please attend to discuss your child\'s academic progress.\n\nBest regards,\nRahim Uddin',
     read: false,
+    status: 'delivered',
     createdAt: new Date(Date.now() - 3600000).toISOString(),
   },
   {
@@ -49,6 +52,7 @@ const SEED_MESSAGES: Message[] = [
     subject: 'Monthly Staff Meeting — August',
     body: 'All teachers are requested to attend the monthly staff meeting on Monday at 10:00 AM in the conference room.\n\nAgenda:\n1. Exam schedule review\n2. New curriculum updates\n3. Student attendance concerns',
     read: false,
+    status: 'delivered',
     createdAt: new Date(Date.now() - 7200000).toISOString(),
   },
   {
@@ -62,6 +66,7 @@ const SEED_MESSAGES: Message[] = [
     subject: 'Overdue Library Books Reminder',
     body: 'Dear students,\n\nThis is a reminder that you have overdue library books. Please return them at the earliest to avoid late fees.\n\nThank you,\nLibrary Department',
     read: true,
+    status: 'delivered',
     createdAt: new Date(Date.now() - 86400000).toISOString(),
   },
   {
@@ -75,6 +80,7 @@ const SEED_MESSAGES: Message[] = [
     subject: 'Fee Payment Reminder — September',
     body: 'Dear parents,\n\nThis is a friendly reminder that the tuition fee for September is due by the 15th. Please make the payment at your earliest convenience.\n\nYou can pay online or visit the accounts office.\n\nThank you,\nFinance Department',
     read: false,
+    status: 'delivered',
     createdAt: new Date(Date.now() - 172800000).toISOString(),
   },
   {
@@ -88,6 +94,7 @@ const SEED_MESSAGES: Message[] = [
     subject: 'Annual Sports Day Announcement',
     body: 'Dear all,\n\nI am pleased to announce that our Annual Sports Day will be held on October 20th. All students are encouraged to participate.\n\nMore details will follow soon.\n\nWarm regards,\nThe Principal',
     read: true,
+    status: 'delivered',
     createdAt: new Date(Date.now() - 604800000).toISOString(),
   },
   {
@@ -101,6 +108,7 @@ const SEED_MESSAGES: Message[] = [
     subject: 'Updated Exam Grading Policy',
     body: 'Dear teachers,\n\nPlease note that the grading policy has been updated for this semester. Refer to the attached document for the new grade boundaries.\n\nRegards,\nAdmin',
     read: true,
+    status: 'delivered',
     createdAt: new Date(Date.now() - 259200000).toISOString(),
   },
   {
@@ -114,7 +122,78 @@ const SEED_MESSAGES: Message[] = [
     subject: 'Welcome Back — New Semester',
     body: 'Dear students,\n\nWelcome back to a new semester! We hope you had a great break. Let\'s make this semester a productive and enjoyable one.\n\nBest wishes,\nAdmin',
     read: true,
+    status: 'delivered',
     createdAt: new Date(Date.now() - 432000000).toISOString(),
+  },
+  {
+    id: 'MSG-SEED-010',
+    senderId: 'me',
+    senderName: 'Admin',
+    senderNameBn: 'Admin',
+    senderRole: 'admin',
+    recipientId: 'all',
+    recipientName: 'All Users',
+    subject: 'Holiday Notice — Eid Celebration',
+    body: 'Dear all,\n\nThe institution will remain closed from April 10-15 for Eid celebrations. Classes will resume on April 16.\n\nHappy Eid!',
+    read: true,
+    status: 'sent',
+    createdAt: new Date(Date.now() - 1296000000).toISOString(),
+  },
+  {
+    id: 'MSG-SEED-011',
+    senderId: 'me',
+    senderName: 'Admin',
+    senderNameBn: 'Admin',
+    senderRole: 'admin',
+    recipientId: 'teachers',
+    recipientName: 'Teachers',
+    subject: 'Result Submission Deadline',
+    body: 'Dear teachers,\n\nPlease submit all exam results by Friday 5:00 PM. Late submissions will not be accepted.\n\nThank you.',
+    read: true,
+    status: 'queued',
+    createdAt: new Date(Date.now() - 1800000).toISOString(),
+  },
+  {
+    id: 'MSG-SEED-012',
+    senderId: 'me',
+    senderName: 'Admin',
+    senderNameBn: 'Admin',
+    senderRole: 'admin',
+    recipientId: 'parents',
+    recipientName: 'Parents',
+    subject: 'Field Trip Permission Slip',
+    body: 'Dear parents,\n\nA field trip to the Science Museum is scheduled for next Wednesday. Please sign and return the permission slip by Monday.\n\nRegards,\nAdmin',
+    read: true,
+    status: 'failed',
+    createdAt: new Date(Date.now() - 900000).toISOString(),
+  },
+  {
+    id: 'MSG-SEED-013',
+    senderId: 'me',
+    senderName: 'Admin',
+    senderNameBn: 'Admin',
+    senderRole: 'admin',
+    recipientId: 'students',
+    recipientName: 'Students',
+    subject: 'Club Registration Open',
+    body: 'Dear students,\n\nClub registration for the new term is now open. Visit the student affairs office to sign up for your preferred clubs.\n\nDeadline: End of this week.',
+    read: true,
+    status: 'queued',
+    createdAt: new Date(Date.now() - 600000).toISOString(),
+  },
+  {
+    id: 'MSG-SEED-014',
+    senderId: 'me',
+    senderName: 'Admin',
+    senderNameBn: 'Admin',
+    senderRole: 'admin',
+    recipientId: 'all',
+    recipientName: 'All Users',
+    subject: 'System Maintenance Notice',
+    body: 'Dear all,\n\nThe school management system will undergo maintenance this Saturday from 10 PM to 2 AM. Please plan accordingly.\n\nIT Department',
+    read: true,
+    status: 'failed',
+    createdAt: new Date(Date.now() - 300000).toISOString(),
   },
 ]
 
@@ -124,6 +203,7 @@ interface MessageState {
   markRead: (id: string) => void
   markAllRead: (inbox: boolean) => void
   deleteMessage: (id: string) => void
+  resendMessage: (id: string) => void
 }
 
 export const useMessageStore = create<MessageState>()(
@@ -145,6 +225,12 @@ export const useMessageStore = create<MessageState>()(
         })),
       deleteMessage: (id) =>
         set((state) => ({ messages: state.messages.filter((m) => m.id !== id) })),
+      resendMessage: (id) =>
+        set((state) => ({
+          messages: state.messages.map((m) =>
+            m.id === id ? { ...m, status: 'sent' as MessageStatus, createdAt: new Date().toISOString() } : m
+          ),
+        })),
     }),
     {
       name: 'edutech-messages',
