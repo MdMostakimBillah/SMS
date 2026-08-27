@@ -226,7 +226,7 @@ export default function MessagesPage() {
                 <p className="text-[0.75rem] text-[var(--text-muted)] truncate mt-0.5">{msg.body}</p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                {activeTab === 'outgoing' && (msg.status === 'failed' || msg.status === 'queued') && (
+                {activeTab === 'outgoing' && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setResendConfirm(msg.id) }}
                     className="p-1.5 rounded-lg hover:bg-[var(--brand)]10 text-[var(--brand)] transition-colors"
