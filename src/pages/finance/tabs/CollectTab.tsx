@@ -403,7 +403,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const todayStr = new Date().toISOString().split('T')[0]
   const todayIncome = useMemo(() => payments.filter((p) => p.paidAt === todayStr && p.feeStructureId !== '' && !p.feeStructureId.startsWith('FEE-OTHER-')).reduce((s, p) => s + p.amount, 0), [payments, todayStr])
   const todayOtherIncome = useMemo(() => payments.filter((p) => p.paidAt === todayStr && p.feeStructureId.startsWith('FEE-OTHER-')).reduce((s, p) => s + p.amount, 0), [payments, todayStr])
-  const todayShopIncome = useMemo(() => storeSales.filter((s) => s.createdAt.startsWith(todayStr) && !s.note?.startsWith('Fee Collect —')).reduce((sum, s) => sum + s.total, 0), [storeSales, todayStr])
+  const todayShopIncome = useMemo(() => storeSales.filter((s) => s.createdAt.startsWith(todayStr)).reduce((sum, s) => sum + s.total, 0), [storeSales, todayStr])
   const todayDiscount = useMemo(() => payments.filter((p) => p.paidAt === todayStr).reduce((s, p) => s + (p.discount || 0), 0), [payments, todayStr])
   const todayWaiver = useMemo(() => {
     const todayPayments = payments.filter((p) => p.paidAt === todayStr)
