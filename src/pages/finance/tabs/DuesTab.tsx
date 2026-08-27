@@ -279,7 +279,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
               continue
             }
 
-            if (fee.applicableMonths && !fee.applicableMonths.includes(m)) {
+            if (fee.applicableMonths && fee.applicableMonths.length > 0 && !fee.applicableMonths.includes(m)) {
               monthCells[m] = { paid: true, amount: 0, paidAmount: 0 }
               continue
             }
