@@ -152,7 +152,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
     setSelected(new Set())
   }
 
-  const clearFilters = () => { setDateFrom(''); setDateTo(''); setFilterPayment(''); setFilterCategory(''); setQuickSearch('') }
+  const clearFilters = () => { const t = new Date().toISOString().split('T')[0]; setDateFrom(t); setDateTo(t); setFilterPayment(''); setFilterCategory(''); setQuickSearch('') }
 
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString(bn ? 'bn-BD' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })
   const formatTime = (iso: string) => new Date(iso).toLocaleTimeString(bn ? 'bn-BD' : 'en-US', { hour: '2-digit', minute: '2-digit' })

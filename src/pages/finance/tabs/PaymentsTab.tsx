@@ -151,11 +151,11 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     setSearch('')
     setFMethod('')
     setFCollector('')
-    setDateFrom('')
-    setDateTo('')
+    setDateFrom(todayStr)
+    setDateTo(todayStr)
     setSortBy('date-desc')
     setSelectedRows(new Set())
-  }, [])
+  }, [todayStr])
 
   const toggleRowSelection = useCallback((key: string) => {
     setSelectedRows((prev) => {
