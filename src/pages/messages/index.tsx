@@ -231,7 +231,7 @@ export default function MessagesPage() {
                   </span>
                 </div>
                 <p className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">{msg.subject}</p>
-                <p className="text-[0.75rem] text-[var(--text-muted)] truncate mt-0.5">{msg.body}</p>
+                <p className="text-[0.75rem] text-[var(--text-muted)] truncate mt-0.5">{msg.body.replace(/<[^>]*>/g, '')}</p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {activeTab === 'outgoing' && (
@@ -341,9 +341,7 @@ function MessageDetail({ message, onBack, onReply, onDelete, bn }: { message: Me
       </div>
 
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-        <p className="text-[0.875rem] text-[var(--text-primary)] whitespace-pre-line leading-relaxed">
-          {message.body}
-        </p>
+        <div className="msg-content text-[0.875rem] text-[var(--text-primary)] leading-relaxed" dangerouslySetInnerHTML={{ __html: message.body }} />
       </div>
 
       <div className="mt-3 flex items-center gap-2 text-[0.6875rem] text-[var(--text-muted)]">
