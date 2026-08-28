@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Mail, Inbox, Send, Plus, Search, Trash2, ArrowLeft, X, RotateCcw, Clock, CheckCircle2, AlertCircle, Minus, Maximize2, Paperclip, Link2, Smile, Image, Bold, Italic, Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote, Undo2, Redo2, ChevronDown } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -381,7 +382,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
   }
 
   if (isFullscreen) {
-    return (
+    return createPortal(
       <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'var(--bg-card)' }}>
         {/* Fullscreen Header */}
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border)]">
@@ -482,11 +483,12 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
             </div>
           </div>
         </form>
-      </div>
+      </div>,
+      document.body
     )
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6" style={{ background: 'rgba(0,0,0,0.5)' }}>
       <div className="w-full max-w-[36rem] rounded-t-2xl border border-[var(--border)] shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '85vh', background: 'var(--bg-card)' }}>
         {/* Header */}
@@ -586,6 +588,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
