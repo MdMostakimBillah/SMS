@@ -505,15 +505,9 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
           </div>
           <div className="flex items-center gap-1.5">
             <Calendar size={12} className="text-[var(--text-muted)]" />
-            <div className="relative">
-              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px] pr-6`} />
-              {dateFrom && <button type="button" onClick={() => setDateFrom('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><X size={10} /></button>}
-            </div>
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px]`} />
             <span className="text-[var(--text-muted)] text-xs">—</span>
-            <div className="relative">
-              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px] pr-6`} />
-              {dateTo && <button type="button" onClick={() => setDateTo('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><X size={10} /></button>}
-            </div>
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px]`} />
           </div>
           {hasFilter && (
             <button onClick={clearFilters} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[0.65rem] font-medium bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)]/20 cursor-pointer transition-all hover:bg-[var(--red)]/20">
