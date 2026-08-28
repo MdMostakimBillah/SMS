@@ -1,6 +1,13 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Mail, Inbox, Send, Plus, Search, Trash2, ArrowLeft, X, RotateCcw, Clock, CheckCircle2, AlertCircle, Minus, Maximize2, Paperclip, Link2, Smile, Image, Bold, Italic, Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote, Undo2, Redo2, ChevronDown } from 'lucide-react'
+import { Mail, Inbox, Send, Plus, Search, Trash2, ArrowLeft, X, RotateCcw, Clock, CheckCircle2, AlertCircle, Minus, Maximize2, Paperclip, Link2, Smile, Image, Bold, Italic, Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote, Undo2, Redo2 } from 'lucide-react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import UnderlineExt from '@tiptap/extension-underline'
+import TextAlign from '@tiptap/extension-text-align'
+import Placeholder from '@tiptap/extension-placeholder'
+import LinkExt from '@tiptap/extension-link'
+import ImageExt from '@tiptap/extension-image'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useMessageStore, type Message, type MessageRecipient, messageId, type MessageStatus } from '@/store/messageStore'
@@ -350,43 +357,205 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
   const [recipientId, setRecipientId] = useState<MessageRecipient>('all')
   const [showCcBcc, setShowCcBcc] = useState(false)
   const [subject, setSubject] = useState('')
-  const [body, setBody] = useState('')
+  const [showEmoji, setShowEmoji] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [attachments, setAttachments] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   const selectedRecipient = RECIPIENT_OPTIONS.find((o) => o.value === recipientId)
+  const MAX_FILE_SIZE = 5 * 1024 * 1024
+
+  const EMOJIS = ['😀','😂','😍','🥰','😊','👍','❤️','🔥','✅','🎉','👏','🙌','💪','🙏','😢','😮','🤔','💯','⭐','🌟','✨','🚀','📌','📝','💡','🎯','🏆','📚','✏️','🎒']
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({ heading: false }),
+      UnderlineExt,
+      TextAlign.configure({ types: ['paragraph'] }),
+      Placeholder.configure({ placeholder: bn ? 'বার্তা লিখুন...' : 'Write your message...' }),
+      LinkExt.configure({ openOnClick: false }),
+      ImageExt,
+    ],
+    editorProps: {
+      attributes: {
+        class: 'w-full min-h-[180px] border-none outline-none text-[0.8125rem] text-[var(--text-primary)] leading-relaxed',
+        style: `background: ${COMPOSE_BG}; white-space: pre-wrap; word-break: break-word;`,
+      },
+    },
+  })
+
+  useEffect(() => {
+    return () => editor?.destroy()
+  }, [editor])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!subject.trim() || !body.trim()) return
+    const bodyHtml = editor?.getHTML() || ''
+    const bodyText = editor?.getText()?.trim() || ''
+    if (!subject.trim() || !bodyText) return
     onSave({
       recipientId,
       recipientName: bn ? selectedRecipient?.labelBn || 'All' : selectedRecipient?.label || 'All',
       subject: subject.trim(),
-      body: body.trim(),
+      body: bodyHtml,
     })
   }
 
-  const handleFormatting = (action: string) => {
-    const ta = textareaRef.current
-    if (!ta) return
-    const start = ta.selectionStart
-    const end = ta.selectionEnd
-    const selected = body.substring(start, end)
-    let wrapped = ''
-    switch (action) {
-      case 'bold': wrapped = `**${selected || 'text'}**`; break
-      case 'italic': wrapped = `_${selected || 'text'}_`; break
-      case 'underline': wrapped = `__${selected || 'text'}__`; break
-      default: return
-    }
-    setBody(body.substring(0, start) + wrapped + body.substring(end))
+  const insertEmoji = (emoji: string) => {
+    editor?.chain().focus().insertContent(emoji).run()
+    setShowEmoji(false)
   }
+
+  const insertLink = () => {
+    const url = prompt(bn ? 'লিংক URL দিন:' : 'Enter link URL:')
+    if (url) {
+      editor?.chain().focus().setLink({ href: url }).run()
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+    const validFiles: File[] = []
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_SIZE) {
+        alert(bn ? `"${file.name}" ৫ এমবির বেশি। সর্বোচ্চ সাইজ ৫ এমবি।` : `"${file.name}" exceeds 5MB max size.`)
+        continue
+      }
+      validFiles.push(file)
+    }
+    setAttachments((prev) => [...prev, ...validFiles])
+    e.target.value = ''
+  }
+
+  const handleImageInsert = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > MAX_FILE_SIZE) {
+      alert(bn ? 'ছবি ৫ এমবির বেশি। সর্বোচ্চ সাইজ ৫ এমবি।' : 'Image exceeds 5MB max size.')
+      e.target.value = ''
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      editor?.chain().focus().setImage({ src: ev.target?.result as string }).run()
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const removeAttachment = (idx: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== idx))
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  const ToolbarBtn = ({ onClick, active, disabled, children, title }: { onClick: () => void; active?: boolean; disabled?: boolean; children: React.ReactNode; title?: string }) => (
+    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={onClick} disabled={disabled} title={title}
+      className={`p-1.5 rounded hover:bg-[var(--bg-secondary)] transition-colors ${active ? 'text-[var(--brand)] bg-[var(--brand)]/10' : 'text-[var(--text-muted)]'} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}>
+      {children}
+    </button>
+  )
+
+  const ToolbarSep = () => <div className="w-px h-4 bg-[var(--border)] mx-1" />
+
+  const toolbarBlock = (compact: boolean) => editor && (
+    <div className={`flex items-center gap-0.5 px-${compact ? '3' : '4'} py-1.5 border-t border-[var(--border)]`} style={{ background: COMPOSE_BG }}>
+      <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title={bn ? 'পূর্বাবস্থায় ফেরান' : 'Undo'}>
+        <Undo2 size={compact ? 14 : 15} />
+      </ToolbarBtn>
+      <ToolbarBtn onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title={bn ? 'পুনরায়' : 'Redo'}>
+        <Redo2 size={compact ? 14 : 15} />
+      </ToolbarBtn>
+      <ToolbarSep />
+      <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title={bn ? 'মোটা' : 'Bold'}>
+        <Bold size={compact ? 14 : 15} />
+      </ToolbarBtn>
+      <ToolbarBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title={bn ? 'তির্যক' : 'Italic'}>
+        <Italic size={compact ? 14 : 15} />
+      </ToolbarBtn>
+      <ToolbarBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title={bn ? 'আন্ডারলাইন' : 'Underline'}>
+        <UnderlineIcon size={compact ? 14 : 15} />
+      </ToolbarBtn>
+      <ToolbarSep />
+      <ToolbarBtn onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} title={bn ? 'বামে সাজান' : 'Align Left'}>
+        <AlignLeft size={compact ? 14 : 15} />
+      </ToolbarBtn>
+      <ToolbarBtn onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} title={bn ? 'মাঝে সাজান' : 'Align Center'}>
+        <AlignCenter size={compact ? 14 : 15} />
+      </ToolbarBtn>
+      <ToolbarBtn onClick={() => editor.chain().focus().setTextAlign('right').run()} active={editor.isActive({ textAlign: 'right' })} title={bn ? 'ডানে সাজান' : 'Align Right'}>
+        <AlignRight size={compact ? 14 : 15} />
+      </ToolbarBtn>
+      <ToolbarSep />
+      <ToolbarBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title={bn ? 'তালিকা' : 'Bullet List'}>
+        <List size={compact ? 14 : 15} />
+      </ToolbarBtn>
+      <ToolbarBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title={bn ? 'নম্বর তালিকা' : 'Numbered List'}>
+        <ListOrdered size={compact ? 14 : 15} />
+      </ToolbarBtn>
+      <ToolbarSep />
+      <ToolbarBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title={bn ? 'উদ্ধৃতি' : 'Quote'}>
+        <Quote size={compact ? 14 : 15} />
+      </ToolbarBtn>
+    </div>
+  )
+
+  const actionBarBlock = (compact: boolean) => (
+    <div className={`flex items-center justify-between px-${compact ? '3' : '4'} py-${compact ? '2' : '2.5'} border-t border-[var(--border)] rounded-b-2xl`} style={{ background: COMPOSE_BG }}>
+      <div className="flex items-center gap-1">
+        <button type="submit" className={`flex items-center gap-1.5 px-${compact ? '4' : '5'} py-${compact ? '1.5' : '2'} rounded-full text-[0.875rem] font-medium text-white bg-[var(--brand)] hover:opacity-90 transition-opacity`}>
+          <Send size={compact ? 13 : 14} />
+          {bn ? 'পাঠান' : 'Send'}
+        </button>
+      </div>
+      <div className="flex items-center gap-0.5 relative">
+        <button type="button" onClick={() => fileInputRef.current?.click()} className={`p-${compact ? '1.5' : '2'} rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]`} title={bn ? 'সংযুক্তি (সর্বোচ্চ ৫ এমবি)' : 'Attach file (max 5MB)'}>
+          <Paperclip size={compact ? 15 : 16} />
+        </button>
+        <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={insertLink} className={`p-${compact ? '1.5' : '2'} rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]`} title={bn ? 'লিংক' : 'Insert link'}>
+          <Link2 size={compact ? 15 : 16} />
+        </button>
+        <button type="button" onClick={() => setShowEmoji(!showEmoji)} className={`p-${compact ? '1.5' : '2'} rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]`} title={bn ? 'ইমোজি' : 'Emoji'}>
+          <Smile size={compact ? 15 : 16} />
+        </button>
+        {showEmoji && (
+          <div className="absolute bottom-full right-0 mb-2 p-3 rounded-xl border border-[var(--border)] shadow-xl grid grid-cols-6 gap-1.5 z-10" style={{ background: COMPOSE_BG, minWidth: '220px' }}>
+            {EMOJIS.map((e) => (
+              <button key={e} type="button" onMouseDown={(ev) => ev.preventDefault()} onClick={() => insertEmoji(e)} className="text-xl hover:bg-[var(--bg-secondary)] rounded-lg p-1 transition-colors">{e}</button>
+            ))}
+          </div>
+        )}
+        <button type="button" onClick={() => imageInputRef.current?.click()} className={`p-${compact ? '1.5' : '2'} rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]`} title={bn ? 'ছবি (সর্বোচ্চ ৫ এমবি)' : 'Insert photo (max 5MB)'}>
+          <Image size={compact ? 15 : 16} />
+        </button>
+        <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageInsert} />
+      </div>
+    </div>
+  )
+
+  const attachmentList = attachments.length > 0 && (
+    <div className="flex flex-wrap gap-2 px-4 py-2 border-t border-[var(--border)]" style={{ background: COMPOSE_BG }}>
+      {attachments.map((file, idx) => (
+        <div key={`${file.name}-${idx}`} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)]">
+          <Paperclip size={11} className="text-[var(--text-muted)]" />
+          <span className="max-w-[120px] truncate">{file.name}</span>
+          <span className="text-[var(--text-muted)]">({formatFileSize(file.size)})</span>
+          <button type="button" onClick={() => removeAttachment(idx)} className="p-0.5 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)]"><X size={10} /></button>
+        </div>
+      ))}
+    </div>
+  )
 
   if (isFullscreen) {
     return createPortal(
       <div className="fixed inset-0 z-[9999] flex flex-col" style={{ background: COMPOSE_BG }}>
-        {/* Fullscreen Header */}
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border)]">
           <h2 className="font-medium text-[0.9375rem] text-[var(--text-primary)]">
             {bn ? 'নতুন বার্তা' : 'New Message'}
@@ -400,9 +569,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
             </button>
           </div>
         </div>
-
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-          {/* To */}
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--border)]" style={{ background: COMPOSE_BG }}>
             <span className="text-[0.8125rem] text-[var(--text-muted)] shrink-0">{bn ? 'প্রাপক' : 'To'}</span>
             <select value={recipientId} onChange={(e) => setRecipientId(e.target.value)} className="flex-1 border-none outline-none text-[0.875rem] text-[var(--text-primary)] cursor-pointer appearance-none" style={{ background: COMPOSE_BG }}>
@@ -412,8 +579,6 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
               Cc Bcc
             </button>
           </div>
-
-          {/* Subject */}
           <div className="px-4 py-2.5 border-b border-[var(--border)]" style={{ background: COMPOSE_BG }}>
             <input
               value={subject}
@@ -424,66 +589,12 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
               required
             />
           </div>
-
-          {/* Body */}
           <div className="flex-1 overflow-auto px-4 py-3" style={{ background: COMPOSE_BG }}>
-            <textarea
-              ref={textareaRef}
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder={bn ? 'বার্তা লিখুন...' : 'Write your message...'}
-              className="w-full h-full min-h-[300px] border-none outline-none text-[0.875rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none leading-relaxed"
-              style={{ background: COMPOSE_BG }}
-              required
-            />
+            <EditorContent editor={editor} className="h-full [&_.tiptap]:min-h-[300px] [&_.tiptap]:h-full" />
           </div>
-
-          {/* Formatting Toolbar */}
-          <div className="flex items-center gap-0.5 px-4 py-1.5 border-t border-[var(--border)]" style={{ background: COMPOSE_BG }}>
-            <button type="button" onClick={() => {}} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Undo2 size={15} /></button>
-            <button type="button" onClick={() => {}} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Redo2 size={15} /></button>
-            <div className="w-px h-4 bg-[var(--border)] mx-1" />
-            <button type="button" className="flex items-center gap-0.5 px-2 py-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.75rem]">
-              Sans Serif <ChevronDown size={12} />
-            </button>
-            <div className="w-px h-4 bg-[var(--border)] mx-1" />
-            <button type="button" onClick={() => handleFormatting('bold')} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Bold size={15} /></button>
-            <button type="button" onClick={() => handleFormatting('italic')} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Italic size={15} /></button>
-            <button type="button" onClick={() => handleFormatting('underline')} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><UnderlineIcon size={15} /></button>
-            <div className="w-px h-4 bg-[var(--border)] mx-1" />
-            <button type="button" className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><AlignLeft size={15} /></button>
-            <button type="button" className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><AlignCenter size={15} /></button>
-            <button type="button" className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><AlignRight size={15} /></button>
-            <div className="w-px h-4 bg-[var(--border)] mx-1" />
-            <button type="button" className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><List size={15} /></button>
-            <button type="button" className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><ListOrdered size={15} /></button>
-            <div className="w-px h-4 bg-[var(--border)] mx-1" />
-            <button type="button" className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Quote size={15} /></button>
-          </div>
-
-          {/* Bottom Action Bar */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-t border-[var(--border)]" style={{ background: COMPOSE_BG }}>
-            <div className="flex items-center gap-1">
-              <button type="submit" className="flex items-center gap-1.5 px-5 py-2 rounded-full text-[0.875rem] font-medium text-white bg-[var(--brand)] hover:opacity-90 transition-opacity">
-                <Send size={14} />
-                {bn ? 'পাঠান' : 'Send'}
-              </button>
-            </div>
-            <div className="flex items-center gap-0.5">
-              <button type="button" className="p-2 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'সংযুক্তি' : 'Attach'}>
-                <Paperclip size={16} />
-              </button>
-              <button type="button" className="p-2 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'লিংক' : 'Link'}>
-                <Link2 size={16} />
-              </button>
-              <button type="button" className="p-2 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'ইমোজি' : 'Emoji'}>
-                <Smile size={16} />
-              </button>
-              <button type="button" className="p-2 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'ছবি' : 'Photo'}>
-                <Image size={16} />
-              </button>
-            </div>
-          </div>
+          {attachmentList}
+          {toolbarBlock(false)}
+          {actionBarBlock(false)}
         </form>
       </div>,
       document.body
@@ -493,7 +604,6 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-end justify-end p-4 sm:p-6" style={{ background: 'rgba(0,0,0,0.5)' }}>
       <div className="w-full max-w-[36rem] rounded-t-2xl shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '85vh', background: COMPOSE_BG }}>
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 rounded-t-2xl" style={{ background: 'var(--brand)' }}>
           <h2 className="font-medium text-[0.875rem] text-white">
             {bn ? 'নতুন বার্তা' : 'New Message'}
@@ -507,9 +617,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
             </button>
           </div>
         </div>
-
         <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden" style={{ maxHeight: 'calc(85vh - 2.5rem)' }}>
-          {/* To */}
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--border)]" style={{ background: COMPOSE_BG }}>
             <span className="text-[0.8125rem] text-[var(--text-muted)] shrink-0">{bn ? 'প্রাপক' : 'To'}</span>
             <select value={recipientId} onChange={(e) => setRecipientId(e.target.value)} className="flex-1 border-none outline-none text-[0.8125rem] text-[var(--text-primary)] cursor-pointer appearance-none" style={{ background: COMPOSE_BG }}>
@@ -519,8 +627,6 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
               Cc Bcc
             </button>
           </div>
-
-          {/* Subject */}
           <div className="px-4 py-2 border-b border-[var(--border)]" style={{ background: COMPOSE_BG }}>
             <input
               value={subject}
@@ -531,63 +637,12 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
               required
             />
           </div>
-
-          {/* Body */}
           <div className="flex-1 overflow-auto px-4 py-3 min-h-[200px]" style={{ background: COMPOSE_BG }}>
-            <textarea
-              ref={textareaRef}
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder={bn ? 'বার্তা লিখুন...' : 'Write your message...'}
-              className="w-full h-full min-h-[180px] border-none outline-none text-[0.8125rem] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none leading-relaxed"
-              style={{ background: COMPOSE_BG }}
-              required
-            />
+            <EditorContent editor={editor} className="h-full [&_.tiptap]:min-h-[180px] [&_.tiptap]:h-full" />
           </div>
-
-          {/* Formatting Toolbar */}
-          <div className="flex items-center gap-0.5 px-3 py-1.5 border-t border-[var(--border)]" style={{ background: COMPOSE_BG }}>
-            <button type="button" onClick={() => {}} className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Undo2 size={14} /></button>
-            <button type="button" onClick={() => {}} className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Redo2 size={14} /></button>
-            <div className="w-px h-3.5 bg-[var(--border)] mx-0.5" />
-            <button type="button" className="flex items-center gap-0.5 px-1.5 py-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem]">
-              Sans Serif <ChevronDown size={10} />
-            </button>
-            <div className="w-px h-3.5 bg-[var(--border)] mx-0.5" />
-            <button type="button" onClick={() => handleFormatting('bold')} className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Bold size={14} /></button>
-            <button type="button" onClick={() => handleFormatting('italic')} className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><Italic size={14} /></button>
-            <button type="button" onClick={() => handleFormatting('underline')} className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><UnderlineIcon size={14} /></button>
-            <div className="w-px h-3.5 bg-[var(--border)] mx-0.5" />
-            <button type="button" className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><AlignLeft size={14} /></button>
-            <button type="button" className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><AlignRight size={14} /></button>
-            <div className="w-px h-3.5 bg-[var(--border)] mx-0.5" />
-            <button type="button" className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><List size={14} /></button>
-            <button type="button" className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><ListOrdered size={14} /></button>
-          </div>
-
-          {/* Bottom Action Bar */}
-          <div className="flex items-center justify-between px-3 py-2 border-t border-[var(--border)] rounded-b-2xl" style={{ background: COMPOSE_BG }}>
-            <div className="flex items-center gap-1">
-              <button type="submit" className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[0.8125rem] font-medium text-white bg-[var(--brand)] hover:opacity-90 transition-opacity">
-                <Send size={13} />
-                {bn ? 'পাঠান' : 'Send'}
-              </button>
-            </div>
-            <div className="flex items-center gap-0.5">
-              <button type="button" className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'সংযুক্তি' : 'Attach'}>
-                <Paperclip size={15} />
-              </button>
-              <button type="button" className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'লিংক' : 'Link'}>
-                <Link2 size={15} />
-              </button>
-              <button type="button" className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'ইমোজি' : 'Emoji'}>
-                <Smile size={15} />
-              </button>
-              <button type="button" className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]" title={bn ? 'ছবি' : 'Photo'}>
-                <Image size={15} />
-              </button>
-            </div>
-          </div>
+          {attachmentList}
+          {toolbarBlock(true)}
+          {actionBarBlock(true)}
         </form>
       </div>
     </div>,

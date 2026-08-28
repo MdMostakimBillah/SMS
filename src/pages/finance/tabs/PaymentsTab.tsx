@@ -50,8 +50,8 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const [search, setSearch] = useState('')
   const [fMethod, setFMethod] = useState('')
   const [fCollector, setFCollector] = useState('')
-  const [dateFrom, setDateFrom] = useState(new Date().toISOString().split('T')[0])
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0])
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc'>('date-desc')
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
@@ -132,6 +132,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const totalCollected = useMemo(() => batches.reduce((sum, b) => sum + b.totalAmount, 0), [batches])
   const totalDiscount = useMemo(() => batches.reduce((sum, b) => sum + b.totalDiscount, 0), [batches])
   const todayStr = new Date().toISOString().split('T')[0]
+  const monthStart = (() => { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0] })()
   const todayCollected = useMemo(() => batches.filter((b) => b.paidAt.startsWith(todayStr)).reduce((sum, b) => sum + b.totalAmount, 0), [batches, todayStr])
 
   const fmt = (n: number) => n.toLocaleString()
@@ -151,11 +152,11 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     setSearch('')
     setFMethod('')
     setFCollector('')
-    setDateFrom(todayStr)
+    setDateFrom(monthStart)
     setDateTo(todayStr)
     setSortBy('date-desc')
     setSelectedRows(new Set())
-  }, [todayStr])
+  }, [monthStart, todayStr])
 
   const toggleRowSelection = useCallback((key: string) => {
     setSelectedRows((prev) => {
@@ -504,9 +505,15 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
           </div>
           <div className="flex items-center gap-1.5">
             <Calendar size={12} className="text-[var(--text-muted)]" />
-            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px]`} />
+            <div className="relative">
+              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px] pr-6`} />
+              {dateFrom && <button type="button" onClick={() => setDateFrom('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><X size={10} /></button>}
+            </div>
             <span className="text-[var(--text-muted)] text-xs">—</span>
-            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px]`} />
+            <div className="relative">
+              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px] pr-6`} />
+              {dateTo && <button type="button" onClick={() => setDateTo('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><X size={10} /></button>}
+            </div>
           </div>
           {hasFilter && (
             <button onClick={clearFilters} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[0.65rem] font-medium bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)]/20 cursor-pointer transition-all hover:bg-[var(--red)]/20">

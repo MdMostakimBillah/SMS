@@ -23,8 +23,8 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const deleteSale = useStoreStore((s) => s.deleteSale)
 
   const [searchParams] = useSearchParams()
-  const initDateFrom = searchParams.get('dateFrom') || new Date().toISOString().split('T')[0]
-  const initDateTo = searchParams.get('dateTo') || new Date().toISOString().split('T')[0]
+  const initDateFrom = searchParams.get('dateFrom') || ''
+  const initDateTo = searchParams.get('dateTo') || ''
   const initProduct = searchParams.get('product') || ''
 
   const [dateFrom, setDateFrom] = useState(initDateFrom)
@@ -152,7 +152,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
     setSelected(new Set())
   }
 
-  const clearFilters = () => { const t = new Date().toISOString().split('T')[0]; setDateFrom(t); setDateTo(t); setFilterPayment(''); setFilterCategory(''); setQuickSearch('') }
+  const clearFilters = () => { const now = new Date(); const t = now.toISOString().split('T')[0]; const m = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]; setDateFrom(m); setDateTo(t); setFilterPayment(''); setFilterCategory(''); setQuickSearch('') }
 
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString(bn ? 'bn-BD' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })
   const formatTime = (iso: string) => new Date(iso).toLocaleTimeString(bn ? 'bn-BD' : 'en-US', { hour: '2-digit', minute: '2-digit' })
@@ -383,8 +383,14 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
       {/* Filters */}
       {showFilters && (
         <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
-          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors" />
-          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors" />
+          <div className="relative">
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 pr-7 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors" />
+            {dateFrom && <button type="button" onClick={() => setDateFrom('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><X size={10} /></button>}
+          </div>
+          <div className="relative">
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 pr-7 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors" />
+            {dateTo && <button type="button" onClick={() => setDateTo('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><X size={10} /></button>}
+          </div>
           <select value={filterPayment} onChange={(e) => setFilterPayment(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--text-muted)] transition-colors cursor-pointer">
             <option value="">{bn ? 'সব পেমেন্ট' : 'All Payments'}</option>
             <option value="cash">{bn ? 'নগদ' : 'Cash'}</option>
