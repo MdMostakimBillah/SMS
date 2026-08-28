@@ -23,8 +23,8 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const deleteSale = useStoreStore((s) => s.deleteSale)
 
   const [searchParams] = useSearchParams()
-  const initDateFrom = searchParams.get('dateFrom') || ''
-  const initDateTo = searchParams.get('dateTo') || ''
+  const initDateFrom = searchParams.get('dateFrom') || new Date().toISOString().split('T')[0]
+  const initDateTo = searchParams.get('dateTo') || new Date().toISOString().split('T')[0]
   const initProduct = searchParams.get('product') || ''
 
   const [dateFrom, setDateFrom] = useState(initDateFrom)
