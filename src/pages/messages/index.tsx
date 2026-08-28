@@ -14,17 +14,11 @@ import { useMessageStore, type Message, type MessageRecipient, messageId, type M
 import { useAuth } from '@/contexts/AuthContext'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
+import { useSessionStudents } from '@/store/admissionStore'
 
 const inputCls = 'px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors'
 
 const COMPOSE_BG = 'var(--bg-primary, #1a1a2e)'
-
-const RECIPIENT_OPTIONS = [
-  { value: 'all', label: 'All Users', labelBn: 'সকল ব্যবহারকারী' },
-  { value: 'students', label: 'Students', labelBn: 'শিক্ষার্থী' },
-  { value: 'teachers', label: 'Teachers', labelBn: 'শিক্ষক' },
-  { value: 'parents', label: 'Parents', labelBn: 'অভিভাবক' },
-]
 
 export default function MessagesPage() {
   const bn = useBn()
@@ -351,8 +345,61 @@ function MessageDetail({ message, onBack, onReply, onDelete, bn }: { message: Me
   )
 }
 
+function RecipientField({ recipientId, recipientName, recipientSearch, showDrop, groups, filteredStudents, bn, onSelect, onSearch, onToggleDrop, dropRef }: {
+  recipientId: string; recipientName: string; recipientSearch: string; showDrop: boolean
+  groups: { value: string; label: string; labelBn: string }[]; filteredStudents: { id: string; nameEn: string; nameBn: string; class: string; roll: string }[]
+  bn: boolean; onSelect: (id: string, name: string) => void; onSearch: (v: string) => void; onToggleDrop: () => void; dropRef: React.RefObject<HTMLDivElement | null>
+}) {
+  return (
+    <div className="flex items-center gap-2 flex-1 relative" ref={dropRef}>
+      <span className="text-[0.8125rem] text-[var(--text-muted)] shrink-0">{bn ? 'প্রাপক' : 'To'}</span>
+      <button type="button" onClick={onToggleDrop} className="flex-1 text-left border-none outline-none text-[0.8125rem] text-[var(--text-primary)] cursor-pointer bg-transparent truncate">
+        {recipientName}
+      </button>
+      {showDrop && (
+        <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-[var(--border)] shadow-xl z-20 max-h-[300px] overflow-auto" style={{ background: 'var(--bg-primary)' }}>
+          <div className="p-2 border-b border-[var(--border)]">
+            <input
+              autoFocus
+              value={recipientSearch}
+              onChange={(e) => onSearch(e.target.value)}
+              placeholder={bn ? 'অনুসন্ধান...' : 'Search...'}
+              className="w-full px-2.5 py-1.5 rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none"
+            />
+          </div>
+          <div className="py-1">
+            {groups.map((g) => (
+              <button key={g.value} type="button" onClick={() => onSelect(g.value, bn ? g.labelBn : g.label)}
+                className={`w-full text-left px-3 py-2 text-[0.75rem] hover:bg-[var(--bg-secondary)] transition-colors ${recipientId === g.value && !filteredStudents.length ? 'text-[var(--brand)] bg-[var(--brand)]/5' : 'text-[var(--text-primary)]'}`}>
+                {bn ? g.labelBn : g.label}
+              </button>
+            ))}
+            {filteredStudents.length > 0 && (
+              <>
+                <div className="px-3 py-1 text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'শিক্ষার্থী' : 'Students'}</div>
+                {filteredStudents.slice(0, 50).map((s) => (
+                  <button key={s.id} type="button" onClick={() => onSelect(s.id, bn ? s.nameBn : s.nameEn)}
+                    className={`w-full text-left px-3 py-2 text-[0.75rem] hover:bg-[var(--bg-secondary)] transition-colors ${recipientId === s.id ? 'text-[var(--brand)] bg-[var(--brand)]/5' : 'text-[var(--text-primary)]'}`}>
+                    <span className="font-medium">{bn ? s.nameBn : s.nameEn}</span>
+                    <span className="text-[var(--text-muted)] ml-1.5">{s.class} • {s.roll}</span>
+                  </button>
+                ))}
+                {filteredStudents.length > 50 && <div className="px-3 py-1.5 text-[0.625rem] text-[var(--text-muted)] text-center">{bn ? `আরো ${filteredStudents.length - 50} জন...` : `${filteredStudents.length - 50} more...`}</div>}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: MessageRecipient; recipientName: string; subject: string; body: string }) => void; onClose: () => void; bn: boolean }) {
+  const students = useSessionStudents()
   const [recipientId, setRecipientId] = useState<MessageRecipient>('all')
+  const [recipientName, setRecipientName] = useState(bn ? 'সকল ব্যবহারকারী' : 'All Users')
+  const [recipientSearch, setRecipientSearch] = useState('')
+  const [showRecipientDrop, setShowRecipientDrop] = useState(false)
   const [showCcBcc, setShowCcBcc] = useState(false)
   const [subject, setSubject] = useState('')
   const [showEmoji, setShowEmoji] = useState(false)
@@ -360,11 +407,31 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
   const [attachments, setAttachments] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
+  const recipientDropRef = useRef<HTMLDivElement>(null)
 
-  const selectedRecipient = RECIPIENT_OPTIONS.find((o) => o.value === recipientId)
   const MAX_FILE_SIZE = 5 * 1024 * 1024
 
   const EMOJIS = ['😀','😂','😍','🥰','😊','👍','❤️','🔥','✅','🎉','👏','🙌','💪','🙏','😢','😮','🤔','💯','⭐','🌟','✨','🚀','📌','📝','💡','🎯','🏆','📚','✏️','🎒']
+
+  const GROUP_OPTIONS = [
+    { value: 'all', label: 'All Users', labelBn: 'সকল ব্যবহারকারী' },
+    { value: 'students', label: 'All Students', labelBn: 'সকল শিক্ষার্থী' },
+    { value: 'teachers', label: 'All Teachers', labelBn: 'সকল শিক্ষক' },
+    { value: 'parents', label: 'All Parents', labelBn: 'সকল অভিভাবক' },
+  ]
+
+  const filteredStudents = useMemo(() => {
+    if (!recipientSearch) return students.filter((s) => s.active !== false)
+    const q = recipientSearch.toLowerCase()
+    return students.filter((s) => s.active !== false && (s.nameEn.toLowerCase().includes(q) || s.nameBn.includes(q) || s.class.toLowerCase().includes(q) || s.roll.includes(q)))
+  }, [students, recipientSearch])
+
+  const selectRecipient = (id: string, name: string) => {
+    setRecipientId(id)
+    setRecipientName(name)
+    setShowRecipientDrop(false)
+    setRecipientSearch('')
+  }
 
   const editor = useEditor({
     extensions: [
@@ -387,6 +454,17 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
     return () => editor?.destroy()
   }, [editor])
 
+  useEffect(() => {
+    if (!showRecipientDrop) return
+    const handler = (e: MouseEvent) => {
+      if (recipientDropRef.current && !recipientDropRef.current.contains(e.target as Node)) {
+        setShowRecipientDrop(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showRecipientDrop])
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const bodyHtml = editor?.getHTML() || ''
@@ -394,7 +472,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
     if (!subject.trim() || !bodyText) return
     onSave({
       recipientId,
-      recipientName: bn ? selectedRecipient?.labelBn || 'All' : selectedRecipient?.label || 'All',
+      recipientName,
       subject: subject.trim(),
       body: bodyHtml,
     })
@@ -569,10 +647,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
         </div>
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--border)]" style={{ background: COMPOSE_BG }}>
-            <span className="text-[0.8125rem] text-[var(--text-muted)] shrink-0">{bn ? 'প্রাপক' : 'To'}</span>
-            <select value={recipientId} onChange={(e) => setRecipientId(e.target.value)} className="flex-1 border-none outline-none text-[0.875rem] text-[var(--text-primary)] cursor-pointer appearance-none" style={{ background: COMPOSE_BG }}>
-              {RECIPIENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{bn ? o.labelBn : o.label}</option>)}
-            </select>
+            <RecipientField recipientId={recipientId} recipientName={recipientName} recipientSearch={recipientSearch} showDrop={showRecipientDrop} groups={GROUP_OPTIONS} filteredStudents={filteredStudents} bn={bn} onSelect={selectRecipient} onSearch={setRecipientSearch} onToggleDrop={() => setShowRecipientDrop(!showRecipientDrop)} dropRef={recipientDropRef} />
             <button type="button" onClick={() => setShowCcBcc(!showCcBcc)} className="text-[0.75rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] shrink-0">
               Cc Bcc
             </button>
@@ -617,10 +692,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden" style={{ maxHeight: 'calc(85vh - 2.5rem)' }}>
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--border)]" style={{ background: COMPOSE_BG }}>
-            <span className="text-[0.8125rem] text-[var(--text-muted)] shrink-0">{bn ? 'প্রাপক' : 'To'}</span>
-            <select value={recipientId} onChange={(e) => setRecipientId(e.target.value)} className="flex-1 border-none outline-none text-[0.8125rem] text-[var(--text-primary)] cursor-pointer appearance-none" style={{ background: COMPOSE_BG }}>
-              {RECIPIENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{bn ? o.labelBn : o.label}</option>)}
-            </select>
+            <RecipientField recipientId={recipientId} recipientName={recipientName} recipientSearch={recipientSearch} showDrop={showRecipientDrop} groups={GROUP_OPTIONS} filteredStudents={filteredStudents} bn={bn} onSelect={selectRecipient} onSearch={setRecipientSearch} onToggleDrop={() => setShowRecipientDrop(!showRecipientDrop)} dropRef={recipientDropRef} />
             <button type="button" onClick={() => setShowCcBcc(!showCcBcc)} className="text-[0.6875rem] text-[var(--text-muted)] hover:text-[var(--text-primary)] shrink-0">
               Cc Bcc
             </button>
