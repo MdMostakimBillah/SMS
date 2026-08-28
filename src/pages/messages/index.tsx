@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Mail, Inbox, Send, Plus, Search, Trash2, ArrowLeft, X, RotateCcw, Clock, CheckCircle2, AlertCircle, Minus, Maximize2, Paperclip, Link2, Smile, Image, Bold, Italic, Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote, Undo2, Redo2 } from 'lucide-react'
+import { Mail, Inbox, Send, Plus, Search, Trash2, ArrowLeft, X, RotateCcw, Clock, CheckCircle2, AlertCircle, Minus, Maximize2, Paperclip, Link2, Smile, Image, Bold, Italic, Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote, Undo2, Redo2, FileText } from 'lucide-react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import UnderlineExt from '@tiptap/extension-underline'
@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { useSessionStudents } from '@/store/admissionStore'
+import { TemplatesTab } from './tabs/TemplatesTab'
 
 const inputCls = 'px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors'
 
@@ -29,7 +30,7 @@ export default function MessagesPage() {
   const deleteMessage = useMessageStore((s) => s.deleteMessage)
   const resendMessage = useMessageStore((s) => s.resendMessage)
 
-  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'outgoing'>('inbox')
+  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'outgoing' | 'templates'>('inbox')
   const [search, setSearch] = useState('')
   const [showCompose, setShowCompose] = useState(false)
   const [viewMessage, setViewMessage] = useState<Message | null>(null)
@@ -80,6 +81,7 @@ export default function MessagesPage() {
     { key: 'inbox', label: bn ? 'ইনবক্স' : 'Inbox', icon: Inbox, count: unreadCount },
     { key: 'sent', label: bn ? 'পাঠানো' : 'Sent', icon: Send, count: 0 },
     { key: 'outgoing', label: bn ? 'বহিঃগামী' : 'Outgoing', icon: Clock, count: outgoingMessages.length },
+    { key: 'templates', label: bn ? 'টেমপ্লেট' : 'Templates', icon: FileText, count: 0 },
   ]
 
   const handleSend = (data: { recipientId: MessageRecipient; recipientName: string; subject: string; body: string }) => {
@@ -154,7 +156,7 @@ export default function MessagesPage() {
             <button
               key={tab.key}
               ref={(el) => { if (el) tabRefs.current.set(tab.key, el) }}
-              onClick={() => setActiveTab(tab.key as 'inbox' | 'sent' | 'outgoing')}
+              onClick={() => setActiveTab(tab.key as 'inbox' | 'sent' | 'outgoing' | 'templates')}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-[0.8125rem] font-medium transition-colors relative ${
                 activeTab === tab.key ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
@@ -171,6 +173,11 @@ export default function MessagesPage() {
         </div>
       </div>
 
+      {/* Templates Tab Content */}
+      {activeTab === 'templates' ? (
+        <TemplatesTab />
+      ) : (
+        <>
       {/* Search */}
       <div className="relative mb-4">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
@@ -276,6 +283,8 @@ export default function MessagesPage() {
           message={bn ? 'আপনি কি এই বার্তাটি পুনঃপাঠাতে চান?' : 'Are you sure you want to resend this message?'}
           isBn={bn}
         />
+      )}
+        </>
       )}
     </div>
   )
