@@ -82,6 +82,19 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const feeCollectCount = filtered.filter((s) => isFeeCollect(s)).length
   const directCount = filtered.length - feeCollectCount
   const hasActiveFilters = dateFrom || dateTo || filterPayment || filterCategory || quickSearch
+  const todayStr = new Date().toISOString().split('T')[0]
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
+  const isTodayRange = dateFrom === todayStr && dateTo === todayStr
+
+  const toggleDateRange = () => {
+    if (isTodayRange) {
+      setDateFrom(monthStart)
+      setDateTo(todayStr)
+    } else {
+      setDateFrom(todayStr)
+      setDateTo(todayStr)
+    }
+  }
 
   interface FlatItemRow {
     key: string
@@ -151,8 +164,6 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
     }
     setSelected(new Set())
   }
-
-  const clearFilters = () => { const now = new Date(); const t = now.toISOString().split('T')[0]; const m = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]; setDateFrom(m); setDateTo(t); setFilterPayment(''); setFilterCategory(''); setQuickSearch('') }
 
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString(bn ? 'bn-BD' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })
   const formatTime = (iso: string) => new Date(iso).toLocaleTimeString(bn ? 'bn-BD' : 'en-US', { hour: '2-digit', minute: '2-digit' })
@@ -398,11 +409,9 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
               <option key={c.id} value={c.id}>{bn ? c.nameBn : c.name}</option>
             ))}
           </select>
-          {hasActiveFilters && (
-                  <button onClick={clearFilters} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[0.75rem] text-red-500 border border-red-500/30 hover:bg-red-500/10 transition-colors cursor-pointer">
-              <X size={12} />{bn ? 'মুছুন' : 'Clear'}
-            </button>
-          )}
+          <button onClick={toggleDateRange} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[0.75rem] font-medium border cursor-pointer transition-all bg-[var(--brand-light)] text-[var(--brand)] border-[var(--brand)]/20 hover:bg-[var(--brand)]/20">
+            {isTodayRange ? (bn ? 'এই মাস' : 'This Month') : (bn ? 'আজ' : 'Today')}
+          </button>
         </div>
       )}
 

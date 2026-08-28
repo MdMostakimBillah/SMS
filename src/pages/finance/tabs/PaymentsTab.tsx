@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import React from 'react'
-import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Filter, X } from 'lucide-react'
+import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Filter } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
@@ -146,17 +146,17 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     return Array.from(set).sort()
   }, [payments])
 
-  const hasFilter = search || fMethod || fCollector || dateFrom || dateTo
+  const isTodayRange = dateFrom === todayStr && dateTo === todayStr
 
-  const clearFilters = useCallback(() => {
-    setSearch('')
-    setFMethod('')
-    setFCollector('')
-    setDateFrom(monthStart)
-    setDateTo(todayStr)
-    setSortBy('date-desc')
-    setSelectedRows(new Set())
-  }, [monthStart, todayStr])
+  const toggleDateRange = useCallback(() => {
+    if (isTodayRange) {
+      setDateFrom(monthStart)
+      setDateTo(todayStr)
+    } else {
+      setDateFrom(todayStr)
+      setDateTo(todayStr)
+    }
+  }, [isTodayRange, monthStart, todayStr])
 
   const toggleRowSelection = useCallback((key: string) => {
     setSelectedRows((prev) => {
@@ -509,11 +509,9 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
             <span className="text-[var(--text-muted)] text-xs">—</span>
             <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px]`} />
           </div>
-          {hasFilter && (
-            <button onClick={clearFilters} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[0.65rem] font-medium bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)]/20 cursor-pointer transition-all hover:bg-[var(--red)]/20">
-              <X size={10} />{bn ? 'মুছুন' : 'Clear'}
-            </button>
-          )}
+          <button onClick={toggleDateRange} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all bg-[var(--brand-light)] text-[var(--brand)] border-[var(--brand)]/20 hover:bg-[var(--brand)]/20">
+            {isTodayRange ? (bn ? 'এই মাস' : 'This Month') : (bn ? 'আজ' : 'Today')}
+          </button>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
