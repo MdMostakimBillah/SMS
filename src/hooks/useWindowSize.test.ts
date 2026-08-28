@@ -1,8 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useWindowSize } from './useWindowSize'
 
 describe('useWindowSize', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('returns current window dimensions', () => {
     const { result } = renderHook(() => useWindowSize())
     expect(result.current.width).toBe(window.innerWidth)
@@ -34,6 +38,7 @@ describe('useWindowSize', () => {
   })
 
   it('updates on resize', () => {
+    vi.useFakeTimers()
     Object.defineProperty(window, 'innerWidth', { value: 500, writable: true })
     Object.defineProperty(window, 'innerHeight', { value: 400, writable: true })
     const { result } = renderHook(() => useWindowSize())
@@ -43,6 +48,10 @@ describe('useWindowSize', () => {
       Object.defineProperty(window, 'innerWidth', { value: 1200, writable: true })
       Object.defineProperty(window, 'innerHeight', { value: 800, writable: true })
       window.dispatchEvent(new Event('resize'))
+    })
+
+    act(() => {
+      vi.advanceTimersByTime(150)
     })
 
     expect(result.current.width).toBe(1200)

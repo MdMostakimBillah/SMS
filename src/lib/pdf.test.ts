@@ -22,18 +22,24 @@ describe('openPrintWindow', () => {
     vi.restoreAllMocks()
   })
 
-  it('returns null when window.open is blocked', () => {
-    vi.spyOn(window, 'open').mockReturnValue(null)
-    const result = openPrintWindow('Test', '<p>Hello</p>')
-    expect(result).toBeNull()
+  it('creates an iframe and writes HTML', () => {
+    const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((() => {}) as any)
+    const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((() => {}) as any)
+    openPrintWindow('Test', '<p>Hello</p>')
+    expect(appendChildSpy).toHaveBeenCalled()
+    const iframe = appendChildSpy.mock.calls[0][0] as HTMLIFrameElement
+    expect(iframe.tagName).toBe('IFRAME')
+    appendChildSpy.mockRestore()
+    removeChildSpy.mockRestore()
   })
 
-  it('opens blob URL in new window', () => {
-    const mockWin = { } as any
-    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin)
-    const result = openPrintWindow('Test Title', '<p>Content</p>')
-    expect(result).toBe(mockWin)
-    expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('blob:'), '_blank', 'noopener,noreferrer')
+  it('uses provided CSS', () => {
+    const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((() => {}) as any)
+    const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((() => {}) as any)
+    openPrintWindow('Test', '<p>Hello</p>', { css: 'body{color:red}' })
+    expect(appendChildSpy).toHaveBeenCalled()
+    appendChildSpy.mockRestore()
+    removeChildSpy.mockRestore()
   })
 })
 
