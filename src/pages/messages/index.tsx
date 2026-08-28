@@ -382,6 +382,7 @@ function RecipientField({ recipientId, recipientName, recipientSearch, showDrop,
                     className={`w-full text-left px-3 py-2 text-[0.75rem] hover:bg-[var(--bg-secondary)] transition-colors ${recipientId === s.id ? 'text-[var(--brand)] bg-[var(--brand)]/5' : 'text-[var(--text-primary)]'}`}>
                     <span className="font-medium">{bn ? s.nameBn : s.nameEn}</span>
                     <span className="text-[var(--text-muted)] ml-1.5">{s.class} • {s.roll}</span>
+                    <span className="text-[var(--text-muted)] ml-1 text-[0.625rem]">({s.id})</span>
                   </button>
                 ))}
                 {filteredStudents.length > 50 && <div className="px-3 py-1.5 text-[0.625rem] text-[var(--text-muted)] text-center">{bn ? `আরো ${filteredStudents.length - 50} জন...` : `${filteredStudents.length - 50} more...`}</div>}
@@ -423,7 +424,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
   const filteredStudents = useMemo(() => {
     if (!recipientSearch) return students.filter((s) => s.active !== false)
     const q = recipientSearch.toLowerCase()
-    return students.filter((s) => s.active !== false && (s.nameEn.toLowerCase().includes(q) || s.nameBn.includes(q) || s.class.toLowerCase().includes(q) || s.roll.includes(q)))
+    return students.filter((s) => s.active !== false && (s.id.toLowerCase().includes(q) || s.nameEn.toLowerCase().includes(q) || s.nameBn.includes(q) || s.class.toLowerCase().includes(q) || s.roll.includes(q)))
   }, [students, recipientSearch])
 
   const selectRecipient = (id: string, name: string) => {
