@@ -18,12 +18,46 @@ export interface Message {
   read: boolean
   status: MessageStatus
   createdAt: string
+  isSMS?: boolean
+  phoneNumber?: string
+  templateId?: string
+  studentId?: string
 }
 
 let counter = 0
 export function messageId(): string {
   counter++
   return `MSG-${Date.now()}-${counter}`
+}
+
+export function sendTemplateSMS(data: {
+  studentId: string
+  studentName: string
+  phoneNumber: string
+  subject: string
+  body: string
+  templateId?: string
+}): Message {
+  const msg: Message = {
+    id: messageId(),
+    senderId: 'me',
+    senderName: 'Admin',
+    senderNameBn: 'Admin',
+    senderRole: 'admin',
+    recipientId: data.studentId,
+    recipientName: data.studentName,
+    subject: data.subject,
+    body: data.body,
+    read: true,
+    status: 'sent',
+    createdAt: new Date().toISOString(),
+    isSMS: true,
+    phoneNumber: data.phoneNumber,
+    templateId: data.templateId,
+    studentId: data.studentId,
+  }
+  useMessageStore.getState().addMessage(msg)
+  return msg
 }
 
 const SEED_MESSAGES: Message[] = [

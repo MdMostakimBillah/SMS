@@ -11,6 +11,8 @@ import type { FeeDue, FeeStructure, FeePayment } from '@/store/feeStore'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { sendTemplateSMS } from '@/store/messageStore'
+import { useMessageTemplateStore } from '@/store/messageTemplateStore'
 
 interface ReceiptData {
   receiptNo: string
@@ -213,6 +215,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const storeCategories = useStoreStore((s) => s.categories)
   const addSale = useStoreStore((s) => s.addSale)
   const storeSales = useStoreStore((s) => s.sales)
+  const templates = useMessageTemplateStore((s) => s.templates)
 
   const storeCategoryMap = useMemo(() => {
     const map: Record<string, { name: string; nameBn: string }> = {}
@@ -546,6 +549,34 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     setExtraRows((prev) => prev.filter((r) => !receivedKeys.has(r.key)))
     setEditState({})
     setFindDueTrigger((t) => t + 1)
+
+    if (sendSms && selectedStudent.phone) {
+      const feeTemplate = templates.find((t) => t.trigger === 'fee_collect')
+      if (feeTemplate) {
+        const feeNames = receiptFees.map((f) => bn ? f.nameBn : f.name).join(', ')
+        const months = receiptFees.filter((f) => f.month).map((f) => `${f.month}-${f.year}`).join(', ')
+        const smsBody = feeTemplate.body
+          .replace(/{student_name}/g, bn ? selectedStudent.nameBn : selectedStudent.nameEn)
+          .replace(/{amount}/g, String(totalReceive))
+          .replace(/{month}/g, months || fSession)
+          .replace(/{receipt_no}/g, rn)
+          .replace(/{fee_name}/g, feeNames)
+        const smsSubject = feeTemplate.subject
+          .replace(/{student_name}/g, bn ? selectedStudent.nameBn : selectedStudent.nameEn)
+          .replace(/{amount}/g, String(totalReceive))
+          .replace(/{month}/g, months || fSession)
+          .replace(/{receipt_no}/g, rn)
+          .replace(/{fee_name}/g, feeNames)
+        sendTemplateSMS({
+          studentId: selectedStudent.id,
+          studentName: bn ? selectedStudent.nameBn : selectedStudent.nameEn,
+          phoneNumber: selectedStudent.phone,
+          subject: smsSubject,
+          body: smsBody,
+          templateId: feeTemplate.id,
+        })
+      }
+    }
   }, [selectedStudent, displayRows, getRowEdit, receivedDate, addPayment, addSale, storeProducts, storeCategoryMap, fSession])
 
   const numberToWords = useCallback((n: number): string => {

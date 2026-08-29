@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Mail, Inbox, Send, Plus, Search, Trash2, ArrowLeft, X, RotateCcw, Clock, CheckCircle2, AlertCircle, Minus, Maximize2, Paperclip, Link2, Smile, Image, Bold, Italic, Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote, Undo2, Redo2, FileText } from 'lucide-react'
+import { Mail, Inbox, Send, Plus, Search, Trash2, ArrowLeft, X, RotateCcw, Clock, CheckCircle2, AlertCircle, Minus, Maximize2, Paperclip, Link2, Smile, Image, Bold, Italic, Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote, Undo2, Redo2, FileText, Smartphone } from 'lucide-react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import UnderlineExt from '@tiptap/extension-underline'
@@ -11,6 +11,7 @@ import ImageExt from '@tiptap/extension-image'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useMessageStore, type Message, type MessageRecipient, messageId, type MessageStatus } from '@/store/messageStore'
+import { useMessageTemplateStore } from '@/store/messageTemplateStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
@@ -224,6 +225,12 @@ export default function MessagesPage() {
                     {activeTab === 'inbox' ? msg.senderName : msg.recipientName}
                   </span>
                   {!msg.read && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--brand)' }} />}
+                  {msg.isSMS && (
+                    <span className="inline-flex items-center gap-0.5 text-[0.5625rem] font-medium px-1 py-px rounded-full bg-[var(--teal)]/10 text-[var(--teal)]">
+                      <Smartphone size={9} />
+                      SMS
+                    </span>
+                  )}
                   {activeTab === 'outgoing' && (
                     <StatusBadge status={msg.status} bn={bn} />
                   )}
@@ -406,12 +413,14 @@ function RecipientField({ recipientId, recipientName, recipientSearch, showDrop,
 
 function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: MessageRecipient; recipientName: string; subject: string; body: string }) => void; onClose: () => void; bn: boolean }) {
   const students = useSessionStudents()
+  const templates = useMessageTemplateStore((s) => s.templates)
   const [recipientId, setRecipientId] = useState<MessageRecipient>('all')
   const [recipientName, setRecipientName] = useState(bn ? 'সকল ব্যবহারকারী' : 'All Users')
   const [recipientSearch, setRecipientSearch] = useState('')
   const [showRecipientDrop, setShowRecipientDrop] = useState(false)
   const [showCcBcc, setShowCcBcc] = useState(false)
   const [subject, setSubject] = useState('')
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
   const [showEmoji, setShowEmoji] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [attachments, setAttachments] = useState<File[]>([])
@@ -441,6 +450,17 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
     setRecipientName(name)
     setShowRecipientDrop(false)
     setRecipientSearch('')
+  }
+
+  const handleTemplateSelect = (tplId: string) => {
+    setSelectedTemplateId(tplId)
+    if (!tplId) return
+    const tpl = templates.find((t) => t.id === tplId)
+    if (!tpl) return
+    setSubject(tpl.subject)
+    if (editor) {
+      editor.commands.setContent(tpl.body)
+    }
   }
 
   const editor = useEditor({
@@ -672,6 +692,20 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
               required
             />
           </div>
+          <div className="px-4 py-1.5 border-b border-[var(--border)] flex items-center gap-2" style={{ background: COMPOSE_BG }}>
+            <FileText size={13} className="text-[var(--text-muted)] shrink-0" />
+            <select
+              value={selectedTemplateId}
+              onChange={(e) => handleTemplateSelect(e.target.value)}
+              className="flex-1 text-[0.75rem] border-none outline-none cursor-pointer bg-transparent text-[var(--text-primary)] truncate"
+              style={{ background: COMPOSE_BG }}
+            >
+              <option value="">{bn ? '— টেমপ্লেট বাছাই করুন —' : '— Select a template —'}</option>
+              {templates.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>{bn ? tpl.nameBn : tpl.name}</option>
+              ))}
+            </select>
+          </div>
           <div className="flex-1 overflow-auto px-4 py-3" style={{ background: COMPOSE_BG }}>
             <EditorContent editor={editor} className="h-full [&_.tiptap]:min-h-[300px] [&_.tiptap]:h-full" />
           </div>
@@ -716,6 +750,20 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
               style={{ background: COMPOSE_BG }}
               required
             />
+          </div>
+          <div className="px-4 py-1.5 border-b border-[var(--border)] flex items-center gap-2" style={{ background: COMPOSE_BG }}>
+            <FileText size={13} className="text-[var(--text-muted)] shrink-0" />
+            <select
+              value={selectedTemplateId}
+              onChange={(e) => handleTemplateSelect(e.target.value)}
+              className="flex-1 text-[0.6875rem] border-none outline-none cursor-pointer bg-transparent text-[var(--text-primary)] truncate"
+              style={{ background: COMPOSE_BG }}
+            >
+              <option value="">{bn ? '— টেমপ্লেট বাছাই করুন —' : '— Select a template —'}</option>
+              {templates.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>{bn ? tpl.nameBn : tpl.name}</option>
+              ))}
+            </select>
           </div>
           <div className="flex-1 overflow-auto px-4 py-3 min-h-[200px]" style={{ background: COMPOSE_BG }}>
             <EditorContent editor={editor} className="h-full [&_.tiptap]:min-h-[180px] [&_.tiptap]:h-full" />
