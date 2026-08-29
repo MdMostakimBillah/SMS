@@ -92,7 +92,7 @@ export function TemplatesTab() {
         const edit = getEdit(tpl)
 
         return (
-          <div key={type} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] overflow-hidden">
+          <div key={type} className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] overflow-hidden mb-2">
             <button
               type="button"
               onClick={() => setExpandedType(isExpanded ? null : type)}

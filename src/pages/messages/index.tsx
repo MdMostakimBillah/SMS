@@ -204,15 +204,15 @@ export default function MessagesPage() {
           )}
         </div>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-2">
           {currentList.map((msg) => (
             <div
               key={msg.id}
               onClick={() => setViewMessage(msg)}
               className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                 msg.read
-                  ? 'border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--brand)]'
-                  : 'border-[var(--brand)] bg-[var(--brand)]05 hover:border-[var(--brand)]'
+                  ? 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]'
+                  : 'border-[var(--brand)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]'
               }`}
             >
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-[0.75rem] font-bold text-white shrink-0" style={{ background: 'var(--brand)' }}>
