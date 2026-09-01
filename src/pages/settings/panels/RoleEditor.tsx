@@ -15,7 +15,7 @@ interface Props {
 export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const bn = isBn
   const { roles, addRole, updateRole, setRolePerm, setRolePermAll, applyPreset, staffPermissions, addStaff, removeStaff } = usePermissionStore()
-  const { teachers, departments } = useTeacherStore()
+  const { teachers } = useTeacherStore()
   const role = roleId ? roles.find((r) => r.id === roleId) : null
   const isCreate = !roleId
 
@@ -153,8 +153,6 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
     }
     return filtered
   }, [teachers, assignedStaff, staffSearch])
-
-  const getDeptName = (deptId: string) => departments.find((d) => d.id === deptId)?.name || deptId
 
   const handleAddStaffMember = (teacherId: string) => {
     if (!activeRoleId) return
@@ -438,11 +436,11 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
                           onClick={() => handleAddStaffMember(teacher.id)}
                           className="w-full flex items-center gap-3 p-3 hover:bg-[var(--brand)]/5 transition-colors text-left bg-transparent border-none cursor-pointer"
                         >
-                          <div className="w-9 h-9 rounded-full bg-[var(--brand)]/10 flex items-center justify-center shrink-0 overflow-hidden">
+                          <div className="w-8 h-8 rounded-full bg-[var(--brand)]/10 flex items-center justify-center shrink-0 overflow-hidden">
                             {teacher.photo ? (
                               <img src={teacher.photo} alt="" className="w-full h-full object-cover" />
                             ) : (
-                              <span className="text-[0.75rem] font-semibold text-[var(--brand)]">
+                              <span className="text-[0.6875rem] font-semibold text-[var(--brand)]">
                                 {teacher.nameEn.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                               </span>
                             )}
@@ -451,14 +449,8 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
                             <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">
                               {bn ? teacher.nameBn : teacher.nameEn}
                             </div>
-                            <div className="text-[0.625rem] text-[var(--text-muted)] truncate">
-                              {teacher.designation} • {getDeptName(teacher.departmentId)}
-                            </div>
                           </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="text-[0.5625rem] text-[var(--text-muted)]">{teacher.id}</span>
-                            <Plus size={14} className="text-[var(--brand)]" />
-                          </div>
+                          <Plus size={14} className="text-[var(--brand)] shrink-0" />
                         </button>
                       ))}
                     </div>
@@ -494,13 +486,8 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
                             </span>
                           )}
                         </div>
-                        <div className="min-w-0">
-                          <div className="text-[0.75rem] font-medium text-[var(--text-primary)] truncate">
-                            {bn ? member.staffNameBn : member.staffName}
-                          </div>
-                          <div className="text-[0.625rem] text-[var(--text-muted)] truncate">
-                            {teacher?.designation || ''} {teacher ? `• ${getDeptName(teacher.departmentId)}` : ''}
-                          </div>
+                        <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">
+                          {bn ? member.staffNameBn : member.staffName}
                         </div>
                       </div>
                       <button
