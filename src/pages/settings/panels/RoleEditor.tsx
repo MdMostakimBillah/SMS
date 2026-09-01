@@ -1,19 +1,23 @@
 import { useState, useMemo } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
-import { Save, Search, Check, ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
+import { Save, Search, Check, ChevronDown, ChevronRight, Sparkles, Users, Plus, Trash2 } from 'lucide-react'
 import { usePermissionStore, type PermissionAction } from '@/store/permissionStore'
+import { useTeacherStore } from '@/store/teacherStore'
 import { PERMISSION_TREE, getPermissionNode, ROLE_TEMPLATES, DATA_SCOPE_OPTIONS, type PermissionNode, type ActionSet, createActionSet } from '@/lib/permissionConfig'
 
 interface Props {
   isBn: boolean
-  roleId: string
+  roleId: string | null
   onBack: () => void
+  onCreated?: (newRoleId: string) => void
 }
 
-export function RoleEditor({ isBn, roleId, onBack }: Props) {
+export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const bn = isBn
-  const { roles, updateRole, setRolePerm, setRolePermAll, applyPreset } = usePermissionStore()
-  const role = roles.find((r) => r.id === roleId)
+  const { roles, addRole, updateRole, setRolePerm, setRolePermAll, applyPreset, staffPermissions, addStaff, removeStaff } = usePermissionStore()
+  const teachers = useTeacherStore((s) => s.teachers)
+  const role = roleId ? roles.find((r) => r.id === roleId) : null
+  const isCreate = !roleId
 
   const [name, setName] = useState(role?.name || '')
   const [nameBn, setNameBn] = useState(role?.nameBn || '')
@@ -24,8 +28,13 @@ export function RoleEditor({ isBn, roleId, onBack }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set(PERMISSION_TREE.map((n) => n.key)))
   const [showPresets, setShowPresets] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [createdId, setCreatedId] = useState<string | null>(roleId)
+  const [showAddStaff, setShowAddStaff] = useState(false)
+  const [newStaffId, setNewStaffId] = useState('')
 
-  if (!role) {
+  const activeRoleId = createdId || roleId
+
+  if (activeRoleId && !role && !isCreate) {
     return (
       <SettingsPanel title="Edit Role" titleBn="ভূমিকা সম্পাদনা" isBn={bn} onBack={onBack}>
         <div className="text-center py-8 text-[var(--text-muted)]">
@@ -35,8 +44,10 @@ export function RoleEditor({ isBn, roleId, onBack }: Props) {
     )
   }
 
+  const currentRole = role || (createdId ? roles.find((r) => r.id === createdId) : null)
+
   const getPerm = (key: string): ActionSet => {
-    const entry = role.permissions.find((p) => p.key === key)
+    const entry = currentRole?.permissions.find((p) => p.key === key)
     return entry?.actions || createActionSet()
   }
 
@@ -81,29 +92,74 @@ export function RoleEditor({ isBn, roleId, onBack }: Props) {
   }, [search])
 
   const handleSave = () => {
-    updateRole(roleId, { name, nameBn, description, descriptionBn, dataScope })
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    if (isCreate) {
+      const newId = addRole({
+        name: name || 'New Role',
+        nameBn: nameBn || 'নতুন ভূমিকা',
+        description: description || 'Custom role',
+        descriptionBn: descriptionBn || 'কাস্টম ভূমিকা',
+        permissions: [],
+        dataScope,
+        isSystemRole: false,
+      })
+      setCreatedId(newId)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+      onCreated?.(newId)
+    } else if (activeRoleId) {
+      updateRole(activeRoleId, { name, nameBn, description, descriptionBn, dataScope })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    }
   }
 
   const handlePreset = (key: string) => {
-    applyPreset(roleId, key)
+    if (!activeRoleId) return
+    applyPreset(activeRoleId, key)
     setShowPresets(false)
-    // Reload role data
-    const updated = usePermissionStore.getState().roles.find((r) => r.id === roleId)
+    const updated = usePermissionStore.getState().roles.find((r) => r.id === activeRoleId)
     if (updated) {
       setDataScope(updated.dataScope)
     }
   }
 
   const handleToggleAll = (key: string) => {
+    if (!activeRoleId) return
     const allChecked = isAllActionsChecked(key)
-    setRolePermAll(roleId, key, !allChecked)
+    setRolePermAll(activeRoleId, key, !allChecked)
   }
 
   const handleToggleAction = (key: string, action: PermissionAction) => {
+    if (!activeRoleId) return
     const current = getPerm(key)
-    setRolePerm(roleId, key, action, !current[action])
+    setRolePerm(activeRoleId, key, action, !current[action])
+  }
+
+  const assignedStaff = useMemo(() => {
+    if (!activeRoleId) return []
+    return staffPermissions.filter((s) => s.roleId === activeRoleId)
+  }, [staffPermissions, activeRoleId])
+
+  const availableTeachers = useMemo(() => {
+    if (!activeRoleId) return []
+    const assignedIds = new Set(assignedStaff.map((s) => s.staffId))
+    return teachers.filter((t) => !assignedIds.has(t.id))
+  }, [teachers, assignedStaff])
+
+  const handleAddStaff = () => {
+    if (!newStaffId || !activeRoleId) return
+    const teacher = teachers.find((t) => t.id === newStaffId)
+    if (!teacher) return
+    addStaff({
+      staffId: teacher.id,
+      staffName: teacher.nameEn,
+      staffNameBn: teacher.nameBn,
+      roleId: activeRoleId,
+      email: teacher.email,
+      defaultPassword: '123456',
+    })
+    setNewStaffId('')
+    setShowAddStaff(false)
   }
 
   const renderNode = (node: PermissionNode, depth = 0) => {
@@ -193,8 +249,8 @@ export function RoleEditor({ isBn, roleId, onBack }: Props) {
 
   return (
     <SettingsPanel
-      title={role.name}
-      titleBn={role.nameBn}
+      title={isCreate ? (bn ? 'নতুন ভূমিকা' : 'Create Role') : (currentRole?.name || '')}
+      titleBn={isCreate ? 'নতুন ভূমিকা' : (currentRole?.nameBn || '')}
       isBn={bn}
       onBack={onBack}
     >
@@ -209,7 +265,8 @@ export function RoleEditor({ isBn, roleId, onBack }: Props) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
+              placeholder={bn ? 'যেমন: সিনিয়র শিক্ষক' : 'e.g. Senior Teacher'}
+              className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]"
             />
           </div>
           <div>
@@ -220,7 +277,8 @@ export function RoleEditor({ isBn, roleId, onBack }: Props) {
               type="text"
               value={nameBn}
               onChange={(e) => setNameBn(e.target.value)}
-              className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
+              placeholder={bn ? 'যেমন: সিনিয়র শিক্ষক' : 'যেমন: সিনিয়র শিক্ষক'}
+              className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]"
             />
           </div>
           <div className="col-span-2">
@@ -231,7 +289,8 @@ export function RoleEditor({ isBn, roleId, onBack }: Props) {
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
+              placeholder={bn ? 'ভূমিকার বিবরণ' : 'Role description'}
+              className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]"
             />
           </div>
         </div>
@@ -305,17 +364,112 @@ export function RoleEditor({ isBn, roleId, onBack }: Props) {
         <div className="rounded-xl border border-[var(--border)] overflow-hidden max-h-[50vh] overflow-y-auto">
           <div className="px-3 py-2 bg-[var(--bg-tertiary)] text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase flex items-center justify-between">
             <span>{bn ? 'মডিউল / পৃষ্ঠা / অ্যাকশন' : 'Module / Page / Action'}</span>
-            <span>{role.permissions.filter((p) => Object.values(p.actions).some(Boolean)).length} {bn ? 'সক্রিয়' : 'active'}</span>
+            <span>{(currentRole?.permissions || []).filter((p) => Object.values(p.actions).some(Boolean)).length} {bn ? 'সক্রিয়' : 'active'}</span>
           </div>
           <div className="divide-y divide-[var(--border)]/50">
             {filteredTree.map((node) => renderNode(node))}
           </div>
         </div>
 
+        {/* Staff Assigned */}
+        {activeRoleId && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Users size={14} className="text-[var(--brand)]" />
+                <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                  {bn ? 'নির্ধারিত স্টাফ' : 'Assigned Staff'}
+                </span>
+                <span className="text-[0.625rem] text-[var(--text-muted)]">
+                  ({assignedStaff.length})
+                </span>
+              </div>
+              {availableTeachers.length > 0 && (
+                <button
+                  onClick={() => setShowAddStaff(!showAddStaff)}
+                  className="h-7 px-2.5 rounded-lg bg-[var(--brand)]/10 text-[var(--brand)] text-[0.6875rem] font-medium border-none cursor-pointer hover:bg-[var(--brand)]/20 transition-colors flex items-center gap-1"
+                >
+                  <Plus size={12} />
+                  {bn ? 'যোগ করুন' : 'Add'}
+                </button>
+              )}
+            </div>
+
+            {showAddStaff && (
+              <div className="mb-3 p-3 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand)]/5">
+                <select
+                  value={newStaffId}
+                  onChange={(e) => setNewStaffId(e.target.value)}
+                  className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
+                >
+                  <option value="">{bn ? 'শিক্ষক/স্টাফ নির্বাচন করুন...' : 'Select teacher/staff...'}</option>
+                  {availableTeachers.map((t) => (
+                    <option key={t.id} value={t.id}>{bn ? t.nameBn : t.nameEn} ({t.id})</option>
+                  ))}
+                </select>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => { setShowAddStaff(false); setNewStaffId('') }}
+                    className="flex-1 h-8 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-medium border border-[var(--border)] cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors"
+                  >
+                    {bn ? 'বাতিল' : 'Cancel'}
+                  </button>
+                  <button
+                    onClick={handleAddStaff}
+                    disabled={!newStaffId}
+                    className="flex-1 h-8 rounded-lg bg-[var(--brand)] text-white text-[0.75rem] font-medium border-none cursor-pointer disabled:opacity-50 hover:opacity-90 transition-opacity"
+                  >
+                    {bn ? 'যোগ করুন' : 'Add'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {assignedStaff.length === 0 ? (
+              <div className="text-center py-4 rounded-xl border border-dashed border-[var(--border)]">
+                <Users size={20} className="text-[var(--text-muted)] mx-auto mb-1.5 opacity-40" />
+                <div className="text-[0.75rem] text-[var(--text-muted)]">
+                  {bn ? 'এই ভূমিকায় কোনো স্টাফ নেই' : 'No staff assigned to this role'}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {assignedStaff.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-[var(--brand)]/10 flex items-center justify-center">
+                        <Users size={14} className="text-[var(--brand)]" />
+                      </div>
+                      <div>
+                        <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">
+                          {bn ? member.staffNameBn : member.staffName}
+                        </div>
+                        <div className="text-[0.625rem] text-[var(--text-muted)]">
+                          {member.email}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeStaff(member.id)}
+                      className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 cursor-pointer bg-transparent border-none transition-colors"
+                      title={bn ? 'সরান' : 'Remove'}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Save */}
         <div className="flex items-center justify-between pt-2">
           <div className="text-[0.75rem] text-[var(--text-muted)]">
-            {role.isSystemRole ? (bn ? 'সিস্টেম ভূমিকা — মুছে ফেলা যাবে না' : 'System role — cannot be deleted') : ''}
+            {currentRole?.isSystemRole ? (bn ? 'সিস্টেম ভূমিকা — মুছে ফেলা যাবে না' : 'System role — cannot be deleted') : ''}
           </div>
           <div className="flex gap-2">
             <button

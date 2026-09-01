@@ -62,6 +62,7 @@ export default function Page() {
 function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; isInstAdmin: boolean; isSuperAdmin: boolean }) {
   const [activePanel, setActivePanel] = useState<string | null>(null)
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null)
+  const [creatingRole, setCreatingRole] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   const generalGroup: SettingGroup = {
@@ -146,6 +147,9 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
   }, [searchQuery, isBn, isInstAdmin, isSuperAdmin])
 
   const renderPanel = () => {
+    if (creatingRole) {
+      return <RoleEditor isBn={isBn} roleId={null} onBack={() => setCreatingRole(false)} onCreated={(id) => { setCreatingRole(false); setEditingRoleId(id) }} />
+    }
     if (editingRoleId) {
       return <RoleEditor isBn={isBn} roleId={editingRoleId} onBack={() => setEditingRoleId(null)} />
     }
@@ -160,7 +164,7 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
       case 'login-method': return <ChangeLoginMethodPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'access-modes': return <AccessModesPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'session-mgmt': return <SessionManagementPanel isBn={isBn} onBack={() => setActivePanel(null)} />
-      case 'roles-permissions': return <RolesList isBn={isBn} onBack={() => setActivePanel(null)} onEditRole={(id) => { setActivePanel(null); setEditingRoleId(id) }} />
+      case 'roles-permissions': return <RolesList isBn={isBn} onBack={() => setActivePanel(null)} onEditRole={(id) => { setActivePanel(null); setEditingRoleId(id) }} onCreateRole={() => { setActivePanel(null); setCreatingRole(true) }} />
       case 'staff-permissions': return <StaffPermissionsPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'email-password': return <EmailPasswordPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'danger-zone': return <DangerZonePanel isBn={isBn} onBack={() => setActivePanel(null)} />
@@ -183,7 +187,7 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
       </div>
 
       {/* Panel or Group List */}
-      {activePanel || editingRoleId ? (
+      {activePanel || editingRoleId || creatingRole ? (
         renderPanel()
       ) : (
         <div>

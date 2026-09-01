@@ -1,15 +1,16 @@
 import { useState, useMemo } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
-import { Shield, Trash2, Copy, Users, Search, ChevronRight, Lock } from 'lucide-react'
+import { Shield, Trash2, Copy, Users, Search, ChevronRight, Lock, Plus } from 'lucide-react'
 import { usePermissionStore, type RolePerm } from '@/store/permissionStore'
 
 interface Props {
   isBn: boolean
   onBack: () => void
   onEditRole: (roleId: string) => void
+  onCreateRole: () => void
 }
 
-export function RolesList({ isBn, onBack, onEditRole }: Props) {
+export function RolesList({ isBn, onBack, onEditRole, onCreateRole }: Props) {
   const bn = isBn
   const { roles, staffPermissions, removeRole, duplicateRole } = usePermissionStore()
   const [search, setSearch] = useState('')
@@ -58,6 +59,15 @@ export function RolesList({ isBn, onBack, onEditRole }: Props) {
             className="w-full h-10 pl-10 pr-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)] transition-colors"
           />
         </div>
+
+        {/* Create Role Button */}
+        <button
+          onClick={onCreateRole}
+          className="w-full h-10 rounded-xl border border-dashed border-[var(--brand)]/30 text-[var(--brand)] text-[0.8125rem] font-medium cursor-pointer hover:border-[var(--brand)] hover:bg-[var(--brand)]/5 transition-colors flex items-center justify-center gap-2 bg-transparent"
+        >
+          <Plus size={16} />
+          {bn ? 'নতুন ভূমিকা তৈরি করুন' : 'Create New Role'}
+        </button>
 
         {/* Roles List */}
         <div className="space-y-2">
