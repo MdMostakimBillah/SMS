@@ -3,7 +3,7 @@ import { SettingsPanel } from '../components/SettingsPanel'
 import { Save, Search, Check, ChevronDown, ChevronRight, Sparkles, Users, Plus, Trash2, UserPlus, X } from 'lucide-react'
 import { usePermissionStore, type PermissionAction } from '@/store/permissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
-import { PERMISSION_TREE, getPermissionNode, ROLE_TEMPLATES, DATA_SCOPE_OPTIONS, type PermissionNode, type ActionSet, createActionSet } from '@/lib/permissionConfig'
+import { PERMISSION_TREE, getPermissionNode, ROLE_TEMPLATES, type PermissionNode, type ActionSet, createActionSet } from '@/lib/permissionConfig'
 
 interface Props {
   isBn: boolean
@@ -15,15 +15,12 @@ interface Props {
 export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const bn = isBn
   const { roles, addRole, updateRole, setRolePerm, setRolePermAll, applyPreset, staffPermissions, addStaff, removeStaff } = usePermissionStore()
-  const { teachers } = useTeacherStore()
+  const { teachers, departments } = useTeacherStore()
   const role = roleId ? roles.find((r) => r.id === roleId) : null
   const isCreate = !roleId
 
   const [name, setName] = useState(role?.name || '')
   const [nameBn, setNameBn] = useState(role?.nameBn || '')
-  const [description, setDescription] = useState(role?.description || '')
-  const [descriptionBn] = useState(role?.descriptionBn || '')
-  const [dataScope, setDataScope] = useState(role?.dataScope || 'all')
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState<Set<string>>(new Set(PERMISSION_TREE.map((n) => n.key)))
   const [showPresets, setShowPresets] = useState(false)
@@ -31,6 +28,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const [createdId, setCreatedId] = useState<string | null>(roleId)
   const [showAddStaff, setShowAddStaff] = useState(false)
   const [staffSearch, setStaffSearch] = useState('')
+  const [deptFilter, setDeptFilter] = useState('')
 
   const activeRoleId = createdId || roleId
 
@@ -96,10 +94,10 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
       const newId = addRole({
         name: name || 'New Role',
         nameBn: nameBn || 'নতুন ভূমিকা',
-        description: description || 'Custom role',
-        descriptionBn: descriptionBn || 'কাস্টম ভূমিকা',
+        description: '',
+        descriptionBn: '',
         permissions: [],
-        dataScope,
+        dataScope: 'all',
         isSystemRole: false,
       })
       setCreatedId(newId)
@@ -107,7 +105,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
       setTimeout(() => setSaved(false), 2000)
       onCreated?.(newId)
     } else if (activeRoleId) {
-      updateRole(activeRoleId, { name, nameBn, description, descriptionBn, dataScope })
+      updateRole(activeRoleId, { name, nameBn })
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     }
@@ -117,10 +115,6 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
     if (!activeRoleId) return
     applyPreset(activeRoleId, key)
     setShowPresets(false)
-    const updated = usePermissionStore.getState().roles.find((r) => r.id === activeRoleId)
-    if (updated) {
-      setDataScope(updated.dataScope)
-    }
   }
 
   const handleToggleAll = (key: string) => {
@@ -144,6 +138,9 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
     if (!activeRoleId) return []
     const assignedIds = new Set(assignedStaff.map((s) => s.staffId))
     let filtered = teachers.filter((t) => !assignedIds.has(t.id))
+    if (deptFilter) {
+      filtered = filtered.filter((t) => t.departmentId === deptFilter)
+    }
     if (staffSearch.trim()) {
       const q = staffSearch.toLowerCase()
       filtered = filtered.filter((t) =>
@@ -152,7 +149,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
       )
     }
     return filtered
-  }, [teachers, assignedStaff, staffSearch])
+  }, [teachers, assignedStaff, staffSearch, deptFilter])
 
   const handleAddStaffMember = (teacherId: string) => {
     if (!activeRoleId) return
@@ -287,40 +284,6 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
               className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]"
             />
           </div>
-          <div className="col-span-2">
-            <label className="text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1 block">
-              {bn ? 'বিবরণ' : 'Description'}
-            </label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={bn ? 'ভূমিকার বিবরণ' : 'Role description'}
-              className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]"
-            />
-          </div>
-        </div>
-
-        {/* Data Scope */}
-        <div>
-          <label className="text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1.5 block">
-            {bn ? 'ডেটা পরিসীমা' : 'Data Scope'}
-          </label>
-          <div className="flex flex-wrap gap-1.5">
-            {DATA_SCOPE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setDataScope(opt.value)}
-                className={`h-8 px-3 rounded-lg text-[0.75rem] font-medium border cursor-pointer transition-colors ${
-                  dataScope === opt.value
-                    ? 'bg-[var(--brand)]/10 border-[var(--brand)]/30 text-[var(--brand)]'
-                    : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--brand)]/20'
-                }`}
-              >
-                {bn ? opt.labelBn : opt.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Presets */}
@@ -406,17 +369,27 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
             {/* Add Staff Panel */}
             {showAddStaff && (
               <div className="mb-3 rounded-xl border border-[var(--brand)]/20 bg-[var(--bg-secondary)] overflow-hidden">
-                <div className="p-3 border-b border-[var(--border)]">
+                <div className="p-3 border-b border-[var(--border)] space-y-2">
                   <div className="relative">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                     <input
                       type="text"
                       value={staffSearch}
                       onChange={(e) => setStaffSearch(e.target.value)}
-                      placeholder={bn ? 'নাম, ইমেইল বা আইডি দিয়ে খুঁজুন...' : 'Search by name, email or ID...'}
+                      placeholder={bn ? 'নাম দিয়ে খুঁজুন...' : 'Search by name...'}
                       className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]"
                     />
                   </div>
+                  <select
+                    value={deptFilter}
+                    onChange={(e) => setDeptFilter(e.target.value)}
+                    className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
+                  >
+                    <option value="">{bn ? 'সব বিভাগ' : 'All Departments'}</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>{bn ? d.nameBn || d.name : d.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="max-h-[280px] overflow-y-auto">
                   {availableTeachers.length === 0 ? (
