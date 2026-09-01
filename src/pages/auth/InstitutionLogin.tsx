@@ -8,6 +8,7 @@ import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark, type ThemeColors } from '@/store/classStore'
 import { nsSet, migrateOldKeys, setSlug } from '@/lib/storage'
+import { usePermissionStore } from '@/store/permissionStore'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_DURATION = 5 * 60 * 1000 // 5 minutes
@@ -117,6 +118,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   const setAppLanguage = useAppStore((s) => s.setLanguage)
   const authCtx = useContext(AuthContext)
   const setInstitutionUser = authCtx?.setInstitutionUser
+  const staffPermissions = usePermissionStore((s) => s.staffPermissions)
 
   const institution = useMemo(() => {
     if (propInstitution) return propInstitution
@@ -333,6 +335,45 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         return
       }
 
+      // Teacher / Staff login — match staffId or email against permission store
+      const inputLower = email.trim().toLowerCase()
+      const matchedStaff = staffPermissions.find(
+        (s) => s.staffId.toLowerCase() === inputLower || s.email.toLowerCase() === inputLower
+      )
+      if (matchedStaff && password === matchedStaff.defaultPassword) {
+        setSlug(institution.slug)
+        sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
+        migrateOldKeys(institution.slug)
+        loadInstitutionData(institution)
+        clearLoginAttempts()
+        if (navigator.serviceWorker) {
+          navigator.serviceWorker.ready.then((reg) => {
+            reg.active?.postMessage({
+              type: 'SET_INSTITUTION',
+              name: institution.name,
+              brandName: institution.brandName || institution.name,
+              slug: institution.slug,
+              logo: institution.logo || null,
+              brandColor: institution.brandColor || '#6366f1',
+            })
+          })
+        }
+        const teacherName = isBn ? matchedStaff.staffNameBn : matchedStaff.staffName
+        if (setInstitutionUser) {
+          setInstitutionUser(matchedStaff.email, teacherName, matchedStaff.role, institution.id, institution.subdomain, institution.slug)
+        } else {
+          nsSet('user', JSON.stringify({
+            email: matchedStaff.email, role: matchedStaff.role, name: teacherName,
+            institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug
+          }))
+          nsSet('institutionId', institution.id)
+          nsSet('institutionSubdomain', institution.subdomain)
+        }
+        navigate(`/i/${institution.slug}/admin/dashboard`)
+        setLoading(false)
+        return
+      }
+
       // Wrong credentials
       recordFailedAttempt()
       const attempts = getLoginAttempts()
@@ -406,7 +447,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           </p>
           <div className="mt-8 flex items-center justify-center gap-2 text-[0.75rem] text-white/30">
             <Lock size={12} />
-            <span>{isBn ? 'নিরাপদ অ্যাডমিন অ্যাক্সেস' : 'Secure Admin Access'}</span>
+            <span>{isBn ? 'নিরাপদ অ্যাডমিন ও শিক্ষক অ্যাক্সেস' : 'Secure Admin & Teacher Access'}</span>
           </div>
         </div>
       </div>
@@ -432,7 +473,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
               {isBn ? 'স্বাগতম' : 'Welcome Back'}
             </h2>
             <p className={`text-[0.875rem] ${isDark ? 'text-white/40' : 'text-[var(--text-secondary)]'}`}>
-              {isBn ? 'অ্যাডমিন প্যানেলে সাইন ইন করুন' : 'Sign in to admin panel'}
+              {isBn ? 'অ্যাডমিন বা শিক্ষক প্যানেলে সাইন ইন করুন' : 'Sign in to admin or teacher panel'}
             </p>
           </div>
 
@@ -460,18 +501,18 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
 
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-4">
-            {/* Email */}
+            {/* Email / Teacher ID */}
             <div>
               <label className={`text-[0.75rem] font-medium mb-1.5 block ${isDark ? 'text-white/50' : 'text-[var(--text-secondary)]'}`}>
-                {isBn ? 'ইমেইল' : 'Email'}
+                {isBn ? 'ইমেইল বা শিক্ষক আইডি' : 'Email or Teacher ID'}
               </label>
               <div className="relative">
                 <Mail size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
                 <input
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError('') }}
-                  placeholder="admin@school.edu.bd"
+                  placeholder={isBn ? 'admin@school.edu.bd বা TCH-2026-001' : 'admin@school.edu.bd or TCH-2026-001'}
                   className={`w-full h-11 pl-10 pr-4 rounded-xl border text-[0.875rem] outline-none transition-all ${
                     isDark
                       ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50 focus:bg-white/[0.07]'
@@ -546,7 +587,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           <div className="mt-8 text-center">
             <div className={`flex items-center justify-center gap-2 text-[0.6875rem] ${isDark ? 'text-white/20' : 'text-[var(--text-muted)]'}`}>
               <Lock size={11} />
-              <span>{isBn ? 'নিরাপদ অ্যাডমিন অ্যাক্সেস' : 'Protected admin access'}</span>
+              <span>{isBn ? 'নিরাপদ অ্যাডমিন ও শিক্ষক অ্যাক্সেস' : 'Protected admin & teacher access'}</span>
             </div>
           </div>
         </div>
