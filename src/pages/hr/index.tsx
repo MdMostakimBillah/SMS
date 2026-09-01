@@ -14,6 +14,7 @@ import {
   Clock,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useShallow } from 'zustand/shallow'
@@ -81,6 +82,7 @@ function HRPageSkeleton() {
 
 export default function HRPage() {
   const isBn = useBn()
+  const { canRead } = usePermission()
   const { isMobile, isTablet } = useWindowSize()
   const { teachers, departments, attendance } = useTeacherStore(
     useShallow((s) => ({
@@ -949,7 +951,7 @@ export default function HRPage() {
   )
 
   // ─── Tab Config ───
-  const tabs: { id: Tab; icon: any; label: string; labelBn: string; color: string }[] = [
+  const allTabs: { id: Tab; icon: any; label: string; labelBn: string; color: string }[] = [
     { id: 'overview', icon: LayoutGrid, label: 'Overview', labelBn: 'সারসংক্ষেপ', color: 'var(--brand)' },
     { id: 'decisions', icon: Zap, label: 'Decisions', labelBn: 'সিদ্ধান্ত', color: 'var(--teal)' },
     { id: 'increment', icon: TrendingUp, label: 'Increment', labelBn: 'বেতন বৃদ্ধি', color: 'var(--green)' },
@@ -959,6 +961,7 @@ export default function HRPage() {
     { id: 'salary-setup', icon: Calculator, label: 'Salary Setup', labelBn: 'বেতন সেটআপ', color: 'var(--teal)' },
     { id: 'fund', icon: HandCoins, label: 'Fund', labelBn: 'তহবিল', color: 'var(--brand)' },
   ]
+  const tabs = useMemo(() => allTabs.filter((t) => canRead('hr', t.id)), [allTabs, canRead])
 
   const quickStats = [
     {

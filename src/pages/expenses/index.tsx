@@ -7,6 +7,7 @@ import { toBnNum } from '@/lib/i18n'
 import { CategoriesTab } from './tabs/CategoriesTab'
 import { ExpensesTab } from './tabs/ExpensesTab'
 import { RecurringTab } from './tabs/RecurringTab'
+import { usePermission } from '@/hooks/usePermission'
 
 type View = 'categories' | 'expenses' | 'recurring'
 
@@ -39,6 +40,7 @@ function StatCards({ stats, bn }: { stats: { totalCategories: number; activeCate
 
 export default function ExpensesManagementPage() {
   const bn = useBn()
+  const { canRead } = usePermission()
   const categories = useExpenseStore((s) => s.categories)
   const expenses = useExpenseStore((s) => s.expenses)
 
@@ -70,11 +72,12 @@ export default function ExpensesManagementPage() {
     return { totalCategories, activeCategories, totalExpenses, totalRecurring }
   }, [categories, expenses])
 
-  const tabs = useMemo(() => [
+  const allTabs = useMemo(() => [
     { id: 'categories' as View, icon: Tag, label: bn ? 'ক্যাটাগরি' : 'Categories' },
     { id: 'expenses' as View, icon: Receipt, label: bn ? 'খরচ' : 'Expenses' },
     { id: 'recurring' as View, icon: RefreshCw, label: bn ? 'পুনরাবৃত্ত' : 'Recurring' },
   ], [bn])
+  const tabs = useMemo(() => allTabs.filter((t) => canRead('expenses', t.id)), [allTabs, canRead])
 
   const handleTabChange = useCallback((v: View) => { setActiveTab(v); setSearchQuery('') }, [])
 

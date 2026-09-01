@@ -16,6 +16,7 @@ import {
   GraduationCap,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -69,6 +70,7 @@ function ExamSkeleton() {
 export default function ExamDashboard() {
   const navigate = useNavigate()
   const nav = useNavPath()
+  const { canRead } = usePermission()
   const { isMobile, isTablet } = useWindowSize()
   const students = useSessionStudents()
   const subjects = useTeacherStore((s) => s.subjects)
@@ -150,7 +152,7 @@ export default function ExamDashboard() {
   const notEligibleCount = useMemo(() => sessionPromotions.filter((p) => p.status === 'not-eligible').length, [sessionPromotions])
 
   // ── Step Status ──
-  const steps = useMemo(() => {
+  const allSteps = useMemo(() => {
     const s1 = examConfigs.length > 0 && sessionSubjectMarkConfigs.length > 0
     const s2 = activeExamRoutines.length > 0 && completedRoutines === totalRoutines && totalRoutines > 0
     const s3 = totalSubjects > 0 && completedSubjects === totalSubjects
@@ -159,6 +161,7 @@ export default function ExamDashboard() {
     return [
       {
         key: 'planning',
+        permKey: 'exams.configs',
         label: 'Planning',
         labelBn: 'পরিকল্পনা',
         icon: Settings,
@@ -166,6 +169,7 @@ export default function ExamDashboard() {
       },
       {
         key: 'scheduling',
+        permKey: 'exams.routines',
         label: 'Scheduling',
         labelBn: 'সময়সূচী',
         icon: Calendar,
@@ -173,6 +177,7 @@ export default function ExamDashboard() {
       },
       {
         key: 'evaluation',
+        permKey: 'exams.marks_entry',
         label: 'Evaluation',
         labelBn: 'মূল্যায়ন',
         icon: Edit2,
@@ -180,6 +185,7 @@ export default function ExamDashboard() {
       },
       {
         key: 'results',
+        permKey: 'exams.results',
         label: 'Results',
         labelBn: 'ফলাফল',
         icon: BarChart2,
@@ -187,6 +193,7 @@ export default function ExamDashboard() {
       },
       {
         key: 'promotion',
+        permKey: 'exams.promotions',
         label: 'Promotion',
         labelBn: 'প্রমোশন',
         icon: GraduationCap,
@@ -204,6 +211,8 @@ export default function ExamDashboard() {
     sessionStudentMarks,
     sessionPromotions,
   ])
+
+  const steps = useMemo(() => allSteps.filter((s) => canRead(s.permKey)), [allSteps, canRead])
 
   const handleStepClick = useCallback(
     (key: string) => {
@@ -267,7 +276,15 @@ export default function ExamDashboard() {
   const navMarksheet = useCallback(() => navigate(nav('/exams/marksheet')), [navigate, nav])
 
   // ── Quick Access Card IDs ──
-  const quickAccessCardIds = useMemo(() => ['create-exam', 'generate-routine', 'create-seat-plan', 'enter-marks', 'publish-result', 'promote-students'], [])
+  const quickAccessCardPermMap = useMemo(() => ({
+    'create-exam': 'exams.configs',
+    'generate-routine': 'exams.routines',
+    'create-seat-plan': 'exams.seat_plans',
+    'enter-marks': 'exams.marks_entry',
+    'publish-result': 'exams.results',
+    'promote-students': 'exams.promotions',
+  }), [])
+  const quickAccessCardIds = useMemo(() => Object.keys(quickAccessCardPermMap).filter((id) => canRead(quickAccessCardPermMap[id as keyof typeof quickAccessCardPermMap])), [quickAccessCardPermMap, canRead])
 
   const orderedQuickAccessCardIds = useMemo(() => {
     if (quickAccessCardsOrder.length > 0) {

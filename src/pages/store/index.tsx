@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Package, AlertTriangle, DollarSign, TrendingUp, Tag, BarChart3, ShoppingCart, Search, Plus, Minus, Pencil, Trash2, ChevronDown } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useStoreStore, type StoreProduct } from '@/store/storeStore'
 import { useClassStore, extractClassNumber } from '@/store/classStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
@@ -249,6 +250,7 @@ function StatCards({ stats, bn }: { stats: { totalProducts: number; lowStock: nu
 
 export default function StorePage() {
   const bn = useBn()
+  const { canRead } = usePermission()
   const products = useStoreStore((s) => s.products)
   const sales = useStoreStore((s) => s.sales)
   const deleteProduct = useStoreStore((s) => s.deleteProduct)
@@ -299,12 +301,13 @@ export default function StorePage() {
     return list.sort((a, b) => a.name.localeCompare(b.name))
   }, [products, searchQuery])
 
-  const tabs = useMemo(() => [
+  const allTabs = useMemo(() => [
     { id: 'categories' as View, icon: Tag, label: bn ? 'ক্যাটাগরি' : 'Categories' },
     { id: 'products' as View, icon: Package, label: bn ? 'পণ্য' : 'Products' },
     { id: 'sales' as View, icon: ShoppingCart, label: bn ? 'বিক্রয়' : 'Sales' },
     { id: 'reports' as View, icon: BarChart3, label: bn ? 'রিপোর্ট' : 'Reports' },
   ], [bn])
+  const tabs = useMemo(() => allTabs.filter((t) => canRead('store', t.id)), [allTabs, canRead])
 
   const handleTabChange = useCallback((v: View) => { setActiveTab(v); setSearchQuery('') }, [])
 

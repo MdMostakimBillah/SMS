@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Library, BookOpen, HandCoins, RotateCcw, Clock, AlertTriangle, Search, Monitor, BookMarked, Users, History, FileText, BarChart3, Settings, Tag } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useLibraryStore } from '@/store/libraryStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { toBnNum } from '@/lib/i18n'
@@ -49,6 +50,7 @@ function StatCards({ stats, bn }: { stats: { totalBooks: number; available: numb
 
 export default function LibraryPage() {
   const bn = useBn()
+  const { canRead } = usePermission()
   const books = useLibraryStore((s) => s.books)
   const copies = useLibraryStore((s) => s.copies)
   const borrowings = useLibraryStore((s) => s.borrowings)
@@ -75,7 +77,7 @@ export default function LibraryPage() {
     return { totalBooks, available, issued, overdue }
   }, [books, copies, borrowings])
 
-  const tabs = useMemo(() => [
+  const allTabs = useMemo(() => [
     { id: 'dashboard' as View, icon: Library, label: bn ? 'ড্যাশবোর্ড' : 'Dashboard' },
     { id: 'books' as View, icon: BookOpen, label: bn ? 'বই' : 'Books' },
     { id: 'categories' as View, icon: Tag, label: bn ? 'ক্যাটাগরি' : 'Categories' },
@@ -91,6 +93,8 @@ export default function LibraryPage() {
     { id: 'reports' as View, icon: BarChart3, label: bn ? 'রিপোর্ট' : 'Reports' },
     { id: 'settings' as View, icon: Settings, label: bn ? 'সেটিংস' : 'Settings' },
   ], [bn])
+
+  const tabs = useMemo(() => allTabs.filter((t) => canRead('library', t.id)), [allTabs, canRead])
 
   const handleTabChange = useCallback((v: View) => { setActiveTab(v); setSearchQuery('') }, [])
 

@@ -12,12 +12,14 @@ import { CreateClassModal } from './modals/CreateClassModal'
 import { VideoPlayerModal } from './modals/VideoPlayerModal'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { usePermission } from '@/hooks/usePermission'
 
 const inputCls = 'px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors'
 const selectCls = inputCls + ' cursor-pointer appearance-none pr-7 bg-no-repeat bg-[right_0.5rem_center] bg-[length:0.75rem] bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'m6 9 6 6 6-6\'/%3E%3C/svg%3E")]'
 
 export default function OnlineClassesPage() {
   const isBn = useBn()
+  const { canRead } = usePermission()
   const { isMobile } = useWindowSize()
   const { classes: allClasses } = useClassStore()
   const { subjects } = useTeacherStore()
@@ -52,10 +54,11 @@ export default function OnlineClassesPage() {
 
   const liveCount = useMemo(() => allOnlineClasses.filter((c) => c.status === 'live').length, [allOnlineClasses])
 
-  const tabs = [
+  const allTabs = [
     { key: 'live' as const, label: isBn ? 'লাইভ' : 'Live Now', icon: Radio, color: 'var(--red)', count: liveCount },
     { key: 'recordings' as const, label: isBn ? 'রেকর্ডিং' : 'Recordings', icon: PlayCircle, color: 'var(--brand)', count: 0 },
   ]
+  const tabs = useMemo(() => allTabs.filter((t) => canRead('online', t.key)), [allTabs, canRead])
 
   if (isLoading) {
     return (

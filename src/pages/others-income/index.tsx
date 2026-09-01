@@ -6,6 +6,7 @@ import { useTabSlider } from '@/hooks/useTabSlider'
 import { toBnNum } from '@/lib/i18n'
 import { TypesTab } from './tabs/TypesTab'
 import { AssignmentsTab } from './tabs/AssignmentsTab'
+import { usePermission } from '@/hooks/usePermission'
 
 type View = 'types' | 'assignments'
 
@@ -38,6 +39,7 @@ function StatCards({ stats, bn }: { stats: { totalCategories: number; activeCate
 
 export default function OthersIncomePage() {
   const bn = useBn()
+  const { canRead } = usePermission()
   const categories = useOthersIncomeStore((s) => s.categories)
   const assignments = useOthersIncomeStore((s) => s.assignments)
 
@@ -75,10 +77,11 @@ export default function OthersIncomePage() {
     return { totalCategories, activeCategories, assignedStudents, totalMonthlyIncome }
   }, [categories, assignments])
 
-  const tabs = useMemo(() => [
+  const allTabs = useMemo(() => [
     { id: 'types' as View, icon: Tag, label: bn ? 'ক্যাটাগরি' : 'Categories' },
     { id: 'assignments' as View, icon: Users, label: bn ? 'ছাত্র নির্বাচন' : 'Assignments' },
   ], [bn])
+  const tabs = useMemo(() => allTabs.filter((t) => canRead('others_income', t.id)), [allTabs, canRead])
 
   const handleTabChange = useCallback((v: View) => { setActiveTab(v); setSearchQuery('') }, [])
 

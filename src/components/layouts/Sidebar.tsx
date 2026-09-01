@@ -161,13 +161,21 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
     nav_hr: 'hr',
     nav_attendance: 'attendance',
     nav_exams: 'exams',
+    nav_syllabus: 'syllabus',
+    nav_assignments: 'assignments',
+    nav_online: 'online',
     nav_finance: 'finance',
+    nav_payroll: 'payroll',
     nav_store: 'store',
+    nav_expenses: 'finance.expenses',
     nav_accounting_report: 'accounting',
+    nav_others_income: 'finance',
     nav_library: 'library',
     nav_transport: 'transport',
     nav_hostel: 'hostel',
     nav_messages: 'messages',
+    nav_notice: 'notice',
+    nav_notifications: 'notifications',
     nav_reports: 'reports',
     nav_settings: 'settings',
   }
@@ -248,14 +256,18 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
       },
     ]
 
-    return groups.map((group) => ({
-      ...group,
-      items: group.items.filter((item) => {
-        const pageKey = SIDEBAR_TO_PAGE[item.key]
-        if (!pageKey) return true
-        return canRead(pageKey)
-      }),
-    }))
+    return groups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => {
+          if (item.key === 'nav_settings') return true
+          if (item.key === 'nav_superadmin' || item.key === 'nav_superadmin_back') return true
+          const pageKey = SIDEBAR_TO_PAGE[item.key]
+          if (!pageKey) return true
+          return canRead(pageKey)
+        }),
+      }))
+      .filter((group) => group.items.length > 0)
   }, [isSuperAdmin, isViewing, navBase, canRead])
 
   // Apply custom sidebar order
