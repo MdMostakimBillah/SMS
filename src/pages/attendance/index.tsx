@@ -21,6 +21,7 @@ import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { usePermission } from '@/hooks/usePermission'
 import { AttendancePDFOptionsModal } from '@/components/shared/AttendancePDFOptionsModal'
 import type { AttendancePDFOptions } from '@/components/shared/AttendancePDFOptionsModal'
 import type { AttendanceStatus, DayAttendance } from '@/store/teacherStore'
@@ -90,6 +91,7 @@ export default function AttendancePage() {
   )
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
+  const { canRead } = usePermission()
   setGlobalBn(isBn)
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
@@ -565,7 +567,7 @@ export default function AttendancePage() {
     }))
   }, [filteredEmployees, getPersonMonthData, getDeptName])
 
-  const tabs = [
+  const allTabs = [
     {
       key: 'today' as Tab,
       labelBn: 'আজকের উপস্থিতি',
@@ -595,6 +597,7 @@ export default function AttendancePage() {
       color: '#7C3AED',
     },
   ]
+  const tabs = allTabs.filter((t) => canRead('attendance', t.key))
 
   const statusFilters: {
     key: StatusFilter

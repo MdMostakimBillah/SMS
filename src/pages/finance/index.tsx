@@ -17,6 +17,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useFeeStore } from '@/store/feeStore'
 import { useAppStore } from '@/store/appStore'
 import { useSessionStudents } from '@/store/admissionStore'
+import { usePermission } from '@/hooks/usePermission'
 import type { LucideIcon } from 'lucide-react'
 import gsap from 'gsap'
 import { toBnNum } from '@/lib/i18n'
@@ -178,6 +179,7 @@ export default function FeeManagementPage() {
   const { structures, payments, addStructure, updateStructure, addPayment, bulkAddStructures } = useFeeStore()
   const students = useSessionStudents()
   const { feeCardsOrder, setFeeCardsOrder, trackVisit } = useAppStore()
+  const { canRead } = usePermission()
   const [searchParams, setSearchParams] = useSearchParams()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -240,7 +242,7 @@ export default function FeeManagementPage() {
   const orderedOptions = orderedCardIds.map((id) => {
     const opt = STATIC_OPTIONS.find((o) => o.id === id)!
     return { ...opt, ...getStatForOpt(opt) }
-  }).filter(Boolean)
+  }).filter(Boolean).filter((opt) => canRead('finance', opt.id))
 
   const statsData = [
     {

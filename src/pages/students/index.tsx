@@ -6,6 +6,7 @@ import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useAppStore } from '@/store/appStore'
+import { usePermission } from '@/hooks/usePermission'
 import type { LucideIcon } from 'lucide-react'
 import gsap from 'gsap'
 import { toBnNum } from '@/lib/i18n'
@@ -57,6 +58,7 @@ export default function StudentsPage() {
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
   const { studentCardsOrder, setStudentCardsOrder } = useAppStore()
+  const { canRead } = usePermission()
 
   const approvedStudents = students.filter((s) => s.status === 'approved' && s.active !== false)
   const totalStudents = approvedStudents.length
@@ -175,7 +177,7 @@ export default function StudentsPage() {
   const orderedOptions = orderedCardIds.map((id) => {
     const opt = STATIC_OPTIONS.find((o) => o.id === id)!
     return { ...opt, ...getStatForOpt(opt) }
-  }).filter(Boolean)
+  }).filter(Boolean).filter((opt) => canRead('students', opt.id))
 
   const handleDragStart = useCallback((e: React.DragEvent, idx: number) => {
     setDraggedIdx(idx)

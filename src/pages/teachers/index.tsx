@@ -17,6 +17,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAppStore } from '@/store/appStore'
 import { useNavPath } from '@/hooks/useNavPath'
+import { usePermission } from '@/hooks/usePermission'
 
 import gsap from 'gsap'
 
@@ -152,6 +153,7 @@ export default function TeachersPage() {
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
   const { teacherCardsOrder, setTeacherCardsOrder } = useAppStore()
+  const { canRead } = usePermission()
 
   const defaultCardIds = STATIC_OPTIONS.map((o) => o.id)
 
@@ -229,7 +231,7 @@ export default function TeachersPage() {
   const orderedOptions = orderedCardIds.map((id) => {
     const opt = STATIC_OPTIONS.find((o) => o.id === id)!
     return { ...opt, ...getStatForOpt(opt) }
-  }).filter(Boolean)
+  }).filter(Boolean).filter((opt) => canRead('teachers', opt.id))
 
   const statsData = [
     {

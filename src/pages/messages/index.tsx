@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { useSessionStudents } from '@/store/admissionStore'
+import { usePermission } from '@/hooks/usePermission'
 import { TemplatesTab } from './tabs/TemplatesTab'
 
 const inputCls = 'px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors'
@@ -38,6 +39,7 @@ export default function MessagesPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [resendConfirm, setResendConfirm] = useState<string | null>(null)
+  const { canRead, canCreate, canDelete } = usePermission()
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
@@ -78,12 +80,13 @@ export default function MessagesPage() {
   const unreadCount = useMemo(() => messages.filter((m) => m.senderId !== 'me' && !m.read).length, [messages])
 
   const currentList = activeTab === 'inbox' ? inboxMessages : activeTab === 'sent' ? sentMessages : outgoingMessages
-  const tabs = [
+  const allTabs = [
     { key: 'inbox', label: bn ? 'ইনবক্স' : 'Inbox', icon: Inbox, count: unreadCount },
     { key: 'sent', label: bn ? 'পাঠানো' : 'Sent', icon: Send, count: 0 },
     { key: 'outgoing', label: bn ? 'বহিঃগামী' : 'Outgoing', icon: Clock, count: outgoingMessages.length },
     { key: 'templates', label: bn ? 'টেমপ্লেট' : 'Templates', icon: FileText, count: 0 },
   ]
+  const tabs = allTabs.filter((t) => canRead('messages', t.key))
 
   const handleSend = (data: { recipientId: MessageRecipient; recipientName: string; subject: string; body: string }) => {
     const msg: Message = {
@@ -139,14 +142,16 @@ export default function MessagesPage() {
             {unreadCount > 0 && ` · ${unreadCount} ${bn ? 'টি নতুন' : 'unread'}`}
           </p>
         </div>
-        <button
-          onClick={() => setShowCompose(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white transition-colors"
-          style={{ background: 'var(--brand)' }}
-        >
-          <Plus size={16} />
-          {bn ? 'নতুন বার্তা' : 'Compose'}
-        </button>
+        {canCreate('messages') && (
+          <button
+            onClick={() => setShowCompose(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white transition-colors"
+            style={{ background: 'var(--brand)' }}
+          >
+            <Plus size={16} />
+            {bn ? 'নতুন বার্তা' : 'Compose'}
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -251,12 +256,14 @@ export default function MessagesPage() {
                     <RotateCcw size={14} />
                   </button>
                 )}
-                <button
-                  onClick={(e) => { e.stopPropagation(); setDeleteTarget(msg.id) }}
-                  className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"
-                >
-                  <Trash2 size={14} />
-                </button>
+                {canDelete('messages', activeTab) && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(msg.id) }}
+                    className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
             </div>
           ))}
