@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { Save, Search, Check, ChevronDown, ChevronRight, Sparkles, Users, Plus, Trash2, UserPlus, X } from 'lucide-react'
 import { usePermissionStore, type PermissionAction } from '@/store/permissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { PERMISSION_TREE, getPermissionNode, ROLE_TEMPLATES, type PermissionNode, type ActionSet, createActionSet } from '@/lib/permissionConfig'
+import type { PermissionEntry } from '@/store/permissionStore'
 
 interface Props {
   isBn: boolean
@@ -30,36 +31,34 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const [staffSearch, setStaffSearch] = useState('')
   const [deptFilter, setDeptFilter] = useState('')
 
+  // Local permissions for create mode (before role is saved)
+  const [localPerms, setLocalPerms] = useState<Map<string, ActionSet>>(new Map())
+
   const activeRoleId = createdId || roleId
 
-  if (activeRoleId && !role && !isCreate) {
-    return (
-      <SettingsPanel title="Edit Role" titleBn="ভূমিকা সম্পাদনা" isBn={bn} onBack={onBack}>
-        <div className="text-center py-8 text-[var(--text-muted)]">
-          {bn ? 'ভূমিকা পাওয়া যায়নি' : 'Role not found'}
-        </div>
-      </SettingsPanel>
-    )
-  }
+  // ─── Permission helpers (work in both create + edit mode) ───
 
-  const currentRole = role || (createdId ? roles.find((r) => r.id === createdId) : null)
+  const getPerm = useCallback((key: string): ActionSet => {
+    // Edit mode: read from role
+    if (activeRoleId && role) {
+      const entry = role.permissions.find((p) => p.key === key)
+      return entry?.actions || createActionSet()
+    }
+    // Create mode: read from local state
+    return localPerms.get(key) || createActionSet()
+  }, [activeRoleId, role, localPerms])
 
-  const getPerm = (key: string): ActionSet => {
-    const entry = currentRole?.permissions.find((p) => p.key === key)
-    return entry?.actions || createActionSet()
-  }
-
-  const isAllActionsChecked = (key: string): boolean => {
+  const isAllActionsChecked = useCallback((key: string): boolean => {
     const node = getPermissionNode(key)
     if (!node) return false
     const perm = getPerm(key)
     return node.actions.every((a) => perm[a])
-  }
+  }, [getPerm])
 
-  const isSomeActionsChecked = (key: string): boolean => {
+  const isSomeActionsChecked = useCallback((key: string): boolean => {
     const perm = getPerm(key)
     return Object.values(perm).some(Boolean) && !isAllActionsChecked(key)
-  }
+  }, [getPerm, isAllActionsChecked])
 
   const isModuleExpanded = (key: string) => expanded.has(key)
 
@@ -89,14 +88,69 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
     return filterNodes(PERMISSION_TREE)
   }, [search])
 
+  // ─── Toggle actions (works in both modes) ───
+
+  const handleToggleAction = useCallback((key: string, action: PermissionAction) => {
+    if (activeRoleId && role) {
+      // Edit mode: use store
+      const current = getPerm(key)
+      setRolePerm(activeRoleId, key, action, !current[action])
+    } else {
+      // Create mode: update local state
+      setLocalPerms((prev) => {
+        const next = new Map(prev)
+        const current = next.get(key) || createActionSet()
+        next.set(key, { ...current, [action]: !current[action] })
+        return next
+      })
+    }
+  }, [activeRoleId, role, getPerm, setRolePerm])
+
+  const handleToggleAll = useCallback((key: string) => {
+    const allChecked = isAllActionsChecked(key)
+    if (activeRoleId && role) {
+      // Edit mode: use store
+      setRolePermAll(activeRoleId, key, !allChecked)
+    } else {
+      // Create mode: update local state
+      const node = getPermissionNode(key)
+      if (!node) return
+      setLocalPerms((prev) => {
+        const next = new Map(prev)
+        const actions: ActionSet = createActionSet()
+        node.actions.forEach((a) => { actions[a] = !allChecked })
+        next.set(key, actions)
+        return next
+      })
+    }
+  }, [activeRoleId, role, isAllActionsChecked, setRolePermAll])
+
+  // ─── Presets ───
+
+  const handlePreset = (key: string) => {
+    if (activeRoleId && role) {
+      applyPreset(activeRoleId, key)
+    }
+    setShowPresets(false)
+  }
+
+  // ─── Save ───
+
   const handleSave = () => {
     if (isCreate) {
+      // Convert localPerms to PermissionEntry[]
+      const permissions: PermissionEntry[] = []
+      localPerms.forEach((actions, key) => {
+        if (Object.values(actions).some(Boolean)) {
+          permissions.push({ key, actions })
+        }
+      })
       const newId = addRole({
         name: name || 'New Role',
         nameBn: nameBn || 'নতুন ভূমিকা',
         description: '',
         descriptionBn: '',
-        permissions: [],
+        permissions,
         dataScope: 'all',
         isSystemRole: false,
       })
@@ -111,23 +165,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
     }
   }
 
-  const handlePreset = (key: string) => {
-    if (!activeRoleId) return
-    applyPreset(activeRoleId, key)
-    setShowPresets(false)
-  }
-
-  const handleToggleAll = (key: string) => {
-    if (!activeRoleId) return
-    const allChecked = isAllActionsChecked(key)
-    setRolePermAll(activeRoleId, key, !allChecked)
-  }
-
-  const handleToggleAction = (key: string, action: PermissionAction) => {
-    if (!activeRoleId) return
-    const current = getPerm(key)
-    setRolePerm(activeRoleId, key, action, !current[action])
-  }
+  // ─── Staff ───
 
   const assignedStaff = useMemo(() => {
     if (!activeRoleId) return []
@@ -135,7 +173,6 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   }, [staffPermissions, activeRoleId])
 
   const availableTeachers = useMemo(() => {
-    if (!activeRoleId) return []
     const assignedIds = new Set(assignedStaff.map((s) => s.staffId))
     let filtered = teachers.filter((t) => !assignedIds.has(t.id))
     if (deptFilter) {
@@ -144,8 +181,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
     if (staffSearch.trim()) {
       const q = staffSearch.toLowerCase()
       filtered = filtered.filter((t) =>
-        t.nameEn.toLowerCase().includes(q) || t.nameBn.includes(q) ||
-        t.email.toLowerCase().includes(q) || t.id.toLowerCase().includes(q)
+        t.nameEn.toLowerCase().includes(q) || t.nameBn.includes(q)
       )
     }
     return filtered
@@ -163,6 +199,28 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
       email: teacher.email,
       defaultPassword: '123456',
     })
+  }
+
+  // ─── Count active permissions ───
+
+  const activePermCount = useMemo(() => {
+    let count = 0
+    if (activeRoleId && role) {
+      count = role.permissions.filter((p) => Object.values(p.actions).some(Boolean)).length
+    } else {
+      localPerms.forEach((actions) => {
+        if (Object.values(actions).some(Boolean)) count++
+      })
+    }
+    return count
+  }, [activeRoleId, role, localPerms])
+
+  // ─── Render ───
+
+  const actionLabels: Record<PermissionAction, string> = {
+    view: 'View', create: 'Create', edit: 'Edit', delete: 'Delete',
+    approve: 'Approve', reject: 'Reject', print: 'Print', export: 'Export',
+    import: 'Import', download: 'Download', publish: 'Publish', manage: 'Manage', configure: 'Configure',
   }
 
   const renderNode = (node: PermissionNode, depth = 0) => {
@@ -244,21 +302,15 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
     )
   }
 
-  const actionLabels: Record<PermissionAction, string> = {
-    view: 'View', create: 'Create', edit: 'Edit', delete: 'Delete',
-    approve: 'Approve', reject: 'Reject', print: 'Print', export: 'Export',
-    import: 'Import', download: 'Download', publish: 'Publish', manage: 'Manage', configure: 'Configure',
-  }
-
   return (
     <SettingsPanel
-      title={isCreate ? (bn ? 'নতুন ভূমিকা' : 'Create Role') : (currentRole?.name || '')}
-      titleBn={isCreate ? 'নতুন ভূমিকা' : (currentRole?.nameBn || '')}
+      title={isCreate ? (bn ? 'নতুন ভূমিকা' : 'Create Role') : (role?.name || '')}
+      titleBn={isCreate ? 'নতুন ভূমিকা' : (role?.nameBn || '')}
       isBn={bn}
       onBack={onBack}
     >
       <div className="space-y-5">
-        {/* Role Info */}
+        {/* Role Name */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1 block">
@@ -333,156 +385,160 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
         <div className="rounded-xl border border-[var(--border)] overflow-hidden max-h-[50vh] overflow-y-auto">
           <div className="px-3 py-2 bg-[var(--bg-tertiary)] text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase flex items-center justify-between">
             <span>{bn ? 'মডিউল / পৃষ্ঠা / অ্যাকশন' : 'Module / Page / Action'}</span>
-            <span>{(currentRole?.permissions || []).filter((p) => Object.values(p.actions).some(Boolean)).length} {bn ? 'সক্রিয়' : 'active'}</span>
+            <span>{activePermCount} {bn ? 'সক্রিয়' : 'active'}</span>
           </div>
           <div className="divide-y divide-[var(--border)]/50">
             {filteredTree.map((node) => renderNode(node))}
           </div>
         </div>
 
-        {/* Staff Assigned */}
-        {activeRoleId && (
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Users size={14} className="text-[var(--brand)]" />
-                <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-                  {bn ? 'শিক্ষক/স্টাফ নির্বাচন করুন' : 'Select Teachers / Staff'}
-                </span>
+        {/* Staff Section — always visible */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Users size={14} className="text-[var(--brand)]" />
+              <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                {bn ? 'শিক্ষক/স্টাফ নির্বাচন করুন' : 'Select Teachers / Staff'}
+              </span>
+              {activeRoleId && (
                 <span className="text-[0.625rem] text-[var(--text-muted)]">
                   ({assignedStaff.length} {bn ? 'নির্ধারিত' : 'assigned'})
                 </span>
-              </div>
-              <button
-                onClick={() => { setShowAddStaff(!showAddStaff); setStaffSearch('') }}
-                className={`h-7 px-2.5 rounded-lg text-[0.6875rem] font-medium border-none cursor-pointer transition-colors flex items-center gap-1 ${
-                  showAddStaff
-                    ? 'bg-[var(--red)]/10 text-[var(--red)] hover:bg-[var(--red)]/20'
-                    : 'bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)]/20'
-                }`}
-              >
-                {showAddStaff ? <X size={12} /> : <UserPlus size={12} />}
-                {showAddStaff ? (bn ? 'বন্ধ করুন' : 'Close') : (bn ? 'শিক্ষক যোগ করুন' : 'Add Teachers')}
-              </button>
+              )}
             </div>
+            <button
+              onClick={() => { setShowAddStaff(!showAddStaff); setStaffSearch(''); setDeptFilter('') }}
+              className={`h-7 px-2.5 rounded-lg text-[0.6875rem] font-medium border-none cursor-pointer transition-colors flex items-center gap-1 ${
+                showAddStaff
+                  ? 'bg-[var(--red)]/10 text-[var(--red)] hover:bg-[var(--red)]/20'
+                  : 'bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)]/20'
+              }`}
+            >
+              {showAddStaff ? <X size={12} /> : <UserPlus size={12} />}
+              {showAddStaff ? (bn ? 'বন্ধ করুন' : 'Close') : (bn ? 'শিক্ষক যোগ করুন' : 'Add Teachers')}
+            </button>
+          </div>
 
-            {/* Add Staff Panel */}
-            {showAddStaff && (
-              <div className="mb-3 rounded-xl border border-[var(--brand)]/20 bg-[var(--bg-secondary)] overflow-hidden">
-                <div className="p-3 border-b border-[var(--border)] space-y-2">
-                  <div className="relative">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                    <input
-                      type="text"
-                      value={staffSearch}
-                      onChange={(e) => setStaffSearch(e.target.value)}
-                      placeholder={bn ? 'নাম দিয়ে খুঁজুন...' : 'Search by name...'}
-                      className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]"
-                    />
+          {/* Add Staff Panel */}
+          {showAddStaff && (
+            <div className="mb-3 rounded-xl border border-[var(--brand)]/20 bg-[var(--bg-secondary)] overflow-hidden">
+              <div className="p-3 border-b border-[var(--border)] space-y-2">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                  <input
+                    type="text"
+                    value={staffSearch}
+                    onChange={(e) => setStaffSearch(e.target.value)}
+                    placeholder={bn ? 'নাম দিয়ে খুঁজুন...' : 'Search by name...'}
+                    className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]"
+                  />
+                </div>
+                <select
+                  value={deptFilter}
+                  onChange={(e) => setDeptFilter(e.target.value)}
+                  className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
+                >
+                  <option value="">{bn ? 'সব বিভাগ' : 'All Departments'}</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>{bn ? d.nameBn || d.name : d.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="max-h-[280px] overflow-y-auto">
+                {availableTeachers.length === 0 ? (
+                  <div className="text-center py-6">
+                    <Users size={20} className="text-[var(--text-muted)] mx-auto mb-1.5 opacity-40" />
+                    <div className="text-[0.75rem] text-[var(--text-muted)]">
+                      {staffSearch || deptFilter
+                        ? (bn ? 'কোনো শিক্ষক পাওয়া যায়নি' : 'No teachers found')
+                        : (bn ? 'সব শিক্ষক/স্টাফ ইতিমধ্যে নির্ধারিত' : 'All teachers/staff already assigned')}
+                    </div>
                   </div>
-                  <select
-                    value={deptFilter}
-                    onChange={(e) => setDeptFilter(e.target.value)}
-                    className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
-                  >
-                    <option value="">{bn ? 'সব বিভাগ' : 'All Departments'}</option>
-                    {departments.map((d) => (
-                      <option key={d.id} value={d.id}>{bn ? d.nameBn || d.name : d.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="max-h-[280px] overflow-y-auto">
-                  {availableTeachers.length === 0 ? (
-                    <div className="text-center py-6">
-                      <Users size={20} className="text-[var(--text-muted)] mx-auto mb-1.5 opacity-40" />
-                      <div className="text-[0.75rem] text-[var(--text-muted)]">
-                        {staffSearch
-                          ? (bn ? 'কোনো শিক্ষক পাওয়া যায়নি' : 'No teachers found')
-                          : (bn ? 'সব শিক্ষক/স্টাফ ইতিমধ্যে নির্ধারিত' : 'All teachers/staff already assigned')}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-[var(--border)]/50">
-                      {availableTeachers.map((teacher) => (
-                        <button
-                          key={teacher.id}
-                          onClick={() => handleAddStaffMember(teacher.id)}
-                          className="w-full flex items-center gap-3 p-3 hover:bg-[var(--brand)]/5 transition-colors text-left bg-transparent border-none cursor-pointer"
-                        >
-                          <div className="w-8 h-8 rounded-full bg-[var(--brand)]/10 flex items-center justify-center shrink-0 overflow-hidden">
-                            {teacher.photo ? (
-                              <img src={teacher.photo} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-[0.6875rem] font-semibold text-[var(--brand)]">
-                                {teacher.nameEn.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">
-                              {bn ? teacher.nameBn : teacher.nameEn}
-                            </div>
-                          </div>
-                          <Plus size={14} className="text-[var(--brand)] shrink-0" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Assigned Staff List */}
-            {assignedStaff.length === 0 ? (
-              <div className="text-center py-4 rounded-xl border border-dashed border-[var(--border)]">
-                <Users size={20} className="text-[var(--text-muted)] mx-auto mb-1.5 opacity-40" />
-                <div className="text-[0.75rem] text-[var(--text-muted)]">
-                  {bn ? 'এই ভূমিকায় কোনো স্টাফ নেই — উপরের বোতাম দিয়ে যোগ করুন' : 'No staff assigned — click "Add Teachers" above'}
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                {assignedStaff.map((member) => {
-                  const teacher = teachers.find((t) => t.id === member.staffId)
-                  return (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]"
-                    >
-                      <div className="flex items-center gap-2.5">
+                ) : (
+                  <div className="divide-y divide-[var(--border)]/50">
+                    {availableTeachers.map((teacher) => (
+                      <button
+                        key={teacher.id}
+                        onClick={() => handleAddStaffMember(teacher.id)}
+                        className="w-full flex items-center gap-3 p-3 hover:bg-[var(--brand)]/5 transition-colors text-left bg-transparent border-none cursor-pointer"
+                      >
                         <div className="w-8 h-8 rounded-full bg-[var(--brand)]/10 flex items-center justify-center shrink-0 overflow-hidden">
-                          {teacher?.photo ? (
+                          {teacher.photo ? (
                             <img src={teacher.photo} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            <span className="text-[0.625rem] font-semibold text-[var(--brand)]">
-                              {member.staffName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                            <span className="text-[0.6875rem] font-semibold text-[var(--brand)]">
+                              {teacher.nameEn.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                             </span>
                           )}
                         </div>
-                        <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">
-                          {bn ? member.staffNameBn : member.staffName}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">
+                            {bn ? teacher.nameBn : teacher.nameEn}
+                          </div>
                         </div>
-                      </div>
-                      <button
-                        onClick={() => removeStaff(member.id)}
-                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 cursor-pointer bg-transparent border-none transition-colors shrink-0"
-                        title={bn ? 'সরান' : 'Remove'}
-                      >
-                        <Trash2 size={13} />
+                        <Plus size={14} className="text-[var(--brand)] shrink-0" />
                       </button>
-                    </div>
-                  )
-                })}
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+
+          {/* Assigned Staff List */}
+          {!activeRoleId ? (
+            <div className="text-center py-4 rounded-xl border border-dashed border-[var(--border)]">
+              <Users size={20} className="text-[var(--text-muted)] mx-auto mb-1.5 opacity-40" />
+              <div className="text-[0.75rem] text-[var(--text-muted)]">
+                {bn ? 'প্রথমে ভূমিকা সংরক্ষণ করুন, তারপর শিক্ষক যোগ করুন' : 'Save the role first, then assign teachers'}
+              </div>
+            </div>
+          ) : assignedStaff.length === 0 ? (
+            <div className="text-center py-4 rounded-xl border border-dashed border-[var(--border)]">
+              <Users size={20} className="text-[var(--text-muted)] mx-auto mb-1.5 opacity-40" />
+              <div className="text-[0.75rem] text-[var(--text-muted)]">
+                {bn ? 'এই ভূমিকায় কোনো স্টাফ নেই — উপরের বোতাম দিয়ে যোগ করুন' : 'No staff assigned — click "Add Teachers" above'}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {assignedStaff.map((member) => {
+                const teacher = teachers.find((t) => t.id === member.staffId)
+                return (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-[var(--brand)]/10 flex items-center justify-center shrink-0 overflow-hidden">
+                        {teacher?.photo ? (
+                          <img src={teacher.photo} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-[0.625rem] font-semibold text-[var(--brand)]">
+                            {member.staffName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">
+                        {bn ? member.staffNameBn : member.staffName}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeStaff(member.id)}
+                      className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 cursor-pointer bg-transparent border-none transition-colors shrink-0"
+                      title={bn ? 'সরান' : 'Remove'}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Save */}
-        <div className="flex items-center justify-between pt-2">
-          <div className="text-[0.75rem] text-[var(--text-muted)]">
-            {currentRole?.isSystemRole ? (bn ? 'সিস্টেম ভূমিকা — মুছে ফেলা যাবে না' : 'System role — cannot be deleted') : ''}
-          </div>
+        <div className="flex items-center justify-end pt-2">
           <div className="flex gap-2">
             <button
               onClick={onBack}
