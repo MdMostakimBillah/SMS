@@ -164,7 +164,7 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
       case 'login-method': return <ChangeLoginMethodPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'access-modes': return <AccessModesPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'session-mgmt': return <SessionManagementPanel isBn={isBn} onBack={() => setActivePanel(null)} />
-      case 'roles-permissions': return <RolesList isBn={isBn} onBack={() => setActivePanel(null)} onEditRole={(id) => { setActivePanel(null); setEditingRoleId(id) }} onCreateRole={() => { setActivePanel(null); setCreatingRole(true) }} />
+      case 'roles-permissions': return <RolesList isBn={isBn} onBack={() => setActivePanel(null)} onCreateRole={() => { setActivePanel(null); setCreatingRole(true) }} />
       case 'staff-permissions': return <StaffPermissionsPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'email-password': return <EmailPasswordPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'danger-zone': return <DangerZonePanel isBn={isBn} onBack={() => setActivePanel(null)} />
