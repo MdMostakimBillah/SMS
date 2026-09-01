@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
-import { Save, Search, Check, ChevronDown, ChevronRight, Sparkles, Users, Plus, Trash2 } from 'lucide-react'
+import { Save, Search, Check, ChevronDown, ChevronRight, Sparkles, Users, Plus, Trash2, UserPlus, X } from 'lucide-react'
 import { usePermissionStore, type PermissionAction } from '@/store/permissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { PERMISSION_TREE, getPermissionNode, ROLE_TEMPLATES, DATA_SCOPE_OPTIONS, type PermissionNode, type ActionSet, createActionSet } from '@/lib/permissionConfig'
@@ -15,7 +15,7 @@ interface Props {
 export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const bn = isBn
   const { roles, addRole, updateRole, setRolePerm, setRolePermAll, applyPreset, staffPermissions, addStaff, removeStaff } = usePermissionStore()
-  const teachers = useTeacherStore((s) => s.teachers)
+  const { teachers, departments } = useTeacherStore()
   const role = roleId ? roles.find((r) => r.id === roleId) : null
   const isCreate = !roleId
 
@@ -30,7 +30,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const [saved, setSaved] = useState(false)
   const [createdId, setCreatedId] = useState<string | null>(roleId)
   const [showAddStaff, setShowAddStaff] = useState(false)
-  const [newStaffId, setNewStaffId] = useState('')
+  const [staffSearch, setStaffSearch] = useState('')
 
   const activeRoleId = createdId || roleId
 
@@ -143,12 +143,22 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const availableTeachers = useMemo(() => {
     if (!activeRoleId) return []
     const assignedIds = new Set(assignedStaff.map((s) => s.staffId))
-    return teachers.filter((t) => !assignedIds.has(t.id))
-  }, [teachers, assignedStaff])
+    let filtered = teachers.filter((t) => !assignedIds.has(t.id))
+    if (staffSearch.trim()) {
+      const q = staffSearch.toLowerCase()
+      filtered = filtered.filter((t) =>
+        t.nameEn.toLowerCase().includes(q) || t.nameBn.includes(q) ||
+        t.email.toLowerCase().includes(q) || t.id.toLowerCase().includes(q)
+      )
+    }
+    return filtered
+  }, [teachers, assignedStaff, staffSearch])
 
-  const handleAddStaff = () => {
-    if (!newStaffId || !activeRoleId) return
-    const teacher = teachers.find((t) => t.id === newStaffId)
+  const getDeptName = (deptId: string) => departments.find((d) => d.id === deptId)?.name || deptId
+
+  const handleAddStaffMember = (teacherId: string) => {
+    if (!activeRoleId) return
+    const teacher = teachers.find((t) => t.id === teacherId)
     if (!teacher) return
     addStaff({
       staffId: teacher.id,
@@ -158,8 +168,6 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
       email: teacher.email,
       defaultPassword: '123456',
     })
-    setNewStaffId('')
-    setShowAddStaff(false)
   }
 
   const renderNode = (node: PermissionNode, depth = 0) => {
@@ -378,89 +386,133 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
               <div className="flex items-center gap-2">
                 <Users size={14} className="text-[var(--brand)]" />
                 <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-                  {bn ? 'নির্ধারিত স্টাফ' : 'Assigned Staff'}
+                  {bn ? 'শিক্ষক/স্টাফ নির্বাচন করুন' : 'Select Teachers / Staff'}
                 </span>
                 <span className="text-[0.625rem] text-[var(--text-muted)]">
-                  ({assignedStaff.length})
+                  ({assignedStaff.length} {bn ? 'নির্ধারিত' : 'assigned'})
                 </span>
               </div>
-              {availableTeachers.length > 0 && (
-                <button
-                  onClick={() => setShowAddStaff(!showAddStaff)}
-                  className="h-7 px-2.5 rounded-lg bg-[var(--brand)]/10 text-[var(--brand)] text-[0.6875rem] font-medium border-none cursor-pointer hover:bg-[var(--brand)]/20 transition-colors flex items-center gap-1"
-                >
-                  <Plus size={12} />
-                  {bn ? 'যোগ করুন' : 'Add'}
-                </button>
-              )}
+              <button
+                onClick={() => { setShowAddStaff(!showAddStaff); setStaffSearch('') }}
+                className={`h-7 px-2.5 rounded-lg text-[0.6875rem] font-medium border-none cursor-pointer transition-colors flex items-center gap-1 ${
+                  showAddStaff
+                    ? 'bg-[var(--red)]/10 text-[var(--red)] hover:bg-[var(--red)]/20'
+                    : 'bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)]/20'
+                }`}
+              >
+                {showAddStaff ? <X size={12} /> : <UserPlus size={12} />}
+                {showAddStaff ? (bn ? 'বন্ধ করুন' : 'Close') : (bn ? 'শিক্ষক যোগ করুন' : 'Add Teachers')}
+              </button>
             </div>
 
+            {/* Add Staff Panel */}
             {showAddStaff && (
-              <div className="mb-3 p-3 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand)]/5">
-                <select
-                  value={newStaffId}
-                  onChange={(e) => setNewStaffId(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
-                >
-                  <option value="">{bn ? 'শিক্ষক/স্টাফ নির্বাচন করুন...' : 'Select teacher/staff...'}</option>
-                  {availableTeachers.map((t) => (
-                    <option key={t.id} value={t.id}>{bn ? t.nameBn : t.nameEn} ({t.id})</option>
-                  ))}
-                </select>
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={() => { setShowAddStaff(false); setNewStaffId('') }}
-                    className="flex-1 h-8 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-medium border border-[var(--border)] cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors"
-                  >
-                    {bn ? 'বাতিল' : 'Cancel'}
-                  </button>
-                  <button
-                    onClick={handleAddStaff}
-                    disabled={!newStaffId}
-                    className="flex-1 h-8 rounded-lg bg-[var(--brand)] text-white text-[0.75rem] font-medium border-none cursor-pointer disabled:opacity-50 hover:opacity-90 transition-opacity"
-                  >
-                    {bn ? 'যোগ করুন' : 'Add'}
-                  </button>
+              <div className="mb-3 rounded-xl border border-[var(--brand)]/20 bg-[var(--bg-secondary)] overflow-hidden">
+                <div className="p-3 border-b border-[var(--border)]">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                    <input
+                      type="text"
+                      value={staffSearch}
+                      onChange={(e) => setStaffSearch(e.target.value)}
+                      placeholder={bn ? 'নাম, ইমেইল বা আইডি দিয়ে খুঁজুন...' : 'Search by name, email or ID...'}
+                      className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]"
+                    />
+                  </div>
+                </div>
+                <div className="max-h-[280px] overflow-y-auto">
+                  {availableTeachers.length === 0 ? (
+                    <div className="text-center py-6">
+                      <Users size={20} className="text-[var(--text-muted)] mx-auto mb-1.5 opacity-40" />
+                      <div className="text-[0.75rem] text-[var(--text-muted)]">
+                        {staffSearch
+                          ? (bn ? 'কোনো শিক্ষক পাওয়া যায়নি' : 'No teachers found')
+                          : (bn ? 'সব শিক্ষক/স্টাফ ইতিমধ্যে নির্ধারিত' : 'All teachers/staff already assigned')}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-[var(--border)]/50">
+                      {availableTeachers.map((teacher) => (
+                        <button
+                          key={teacher.id}
+                          onClick={() => handleAddStaffMember(teacher.id)}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-[var(--brand)]/5 transition-colors text-left bg-transparent border-none cursor-pointer"
+                        >
+                          <div className="w-9 h-9 rounded-full bg-[var(--brand)]/10 flex items-center justify-center shrink-0 overflow-hidden">
+                            {teacher.photo ? (
+                              <img src={teacher.photo} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-[0.75rem] font-semibold text-[var(--brand)]">
+                                {teacher.nameEn.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">
+                              {bn ? teacher.nameBn : teacher.nameEn}
+                            </div>
+                            <div className="text-[0.625rem] text-[var(--text-muted)] truncate">
+                              {teacher.designation} • {getDeptName(teacher.departmentId)}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-[0.5625rem] text-[var(--text-muted)]">{teacher.id}</span>
+                            <Plus size={14} className="text-[var(--brand)]" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
+            {/* Assigned Staff List */}
             {assignedStaff.length === 0 ? (
               <div className="text-center py-4 rounded-xl border border-dashed border-[var(--border)]">
                 <Users size={20} className="text-[var(--text-muted)] mx-auto mb-1.5 opacity-40" />
                 <div className="text-[0.75rem] text-[var(--text-muted)]">
-                  {bn ? 'এই ভূমিকায় কোনো স্টাফ নেই' : 'No staff assigned to this role'}
+                  {bn ? 'এই ভূমিকায় কোনো স্টাফ নেই — উপরের বোতাম দিয়ে যোগ করুন' : 'No staff assigned — click "Add Teachers" above'}
                 </div>
               </div>
             ) : (
               <div className="space-y-1.5">
-                {assignedStaff.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-[var(--brand)]/10 flex items-center justify-center">
-                        <Users size={14} className="text-[var(--brand)]" />
-                      </div>
-                      <div>
-                        <div className="text-[0.75rem] font-medium text-[var(--text-primary)]">
-                          {bn ? member.staffNameBn : member.staffName}
-                        </div>
-                        <div className="text-[0.625rem] text-[var(--text-muted)]">
-                          {member.email}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeStaff(member.id)}
-                      className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 cursor-pointer bg-transparent border-none transition-colors"
-                      title={bn ? 'সরান' : 'Remove'}
+                {assignedStaff.map((member) => {
+                  const teacher = teachers.find((t) => t.id === member.staffId)
+                  return (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]"
                     >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-[var(--brand)]/10 flex items-center justify-center shrink-0 overflow-hidden">
+                          {teacher?.photo ? (
+                            <img src={teacher.photo} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-[0.625rem] font-semibold text-[var(--brand)]">
+                              {member.staffName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[0.75rem] font-medium text-[var(--text-primary)] truncate">
+                            {bn ? member.staffNameBn : member.staffName}
+                          </div>
+                          <div className="text-[0.625rem] text-[var(--text-muted)] truncate">
+                            {teacher?.designation || ''} {teacher ? `• ${getDeptName(teacher.departmentId)}` : ''}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeStaff(member.id)}
+                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 cursor-pointer bg-transparent border-none transition-colors shrink-0"
+                        title={bn ? 'সরান' : 'Remove'}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
