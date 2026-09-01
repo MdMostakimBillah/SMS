@@ -360,10 +360,10 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         }
         const teacherName = isBn ? matchedStaff.staffNameBn : matchedStaff.staffName
         if (setInstitutionUser) {
-          setInstitutionUser(matchedStaff.email, teacherName, matchedStaff.role, institution.id, institution.subdomain, institution.slug)
+          setInstitutionUser(matchedStaff.email, teacherName, matchedStaff.role || 'teacher', institution.id, institution.subdomain, institution.slug)
         } else {
           nsSet('user', JSON.stringify({
-            email: matchedStaff.email, role: matchedStaff.role, name: teacherName,
+            email: matchedStaff.email, role: matchedStaff.role || 'teacher', name: teacherName,
             institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug
           }))
           nsSet('institutionId', institution.id)

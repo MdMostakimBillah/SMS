@@ -256,7 +256,7 @@ export default function MessagesPage() {
                     <RotateCcw size={14} />
                   </button>
                 )}
-                {canDelete('messages', activeTab) && (
+                {canDelete('messages') && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setDeleteTarget(msg.id) }}
                     className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"

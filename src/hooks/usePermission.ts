@@ -1,7 +1,9 @@
 import { useContext } from 'react'
 import { AuthContext } from '@/contexts/AuthContext'
 import { usePermissionStore, type TabPerm, type DataScope } from '@/store/permissionStore'
-import { PERMISSION_TREE, getPermissionNode, type PermissionAction, type ActionSet } from '@/lib/permissionConfig'
+import { getPermissionNode, type PermissionAction, type ActionSet } from '@/lib/permissionConfig'
+
+export type { PermissionAction }
 
 const FULL_ACCESS: TabPerm = { create: true, read: true, update: true, delete: true }
 const ALL_FALSE: ActionSet = { view: false, create: false, edit: false, delete: false, approve: false, reject: false, print: false, export: false, import: false, download: false, publish: false, manage: false, configure: false }

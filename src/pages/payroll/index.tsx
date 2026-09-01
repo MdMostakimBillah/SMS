@@ -16,7 +16,6 @@ import {
 } from 'lucide-react'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { useBn } from '@/hooks/useBn'
-import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -31,7 +30,6 @@ type SortKey = 'name' | 'salary' | 'department' | 'designation'
 
 export default function PayrollPage() {
   const isBn = useBn()
-  const { canRead } = usePermission()
   const { isMobile } = useWindowSize()
   const { teachers, departments } = useTeacherStore(
     useShallow((s) => ({

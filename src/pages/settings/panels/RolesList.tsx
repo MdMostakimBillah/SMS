@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
-import { Shield, Plus, Trash2, Copy, Users, Search, ChevronRight, Lock, Unlock } from 'lucide-react'
+import { Shield, Trash2, Copy, Users, Search, ChevronRight, Lock } from 'lucide-react'
 import { usePermissionStore, type RolePerm } from '@/store/permissionStore'
 
 interface Props {

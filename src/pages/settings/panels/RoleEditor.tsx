@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
-import { Save, Search, Check, X, ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
-import { usePermissionStore, type RolePerm, type PermissionAction } from '@/store/permissionStore'
+import { Save, Search, Check, ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
+import { usePermissionStore, type PermissionAction } from '@/store/permissionStore'
 import { PERMISSION_TREE, getPermissionNode, ROLE_TEMPLATES, DATA_SCOPE_OPTIONS, type PermissionNode, type ActionSet, createActionSet } from '@/lib/permissionConfig'
 
 interface Props {
@@ -12,13 +12,13 @@ interface Props {
 
 export function RoleEditor({ isBn, roleId, onBack }: Props) {
   const bn = isBn
-  const { roles, updateRole, setRolePerm, setRolePermAll, setRoleDataScope, applyPreset } = usePermissionStore()
+  const { roles, updateRole, setRolePerm, setRolePermAll, applyPreset } = usePermissionStore()
   const role = roles.find((r) => r.id === roleId)
 
   const [name, setName] = useState(role?.name || '')
   const [nameBn, setNameBn] = useState(role?.nameBn || '')
   const [description, setDescription] = useState(role?.description || '')
-  const [descriptionBn, setDescriptionBn] = useState(role?.descriptionBn || '')
+  const [descriptionBn] = useState(role?.descriptionBn || '')
   const [dataScope, setDataScope] = useState(role?.dataScope || 'all')
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState<Set<string>>(new Set(PERMISSION_TREE.map((n) => n.key)))

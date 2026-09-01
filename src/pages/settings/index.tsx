@@ -145,9 +145,6 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
       .filter((group) => group.items.length > 0)
   }, [searchQuery, isBn, isInstAdmin, isSuperAdmin])
 
-  const allItems = filteredGroups.flatMap((g) => g.items)
-  const activeItem = allItems.find((i) => i.key === activePanel)
-
   const renderPanel = () => {
     if (editingRoleId) {
       return <RoleEditor isBn={isBn} roleId={editingRoleId} onBack={() => setEditingRoleId(null)} />

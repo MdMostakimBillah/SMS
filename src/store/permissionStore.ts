@@ -29,6 +29,7 @@ export interface StaffPerm {
   staffName: string
   staffNameBn: string
   roleId: string
+  role?: string
   email: string
   defaultPassword: string
   overrides: PermissionEntry[]
