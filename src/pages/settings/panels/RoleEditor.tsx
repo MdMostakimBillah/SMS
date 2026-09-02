@@ -77,8 +77,29 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const toggleExpand = (key: string) => {
     setExpanded((prev) => {
       const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
+      if (next.has(key)) {
+        next.delete(key)
+        // Remove all descendants when collapsing
+        const removeDescendants = (nodeKey: string) => {
+          for (const k of next) {
+            if (k.startsWith(nodeKey + '.')) {
+              next.delete(k)
+              removeDescendants(k)
+            }
+          }
+        }
+        removeDescendants(key)
+      } else {
+        next.add(key)
+        // Auto-expand direct children so their CRUD buttons show
+        const node = getPermissionNode(key)
+        if (node?.children) {
+          node.children.forEach((c) => {
+            const childKey = key + '.' + c.key
+            next.add(childKey)
+          })
+        }
+      }
       return next
     })
   }
@@ -281,7 +302,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
                 ? 'bg-[var(--brand)] text-white'
                 : someChecked
                 ? 'bg-[var(--brand)]/20 text-[var(--brand)]'
-                : 'bg-[var(--bg-primary)] border border-[var(--border)] text-transparent'
+                : 'bg-transparent border-2 border-[var(--border)] text-transparent'
             }`}
           >
             {(allChecked || someChecked) && <Check size={11} className={allChecked ? 'text-white' : ''} />}
@@ -304,8 +325,8 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
           </div>
         )}
 
-        {isExpanded && !hasChildren && (
-          <div className="ml-8 mb-2 flex flex-wrap gap-1.5">
+        {!hasChildren && (
+          <div className="mb-2 flex flex-wrap gap-1.5" style={{ paddingLeft: `${depth * 20 + 32}px` }}>
             {node.actions.map((action) => {
               const checked = getPerm(fullKey)[action]
               return (
