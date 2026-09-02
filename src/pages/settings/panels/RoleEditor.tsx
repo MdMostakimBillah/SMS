@@ -49,27 +49,34 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   }, [activeRoleId, role, localPerms])
 
   const isAllActionsChecked = useCallback((key: string): boolean => {
-    const node = getPermissionNode(key)
-    if (!node) return false
-    // Collect all descendant leaf keys
-    const collectLeafKeys = (n: PermissionNode, parentKey: string): string[] => {
-      const fullK = parentKey ? `${parentKey}.${n.key}` : n.key
-      if (!n.children || n.children.length === 0) return [fullK]
-      return n.children.flatMap((c) => collectLeafKeys(c, fullK))
+    // Collect all descendant leaf keys using full dot-separated keys
+    const collectLeafKeys = (fullKey: string): string[] => {
+      const n = getPermissionNode(fullKey)
+      if (!n || !n.children || n.children.length === 0) return [fullKey]
+      return n.children.flatMap((c) => collectLeafKeys(`${fullKey}.${c.key}`))
     }
-    const leafKeys = collectLeafKeys(node, '')
-    // All leaves must have all their actions checked
-    return leafKeys.every((lk) => {
+    const leafKeys = collectLeafKeys(key)
+    return leafKeys.length > 0 && leafKeys.every((lk) => {
       const leafNode = getPermissionNode(lk)
-      if (!leafNode) return true
+      if (!leafNode) return false
       const perm = getPerm(lk)
       return leafNode.actions.every((a) => perm[a])
     })
   }, [getPerm])
 
   const isSomeActionsChecked = useCallback((key: string): boolean => {
-    const perm = getPerm(key)
-    return Object.values(perm).some(Boolean) && !isAllActionsChecked(key)
+    // Check if any descendant leaf has any action enabled
+    const collectLeafKeys = (fullKey: string): string[] => {
+      const n = getPermissionNode(fullKey)
+      if (!n || !n.children || n.children.length === 0) return [fullKey]
+      return n.children.flatMap((c) => collectLeafKeys(`${fullKey}.${c.key}`))
+    }
+    const leafKeys = collectLeafKeys(key)
+    const someEnabled = leafKeys.some((lk) => {
+      const perm = getPerm(lk)
+      return Object.values(perm).some(Boolean)
+    })
+    return someEnabled && !isAllActionsChecked(key)
   }, [getPerm, isAllActionsChecked])
 
   const isModuleExpanded = (key: string) => expanded.has(key)
@@ -144,13 +151,13 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
     const node = getPermissionNode(key)
     if (!node) return
 
-    // Collect all descendant leaf keys
-    const collectLeafKeys = (n: PermissionNode, parentKey: string): string[] => {
-      const fullK = parentKey ? `${parentKey}.${n.key}` : n.key
-      if (!n.children || n.children.length === 0) return [fullK]
-      return n.children.flatMap((c) => collectLeafKeys(c, fullK))
+    // Collect all descendant leaf keys using full dot-separated keys
+    const collectLeafKeys = (fullKey: string): string[] => {
+      const n = getPermissionNode(fullKey)
+      if (!n || !n.children || n.children.length === 0) return [fullKey]
+      return n.children.flatMap((c) => collectLeafKeys(`${fullKey}.${c.key}`))
     }
-    const leafKeys = collectLeafKeys(node, '')
+    const leafKeys = collectLeafKeys(key)
 
     if (activeRoleId && role) {
       // Edit mode: toggle all leaves via store
