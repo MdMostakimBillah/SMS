@@ -304,12 +304,12 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
 
           <button
             onClick={() => handleToggleAll(fullKey)}
-            className={`w-5 h-5 rounded flex items-center justify-center cursor-pointer border-none transition-colors shrink-0 ${
+            className={`w-5 h-5 rounded flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
               allChecked
-                ? 'bg-[var(--brand)] text-white'
+                ? 'bg-[var(--brand)] text-white border-none'
                 : someChecked
-                ? 'bg-[var(--brand)]/20 text-[var(--brand)]'
-                : 'bg-transparent border-2 border-[var(--border)] text-transparent'
+                ? 'bg-[var(--brand)]/20 text-[var(--brand)] border-none'
+                : 'bg-transparent border-2 border-solid border-[var(--text-muted)]/30 text-transparent'
             }`}
           >
             {(allChecked || someChecked) && <Check size={11} className={allChecked ? 'text-white' : ''} />}
