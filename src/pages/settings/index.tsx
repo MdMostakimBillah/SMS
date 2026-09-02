@@ -178,7 +178,7 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className={`${creatingRole || editingRoleId ? 'max-w-4xl' : 'max-w-2xl'} mx-auto px-4 py-6`}>
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-[1.375rem] font-bold text-[var(--text-primary)] tracking-tight">

@@ -223,14 +223,15 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
     import: 'Import', download: 'Download', publish: 'Publish', manage: 'Manage', configure: 'Configure',
   }
 
-  const renderNode = (node: PermissionNode, depth = 0) => {
+  const renderNode = (node: PermissionNode, depth = 0, parentPath = '') => {
+    const fullKey = parentPath ? `${parentPath}.${node.key}` : node.key
     const hasChildren = node.children && node.children.length > 0
-    const isExpanded = isModuleExpanded(node.key)
-    const allChecked = isAllActionsChecked(node.key)
-    const someChecked = isSomeActionsChecked(node.key)
+    const isExpanded = isModuleExpanded(fullKey)
+    const allChecked = isAllActionsChecked(fullKey)
+    const someChecked = isSomeActionsChecked(fullKey)
 
     return (
-      <div key={node.key}>
+      <div key={fullKey}>
         <div
           className={`flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-[var(--bg-secondary)]/50 transition-colors ${
             depth === 0 ? 'font-semibold' : ''
@@ -239,7 +240,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
         >
           {hasChildren ? (
             <button
-              onClick={() => toggleExpand(node.key)}
+              onClick={() => toggleExpand(fullKey)}
               className="p-0.5 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] bg-transparent border-none cursor-pointer"
             >
               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -249,7 +250,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
           )}
 
           <button
-            onClick={() => handleToggleAll(node.key)}
+            onClick={() => handleToggleAll(fullKey)}
             className={`w-5 h-5 rounded flex items-center justify-center cursor-pointer border-none transition-colors shrink-0 ${
               allChecked
                 ? 'bg-[var(--brand)] text-white'
@@ -274,18 +275,18 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
 
         {isExpanded && hasChildren && (
           <div>
-            {node.children!.map((child) => renderNode(child, depth + 1))}
+            {node.children!.map((child) => renderNode(child, depth + 1, fullKey))}
           </div>
         )}
 
         {isExpanded && !hasChildren && (
           <div className="ml-8 mb-2 flex flex-wrap gap-1.5">
             {node.actions.map((action) => {
-              const checked = getPerm(node.key)[action]
+              const checked = getPerm(fullKey)[action]
               return (
                 <button
                   key={action}
-                  onClick={() => handleToggleAction(node.key, action)}
+                  onClick={() => handleToggleAction(fullKey, action)}
                   className={`h-7 px-2.5 rounded-lg text-[0.6875rem] font-medium border cursor-pointer transition-colors ${
                     checked
                       ? 'bg-[var(--brand)]/10 border-[var(--brand)]/30 text-[var(--brand)]'
