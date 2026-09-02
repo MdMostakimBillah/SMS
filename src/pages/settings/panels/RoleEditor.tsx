@@ -51,8 +51,20 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const isAllActionsChecked = useCallback((key: string): boolean => {
     const node = getPermissionNode(key)
     if (!node) return false
-    const perm = getPerm(key)
-    return node.actions.every((a) => perm[a])
+    // Collect all descendant leaf keys
+    const collectLeafKeys = (n: PermissionNode, parentKey: string): string[] => {
+      const fullK = parentKey ? `${parentKey}.${n.key}` : n.key
+      if (!n.children || n.children.length === 0) return [fullK]
+      return n.children.flatMap((c) => collectLeafKeys(c, fullK))
+    }
+    const leafKeys = collectLeafKeys(node, '')
+    // All leaves must have all their actions checked
+    return leafKeys.every((lk) => {
+      const leafNode = getPermissionNode(lk)
+      if (!leafNode) return true
+      const perm = getPerm(lk)
+      return leafNode.actions.every((a) => perm[a])
+    })
   }, [getPerm])
 
   const isSomeActionsChecked = useCallback((key: string): boolean => {
@@ -108,18 +120,31 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
 
   const handleToggleAll = useCallback((key: string) => {
     const allChecked = isAllActionsChecked(key)
+    const node = getPermissionNode(key)
+    if (!node) return
+
+    // Collect all descendant leaf keys
+    const collectLeafKeys = (n: PermissionNode, parentKey: string): string[] => {
+      const fullK = parentKey ? `${parentKey}.${n.key}` : n.key
+      if (!n.children || n.children.length === 0) return [fullK]
+      return n.children.flatMap((c) => collectLeafKeys(c, fullK))
+    }
+    const leafKeys = collectLeafKeys(node, '')
+
     if (activeRoleId && role) {
-      // Edit mode: use store
-      setRolePermAll(activeRoleId, key, !allChecked)
+      // Edit mode: toggle all leaves via store
+      leafKeys.forEach((lk) => setRolePermAll(activeRoleId, lk, !allChecked))
     } else {
-      // Create mode: update local state
-      const node = getPermissionNode(key)
-      if (!node) return
+      // Create mode: update local state for all leaves
       setLocalPerms((prev) => {
         const next = new Map(prev)
-        const actions: ActionSet = createActionSet()
-        node.actions.forEach((a) => { actions[a] = !allChecked })
-        next.set(key, actions)
+        leafKeys.forEach((lk) => {
+          const leafNode = getPermissionNode(lk)
+          if (!leafNode) return
+          const actions: ActionSet = createActionSet()
+          leafNode.actions.forEach((a) => { actions[a] = !allChecked })
+          next.set(lk, actions)
+        })
         return next
       })
     }
@@ -383,7 +408,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
         </div>
 
         {/* Permission Tree */}
-        <div className="rounded-xl border border-[var(--border)] overflow-hidden max-h-[50vh] overflow-y-auto">
+        <div className="rounded-xl border border-[var(--border)] overflow-hidden">
           <div className="px-3 py-2 bg-[var(--bg-tertiary)] text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase flex items-center justify-between">
             <span>{bn ? 'মডিউল / পৃষ্ঠা / অ্যাকশন' : 'Module / Page / Action'}</span>
             <span>{activePermCount} {bn ? 'সক্রিয়' : 'active'}</span>
