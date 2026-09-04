@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useForm as useReactHookForm } from 'react-hook-form'
-import type { DefaultValues, RegisterOptions } from 'react-hook-form'
+import type { RegisterOptions } from 'react-hook-form'
 import { z } from 'zod'
 
 /** Bilingual error message mapping.
@@ -58,37 +58,28 @@ export function useFormValidation<T extends Record<string, any>>({
   defaultValues,
   onSubmit,
   onError,
-  multiStep = false,
-  currentStep = 1,
-  setCurrentStep,
 }: {
   schema: z.ZodSchema<T>
   bilingualErrors?: BilingualErrors<T>
   defaultValues?: Partial<T>
   onSubmit: (data: T) => Promise<void> | void
   onError?: (errors: Record<string, string>) => void
-  multiStep?: boolean
-  currentStep?: number
-  setCurrentStep?: (step: number) => void
 }): [FormValidationState<T>, FormValidationActions<T>] {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isValid, setIsValid] = useState(false)
 
-  const reactForm = useReactHookForm<DefaultValues>({
-    defaultValues,
+  const reactForm = useReactHookForm<T>({
+    defaultValues: defaultValues as T,
     mode: 'onBlur',
   })
 
-  const [values, setValues] = useState<T>(defaultValues || {} as T)
+  const [values, setValues] = useState<T>(() => (defaultValues || {}) as T)
   const [errors, setErrors] = useState<Record<string, string | undefined>>({})
   const [touched, setTouched] = useState<Record<string, boolean>>({})
 
   const register = useReactHookForm.register
 
-  const handleSubmit = useReactHookForm.handleSubmit<
-    T,
-    DefaultValues
-  >(async (data) => {
+  const handleSubmit = useReactHookForm.handleSubmit<T>(async (data) => {
     try {
       const parsed = schema.parse(data)
       setValues(parsed as T)
