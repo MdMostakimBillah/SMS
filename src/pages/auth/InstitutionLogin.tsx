@@ -501,10 +501,10 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
 
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-4">
-            {/* Email / Teacher ID */}
+            {/* Email */}
             <div>
               <label className={`text-[0.75rem] font-medium mb-1.5 block ${isDark ? 'text-white/50' : 'text-[var(--text-secondary)]'}`}>
-                {isBn ? 'ইমেইল বা শিক্ষক আইডি' : 'Email or Teacher ID'}
+                {isBn ? 'ইমেইল' : 'Email'}
               </label>
               <div className="relative">
                 <Mail size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
@@ -512,7 +512,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
                   type="text"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError('') }}
-                  placeholder={isBn ? 'admin@school.edu.bd বা TCH-2026-001' : 'admin@school.edu.bd or TCH-2026-001'}
+                  placeholder={isBn ? 'admin@school.edu.bd' : 'admin@school.edu.bd'}
                   className={`w-full h-11 pl-10 pr-4 rounded-xl border text-[0.875rem] outline-none transition-all ${
                     isDark
                       ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50 focus:bg-white/[0.07]'
