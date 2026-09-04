@@ -151,7 +151,7 @@ function sendBrandColorToSW(color: string) {
   if (!navigator.serviceWorker) return
   navigator.serviceWorker.ready.then((reg) => {
     const slug = sessionStorage.getItem('edutech_inst_slug')
-    const institutions = useSuperAdminStore.getState().institutions
+    const institutions = useSuperAdminStore.getState().institutions ?? []
     const inst = slug ? institutions.find((i) => i.slug === slug) : null
     const { institution: classInst } = useClassStore.getState()
     reg.active?.postMessage({

@@ -46,7 +46,7 @@ export function resolveInstitution(
 }
 
 export function useSubdomain() {
-  const institutions = useSuperAdminStore((s) => s.institutions)
+  const institutions = useSuperAdminStore((s) => s.institutions) ?? []
 
   const result = useMemo(() => {
     const resolved = resolveInstitution(window.location.hostname, window.location.pathname, institutions)

@@ -25,7 +25,7 @@ export default function AppLayout() {
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const institution = useClassStore((s) => s.institution)
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
-  const institutions = useSuperAdminStore((s) => s.institutions)
+  const institutions = useSuperAdminStore((s) => s.institutions) ?? []
   const stopViewing = useSuperAdminStore((s) => s.stopViewing)
   const { user } = useAuth()
   const navigate = useNavigate()

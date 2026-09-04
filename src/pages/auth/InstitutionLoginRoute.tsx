@@ -11,7 +11,7 @@ export default function InstitutionLoginRoute() {
   const { slug } = useParams<{ slug: string }>()
   const authCtx = useContext(AuthContext)
   const user = authCtx?.user
-  const storeInstitutions = useSuperAdminStore((s) => s.institutions)
+  const storeInstitutions = useSuperAdminStore((s) => s.institutions) ?? []
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
   const stopViewing = useSuperAdminStore((s) => s.stopViewing)
 

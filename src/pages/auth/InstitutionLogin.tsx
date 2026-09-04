@@ -114,7 +114,7 @@ export { loadInstitutionData }
 export default function InstitutionLogin({ subdomain, institution: propInstitution }: { subdomain?: string; institution?: Institution }) {
   const isBn = useBn()
   const navigate = useNavigate()
-  const storeInstitutions = useSuperAdminStore((s) => s.institutions)
+  const storeInstitutions = useSuperAdminStore((s) => s.institutions) ?? []
   const setAppTheme = useAppStore((s) => s.setTheme)
   const setAppLanguage = useAppStore((s) => s.setLanguage)
   const authCtx = useContext(AuthContext)

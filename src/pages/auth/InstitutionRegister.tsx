@@ -116,7 +116,7 @@ export default function InstitutionRegister() {
   const navigate = useNavigate()
   const isBn = document.documentElement.dataset.lang === 'bn'
   const addInstitution = useSuperAdminStore((s) => s.addInstitution)
-  const institutions = useSuperAdminStore((s) => s.institutions)
+  const institutions = useSuperAdminStore((s) => s.institutions) ?? []
 
   const [started, setStarted] = useState(false)
   const [showLoginHint, setShowLoginHint] = useState(false)
