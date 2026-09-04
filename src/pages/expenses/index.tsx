@@ -77,7 +77,7 @@ export default function ExpensesManagementPage() {
     { id: 'expenses' as View, icon: Receipt, label: bn ? 'খরচ' : 'Expenses' },
     { id: 'recurring' as View, icon: RefreshCw, label: bn ? 'পুনরাবৃত্ত' : 'Recurring' },
   ], [bn])
-  const tabs = useMemo(() => allTabs.filter((t) => canRead('expenses', t.id)), [allTabs, canRead])
+  const tabs = useMemo(() => allTabs.filter((t) => canRead('finance.expenses', t.id)), [allTabs, canRead])
 
   const handleTabChange = useCallback((v: View) => { setActiveTab(v); setSearchQuery('') }, [])
 

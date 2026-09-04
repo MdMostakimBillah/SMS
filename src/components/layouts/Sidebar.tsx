@@ -169,7 +169,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
     nav_store: 'store',
     nav_expenses: 'finance.expenses',
     nav_accounting_report: 'accounting',
-    nav_others_income: 'finance',
+    nav_others_income: 'finance.others_income',
     nav_library: 'library',
     nav_transport: 'transport',
     nav_hostel: 'hostel',

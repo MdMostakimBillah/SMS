@@ -103,9 +103,13 @@ export const PERMISSION_TREE: PermissionNode[] = [
         actions: ['view', 'create', 'edit', 'delete', 'approve', 'export'],
         children: [
           { key: 'categories', label: 'Categories', labelBn: 'ক্যাটাগরি', actions: ['view', 'create', 'edit', 'delete'] },
-          { key: 'list', label: 'Expense List', labelBn: 'খরচের তালিকা', actions: ['view', 'create', 'edit', 'delete', 'approve', 'export'] },
+          { key: 'expenses', label: 'Expense List', labelBn: 'খরচের তালিকা', actions: ['view', 'create', 'edit', 'delete', 'approve', 'export'] },
           { key: 'recurring', label: 'Recurring', labelBn: 'পুনরাবৃত্ত', actions: ['view', 'create', 'edit', 'delete'] },
         ],
+      },
+      {
+        key: 'others_income', label: 'Others Income', labelBn: 'অন্যান্য আয়',
+        actions: ['view', 'create', 'edit', 'delete', 'approve', 'export'],
       },
     ],
   },

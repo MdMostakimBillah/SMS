@@ -161,7 +161,7 @@ export default function ExamDashboard() {
     return [
       {
         key: 'planning',
-        permKey: 'exams.configs',
+        permKey: 'exams.planning',
         label: 'Planning',
         labelBn: 'পরিকল্পনা',
         icon: Settings,
@@ -169,7 +169,7 @@ export default function ExamDashboard() {
       },
       {
         key: 'scheduling',
-        permKey: 'exams.routines',
+        permKey: 'exams.scheduling',
         label: 'Scheduling',
         labelBn: 'সময়সূচী',
         icon: Calendar,
@@ -177,7 +177,7 @@ export default function ExamDashboard() {
       },
       {
         key: 'evaluation',
-        permKey: 'exams.marks_entry',
+        permKey: 'exams.evaluation',
         label: 'Evaluation',
         labelBn: 'মূল্যায়ন',
         icon: Edit2,
@@ -193,7 +193,7 @@ export default function ExamDashboard() {
       },
       {
         key: 'promotion',
-        permKey: 'exams.promotions',
+        permKey: 'exams.promotion',
         label: 'Promotion',
         labelBn: 'প্রমোশন',
         icon: GraduationCap,
@@ -277,12 +277,12 @@ export default function ExamDashboard() {
 
   // ── Quick Access Card IDs ──
   const quickAccessCardPermMap = useMemo(() => ({
-    'create-exam': 'exams.configs',
-    'generate-routine': 'exams.routines',
-    'create-seat-plan': 'exams.seat_plans',
-    'enter-marks': 'exams.marks_entry',
+    'create-exam': 'exams.planning',
+    'generate-routine': 'exams.scheduling',
+    'create-seat-plan': 'exams.evaluation',
+    'enter-marks': 'exams.evaluation',
     'publish-result': 'exams.results',
-    'promote-students': 'exams.promotions',
+    'promote-students': 'exams.promotion',
   }), [])
   const quickAccessCardIds = useMemo(() => Object.keys(quickAccessCardPermMap).filter((id) => canRead(quickAccessCardPermMap[id as keyof typeof quickAccessCardPermMap])), [quickAccessCardPermMap, canRead])
 
