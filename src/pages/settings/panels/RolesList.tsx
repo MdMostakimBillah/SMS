@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { Plus, Users, Shield, Trash2 } from 'lucide-react'
 import { usePermissionStore } from '@/store/permissionStore'
@@ -10,7 +10,7 @@ interface Props {
   onEditRole: (roleId: string) => void
 }
 
-export const RolesList = React.memo(function RolesList({ isBn, onBack, onCreateRole, onEditRole }: Props) {
+export function RolesList({ isBn, onBack, onCreateRole, onEditRole }: Props) {
   const bn = isBn
   const { roles, staffPermissions, removeRole } = usePermissionStore()
 
@@ -89,4 +89,4 @@ export const RolesList = React.memo(function RolesList({ isBn, onBack, onCreateR
       </div>
     </SettingsPanel>
   )
-})
+}

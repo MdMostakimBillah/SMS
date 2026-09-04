@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { Save, Search, Check, ChevronDown, ChevronRight, Sparkles, Users, Plus, Trash2, UserPlus, X, Lock, Copy } from 'lucide-react'
 import { usePermissionStore, type PermissionAction } from '@/store/permissionStore'
@@ -13,7 +13,7 @@ interface Props {
   onCreated?: (newRoleId: string) => void
 }
 
-export const RoleEditor = React.memo(function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
+export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const bn = isBn
   const { roles, addRole, updateRole, setRolePerm, setRolePermAll, applyPreset, staffPermissions, addStaff, removeStaff, setStaffPassword } = usePermissionStore()
   const { teachers, departments } = useTeacherStore()
@@ -597,7 +597,7 @@ export const RoleEditor = React.memo(function RoleEditor({ isBn, roleId, onBack,
       </div>
     </SettingsPanel>
   )
-})
+}
 
 function StaffMemberCard({ member, teacher, bn, onRemove, onPasswordChange }: {
   member: { id: string; staffId: string; staffName: string; staffNameBn: string; email: string; defaultPassword: string }

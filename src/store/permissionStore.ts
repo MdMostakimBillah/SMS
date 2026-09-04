@@ -504,15 +504,6 @@ export const usePermissionStore = create<PermissionState>()(
     {
       name: 'edutech-staff-permissions',
       storage: createNamespacedStorage('edutech-staff-permissions'),
-      version: 1,
-      migrate: (persistedState: any, version: number) => {
-        if (version < 1) {
-          persistedState.roles = (persistedState.roles || []).filter(
-            (r: any) => !r.isSystemRole
-          )
-        }
-        return persistedState
-      },
     }
   )
 )

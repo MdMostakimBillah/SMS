@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import { AuthContext } from '@/contexts/AuthContext'
-import { usePermissionStore, type TabPerm, type DataScope, type PermissionEntry } from '@/store/permissionStore'
+import { usePermissionStore, type TabPerm, type DataScope } from '@/store/permissionStore'
 import { getPermissionNode, type PermissionAction, type ActionSet } from '@/lib/permissionConfig'
 
 export type { PermissionAction }
@@ -170,4 +170,9 @@ export function usePermission() {
     canUpdate,
     getTabPerm,
   }
+}
+
+interface PermissionEntry {
+  key: string
+  actions: ActionSet
 }
