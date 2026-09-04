@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 import { PERMISSION_TREE, createActionSet, ROLE_TEMPLATES, getPermissionNode, type PermissionAction, type ActionSet, type DataScope, type PermissionNode } from '@/lib/permissionConfig'
 
 export type { PermissionAction, ActionSet, DataScope }
@@ -544,4 +544,20 @@ function collectKeys(prefix: string): string[] {
 
 registerStoreReset(() => {
   usePermissionStore.setState({ roles: createDefaultRoles(), staffPermissions: [] })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-staff-permissions_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) {
+        usePermissionStore.setState(parsed.state)
+      }
+    }
+  } catch {
+    // ignore
+  }
 })
