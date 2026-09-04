@@ -462,8 +462,11 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
             </div>
             <button
               onClick={() => { setShowAddStaff(!showAddStaff); setStaffSearch(''); setDeptFilter('') }}
+              disabled={!activeRoleId}
               className={`h-7 px-2.5 rounded-lg text-[0.6875rem] font-medium border-none cursor-pointer transition-colors flex items-center gap-1 ${
-                showAddStaff
+                !activeRoleId
+                  ? 'bg-[var(--bg-tertiary)] text-[var(--text-muted)] cursor-not-allowed opacity-50'
+                  : showAddStaff
                   ? 'bg-[var(--red)]/10 text-[var(--red)] hover:bg-[var(--red)]/20'
                   : 'bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)]/20'
               }`}
