@@ -16,6 +16,8 @@ interface User {
   schoolName: string | null
   avatar: string | null
   subdomain: string | null
+  staffId?: string
+  photo?: string | null
 }
 
 interface AuthContextType {
@@ -24,7 +26,7 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, name: string, role?: string) => Promise<void>
-  setInstitutionUser: (email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string) => void
+  setInstitutionUser: (email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string, staffId?: string, photo?: string | null) => void
   logout: () => void
   error: string | null
   clearError: () => void
@@ -136,8 +138,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: parsed.role,
             schoolId: parsed.institutionId || null,
             schoolName: parsed.name || null,
-            avatar: null,
+            avatar: parsed.photo || null,
             subdomain,
+            staffId: parsed.staffId || undefined,
+            photo: parsed.photo || null,
           })
           loginTimestampRef.current = parsed.loginTimestamp || Date.now()
         }
@@ -267,7 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), [])
 
-  const setInstitutionUser = useCallback((email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string) => {
+  const setInstitutionUser = useCallback((email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string, staffId?: string, photo?: string | null) => {
     if (slug) {
       setSlug(slug)
     }
@@ -278,10 +282,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role,
       schoolId: institutionId,
       schoolName: name,
-      avatar: null,
+      avatar: photo || null,
       subdomain,
+      staffId,
+      photo: photo || null,
     })
-    nsSet('user', JSON.stringify({ email, role, name, institutionId, subdomain, slug }))
+    nsSet('user', JSON.stringify({ email, role, name, institutionId, subdomain, slug, staffId, photo }))
     nsSet('institutionId', institutionId)
     nsSet('institutionSubdomain', subdomain)
     sessionStorage.setItem('edutech_inst_subdomain', subdomain)

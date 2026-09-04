@@ -704,16 +704,21 @@ export default React.memo(function Topbar() {
                 width: '1.625rem',
                 height: '1.625rem',
                 borderRadius: '0.375rem',
-                background: 'var(--brand)',
+                background: user?.photo ? 'transparent' : 'var(--brand)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '0.625rem',
                 fontWeight: 700,
                 color: '#fff',
+                overflow: 'hidden',
               }}
             >
-              SA
+              {user?.photo ? (
+                <img src={user.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                (user?.name || 'U').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
+              )}
             </div>
         {!isMobile && (
               <div>
@@ -725,7 +730,7 @@ export default React.memo(function Topbar() {
                     lineHeight: 1,
                   }}
                 >
-                  Admin
+                  {user?.name || (isBn ? 'ব্যবহারকারী' : 'User')}
                 </div>
                 <div
                   style={{
@@ -734,7 +739,7 @@ export default React.memo(function Topbar() {
                     marginTop: '0.0625rem',
                   }}
                 >
-                  Administrator
+                  {user?.role === 'admin' ? (isBn ? 'প্রশাসক' : 'Admin') : user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
                 </div>
               </div>
             )}
@@ -758,7 +763,7 @@ export default React.memo(function Topbar() {
                     width: '2.375rem',
                     height: '2.375rem',
                     borderRadius: '0.625rem',
-                    background: 'var(--brand)',
+                    background: user?.photo ? 'transparent' : 'var(--brand)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -766,9 +771,14 @@ export default React.memo(function Topbar() {
                     fontWeight: 700,
                     color: '#fff',
                     flexShrink: 0,
+                    overflow: 'hidden',
                   }}
                 >
-                  SA
+                  {user?.photo ? (
+                    <img src={user.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    (user?.name || 'U').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
+                  )}
                 </div>
                 <div>
                   <div
@@ -778,9 +788,13 @@ export default React.memo(function Topbar() {
                       color: 'var(--text-primary)',
                     }}
                   >
-                    School Admin
+                    {user?.name || (isBn ? 'ব্যবহারকারী' : 'User')}
                   </div>
-                  <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{user?.email || 'admin@school.edu'}</div>
+                  <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
+                    {user?.role === 'admin' ? (isBn ? 'প্রশাসক' : 'Admin') : user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
+                    {' · '}
+                    {user?.email || 'admin@school.edu'}
+                  </div>
                 </div>
               </div>
 

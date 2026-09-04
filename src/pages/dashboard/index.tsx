@@ -19,6 +19,8 @@ import {
 } from 'lucide-react'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { useBn } from '@/hooks/useBn'
+import { useAuth } from '@/contexts/AuthContext'
+import { usePermission } from '@/hooks/usePermission'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -81,6 +83,8 @@ function DashboardSkeleton() {
 
 export default function DashboardPage() {
   const isBn = useBn()
+  const { user } = useAuth()
+  const { canRead } = usePermission()
   const students = useSessionStudents()
   const teachers = useTeacherStore(useShallow((s) => s.teachers))
   const payments = useFeeStore((s) => s.payments)
@@ -266,7 +270,7 @@ export default function DashboardPage() {
             {(() => {
               const hour = new Date().getHours()
               const greet = hour < 12 ? (isBn ? 'সুপ্রভাত' : 'Good morning') : hour < 17 ? (isBn ? 'শুভ অপরাহ্ন' : 'Good afternoon') : hour < 21 ? (isBn ? 'শুভ সন্ধ্যা' : 'Good evening') : (isBn ? 'শুভ রাত্রি' : 'Good night')
-              return `${greet}, Admin 👋`
+              return `${greet}, ${user?.name || (isBn ? 'ব্যবহারকারী' : 'User')} 👋`
             })()}
           </h1>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.1875rem' }}>
@@ -322,35 +326,39 @@ export default function DashboardPage() {
       {/* Stat Cards */}
       <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col4, gap }}>
         {[
-          {
-            labelBn: 'মোট ছাত্র',
-            labelEn: 'Total Students',
-            value: totalStudents,
-            icon: <Users size={14} />,
-            color: 'var(--brand)',
-          },
-          {
-            labelBn: 'সক্রিয় ছাত্র',
-            labelEn: 'Active Students',
-            value: approvedStudents,
-            icon: <GraduationCap size={14} />,
-            color: 'var(--green)',
-          },
-          {
-            labelBn: 'ছাত্র (ছেলে/মেয়ে)',
-            labelEn: 'M/F Students',
-            value: `${maleStudents}/${femaleStudents}`,
-            icon: <Users size={14} />,
-            color: 'var(--teal)',
-          },
-          {
-            labelBn: 'কর্মচারী বেতন',
-            labelEn: 'Employee Salary',
-            value: totalTeacherSalary,
-            icon: <Wallet size={14} />,
-            color: 'var(--amber)',
-            isCurrency: true,
-          },
+          ...(canRead('students') ? [
+            {
+              labelBn: 'মোট ছাত্র',
+              labelEn: 'Total Students',
+              value: totalStudents,
+              icon: <Users size={14} />,
+              color: 'var(--brand)',
+            },
+            {
+              labelBn: 'সক্রিয় ছাত্র',
+              labelEn: 'Active Students',
+              value: approvedStudents,
+              icon: <GraduationCap size={14} />,
+              color: 'var(--green)',
+            },
+            {
+              labelBn: 'ছাত্র (ছেলে/মেয়ে)',
+              labelEn: 'M/F Students',
+              value: `${maleStudents}/${femaleStudents}`,
+              icon: <Users size={14} />,
+              color: 'var(--teal)',
+            },
+          ] : []),
+          ...(canRead('teachers') ? [
+            {
+              labelBn: 'কর্মচারী বেতন',
+              labelEn: 'Employee Salary',
+              value: totalTeacherSalary,
+              icon: <Wallet size={14} />,
+              color: 'var(--amber)',
+              isCurrency: true,
+            },
+          ] : []),
         ].map((s) => (
           <div
             key={s.labelEn}
@@ -391,6 +399,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Finance Stat Cards */}
+      {canRead('finance') && (
       <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col4, gap }}>
         {[
           {
@@ -459,6 +468,7 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+      )}
 
       {/* Todo / Tasks Section */}
       <div className="gsap-fade-up" style={{ display: 'grid', gridTemplateColumns: col2, gap }}>

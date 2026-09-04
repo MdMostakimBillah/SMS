@@ -9,6 +9,7 @@ import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark, type ThemeColors } from '@/store/classStore'
 import { nsSet, migrateOldKeys, setSlug } from '@/lib/storage'
 import { usePermissionStore } from '@/store/permissionStore'
+import { useTeacherStore } from '@/store/teacherStore'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_DURATION = 5 * 60 * 1000 // 5 minutes
@@ -119,6 +120,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   const authCtx = useContext(AuthContext)
   const setInstitutionUser = authCtx?.setInstitutionUser
   const staffPermissions = usePermissionStore((s) => s.staffPermissions)
+  const teachers = useTeacherStore((s) => s.teachers)
 
   const institution = useMemo(() => {
     if (propInstitution) return propInstitution
@@ -359,12 +361,14 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           })
         }
         const teacherName = isBn ? matchedStaff.staffNameBn : matchedStaff.staffName
+        const teacherRecord = teachers.find((t) => t.id === matchedStaff.staffId)
         if (setInstitutionUser) {
-          setInstitutionUser(matchedStaff.email, teacherName, matchedStaff.role || 'teacher', institution.id, institution.subdomain, institution.slug)
+          setInstitutionUser(matchedStaff.email, teacherName, matchedStaff.role || 'teacher', institution.id, institution.subdomain, institution.slug, matchedStaff.staffId, teacherRecord?.photo || null)
         } else {
           nsSet('user', JSON.stringify({
             email: matchedStaff.email, role: matchedStaff.role || 'teacher', name: teacherName,
-            institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug
+            institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug,
+            staffId: matchedStaff.staffId, photo: teacherRecord?.photo || null
           }))
           nsSet('institutionId', institution.id)
           nsSet('institutionSubdomain', institution.subdomain)

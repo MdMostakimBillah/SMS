@@ -17,7 +17,7 @@ export function usePermission() {
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
 
   const myStaff = !isAdmin
-    ? staffPermissions.find((s) => s.staffId === user?.id)
+    ? staffPermissions.find((s) => s.staffId === user?.staffId || s.staffId === user?.id)
     : undefined
 
   const myRole = myStaff ? roles.find((r) => r.id === myStaff.roleId) : undefined
