@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Plus, Megaphone, Pin, PinOff, Edit3, Trash2, X, AlertTriangle, Info } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNoticeStore, type Notice, type NoticeTarget, type NoticePriority, noticeId } from '@/store/noticeStore'
 import { useAuth } from '@/contexts/AuthContext'
@@ -32,6 +33,7 @@ const PRIORITY_ICONS: Record<NoticePriority, typeof AlertTriangle> = {
 
 export default function NoticeBoardPage() {
   const bn = useBn()
+  usePermission()
   const { isMobile } = useWindowSize()
   const notices = useNoticeStore((s) => s.notices)
   const addNotice = useNoticeStore((s) => s.addNotice)

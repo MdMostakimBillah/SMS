@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Home, BedDouble, Users, Search } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useHostelStore, pruneExpiredHostelAssignments } from '@/store/hostelStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { toBnNum } from '@/lib/i18n'
@@ -36,6 +37,7 @@ function StatCards({ stats, bn }: { stats: { totalRooms: number; activeRooms: nu
 
 export default function HostelPage() {
   const bn = useBn()
+  const { canRead } = usePermission()
   const rooms = useHostelStore((s) => s.rooms)
   const assignments = useHostelStore((s) => s.assignments)
 
@@ -70,7 +72,7 @@ export default function HostelPage() {
   const tabs = useMemo(() => [
     { id: 'rooms' as View, icon: Home, label: bn ? 'রুম' : 'Rooms' },
     { id: 'students' as View, icon: Users, label: bn ? 'ছাত্র' : 'Students' },
-  ], [bn])
+  ].filter((t) => canRead('hostel', t.id)), [bn, canRead])
 
   const handleTabChange = useCallback((v: View) => { setActiveTab(v); setSearchQuery('') }, [])
 

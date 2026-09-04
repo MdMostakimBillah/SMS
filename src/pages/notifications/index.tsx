@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Bell, CheckCircle, AlertTriangle, Info, XCircle, Trash2, CheckCheck } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNotificationStore, type Notification, type NotificationType } from '@/store/notificationStore'
 import { useNavigate } from 'react-router-dom'
@@ -15,6 +16,7 @@ const TYPE_CONFIG: Record<NotificationType, { icon: typeof Bell; color: string; 
 
 export default function NotificationsPage() {
   const bn = useBn()
+  usePermission()
   const { isMobile } = useWindowSize()
   const navigate = useNavigate()
   const notifications = useNotificationStore((s) => s.notifications)

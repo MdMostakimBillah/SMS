@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { TrendingUp, TrendingDown, DollarSign, MoreVertical, ChevronDown, FileSpreadsheet, FileText, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useFeeStore } from '@/store/feeStore'
 import { useOthersIncomeStore } from '@/store/othersIncomeStore'
 import { useExpenseStore } from '@/store/expenseStore'
@@ -45,6 +46,7 @@ function StatCards({ stats, bn }: { stats: { totalIncome: number; totalExpenses:
 
 export default function AccountingReportPage() {
   const bn = useBn()
+  const { canRead } = usePermission()
   const feePayments = useFeeStore((s) => s.payments)
   const feeStructures = useFeeStore((s) => s.structures)
   const otherCategories = useOthersIncomeStore((s) => s.categories)
@@ -210,7 +212,7 @@ export default function AccountingReportPage() {
     { id: 'income' as View, icon: TrendingUp, label: bn ? 'আয়' : 'Income' },
     { id: 'expenses' as View, icon: TrendingDown, label: bn ? 'খরচ' : 'Expenses' },
     { id: 'profit-loss' as View, icon: DollarSign, label: bn ? 'লাভ/ক্ষতি' : 'Profit/Loss' },
-  ], [bn])
+  ].filter((t) => canRead('accounting', t.id)), [bn, canRead])
 
   const fmt = (n: number) => `৳${n.toLocaleString()}`
 

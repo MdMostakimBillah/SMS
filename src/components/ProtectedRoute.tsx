@@ -1,8 +1,35 @@
-import { Navigate, Outlet, useParams } from 'react-router-dom'
+import { Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import { usePermission } from '@/hooks/usePermission'
 import { LOGIN_PATH } from '@/lib/constants'
 import { INSTITUTION_ROLES, type InstitutionRole } from '@/lib/navUtils'
+
+const ROUTE_TO_PERMISSION: Record<string, string> = {
+  dashboard: 'dashboard',
+  classes: 'classes',
+  teachers: 'teachers',
+  students: 'students',
+  hr: 'hr',
+  attendance: 'attendance',
+  exams: 'exams',
+  syllabus: 'syllabus',
+  assignments: 'assignments',
+  online: 'online',
+  finance: 'finance',
+  payroll: 'payroll',
+  store: 'store',
+  expenses: 'finance.expenses',
+  'accounting-report': 'accounting',
+  'others-income': 'finance.others_income',
+  library: 'library',
+  transport: 'transport',
+  hostel: 'hostel',
+  messages: 'messages',
+  notice: 'notice',
+  notifications: 'notifications',
+  settings: 'settings',
+}
 
 function getLoginRedirect(slug?: string): string {
   const s = slug || sessionStorage.getItem('edutech_inst_slug')
@@ -13,6 +40,8 @@ function getLoginRedirect(slug?: string): string {
 export function ProtectedRoute() {
   const { user, loading } = useAuth()
   const { role, slug } = useParams<{ role: string; slug: string }>()
+  const location = useLocation()
+  const { canRead, isAdmin } = usePermission()
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
 
   if (loading) return null
@@ -33,6 +62,18 @@ export function ProtectedRoute() {
         if (user.role === 'super_admin') return <Navigate to="/super-admin/admin/dashboard" replace />
         if (slug) return <Navigate to={`/i/${slug}/${userRole}/dashboard`} replace />
         return <Navigate to="/super-admin/admin/dashboard" replace />
+      }
+
+      // Permission check for institution pages (skip for super_admin viewing)
+      if (!isAdmin && user.role !== 'super_admin') {
+        const pathParts = location.pathname.split('/')
+        // URL structure: /i/{slug}/{role}/{page}/...
+        const pageSegment = pathParts[4] || ''
+        const permKey = ROUTE_TO_PERMISSION[pageSegment]
+        if (permKey && !canRead(permKey)) {
+          const s = sessionStorage.getItem('edutech_inst_slug')
+          return <Navigate to={`/i/${s}/${userRole}/dashboard`} replace />
+        }
       }
     }
   }

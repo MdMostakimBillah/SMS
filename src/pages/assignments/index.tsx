@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import gsap from 'gsap'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAssignmentStore } from '@/store/assignmentStore'
 import type { Assignment, AssignmentStatus } from '@/store/assignmentStore'
@@ -76,6 +77,7 @@ function PageSkeleton() {
 
 export default function AssignmentPage() {
   const isBn = useBn()
+  usePermission()
   const { isMobile } = useWindowSize()
   const classes = useClassStore((s) => s.classes)
   const teachers = useTeacherStore((s) => s.teachers)

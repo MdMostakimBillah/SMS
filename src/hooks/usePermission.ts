@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import { AuthContext } from '@/contexts/AuthContext'
-import { usePermissionStore, type TabPerm, type DataScope } from '@/store/permissionStore'
+import { usePermissionStore, type TabPerm, type DataScope, type PermissionEntry } from '@/store/permissionStore'
 import { getPermissionNode, type PermissionAction, type ActionSet } from '@/lib/permissionConfig'
 
 export type { PermissionAction }
@@ -35,7 +35,11 @@ export function usePermission() {
     const base = roleEntry?.actions || ALL_FALSE
     const override = overrideEntry?.actions
 
+    // Override explicitly denies → false
+    if (override && action in override && !override[action]) return false
+    // Override explicitly allows → true
     if (override?.[action]) return true
+    // Fallback to role permission
     return base[action]
   }
 
@@ -166,9 +170,4 @@ export function usePermission() {
     canUpdate,
     getTabPerm,
   }
-}
-
-interface PermissionEntry {
-  key: string
-  actions: ActionSet
 }

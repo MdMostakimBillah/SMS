@@ -13,6 +13,59 @@ export interface NavChainItem {
 }
 
 /**
+ * Truncates the chain to the given index (inclusive).
+ * @param index - The index to truncate to
+ * @returns The truncated chain
+ */
+export function truncateChain(index: number): NavChainItem[] {
+  try {
+    const chain = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    const truncated = chain.slice(0, index + 1)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(truncated))
+    return truncated
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Truncates the chain to the given index and navigates to that page.
+ * @param index - The index to truncate to and navigate to
+ * @param navigateFn - Router navigate function
+ */
+export function truncateAndNavigate(index: number, navigateFn: (path?: string) => void): void {
+  truncateChain(index)
+  if (index < getChainLength() - 1) {
+    const path = getChainPath(index)
+    if (path) navigateFn(path)
+  }
+}
+
+/** Returns the length of the current chain. */
+function getChainLength(): number {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]').length
+  } catch {
+    return 0
+  }
+}
+
+/** Returns the path at the given index in the current chain. */
+function getChainPath(index: number): string | undefined {
+  try {
+    const chain = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    return index >= 0 && index < chain.length ? chain[index].path : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** Utility for breadcrumb onClick handlers that truncates chain and navigates. */
+export function chainClickHandler(index: number, navigateFn: () => void): void {
+  truncateAndNavigate(index, navigateFn)
+}
+
+/**
  * Hook providing methods to manage a localStorage-based navigation breadcrumb chain.
  * @returns Object with chain manipulation helpers.
  */
@@ -48,9 +101,13 @@ export function useNavChain() {
   }, [getChain, setChain])
 
   /** Truncates the chain to the given index (inclusive). */
-  const truncateChain = useCallback((index: number) => {
-    const chain = getChain()
-    setChain(chain.slice(0, index + 1))
+  const truncateChainLocal = useCallback((index: number) => {
+    try {
+      const chain = getChain()
+      setChain(chain.slice(0, index + 1))
+    } catch {
+      // ignore
+    }
   }, [getChain, setChain])
 
   /** Removes the entire navigation chain from localStorage. */
@@ -82,7 +139,7 @@ export function useNavChain() {
     setChain,
     pushToChain,
     popFromChain,
-    truncateChain,
+    truncateChain: truncateChainLocal,
     clearChain,
     setRedirectTimestamp,
     isRedirectRecent,
@@ -101,3 +158,8 @@ export function useNavChainClearOnMount() {
     clearStaleChain()
   }, [clearStaleChain])
 }
+
+/**
+ * Exported utilities for navigation chain management.
+ */
+// truncateChain, truncateAndNavigate, chainClickHandler are already exported above

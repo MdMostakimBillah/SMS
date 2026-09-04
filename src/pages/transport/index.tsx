@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Bus, MapPin, Users, Search } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useTransportStore, pruneExpiredAssignments } from '@/store/transportStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { toBnNum } from '@/lib/i18n'
@@ -37,6 +38,7 @@ function StatCards({ stats, bn }: { stats: { totalVehicles: number; activeRoutes
 
 export default function TransportPage() {
   const bn = useBn()
+  const { canRead } = usePermission()
   const vehicles = useTransportStore((s) => s.vehicles)
   const routes = useTransportStore((s) => s.routes)
   const assignments = useTransportStore((s) => s.assignments)
@@ -73,7 +75,7 @@ export default function TransportPage() {
     { id: 'vehicles' as View, icon: Bus, label: bn ? 'যানবাহন' : 'Vehicles' },
     { id: 'routes' as View, icon: MapPin, label: bn ? 'রুট' : 'Routes' },
     { id: 'students' as View, icon: Users, label: bn ? 'ছাত্র' : 'Students' },
-  ], [bn])
+  ].filter((t) => canRead('transport', t.id)), [bn, canRead])
 
   const handleTabChange = useCallback((v: View) => { setActiveTab(v); setSearchQuery('') }, [])
 

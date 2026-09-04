@@ -91,33 +91,7 @@ function buildRolePermissions(templateKey: string): PermissionEntry[] {
 }
 
 function createDefaultRoles(): RolePerm[] {
-  const now = new Date().toISOString()
-  return [
-    {
-      id: 'role-admin',
-      name: 'Institution Admin',
-      nameBn: 'প্রতিষ্ঠান প্রশাসক',
-      description: 'Full institution access with all permissions',
-      descriptionBn: 'সম্পূর্ণ প্রতিষ্ঠান অ্যাক্সেস',
-      isSystemRole: true,
-      permissions: buildDefaultPermissions().map((e) => ({ key: e.key, actions: createActionSet(PERMISSION_TREE.find((n) => e.key === n.key)?.actions || []) })),
-      dataScope: 'all',
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: 'role-teacher',
-      name: 'Teacher',
-      nameBn: 'শিক্ষক',
-      description: 'Academic modules — attendance, exams, classes',
-      descriptionBn: 'একাডেমিক মডিউল — উপস্থিতি, পরীক্ষা, শ্রেণি',
-      isSystemRole: true,
-      permissions: buildRolePermissions('teacher'),
-      dataScope: 'own_class',
-      createdAt: now,
-      updatedAt: now,
-    },
-  ]
+  return []
 }
 
 // Merge role permissions with user overrides
@@ -130,7 +104,10 @@ function getEffectiveActions(rolePerms: PermissionEntry[], overrides: Permission
 
   const merged = { ...base }
   for (const action of Object.keys(overrideEntry.actions) as PermissionAction[]) {
-    if (overrideEntry.actions[action]) {
+    // Override explicitly denies → false
+    if (action in overrideEntry.actions && !overrideEntry.actions[action]) {
+      merged[action] = false
+    } else if (overrideEntry.actions[action]) {
       merged[action] = true
     }
   }
@@ -164,6 +141,7 @@ interface PermissionState {
   // Data scope
   setStaffDataScope: (staffId: string, scope: DataScope) => void
   setRoleDataScope: (roleId: string, scope: DataScope) => void
+  setStaffPassword: (staffPermId: string, password: string) => void
 
   // Getters
   getRole: (roleId: string) => RolePerm | undefined
@@ -210,11 +188,10 @@ export const usePermissionStore = create<PermissionState>()(
         })),
 
       removeRole: (id) => {
-        if (id === 'role-admin' || id === 'role-teacher') return
         set((state) => ({
           roles: state.roles.filter((r) => r.id !== id),
           staffPermissions: state.staffPermissions.map((s) =>
-            s.roleId === id ? { ...s, roleId: 'role-teacher' } : s
+            s.roleId === id ? { ...s, roleId: '' } : s
           ),
         }))
       },
@@ -390,6 +367,13 @@ export const usePermissionStore = create<PermissionState>()(
           ),
         })),
 
+      setStaffPassword: (staffPermId, password) =>
+        set((state) => ({
+          staffPermissions: state.staffPermissions.map((s) =>
+            s.id === staffPermId ? { ...s, defaultPassword: password } : s
+          ),
+        })),
+
       // ─── Getters ──────────────────────────────────────────
 
       getRole: (roleId) => get().roles.find((r) => r.id === roleId),
@@ -543,7 +527,7 @@ function collectKeys(prefix: string): string[] {
 }
 
 registerStoreReset(() => {
-  usePermissionStore.setState({ roles: createDefaultRoles(), staffPermissions: [] })
+  usePermissionStore.setState({ roles: [], staffPermissions: [] })
 })
 
 registerStoreLoad(() => {

@@ -26,7 +26,7 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, name: string, role?: string) => Promise<void>
-  setInstitutionUser: (email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string, staffId?: string, photo?: string | null) => void
+  setInstitutionUser: (email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string, staffId?: string, photo?: string | null, schoolName?: string) => void
   logout: () => void
   error: string | null
   clearError: () => void
@@ -271,7 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), [])
 
-  const setInstitutionUser = useCallback((email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string, staffId?: string, photo?: string | null) => {
+  const setInstitutionUser = useCallback((email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string, staffId?: string, photo?: string | null, schoolName?: string) => {
     if (slug) {
       setSlug(slug)
     }
@@ -281,13 +281,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name,
       role,
       schoolId: institutionId,
-      schoolName: name,
+      schoolName: schoolName || name,
       avatar: photo || null,
       subdomain,
       staffId,
       photo: photo || null,
     })
-    nsSet('user', JSON.stringify({ email, role, name, institutionId, subdomain, slug, staffId, photo }))
+    nsSet('user', JSON.stringify({ email, role, name, institutionId, subdomain, slug, staffId, photo, schoolName: schoolName || name }))
     nsSet('institutionId', institutionId)
     nsSet('institutionSubdomain', subdomain)
     sessionStorage.setItem('edutech_inst_subdomain', subdomain)

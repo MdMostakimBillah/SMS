@@ -1,6 +1,7 @@
 export const API_BASE = import.meta.env.VITE_API_URL || ''
 
 let authToken: string | null = null
+let requestCount = 0
 
 export function setAuthToken(token: string | null) {
   authToken = token
@@ -10,11 +11,55 @@ export function getAuthToken(): string | null {
   return authToken
 }
 
+export function incrementRequestCount(): void {
+  requestCount++
+}
+
+export function decrementRequestCount(): void {
+  requestCount = Math.max(0, requestCount - 1)
+}
+
+export function getRequestCount(): number {
+  return requestCount
+}
+
+interface RetryConfig {
+  maxRetries: number
+  baseDelay: number
+}
+
+const defaultRetryConfig: RetryConfig = {
+  maxRetries: 2,
+  baseDelay: 1000,
+}
+
+interface RequestInterceptor {
+  (options: ApiOptions): ApiOptions
+}
+
+let beforeRequestInterceptors: RequestInterceptor[] = []
+let afterResponseInterceptors: ((data: any) => any)[] = []
+
+export function setApiRequestInterceptor(interceptor: RequestInterceptor): void {
+  beforeRequestInterceptors = [interceptor]
+}
+
+export function clearApiRequestQueue(): void {
+  requestCount = 0
+}
+
+export function useApiLoading(): boolean {
+  return getRequestCount() > 0
+}
+
 interface ApiOptions {
   method?: string
   body?: unknown
   headers?: Record<string, string>
   timeout?: number
+  retry?: number
+  onStart?: () => void
+  onError?: (err: ApiError) => void
 }
 
 export class ApiError extends Error {
@@ -26,41 +71,88 @@ export class ApiError extends Error {
   }
 }
 
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  pageSize: number
+}
+
 export async function apiRequest<T = unknown>(
   path: string,
   options: ApiOptions = {}
 ): Promise<T> {
-  const { method = 'GET', body, headers = {}, timeout = 15000 } = options
+  const { method = 'GET', body, headers = {}, timeout = 15000, retry = defaultRetryConfig.maxRetries, onStart, onError } = options
 
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeout)
+  incrementRequestCount()
+  onStart && onStart()
 
-  try {
-    const res = await fetch(`${API_BASE}${path}`, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-        ...headers,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-      signal: controller.signal,
-    })
+  let lastError: ApiError | null = null
 
-    if (!res.ok) {
-      let errorMsg = `Request failed (${res.status})`
-      try {
-        const data = await res.json()
-        if (data.error) errorMsg = data.error
-      } catch { /* non-JSON response */ }
-      throw new ApiError(errorMsg, res.status)
+  for (let attempt = 0; attempt <= retry; attempt++) {
+    try {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), timeout)
+
+      const res = await fetch(`${API_BASE}${path}`, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          ...headers,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      })
+
+      clearTimeout(timer)
+
+      if (!res.ok) {
+        let errorMsg = `Request failed (${res.status})`
+        try {
+          const data = await res.json()
+          if (data.error) errorMsg = data.error
+        } catch { /* non-JSON response */ }
+        const apiError = new ApiError(errorMsg, res.status)
+        lastError = apiError
+        if (attempt < retry) {
+          const delay = defaultRetryConfig.baseDelay * 2 ** attempt
+          await new Promise((resolve) => setTimeout(resolve, delay))
+          continue
+        }
+        onError && onError(apiError)
+        throw apiError
+      }
+
+      const data = await res.json()
+
+      afterResponseInterceptors.forEach((interceptor) => {
+        // interceptor can transform data
+      })
+
+      return data as T
+    } catch (err) {
+      if (err instanceof ApiError) {
+        lastError = err
+        if (attempt < retry) {
+          const delay = defaultRetryConfig.baseDelay * 2 ** attempt
+          await new Promise((resolve) => setTimeout(resolve, delay))
+          continue
+        }
+        onError && onError(err)
+        throw err
+      }
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        onError && onError(new ApiError('Request timed out', 0))
+        throw new ApiError('Request timed out', 0)
+      }
+      onError && onError(new ApiError(String(err), 0))
+      throw new ApiError(String(err), 0)
     }
-
-    const data = await res.json()
-    return data as T
-  } finally {
-    clearTimeout(timer)
   }
+
+  decrementRequestCount()
+  throw lastError || new ApiError('Unexpected error', 0)
 }
 
 export interface AuthResponse {
@@ -140,7 +232,6 @@ export interface TeacherData {
   salary: string | null
   salaryStartDate: string | null
   bonus: string | null
-  overtime: string | null
   festivalBonus: string | null
   status: string
   category: string | null
@@ -150,7 +241,6 @@ export interface TeacherData {
   fatherNameEn: string | null
   fatherNameBn: string | null
   fatherPhone: string | null
-  fatherNid: string | null
   motherNameEn: string | null
   motherNameBn: string | null
   motherPhone: string | null

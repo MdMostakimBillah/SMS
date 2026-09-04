@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
-import { Save, Search, Check, ChevronDown, ChevronRight, Sparkles, Users, Plus, Trash2, UserPlus, X } from 'lucide-react'
+import { Save, Search, Check, ChevronDown, ChevronRight, Sparkles, Users, Plus, Trash2, UserPlus, X, Lock, Copy } from 'lucide-react'
 import { usePermissionStore, type PermissionAction } from '@/store/permissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { PERMISSION_TREE, getPermissionNode, ROLE_TEMPLATES, type PermissionNode, type ActionSet, createActionSet } from '@/lib/permissionConfig'
@@ -13,9 +13,9 @@ interface Props {
   onCreated?: (newRoleId: string) => void
 }
 
-export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
+export const RoleEditor = React.memo(function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const bn = isBn
-  const { roles, addRole, updateRole, setRolePerm, setRolePermAll, applyPreset, staffPermissions, addStaff, removeStaff } = usePermissionStore()
+  const { roles, addRole, updateRole, setRolePerm, setRolePermAll, applyPreset, staffPermissions, addStaff, removeStaff, setStaffPassword } = usePermissionStore()
   const { teachers, departments } = useTeacherStore()
   const role = roleId ? roles.find((r) => r.id === roleId) : null
   const isCreate = !roleId
@@ -562,32 +562,14 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
               {assignedStaff.map((member) => {
                 const teacher = teachers.find((t) => t.id === member.staffId)
                 return (
-                  <div
+                  <StaffMemberCard
                     key={member.id}
-                    className="flex items-center justify-between p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-[var(--brand)]/10 flex items-center justify-center shrink-0 overflow-hidden">
-                        {teacher?.photo ? (
-                          <img src={teacher.photo} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-[0.625rem] font-semibold text-[var(--brand)]">
-                            {member.staffName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">
-                        {bn ? member.staffNameBn : member.staffName}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeStaff(member.id)}
-                      className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 cursor-pointer bg-transparent border-none transition-colors shrink-0"
-                      title={bn ? 'সরান' : 'Remove'}
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
+                    member={member}
+                    teacher={teacher}
+                    bn={bn}
+                    onRemove={() => removeStaff(member.id)}
+                    onPasswordChange={(pw) => setStaffPassword(member.id, pw)}
+                  />
                 )
               })}
             </div>
@@ -614,5 +596,106 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
         </div>
       </div>
     </SettingsPanel>
+  )
+})
+
+function StaffMemberCard({ member, teacher, bn, onRemove, onPasswordChange }: {
+  member: { id: string; staffId: string; staffName: string; staffNameBn: string; email: string; defaultPassword: string }
+  teacher: { photo?: string } | undefined
+  bn: boolean
+  onRemove: () => void
+  onPasswordChange: (pw: string) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [pw, setPw] = useState(member.defaultPassword)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(member.email + ' / ' + member.defaultPassword)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+
+  const handleSavePw = () => {
+    if (pw.trim()) {
+      onPasswordChange(pw.trim())
+      setEditing(false)
+    }
+  }
+
+  return (
+    <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]">
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full bg-[var(--brand)]/10 flex items-center justify-center shrink-0 overflow-hidden">
+            {teacher?.photo ? (
+              <img src={teacher.photo} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-[0.625rem] font-semibold text-[var(--brand)]">
+                {member.staffName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+              </span>
+            )}
+          </div>
+          <div>
+            <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">
+              {bn ? member.staffNameBn : member.staffName}
+            </div>
+            <div className="text-[0.6875rem] text-[var(--text-muted)]">
+              {bn ? 'লগইন আইডি' : 'Login ID'}: {member.email}
+            </div>
+            <div className="flex items-center gap-1.5 mt-1">
+              <Lock size={10} className="text-[var(--text-muted)]" />
+              {editing ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    value={pw}
+                    onChange={(e) => setPw(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSavePw()}
+                    className="h-6 px-1.5 w-24 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[0.6875rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSavePw}
+                    className="p-0.5 rounded bg-[var(--brand)]/10 text-[var(--brand)] border-none cursor-pointer"
+                  >
+                    <Check size={10} />
+                  </button>
+                  <button
+                    onClick={() => { setEditing(false); setPw(member.defaultPassword) }}
+                    className="p-0.5 rounded bg-[var(--red)]/10 text-[var(--red)] border-none cursor-pointer"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ) : (
+                <span
+                  className="text-[0.6875rem] text-[var(--text-muted)] cursor-pointer hover:text-[var(--brand)]"
+                  onClick={() => setEditing(true)}
+                >
+                  {bn ? 'পাসওয়ার্ড' : 'Password'}: {member.defaultPassword}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-0.5 shrink-0">
+          <button
+            onClick={handleCopy}
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--brand)] hover:bg-[var(--brand)]/10 cursor-pointer bg-transparent border-none transition-colors"
+            title={bn ? 'কপি করুন' : 'Copy credentials'}
+          >
+            {copied ? <Check size={13} className="text-[var(--green)]" /> : <Copy size={13} />}
+          </button>
+          <button
+            onClick={onRemove}
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 cursor-pointer bg-transparent border-none transition-colors"
+            title={bn ? 'সরান' : 'Remove'}
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }

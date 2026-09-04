@@ -119,7 +119,6 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   const setAppLanguage = useAppStore((s) => s.setLanguage)
   const authCtx = useContext(AuthContext)
   const setInstitutionUser = authCtx?.setInstitutionUser
-  const staffPermissions = usePermissionStore((s) => s.staffPermissions)
   const teachers = useTeacherStore((s) => s.teachers)
 
   const institution = useMemo(() => {
@@ -324,7 +323,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           })
         }
         if (setInstitutionUser) {
-          setInstitutionUser(email, institution.name, 'admin', institution.id, institution.subdomain, institution.slug)
+          setInstitutionUser(email, institution.name, 'admin', institution.id, institution.subdomain, institution.slug, undefined, undefined, institution.name)
         } else {
           nsSet('user', JSON.stringify({
             email, role: 'admin', name: institution.name, institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug
@@ -338,12 +337,15 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
       }
 
       // Teacher / Staff login — match staffId or email against permission store
+      // First ensure slug is set so permission store loads correct data
+      setSlug(institution.slug)
       const inputLower = email.trim().toLowerCase()
-      const matchedStaff = staffPermissions.find(
+      // Read directly from store to get freshly loaded data
+      const currentStaffPermissions = usePermissionStore.getState().staffPermissions || []
+      const matchedStaff = currentStaffPermissions.find(
         (s) => s.staffId.toLowerCase() === inputLower || s.email.toLowerCase() === inputLower
       )
       if (matchedStaff && password === matchedStaff.defaultPassword) {
-        setSlug(institution.slug)
         sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
         migrateOldKeys(institution.slug)
         loadInstitutionData(institution)
@@ -363,7 +365,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         const teacherName = isBn ? matchedStaff.staffNameBn : matchedStaff.staffName
         const teacherRecord = teachers.find((t) => t.id === matchedStaff.staffId)
         if (setInstitutionUser) {
-          setInstitutionUser(matchedStaff.email, teacherName, matchedStaff.role || 'teacher', institution.id, institution.subdomain, institution.slug, matchedStaff.staffId, teacherRecord?.photo || null)
+          setInstitutionUser(matchedStaff.email, teacherName, matchedStaff.role || 'teacher', institution.id, institution.subdomain, institution.slug, matchedStaff.staffId, teacherRecord?.photo || null, institution.name)
         } else {
           nsSet('user', JSON.stringify({
             email: matchedStaff.email, role: matchedStaff.role || 'teacher', name: teacherName,

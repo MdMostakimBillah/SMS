@@ -28,6 +28,7 @@ import type { SyllabusEntry, SyllabusChapter, SyllabusTopic } from '@/store/syll
 import { SyllabusPDFOptionsModal } from './SyllabusPDFOptionsModal'
 import { printRawHTML } from '@/lib/pdf'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
+import { usePermission } from '@/hooks/usePermission'
 import { useNavPath } from '@/hooks/useNavPath'
 import { Skeleton, SkeletonCard, SkeletonLine } from '@/components/ui/Skeleton'
 
@@ -61,6 +62,7 @@ export default function SyllabusPage() {
   const isBn = useBn()
   const navigate = useNavigate()
   const nav = useNavPath()
+  usePermission()
   const classes = useClassStore((s) => s.classes)
   const currentSession = useClassStore((s) => s.institution.currentSession)
   const subjects = useTeacherStore((s) => s.subjects)

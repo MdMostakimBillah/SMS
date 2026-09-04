@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Settings,
@@ -9,6 +9,7 @@ import {
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { usePermission } from '@/hooks/usePermission'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import { useClassStore } from '@/store/classStore'
 import { useShallow } from 'zustand/shallow'
@@ -46,6 +47,7 @@ export default function ClassesPage() {
   )
   const { students } = useAdmissionStore()
   const isBn = useBn()
+  const { canRead } = usePermission()
 
   const [activeTab, setActiveTab] = useState<'institution' | 'classes' | 'routine'>('institution')
   const [editingInst, setEditingInst] = useState(false)
@@ -59,12 +61,24 @@ export default function ClassesPage() {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 
+  const tabs = useMemo(() => [
+    { id: 'institution' as const, icon: Settings, label: isBn ? 'প্রতিষ্ঠান' : 'Institution' },
+    { id: 'classes' as const, icon: Users, label: isBn ? 'শ্রেণি' : 'Classes' },
+    { id: 'routine' as const, icon: CalendarDays, label: isBn ? 'রুটিন' : 'Routine' },
+  ].filter((t) => canRead('classes', t.id)), [isBn, canRead])
+
   useTabSlider({
     activeTab,
     tabRefs,
     sliderRef,
     getContainer: (slider) => slider?.parentElement ?? null,
   })
+
+  useEffect(() => {
+    if (tabs.length > 0 && !tabs.find((t) => t.id === activeTab)) {
+      setActiveTab(tabs[0].id)
+    }
+  }, [tabs, activeTab])
 
   const handleSaveInstitution = () => {
     updateInstitution(instForm)
@@ -120,11 +134,7 @@ export default function ClassesPage() {
             zIndex: 0,
           }}
         />
-        {[
-          { id: 'institution' as const, icon: Settings, label: isBn ? 'প্রতিষ্ঠান' : 'Institution' },
-          { id: 'classes' as const, icon: Users, label: isBn ? 'শ্রেণি' : 'Classes' },
-          { id: 'routine' as const, icon: CalendarDays, label: isBn ? 'রুটিন' : 'Routine' },
-        ].map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.id}
             ref={(el) => { if (el) tabRefs.current.set(tab.id, el) }}
