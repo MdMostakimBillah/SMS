@@ -29,8 +29,8 @@ export function usePermission() {
     if (!myStaff) return false
 
     // Merge role + overrides for this key
-    const roleEntry = myRole?.permissions.find((p) => p.key === key)
-    const overrideEntry = myStaff.overrides.find((o) => o.key === key)
+    const roleEntry = (myRole?.permissions ?? []).find((p) => p.key === key)
+    const overrideEntry = (myStaff.overrides ?? []).find((o) => o.key === key)
 
     const base = roleEntry?.actions || ALL_FALSE
     const override = overrideEntry?.actions
@@ -66,7 +66,7 @@ export function usePermission() {
   const getModulePermissions = (moduleKey: string): PermissionEntry[] => {
     if (!myStaff) return []
     const rolePerms = myRole?.permissions || []
-    const overrides = myStaff.overrides
+    const overrides = myStaff.overrides ?? []
     const result: { key: string; actions: ActionSet }[] = []
     for (const entry of rolePerms) {
       if (entry.key === moduleKey || entry.key.startsWith(moduleKey + '.')) {
@@ -92,7 +92,7 @@ export function usePermission() {
   const getPermissionSource = (key: string, action: PermissionAction): 'role' | 'override' | 'admin' => {
     if (isAdmin) return 'admin'
     if (!myStaff) return 'role'
-    const override = myStaff.overrides.find((o) => o.key === key)
+    const override = (myStaff.overrides ?? []).find((o) => o.key === key)
     if (override?.actions[action]) return 'override'
     return 'role'
   }

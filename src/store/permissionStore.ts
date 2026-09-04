@@ -123,7 +123,7 @@ function createDefaultRoles(): RolePerm[] {
 // Merge role permissions with user overrides
 function getEffectiveActions(rolePerms: PermissionEntry[], overrides: PermissionEntry[], key: string): ActionSet {
   const roleEntry = rolePerms.find((e) => e.key === key)
-  const overrideEntry = overrides.find((e) => e.key === key)
+  const overrideEntry = (overrides || []).find((e) => e.key === key)
 
   const base = roleEntry?.actions || createActionSet()
   if (!overrideEntry) return base
@@ -400,7 +400,7 @@ export const usePermissionStore = create<PermissionState>()(
         const staff = get().staffPermissions.find((s) => s.id === staffId)
         if (!staff) return createActionSet()
         const role = get().roles.find((r) => r.id === staff.roleId)
-        return getEffectiveActions(role?.permissions || [], staff.overrides, key)
+        return getEffectiveActions(role?.permissions || [], staff.overrides || [], key)
       },
 
       canStaff: (staffId, key, action) => {
@@ -418,7 +418,7 @@ export const usePermissionStore = create<PermissionState>()(
       getPermissionSource: (staffId, key, action) => {
         const staff = get().staffPermissions.find((s) => s.id === staffId)
         if (!staff) return 'role'
-        const override = staff.overrides.find((o) => o.key === key)
+        const override = (staff.overrides || []).find((o) => o.key === key)
         if (override?.actions[action]) return 'override'
         return 'role'
       },
@@ -439,7 +439,7 @@ export const usePermissionStore = create<PermissionState>()(
         for (const p of role?.permissions || []) {
           if (Object.values(p.actions).some(Boolean)) keys.add(p.key)
         }
-        for (const o of staff.overrides) {
+        for (const o of staff.overrides || []) {
           if (Object.values(o.actions).some(Boolean)) keys.add(o.key)
         }
         return keys.size
@@ -453,7 +453,7 @@ export const usePermissionStore = create<PermissionState>()(
         const staff = get().staffPermissions.find((s) => s.id === staffId)
         if (!staff) return 0
         const role = get().roles.find((r) => r.id === staff.roleId)
-        const allKeys = (role?.permissions || []).concat(staff.overrides).map((p) => p.key)
+        const allKeys = (role?.permissions || []).concat(staff.overrides || []).map((p) => p.key)
         return allKeys.filter((k) => k.startsWith(pageKey + '.')).length
       },
 
@@ -464,8 +464,8 @@ export const usePermissionStore = create<PermissionState>()(
         const staff = get().staffPermissions.find((s) => s.id === staffId)
         if (!staff) return
         const role = get().roles.find((r) => r.id === staff.roleId)
-        const currentVal = role?.permissions.find((p) => p.key === key)?.actions[permAction] || false
-        if (value === currentVal && !staff.overrides.find((o) => o.key === key)) return
+        const currentVal = (role?.permissions || []).find((p) => p.key === key)?.actions[permAction] || false
+        if (value === currentVal && !(staff.overrides || []).find((o) => o.key === key)) return
         const overrideActions = createActionSet()
         overrideActions[permAction] = value
         get().setOverride(staffId, key, overrideActions)
