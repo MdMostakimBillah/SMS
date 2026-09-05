@@ -306,7 +306,7 @@ export default function TeacherBulkUpdatePage() {
                   </option>
                 ))}
               </select>
-              {canEdit('teachers.edit.edit') && (
+              {canEdit('teachers.bulk-update') && (
                 <button
                   onClick={applyBatch}
                   disabled={!batchVal || selected.length === 0}
@@ -333,7 +333,7 @@ export default function TeacherBulkUpdatePage() {
                   </option>
                 ))}
               </select>
-              {canEdit('teachers.edit.edit') && (
+              {canEdit('teachers.bulk-update') && (
                 <button
                   onClick={applyBatch}
                   disabled={!batchVal || selected.length === 0}
@@ -370,7 +370,7 @@ export default function TeacherBulkUpdatePage() {
                   className={`${inpCls} flex-1 text-[var(--text-primary)]`}
                 />
               )}
-              {canEdit('teachers.edit.edit') && (
+              {canEdit('teachers.bulk-update') && (
                 <button
                   onClick={applyBatch}
                   disabled={!batchVal || selected.length === 0}
@@ -573,7 +573,7 @@ export default function TeacherBulkUpdatePage() {
           >
             {isBn ? 'পরিষ্কার করুন' : 'Clear All'}
           </button>
-          {canEdit('teachers.edit.edit') && (
+          {canEdit('teachers.bulk-update') && (
             <button
               onClick={applyChanges}
               disabled={readyCount === 0}

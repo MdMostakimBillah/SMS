@@ -87,7 +87,7 @@ export default function AddTeacherPage() {
       getNextTeacherId: s.getNextTeacherId,
     }))
   )
-  const { canCreate, canConfigure } = usePermission()
+  const { canCreate } = usePermission()
   const { user } = useAuth()
   const departmentMap = useMemo(() => new Map(departments.map(d => [d.id, d])), [departments])
   const subjectMap = useMemo(() => new Map(subjects.map(s => [s.id, s])), [subjects])
@@ -245,7 +245,7 @@ export default function AddTeacherPage() {
         </div>
         <p className="text-[0.8125rem] text-[var(--teal)] mb-5">{isBn ? form.nameEn + ' সফলভাবে যোগ করা হয়েছে' : form.nameEn + ' has been added successfully'}</p>
         <div className="flex gap-2 justify-center flex-wrap">
-          {canCreate('teachers.create.create') && (
+          {canCreate('teachers.add') && (
             <button type="button" onClick={() => { setDone(false); setForm(initForm()); setShowReview(false); setActiveTab('personal') }} className="flex items-center gap-1.5 px-[1.125rem] py-2.5 rounded-[0.5625rem] bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer">
               <Send size={14} /> {isBn ? 'নতুন শিক্ষক যোগ করুন' : 'Add Another Teacher'}
             </button>
@@ -386,7 +386,7 @@ export default function AddTeacherPage() {
             {isBn ? 'রিসেট' : 'Reset'}
           </button>
         </div>
-        {canCreate('teachers.create.create') && (
+        {canCreate('teachers.add') && (
           <button type="button" onClick={handleSubmit} disabled={saving}
             className={'flex items-center gap-[0.4375rem] py-[0.625rem] px-6 rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold ' + (saving ? 'bg-[var(--text-muted)] cursor-default' : 'bg-[var(--brand)] cursor-pointer shadow-[0_4px_14px_rgba(99,102,241,0.35)]')}>
             <Send size={14} />{saving ? (isBn ? 'সংরক্ষণ হচ্ছে...' : 'Saving...') : isBn ? 'সাবমিট' : 'Submit'}
@@ -505,7 +505,7 @@ export default function AddTeacherPage() {
                 {departments.length === 0 ? (
                   <div className="flex items-center gap-2">
                     <input value="" disabled placeholder={isBn ? 'কোনো বিভাগ নেই' : 'No departments'} className={inputNormal + ' opacity-60'} style={{ flex: 1 }} />
-                    {canConfigure('teachers.departments.configure') && (
+                    {canCreate('teachers.departments') && (
                       <button onClick={() => { pushToChain({ path: nav('/teachers/add'), label: isBn ? 'শিক্ষক যোগ' : 'Add Teacher' }); setRedirectTimestamp(); navigate(nav('/teachers/departments')) }}
                         className="py-[0.5rem] px-[0.75rem] rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none whitespace-nowrap">
                         {isBn ? 'বিভাগ তৈরি করুন \u2192' : 'Create Dept \u2192'}
@@ -525,7 +525,7 @@ export default function AddTeacherPage() {
                 {designations.length === 0 ? (
                   <div className="flex items-center gap-2">
                     <input value="" disabled placeholder={isBn ? 'কোনো পদবি নেই' : 'No designations'} className={inputNormal + ' opacity-60'} style={{ flex: 1 }} />
-                    {canConfigure('teachers.designations.configure') && (
+                    {canCreate('teachers.designations') && (
                       <button onClick={() => { pushToChain({ path: nav('/teachers/add'), label: isBn ? 'শিক্ষক যোগ' : 'Add Teacher' }); setRedirectTimestamp(); navigate(nav('/teachers/designations')) }}
                         className="py-[0.5rem] px-[0.75rem] rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none whitespace-nowrap">
                         {isBn ? 'পদবি তৈরি করুন \u2192' : 'Create Designation \u2192'}

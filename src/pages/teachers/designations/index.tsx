@@ -24,7 +24,7 @@ export default function DesignationsPage() {
       deleteDesignation: s.deleteDesignation,
     }))
   )
-  const { canConfigure } = usePermission()
+  const { canCreate } = usePermission()
 
   const { popFromChain, getChain } = useNavChain()
   useNavChainClearOnMount()
@@ -115,7 +115,7 @@ export default function DesignationsPage() {
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              {canConfigure('teachers.designations.configure') && (
+              {canCreate('teachers.designations') && (
                 <button
                   onClick={editD ? handleEdit : handleAdd}
                   className="px-3.5 py-2 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
@@ -149,7 +149,7 @@ export default function DesignationsPage() {
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              {canConfigure('teachers.designations.configure') && (
+              {canCreate('teachers.designations') && (
                 <button
                   onClick={() => {
                     deleteDesignation(delConfirm)
@@ -214,7 +214,7 @@ export default function DesignationsPage() {
             {isBn ? `মোট ${designations.length} টি পদবি` : `${designations.length} designations`}
           </p>
         </div>
-        {canConfigure('teachers.designations.configure') && (
+        {canCreate('teachers.designations') && (
           <button
             onClick={() => {
               setShowAdd(true)
@@ -285,7 +285,7 @@ export default function DesignationsPage() {
                     </td>
                     <td className="px-3 py-[0.625rem] text-center">
                       <div className="flex gap-1 justify-center">
-                        {canConfigure('teachers.designations.configure') && (
+                        {canCreate('teachers.designations') && (
                           <button
                             onClick={() => startEdit(d)}
                             title={isBn ? 'এডিট' : 'Edit'}
@@ -294,7 +294,7 @@ export default function DesignationsPage() {
                             <Edit2 size={12} />
                           </button>
                         )}
-                        {canConfigure('teachers.designations.configure') && (
+                        {canCreate('teachers.designations') && (
                           <button
                             onClick={() => setDelConfirm(d.id)}
                             title={isBn ? 'মুছুন' : 'Delete'}

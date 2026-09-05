@@ -28,7 +28,7 @@ export default function SubjectsPage() {
       deleteSubject: s.deleteSubject,
     }))
   )
-  const { canConfigure } = usePermission()
+  const { canCreate } = usePermission()
 
   const { pushToChain, popFromChain, getChain, setRedirectTimestamp } = useNavChain()
   useNavChainClearOnMount()
@@ -165,7 +165,7 @@ export default function SubjectsPage() {
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              {canConfigure('teachers.subjects.configure') && (
+              {canCreate('teachers.subjects') && (
                 <button
                   onClick={editS ? handleEdit : handleAdd}
                   className="py-2 px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
@@ -199,7 +199,7 @@ export default function SubjectsPage() {
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              {canConfigure('teachers.subjects.configure') && (
+              {canCreate('teachers.subjects') && (
                 <button
                   onClick={() => {
                     deleteSubject(delConfirm)
@@ -264,7 +264,7 @@ export default function SubjectsPage() {
             {isBn ? `মোট ${filtered.length} টি বিষয়` : `${filtered.length} subjects`}
           </p>
         </div>
-        {canConfigure('teachers.subjects.configure') && (
+        {canCreate('teachers.subjects') && (
           <button
             onClick={() => {
               setShowAdd(true)
@@ -278,7 +278,7 @@ export default function SubjectsPage() {
             {isBn ? 'নতুন যোগ করুন' : 'Add Subject'}
           </button>
         )}
-        {departments.length === 0 && canConfigure('teachers.departments.configure') && (
+        {departments.length === 0 && canCreate('teachers.departments') && (
           <button
             onClick={() => {
               pushToChain({ path: nav('/teachers/subjects'), label: isBn ? 'বিষয়' : 'Subjects' })
@@ -352,7 +352,7 @@ export default function SubjectsPage() {
                         <p className="text-[0.75rem] text-[var(--text-secondary)] mb-2">
                           {isBn ? 'প্রথমে বিভাগ তৈরি করুন' : 'Create departments first'}
                         </p>
-                        {canConfigure('teachers.departments.configure') && (
+                        {canCreate('teachers.departments') && (
                           <button
                             onClick={() => {
                               const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
@@ -402,7 +402,7 @@ export default function SubjectsPage() {
                     </td>
                     <td className="py-3 px-3 text-center">
                       <div className="flex gap-1 justify-center">
-                        {canConfigure('teachers.subjects.configure') && (
+                        {canCreate('teachers.subjects') && (
                           <button
                             onClick={() => startEdit(s)}
                             title={isBn ? 'এডিট' : 'Edit'}
@@ -411,7 +411,7 @@ export default function SubjectsPage() {
                             <Edit2 size={12} />
                           </button>
                         )}
-                        {canConfigure('teachers.subjects.configure') && (
+                        {canCreate('teachers.subjects') && (
                           <button
                             onClick={() => setDelConfirm(s.id)}
                             title={isBn ? 'মুছুন' : 'Delete'}

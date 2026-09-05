@@ -27,7 +27,7 @@ export default function DepartmentsPage() {
     }))
   )
   const { isMobile } = useWindowSize()
-  const { canConfigure } = usePermission()
+  const { canCreate } = usePermission()
 
   const { popFromChain, getChain } = useNavChain()
   useNavChainClearOnMount()
@@ -146,7 +146,7 @@ export default function DepartmentsPage() {
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              {canConfigure('teachers.departments.configure') && (
+              {canCreate('teachers.departments') && (
                 <button
                   onClick={editD ? handleEdit : handleAdd}
                   className="py-2 px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
@@ -179,7 +179,7 @@ export default function DepartmentsPage() {
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              {canConfigure('teachers.departments.configure') && (
+              {canCreate('teachers.departments') && (
                 <button
                   onClick={() => {
                     deleteDepartment(delConfirm)
@@ -243,7 +243,7 @@ export default function DepartmentsPage() {
             {isBn ? `মোট ${departments.length} টি বিভাগ` : `${departments.length} departments`}
           </p>
         </div>
-        {canConfigure('teachers.departments.configure') && (
+        {canCreate('teachers.departments') && (
           <button
             onClick={() => {
               setShowAdd(true)
@@ -330,7 +330,7 @@ export default function DepartmentsPage() {
                     </td>
                     <td className="py-[0.625rem] px-3 text-center">
                       <div className="flex gap-1 justify-center">
-                        {canConfigure('teachers.departments.configure') && (
+                        {canCreate('teachers.departments') && (
                           <button
                             onClick={() => startEdit(d)}
                             title={isBn ? 'এডিট' : 'Edit'}
@@ -339,7 +339,7 @@ export default function DepartmentsPage() {
                             <Edit2 size={12} />
                           </button>
                         )}
-                        {canConfigure('teachers.departments.configure') && (
+                        {canCreate('teachers.departments') && (
                           <button
                             onClick={() => setDelConfirm(d.id)}
                             title={isBn ? 'মুছুন' : 'Delete'}

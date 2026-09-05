@@ -694,7 +694,7 @@ export default function EditTeacherPage() {
         >
           {isBn ? 'বাতিল' : 'Cancel'}
         </button>
-        {canEdit('teachers.edit.edit') && (
+        {canEdit('teachers.all') && (
           <button
             type="submit"
             className="flex items-center gap-[0.4375rem] px-6 py-2.5 rounded-[0.5625rem] bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-semibold cursor-pointer shadow-[0_4px_14px_rgba(99,102,241,0.35)]"

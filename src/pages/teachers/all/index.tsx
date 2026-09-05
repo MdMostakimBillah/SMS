@@ -437,7 +437,7 @@ ${photoHtml}
               >
                 {isBn ? 'বন্ধ' : 'Close'}
               </button>
-              {canEdit('teachers.edit.edit') && (
+              {canEdit('teachers.all') && (
                 <button
                   onClick={() => {
                     navigate(nav(`/teachers/edit/${viewT.id}`))
@@ -474,7 +474,7 @@ ${photoHtml}
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              {canDelete('teachers.delete.delete') && (
+              {canDelete('teachers.all') && (
                 <button
                   onClick={() => handleDelete(delConfirm)}
                   className="px-3.5 py-2 rounded-lg bg-[var(--red)] border-0 text-white text-[0.8125rem] font-semibold cursor-pointer"
@@ -520,7 +520,7 @@ ${photoHtml}
               ))}
             </div>
           </div>
-          {canCreate('teachers.create.create') && (
+          {canCreate('teachers.add') && (
             <button
               onClick={() => navigate(nav('/teachers/add'))}
               className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-[0.5625rem] bg-[var(--teal-light)] border border-[var(--teal)] text-[var(--teal)] text-[0.8125rem] cursor-pointer font-medium"
@@ -659,7 +659,7 @@ ${photoHtml}
               )}
             </div>
             <div style={{ position: 'relative', display: 'flex', gap: '0.375rem' }}>
-              {canView('teachers.read.view') && (
+              {canView('teachers.all') && (
                 <button
                   onClick={() => setShowActionMenu(!showActionMenu)}
                   className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-xs cursor-pointer font-medium"
@@ -843,7 +843,7 @@ ${photoHtml}
                     <td className="p-2">{statusBadge(t.status)}</td>
                     <td className="p-2">
                       <div className="flex gap-[0.1875rem]">
-                        {canView('teachers.read.view') && (
+                        {canView('teachers.all') && (
                           <button
                             onClick={() => setViewT(t)}
                             title="View"
@@ -852,7 +852,7 @@ ${photoHtml}
                             <Eye size={12} />
                           </button>
                         )}
-                        {canEdit('teachers.edit.edit') && (
+                        {canEdit('teachers.all') && (
                           <button
                             onClick={() => navigate(nav(`/teachers/edit/${t.id}`))}
                             title="Edit"

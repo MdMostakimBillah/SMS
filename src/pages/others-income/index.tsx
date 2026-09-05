@@ -81,7 +81,7 @@ export default function OthersIncomePage() {
     { id: 'types' as View, icon: Tag, label: bn ? 'ক্যাটাগরি' : 'Categories' },
     { id: 'assignments' as View, icon: Users, label: bn ? 'ছাত্র নির্বাচন' : 'Assignments' },
   ], [bn])
-  const tabs = useMemo(() => allTabs.filter((t) => canRead('finance.others_income', t.id)), [allTabs, canRead])
+  const tabs = useMemo(() => allTabs.filter(() => canRead('finance.others_income')), [allTabs, canRead])
 
   const handleTabChange = useCallback((v: View) => { setActiveTab(v); setSearchQuery('') }, [])
 

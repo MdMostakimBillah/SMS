@@ -153,7 +153,7 @@ export default function TeachersPage() {
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
   const { teacherCardsOrder, setTeacherCardsOrder } = useAppStore()
-  const { canCreate, canEdit, canConfigure, canView } = usePermission()
+  const { canCreate, canEdit, canView } = usePermission()
 
   const defaultCardIds = STATIC_OPTIONS.map((o) => o.id)
 
@@ -232,12 +232,12 @@ export default function TeachersPage() {
     const opt = STATIC_OPTIONS.find((o) => o.id === id)!
     return { ...opt, ...getStatForOpt(opt) }
   }).filter(Boolean).filter((opt) => {
-    if (opt.id === 'add') return canCreate('teachers.create.create')
-    if (opt.id === 'all') return canView('teachers.read.view')
-    if (opt.id === 'departments') return canConfigure('teachers.departments.configure')
-    if (opt.id === 'subjects') return canConfigure('teachers.subjects.configure')
-    if (opt.id === 'designations') return canConfigure('teachers.designations.configure')
-    if (opt.id === 'bulk-update') return canEdit('teachers.edit.edit')
+    if (opt.id === 'add') return canCreate('teachers.add')
+    if (opt.id === 'all') return canView('teachers.all')
+    if (opt.id === 'departments') return canCreate('teachers.departments')
+    if (opt.id === 'subjects') return canCreate('teachers.subjects')
+    if (opt.id === 'designations') return canCreate('teachers.designations')
+    if (opt.id === 'bulk-update') return canEdit('teachers.bulk-update')
     return true
   })
 
